@@ -1,0 +1,24 @@
+<component>
+	name = "SecLibraryInstances"
+	category = Modulepart
+	LocalRoot = "SecurityPkg\LibraryInstances"
+	RefName = "SecurityPkg.LibraryInstances"
+[inf]
+"DxeImageVerificationLib\DxeImageVerificationLib.inf"
+"DxeTpm2MeasureBootLib\DxeTpm2MeasureBootLib.inf"
+"DxeTpmMeasurementLib\DxeTpmMeasurementLib.inf"
+"DxeTrEEPhysicalPresenceLib\DxeTrEEPhysicalPresenceLib.inf"
+"HashInstanceLibSha1\HashInstanceLibSha1.inf"
+"HashInstanceLibSha256\HashInstanceLibSha256.inf"
+"HashInstanceLibSha1\HashInstanceLibSha1Dxe.inf"
+"HashInstanceLibSha256\HashInstanceLibSha256Dxe.inf"
+"HashLibBaseCryptoRouter\HashLibBaseCryptoRouterDxe.inf"
+"HashLibBaseCryptoRouter\HashLibBaseCryptoRouterPei.inf"
+"HashLibTpm2\HashLibTpm2.inf"
+"Tpm2CommandLib\Tpm2CommandLib.inf"
+"Tpm2DeviceLibDTpm\Tpm2DeviceLibDTpm.inf"
+"Tpm2DeviceLibDTpm\Tpm2InstanceLibDTpm.inf"
+"Tpm2DeviceLibRouter\Tpm2DeviceLibRouterDxe.inf"
+"Tpm2DeviceLibRouter\Tpm2DeviceLibRouterPei.inf"
+"Tpm2DeviceLibTrEE\Tpm2DeviceLibTrEE.inf"
+<endComponent>

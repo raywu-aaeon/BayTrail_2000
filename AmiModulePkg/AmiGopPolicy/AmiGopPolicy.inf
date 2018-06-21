@@ -1,0 +1,27 @@
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = AmiGopPolicy
+  FILE_GUID                      = 3FCEBA10-2D9D-4a1e-9C2B-2B625F7E8556
+  MODULE_TYPE                    = BASE
+  VERSION_STRING                 = 1.0
+
+[Sources]
+  AmiGopPolicy.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  IntelFrameworkPkg/IntelFrameworkPkg.dec
+  AmiCompatibilityPkg/AmiCompatibilityPkg.dec
+  AmiModulePkg/AmiModulePkg.dec
+  
+[LibraryClasses]
+  AmiDxeLib
+  AmiCspLib
+  AmiSdlLib
+  UefiDriverEntryPoint
+
+[Protocols] 
+  gEfiEdidOverrideProtocolGuid
+
+#[Guids]
+#[Depex]

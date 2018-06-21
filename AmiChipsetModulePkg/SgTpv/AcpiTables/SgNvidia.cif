@@ -1,0 +1,16 @@
+<component>
+	name = "nVidia"
+	category = ModulePart
+	LocalRoot = "AmiChipsetModulePkg\SgTpv\AcpiTables\"
+	RefName = "nVidiaSG"
+[INF]
+"SgNvidia.inf"
+[files]
+"NVdGPUPCH.asl"	
+"NViGPUPCH.asl"	
+"NViGDmiscPCH.asl"	
+"NvVenturaPCH.asl"	
+"NvGPSPCH.asl"	
+"NvGC6PCH.asl"	
+"NvGC6v2PCH.asl"		
+<endComponent>

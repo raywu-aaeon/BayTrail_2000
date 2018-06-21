@@ -1,0 +1,93 @@
+#
+# This file contains an 'Intel Pre-EFI Module' and is licensed
+# for Intel CPUs and Chipsets under the terms of your license 
+# agreement with Intel or your vendor.  This file may be      
+# modified by the user, subject to additional terms of the    
+# license agreement                                           
+#
+## @file
+# This is the Platform PEIM to initialize whole platform on PEI phase.
+#
+# This PEIM includes 3 parts, pre memory initialization, MRC
+#  wrapper and post memory initialization.
+#  On pre memory, following action is performed,
+#  1. Initizluize GMCH.
+#  2. Detect boot mode.
+#  3. Detect video adapter to determine whether we need pre allocated
+#  memory.
+# 
+#  After that MRC wrapper calls MRC to initialize memory and install a PPI
+#  notify to do post memory
+#  initialization. MRC wrapper performance following actions,
+#  1. Install EFI Memory.
+#  2. Capsule coalesce if capsule boot mode.
+#  3. Create HOB of system memory.
+#  Note: MRC supports 3 kinds of chipsets including Lakeport, Glenwood and Mukilteo,
+#   so please don't define MACRO MUKILTEO_SUPPORT on Lakeport here.
+# 
+#  On post memory, following action is performed,
+#  1. TC initialization after MRC.
+#  2. SIO initialization.
+#  3. Install ResetSystem and FinvFv PPI, relocate Stall to memory on
+#   recovery boot mode.
+#  4. Set MTRR for PEI
+#  5. Create FV HOB and Flash HOB
+#  6. Install RecoveryModule and AtaController PPI if on recovery boot mode.
+# 
+#  This PEIM does not have any register access directly, it depends on
+#  IntelTCLib, TCAccess libraries to access Chipset
+#  registers.
+# 
+#  Platform.c - Provide main flow and entrypoint of PEIM.
+#  MemoryCallback.c - Includes a memory call back function notified when
+#     MRC is done.
+#
+# Copyright (c) 2012 - 2013, Intel Corporation.
+#
+#  All rights reserved.
+#  This software and associated documentation (if any) is furnished
+#  under a license and may only be used or copied in accordance
+#  with the terms of the license. Except as permitted by such
+#  license, no part of this software or documentation may be
+#  reproduced, stored in a retrieval system, or transmitted in any
+#  form or by any means without the express written consent of
+#  Intel Corporation.
+#
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = SaveConfigMemData
+  FILE_GUID                      = 1FAAA415-F8A9-4a33-B434-A7811FBEC145
+  MODULE_TYPE                    = DXE_DRIVER
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = SaveConfigMemDataEntryPoint
+
+[sources.common]
+  SaveConfigMemData.c
+  SaveConfigMemData.h
+
+[Packages]
+  MdePkg/MdePkg.dec
+  IntelFrameworkPkg/IntelFrameworkPkg.dec
+  Vlv2DeviceRefCodePkg/Vlv2DeviceRefCodePkg.dec
+
+
+[LibraryClasses]
+  UefiDriverEntryPoint
+  DebugLib
+  UefiBootServicesTableLib
+  DxeServicesTableLib
+  BaseMemoryLib
+  MemoryAllocationLib
+  HobLib
+
+[Guids]
+  gEfiVlv2VariableGuid
+  gEfiMemoryConfigDataGuid
+
+[Depex]
+  TRUE
+
+[BuildOptions] 
+  *_*_*_CC_FLAGS = /DEFI_MEMORY_INIT
+  

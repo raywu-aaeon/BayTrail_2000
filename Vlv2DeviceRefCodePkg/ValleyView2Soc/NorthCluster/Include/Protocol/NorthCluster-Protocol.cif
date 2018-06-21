@@ -1,0 +1,12 @@
+<component>
+	name = "NorthCluster-Protocol"
+	category = ModulePart
+	LocalRoot = "Vlv2DeviceRefCodePkg\ValleyView2Soc\NorthCluster\Include\Protocol"
+	RefName = "Vlv2DeviceRefCodePkg.ValleyView2Soc.ValleyView2Soc-NorthCluster.NorthCluster-Include.NorthCluster-Protocol"
+[files]
+"GlobalNvsArea.h"
+"IgdOpRegion.h"
+"MemInfo.h"
+"PlatformGopPolicy.h"
+"VlvPlatformPolicy.h"
+<endComponent>

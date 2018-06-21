@@ -1,0 +1,15 @@
+#ifdef FORM_SET_VARSTORE
+
+#if NPCE791x_SERIAL_PORT1_PRESENT
+ varstore COMA_V_DATA, key = AUTO_ID(COMA_V_DATA_KEY), name = PNP0501_0_VV, guid = SIO_VAR_GUID;
+ varstore COMA_NV_DATA, key = AUTO_ID(COMA_NV_DATA_KEY), name = PNP0501_0_NV, guid = SIO_VAR_GUID;
+#endif
+ 
+#if NPCE791x_CIR_PORT_PRESENT 
+ varstore CIR_V_DATA, key = AUTO_ID(CIR_V_DATA_KEY), name = PNP0510_0_VV, guid = SIO_VAR_GUID;
+ varstore CIR_NV_DATA, key = AUTO_ID(CIR_NV_DATA_KEY), name = PNP0510_0_NV, guid = SIO_VAR_GUID;
+#endif
+ 
+#endif
+
+

@@ -1,0 +1,9 @@
+<component>
+	name = "NorthCluster-Guid"
+	category = ModulePart
+	LocalRoot = "Vlv2DeviceRefCodePkg\ValleyView2Soc\NorthCluster\Include\Guid"
+	RefName = "Vlv2DeviceRefCodePkg.ValleyView2Soc.ValleyView2Soc-NorthCluster.NorthCluster-Include.NorthCluster-Guid"
+[files]
+"AcpiVariable.h"
+"MemoryConfigData.h"
+<endComponent>

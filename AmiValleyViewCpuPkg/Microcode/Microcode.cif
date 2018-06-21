@@ -1,0 +1,24 @@
+<component>
+	name = "ValleyView Microcode"
+	category = ModulePart
+	LocalRoot = "AmiValleyViewCpuPkg/Microcode/"
+	RefName = "AmiValleyViewCpuPkg.VlvMicrocode"
+[files]
+"Microcode.mak"	
+"Microcode.sdl"	
+"CovMicroL.exe"
+"VlvMcuFdfFileStatements.txt"
+"M0230671113.PDB"
+"M0230671116.PDB"
+"M0230672213.PDB"
+"M0C30672216.PDB"
+"M0C30673325.PDB"
+"M0C30678833.PDB"
+"M0230672228.PDB"
+"M0230673325.PDB"
+"M0230678832.PDB"
+"M013067222D.PDB"
+"M0130673324.PDB"
+"M0130678806.PDB"
+"M0130679903.PDB"
+<endComponent>

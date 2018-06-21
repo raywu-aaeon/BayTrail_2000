@@ -1,0 +1,20 @@
+<component>
+	name = "Debugger"
+	category = eModule
+	Rank = 48
+	LocalRoot = "AMIDebugRxPkg\Debugger\"
+	RefName = "Debugger"
+[files]
+"AMI Debug for UEFI.chm"	
+"Debugger.sdl"	
+"Debugger.mak"	
+"DebuggerHost.zip"
+"RxFirmware.zip"	
+[parts]
+"Debugger.DbgDbgrLib"
+"Debugger.ConsoleRedirectionLib"
+"Debugger.GenericUSBDebugger"
+"Debugger.DbgPerformanceLib"
+"Debugger.DbgModuleLocator"
+"Debugger.PeCoffExtraActionLibDebug"
+<endComponent>

@@ -1,0 +1,15 @@
+<component>
+	name = "OpensslLib"
+	category = ModulePart
+	LocalRoot = "CryptoPkg\Library\OpensslLib\"
+	RefName = "CryptoPkg.OpensslLib"
+[parts]
+"CryptoPkg.OpensslLib.openssl-0.9.8w"
+[files]
+"buildinf.h"	
+"EDKII_openssl-0.9.8w.patch"	
+"Install.cmd"	
+"Install.sh"	
+"Patch-HOWTO.txt"	
+"OpensslLib.sdl"	
+<endComponent>

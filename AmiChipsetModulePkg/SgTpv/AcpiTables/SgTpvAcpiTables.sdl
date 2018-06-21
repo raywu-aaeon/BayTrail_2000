@@ -1,0 +1,141 @@
+TOKEN
+	Name  = "SgTpvAcpiTables_SUPPORT"
+	Value  = "1"
+	Help  = "Main switch to enable SgAcpiTables support in Project"
+	TokenType = Boolean
+	Master = Yes
+End
+
+TOKEN
+	Name  = "SGTPV_ASL_DEBUG"
+	Value  = "1"
+	Help  = "Turns on debug check points in ASL code"
+	TokenType = Boolean
+	TargetH = Yes
+	Token = "DEBUG_MODE" "=" "1"
+End
+
+TOKEN
+	Name  = "NV_VENTURA_SUPPORT"
+	Value  = "0"
+	Help  = "Switch to enable Nvidia Ventura support with SG and Optimus.\Controls inclusion of different ASL reference code"
+	TokenType = Boolean
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "NV_GPS_SUPPORT"
+	Value  = "0"
+	Help  = "Switch to enable Nvidia GPS support with SG and Optimus.\Controls inclusion of different ASL reference code"
+	TokenType = Boolean
+	TargetH = Yes
+End
+
+
+TOKEN
+	Name  = "NV_GC6_SUPPORT"
+	Value  = "0"
+	Help  = "Switch to enable Nvidia GC6 support with SG and Optimus.0:Disable GC6 1:Support GC6 v1 2:Support GC6 v2"
+	TokenType = Integer
+	TargetMAK = Yes
+	TargetH = Yes
+	Range  = "0 - 2"
+End
+
+TOKEN
+	Name  = "GPIO_GC6_FB_EN"
+	Value  = "0x55"
+	Help  = "GPIO No + GPIO active info. {BIT7 => (1:Active, 0: Not active), BIT6:0 => GPIO No"
+	TokenType = Integer
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "GPU_EVENT"
+	Value  = "0x50"
+	Help  = "GPIO No + GPIO active info. {BIT7 => (1:Active, 0: Not active), BIT6:0 => GPIO No"
+	TokenType = Integer
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "NV_OPTIMUS_DISPLAYLESS"
+	Value  = "0"
+	Help  = "Follow nVidia's suggetion, Optimus displayless platform has no used for other sub-functions.just support sub-functions NVOP_FUNC_SUPPORT, NVOP_FUNC_GETOBJBYTYPE,    NVOP_FUNC_GETALLONJS, NVOP_FUNC_OPTIMUSCAPS) in  _DSM NVOP_FUNC_SUPPORT (0x00000000) function"
+	TokenType = Boolean
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "PCI_SCOPE"
+	Value  = "\_SB.PCI0"
+	TokenType = Expression
+	TargetH = Yes
+	Lock = Yes
+End
+
+TOKEN
+	Name  = "IGPU_SCOPE"
+	Value  = "\_SB.PCI0.GFX0"
+	Help  = "PLATFORM PORTING!!! Update iGPU and dGPU device names as defined in SB/NB.SDL"
+	TokenType = Expression
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "SG_ULT_PORT_FUNC"
+	Value  = "0x00"
+	Help  = "Port Function Number."
+	TokenType = Integer
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "SG_ULT_RPNum"
+	Value  = "1"
+	TokenType = Expression
+    TargetMak = Yes
+	TargetH = Yes
+    Token = "SG_ULT_PORT_FUNC" "=" "0"
+	Lock = Yes
+End
+
+TOKEN
+	Name  = "SG_ULT_RPNum"
+	Value  = "5"
+	TokenType = Expression
+    TargetMak = Yes
+	TargetH = Yes
+    Token = "SG_ULT_PORT_FUNC" "=" "4"
+	Lock = Yes
+End
+
+TOKEN
+	Name  = "SG_ULT_RP_NUM"
+	Value  = "\_SB.PCI0.RP0$(SG_ULT_RPNum)"
+	TokenType = Expression
+	TargetH = Yes
+	Lock = Yes
+End
+
+TOKEN
+    Name  = "DGPUPCH_SCOPE"
+    Value  = "\_SB.PCI0.RP0$(SG_ULT_RPNum).PEGP"
+    Help  = "PLATFORM PORTING!!! Update iGPU and dGPU device names as defined in SB/NB.SDL"
+    TokenType = Expression
+    TargetH = Yes
+End
+
+INFComponent
+	Name  = "SgAti"
+	File  = "SgAti.inf"
+	Package  = "AmiChipsetModulePkg"
+	ModuleTypes="USER_DEFINED"
+End
+
+INFComponent
+	Name  = "SgNvdia"
+	File  = "SgNvidia.inf"
+	Package  = "AmiChipsetModulePkg"
+	ModuleTypes="USER_DEFINED"
+End

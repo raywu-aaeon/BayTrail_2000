@@ -1,0 +1,21 @@
+[Defines]
+    INF_VERSION = 0x00010005
+    VERSION_STRING = 1.0
+    BASE_NAME = CrbSmiFlashHook
+    MODULE_TYPE = DXE_SMM_DRIVER
+    FILE_GUID = cb16fdd7-9bed-4150-bb38-ad1acede887b
+    PI_SPECIFICATION_VERSION = 0x00010014
+    LIBRARY_CLASS = AmiDxeLib 
+
+[Sources]
+    CrbSmiFlashHook.c
+
+[Packages]
+    MdePkg/MdePkg.dec
+    MdeModulePkg/MdeModulePkg.dec
+    IntelFrameworkPkg/IntelFrameworkPkg.dec
+    AmiCompatibilityPkg/AmiCompatibilityPkg.dec 
+    AmiModulePkg/AmiModulePkg.dec
+
+[LibraryClasses]
+    AmiDxeLib

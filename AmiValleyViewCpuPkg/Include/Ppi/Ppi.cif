@@ -1,0 +1,6 @@
+<component>
+	name = "Ppi"
+	category = ModulePart
+	LocalRoot = "AmiValleyViewCpuPkg\Include\Ppi\"
+	RefName = "AmiValleyViewCpuPkg.Ppi"
+<endComponent>

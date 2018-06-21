@@ -1,0 +1,13 @@
+<component>
+	name = "Embedded Controller"
+	category = eModule
+	LocalRoot = "AmiModulePkg\EC\"
+	RefName = "EC"
+[INF]
+"EC.inf"
+"DxeKscLib.inf" #EIP175650
+[files]
+"EC.sdl"
+[parts]
+"ECProtocol"
+<endComponent>

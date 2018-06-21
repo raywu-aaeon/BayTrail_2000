@@ -1,0 +1,84 @@
+#*************************************************************************
+#*************************************************************************
+#**                                                                     **
+#**        (C)Copyright 1985-2011, American Megatrends, Inc.            **
+#**                                                                     **
+#**                       All Rights Reserved.                          **
+#**                                                                     **
+#**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093           **
+#**                                                                     **
+#**                       Phone: (770)-246-8600                         **
+#**                                                                     **
+#*************************************************************************
+#*************************************************************************
+#
+#*************************************************************************
+# $Header: $
+#
+# $Revision: $
+#
+# $Date: $
+#*************************************************************************
+#<AMI_FHDR_START>
+#
+# Name:  <AmiSmmCorePlatformHookLib.SDL>
+#
+# Description:     
+#
+#<AMI_FHDR_END>
+#*************************************************************************
+TOKEN
+	Name  = "AMI_SMM_PLATFORMHOOK_SUPPORT"
+	Value  = "1"
+	Help  = "Main switch to enable Ami SMM Platform Hook Library support in Project"
+	TokenType = Boolean
+	TargetEQU = Yes
+	TargetMAK = Yes
+	Master = Yes
+End  
+
+PATH
+	Name  = "AmiSmmPlatFormHook_DIR"
+End
+
+MODULE
+	Help  = "Includes Board.mak to Project"
+	File  = "AmiSmmCorePlatformHookLib.mak"
+End
+
+ELINK
+	Name  = "PLATFORMHOOK_BEFORE_SMMDISPATCH"
+	InvokeOrder = ReplaceParent
+End
+
+ELINK
+	Name  = "PLATFORMHOOK_AFTER_SMMDISPATCH"
+	InvokeOrder = ReplaceParent
+End
+
+#ELINK
+#	Name  = "PlatfromhookBeforeSmmDispatchFunc, "
+#	Parent  = "PLATFORMHOOK_BEFORE_SMMDISPATCH"
+#	InvokeOrder = AfterParent
+#End
+
+#ELINK
+#	Name  = "PlatfromhookAfterSmmDispatchFunc, "
+#	Parent  = "PLATFORMHOOK_AFTER_SMMDISPATCH"
+#	InvokeOrder = AfterParent
+#End	
+	
+INFComponent
+	Name  = "AmiSmmCorePlatformHookLib"
+	File  = "AmiSmmCorePlatformHookLib.inf"
+	Package  = "AmiModulePkg"
+	Token = "AMI_SMM_PLATFORMHOOK_SUPPORT" "=" "1"
+End
+
+LibraryMapping
+	Class  = "SmmCorePlatformHookLib"
+	Instance  = "AmiModulePkg.AmiSmmCorePlatformHookLib"
+	ModuleTypes  = "SMM_CORE"
+	Token = "SMM_SUPPORT" "=" "1"
+End
+

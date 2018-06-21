@@ -1,0 +1,171 @@
+TOKEN
+	Name  = "PEI_HASH_DXE_SUPPORT"
+	Value  = "1"
+	Help  = "Main switch to enable Pei Hash Dxe in Project"
+	TokenType = Boolean
+	TargetEQU = Yes
+	TargetMAK = Yes
+	TargetH = Yes
+	Master = Yes
+	Token = "VERIFY_BOOT_SUPPORT" "=" "1"
+End
+
+PATH
+	Name  = "PHD_DIR"
+	Path  = "Board\EM\PHashDPei"
+End
+
+MODULE
+	File  = "PHashDPei.mak"
+End
+
+INFComponent
+	Name  = "PHashDPei"
+	File  = "PHashDPei.inf"
+	Package  = "AmiModulePkg"
+	ModuleTypes  = "PEIM"
+End
+
+#<EIP134987+> 2013/09/04 >>>
+FFS_FILE
+	Name  = "PHashDPei"
+	FD_AREA  = "FV_PRE_BB"
+	INFComponent  = "AmiModulePkg.PHashDPei"
+	Apriori_Index  = "6"
+End
+#<EIP134987+> 2013/09/04 <<<
+
+TOKEN
+	Name  = "HASH_DATA_OFFSET_1"
+	Value  = "$(MICROCODE_OFFSET)"
+	TokenType = Integer
+	TargetMAK = Yes
+	TargetH = Yes
+End
+
+TOKEN
+	Name = "HASH_DATA_OFFSET_1"
+	Value = "$(MICROCODE_OFFSET) + 4096"
+	TokenType = Integer
+	TargetMAK = Yes
+	TargetH = Yes
+	Token = "FWCAPSULE_FILE_FORMAT" "=" "1"
+End
+
+TOKEN
+	Name = "HASH_DATA_OFFSET_2"
+	Value = "$(FLASH_SIZE) - $(HASH_DATA_OFFSET_1)"
+	TokenType = Integer
+	TargetMAK = Yes
+	TargetH = Yes
+End
+
+TOKEN
+	Name = "HASH_KEY_DATA_ADDRESS"
+	Value =  "0xFFFFFFFF - 0x20000 + 0x65"
+	TokenType = Integer
+	TargetMAK = Yes
+	TargetH = Yes
+End
+
+TOKEN
+	Name = "BB_HASH_KEY_DATA_ADDRESS"
+	Value =  "0xFFFFFFFF -0x20000+0x8d"
+	TokenType = Integer
+	TargetMAK = Yes
+	TargetH = Yes
+End
+
+TOKEN
+	Name = "HASH_DATA_SIZE"
+	Value = "$(MICROCODE_SIZE) + $(FV_MAIN_SIZE) + $(FV_BB_SIZE)"
+	TokenType = Integer
+	TargetMAK = Yes
+	TargetH = Yes
+End
+
+TOKEN
+	Name = "HASH_DATA_ADDRESS"
+	Value = "$(MICROCODE_ADDRESS)"
+	TokenType = Integer
+	TargetMAK = Yes
+	TargetH = Yes
+End
+
+TOKEN
+	Name = "HASH_FV_BB_SIZE"
+	Value = "$(FV_BB_SIZE) "
+	TokenType = Integer
+	TargetMAK = Yes
+	TargetH = Yes
+End
+
+TOKEN
+	Name = "HASH_FV_BB_ADDRESS"
+	Value = "$(FV_BB_ADDRESS)"
+	TokenType = Integer
+	TargetMAK = Yes
+	TargetH = Yes
+End
+
+TOKEN
+	Name = "HASH_FV_BB_BACKUP_ADDRESS"
+	Value = "$(FV_BB_BACKUP_ADDRESS)"
+	TokenType = Integer
+	TargetMAK = Yes
+	TargetH = Yes
+End
+
+TOKEN
+	Name = "FV_BB_FILE"
+	Value = "$(BUILD_DIR)$(PATH_SLASH)$(PLATFORM_NAME)$(PATH_SLASH)$(TARGET)_$(TOOL_CHAIN_TAG)$(PATH_SLASH)FV$(PATH_SLASH)FV_BB.Fv"
+	TokenType = Expression
+	TargetMAK = Yes
+End
+
+TOKEN
+	Name = "HASH_FV_BB_KEY_FILE"
+	Value = "$(BUILD_DIR)$(PATH_SLASH)HashFvBbKey.bin"
+	TokenType = Expression
+	TargetMAK = Yes
+End
+
+TOKEN
+	Name = "HASH_FV_SECOND_STAGE_KEY_FILE"
+	Value = "$(BUILD_DIR)$(PATH_SLASH)HashSecondStageKey.bin"
+	TokenType = Expression
+	TargetMAK = Yes
+End
+
+TOKEN
+	Name = "BIOS_IMAGE_INFO"
+	Value = "$(BUILD_DIR)$(PATH_SLASH)BiosImageInfo.bin"
+	TokenType = Expression
+	TargetMAK = Yes
+End
+
+#CSP20140330_22 >>
+INFComponent
+	Name  = "BlockReportFvBBLib"
+	File  = "BlockReportFvBB.inf"
+	Package  = "AmiModulePkg"
+End
+
+LibraryMapping
+	Class  = "BlockReportFvBBLib"
+	Instance  = "AmiModulePkg.BlockReportFvBBLib"
+End
+
+ELINK
+	Name  = "BlockReportFvBB"
+	Parent  = "PeiProcessFvBeforePublishing"
+	InvokeOrder = AfterParent
+End
+#CSP20140330_22 <<
+
+LibraryMapping
+	Class  = "NULL"
+	Instance  = "AmiModulePkg.BlockReportFvBBLib"
+	Override  = "AmiModulePkg.RomLayoutPei"
+End
+

@@ -1,0 +1,19 @@
+<component>
+	name = "Wrapper-Guid"
+	category = ModulePart
+	LocalRoot = "Vlv2DeviceRefCodePkg\Wrapper\Include\Guid"
+	RefName = "Vlv2DeviceRefCodePkg.Wrapper-Guid"
+[files]
+"AcpiTableStorage.h"
+"BoardFeatures.h"
+"EfiVpdData.h"
+"AmdAcpiTablePchGuid.h"
+"NvidiaAcpiTablePchGuid.h"
+"CapsuleProcessingResult.h"
+"HwWatchdogTimerHob.h"
+"ItkData.h"
+"PciLanInfo.h"
+"PlatformCpuInfo.h"
+"PlatformInfo.h"
+"SmmBaseThunkCommunication.h"
+<endComponent>

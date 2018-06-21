@@ -1,0 +1,16 @@
+<component>
+	name = "ValleyView2Soc-NorthCluster"
+	category = ModulePart
+	LocalRoot = "Vlv2DeviceRefCodePkg\ValleyView2Soc\NorthCluster"
+	RefName = "Vlv2DeviceRefCodePkg.ValleyView2Soc.ValleyView2Soc-NorthCluster"
+[inf]
+"PciHostBridge\Dxe\PciHostBridge.inf"
+"SmBiosMemory\Dxe\SmBiosMemory.inf"
+"ISPDxe\ISPDxe.inf"
+"VlvInit\Dxe\VlvInit.inf"
+"VlvInit\Pei\VlvInitPeim.inf"
+[parts]
+"Vlv2DeviceRefCodePkg.ValleyView2Soc.ValleyView2Soc-NorthCluster.NorthCluster-Include"
+"Vlv2DeviceRefCodePkg.ValleyView2Soc.ValleyView2Soc-NorthCluster.NorthCluster-MemoryInit"
+"Vlv2DeviceRefCodePkg.ValleyView2Soc.ValleyView2Soc-NorthCluster.NorthCluster-SampleCode"
+<endComponent>

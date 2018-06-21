@@ -1,0 +1,46 @@
+
+
+#
+# This file contains code for South Bridge initialization in the Runtime stage.
+#
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = SmmControl2
+  FILE_GUID                      = 224436B7-DAD5-43b7-96B2-9C584EBF2EAE
+  MODULE_TYPE                    = DXE_RUNTIME_DRIVER
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = SmmControl2EntryPoint
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64
+#
+#  
+
+[Sources]  
+  SmmControl2.c
+
+[Packages]
+  MdePkg/MdePkg.dec   
+  AmiChipsetPkg/AmiChipsetPkg.dec
+  AmiCompatibilityPkg/AmiCompatibilityPkg.dec 
+  AmiChipsetModulePkg/AmiChipsetModulePkg.dec
+  
+[LibraryClasses]
+  UefiDriverEntryPoint
+  UefiBootServicesTableLib
+  UefiRuntimeLib
+  DebugLib
+  AmiChipsetIoLib
+  
+[Protocols]
+  gEfiSmmAccess2ProtocolGuid
+  gEfiSmmControl2ProtocolGuid
+  gEfiS3SaveStateProtocolGuid
+
+[Depex]
+  gEfiSmmAccess2ProtocolGuid AND
+  gEfiS3SaveStateProtocolGuid
+  

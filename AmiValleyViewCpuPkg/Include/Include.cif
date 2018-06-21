@@ -1,0 +1,13 @@
+<component>
+	name = "Include"
+	category = ModulePart
+	LocalRoot = "AmiValleyViewCpuPkg/Include/"
+	RefName = "AmiValleyViewCpuPkg.Include"
+[files]
+"Library/CpuPolicy.h"	
+"Cpu.h"	
+[parts]
+"AmiValleyViewCpuPkg.Guid"
+"AmiValleyViewCpuPkg.Library"
+"AmiValleyViewCpuPkg.Ppi"
+<endComponent>

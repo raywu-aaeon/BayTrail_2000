@@ -1,0 +1,61 @@
+
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = CpuDxeBoard
+  FILE_GUID                      = E03ABADF-E536-4e88-B3A0-B77F78EB34FE
+  MODULE_TYPE                    = DXE_DRIVER
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = DxeInitializeCpu
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = X64
+#
+#
+
+[Sources]
+  CpuDxeBoard.c
+  
+[Packages]
+  MdePkg/MdePkg.dec
+  AmiCompatibilityPkg/AmiCompatibilityPkg.dec 
+  AmiModulePkg/AmiModulePkg.dec
+  IntelFrameworkPkg/IntelFrameworkPkg.dec
+  IA32FamilyCpuPkg/IA32FamilyCpuPkg.dec
+  AmiValleyViewCpuPkg/AmiValleyViewCpuPkg.dec
+  Vlv2DeviceRefCodePkg/Vlv2DeviceRefCodePkg.dec
+    
+[LibraryClasses] 
+  AmiDxeLib
+  AmiCspLib
+  UefiBootServicesTableLib
+  UefiDriverEntryPoint
+  UefiRuntimeServicesTableLib
+#  PcdLib
+  CpuGetSetupData
+  CpuCspLib
+
+  
+[Pcd]
+  gEfiCpuTokenSpaceGuid.PcdCpuProcessorFeatureSetting
+  gEfiCpuTokenSpaceGuid.PcdCpuProcessorFeatureSettingEx1
+  gEfiCpuTokenSpaceGuid.PcdCpuProcessorFeatureCapability
+  gEfiCpuTokenSpaceGuid.PcdCpuProcessorFeatureCapabilityEx1
+  gEfiCpuTokenSpaceGuid.PcdCpuProcessorFeatureUserConfiguration  
+  gEfiCpuTokenSpaceGuid.PcdCpuProcessorFeatureUserConfigurationEx1
+  gEfiCpuTokenSpaceGuid.PcdCpuPackageCStateLimit  
+  
+[Protocols]
+  gEfiMpServiceProtocolGuid
+  gEfiLegacyBiosProtocolGuid
+
+[Guids]
+  gEfiSetupVariableGuid
+    
+[Depex] 
+  TRUE
+#  gEfiCpuArchProtocolGuid AND
+#  gEfiVariableWriteArchProtocolGuid
+

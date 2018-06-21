@@ -1,0 +1,59 @@
+//------------------------------------------------------------------------------
+//
+// Copyright (c)  1999 - 2002 Intel Corporation. All rights reserved
+// This software and associated documentation (if any) is furnished
+// under a license and may only be used or copied in accordance
+// with the terms of the license. Except as permitted by such
+// license, no part of this software or documentation may be
+// reproduced, stored in a retrieval system, or transmitted in any
+// form or by any means without the express written consent of
+// Intel Corporation.
+//
+//
+// Module Name:
+//
+//   Cpu.dxs
+// 
+// Abstract:
+// 
+//   This is the Dependency expression for the CPU architectural protocol
+//
+//------------------------------------------------------------------------------
+#include "EfiDepex.h"
+#ifdef ECP_FLAG
+#include <Protocol/CpuIo/CpuIo.h> 
+#include <Protocol/HiiDatabase/HiiDatabase.h> 
+#include <Protocol/DataHub/DataHub.h> 
+#include <Protocol/Legacy8259/Legacy8259.h> 
+#include <ArchProtocol/Variable/Variable.h> 
+#include <ArchProtocol/VariableWrite/VariableWrite.h> 
+#include <Protocol/FirmwareVolume/FirmwareVolume.h> 
+#include <Protocol/LoadPe32Image/LoadPe32Image.h> 
+#include <Protocol/PlatformCpu.h> 
+#else
+#include EFI_PROTOCOL_DEFINITION(CpuIo)
+#include EFI_PROTOCOL_DEFINITION(Hii)
+#include EFI_PROTOCOL_DEFINITION (DataHub)
+#include EFI_PROTOCOL_DEFINITION (Legacy8259)
+#include EFI_ARCH_PROTOCOL_DEFINITION (Variable)
+#include EFI_ARCH_PROTOCOL_DEFINITION (VariableWrite)
+#include EFI_PROTOCOL_DEFINITION (FirmwareVolume)
+#include EFI_PROTOCOL_DEFINITION (LoadPe32Image)
+#include EFI_PROTOCOL_DEFINITION (PlatformCpu)
+#endif
+
+DEPENDENCY_START
+  EFI_CPU_IO_PROTOCOL_GUID AND
+#ifdef ECP_FLAG
+  EFI_HII_DATABASE_PROTOCOL_GUID AND
+#else
+  EFI_HII_PROTOCOL_GUID AND
+#endif
+  EFI_DATA_HUB_PROTOCOL_GUID AND 
+  EFI_LEGACY_8259_PROTOCOL_GUID AND
+  EFI_VARIABLE_ARCH_PROTOCOL_GUID AND
+  EFI_VARIABLE_WRITE_ARCH_PROTOCOL_GUID AND
+  EFI_FIRMWARE_VOLUME_PROTOCOL_GUID AND
+  EFI_PLATFORM_CPU_PROTOCOL_GUID AND
+  PE32_IMAGE_PROTOCOL_GUID
+DEPENDENCY_END

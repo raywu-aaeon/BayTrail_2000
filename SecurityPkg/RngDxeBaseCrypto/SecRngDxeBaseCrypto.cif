@@ -1,0 +1,8 @@
+<component>
+	name = "SecRngDxeBaseCrypto"
+	category = Modulepart
+	LocalRoot = "SecurityPkg\RngDxeBaseCrypto"
+	RefName = "SecurityPkg.RngDxeBaseCrypto"
+[inf]
+"RngDxeBaseCrypto.inf"
+<endComponent>

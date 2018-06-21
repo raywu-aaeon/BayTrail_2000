@@ -1,0 +1,10 @@
+<component>
+	name = "SouthCluster-IndustryStandard"
+	category = ModulePart
+	LocalRoot = "Vlv2DeviceRefCodePkg\ValleyView2Soc\SouthCluster\Include\IndustryStandard"
+	RefName = "Vlv2DeviceRefCodePkg.ValleyView2Soc.ValleyView2Soc-SouthCluster.SouthCluster-Include.SouthCluster-IndustryStandard"
+[files]
+"CeAta.h"
+"Mmc.h"
+"SdCard.h"
+<endComponent>

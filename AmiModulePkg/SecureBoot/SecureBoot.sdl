@@ -1,0 +1,338 @@
+TOKEN
+    Name  = "SecureBoot_SUPPORT"
+    Value  = "1"
+    Help  = "Main switch to enable SecureBoot Module support in Project"
+    TokenType = Boolean
+    TargetH = Yes
+    Master = Yes
+    Token = "AmiCryptoPkg_SUPPORT" "=" "1" 
+End
+
+TOKEN
+    Name  = "SECURE_BOOT_MODULE_REVISION"
+    Value  = "18"
+    Help  = "Version of Secure Boot module interfaces"
+    TokenType = Integer
+    TargetMAK = Yes
+    TargetH = Yes
+End
+
+TOKEN
+    Name  = "DEFAULT_SECURE_BOOT_ENABLE"
+    Value  = "0"
+    Help  = "Default value of Secure Boot Enable Control.\0-Secure Boot control option will be locked Disabled unless platform in User mode with CSM disabled "
+    TokenType = Boolean
+    TargetH = Yes
+End
+
+TOKEN
+    Name  = "DEFAULT_SECURE_BOOT_MODE"
+    Value  = "0"
+    Help  = "Default Secure Boot Mode selector.\0-Standard, 1-Custom Mode allows physically present users more flexibility changing Image Execution policy and Secure Boot Key management."
+    TokenType = Boolean
+    TargetH = Yes
+End
+
+TOKEN
+    Name  = "DEFAULT_SECURE_BOOT_MODE"
+    Value  = "1"
+    TokenType = Boolean
+    TargetH = Yes
+    Token = "DEFAULT_SECURE_BOOT_ENABLE" "=" "0"
+End
+
+TOKEN
+    Name  = "DEFAULT_PROVISION_SECURE_VARS"
+    Value  = "0"
+    Help  = "Install factory default Secure Boot variables: PK, KEK, db, dbx and dbt.\Note: this function will not override existing Secure Boot variables in NVRAM."
+    TokenType = Boolean
+    TargetH = Yes
+End
+
+TOKEN
+    Name  = "PRESERVE_SECURE_VARIABLES"
+    Value  = "1"
+    Help  = "1 - Preserve Secure Boot State across flash updates.\0 - Do not preserve Secure Boot State across flash updates.\Note. Same functionality may already exist in SmiFlash eModule"
+    TokenType = Boolean
+    TargetH = Yes
+End
+
+PATH
+    Name  = "SecureBoot_DIR"
+    Help  = "Path to SecureBoot Module Module in Project"
+End
+
+ELINK
+    Name  = "ITEM_CALLBACK(SECURITY_FORM_SET_CLASS,0,SECURE_BOOT_MENU_REFRESH,ForceSetupModeCallback),"
+    Parent  = "SetupItemCallbacks"
+    InvokeOrder = AfterParent
+End
+
+ELINK
+    Name  = "ITEM_CALLBACK(SECURITY_FORM_SET_CLASS,0,KEY_MANAGEMENT_MENU_REFRESH,ForceSetupModeCallback),"
+    Parent  = "SetupItemCallbacks"
+    InvokeOrder = AfterParent
+End
+
+ELINK
+    Name  = "ITEM_CALLBACK(SECURITY_FORM_SET_CLASS,0,SECURE_BOOT_SUPPORT_CHANGE_KEY,ForceSetupModeCallback),"
+    Parent  = "SetupItemCallbacks"
+    InvokeOrder = AfterParent
+End
+
+ELINK
+    Name  = "ITEM_CALLBACK(SECURITY_FORM_SET_CLASS,0,SECURE_BOOT_MODE_CHANGE_KEY,ForceSetupModeCallback),"
+    Parent  = "SetupItemCallbacks"
+    InvokeOrder = AfterParent
+End
+
+ELINK
+    Name  = "ITEM_CALLBACK(SECURITY_FORM_SET_CLASS,0,FORCE_DEFAULT_KEY,ForceSetupModeCallback),"
+    Parent  = "SetupItemCallbacks"
+    InvokeOrder = AfterParent
+End
+
+ELINK
+    Name  = "ITEM_CALLBACK(SECURITY_FORM_SET_CLASS,0,FORCE_SETUP_KEY,ForceSetupModeCallback),"
+    Parent  = "SetupItemCallbacks"
+    InvokeOrder = AfterParent
+End
+
+ELINK
+    Name  = "ITEM_CALLBACK(SECURITY_FORM_SET_CLASS,0,KEY_PROVISION_CHANGE_KEY,ForceSetupModeCallback),"
+    Parent  = "SetupItemCallbacks"
+    InvokeOrder = AfterParent
+End
+
+ELINK
+    Name  = "ITEM_CALLBACK(SECURITY_FORM_SET_CLASS,0,GET_PK_KEY,GetSecureBootDBCallback),"
+    Parent  = "SetupItemCallbacks"
+    InvokeOrder = AfterParent
+End
+
+ELINK
+    Name  = "ITEM_CALLBACK(SECURITY_FORM_SET_CLASS,0,MANAGE_PK_KEY,ManageSecureBootKeysCallback),"
+    Parent  = "SetupItemCallbacks"
+    InvokeOrder = AfterParent
+End
+
+ELINK
+    Name  = "ITEM_CALLBACK(SECURITY_FORM_SET_CLASS,0,MANAGE_KEK_KEY,ManageSecureBootKeysCallback),"
+    Parent  = "SetupItemCallbacks"
+    InvokeOrder = AfterParent
+End
+
+ELINK
+    Name  = "ITEM_CALLBACK(SECURITY_FORM_SET_CLASS,0,MANAGE_DB_KEY,ManageSecureBootKeysCallback),"
+    Parent  = "SetupItemCallbacks"
+    InvokeOrder = AfterParent
+End
+
+ELINK
+    Name  = "ITEM_CALLBACK(SECURITY_FORM_SET_CLASS,0,MANAGE_DBT_KEY,ManageSecureBootKeysCallback),"
+    Parent  = "SetupItemCallbacks"
+    InvokeOrder = AfterParent
+End
+
+ELINK
+    Name  = "ITEM_CALLBACK(SECURITY_FORM_SET_CLASS,0,MANAGE_DBX_KEY,ManageSecureBootKeysCallback),"
+    Parent  = "SetupItemCallbacks"
+    InvokeOrder = AfterParent
+End
+
+ELINK
+    Name  = "InitSecureBootStrings,"
+    Parent  = "SetupStringInit"
+    InvokeOrder = AfterParent
+End
+
+ELINK
+    Name  = "UpdateSecureVariableBrowserInfo,"
+    Parent  = "LoadedPreviousValuesHook,"
+    InvokeOrder = AfterParent
+End
+
+ELINK
+    Name  = "UpdateSecureVariableBrowserInfo,"
+    Parent  = "LoadedConfigDefaults,"
+    InvokeOrder = AfterParent
+End
+
+ELINK
+    Name  = "$(SecureBoot_DIR)/SecureBoot.c"
+    Parent  = "TSE_SOURCE_FILES"
+    InvokeOrder = AfterParent
+End
+
+ELINK
+    Name  = "$(SecureBoot_DIR)/SecureBoot.sd"
+    Parent  = "SETUP_DEFINITIONS"
+    InvokeOrder = AfterParent
+End
+
+ELINK
+    Name  = "$(SecureBoot_DIR)/SecureBoot.c"
+    Parent  = "SetupCallbackFiles"
+    InvokeOrder = AfterParent
+End
+
+ELINK
+    Name  = "$(SecureBoot_DIR)/SecureBoot.uni"
+    Parent  = "SetupStringFiles"
+    InvokeOrder = AfterParent
+End
+
+ELINK
+    Name  = "gEfiFirmwareVolume2ProtocolGuid"
+    Parent  = "AdditionalSetupProtocols"
+    InvokeOrder = AfterParent
+End
+
+ELINK
+    Name  = "gAmiPostManagerProtocolGuid"
+    Parent  = "AdditionalSetupProtocols"
+    InvokeOrder = AfterParent
+End
+
+ELINK
+    Name  = "gEfiSimpleFileSystemProtocolGuid"
+    Parent  = "AdditionalSetupProtocols"
+    InvokeOrder = AfterParent
+End
+
+ELINK
+    Name  = "gEfiLegacyBiosProtocolGuid"
+    Parent  = "AdditionalSetupProtocols"
+    InvokeOrder = AfterParent
+End
+
+ELINK
+    Name  = "gEfiImageSecurityDatabaseGuid"
+    Parent  = "AdditionalSetupGuids"
+    InvokeOrder = AfterParent    
+End
+
+ELINK
+    Name  = "AmiCryptoPkg/AmiCryptoPkg.dec"
+    Parent  = "AdditionalSetupPackages"
+    InvokeOrder = AfterParent    
+End
+
+ELINK
+    Name  = "AmiTsePkg/AmiTsePkg.dec"
+    Parent  = "AdditionalSetupPackages"
+    InvokeOrder = AfterParent    
+End
+
+ELINK
+    Name  = "AmiCryptoPkg/AmiCryptoPkg.dec"
+    Parent  = "ADDITIONAL_AMITSE_Packages"
+    InvokeOrder = AfterParent    
+End
+
+ELINK
+    Name  = "gEfiImageSecurityDatabaseGuid"
+    Parent  = "ADDITIONAL_AMITSE_Guids"
+    InvokeOrder = AfterParent    
+End
+
+ELINK
+    Name  = "gEfiGlobalVariableGuid"
+    Parent  = "ADDITIONAL_AMITSE_Guids"
+    InvokeOrder = AfterParent    
+End
+
+ELINK
+    Name  = "gEfiCertPkcs7Guid"
+    Parent  = "AdditionalSetupGuids"
+    InvokeOrder = AfterParent    
+End
+
+ELINK
+    Name  = "gEfiCertX509Guid"
+    Parent  = "AdditionalSetupGuids"
+    InvokeOrder = AfterParent    
+End
+
+ELINK
+    Name  = "gEfiCertX509Sha256Guid"
+    Parent  = "AdditionalSetupGuids"
+    InvokeOrder = AfterParent    
+End
+
+ELINK
+    Name  = "gEfiCertX509Sha384Guid"
+    Parent  = "AdditionalSetupGuids"
+    InvokeOrder = AfterParent    
+End
+
+ELINK
+    Name  = "gEfiCertX509Sha512Guid"
+    Parent  = "AdditionalSetupGuids"
+    InvokeOrder = AfterParent    
+End
+
+ELINK
+    Name  = "gEfiCertSha256Guid"
+    Parent  = "AdditionalSetupGuids"
+    InvokeOrder = AfterParent    
+End
+
+ELINK
+    Name  = "gEfiCertRsa2048Guid"
+    Parent  = "AdditionalSetupGuids"
+    InvokeOrder = AfterParent    
+End
+
+ELINK
+    Name  = "gEfiGlobalVariableGuid"
+    Parent  = "AdditionalSetupGuids"
+    InvokeOrder = AfterParent    
+End
+
+ELINK
+    Name  = "PreserveSecureVariables,"
+    Parent  = "SMIFlashPreUpdateList"
+    Token = "SMIFlash_SUPPORT" "=" "1"
+    Token = "PRESERVE_SECURE_VARIABLES" "=" "1"
+    InvokeOrder = AfterParent
+End
+
+ELINK
+    Name  = "RestoreSecureVariables,"
+    Parent  = "SMIFlashEndUpdateList"
+    Token = "SMIFlash_SUPPORT" "=" "1"
+    Token = "PRESERVE_SECURE_VARIABLES" "=" "1"
+    InvokeOrder = AfterParent
+End
+
+INFComponent
+    Name  = "SecureBootDXE"
+    File  = "SecureBootDXE.inf"
+    Package  = "AmiModulePkg"
+    ModuleTypes = "DXE_RUNTIME_DRIVER"
+End
+
+FFS_FILE
+    Name  = "SecureBootDXE"
+    FD_AREA  = "FV_MAIN"
+    INFComponent  = "AmiModulePkg.SecureBootDXE"
+End
+
+INFComponent
+    Name  = "SecureBootSMMlib"
+    File  = "SecureBootSMMlib.inf"
+    Package  = "AmiModulePkg"
+    Token = "SMM_SUPPORT" "=" "1"       
+    Token = "SMIFlash_SUPPORT" "=" "1"
+    Token = "PRESERVE_SECURE_VARIABLES" "=" "1"
+End
+
+LibraryMapping
+    Class  = "NULL"
+    Instance  = "AmiModulePkg.SecureBootSMMlib"
+    Override = "AmiModulePkg.SmiFlash"  
+    Token = "SMM_SUPPORT" "=" "1"       
+    Token = "SMIFlash_SUPPORT" "=" "1"
+    Token = "PRESERVE_SECURE_VARIABLES" "=" "1"
+End

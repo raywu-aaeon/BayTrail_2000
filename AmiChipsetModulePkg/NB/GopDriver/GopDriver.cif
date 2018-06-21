@@ -1,0 +1,12 @@
+<component>
+	name = "GopDriver"
+	category = ModulePart
+	LocalRoot = "AmiChipsetModulePkg\NB\GopDriver\"
+	RefName = "AmiChipsetModulePkg.GopDriver"
+[files]
+"GopFdfFileStatements.txt"
+"vbt.bin"
+"X64\vbt.bin"
+"IA32\IntelGopDriver.efi"
+"X64\IntelGopDriver.efi"
+<endComponent>

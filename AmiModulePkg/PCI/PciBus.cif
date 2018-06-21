@@ -1,0 +1,20 @@
+<component>
+	name = "PciBus"
+	category = eModule
+	LocalRoot = "AmiModulePkg/PCI/"
+	RefName = "AmiModulePkg.PciBus"
+[INF]
+"PciBus.inf"
+"PciRootBridge.inf"
+"PciDynamicSetup.inf"
+"PciDxeInit.inf"
+[files]
+"PciBus.chm"	
+"PciBus.sdl"	
+"PciBus.mak"	
+[parts]
+"AmiModulePkg.PciBusHeaders"
+"AmiModulePkg.PciBusLibraryInstances"
+"GenericPciAsl"
+"PciStaticSetup"
+<endComponent>

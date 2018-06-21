@@ -1,0 +1,18 @@
+<component>
+	name = "Serial Redirection"
+	category = eModule
+	LocalRoot = "AmiModulePkg\Terminal\"
+	RefName = "AmiModulePkg.Terminal"
+[INF]
+"TerminalSrc.inf"
+"TerminalAcpi.inf"
+[files]
+"Terminal.chm"	
+"Terminal.sdl"	
+"Terminal.sd"	
+"Terminal.uni"	
+"InitTerminalStrings.c"	
+[parts]
+"TerminalAmiSerial Protocol"
+"Terminal Setup Includes"
+<endComponent>

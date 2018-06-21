@@ -1,0 +1,8 @@
+<component>
+	name = "Protocol"
+	category = ModulePart
+	LocalRoot = "BayTrailPkg\Include\Protocol\"
+	RefName = "BayTrailPkg.Include.Protocol"
+[files]
+"CrbInfo.h"
+<endComponent>

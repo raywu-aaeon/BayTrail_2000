@@ -1,0 +1,38 @@
+TOKEN
+	Name  = ReportFV_SUPPORT
+	Value  = 1
+	TokenType = Boolean
+	TargetEQU = Yes
+	TargetMAK = Yes
+	Master = Yes
+	Help  = "Main switch to enable ReportFV support in Project"
+End
+
+INFComponent
+    Name  = "AmiReportFVLib"
+    File  = "ReportFV.inf"
+    Package = "AmiModulePkg"
+End
+
+LibraryMapping
+    Class  = "ReportFVLib"
+    Instance  = "AmiModulePkg.AmiReportFVLib"
+End
+
+MODULE
+    Help  = "Includes ReportFV.mak to Project"
+    File  = "ReportFV.mak"
+End
+
+ELINK
+   Name  = "ProcessFvBeforePublishing"
+   Help  = "Called before publishing FV"
+   InvokeOrder = ReplaceParent
+End
+
+ELINK
+   Name  = "ProcessDxeFvInDxeIpl"
+   Help  = "Called for the DXE accessible FV's from the ReportFvDxeIpl"
+   InvokeOrder = ReplaceParent
+End
+

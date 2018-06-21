@@ -1,0 +1,11 @@
+<component>
+	name = "Flash Runtime Driver"
+	category = ModulePart
+	LocalRoot = "AmiModulePkg\FlashDriver\"
+	RefName = "AmiModulePkg.FlashDriver"
+[INF]
+"FlashDriver.inf"
+"FlashDriverSmm.inf"
+[files]
+"FlashDriver.sdl"	
+<endComponent>

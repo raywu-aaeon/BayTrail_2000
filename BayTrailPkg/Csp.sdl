@@ -1,0 +1,481 @@
+TOKEN
+	Name  = "STDFlash_SUPPORT"
+	Value  = "0"
+	Help  = "Main switch to enable STD Flash support in Project"
+	TokenType = Boolean
+	TargetEQU = Yes
+	TargetMAK = Yes
+End
+
+TOKEN
+	Name  = "FWHFlash_SUPPORT"
+	Value  = "0"
+	Help  = "Main switch to enable FWH Flash support in Project"
+	TokenType = Boolean
+	TargetEQU = Yes
+	TargetMAK = Yes
+End
+
+TOKEN
+	Name  = "LPCFlash_SUPPORT"
+	Value  = "0"
+	Help  = "Main switch to enable LPC Flash support in Project"
+	TokenType = Boolean
+	TargetEQU = Yes
+	TargetMAK = Yes
+End
+
+TOKEN
+	Name  = "USB_RUNTIME_DRIVER_IN_SMM"
+	Value  = "0"
+	TokenType = Boolean
+	TargetMAK = Yes
+	TargetH = Yes
+	Token = "CSM_SUPPORT" "=" "0" #EIP128872
+End
+
+TOKEN
+	Name  = "USB_UHCI"
+	Value  = "0"
+	Help  = "Maximum number of UHCI controllers present in the system"
+	TokenType = Integer
+	TargetH = Yes
+	Range  = "0-6"
+End
+
+TOKEN
+	Name  = "USB_EHCI"
+	Value  = "1"
+	Help  = "Maximum number of EHCI controllers present in the system"
+	TokenType = Integer
+	TargetH = Yes
+	Range  = "0-6"
+End
+
+TOKEN
+	Name  = "USB_XHCI"
+	Value  = "1"
+	Help  = "Maximum number of supported XHCI controllers."
+	TokenType = Integer
+	TargetH = Yes
+End
+
+#EIP148801 >>
+TOKEN
+	Name  = "USB_RUNTIME_DRIVER_IN_SMM"
+	Value  = "1"
+	TokenType = Boolean
+	TargetMAK = Yes
+	TargetH = Yes
+	Token = "USB_S5_WAKEUP_SUPPORT" "=" "1"
+End
+#EIP148801 <<
+
+TOKEN
+	Name  = "PEI_EHCI_PCI_BDFS"
+	Value  = "{0x1D0000}"
+	Help  = "List of supported EHCI controllers in the following format: {devfunc1, devfunc2,...,devfuncN}\devfunc represents the location of EHCI controller on PCI bus: dev = Bus << 24 + Dev << 16 + Func << 8. Value followed by dev is the PCI device interface, for EHCI it must be 0.\Note: number of entries {devfunc} must not be less than a number of supported EHCI controllers specified in PEI_NUM_EHCI token."
+	TokenType = Expression
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "PEI_EHCI_MEM_BASE_ADDRESSES"
+	Value  = "{0xFED40C00}"
+	Help  = "List of base addresses for the respective EHCI controllers specified by PEI_EHCI_PCI_BDFS"
+	TokenType = Expression
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "EHCI_PCI_DEVICES"
+	Value  = "{0xE8, 0x20}"
+	Help  = "List of supported EHCI controllers in the following format: {dev1, 0}, {dev2, 0},...,{devN, 0}\dev represents the location of EHCI controller on PCI bus: dev = Bus << 8 + Dev << 3 + Func. Value followed by dev is the PCI device interface, for EHCI it must be 0x20.\Note: number of pairs {dev, 0} must not be less than a number of supported UHCI controllers specified in USB_UHCI token."
+	TokenType = Expression
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "XHCI_PCI_DEVICES"
+	Value  = "{0xA0, 0x30}"
+	Help  = "List of supported onchip XHCI controllers in the following format: {dev1, 0}, {dev2, 0},...,{devN, 0}\dev represents the location of XHCI controller on PCI bus: dev = Bus << 8 + Dev << 3 + Func. Value followed by dev is the PCI device interface, for XHCI it must be 0x30.\Note: number of pairs {dev, 0} must not be less than a number of supported EHCI controllers specified in USB_XHCI token."
+	TokenType = Expression
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "PCIE_BASE_ADDRESS"
+	Value  = "$(PCIEX_BASE_ADDRESS)"
+	Help  = "Specify the Base address where PCI Config space is mapped.\ Set to 0 if PCI Express access functions are not supported."
+	TokenType = Integer
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "MEMORYCEILING_DEFAULT"
+	Value  = "0xC0000000"
+	Help  = "First boot MemoryCeiling use the default value"
+	TokenType = Integer
+	TargetH = Yes
+End
+
+#CSP20140409_22 >>
+#EIP141999 >>
+TOKEN
+	Name  = "MEMORYCEILING_DEFAULT"
+	Value  = "0x80000000"
+	Help  = "First boot MemoryCeiling use the default value"
+	TokenType = Integer
+	TargetH = Yes
+	Token = "PCIE_VGA_CARD_SUPPORT" "=" "1"
+End
+#EIP141999 <<
+#CSP20140409_22 <<
+
+#EIP150027 >>
+TOKEN
+	Name  = "MEMORYCEILING_DEFAULT"
+	Value  = "0x80000000"
+	Help  = "First boot MemoryCeiling use the default value"
+	TokenType = Integer
+	TargetH = Yes
+	Token = "HOTPLUG_SUPPORT" "=" "1"
+End
+#EIP150027 <<
+
+TOKEN
+	Name  = "ACPI_PM_PROFILE"
+	Value  = "2"
+	Help  = "Power Management Profile ACPI 2.0\See acpi20.h"
+	TokenType = Integer
+	TargetH = Yes
+	Range  = "0-6 0 = Unspecified; 1 = Desktop; 2 = Modile; 3 = Workstation; 4 = Enterprise Server; 5 = SOHO Server; 6 = Application PC"
+	Token = "ACPI_BUILD_TABLES_2_0" "=" "1"
+End
+
+#EIP131491 >>
+TOKEN
+    Name  = "ICH_SATA_DEVICE_NUMBER"
+    Value  = "0x13"
+    Help  = "Sata Device Number"
+    TokenType = Integer
+    TargetH = Yes
+End
+
+
+TOKEN
+    Name  = "ICH_SATA_FUNCTION_NUMBER"
+    Value  = "0x0"
+    Help  = "SATA Function No"
+    TokenType = Integer
+    TargetH = Yes
+End
+#EIP131491 <<
+
+TOKEN
+	Name  = "A_S1"
+	Value  = "0"
+	Help  = "S1 Sleep state enabled in BIOS"
+	TokenType = Boolean
+	TargetMAK = Yes
+End
+
+TOKEN
+	Name  = "A_S3"
+	Value  = "1"
+	Help  = "S3 supported"
+	TokenType = Boolean
+	TargetMAK = Yes
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "A_S4"
+	Value  = "1"
+	Help  = "S4 supported"
+	TokenType = Boolean
+	TargetMAK = Yes
+End
+
+TOKEN
+	Name  = "DEFAULT_ACPI_SPCR_CONSOLE_REDIRECTION_ENABLE"
+	Value  = "0"
+	TokenType = Boolean
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "duty_offset"
+	Value  = "1"
+	Help  = "The zero-based index of where the processor’s duty cycle setting is within the processor’s P_CNT register.\(for more information, ACPI SPEC)."
+	TokenType = Integer
+	TargetH = Yes
+	Range  = "0-0xf0"
+End
+
+TOKEN
+	Name  = "duty_width"
+	Value  = "3"
+	Help  = "The bit width of the processor’s duty cycle setting value in the P_CNT register. Each processor’s duty cycle setting\allows the software to select a nominal processor frequency below its absolute frequency.\(for more information, ACPI SPEC)."
+	TokenType = Integer
+	TargetH = Yes
+	Range  = "0-0xff: depends on 'duty_offset'"
+End
+
+TOKEN
+	Name  = "DXE_ARCHITECTURE"
+	Value  = "IA32"
+	TokenType = Expression
+	TargetMAK = Yes
+	TargetFDF = Yes
+	Token = "X64_SUPPORT" "=" "0"
+End
+
+TOKEN
+	Name  = "DXE_ARCHITECTURE"
+	Value  = "X64"
+	TokenType = Expression
+	TargetMAK = Yes
+	TargetFDF = Yes
+	Token = "X64_SUPPORT" "=" "1"
+End
+
+TOKEN
+	Name  = "==========  CPU  =========="
+	TokenType = Integer
+End
+
+TOKEN
+	Name  = "LOCAL_APIC_BASE"
+	Value  = "0xfee00000"
+	TokenType = Integer
+	TargetEQU = Yes
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "CPU_MAX_IO_SIZE"
+	Value  = "0x10000"
+	Help  = "Maximum I/O size addressable by the CPU"
+	TokenType = Integer
+	TargetH = Yes
+End
+
+#EIP137683 >>
+PcdMapping
+Name = "PcdCpuSmmApSyncTimeout"
+GuidSpace = "gEfiCpuTokenSpaceGuid"
+PcdType = "PcdsFixedAtBuild"
+DataType = "UINT64"
+Value = "1500"
+Offset = 00h
+Length = 08h
+TargetDSC = Yes
+End
+#EIP137683 <<
+
+TOKEN
+	Name  = "========================="
+	TokenType = Integer
+End
+
+TOKEN
+	Name  = "SW_SMI_PSTATE_CNT"
+	Value  = "0x80"
+	Help  = "VALUE to write into SMI CMD register to enter\CPU performance state control mode (if any)"
+	TokenType = Integer
+	TargetH = Yes
+	Range  = "0-0xff 0 = not supported"
+	Token = "ACPI_BUILD_TABLES_2_0" "=" "1"
+End
+
+TOKEN
+	Name  = "SW_SMI_CST_CNT"
+	Value  = "0x85"
+	Help  = "Value to write in SMI_CMD reg to support _CST object and change state notification"
+	TokenType = Integer
+	TargetH = Yes
+	Range  = "0-0xff"
+	Token = "ACPI_BUILD_TABLES_2_0" "=" "1"
+End
+
+#CSP20131205 >>
+TOKEN
+    Name  = "MAX_MANAGED_CMOS_ADDRESS"
+    Value  = "0x100"
+    Help  = "Last CMOS address + 1 used to specify the maximum address that is managed by CMOS Manager. \\Note: the region starting at FIRST_MANAGED_CMOS_ADDRESS and ending at MAX_MANAGED_CMOS_ADDRESS - 1 represents the managed region."
+    TokenType = Integer
+    TargetEQU = Yes
+    TargetH = Yes
+End
+#CSP20131205 <<
+
+#EIP130623 >>
+TOKEN
+	Name  = "ROOT_PORT_PCIE_X"
+	Value  = "0x00"
+	Help  = "00: 4x1s Port 1 (x1), Port 2 (x1), Port 3 (x1), Port 4 (x1);\ 01: 1x2, 2 x1s Port 1 (x2), Port 3 (x1), Port 4 (x1);\ 10: 2x2 Port 1 (x2), Port 3 (x2);\ 11: 1x4 Port 1 (x4)."
+	TokenType = Integer
+	TargetH = Yes
+	TargetEQU = Yes
+	Range  = "0x00, 0x01, 0x10, 0x11"
+End
+#EIP130623 <<
+
+#EIP128882 >>
+OUTPUTREGISTER
+	Name  = "TOKEN_ASLH"
+	Path  = "Build"
+	File  = "TokenAsl.h"
+	Token = "IFDEF_ASL_SUPPORT" "=" "1"
+End
+#EIP128882 <<
+
+#// (EIP129308+)>>
+ELINK
+	Name  = "ProcessNestedFvBeforePublishing"
+	Help  = "Called before publishing Nested FV"
+	InvokeOrder = ReplaceParent
+End
+#// (EIP129308+)<<
+
+#EIP131491 >>
+INFComponent
+    Name  = "AhciSmm"
+    File  = "../AmiModulePkg/AHCI/AhciSmm/AhciSmm.inf"
+    Package  = "AmiModulePkg"
+    ModuleTypes  = "DXE_SMM_DRIVER"
+End
+#EIP131491 <<
+
+INFComponent
+	Name  = "CmosManagerBuild"
+	File  = "CmosManagerBuild.inf"
+	Package  = "AmiCompatibilityPkg"
+	Disable = Yes
+End
+
+INFComponent
+	Name  = "BasePlatformHookLibNull"
+	File  = "../MdeModulePkg/Library/BasePlatformHookLibNull/BasePlatformHookLibNull.inf"
+	Package  = "MdeModulePkg"
+End
+
+LibraryMapping
+	Class  = "PlatformHookLib"
+	Instance  = "MdeModulePkg.BasePlatformHookLibNull"
+	Token = "NO_SIO_SUPPORT" "=" "1"
+End
+
+LibraryMapping
+	Class  = "FileHandleLib"
+	Instance  = "ShellPkg.BaseFileHandleLib"
+	ModuleTypes  = "DXE_DRIVER UEFI_APPLICATION UEFI_DRIVER DXE_RUNTIME_DRIVER"
+End
+
+#EIP150027 >>
+LibraryMapping
+	Class  = "AmiPciHotPlugLib"
+	Instance  = "AmiChipsetModulePkg.SbPciHotPlugLib"
+	ModuleTypes  = "DXE_DRIVER UEFI_DRIVER"
+	Token = "HOTPLUG_SUPPORT" "=" "1"
+End
+#EIP150027 <<
+
+PcdMapping
+	Name  = "PcdTemporaryRamSize"
+	GuidSpace  = "gEfiCpuTokenSpaceGuid"
+	PcdType  = "PcdsFixedAtBuild"
+	Value  = "0x10000"
+	Offset  = 00h
+	Length  = 00h
+	TargetDSC = Yes
+End
+
+PcdMapping
+	Name  = "PcdDxeIplSwitchToLongMode"
+	GuidSpace  = "gEfiMdeModulePkgTokenSpaceGuid"
+	PcdType  = "PcdsFeatureFlag"
+	DataType  = "Boolean"
+	Value  = "FALSE"
+	Offset  = 00h
+	Length  = 01h
+	TargetDSC = Yes
+	Token = "X64_SUPPORT" "=" "0"
+End
+
+PcdMapping
+	Name  = "PcdFrameworkCompatibilitySupport"
+	GuidSpace  = "gEfiMdeModulePkgTokenSpaceGuid"
+	PcdType  = "PcdsFeatureFlag"
+	DataType  = "Boolean"
+	Value  = "TRUE"
+	Offset  = 00h
+	Length  = 01h
+	TargetDSC = Yes
+End
+
+PcdMapping
+	Name  = "PcdFlashMicroCodeAddress"
+	GuidSpace  = "gPlatformModuleTokenSpaceGuid"
+	PcdType  = "PcdsFixedAtBuild"
+	DataType  = "Uint32"
+	Value  = "$(MICROCODE_ADDRESS)"
+	Offset  = 00h
+	Length  = 01h
+	TargetDSC = Yes
+End
+
+PcdMapping
+	Name  = "PcdFlashMicroCodeSize"
+	GuidSpace  = "gPlatformModuleTokenSpaceGuid"
+	PcdType  = "PcdsFixedAtBuild"
+	DataType  = "Uint32"
+	Value  = "$(MICROCODE_SIZE)"
+	Offset  = 00h
+	Length  = 01h
+	TargetDSC = Yes
+End
+
+# [ EIP259936+>>> ]
+#FFS_FILE
+#	Name  = "FWkeyFileStatement"
+#	FD_AREA  = "FV_PRE_BB"
+#	FILE_Stmt  = "Keys\Fw\FWkeyFileStatement.txt"
+#	Token = "CREATE_FWCAPSULE" "!=" "0"
+#End
+FFS_FILE
+    Name  = "FWKey"
+    FD_AREA  = "FV_PRE_BB"
+    INFComponent  = "AmiModulePkg.FWKey"
+    Rule_Override  = "Uncompressed"
+    Token = "SecureMod_SUPPORT" "!=" "0"
+End
+# [ EIP259936+<<< ]
+
+#EIP149376 >>
+PcdMapping
+    Name  = "PcdUseNewImageOnFlashUpdate"
+    GuidSpace  = "gAmiModulePkgTokenSpaceGuid"
+    PcdType  = "PcdsFixedAtBuild"
+    DataType  = "Boolean"
+    Value  = "FALSE"
+    Offset  = 00h
+    Length  = 01h
+    TargetDSC = Yes
+End
+#EIP149376 <<
+
+#//<EIP150193+> >>>
+PcdMapping
+	Name  = "PcdFlashMicroCodeBackupAddress"
+	GuidSpace  = "gPlatformModuleTokenSpaceGuid"
+	PcdType  = "PcdsFixedAtBuild"
+	DataType  = "Uint32"
+	Value  = "$(MICROCODE_BACKUP_ADDRESS)"
+	Offset  = 00h
+	Length  = 01h
+	TargetDSC = Yes
+End
+#//<EIP150193+> <<<
+

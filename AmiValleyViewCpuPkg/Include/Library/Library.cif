@@ -1,0 +1,9 @@
+<component>
+	name = "Library"
+	category = ModulePart
+	LocalRoot = "AmiValleyViewCpuPkg\Include\Library\"
+	RefName = "AmiValleyViewCpuPkg.Library"
+
+[files]
+"CpuCspLib.h"	
+<endComponent>

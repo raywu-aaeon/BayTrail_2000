@@ -1,0 +1,115 @@
+#*************************************************************************
+#*************************************************************************
+#**                                                                     **
+#**        (C)Copyright 1985-2011, American Megatrends, Inc.            **
+#**                                                                     **
+#**                       All Rights Reserved.                          **
+#**                                                                     **
+#**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093           **
+#**                                                                     **
+#**                       Phone: (770)-246-8600                         **
+#**                                                                     **
+#*************************************************************************
+#*************************************************************************
+
+#**********************************************************************
+# $Header: $
+#
+# $Revision: $
+#
+# $Date: $
+#**********************************************************************
+
+TOKEN
+	Name  = "ICHx_SPI_SUPPORT"
+	Value  = "1"
+	Help  = "Main switch to enable ICHx SPI support in Project"
+	TokenType = Boolean
+	Master = Yes
+End
+
+TOKEN
+	Name  = "SPI_INITIALIZE_WITH_VSCC"
+	Value  = "0"
+	Help  = "Program Host Lower/Upper Vendor Specific Component Capabilities Register."
+	TokenType = Boolean
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "LOWER_VSCC_REG"
+	Value  = "0xC4"
+	Help  = "Host Lower Vendor Specific Component Capabilities Register."
+	TokenType = Integer
+	TargetH = Yes
+	Token = "SPI_INITIALIZE_WITH_VSCC" "=" "1"
+End
+
+TOKEN
+	Name  = "UPPER_VSCC_REG"
+	Value  = "0xC8"
+	Help  = "Host Upper Vendor Specific Component Capabilities Register."
+	TokenType = Integer
+	TargetH = Yes
+	Token = "SPI_INITIALIZE_WITH_VSCC" "=" "1"
+End
+
+TOKEN
+	Name  = "SPI_PARAMETER_TABLE_INDEX"
+	Value  = "0xCC"
+	Help  = "PCH Parameter Table Index Register."
+	TokenType = Integer
+	TargetH = Yes
+	Token = "SPI_INITIALIZE_WITH_VSCC" "=" "1"
+End
+
+TOKEN
+	Name  = "SPI_CYCLE_FREQUENCY"
+	Value  = "0"
+	Help  = "Sets frequency to use for all SPI software sequencing cycles.\0 - 20MHz, 1 - 33MHz, 4 - 50MHz."
+	TokenType = Integer
+	TargetH = Yes
+	Token = "FAST_READ_SUPPORT" "!=" "0"
+End
+
+PATH
+	Name  = "SPI_CSP_DIR"
+End
+
+INFComponent
+	Name  = "ICHxCspSpiFlashLib"
+	File  = "ICHxCspSpiFlashLib.inf"
+	Package  = "AmiModulePkg"
+End
+
+LibraryMapping
+	Class  = "CspSpiFlashLib"
+	Instance  = "AmiModulePkg.ICHxCspSpiFlashLib"
+    ModuleTypes  = "DXE_CORE DXE_DRIVER DXE_RUNTIME_DRIVER DXE_SAL_DRIVER DXE_SMM_DRIVER SMM_CORE UEFI_APPLICATION UEFI_DRIVER"
+End
+
+INFComponent
+	Name  = "ICHxCspSpiFlashPeiLib"
+	File  = "ICHxCspSpiFlashPeiLib.inf"
+	Package  = "AmiModulePkg"
+End
+
+LibraryMapping
+	Class  = "CspSpiFlashLib"
+	Instance  = "AmiModulePkg.ICHxCspSpiFlashPeiLib"
+    ModuleTypes  = "PEIM"
+End
+
+#*************************************************************************
+#*************************************************************************
+#**                                                                     **
+#**        (C)Copyright 1985-2011, American Megatrends, Inc.            **
+#**                                                                     **
+#**                       All Rights Reserved.                          **
+#**                                                                     **
+#**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093           **
+#**                                                                     **
+#**                       Phone: (770)-246-8600                         **
+#**                                                                     **
+#*************************************************************************
+#*************************************************************************

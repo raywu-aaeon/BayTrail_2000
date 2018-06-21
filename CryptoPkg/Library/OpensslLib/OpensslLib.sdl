@@ -1,0 +1,26 @@
+TOKEN
+	Name  = "OpensslLib_SUPPORT"
+	Value  = "1"
+	Help  = "Switch for Enabling OpensslLib support in the project"
+	TokenType = Boolean
+	Master = Yes
+End
+
+PATH
+	Name  = "Openssl_DIR"
+	Path  = "CryptoPkg\Library\OpensslLib\openssl-0.9.8w"
+End
+
+INFComponent
+	Name  = "OpensslLib"
+	File  = "OpensslLib.inf"
+	Package  = "CryptoPkg"
+	ModuleTypes  = "BASE"
+	Path = "Openssl_DIR"
+End
+
+LibraryMapping
+	Class  = "OpensslLib"
+	Instance  = "CryptoPkg.OpensslLib"
+End
+

@@ -1,0 +1,10 @@
+<component>
+	name = "SecCore"
+	category = ModulePart
+	LocalRoot = "IA32FamilyCpuPkg/SecCore/"
+	RefName = "IA32FamilyCpuPkg.SecCore"
+[INF]
+"SecCore.inf"
+[files]
+"SecCore.sdl"   
+<endComponent>

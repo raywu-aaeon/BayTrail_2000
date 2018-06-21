@@ -1,0 +1,271 @@
+#****************************************************************************
+#****************************************************************************
+#**                                                                        **
+#**           (C)Copyright 1985-2010, American Megatrends, Inc.            **
+#**                                                                        **
+#**                          All Rights Reserved.                          **
+#**                                                                        **
+#**           5555 Oakbrook Parkway, Suite 200, Norcross, GA 30071         **
+#**                                                                        **
+#**                          Phone (770)-246-8600                          **
+#**                                                                        **
+#****************************************************************************
+#****************************************************************************
+#****************************************************************************
+# $Header: /Alaska/SOURCE/Modules/PEI Ram Boot/PeiRamBoot.sdl 12    7/18/12 5:25a Calvinchen $
+#
+# $Revision: 12 $
+#
+# $Date: 7/18/12 5:25a $
+#
+#****************************************************************************
+# Revision History
+# ----------------
+# $Log: /Alaska/SOURCE/Modules/PEI Ram Boot/PeiRamBoot.sdl $
+# 
+# 12    7/18/12 5:25a Calvinchen
+# Missing "PeiRamBootNestedFvPublishing" eLink in sdl file.
+# 
+# 11    7/18/12 4:18a Calvinchen
+# PRESERVE_NESTED_FV_IN_MEM = 0 (Default)
+# 
+# 10    7/18/12 3:41a Calvinchen
+# 
+# 9     2/23/12 6:34a Calvinchen
+# [TAG]  		EIP82264
+# [Category]  	Improvement
+# [Description]  	Need to do cold boot to get the correct data in rom
+# hole when changing data in rom hole.
+# [Files]  		PeiRamBoot.sdl
+# PeiRamBoot.mak
+# PeiRamBoot.h
+# PeiRamBoot.c
+# PeiRamBootDxe.c
+# PeiRamBoot.chm
+# PeiRamBoot.cif
+# 
+# 8     6/21/11 2:22a Calvinchen
+# ¡P Bug Fixed: 
+# Bug Fixed:
+# 1. Build failed if Core 4.6.4.0. 
+# 2. System could hang if SAVE_ENTIRE_FV_TO_MEM = 1with AMD platform. 
+# 
+# 7     5/27/11 7:16a Calvinchen
+# Added "WARM_BOOT_VERIFY_CHECKSUM" for verifying FV/FFS checksum if
+# Warmboot support. 
+# 
+# 6     4/22/11 1:22a Calvinchen
+# 
+# 5     2/11/11 3:16a Calvinchen
+# Bug Fixed : System hangs after reflashed BIOS with warm reset if
+# PEI_RAM_BOOT_S3_SUPPORT = 1 with fast warm boot support.
+# 
+# 4     12/21/10 2:24a Calvinchen
+# Added an eLink "PeiRamBootObjectsList" for oem links their obj files
+# for fast warm boot support. 
+# 
+# 3     12/14/10 2:25a Calvinchen
+# Improvement : 
+# 1. Added an eLink "PeiRamBootList" for fast warm boot support
+# (PEI_RAM_BOOT_S3_SUPPORT = 1). If system boots in warm boot state, BIOS
+# directly boot to previous copied ROM image in RAM to save time of
+# copying ROM. 
+# 2. Added "PEI_RAM_BOOT_S3_SUPPORT" = "2" for saving runtime memory, it
+# only keep necessary PEIM FFS in runtime memory for S3 resume
+# improvement. 
+# 
+# 2     12/02/10 6:18a Calvinchen
+# Bug Fixed : Fixed Update SMBIOS Structures failed with DMI Utility.
+# 
+# 1     10/27/10 2:48a Calvinchen
+# Initial Check-in.
+# 
+#
+#****************************************************************************
+
+TOKEN
+	Name  = "PeiRamBootSupport"
+	Value  = "1"
+	Help  = "Main switch to enable PEI RAM Boot support in Project"
+	TokenType = Boolean
+	TargetEQU = Yes
+	TargetMAK = Yes
+	TargetH = Yes
+	Master = Yes
+End
+
+TOKEN
+	Name  = "PEI_RAM_BOOT_S3_SUPPORT"
+	Value  = "1"
+	Help  = "Selects the type of method:\0 = POST time Improvement only.\1 = Post/S3/WarmBoot Improvement."
+	TokenType = Integer
+	TargetMAK = Yes
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "SAVE_ENTIRE_FV_IN_MEM"
+	Value  = "0"
+	Help  = "Switch to enable to copy Entire Firmware Volume to Ram."
+	TokenType = Boolean
+	TargetMAK = Yes
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "COPY_TO_RAM_WHILE_DISPATCH"
+	Value  = "0"
+	Help  = "Switch to enable to copy Firmware Volume to Ram while PEI Dispatcher."
+	TokenType = Boolean
+	TargetMAK = Yes
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "WARM_BOOT_VERIFY_CHECKSUM"
+	Value  = "0"
+	Help  = "Switch to verify the FV/FFS checksum if warm boot."
+	TokenType = Boolean
+	TargetH = Yes
+	Token = "PEI_RAM_BOOT_S3_SUPPORT" "=" "1"
+End
+
+
+#-TOKEN
+#-	Name  = "PRESERVE_NESTED_FV_IN_MEM"
+#-	Value  = "0"
+#-	Help  = "Switch to enable to preserve nested firmware volume in memory."
+#-	TokenType = Boolean
+#-	TargetMAK = Yes
+#-	TargetH = Yes
+#-	Token = "PEI_RAM_BOOT_S3_SUPPORT" "=" "1"
+#-End
+TOKEN
+	Name  = "OPTIMIZE_BOOT_FV_COPY"
+	Value  = "0"
+	Help  = "Switch to enable to optimize(Minimumize) Boot FV copy."
+	TokenType = Boolean
+	TargetMAK = Yes
+	TargetH = Yes
+	Token = "PEI_RAM_BOOT_S3_SUPPORT" "=" "1"
+End
+
+PATH
+	Name  = "PeiRamBoot_DIR"
+	Path  = "AmiModulePkg\PeiRamBoot"
+End
+
+PATH
+	Name  = "PEIRAMBOOT_PEI_DIR"
+	Path  = "AmiModulePkg\PeiRamBoot\Pei"
+End
+
+PATH
+	Name  = "PEIRAMBOOT_DXE_DIR"
+	Path  = "AmiModulePkg\PeiRamBoot\Dxe"
+End
+
+MODULE
+	Help  = "Includes PeiRamBoot.mak to Project"
+	File  = "PeiRamBoot.mak"
+End
+
+ELINK
+	Name  = "PeiRamBootOfbdLib"
+	Parent  = "AMI_OFBD_LIBRARIES"
+	InvokeOrder = AfterParent
+End
+
+ELINK
+	Name  = "$(PEIRAMBOOT_DXE_DIR)\PeiRamBootOfbdLib.h"
+	Parent  = "OFBD_FUNC_INCLUDE_FILES"
+	InvokeOrder = AfterParent
+End
+
+ELINK
+	Name  = "PeiRamBootOfbdEntry,"
+	Parent  = "OFBD_INIT_FUNC_LIST"
+	InvokeOrder = AfterParent
+End
+
+ELINK
+	Name  = "PeiRamBootList"
+	InvokeOrder = ReplaceParent
+End
+
+ELINK
+	Name  = "PeiRamBootFfsGuidList"
+	InvokeOrder = ReplaceParent
+End
+
+ELINK
+	Name  = "PeiRamBootFvBootBlockList"
+	InvokeOrder = ReplaceParent
+End
+
+INFComponent
+	Name  = "PeiRamBootPei"
+	File  = "PeiRamBootPei.inf"
+	Package  = "AmiModulePkg"
+	ModuleTypes  = "PEIM"
+	Path  = "PEIRAMBOOT_PEI_DIR"
+End
+
+INFComponent
+	Name  = "PeiRamBootDxe"
+	File  = "PeiRamBootDxe.inf"
+	Package  = "AmiModulePkg"
+	ModuleTypes  = "DXE_DRIVER"
+	Path  = "PEIRAMBOOT_DXE_DIR"
+End
+
+INFComponent
+	Name  = "PeiRamBootCacheRdy"
+	File  = "PeiRamBootCacheRdy.inf"
+	Package  = "AmiModulePkg"
+	ModuleTypes  = "PEIM"
+	Path  = "PEIRAMBOOT_PEI_DIR"
+	Token = "COPY_TO_RAM_WHILE_DISPATCH" "=" "1"
+End
+
+INFComponent
+	Name  = "PeiRamBootOfbdLib"
+	File  = "PeiRamBootOfbdLib.inf"
+	Package  = "AmiModulePkg"
+	Path  = "PEIRAMBOOT_DXE_DIR"
+End
+
+LibraryMapping
+	Class  = "PeiRamBootOfbdLib"
+	Instance  = "AmiModulePkg.PeiRamBootOfbdLib"
+End
+
+LibraryMapping
+	Class  = "NULL"
+	Instance  = "AmiModulePkg.PeiAmiRomLayoutLib"
+	Override  = "AmiModulePkg.PeiRamBootPei"
+	Token = "CORE_COMBINED_VERSION" ">=" "0x5000a"
+End
+
+FFS_FILE
+	Name  = "PeiRamBootPei"
+	FD_AREA  = "FV_BB"
+	INFComponent  = "AmiModulePkg.PeiRamBootPei"
+	Apriori_Index  = "5"
+End
+
+FFS_FILE
+	Name  = "PeiRamBootDxe"
+	FD_AREA  = "FV_MAIN"
+	INFComponent  = "AmiModulePkg.PeiRamBootDxe"
+	Apriori_Index  = "5"
+End
+
+FFS_FILE
+	Name  = "PeiRamBootCacheRdy"
+	FD_AREA  = "FV_BB"
+	INFComponent  = "AmiModulePkg.PeiRamBootCacheRdy"
+	Rule_Override  = "Compressed"
+	Token = "COPY_TO_RAM_WHILE_DISPATCH" "=" "1"
+End
+

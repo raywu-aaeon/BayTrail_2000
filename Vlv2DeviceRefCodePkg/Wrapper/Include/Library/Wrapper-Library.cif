@@ -1,0 +1,20 @@
+<component>
+	name = "Wrapper-Library"
+	category = ModulePart
+	LocalRoot = "Vlv2DeviceRefCodePkg\Wrapper\Include\Library"
+	RefName = "Vlv2DeviceRefCodePkg.Wrapper-Library"
+[files]
+"NcPolicyInitPei.h"
+"NcPolicyInitDxe.h"
+"PchAslUpdateLib.h"
+"ScPolicyInitPei.h"
+"ScPolicyInitDxe.h"
+"PmicLib.h"
+"I2CLib.h"
+"DriverLib.h"
+"Esrt.h"
+"DfuCapsuleLib.h"
+"I2cPort_platform.h"
+"MemoryDownLib.h" #EIP168616
+"OemMemoryDownLib.h" #EIP168616
+<endComponent>

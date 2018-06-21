@@ -1,0 +1,53 @@
+#**********************************************************************
+#**********************************************************************
+#**                                                                  **
+#**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+#**                                                                  **
+#**                       All Rights Reserved.                       **
+#**                                                                  **
+#**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093        **
+#**                                                                  **
+#**                       Phone: (770)-246-8600                      **
+#**                                                                  **
+#**********************************************************************
+#**********************************************************************
+
+## @file
+#   MemoryDownLib.inf 
+##
+
+[Defines]
+  INF_VERSION           = 0x00010005
+  BASE_NAME             = MemoryDownLib
+  FILE_GUID             = 893C224F-48A2-49e5-86DF-EFBB3E0E12CE
+  MODULE_TYPE           = BASE
+  VERSION_STRING        = 1.0
+  LIBRARY_CLASS         = MemoryDownLib
+
+[Sources]
+  MemoryDownLib.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  Vlv2DeviceRefCodePkg/Vlv2DeviceRefCodePkg.dec
+  AmiCompatibilityPkg/AmiCompatibilityPkg.dec
+  
+[LibraryClasses]
+  DebugLib
+  MemoryAllocationLib
+  OemMemoryDownLib
+
+#**********************************************************************
+#**********************************************************************
+#**                                                                  **
+#**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+#**                                                                  **
+#**                       All Rights Reserved.                       **
+#**                                                                  **
+#**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093        **
+#**                                                                  **
+#**                       Phone: (770)-246-8600                      **
+#**                                                                  **
+#**********************************************************************
+#**********************************************************************

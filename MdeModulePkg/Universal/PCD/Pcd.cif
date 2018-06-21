@@ -1,0 +1,11 @@
+<component>
+	name = "Pcd"
+	category = ModulePart
+	LocalRoot = "MdeModulePkg\Universal\PCD\"
+	RefName = "MdeModulePkg.Pcd"
+[files]
+"Pcd.sdl"	
+[INF]
+"Pei/Pcd.inf"
+"Dxe/Pcd.inf"
+<endComponent>

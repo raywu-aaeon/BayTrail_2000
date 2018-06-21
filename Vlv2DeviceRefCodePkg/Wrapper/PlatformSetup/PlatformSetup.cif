@@ -1,0 +1,13 @@
+<component>
+	name = "Platform Setup"
+	category = ModulePart
+	LocalRoot = "Vlv2DeviceRefCodePkg\Wrapper\PlatformSetup"
+	RefName = "Vlv2DeviceRefCodePkg.PlatformSetup"
+[files]
+"PlatformSetup.sd"
+"PlatformSetup.uni"
+"PlatformSetup.c"
+"PlatformSetup.sdl"	
+"PlatformSetupHook.c"
+"PlatformSetupCallBack.c"
+<endComponent>

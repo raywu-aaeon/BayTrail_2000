@@ -1,0 +1,121 @@
+
+#*************************************************************************
+#*************************************************************************
+#**                                                                     **
+#**        (C)Copyright 1985-2012, American Megatrends, Inc.            **
+#**                                                                     **
+#**                       All Rights Reserved.                          **
+#**                                                                     **
+#**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093           **
+#**                                                                     **
+#**                       Phone: (770)-246-8600                         **
+#**                                                                     **
+#*************************************************************************
+#*************************************************************************
+#
+#*************************************************************************
+# $Header: $
+#
+# $Revision: $
+#
+# $Date: $
+#*************************************************************************
+TOKEN
+	Name  = "PLATFORM_SETUP_SUPPORT"
+	Value  = "1"
+	Help  = "Main switch to enable Platform setup support in Project"
+	TokenType = Boolean
+	TargetMAK = Yes
+	TargetH = Yes
+	Master = Yes
+End
+
+PATH
+	Name  = "PLATFORM_SETUP_DIR"
+End
+
+ELINK
+    Name  = "PlatformSaveHook,"
+    Parent  = "SavedConfigChangesHook,"
+    InvokeOrder = AfterParent
+End
+
+ELINK
+    Name  = "$(PLATFORM_SETUP_DIR)\PlatformSetupHook.c"
+    Parent  = "TSE_SOURCE_FILES"
+    InvokeOrder = AfterParent
+End
+
+ELINK
+    Name  = "$(PLATFORM_SETUP_DIR)/PlatformSetup.c"
+    Parent  = "SetupCallbackFiles"
+    InvokeOrder = AfterParent
+End
+
+ELINK
+    Name  = "InitPlatformStrings,"
+    Parent  = "SetupStringInit"
+    InvokeOrder = AfterParent
+End
+
+ELINK
+	Name  = "$(PLATFORM_SETUP_DIR)/PlatformSetup.sd"
+	Parent  = "SETUP_DEFINITIONS"
+	InvokeOrder = AfterParent
+End
+
+ELINK
+	Name  = "$(PLATFORM_SETUP_DIR)/PlatformSetup.uni"
+	Parent  = "SetupStringFiles"
+	InvokeOrder = AfterParent
+End
+
+ELINK
+    Name  = "Vlv2DeviceRefCodePkg/PlatformPkg.dec"
+    Parent  = "ADDITIONAL_AMITSE_Packages"
+    InvokeOrder = AfterParent   
+End
+
+ELINK
+    Name  = "Vlv2DeviceRefCodePkg/Vlv2DeviceRefCodePkg.dec"
+    Parent  = "ADDITIONAL_AMITSE_Packages"
+    InvokeOrder = AfterParent   
+End
+
+ELINK
+    Name  = "gEfiSeCOperationProtocolGuid"
+    Parent  = "ADDITIONAL_AMITSE_Protocols"
+    InvokeOrder = AfterParent
+End
+
+ELINK
+    Name  = "gEfiTdtOperationProtocolGuid"
+    Parent  = "AdditionalSetupProtocols"
+    InvokeOrder = AfterParent
+End
+
+ELINK
+  Name  = "ITEM_CALLBACK(ADVANCED_FORM_SET_CLASS,0,UN_CONFIGURATION_TXE_KEY,PlatformSetupCallback),"
+  Parent  = "SetupItemCallbacks"
+  InvokeOrder = AfterParent
+End
+
+ELINK
+    Name  = "PlatformSetupLoadDefault,"
+    Parent  = "LoadedConfigDefaults,"
+    InvokeOrder = AfterParent
+End
+#*************************************************************************
+#*************************************************************************
+#**                                                                     **
+#**        (C)Copyright 1985-2012, American Megatrends, Inc.            **
+#**                                                                     **
+#**                       All Rights Reserved.                          **
+#**                                                                     **
+#**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093           **
+#**                                                                     **
+#**                       Phone: (770)-246-8600                         **
+#**                                                                     **
+#*************************************************************************
+#*************************************************************************
+

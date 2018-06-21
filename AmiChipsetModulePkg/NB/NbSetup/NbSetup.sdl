@@ -1,0 +1,124 @@
+
+#*************************************************************************
+#*************************************************************************
+#**                                                                     **
+#**        (C)Copyright 1985-2014, American Megatrends, Inc.            **
+#**                                                                     **
+#**                       All Rights Reserved.                          **
+#**                                                                     **
+#**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093           **
+#**                                                                     **
+#**                       Phone: (770)-246-8600                         **
+#**                                                                     **
+#*************************************************************************
+#*************************************************************************
+#
+#*************************************************************************
+# $Header: $
+#
+# $Revision: $
+#
+# $Date: $
+#*************************************************************************
+TOKEN
+	Name  = "NB_SETUP_SUPPORT"
+	Value  = "1"
+	Help  = "Main switch to enable NBSetup support in Project"
+	TokenType = Boolean
+	TargetMAK = Yes
+	TargetH = Yes
+	Master = Yes
+End
+#P20130624 >>
+TOKEN
+	Name  = "MEM_CHANNEL_NUM"
+	Value  = "2"
+	Help  = "Number of SDRAM channels supported by the memory controller. Hardware configuration for Mem channels."
+	TokenType = Integer
+	TargetH = Yes
+	Range  = "1-2"
+End
+
+TOKEN
+	Name  = "MEM_SOCKETS_NUM"
+	Value  = "$(MEM_CHANNEL_NUM)*$(DIMM_SLOT_NUM)"
+	Help  = "Number of DIMM sockets supported by the memory controller. Hardware configuration for Mem SOCKETS."
+	TokenType = Integer
+	TargetH = Yes
+	Range  = "1-2"
+End
+#P20130624 <<
+PATH
+	Name  = "NB_SETUP_DIR"
+End
+
+ELINK
+	Name  = "$(NB_SETUP_DIR)/NbSetup.c"
+	Parent  = "SetupCallbackFiles"
+	InvokeOrder = AfterParent
+End
+
+ELINK
+	Name  = "AmiChipsetPkg/AmiChipsetPkg.dec"
+	Parent  = "AdditionalSetupPackages"
+	InvokeOrder = AfterParent
+End
+
+ELINK
+	Name  = "Vlv2DeviceRefCodePkg/Vlv2DeviceRefCodePkg.dec"
+	Parent  = "AdditionalSetupPackages"
+	InvokeOrder = AfterParent
+End
+
+#EIP179821 >>
+ELINK
+	Name  = "gEfiComponentName2ProtocolGuid"
+	Parent  = "AdditionalSetupProtocols"
+	InvokeOrder = AfterParent
+End
+
+ELINK
+	Name  = "gEfiSeCOperationProtocolGuid"
+	Parent  = "AdditionalSetupProtocols"
+	InvokeOrder = AfterParent
+End
+#EIP179821 <<
+
+ELINK
+	Name  = "SeCLib"
+	Parent  = "AdditionalSetupLibraryClasses"
+	InvokeOrder = AfterParent
+End
+
+ELINK
+	Name  = "InitNbStrings,"
+	Parent  = "SetupStringInit"
+	InvokeOrder = AfterParent
+End
+
+ELINK
+	Name  = "$(NB_SETUP_DIR)/Nb.sd"
+	Parent  = "SETUP_DEFINITIONS"
+	InvokeOrder = AfterParent
+End
+
+ELINK
+	Name  = "$(NB_SETUP_DIR)/Nb.uni"
+	Parent  = "SetupStringFiles"
+	InvokeOrder = AfterParent
+End
+
+#*************************************************************************
+#*************************************************************************
+#**                                                                     **
+#**        (C)Copyright 1985-2014, American Megatrends, Inc.            **
+#**                                                                     **
+#**                       All Rights Reserved.                          **
+#**                                                                     **
+#**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093           **
+#**                                                                     **
+#**                       Phone: (770)-246-8600                         **
+#**                                                                     **
+#*************************************************************************
+#*************************************************************************
+

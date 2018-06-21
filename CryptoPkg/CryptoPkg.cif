@@ -1,0 +1,16 @@
+<component>
+	name = "CryptoPkg"
+	category = eModule
+	LocalRoot = "CryptoPkg\"
+	RefName = "CryptoPkg"
+[INF]
+"Library\BaseCryptLibRuntimeCryptProtocol\BaseCryptLibRuntimeCryptProtocol.inf"
+"Library\IntrinsicLib\IntrinsicLib.inf"
+[files]
+"CryptoPkg.sdl"	
+"CryptoPkg.dec"	
+[parts]
+"CryptoPkg.OpensslLib"
+"CryptoPkg.BaseCryptLib"
+"CryptoPkg.Include"
+<endComponent>

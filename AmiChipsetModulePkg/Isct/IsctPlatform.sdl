@@ -1,0 +1,116 @@
+
+#**********************************************************************
+#**********************************************************************
+#**                                                                  **
+#**        (C)Copyright 1985-2013, American Megatrends, Inc.         **
+#**                                                                  **
+#**                       All Rights Reserved.                       **
+#**                                                                  **
+#**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093        **
+#**                                                                  **
+#**                       Phone: (770)-246-8600                      **
+#**                                                                  **
+#**********************************************************************
+#**********************************************************************
+#**********************************************************************
+# $Header: $
+#
+# $Revision: $
+#
+# $Date: $
+#**********************************************************************
+# Revision History
+# ----------------
+# $Log: $
+#
+#**********************************************************************
+#<AMI_FHDR_START>
+#
+# Name: IsctPlatform.sdl
+#
+# Description: SDL file for IsctPlatform
+#
+#<AMI_FHDR_END>
+#**********************************************************************
+TOKEN
+	Name  = "ISCT_PLATFORM_SUPPORT"
+	Value  = "1"
+	Help  = "Main switch to enable ISCT support in Project"
+	TokenType = Boolean
+	TargetEQU = Yes
+	TargetMAK = Yes
+	Master = Yes
+End
+
+TOKEN
+	Name  = "IsctSmm_SUPPORT"
+	Value  = "1"
+	Help  = "Main switch to enable IsctSmm support in Project"
+	TokenType = Boolean
+	TargetMAK = Yes
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "IsctWakeReason_SUPPORT"
+	Value  = "1"
+	Help  = "Main switch to enable IsctWakeReason support in PEI Phase"
+	TokenType = Boolean
+	TargetMAK = Yes
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "IsctAcpi_SUPPORT"
+	Value  = "1"
+	Help  = "Main switch to enable ISCT support in Project in DXE Phase"
+	TokenType = Boolean
+	TargetMAK = Yes
+	TargetH = Yes
+End
+
+INFComponent
+	Name  = "IsctAsl"
+	File  = "AcpiTables/IsctAsl.inf"
+	Package  = "AmiChipsetModulePkg"
+	ModuleTypes  = "DXE_DRIVER"
+End
+
+INFComponent
+	Name  = "IsctSmm"
+	File  = "Smm/IsctSmm.inf"
+	Package  = "AmiChipsetModulePkg"
+	ModuleTypes  = "DXE_SMM_DRIVER"
+	Token = "IsctSmm_SUPPORT" "=" "1"
+End
+
+INFComponent
+	Name  = "IsctWakeReason"
+	File  = "Pei/IsctWakeReason.inf"
+	Package  = "AmiChipsetModulePkg"
+	ModuleTypes  = "PEIM"
+	Token = "IsctWakeReason_SUPPORT" "=" "1"
+End
+
+INFComponent
+	Name  = "IsctAcpi"
+	File  = "Dxe/IsctAcpi.inf"
+	Package  = "AmiChipsetModulePkg"
+	ModuleTypes  = "DXE_DRIVER"
+	Token = "IsctAcpi_SUPPORT" "=" "1"
+End
+
+#*************************************************************************
+#*************************************************************************
+#**                                                                     **
+#**        (C)Copyright 1985-2013, American Megatrends, Inc.            **
+#**                                                                     **
+#**                       All Rights Reserved.                          **
+#**                                                                     **
+#**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093           **
+#**                                                                     **
+#**                       Phone: (770)-246-8600                         **
+#**                                                                     **
+#*************************************************************************
+#*************************************************************************
+

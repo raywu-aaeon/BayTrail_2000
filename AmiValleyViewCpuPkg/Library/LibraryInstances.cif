@@ -1,0 +1,11 @@
+<component>
+	name = "LibraryInstances"
+	category = ModulePart
+	LocalRoot = "AmiValleyViewCpuPkg/Library/"
+	RefName = "AmiValleyViewCpuPkg.LibraryInstances"
+[INF]
+"PlatformSecLib/PlatformSecLib.inf"
+"CpuCspLib/CpuCspLib.inf"
+"CpuGetSetupData/CpuPeiGetSetupData.inf"
+"CpuGetSetupData/CpuGetSetupData.inf"
+<endComponent>

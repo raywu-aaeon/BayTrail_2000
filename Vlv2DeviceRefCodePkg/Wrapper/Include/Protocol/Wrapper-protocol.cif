@@ -1,0 +1,21 @@
+<component>
+	name = "Wrapper-Protocol"
+	category = ModulePart
+	LocalRoot = "Vlv2DeviceRefCodePkg\Wrapper\Include\Protocol"
+	RefName = "Vlv2DeviceRefCodePkg.Wrapper-Protocol"
+[files]
+"DpsdRsa1024AndSha256SignatureVerification.h"
+"DxePchPolicyUpdateProtocol.h"
+"EnhancedSpeedstep.h"
+"SeCOperation.h"
+"TpmMp.h"
+"UsbPolicy.h"
+"I2cBus.h"
+"I2cHost.h"
+"I2cMaster.h"
+"IntelSaGopProtocol.h" #CSP20131224
+"SmmBaseHelperReady.h"
+"I2cAcpi.h"
+"I2cBusConfigurationManagement.h"
+"MmioDevice.h"
+<endComponent>

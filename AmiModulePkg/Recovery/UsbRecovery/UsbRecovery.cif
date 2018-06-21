@@ -1,0 +1,11 @@
+<component>
+	name = "UsbRecovery"
+	category = ModulePart
+	LocalRoot = "AmiModulePkg/Recovery/UsbRecovery/"
+	RefName = "UsbRecovery"
+[INF]
+"UsbRecov.inf"
+[files]
+"UsbRecov.sdl"	
+"UsbRecovery.chm"
+<endComponent>

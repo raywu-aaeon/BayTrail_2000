@@ -1,0 +1,132 @@
+
+#*************************************************************************
+#*************************************************************************
+#**                                                                     **
+#**        (C)Copyright 1985-2012, American Megatrends, Inc.            **
+#**                                                                     **
+#**                       All Rights Reserved.                          **
+#**                                                                     **
+#**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093           **
+#**                                                                     **
+#**                       Phone: (770)-246-8600                         **
+#**                                                                     **
+#*************************************************************************
+#*************************************************************************
+TOKEN
+	Name  = "AmiChipsetPkg_SUPPORT"
+	Value  = "1"
+	Help  = "Main switch to enable AmiChipsetPkg support in Project"
+	TokenType = Boolean
+	TargetEQU = Yes
+	TargetMAK = Yes
+	Master = Yes
+End
+
+TOKEN
+	Name  = "MAX_AMI_ELINK_NUM"
+	Value  = "0x5"
+	TokenType = Integer
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "ELINK_ARRAY_NUM"
+	Value  = "0x10"
+	TokenType = Integer
+	TargetH = Yes
+End
+
+PATH
+	Name  = "AmiChipsetPkg_DIR"
+End
+
+PATH
+	Name  = "AmiChipsetPkg_Library_DIR"
+	Path  = "AmiChipsetPkg/Library"
+End
+
+PATH
+	Name  = "AmiChipsetPkg_Include_Library_DIR"
+	Path  = "AmiChipsetPkg/Include/Library"
+End
+
+INFComponent
+	Name  = "AmiChipsetIoLib"
+	File  = "AmiChipsetIoLib/AmiChipsetIoLib.inf"
+	Package  = "AmiChipsetPkg"
+	Path  = "AmiChipsetPkg_Library_DIR"
+End
+
+INFComponent
+	Name  = "ElinkTableLib"
+	File  = "ElinkLib/ElinkTableLib.inf"
+	Package  = "AmiChipsetPkg"
+	Path  = "AmiChipsetPkg_Library_DIR"
+End
+
+INFComponent
+	Name  = "ElinkPeiLib"
+	File  = "ElinkLib/ElinkPeiLib.inf"
+	Package  = "AmiChipsetPkg"
+	Path  = "AmiChipsetPkg_Library_DIR"
+End
+
+INFComponent
+	Name  = "ElinkLib"
+	File  = "ElinkLib/ElinkLib.inf"
+	Package  = "AmiChipsetPkg"
+	Path  = "AmiChipsetPkg_Library_DIR"
+End
+
+LibraryMapping
+	Class  = "AmiChipsetIoLib"
+	Instance  = "AmiChipsetPkg.AmiChipsetIoLib"
+End
+
+LibraryMapping
+	Class  = "ElinkTableLib"
+	Instance  = "AmiChipsetPkg.ElinkTableLib"
+	ModuleTypes  = "DXE_DRIVER DXE_RUNTIME_DRIVER DXE_SMM_DRIVER"
+End
+
+LibraryMapping
+	Class  = "ElinkLib"
+	Instance  = "AmiChipsetPkg.ElinkPeiLib"
+	ModuleTypes  = "PEIM"
+End
+
+LibraryMapping
+	Class  = "ElinkLib"
+	Instance  = "AmiChipsetPkg.ElinkLib"
+	ModuleTypes  = "DXE_DRIVER DXE_RUNTIME_DRIVER DXE_SMM_DRIVER"
+End
+
+PcdMapping
+	Name  = "PcdAcpiIoPortBaseAddress"
+	GuidSpace  = "gAmiChipsetPkgTokenSpaceGuid"
+	PcdType  = "PcdsFixedAtBuild"
+	Value  = "$(PM_BASE_ADDRESS)"
+	Offset  = 00h
+	Length  = 00h
+	TargetDSC = Yes
+End
+
+PcdMapping
+	Name  = "PcdDimmSlotNum"
+	GuidSpace  = "gAmiChipsetPkgTokenSpaceGuid"
+	PcdType  = "PcdsFixedAtBuild"
+	Value  = "$(DIMM_SLOT_NUM)"
+	Offset  = 00h
+	Length  = 00h
+	TargetDSC = Yes
+End
+
+PcdMapping
+	Name  = "PcdMemoryArrayNum"
+	GuidSpace  = "gAmiChipsetPkgTokenSpaceGuid"
+	PcdType  = "PcdsFixedAtBuild"
+	Value  = "$(MEMORY_ARRAY_NUM)"
+	Offset  = 00h
+	Length  = 00h
+	TargetDSC = Yes
+End

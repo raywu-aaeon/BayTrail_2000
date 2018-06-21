@@ -1,0 +1,26 @@
+<component>
+	name = "Library"
+	category = ModulePart
+	LocalRoot = "AmiChipsetModulePkg\Library\"
+	RefName = "AmiChipsetModulePkg.SbLibrary"
+[INF]
+"SbAcpiTimerLib\SbAcpiTimerLib.inf"
+"SbSmmLib\SbSmmLib.inf"
+"SbPciHotPlugLib\SbPciHotPlugLib.inf" #EIP150027
+"SbPeiDebugger\SbPeiDebugger.inf"
+"SbRuntimeServiceLib\SbRuntimeServiceLib.inf"
+"SbGetSetupData\SbPeiGetSetupData.inf"
+"SbGetSetupData\SbGetSetupData.inf"
+"SbCspLib\SbCspPeiLib.inf" #EIP134904
+"SbCspLib\SbCspDxeSmmLib.inf"
+"SbCspLib\SbCspRuntimeLib.inf"
+"TscTimerLib\DxeTscTimerLib.inf" #EIP130784
+"TscTimerLib\PeiTscTimerLib.inf" #EIP130784
+"AmiSioPeiLib\AmiSioPeiLib.inf" #EIP142955
+"AmiSioDxeLib\AmiSioDxeLib.inf" #EIP142955
+"SbSmmCorePlatformHookLib\SbSmmCorePlatformHookLib.inf" #EIP134333
+"SbPciDxeLib\SbPciDxeLib.inf" #EIP153622
+"SbHdaVerbTableLib\SbHdaVerbTableLib.inf" #EIP176554
+[parts]
+"AmiChipsetModulePkg.AmiSbCspLib"
+<endComponent>

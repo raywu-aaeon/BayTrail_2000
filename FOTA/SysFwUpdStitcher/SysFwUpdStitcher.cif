@@ -1,0 +1,10 @@
+<component>
+	name = "GenSysFWUpdImage Tool"
+	category = ModulePart
+	LocalRoot = "FOTA\SysFwUpdStitcher\"
+	RefName = "FOTA.SysFwUpdStitcher"
+[files]
+"GenSysFwUpdImage Tool User Guide.pdf"
+[parts]
+"FOTA.SysFwUpdStitcher.v0.6"
+<endComponent>

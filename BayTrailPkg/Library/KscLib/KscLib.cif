@@ -1,0 +1,12 @@
+<component>
+	name = "KscLib"
+	category = ModulePart
+	LocalRoot = "BayTrailPkg\Library\KscLib\"
+	RefName = "BayTrailPkg.KscLib"
+[INF]
+"Dxe\DxeKscLib.inf"
+"Pei\PeiKscLib.inf"
+"Smm\SmmKscLib.inf"
+[files]
+"KscLib.sdl"	
+<endComponent>

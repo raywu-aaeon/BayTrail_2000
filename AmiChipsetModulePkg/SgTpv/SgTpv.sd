@@ -1,0 +1,172 @@
+//**********************************************************************
+//**********************************************************************
+//**                                                                  **
+//**        (C)Copyright 1985-2013, American Megatrends, Inc.         **
+//**                                                                  **
+//**                       All Rights Reserved.                       **
+//**                                                                  **
+//**        5555 Oakbrook Pkwy, Suite 200, Norcross, GA 30093         **
+//**                                                                  **
+//**                       Phone: (770)-246-8600                      **
+//**                                                                  **
+//**********************************************************************
+//**********************************************************************
+//**********************************************************************
+// $Header:     $
+//
+// $Revision:   $
+//
+// $Date:       $
+//**********************************************************************
+// Revision History
+// ----------------
+// $Log:        $
+// 
+// 
+//**********************************************************************
+
+//<AMI_FHDR_START>
+//----------------------------------------------------------------------------
+//
+// Name:		SwitchableGraphics.sd
+//
+// Description:	Switchable Graphics Setup page layout
+//
+//----------------------------------------------------------------------------
+//<AMI_FHDR_END>
+
+#ifdef SETUP_DATA_DEFINITION
+/***********************************************************/
+/* Put NVRAM data definitions here.
+/* For example:	UINT8 Data1;
+/* These definitions will be converted by the build process
+/* to a definitions of SETUP_DATA fields.
+/***********************************************************/
+		UINT8	SgMuxMode;
+//		UINT8	PX_FIXED_MODE;
+//		UINT8	PX_DYNAMIC_MODE;
+		UINT8	PX_FIXED_DYNAMIC_MODE;
+        UINT8   TPVCardCheck;
+#endif
+
+//---------------------------------------------------------------------------
+#if defined(VFRCOMPILE) && !defined(CONTROLS_ARE_DEFINED)
+#define CONTROL_DEFINITION
+#endif
+//---------------------------------------------------------------------------
+
+//**********************************************************************
+//                  ADVANCED - Onboard Devices Form
+//**********************************************************************
+#ifdef CONTROL_DEFINITION
+
+#define SG_ONEOF_SGMUXMODE\
+    	oneof varid  = SETUP_DATA.SgMuxMode,\
+    		prompt = STRING_TOKEN(STR_SG_MODE),\
+    		help = STRING_TOKEN(STR_SG_MODE_HELP),\
+    		option text = STRING_TOKEN(STR_SG_MUXLESS), value = 2, flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;\
+    	endoneof;
+
+/*
+#define SG_ONEOF_PXFIXEDMODE\
+        oneof varid = SETUP_DATA.PX_FIXED_MODE,
+            prompt  = STRING_TOKEN(STR_PX_FIXED_MODE),
+            help  = STRING_TOKEN(STR_PX_FIXED_MODE_HELP),
+            option text = STRING_TOKEN(STR_DISABLED), value = 0, flags = RESET_REQUIRED | DEFAULT | MANUFACTURING;
+            option text = STRING_TOKEN(STR_ENABLED), value = 1, flags = RESET_REQUIRED;
+        endoneof;
+
+#define SG_ONEOF_PXDYNAMICMODE\
+        oneof varid = SETUP_DATA.PX_DYNAMIC_MODE,
+            prompt  = STRING_TOKEN(STR_PX_DYNAMIC_MODE),
+            help  = STRING_TOKEN(STR_PX_DYNAMIC_MODE_HELP),
+            option text = STRING_TOKEN(STR_DISABLED), value = 0, flags = RESET_REQUIRED | DEFAULT | MANUFACTURING;
+            option text = STRING_TOKEN(STR_ENABLED), value = 1, flags = RESET_REQUIRED;
+        endoneof;
+*/
+
+#define SG_ONEOF_PXFIXEDDYNAMICMODE\
+        oneof varid = SETUP_DATA.PX_FIXED_DYNAMIC_MODE,\
+            prompt  = STRING_TOKEN(STR_PX_FIXED_DYNAMIC_MODE),\
+            help  = STRING_TOKEN(STR_PX_FIXED_DYNAMIC_MODE_HELP),\
+            option text = STRING_TOKEN(STR_BACO_DYNAMIC_SCHEME), value = 0, flags = RESET_REQUIRED | DEFAULT | MANUFACTURING;\
+            option text = STRING_TOKEN(STR_DGPUOFF_DYNAMIC_SCHEME), value = 1, flags = RESET_REQUIRED;\
+        endoneof;
+
+#define SG_GOTO_SWITCHABLEGRAPHICS\
+    goto SG_FORM_ID, \
+    prompt  = STRING_TOKEN(STR_SG_FORM),\
+    help    = STRING_TOKEN(STR_SG_FORM_HELP);
+
+#endif // CONTROL_DEFINITION
+
+//---------------------------------------------------------------------------
+#ifdef CONTROLS_WITH_DEFAULTS
+    SG_ONEOF_SGMUXMODE
+/*
+    SG_ONEOF_PXFIXEDMODE
+    SG_ONEOF_PXDYNAMICMODE
+*/
+    SG_ONEOF_PXFIXEDDYNAMICMODE
+#endif // CONTROLS_WITH_DEFAULTS
+//---------------------------------------------------------------------------
+
+//**********************************************************************
+//                  Advanced -  SwitchableGraphics Configuration Form
+//**********************************************************************
+
+#ifdef ADVANCED_FORM_SET
+
+  #ifndef SUPPRESS_GRAYOUT_ENDIF //old Core
+    #define SUPPRESS_GRAYOUT_ENDIF endif;
+  #endif
+
+  #ifdef FORM_SET_ITEM
+  // Define controls to be added to the main page of the formset
+
+  #endif
+
+  #ifdef FORM_SET_GOTO
+  // Define goto commands for the forms defined in this file
+    SG_GOTO_SWITCHABLEGRAPHICS
+  #endif
+
+  #ifdef FORM_SET_FORM
+    #ifndef SWITCHABLEGRAPHICS_FORM_SETUP
+    #define SWITCHABLEGRAPHICS_FORM_SETUP
+
+  // Define forms
+   form formid = AUTO_ID(SG_FORM_ID),
+    title     = STRING_TOKEN(STR_SG_FORM);
+    
+  // Define controls to be added to the main page of the formset
+
+        grayoutif NOT ideqval SETUP_DATA.PrimaryDisplay == 4;
+          SG_ONEOF_SGMUXMODE
+    	endif;
+
+        suppressif NOT ideqval SETUP_DATA.PrimaryDisplay == 4 OR
+                       ideqval SETUP_DATA.TPVCardCheck == 0;
+          SG_ONEOF_PXFIXEDDYNAMICMODE
+        endif;
+
+    endform;
+    #endif // SWITCHABLEGRAPHICS_FORM_SETUP
+  #endif // FORM_SET_FORM
+
+#endif // ADVANCED_FORM_SET
+
+
+//**********************************************************************
+//**********************************************************************
+//**                                                                  **
+//**        (C)Copyright 1985-2013, American Megatrends, Inc.         **
+//**                                                                  **
+//**                       All Rights Reserved.                       **
+//**                                                                  **
+//**        5555 Oakbrook Pkwy, Suite 200, Norcross, GA 30093         **
+//**                                                                  **
+//**                       Phone: (770)-246-8600                      **
+//**                                                                  **
+//**********************************************************************
+//**********************************************************************

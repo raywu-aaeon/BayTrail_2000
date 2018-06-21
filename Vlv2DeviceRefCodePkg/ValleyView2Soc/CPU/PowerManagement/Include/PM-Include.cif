@@ -1,0 +1,16 @@
+<component>
+	name = "PM-Include"
+	category = ModulePart
+	LocalRoot = "Vlv2DeviceRefCodePkg\ValleyView2Soc\CPU\PowerManagement\Include"
+	RefName = "Vlv2DeviceRefCodePkg.ValleyView2Soc.ValleyView2Soc-CPU.PM-Include"
+[files]
+"CpuPpmLib.h"
+"IchPpmLib.h"
+"IstAppletLib.h"
+"MchPpmLib.h"
+"PowerManagement.dsc"
+"PowerManagementDxe.dsc"
+"PowerManagementLibraries.dsc"
+"PpmAslDefines.h"
+"PpmCommon.h"
+<endComponent>

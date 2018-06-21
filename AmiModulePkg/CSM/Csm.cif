@@ -1,0 +1,27 @@
+<component>
+	name = "Csm"
+	category = eModule
+	LocalRoot = "AmiModulePkg\CSM\"
+	RefName = "CSM"
+[files]
+"Csm.sdl"	
+"Csm.mak"
+"Oem16Sig.csm16"
+"MBIOSEQU.EQU"
+"MBIOSMAC.MAC"
+"Oem16End.csm16obj"
+"AmiLegacy16.bin"
+"CsmFileStatements.txt"
+"OpRomScript.txt"
+"csm.chm"
+
+[parts]
+"CSM_SETUP"
+
+[INF]
+"CsmDxe.inf"
+"x86thunk.inf"
+"CsmBlockIo\CsmBlockIo.inf"
+"CsmVideo\CsmVideo.inf"
+"CsmPolicy\CsmPolicy.inf"
+<endComponent>

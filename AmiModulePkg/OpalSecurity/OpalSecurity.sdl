@@ -1,0 +1,29 @@
+TOKEN
+    Name  = "OpalSecurity_SUPPORT"
+    Value  = "1"
+    Help  = "Main switch to enable OpalSecurity support in Project"
+    TokenType = Boolean
+    TargetH = Yes
+    Master = Yes
+End
+
+TOKEN
+    Name  = "TPer_LOCK_ON_RESET"
+    Value  = "0"
+    Help  = "Issue eDrive Lock On Reset"
+    TokenType = Boolean
+    TargetH = Yes
+End
+
+PATH
+    Name  = "OpalSecurity_DIR"
+End
+
+INFComponent
+    Name  = "OpalSecurity"
+    File  = "OpalSecurity.inf"
+    Package  = "AmiModulePkg"
+    ModuleTypes  = "DXE_DRIVER"
+    Token = "OpalSecurity_SUPPORT" "=" "1"
+End
+

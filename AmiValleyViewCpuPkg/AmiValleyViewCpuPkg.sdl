@@ -1,0 +1,210 @@
+TOKEN
+	Name  = "AmiValleyViewCpuPkg_SUPPORT"
+	Value  = "1"
+	Help  = "Switch for Enabling AmiValleyViewCpuPkg support in the project"
+	TokenType = Boolean
+	Master = Yes
+End
+
+TOKEN
+	Name  = "NUMBER_CPU_SOCKETS"
+	Value  = "1"
+	Help  = "Number CPU Sockets on the board."
+	TokenType = Integer
+	TargetEQU = Yes
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "CPU_POLICY_VERSION"
+	Value  = "01h"
+	Help  = "The policy of CPU Version Number."
+	TokenType = Integer
+	TargetEQU = Yes
+	TargetMAK = Yes
+	TargetH = Yes
+	Lock = Yes
+End
+
+TOKEN
+	Name  = "APIC_VERSION_REGISTER"
+	Value  = "0x30"
+	Help  = "APIC Version Register Index"
+	TokenType = Integer
+	TargetEQU = Yes
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "AES_ENABLE"
+	Value  = "1"
+	Help  = "Switch for Enable/Disable AES-NI support for CPU"
+	TokenType = Boolean
+	TargetEQU = Yes
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "CpuGetSetupData_Support"
+	Value  = "1"
+	TokenType = Boolean
+End
+
+TOKEN
+	Name  = "CpuPeiBoard_Support"
+	Value  = "1"
+	TokenType = Boolean
+End
+
+TOKEN
+	Name  = "CpuEarlyInit_Support"
+	Value  = "1"
+	TokenType = Boolean
+End
+
+TOKEN
+	Name  = "CpuDxeBoard_Support"
+	Value  = "1"
+	TokenType = Boolean
+End
+
+TOKEN
+	Name  = "PlatformCpuPolicy_Support"
+	Value  = "1"
+	TokenType = Boolean
+End
+
+TOKEN
+	Name  = "CP_OPTS"
+	Value  = " /b"
+	Help  = "Tool chain tag"
+	TokenType = Expression
+	TargetMAK = Yes
+End
+
+PATH
+	Name  = "CPU_LIBRARY_DIR"
+	Path  = "AmiValleyViewCpuPkg/Library"
+End
+
+PATH
+	Name  = "CPU_DIR"
+End
+
+MODULE
+	File  = "Cpu.mak"
+End
+
+ELINK
+	Name  = "$(CPU_LIBRARY_DIR)/PlatformSecLib/Ia32/SECCoreL.ASM"
+	Parent  = "AMI_SEC_ELINK_SOURCES"
+	InvokeOrder = AfterParent
+End
+
+ELINK
+	Name  = "SecCoreAtPowerOn"
+	Segment  = "STARTUP_SEG"
+	Help  = "SEmbioC Core Init after power-on and before memory detection."
+	mSTART  = "mSTART_PROC_NEAR"
+	mBODY  = "mBODY_JMP_PROC_NEAR"
+	mEND  = "mEND_PROC_WITH_JMP_NEAR"
+	mEXTERN  = "mEXTERN_NEAR"
+#	SrcFile  = "$(BUILD_DIR)/SECCore.ASM"
+	InvokeOrder = TableFunction
+	OutBOOT = Yes
+End
+
+OUTPUTREGISTER
+	Name  = "EKERNEL_BOOT"
+	Path  = "BUILD/"
+	File  = "SECCore.ASM"
+End
+
+SEGMENT
+	Name  = "STARTUP_SEG"
+	Format  = "SEGMENT PARA PUBLIC 'CODE' USE32"
+End
+
+INFComponent
+	Name  = "CpuPeiBoard"
+	File  = "Pei/CpuPeiBoard/CpuPeiBoard.inf"
+	Package  = "AmiValleyViewCpuPkg"
+	ModuleTypes  = "PEIM"
+	Token = "CpuPeiBoard_Support" "=" "1"
+End
+
+INFComponent
+	Name  = "CpuDxeBoard"
+	File  = "Dxe/CpuDxeBoard/CpuDxeBoard.inf"
+	Package  = "AmiValleyViewCpuPkg"
+	ModuleTypes  = "DXE_DRIVER"
+	Token = "CpuDxeBoard_Support" "=" "1"
+End
+
+INFComponent
+	Name  = "CpuEarlyInit"
+	File  = "Pei/CpuEarlyInit/CpuEarlyInit.inf"
+	Package  = "AmiValleyViewCpuPkg"
+	ModuleTypes  = "PEIM"
+	Token = "CpuEarlyInit_Support" "=" "1"
+End
+
+INFComponent
+	Name  = "PlatformCpuPolicy"
+	File  = "Dxe/PlatformCpuPolicy/PlatformCpuPolicy.inf"
+	Package  = "AmiValleyViewCpuPkg"
+	ModuleTypes  = "DXE_DRIVER"
+	Token = "PlatformCpuPolicy_Support" "=" "1"
+End
+
+INFComponent
+	Name  = "PlatformSecLib"
+	File  = "Library/PlatformSecLib/PlatformSecLib.inf"
+	Package  = "AmiValleyViewCpuPkg"
+End
+
+INFComponent
+	Name  = "CpuGetSetupData"
+	File  = "CpuGetSetupData/CpuGetSetupData.inf"
+	Package  = "AmiValleyViewCpuPkg"
+	Path  = "CPU_LIBRARY_DIR"
+	Token = "CpuGetSetupData_Support" "=" "1"
+End
+
+INFComponent
+	Name  = "CpuPeiGetSetupData"
+	File  = "CpuGetSetupData/CpuPeiGetSetupData.inf"
+	Package  = "AmiValleyViewCpuPkg"
+	Path  = "CPU_LIBRARY_DIR"
+	Token = "CpuGetSetupData_Support" "=" "1"
+End
+
+INFComponent
+	Name  = "CpuCspLib"
+	File  = "Library/CpuCspLib/CpuCspLib.inf"
+	Package  = "AmiValleyViewCpuPkg"
+End
+
+LibraryMapping
+	Class  = "CpuGetSetupData"
+	Instance  = "AmiValleyViewCpuPkg.CpuGetSetupData"
+	ModuleTypes  = "DXE_DRIVER DXE_RUNTIME_DRIVER DXE_SMM_DRIVER"
+	Token = "CpuGetSetupData_Support" "=" "1"
+End
+
+LibraryMapping
+	Class  = "CpuGetSetupData"
+	Instance  = "AmiValleyViewCpuPkg.CpuPeiGetSetupData"
+	ModuleTypes  = "PEIM"
+	Token = "CpuGetSetupData_Support" "=" "1"
+End
+
+LibraryMapping
+	Class  = "PlatformSecLib"
+	Instance  = "AmiValleyViewCpuPkg.PlatformSecLib"
+End
+
+LibraryMapping
+	Class  = "CpuCspLib"
+	Instance  = "AmiValleyViewCpuPkg.CpuCspLib"
+End

@@ -1,0 +1,13 @@
+<component>
+	name = "Guid"
+	category = ModulePart
+	LocalRoot = "ShellPkg\Include\Guid\"
+	RefName = "ShellPkg.Guid"
+[files]
+"ShellAliasGuid.h"	
+"ShellEnvironment2Ext.h"	
+"ShellLibHiiGuid.h"	
+"ShellMapGuid.h"	
+"ShellPkgTokenSpace.h"	
+"ShellVariableGuid.h"	
+<endComponent>

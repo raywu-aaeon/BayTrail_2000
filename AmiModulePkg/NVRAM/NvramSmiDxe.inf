@@ -1,0 +1,31 @@
+
+
+[Defines]
+    INF_VERSION = 0x00010005
+    VERSION_STRING = 1.0
+    PI_SPECIFICATION_VERSION = 0x0001000A
+    BASE_NAME = NvramSmiDxe
+    MODULE_TYPE = DXE_RUNTIME_DRIVER
+    FILE_GUID = 54B070F3-9EB8-47CC-ADAF-39029C853CBB
+    ENTRY_POINT = NvramSmiDxeEntry
+
+[Sources]
+    NvramSmi.h
+    NvramSmiDxe.c
+
+[Packages]
+    MdePkg/MdePkg.dec
+    IntelFrameworkPkg/IntelFrameworkPkg.dec
+    AmiCompatibilityPkg/AmiCompatibilityPkg.dec
+    AmiModulePkg/AmiModulePkg.dec
+
+[LibraryClasses]
+    AmiDxeLib
+    UefiDriverEntryPoint
+    
+[Protocols]  
+ gEfiSmmCommunicationProtocolGuid
+
+[Depex]
+gEfiSmmBase2ProtocolGuid
+

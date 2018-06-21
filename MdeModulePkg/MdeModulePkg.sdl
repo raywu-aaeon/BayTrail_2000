@@ -1,0 +1,284 @@
+TOKEN
+	Name  = "MdeModulePkg_SUPPORT"
+	Value  = "1"
+	Help  = "Main switch to enable MdeModulePkg support in Project"
+	TokenType = Boolean
+	TargetEQU = Yes
+	TargetMAK = Yes
+	Master = Yes
+End
+
+PATH
+	Name  = "MDEMODULEPKG_DIR"
+End
+
+INFComponent
+	Name  = "BasePlatformHookLibNull"
+	File  = "Library/BasePlatformHookLibNull/BasePlatformHookLibNull.inf"
+	Package  = "MdeModulePkg"
+End
+
+INFComponent
+	Name  = "CpuExceptionHandlerLibNull"
+	File  = "Library/CpuExceptionHandlerLibNull/CpuExceptionHandlerLibNull.inf"
+	Package  = "MdeModulePkg"
+End
+
+INFComponent
+	Name  = "DebugAgentLibNull"
+	File  = "Library/DebugAgentLibNull/DebugAgentLibNull.inf"
+	Package  = "MdeModulePkg"
+End
+
+INFComponent
+	Name  = "DxeCapsuleLibNull"
+	File  = "Library/DxeCapsuleLibNull/DxeCapsuleLibNull.inf"
+	Package  = "MdeModulePkg"
+End
+
+INFComponent
+	Name  = "DxeCoreMemoryAllocationLib"
+	File  = "Library/DxeCoreMemoryAllocationLib/DxeCoreMemoryAllocationLib.inf"
+	Package  = "MdeModulePkg"
+End
+
+INFComponent
+	Name  = "DxeCorePerformanceLib"
+	File  = "Library/DxeCorePerformanceLib/DxeCorePerformanceLib.inf"
+	Package  = "MdeModulePkg"
+End
+
+INFComponent
+	Name  = "DxeDpcLib"
+	File  = "Library/DxeDpcLib/DxeDpcLib.inf"
+	Package  = "MdeModulePkg"
+End
+
+INFComponent
+	Name  = "DxeIpIoLib"
+	File  = "Library/DxeIpIoLib/DxeIpIoLib.inf"
+	Package  = "MdeModulePkg"
+End
+
+INFComponent
+	Name  = "DxeNetLib"
+	File  = "Library/DxeNetLib/DxeNetLib.inf"
+	Package  = "MdeModulePkg"
+End
+
+INFComponent
+	Name  = "DxePerformanceLib"
+	File  = "Library/DxePerformanceLib/DxePerformanceLib.inf"
+	Package  = "MdeModulePkg"
+End
+
+INFComponent
+	Name  = "DxeReportStatusCodeLib"
+	File  = "Library/DxeReportStatusCodeLib/DxeReportStatusCodeLib.inf"
+	Package  = "MdeModulePkg"
+End
+
+INFComponent
+	Name  = "DxeSecurityManagementLib"
+	File  = "Library/DxeSecurityManagementLib/DxeSecurityManagementLib.inf"
+	Package  = "MdeModulePkg"
+End
+
+INFComponent
+	Name  = "DxeTcpIoLib"
+	File  = "Library/DxeTcpIoLib/DxeTcpIoLib.inf"
+	Package  = "MdeModulePkg"
+End
+
+INFComponent
+	Name  = "DxeUdpIoLib"
+	File  = "Library/DxeUdpIoLib/DxeUdpIoLib.inf"
+	Package  = "MdeModulePkg"
+End
+
+INFComponent
+	Name  = "OemHookStatusCodeLibNull"
+	File  = "Library/OemHookStatusCodeLibNull/OemHookStatusCodeLibNull.inf"
+	Package  = "MdeModulePkg"
+End
+
+INFComponent
+	Name  = "PeiPerformanceLib"
+	File  = "Library/PeiPerformanceLib/PeiPerformanceLib.inf"
+	Package  = "MdeModulePkg"
+End
+
+INFComponent
+	Name  = "PeiRecoveryLibNull"
+	File  = "Library/PeiRecoveryLibNull/PeiRecoveryLibNull.inf"
+	Package  = "MdeModulePkg"
+End
+
+INFComponent
+	Name  = "PeiReportStatusCodeLib"
+	File  = "Library/PeiReportStatusCodeLib/PeiReportStatusCodeLib.inf"
+	Package  = "MdeModulePkg"
+End
+
+INFComponent
+	Name  = "PeiS3LibNull"
+	File  = "Library/PeiS3LibNull/PeiS3LibNull.inf"
+	Package  = "MdeModulePkg"
+End
+
+INFComponent
+	Name  = "RuntimeDxeReportStatusCodeLib"
+	File  = "Library/RuntimeDxeReportStatusCodeLib/RuntimeDxeReportStatusCodeLib.inf"
+	Package  = "MdeModulePkg"
+End
+
+INFComponent
+	Name  = "UefiHiiLib"
+	File  = "Library/UefiHiiLib/UefiHiiLib.inf"
+	Package  = "MdeModulePkg"
+End
+
+INFComponent
+	Name  = "UefiHiiServicesLib"
+	File  = "Library/UefiHiiServicesLib/UefiHiiServicesLib.inf"
+	Package  = "MdeModulePkg"
+End
+
+INFComponent
+	Name  = "LockBoxNullLib"
+	File  = "Library/LockBoxNullLib/LockBoxNullLib.inf"
+	Package  = "MdeModulePkg"
+End
+
+LibraryMapping
+	Class  = "DebugAgentLib"
+	Instance  = "MdeModulePkg.DebugAgentLibNull"
+End
+
+LibraryMapping
+	Class  = "CpuExceptionHandlerLib"
+	Instance  = "MdeModulePkg.CpuExceptionHandlerLibNull"
+End
+
+LibraryMapping
+	Class  = "CapsuleLib"
+	Instance  = "MdeModulePkg.DxeCapsuleLibNull"
+End
+
+LibraryMapping
+	Class  = "MemoryAllocationLib"
+	Instance  = "MdeModulePkg.DxeCoreMemoryAllocationLib"
+	ModuleTypes  = "DXE_CORE"
+End
+
+LibraryMapping
+	Class  = "PerformanceLib"
+	Instance  = "MdeModulePkg.DxeCorePerformanceLib"
+	ModuleTypes  = "DXE_CORE"
+End
+
+LibraryMapping
+	Class  = "PerformanceLib"
+	Instance  = "MdeModulePkg.DxePerformanceLib"
+	ModuleTypes  = "DXE_DRIVER DXE_RUNTIME_DRIVER DXE_SAL_DRIVER UEFI_APPLICATION UEFI_DRIVER"
+End
+
+LibraryMapping
+	Class  = "PerformanceLib"
+	Instance  = "MdeModulePkg.PeiPerformanceLib"
+	ModuleTypes  = "PEIM PEI_CORE SEC"
+End
+
+LibraryMapping
+	Class  = "PlatformHookLib"
+	Instance  = "MdeModulePkg.BasePlatformHookLibNull"
+End
+
+LibraryMapping
+	Class  = "DpcLib"
+	Instance  = "MdeModulePkg.DxeDpcLib"
+	ModuleTypes  = "DXE_CORE DXE_DRIVER DXE_RUNTIME_DRIVER DXE_SAL_DRIVER DXE_SMM_DRIVER UEFI_APPLICATION UEFI_DRIVER"
+End
+
+LibraryMapping
+	Class  = "IpIoLib"
+	Instance  = "MdeModulePkg.DxeIpIoLib"
+	ModuleTypes  = "DXE_CORE DXE_DRIVER DXE_RUNTIME_DRIVER DXE_SAL_DRIVER DXE_SMM_DRIVER UEFI_APPLICATION UEFI_DRIVER"
+End
+
+LibraryMapping
+	Class  = "NetLib"
+	Instance  = "MdeModulePkg.DxeNetLib"
+	ModuleTypes  = "DXE_CORE DXE_DRIVER DXE_RUNTIME_DRIVER DXE_SAL_DRIVER DXE_SMM_DRIVER UEFI_APPLICATION UEFI_DRIVER"
+End
+
+LibraryMapping
+	Class  = "ReportStatusCodeLib"
+	Instance  = "MdeModulePkg.DxeReportStatusCodeLib"
+	ModuleTypes  = "DXE_CORE DXE_DRIVER UEFI_APPLICATION UEFI_DRIVER"
+End
+
+LibraryMapping
+	Class  = "ReportStatusCodeLib"
+	Instance  = "MdeModulePkg.PeiReportStatusCodeLib"
+	ModuleTypes  = "PEIM PEI_CORE SEC"
+End
+
+LibraryMapping
+	Class  = "ReportStatusCodeLib"
+	Instance  = "MdeModulePkg.RuntimeDxeReportStatusCodeLib"
+	ModuleTypes  = "DXE_RUNTIME_DRIVER DXE_SAL_DRIVER"
+End
+
+LibraryMapping
+	Class  = "SecurityManagementLib"
+	Instance  = "MdeModulePkg.DxeSecurityManagementLib"
+	ModuleTypes  = "DXE_CORE DXE_DRIVER DXE_RUNTIME_DRIVER DXE_SAL_DRIVER DXE_SMM_DRIVER UEFI_APPLICATION UEFI_DRIVER"
+End
+
+LibraryMapping
+	Class  = "TcpIoLib"
+	Instance  = "MdeModulePkg.DxeTcpIoLib"
+	ModuleTypes  = "DXE_CORE DXE_DRIVER DXE_RUNTIME_DRIVER DXE_SAL_DRIVER DXE_SMM_DRIVER UEFI_APPLICATION UEFI_DRIVER"
+End
+
+LibraryMapping
+	Class  = "UdpIoLib"
+	Instance  = "MdeModulePkg.DxeUdpIoLib"
+	ModuleTypes  = "DXE_CORE DXE_DRIVER DXE_RUNTIME_DRIVER DXE_SAL_DRIVER DXE_SMM_DRIVER UEFI_APPLICATION UEFI_DRIVER"
+End
+
+LibraryMapping
+	Class  = "OemHookStatusCodeLib"
+	Instance  = "MdeModulePkg.OemHookStatusCodeLibNull"
+End
+
+LibraryMapping
+	Class  = "RecoveryLib"
+	Instance  = "MdeModulePkg.PeiRecoveryLibNull"
+	ModuleTypes  = "PEIM"
+End
+
+LibraryMapping
+	Class  = "S3Lib"
+	Instance  = "MdeModulePkg.PeiS3LibNull"
+	ModuleTypes  = "PEIM"
+End
+
+LibraryMapping
+	Class  = "HiiLib"
+	Instance  = "MdeModulePkg.UefiHiiLib"
+	ModuleTypes  = "DXE_DRIVER DXE_RUNTIME_DRIVER DXE_SAL_DRIVER DXE_SMM_DRIVER UEFI_APPLICATION UEFI_DRIVER"
+End
+
+LibraryMapping
+	Class  = "UefiHiiServicesLib"
+	Instance  = "MdeModulePkg.UefiHiiServicesLib"
+	ModuleTypes  = "DXE_DRIVER DXE_RUNTIME_DRIVER DXE_SAL_DRIVER DXE_SMM_DRIVER UEFI_APPLICATION UEFI_DRIVER"
+End
+
+LibraryMapping
+	Class  = "LockBoxLib"
+	Instance  = "MdeModulePkg.LockBoxNullLib"
+End
+

@@ -1,0 +1,117 @@
+TOKEN
+	Name  = "UefiNetworkStack_SUPPORT"
+	Value  = "1"
+	Help  = "Main switch to enable UefiNetworkStack support in Project"
+	TokenType = Boolean
+	TargetEQU = Yes
+	TargetMAK = Yes
+	TargetH = Yes
+	Master = Yes
+End
+
+TOKEN
+	Name  = "SnpDxe_SUPPORT"
+	Value  = "1"
+	Help  = "Main switch to enable SnpDxe support in Project"
+	TokenType = Boolean
+End
+
+TOKEN
+	Name  = "DpcDxe_SUPPORT"
+	Value  = "1"
+	Help  = "Main switch to enable DpcDxe support in Project"
+	TokenType = Boolean
+End
+
+TOKEN
+	Name  = "MnpDxe_SUPPORT"
+	Value  = "1"
+	Help  = "Main switch to enable MnpDxe support in Project"
+	TokenType = Boolean
+End
+
+TOKEN
+	Name  = "ArpDxe_SUPPORT"
+	Value  = "1"
+	Help  = "Main switch to enable MnpDxe support in Project"
+	TokenType = Boolean
+End
+
+TOKEN
+	Name  = "IpSecDxe_SUPPORT"
+	Value  = "0"
+	Help  = "Main switch to enable IpSecDxe support in Project"
+	TokenType = Boolean
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "TcpDxe_SUPPORT"
+	Value  = "1"
+	Help  = "Main switch to enable TcpDxe support in Project"
+	TokenType = Boolean
+End
+
+TOKEN
+	Name  = "UefiPxeBcDxe_SUPPORT"
+	Value  = "1"
+	Help  = "Main switch to enable UefiPxeBcDxe support in Project"
+	TokenType = Boolean
+	TargetH = Yes
+End
+
+INFComponent
+	Name  = "SnpDxe"
+	File  = "Common/SnpDxe/SnpDxe.inf"
+	Package  = "AmiNetworkPkg"
+	ModuleTypes  = "UEFI_DRIVER"
+	Token = "SnpDxe_SUPPORT" "=" "1"
+End
+
+INFComponent
+	Name  = "DpcDxe"
+	File  = "Common/DpcDxe/DpcDxe.inf"
+	Package  = "AmiNetworkPkg"
+	ModuleTypes  = "UEFI_DRIVER"
+	Token = "DpcDxe_SUPPORT" "=" "1"
+End
+
+INFComponent
+	Name  = "MnpDxe"
+	File  = "Common/MnpDxe/MnpDxe.inf"
+	Package  = "AmiNetworkPkg"
+	ModuleTypes  = "UEFI_DRIVER"
+	Token = "MnpDxe_SUPPORT" "=" "1"
+End
+
+INFComponent
+	Name  = "ArpDxe"
+	File  = "Common/ArpDxe/ArpDxe.inf"
+	Package  = "AmiNetworkPkg"
+	ModuleTypes  = "UEFI_DRIVER"
+	Token = "ArpDxe_SUPPORT" "=" "1"
+End
+
+INFComponent
+	Name  = "IpSecDxe"
+	File  = "Common/IpSecDxe/IpSecDxe.inf"
+	Package  = "AmiNetworkPkg"
+	ModuleTypes  = "DXE_DRIVER"
+	Token = "IpSecDxe_SUPPORT" "=" "1"
+End
+
+INFComponent
+	Name  = "TcpDxe"
+	File  = "Common/TcpDxe/TcpDxe.inf"
+	Package  = "AmiNetworkPkg"
+	ModuleTypes  = "DXE_DRIVER"
+	Token = "TcpDxe_SUPPORT" "=" "1"	
+End
+
+INFComponent
+	Name  = "UefiPxeBcDxe"
+	File  = "Common/UefiPxeBcDxe/UefiPxeBcDxe.inf"
+	Package  = "AmiNetworkPkg"
+	ModuleTypes  = "DXE_DRIVER"
+	Token = "UefiPxeBcDxe_SUPPORT" "=" "1"
+End

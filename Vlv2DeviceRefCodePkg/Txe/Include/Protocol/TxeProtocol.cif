@@ -1,0 +1,13 @@
+<component>
+	name = "TxeProtocol"
+	category = ModulePart
+	LocalRoot = "Vlv2DeviceRefCodePkg\Txe\Include\Protocol"
+	RefName = "Vlv2DeviceRefCodePkg.Txe.TxeInclude.TxeProtocol"
+[files]
+"Heci.h"
+"SeCPlatformPolicy.h"
+"SeCRcInfo.h"
+"Tdt.h"
+"TdtOperation.h"
+"TdtPlatformPolicy.h"
+<endComponent>

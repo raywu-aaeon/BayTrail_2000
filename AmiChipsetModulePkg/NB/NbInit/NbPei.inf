@@ -1,0 +1,68 @@
+
+#
+# This file contains code for North Bridge initialization in the PEI stage.
+#
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = NbPei
+  FILE_GUID                      = 79AA6086-035A-4ad9-A89A-A6D5AA27F0E2
+  MODULE_TYPE                    = PEIM
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = NbPeiInit
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64
+#
+#  HOB Guid C Name: gEfiHtBistHobGuid Hob Type: GUID_EXTENSION
+#
+
+[Sources]
+  NbPei.c
+  NbPeiBoard.c
+
+
+[Packages]
+  MdePkg/MdePkg.dec 
+  MdeModulePkg/MdeModulePkg.dec
+  AmiCompatibilityPkg/AmiCompatibilityPkg.dec
+  AmiChipsetPkg/AmiChipsetPkg.dec
+  AmiChipsetModulePkg/AmiChipsetModulePkg.dec
+  Vlv2DeviceRefCodePkg/Vlv2DeviceRefCodePkg.dec
+  IA32FamilyCpuPkg/IA32FamilyCpuPkg.dec
+  UefiCpuPkg/UefiCpuPkg.dec
+  AmiModulePkg/AmiModulePkg.dec
+   
+[LibraryClasses]
+  PeimEntryPoint
+  AmiPeiLib
+  AmiChipsetIoLib
+  AmiCspLib
+  HobLib
+  NcPolicyInitPei
+
+[Ppis]
+  gAmiPeiNbCustomPpiGuid	    
+  gAmiPeiNbInitPolicyGuid
+  gEfiPeiStallPpiGuid
+  gPeiBaseMemoryTestPpiGuid
+  gEfiEndOfPeiSignalPpiGuid
+  gEfiPeiMemoryDiscoveredPpiGuid
+  gAmiPeiPciTableInitPpiGuid
+  gEfiPeiReadOnlyVariable2PpiGuid
+  gPeiCachePpiGuid
+  
+[Guids]
+  gEfiMemoryTypeInformationGuid  
+  gAmiGlobalVariableGuid
+  
+[Depex]
+  gEfiPeiCpuIoPpiInstalledGuid AND    #MdePkg.dec
+  gEfiPciCfg2PpiGuid AND              #MdePkg.dec
+  gAmiPeiPciTableInitPpiGuid   AND  #gPeiPciTableInitPpiGuid   #CSP20130725
+  gEfiPeiMemoryDiscoveredPpiGuid #CSP20130725
+	
+[Pcd]
+  gEfiMdePkgTokenSpaceGuid.PcdPciExpressBaseAddress

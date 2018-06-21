@@ -1,0 +1,72 @@
+TOKEN
+	Name  = "RsdpPlus_SUPPORT"
+	Value  = "1"
+	Help  = "Main switch to enable RsdpPlus support in Project"
+	TokenType = Boolean
+	TargetEQU = Yes
+	TargetMAK = Yes
+	Master = Yes
+End
+
+PATH
+	Name  = "RsdpPlus_DIR"
+	Help  = "Path to RsdpPlus Module in Project"
+End
+
+MODULE
+	Help  = "Includes RsdpPlus.mak to Project"
+	File  = "RsdpPlus.mak"
+End
+
+ELINK
+	Name  = "$(RsdpPlus_DIR)\RsdpPlusLink.c"
+  Parent  = "TSE_SOURCE_FILES"
+	InvokeOrder = AfterParent
+End
+
+ELINK
+	Name  = "$(RsdpPlus_DIR)\RsdpPlus.c"
+  	Parent  = "TSE_SOURCE_FILES"
+	InvokeOrder = AfterParent
+End
+
+ELINK
+	Name  = "UpdateShadow,"
+	Parent  = "BeforeEfiBootLaunchHook,"
+	InvokeOrder = AfterParent
+End
+
+ELINK
+	Name  = "EraseShadow,"
+	Parent  = "AfterEfiBootLaunchHook,"
+	InvokeOrder = AfterParent
+End
+
+#ELINK
+#	Name  = "ManageShadowRamEntryPoint,"
+#	Parent  = "DxeCoreInitialize"
+#	InvokeOrder = AfterParent
+#End
+
+ELINK
+	Name  = "RsdpPlusEntryPoint,"
+	Parent  = "UpdateShadow,"
+	InvokeOrder = BeforeParent
+End
+
+ELINK
+	Name  = "UpdateE000ShadowRamHook"
+	InvokeOrder = ReplaceParent
+End
+
+ELINK
+	Name  = "UpdateF000ShadowRamHook"
+	InvokeOrder = ReplaceParent
+End
+
+INFComponent
+	Name  = "RsdpPlus"
+	File  = "RsdpPlus.inf"
+	Package  = "AmiModulePkg"
+	ModuleTypes  = "DXE_DRIVER"
+End

@@ -1,0 +1,13 @@
+<component>
+	name = "Sg TPV"
+	category = eModule
+	LocalRoot = "AmiChipsetModulePkg\SgTpv\"
+	RefName = "SgTpv"
+[files]
+"SgTpv.sdl"	
+"SgTpv.sd"	
+"SgTpv.uni"	
+"SgTpv.chm"	
+[parts]
+"SgTpvAcpiTables"
+<endComponent>

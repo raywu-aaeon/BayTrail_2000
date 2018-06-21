@@ -1,0 +1,27 @@
+TOKEN
+	Name  = CSP_MEUD_SUPPORT
+	Value  = "1"
+	TokenType = Boolean
+	TargetEQU = Yes
+	TargetMAK = Yes
+	Master = Yes
+	Help  = "Main switch to enable ME Firmware Update Chipset function in Project"
+End
+
+ELINK
+	Name  = "$(OFBD_MEUD_DIR)/Platform/CspMeud.c"
+	Parent  = "OFBD_FUNC_SOURCES_FILES"
+	InvokeOrder = AfterParent
+End
+
+ELINK
+	Name  = "Vlv2DeviceRefCodePkg\Vlv2DeviceRefCodePkg.dec"
+	Parent  = "AMI_OFBD_PACKAGES"
+	InvokeOrder = AfterParent
+End
+
+ELINK
+	Name  = "SeCLib"
+	Parent  = "AMI_OFBD_LIBRARIES"
+	InvokeOrder = AfterParent
+End

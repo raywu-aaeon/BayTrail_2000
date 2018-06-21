@@ -1,0 +1,71 @@
+
+################################################################################
+#
+# Defines Section - statements that will be processed to create a Makefile.
+#
+################################################################################
+[Defines]
+INF_VERSION 				   = 0x00010005
+BASE_NAME					   = CpuEarlyInit
+FILE_GUID					   = 91b886FD-2636-4FA8-A4A9-2EB04F235E09
+					     
+MODULE_TYPE 				   = PEIM
+VERSION_STRING				   = 1.0
+PI_SPECIFICATION_VERSION	   = 0x0001000A
+ENTRY_POINT 				   = CpuPeiInitEntry
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32
+#
+
+################################################################################
+#
+# Sources Section - list of files that are required for the build to succeed.
+#
+################################################################################
+
+[sources.common]
+  CpuInitPeim.c
+
+################################################################################
+#
+# Package Dependency Section - list of Package files that are required for
+#                              this module.
+#
+################################################################################
+
+[Packages]
+  AmiCompatibilityPkg/AmiCompatibilityPkg.dec
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  Vlv2DeviceRefCodePkg/PlatformPkg.dec
+  IntelFrameworkPkg/IntelFrameworkPkg.dec
+  Vlv2DeviceRefCodePkg/Vlv2DeviceRefCodePkg.dec
+  IA32FamilyCpuPkg/IA32FamilyCpuPkg.dec
+  UefiCpuPkg/UefiCpuPkg.dec
+  AmiModulePkg/AmiModulePkg.dec  
+  AmiChipsetModulePkg/AmiChipsetModulePkg.dec
+  AmiValleyViewCpuPkg/AmiValleyViewCpuPkg.dec
+  
+[LibraryClasses]
+  PeimEntryPoint
+  DebugLib
+  IoLib
+  CpuGetSetupData
+  MemoryAllocationLib
+  AmiPeiLib
+  
+[Ppis]
+  gEfiPeiReadOnlyVariable2PpiGuid
+
+[Guids]
+  gEfiSetupVariableGuid
+  gEfiPlatformCpuInfoGuid
+
+[Pcd.common]
+
+[Depex]
+  gEfiPeiReadOnlyVariable2PpiGuid  AND gPeiCachePpiGuid
+

@@ -1,0 +1,73 @@
+#/** @file
+#
+#    Memory mapped I/O device component description file.
+#
+#  Copyright (c) 2012, Intel Corporation. <BR>
+#  All rights reserved. This program and the accompanying materials
+#  are licensed and made available under the terms and conditions of the BSD License
+#  which accompanies this distribution.  The full text of the license may be found at
+#  http://opensource.org/licenses/bsd-license.php
+#  
+#  THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
+#  
+#**/
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = I2cMmioDeviceDxe
+  FILE_GUID                      = 591F64F9-1CB8-4029-8868-F5A2C0CF3600
+  MODULE_TYPE                    = DXE_DRIVER
+  VERSION_STRING                 = 1.0
+  EDK_RELEASE_VERSION            = 0x00020000
+  EFI_SPECIFICATION_VERSION      = 0x0002000A
+
+  ENTRY_POINT                    = I2C_MmioEntryPoint
+
+[Packages]
+  Vlv2DeviceRefCodePkg/PlatformPkg.dec
+  Vlv2DeviceRefCodePkg/Vlv2DeviceRefCodePkg.dec
+  AmiModulePkg/AmiModulePkg.dec #AMI_OVERRIDE - EIP137990 Use AMI PciBus
+  MdePkg/MdePkg.dec
+
+[LibraryClasses]
+  BaseLib
+  BaseMemoryLib
+  MemoryAllocationLib
+#  UefiLib
+  DebugLib
+  IoLib
+  DevicePathLib  
+  UefiBootServicesTableLib
+  UefiDriverEntryPoint
+  
+  
+[Sources]
+  I2cMmioDevice.c
+  I2c0BusConfig.c
+  I2c1BusConfig.c
+  I2c2BusConfig.c
+  I2c3BusConfig.c
+  I2c4BusConfig.c
+  I2c5BusConfig.c
+  I2c6BusConfig.c
+  I2cMmioConfig.h
+  I2cBusConfig.c
+  I2cEnum.c
+  I2cEnumLib.h
+ 
+
+[Protocols]
+  gEfiDevicePathProtocolGuid
+  gEfiMmioDeviceProtocolGuid
+  gEfiI2cAcpiProtocolGuid
+  gEfiI2cBusConfigurationManagementProtocolGuid
+  gEfiPciRootBridgeIoProtocolGuid 
+  gLpssDummyProtocolGuid             
+  gEfiGlobalNvsAreaProtocolGuid
+  gEfiPciEnumerationCompleteProtocolGuid
+  gAmiExtPciBusProtocolGuid #AMI_OVERRIDE - EIP137990 Use AMI PciBus
+  
+[depex]
+  gEfiGlobalNvsAreaProtocolGuid
+

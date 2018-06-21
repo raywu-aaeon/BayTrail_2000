@@ -1,0 +1,31 @@
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = ElinkPeiLib
+  FILE_GUID                      = 9A24AB19-4A4A-4228-A9B2-B146D114892D
+  MODULE_TYPE                    = PEIM
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = ElinkLib|PEIM
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64
+#
+#  
+#
+
+[Sources]
+  ElinkPeiLib.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  AmiChipsetPkg/AmiChipsetPkg.dec
+  AmiCompatibilityPkg/AmiCompatibilityPkg.dec 
+  
+[LibraryClasses]
+  MemoryAllocationLib
+  PcdLib
+
+[BuildOptions] 
+  *_*_*_CC_FLAGS = /D ELINK_PEI

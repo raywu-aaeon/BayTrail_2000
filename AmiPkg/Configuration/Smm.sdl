@@ -1,0 +1,160 @@
+TOKEN
+	Name  = "SMM_SUPPORT"
+	Value  = "1"
+	Help  = "Main switch to enable SMM support in Project"
+	TokenType = Boolean
+	TargetEQU = Yes
+	TargetMAK = Yes
+	TargetH = Yes
+	Master = Yes
+End
+
+INFComponent
+	Name  = "SmmMemoryAllocationLib"
+	File  = "../../MdePkg/Library/SmmMemoryAllocationLib/SmmMemoryAllocationLib.inf"
+	Package  = "MdePkg"
+End
+
+INFComponent
+	Name  = "SmmPeriodicSmiLib"
+	File  = "../../MdePkg/Library/SmmPeriodicSmiLib/SmmPeriodicSmiLib.inf"
+	Package  = "MdePkg"
+End
+
+INFComponent
+	Name  = "SmmServicesTableLib"
+	File  = "../../MdePkg/Library/SmmServicesTableLib/SmmServicesTableLib.inf"
+	Package  = "MdePkg"
+	Token = "SMM_SUPPORT" "=" "1"
+End
+
+INFComponent
+	Name  = "PiSmmCoreMemoryAllocationLib"
+	File  = "../../MdeModulePkg/Library/PiSmmCoreMemoryAllocationLib/PiSmmCoreMemoryAllocationLib.inf"
+	Package  = "MdeModulePkg"
+	Token = "SMM_SUPPORT" "=" "1"
+End
+
+INFComponent
+	Name  = "PiSmmCoreSmmServicesTableLib"
+	File  = "../../MdeModulePkg/Library/PiSmmCoreSmmServicesTableLib/PiSmmCoreSmmServicesTableLib.inf"
+	Package  = "MdeModulePkg"
+End
+
+INFComponent
+	Name  = "SmmCorePerformanceLib"
+	File  = "../../MdeModulePkg/Library/SmmCorePerformanceLib/SmmCorePerformanceLib.inf"
+	Package  = "MdeModulePkg"
+	Token = "SMM_SUPPORT" "=" "1"
+End
+
+INFComponent
+	Name  = "SmmPerformanceLib"
+	File  = "../../MdeModulePkg/Library/SmmPerformanceLib/SmmPerformanceLib.inf"
+	Package  = "MdeModulePkg"
+	Token = "SMM_SUPPORT" "=" "1"
+End
+
+INFComponent
+	Name  = "SmmReportStatusCodeLib"
+	File  = "../../MdeModulePkg/Library/SmmReportStatusCodeLib/SmmReportStatusCodeLib.inf"
+	Package  = "MdeModulePkg"
+	Token = "SMM_SUPPORT" "=" "1"
+End
+
+INFComponent
+	Name  = "SmmLockBoxDxeLib"
+	File  = "../../MdeModulePkg/Library/SmmLockBoxLib/SmmLockBoxDxeLib.inf"
+	Package  = "MdeModulePkg"
+	Token = "SMM_SUPPORT" "=" "1"
+End
+
+INFComponent
+	Name  = "SmmLockBoxPeiLib"
+	File  = "../../MdeModulePkg/Library/SmmLockBoxLib/SmmLockBoxPeiLib.inf"
+	Package  = "MdeModulePkg"
+	Token = "SMM_SUPPORT" "=" "1"
+End
+
+INFComponent
+	Name  = "SmmLockBoxSmmLib"
+	File  = "../../MdeModulePkg/Library/SmmLockBoxLib/SmmLockBoxSmmLib.inf"
+	Package  = "MdeModulePkg"
+	Token = "SMM_SUPPORT" "=" "1"
+End
+
+LibraryMapping
+	Class  = "MemoryAllocationLib"
+	Instance  = "MdePkg.SmmMemoryAllocationLib"
+	ModuleTypes  = "DXE_SMM_DRIVER"
+	Token = "SMM_SUPPORT" "=" "1"
+End
+
+LibraryMapping
+	Class  = "SmmPeriodicSmiLib"
+	Instance  = "MdePkg.SmmPeriodicSmiLib"
+	Token = "SMM_SUPPORT" "=" "1"
+End
+
+LibraryMapping
+	Class  = "SmmServicesTableLib"
+	Instance  = "MdePkg.SmmServicesTableLib"
+	Token = "SMM_SUPPORT" "=" "1"
+End
+
+LibraryMapping
+	Class  = "MemoryAllocationLib"
+	Instance  = "MdeModulePkg.PiSmmCoreMemoryAllocationLib"
+	ModuleTypes  = "SMM_CORE"
+	Token = "SMM_SUPPORT" "=" "1"
+End
+
+LibraryMapping
+	Class  = "PerformanceLib"
+	Instance  = "MdeModulePkg.SmmCorePerformanceLib"
+	ModuleTypes  = "SMM_CORE"
+	Token = "SMM_SUPPORT" "=" "1"
+End
+
+LibraryMapping
+	Class  = "PerformanceLib"
+	Instance  = "MdeModulePkg.SmmPerformanceLib"
+	ModuleTypes  = "DXE_SMM_DRIVER"
+	Token = "SMM_SUPPORT" "=" "1"
+End
+
+LibraryMapping
+	Class  = "ReportStatusCodeLib"
+	Instance  = "MdeModulePkg.SmmReportStatusCodeLib"
+	ModuleTypes  = "DXE_SMM_DRIVER SMM_CORE"
+	Token = "SMM_SUPPORT" "=" "1"
+End
+
+LibraryMapping
+	Class  = "SmmServicesTableLib"
+	Instance  = "MdeModulePkg.PiSmmCoreSmmServicesTableLib"
+	ModuleTypes  = "SMM_CORE"
+	Token = "SMM_SUPPORT" "=" "1"
+End
+
+LibraryMapping
+	Class  = "LockBoxLib"
+	Instance  = "MdeModulePkg.SmmLockBoxPeiLib"
+	ModuleTypes  = "PEIM"
+	Token = "SMM_SUPPORT" "=" "1"
+End
+
+LibraryMapping
+	Class  = "LockBoxLib"
+	Instance  = "MdeModulePkg.SmmLockBoxDxeLib"
+	ModuleTypes  = "DXE_DRIVER DXE_RUNTIME_DRIVER UEFI_DRIVER"
+	Token = "SMM_SUPPORT" "=" "1"
+End
+
+LibraryMapping
+	Class  = "LockBoxLib"
+	Instance  = "MdeModulePkg.SmmLockBoxSmmLib"
+	ModuleTypes  = "DXE_SMM_DRIVER"
+	Token = "SMM_SUPPORT" "=" "1"
+End
+

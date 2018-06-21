@@ -1,0 +1,61 @@
+#/*++
+# 
+# Copyright (c) 2005 - 2009 Intel Corporation. All rights reserved
+# This software and associated documentation (if any) is furnished
+# under a license and may only be used or copied in accordance
+# with the terms of the license. Except as permitted by such
+# license, no part of this software or documentation may be
+# reproduced, stored in a retrieval system, or transmitted in any
+# form or by any means without the express written consent of
+# Intel Corporation.
+#
+#  Module Name:
+#
+#   MpS3.inf
+#
+#  Abstract:
+#
+#--*/
+
+[defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = MpS3
+  FILE_GUID                      = C866BD71-7C79-4BF1-A93B-066B830D8F9A
+  MODULE_TYPE                    = PEIM
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = InitializeCpu
+
+[sources]
+  MpS3.c
+  MtrrSync.c
+  Microcode.c
+  HtFuncs.asm
+  HtFuncs.s
+  CpuAsm.asm
+  Htequ.inc
+  MpCommon.h
+  CpuAsm.s
+  
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  IntelFrameworkModulePkg/IntelFrameworkModulePkg.dec
+
+  AmiValleyViewCpuPkg/AmiValleyViewCpuPkg.dec #AMI_OVERRIDE - EIP135119 Improve POST Time & S3 Resume Time
+
+[LibraryClasses]
+  BaseMemoryLib
+  PeimEntryPoint
+  DebugLib
+
+[Pcd]
+  gAmiValleyViewCpuPkgTokenSpaceGuid.PcdFlashAreaBaseAddress #AMI_OVERRIDE - EIP135119 Improve POST Time & S3 Resume Time
+  gAmiValleyViewCpuPkgTokenSpaceGuid.PcdFlashAreaSize #AMI_OVERRIDE - EIP135119 Improve POST Time & S3 Resume Time
+  
+[Ppis]
+  gEfiPeiStallPpiGuid
+  gPeiSmmAccessPpiGuid
+
+[Depex]
+  gEfiPeiMasterBootModePpiGuid AND gEfiPeiMemoryDiscoveredPpiGuid AND gPeiSmmAccessPpiGuid
+

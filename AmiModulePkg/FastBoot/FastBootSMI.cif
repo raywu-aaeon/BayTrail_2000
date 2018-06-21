@@ -1,0 +1,10 @@
+<component>
+	name = "FastBootSMI"
+	category = ModulePart
+	LocalRoot = "AmiModulePkg\FastBoot\"
+	RefName = "FastBootSMI"
+[INF]
+"FastBootSMI.inf"
+[files]
+"FastBootSMI.sdl"	
+<endComponent>

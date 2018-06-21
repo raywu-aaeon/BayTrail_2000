@@ -1,0 +1,12 @@
+<component>
+	name = "Tpm20PlatformDxe"
+	category = ModulePart
+	LocalRoot = "AmiModulePkg\TCG2\Common\Tpm20PlatformDxe\"
+	RefName = "Tpm20PlatformDxe"
+[INF]
+"Tpm20PlatformDxe.inf"
+[files]
+"Tpm20PlatformDxe.sdl"	
+[parts]
+"Tpm20Acpi"
+<endComponent>

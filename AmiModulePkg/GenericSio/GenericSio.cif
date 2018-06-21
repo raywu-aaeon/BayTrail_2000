@@ -1,0 +1,18 @@
+<component>
+	name = "GenericSio"
+	category = eModule
+	LocalRoot = "AmiModulePkg\GenericSio\"
+	RefName = "AmiModulePkg.GenericSio"
+[INF]
+"SioDynamicSetup.inf"
+"SioDxeInit.inf"
+"GenericSio.inf"
+[files]
+"GenericSio.sdl"	
+"GenericSio.chm"	
+[parts]
+"GenericIoAsl"
+"SioStaticSetup"
+"AmiModulePkg.SioHeaders"
+"AmiModulePkg.SioLibraryInstances"
+<endComponent>

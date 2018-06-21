@@ -1,0 +1,9 @@
+<component>
+	name = "fTPM"
+	category = ModulePart
+	LocalRoot = "Vlv2DeviceRefCodePkg\Txe\fTPM"
+	RefName = "Vlv2DeviceRefCodePkg.Txe.fTPM"
+[inf]
+"Pei\fTPMInitPei.inf"
+"Smm\FtpmSmm.inf"
+<endComponent>

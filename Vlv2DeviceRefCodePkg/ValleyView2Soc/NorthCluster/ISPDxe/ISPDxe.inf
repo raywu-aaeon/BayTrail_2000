@@ -1,0 +1,65 @@
+#/*++
+#
+# Copyright (c)  1999 - 2008 Intel Corporation. All rights reserved
+# This software and associated documentation (if any) is furnished
+# under a license and may only be used or copied in accordance
+# with the terms of the license. Except as permitted by such
+# license, no part of this software or documentation may be
+# reproduced, stored in a retrieval system, or transmitted in any
+# form or by any means without the express written consent of
+# Intel Corporation.
+
+#
+#  Module Name:
+#
+#   IspDxe.inf
+#
+#  Abstract:
+#
+#
+#--*/
+
+
+[defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = ISPDxe
+  FILE_GUID                      = 5A38B969-CD6A-4814-82E6-559F840BBC58
+  MODULE_TYPE                    = DXE_DRIVER
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = ISPDxeEntryPoint
+
+[sources.common]
+  ISPDxe.c
+  ISPDxe.h
+  
+[Packages]
+  MdePkg/MdePkg.dec
+  IntelFrameworkPkg/IntelFrameworkPkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  Vlv2DeviceRefCodePkg/Vlv2DeviceRefCodePkg.dec
+  IntelFrameworkModulePkg/IntelFrameworkModulePkg.dec
+
+[LibraryClasses]
+  UefiDriverEntryPoint
+  UefiBootServicesTableLib
+  UefiRuntimeServicesTableLib
+  DxeServicesTableLib
+  UefiLib
+  IoLib
+  DebugLib
+  DxeServicesTableLib
+  S3BootScriptLib
+
+[Guids]
+
+[Protocols]
+  gEfiAcpiSupportProtocolGuid
+  gEfiGlobalNvsAreaProtocolGuid
+
+[Pcd.common]
+  gEfiMdePkgTokenSpaceGuid.PcdPciExpressBaseAddress
+
+[Depex]
+  gEfiAcpiSupportProtocolGuid AND
+  gEfiGlobalNvsAreaProtocolGuid
+

@@ -1,0 +1,25 @@
+################################################################################
+#
+# Rules are use with the [FV] section's module INF type to define
+# how an FFS file is created for a given INF file. The following Rule are the default
+# rules for the different module type. User can add the customized rules to define the
+# content of the FFS file.
+#
+################################################################################
+[Rule.Common.USER_DEFINED.ACPITABLE]
+  FILE FREEFORM = $(NAMED_GUID) {
+    RAW ACPI  Optional     |.acpi
+    RAW ASL   Optional     |.aml
+  }
+
+[Rule.Common.DXE_SMM_DRIVER.DRIVER_ACPITABLE]
+  FILE SMM = $(NAMED_GUID) {
+    SMM_DEPEX    SMM_DEPEX Optional      $(INF_OUTPUT)/$(MODULE_NAME).depex
+    $(COMPRESSION_SECTION) {
+      PE32     PE32                    $(INF_OUTPUT)/$(MODULE_NAME).efi
+      UI       STRING="$(MODULE_NAME)" Optional
+      VERSION  STRING="$(INF_VERSION)" Optional BUILD_NUM=$(BUILD_NUMBER)
+    }
+    RAW ACPI  Optional                |.acpi
+    RAW ASL   Optional                |.aml
+  }

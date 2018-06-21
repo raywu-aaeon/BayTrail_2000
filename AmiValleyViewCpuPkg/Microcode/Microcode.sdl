@@ -1,0 +1,331 @@
+TOKEN
+	Name  = "ValleyView_Microcode_SUPPORT"
+	Value  = "1"
+	Help  = "Switch for Enabling ValleyView Microcode support in the project"
+	TokenType = Boolean
+	Master = Yes
+End
+
+PATH
+	Name  = "MICROCODE_DIR"
+End
+
+MODULE
+	File  = "Microcode.mak"
+End
+
+#########################-----MICROCODE Backup Related Setting--#####################################
+TOKEN
+	Name  = "MICROCODE_BACKUP_SUPPORT"
+	Value  = "0"
+	Help  = "If enabled, \ a) Backup Microcode added at build time is stored in boot block. \If enabled, microcode is more fault tolerant, but requires more flash space.\"	
+	TokenType = Boolean
+	TargetEQU = Yes
+	TargetMAK = Yes
+	TargetH = Yes
+	Lock = Yes
+End
+
+TOKEN
+	Name  = "FV_MICROCODE_BASE"
+	Value  = "$(FV_BB_BASE)"
+	TokenType = Integer
+	TargetEQU = Yes
+	TargetMAK = Yes
+	TargetH = Yes
+	Token = "MICROCODE_BACKUP_SUPPORT" "=" "1"
+End
+#########################-----MICROCODE FFS--#####################################
+
+FFS_FILE
+	Name  = "VlvMcuFdfFileStatements"
+	FD_AREA  = "MICROCODE"
+	FILE_Stmt  = "AmiValleyViewCpuPkg\Microcode\VlvMcuFdfFileStatements.txt"
+End
+
+FFS_FILE
+	Name  = "Backup_Microcode"
+	FD_AREA  = "FV_BB"
+	Index  = "1"
+	FILE_Stmt  = "AmiValleyViewCpuPkg\Microcode\VlvMcuFdfFileStatements.txt"
+	Token = "MICROCODE_BACKUP_SUPPORT" "=" "1"
+End
+
+FD_AREA
+	Name  = "MICROCODE"
+	TYPE  = "FV"
+	FD_INFO  = "AMIROM"
+	Offset  = "$(MICROCODE_OFFSET)"
+	Size  = "$(FV_MICROCODE_SIZE)"
+	Attributes  = "0x0"
+End
+
+TOKEN
+	Name  = "MICROCODE_PAD_SIZE"
+	Value  = "0"
+	TokenType = Integer
+	TargetEQU = Yes
+	TargetMAK = Yes
+End
+
+#########################-----MICROCODE Alignment & Block Setting-----#####################
+
+TOKEN
+	Name  = "MICROCODE_ALIGNMENT"
+	Value  = "2048"
+	TokenType = Integer
+	TargetEQU = Yes
+	TargetMAK = Yes
+	Lock = Yes
+End
+
+TOKEN
+	Name  = "MICROCODE_BLOCK_SIZE"
+	Value  = "2048"
+	Help  = "Do not change. This matches the INT15h Microcode update."
+	TokenType = Integer
+	TargetEQU = Yes
+	TargetMAK = Yes
+	TargetH = Yes
+	Lock = Yes
+End
+
+#########################-----MICROCODE SELECTION TOKEN--#####################################
+ELINK
+	Name  = "MICROCODE_FILES"
+	InvokeOrder = ReplaceParent
+End
+
+TOKEN
+	Name   = "MICROCODE_FILE_NAME"
+	Value  = ""
+	Help   = "use for text or inc format microcode"
+	TokenType = Expression
+	TargetMAK = Yes
+	TargetFDF = Yes
+End
+
+ELINK
+	Name  = "$(Intel_ValleyView)"
+	Parent  = "MICROCODE_FILES"
+	InvokeOrder = AfterParent
+End
+
+TOKEN
+    Name  = "ValleyView_Tablet"
+    Value  = "0"
+    Help  = "Intel(R) ValleyView Tablet Series"
+    TokenType = Boolean
+    TargetH = Yes
+End
+
+TOKEN
+    Name  = "ValleyView_Client"
+    Value  = "0"
+    Help  = "Intel(R) ValleyView Client Series"
+    TokenType = Boolean
+    TargetH = Yes
+End
+
+TOKEN
+    Name  = "ValleyView_Industry"
+    Value  = "0"
+    Help  = "Intel(R) ValleyView Industry Series"
+    TokenType = Boolean
+    TargetH = Yes    
+End
+
+TOKEN
+    Name  = "M0130672"
+    Value  = "0"
+    Help  = "Intel(R) ValleyView B-1 Stepping"
+    TokenType = Boolean
+End
+
+TOKEN
+    Name  = "M0130673"
+    Value  = "1"
+    Help  = "Intel(R) ValleyView B-2 Stepping"
+    TokenType = Boolean
+End
+
+TOKEN
+    Name  = "M0130678"
+    Value  = "1"
+    Help  = "Intel(R) ValleyView C-0 Stepping"
+    TokenType = Boolean
+End
+
+TOKEN
+    Name  = "M0130679"
+    Value  = "1"
+    Help  = "Intel(R) ValleyView D-0 Stepping"
+    TokenType = Boolean
+End
+
+TOKEN
+    Name  = "M0230671"
+    Value  = "0"
+    Help  = "Intel(R) ValleyView A-0 Stepping"
+    TokenType = Boolean
+End
+
+TOKEN
+    Name  = "M0230672"
+    Value  = "0"
+    Help  = "Intel(R) ValleyView B-0 Stepping"
+    TokenType = Boolean
+End
+
+TOKEN
+    Name  = "M0C30672"
+    Value  = "1"
+    Help  = "Intel(R) ValleyView B-1 Stepping"
+    TokenType = Boolean
+End
+
+TOKEN
+    Name  = "M0C30673"
+    Value  = "1"
+    Help  = "Intel(R) ValleyView B2/B3 Stepping"
+    TokenType = Boolean
+End
+
+TOKEN
+    Name  = "M0C30678"
+    Value  = "1"
+    Help  = "Intel(R) ValleyView C0 Stepping"
+    TokenType = Boolean
+End
+
+TOKEN
+    Name  = "M0230673"
+    Value  = "1"
+    Help  = "Intel(R) ValleyView B-2 Stepping"
+    TokenType = Boolean
+End
+
+TOKEN
+    Name  = "M0230678"
+    Value  = "1"
+    Help  = "Intel(R) ValleyView C-0 Stepping"
+    TokenType = Boolean
+End
+
+ELINK
+    Name  = "$(MICROCODE_DIR)\M0230672228.PDB"
+    Parent  = "$(Intel_ValleyView)"
+    Help  = "Intel(R) ValleyView B-0 Stepping"
+    Token = "M0230672" "=" "1"
+    Token = "ValleyView_Tablet" "=" "1"
+    InvokeOrder = AfterParent
+End
+
+ELINK
+    Name  = "$(MICROCODE_DIR)\M0230673325.PDB"
+    Parent  = "$(Intel_ValleyView)"
+    Help  = "Intel(R) ValleyView B-2 Stepping"
+    Token = "M0230673" "=" "1"
+    Token = "ValleyView_Tablet" "=" "1"
+    InvokeOrder = AfterParent
+End
+
+ELINK
+    Name  = "$(MICROCODE_DIR)\M0230678832.PDB"
+    Parent  = "$(Intel_ValleyView)"
+    Help  = "Intel(R) ValleyView C-0 Stepping"
+    Token = "M0230678" "=" "1"
+    Token = "ValleyView_Tablet" "=" "1"
+    InvokeOrder = AfterParent
+End
+
+ELINK
+    Name  = "$(MICROCODE_DIR)\M0230672213.PDB"
+    Parent  = "$(Intel_ValleyView)"
+    Help  = "Intel(R) ValleyView B-0 Stepping"
+    Token = "M0230672" "=" "1"
+    Token = "ValleyView_Client" "=" "1"    
+    InvokeOrder = AfterParent
+End
+
+ELINK
+    Name  = "$(MICROCODE_DIR)\M0C30672216.PDB"
+    Parent  = "$(Intel_ValleyView)"
+    Help  = "Intel(R) ValleyView B-1 Stepping"
+    Token = "M0C30672" "=" "1"
+    Token = "ValleyView_Client" "=" "1"    
+    InvokeOrder = AfterParent
+End
+
+ELINK
+    Name  = "$(MICROCODE_DIR)\M0C30673325.PDB"
+    Parent  = "$(Intel_ValleyView)"
+    Help  = "Intel(R) ValleyView B2/B3 Stepping"
+    Token = "M0C30673" "=" "1"
+    Token = "ValleyView_Client" "=" "1"    
+    InvokeOrder = AfterParent
+End
+
+ELINK
+    Name  = "$(MICROCODE_DIR)\M0C30678833.PDB"
+    Parent  = "$(Intel_ValleyView)"
+    Help  = "Intel(R) ValleyView C0 Stepping"
+    Token = "M0C30678" "=" "1"
+    Token = "ValleyView_Client" "=" "1"    
+    InvokeOrder = AfterParent
+End
+
+ELINK
+    Name  = "$(MICROCODE_DIR)\M0230671116.PDB"
+    Parent  = "$(Intel_ValleyView)"
+    Help  = "Intel(R) ValleyView A-0 Stepping"
+    Token = "M0230671" "=" "1"
+    Token = "ValleyView_Tablet" "=" "1"
+    InvokeOrder = AfterParent
+End
+
+ELINK
+    Name  = "$(MICROCODE_DIR)\M0230671113.PDB"
+    Parent  = "$(Intel_ValleyView)"
+    Help  = "Intel(R) ValleyView A-0 Stepping"
+    Token = "M0230671" "=" "1"
+    Token = "ValleyView_Client" "=" "1"
+    InvokeOrder = AfterParent
+End
+
+ELINK
+    Name  = "$(MICROCODE_DIR)\M013067222D.PDB"
+    Parent  = "$(Intel_ValleyView)"
+    Help  = "Intel(R) ValleyView B-1 Stepping"
+    Token = "M0130672" "=" "1"
+    Token = "ValleyView_Industry" "=" "1"
+    InvokeOrder = AfterParent
+End
+
+ELINK
+    Name  = "$(MICROCODE_DIR)\M0130673324.PDB"
+    Parent  = "$(Intel_ValleyView)"
+    Help  = "Intel(R) ValleyView B-1 Stepping"
+    Token = "M0130673" "=" "1"
+    Token = "ValleyView_Industry" "=" "1"
+    InvokeOrder = AfterParent
+End
+
+ELINK
+    Name  = "$(MICROCODE_DIR)\M0130678806.PDB"
+    Parent  = "$(Intel_ValleyView)"
+    Help  = "Intel(R) ValleyView C-0 Stepping"
+    Token = "M0130678" "=" "1"
+    Token = "ValleyView_Industry" "=" "1"
+    InvokeOrder = AfterParent
+End
+
+ELINK
+    Name  = "$(MICROCODE_DIR)\M0130679903.PDB"
+    Parent  = "$(Intel_ValleyView)"
+    Help  = "Intel(R) ValleyView D-0 Stepping"
+    Token = "M0130679" "=" "1"
+    Token = "ValleyView_Industry" "=" "1"
+    InvokeOrder = AfterParent
+End
+###################################################################

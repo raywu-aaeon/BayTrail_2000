@@ -1,0 +1,24 @@
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = CrbAcpiLib
+  MODULE_TYPE                    = BASE
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = CrbAcpiLib
+
+[Packages]
+  MdePkg/MdePkg.dec 
+  IntelFrameworkPkg/IntelFrameworkPkg.dec
+  AmiCompatibilityPkg/AmiCompatibilityPkg.dec 
+  AmiModulePkg/AmiModulePkg.dec
+  AmiCpuPkg/AmiCpuPkg.dec ###<AAV> this is old one ### TrinityPkg/AgesaWrapperPkg.dec
+  AmiCspPkg/AmiCspPkg.dec
+  PlatformPkg/PlatformPkg.dec
+  AgesaPkg/AgesaPkg.dec
+
+[LibraryClasses]
+  BaseLib
+
+[Sources]
+  CrbAcpiLib.c
+###  CrbLib.h

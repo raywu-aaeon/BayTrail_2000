@@ -1,0 +1,20 @@
+<component>
+	name = "Configuration"
+	category = ModulePart
+	LocalRoot = "AmiPkg\Configuration\"
+	RefName = "AmiPkg.Configuration"
+[files]
+"Configuration.sdl"	
+"CommonDef.txt"	
+"MYTOOLS_DEF.txt"	
+"GCC_DEF.txt"	
+"LINAROWIN_DEF.txt"	
+"build_rule.txt"	
+"utilities.mak"
+"dater.mak"
+"Main.mak"	
+"RunAmiSdl.mak"	
+"FdfRules.txt"	
+"NestedFvMainFdfFileStatement.txt"
+"FontFileStatement.txt"
+<endComponent>

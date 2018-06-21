@@ -1,0 +1,14 @@
+<component>
+	name = "IntelFrameworkPkg"
+	category = ModulePart
+	LocalRoot = "IntelFrameworkPkg\"
+	RefName = "IntelFrameworkPkg"
+[files]
+"IntelFrameworkPkg.dec"	
+"IntelFrameworkPkg.sdl"	
+"FrameworkSpecConformance.txt"	
+"License.txt"	
+[parts]
+"IntelFrameworkPkg.Include"
+"IntelFrameworkPkg.LibraryInstances"
+<endComponent>

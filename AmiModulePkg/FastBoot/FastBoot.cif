@@ -1,0 +1,19 @@
+<component>
+	name = "Post Time Tuning"
+	category = eModule
+	LocalRoot = "AmiModulePkg\FastBoot\"
+	RefName = "FastBoot"
+[INF]
+"FastBoot.inf"
+"FastBootTseHook.inf"
+"FastBootRuntime.inf"
+[files]
+"FastBoot.sdl"	
+"FastBoot.sd"	
+"FastBoot.uni"	
+"FastBoot.mak"	
+"PTT.chm"	
+[parts]
+"FastBootSMI"
+"FastBootOption"
+<endComponent>

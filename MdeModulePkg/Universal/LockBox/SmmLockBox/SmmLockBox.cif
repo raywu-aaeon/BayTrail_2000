@@ -1,0 +1,10 @@
+<component>
+	name = "SmmLockBox"
+	category = ModulePart
+	LocalRoot = "MdeModulePkg\Universal\LockBox\SmmLockBox\"
+	RefName = "MdeModulePkg.SmmLockBox"
+[files]
+"SmmLockBox.sdl"	
+[INF]
+"SmmLockBox.inf"
+<endComponent>

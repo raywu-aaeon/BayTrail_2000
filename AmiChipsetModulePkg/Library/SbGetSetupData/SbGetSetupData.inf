@@ -1,0 +1,43 @@
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = SbGetSetupData
+  FILE_GUID                      = 86B57B57-B70F-4551-AC58-4685DA0468D6  
+  MODULE_TYPE                    = DXE_DRIVER
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = SbGetSetupData|DXE_DRIVER DXE_RUNTIME_DRIVER DXE_SMM_DRIVER
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64
+#
+#  
+#
+
+[Sources]
+  GetSetupData.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec #EIP131494
+  AmiChipsetPkg/AmiChipsetPkg.dec
+  AmiCompatibilityPkg/AmiCompatibilityPkg.dec
+  AmiChipsetModulePkg/AmiChipsetModulePkg.dec
+  
+[LibraryClasses]
+  ElinkLib
+  DebugLib
+  AmiDxeLib
+  HobLib
+
+[Ppis]
+  gEfiPeiReadOnlyVariable2PpiGuid
+  #gPeiCapsulePpiGuid #CSP20140829 EIP200855
+  
+[Guids]
+  gEfiMemoryTypeInformationGuid #EIP131494
+ 
+[Pcd]
+  gAmiChipsetModulePkgTokenSpaceGuid.PcdSbOemSetupElink
+

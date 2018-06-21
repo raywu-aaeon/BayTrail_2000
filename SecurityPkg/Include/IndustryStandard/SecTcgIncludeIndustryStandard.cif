@@ -1,0 +1,11 @@
+<component>
+	name = "SecTcgInclude - IndustryStandard"
+	category = Modulepart
+	LocalRoot = "SecurityPkg\Include\IndustryStandard"
+	RefName = "SecurityPkg.SecTcgIncludeIndustryStandard"
+[files]
+"TcpaAcpi.h"
+"Tpm2Acpi.h"
+"Tpm20.h"
+"Tpm20Implementation.h"
+<endComponent>

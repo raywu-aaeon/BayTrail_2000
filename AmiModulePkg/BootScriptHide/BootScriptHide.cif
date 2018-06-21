@@ -1,0 +1,13 @@
+<component>
+	name = "BootScriptHide"
+	category = eModule
+	LocalRoot = "AmiModulePkg\BootScriptHide\"
+	RefName = "AmiModulePkg.BootScriptHide"
+[INF]
+"BootScriptHideDxe.inf"
+"BootScriptHideSmm.inf"
+"BootScriptHidePei.inf"
+[files]
+"BootScriptHide.sdl"	
+"BootScriptHide.chm"
+<endComponent>

@@ -1,0 +1,13 @@
+<component>
+	name = "MdePkg SMM Library Instances"
+	category = ModulePart
+	LocalRoot = "MdePkg\Library\"
+	RefName = "MdePkg.SmmLibraryInstances"
+	
+[INF]
+"SmmIoLibSmmCpuIo2\SmmIoLibSmmCpuIo2.inf"
+"SmmMemoryAllocationLib\SmmMemoryAllocationLib.inf"
+"SmmPciLibPciRootBridgeIo\SmmPciLibPciRootBridgeIo.inf"
+"SmmPeriodicSmiLib\SmmPeriodicSmiLib.inf"
+"SmmServicesTableLib\SmmServicesTableLib.inf"
+<endComponent>

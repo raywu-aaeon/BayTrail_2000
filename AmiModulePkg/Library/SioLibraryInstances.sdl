@@ -1,0 +1,34 @@
+TOKEN
+	Name  = SioLibraryInstances_SUPPORT
+	Value  = 1
+	TokenType = Boolean
+	TargetEQU = Yes
+	TargetMAK = Yes
+	Master = Yes
+	Help  = "Main switch to enable SioLibraryInstances support in Project"
+End
+
+INFComponent
+	Name  = "AmiSioDxeLib"
+	File  = "AmiSioDxeLib/AmiSioDxeLib.inf"
+	Package  = "AmiModulePkg"
+End
+
+INFComponent
+	Name  = "AmiSioPeiLib"
+	File  = "AmiSioPeiLib/AmiSioPeiLib.inf"
+	Package  = "AmiModulePkg"
+End
+
+LibraryMapping
+	Class  = "AmiSioDxeLib"
+	Instance  = "AmiModulePkg.AmiSioDxeLib"
+	ModuleTypes  = "DXE_DRIVER UEFI_DRIVER DXE_CORE"
+End
+
+LibraryMapping
+	Class  = "AmiSioPeiLib"
+	Instance  = "AmiModulePkg.AmiSioPeiLib"
+	ModuleTypes  = "PEIM PEI_CORE"
+End
+

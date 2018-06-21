@@ -1,0 +1,50 @@
+TOKEN
+	Name  = "BlockS3Var_SUPPORT"
+	Value  = "1"
+	Help  = "Main switch to enable BlockS3Var support in Project"
+	TokenType = Boolean
+	TargetEQU = Yes
+	TargetMAK = Yes
+	Master = Yes
+End
+
+ELINK
+	Name  = "BLOCKED_S3_VAR_LIST"
+	InvokeOrder = ReplaceParent
+End
+
+ELINK
+	Name  = "SetVariableS3Hook,"
+	Parent  = "SetVariableHook"
+	InvokeOrder = AfterParent
+End
+
+ELINK
+	Name  = "BlockS3VariablesList"
+	InvokeOrder = ReplaceParent
+End
+
+OUTPUTREGISTER
+	Name  = "BLOCK_S3_VARS_ELINKS_H"
+	Path  = "Build"
+	File  = "BlockS3VarsElink.h"
+	Template  = "BlockS3VarElinkTempl.txt"
+End
+
+INFComponent
+	Name  = "BlockS3VarLib"
+	File  = "BlockS3VarLib.inf"
+	Package  = "AmiModulePkg"
+End
+
+LibraryMapping
+	Class  = "NULL"
+	Instance  = "AmiModulePkg.BlockS3VarLib"
+	Override  = "AmiModulePkg.NvramDxe"
+End
+
+LibraryMapping
+	Class  = "NULL"
+	Instance  = "AmiModulePkg.BlockS3VarLib"
+	Override  = "AmiModulePkg.NvramSmm"
+End

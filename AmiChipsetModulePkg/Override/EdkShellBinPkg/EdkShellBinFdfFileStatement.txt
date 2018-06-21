@@ -1,0 +1,5 @@
+FILE APPLICATION = PCD(gEfiIntelFrameworkModulePkgTokenSpaceGuid.PcdShellFile) {
+  SECTION $(COMPRESSION_SECTION){
+    SECTION PE32 = EdkShellBinPkg/FullShell/Ia32/Shell_Full.efi
+  }
+}

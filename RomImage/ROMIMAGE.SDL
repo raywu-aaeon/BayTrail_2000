@@ -1,0 +1,12 @@
+TOKEN
+	Name  = "ROM_IMAGE_ME_MODE"
+	Value  = "1"
+	TokenType = Boolean
+	TargetMAK = Yes
+	Master = Yes
+End
+
+PATH
+	Name  = "ROM_IMAGE_DIR"
+End
+

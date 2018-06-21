@@ -1,0 +1,139 @@
+#/*++
+#
+# Copyright (c) 1999 - 2006 Intel Corporation. All rights reserved
+# This software and associated documentation (if any) is furnished
+# under a license and may only be used or copied in accordance
+# with the terms of the license. Except as permitted by such
+# license, no part of this software or documentation may be
+# reproduced, stored in a retrieval system, or transmitted in any
+# form or by any means without the express written consent of
+# Intel Corporation.
+
+#
+#  Module Name:
+#
+#   MpCpu.inf
+#
+#  Abstract:
+#
+#    Component description file for MP Cpu module.
+#
+#--*/
+
+[defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = MpCpu
+  FILE_GUID                      = 62D171CB-78CD-4480-8678-C6A2A797A8DE
+  MODULE_TYPE                    = DXE_DRIVER
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = InitializeCpu
+
+
+[sources.ia32]
+  Ia32/CpuAsm.asm
+  Ia32/CpuAsm.s
+  Ia32/MpProc.asm
+  Ia32/MpProc.s
+  Ia32/MchkInitAsm.asm
+  Ia32/MchkInitAsm.s
+  Ia32/MPFuncs32.asm
+  Ia32/MPFuncs32.s
+  Ia32/MpCommon32.asm
+  Ia32/MpCommon32.s
+  Ia32/MemoryOperation.c
+  Ia32/Exception.c
+  Ia32/MpCpu.c
+  Ia32/InitializeFpu.s
+
+[sources.x64]
+  x64/Cpu.asm
+  x64/CpuAsm.asm
+  x64/Exception.c
+  x64/MemoryOperation.c
+  x64/MpCpu.c
+  x64/MpFuncs.asm
+
+[sources]
+  Cache.h
+  CacheData.c
+  Cpu.c
+  CpuDxe.h
+  LeastFeature.c
+  MchkInit.c
+  MchkInit.h
+  MemoryAttribute.c
+  Microcode.c
+  MpCommon.c
+  MpService.c
+  MtrrSync.c
+  MiscFuncs.c
+  Features.c
+  Processor.c
+  Processor.h
+  ProcessorData.c
+  ProcessorData.h
+  ProcessorSubClassMp.c
+  Thermal.c
+  Strings.uni
+
+[Protocols]
+  gEfiMetronomeArchProtocolGuid
+  gEfiMpServiceProtocolGuid
+  gEfiDataHubProtocolGuid
+  gEfiSmmBaseProtocolGuid
+  gEfiCpuArchProtocolGuid
+  gEfiPlatformCpuProtocolGuid
+  gEfiGenericMemTestProtocolGuid
+  gEfiSmmControlProtocolGuid
+  gEfiSmmAccess2ProtocolGuid
+  gEfiLegacyBiosProtocolGuid
+  gExitPmAuthProtocolGuid
+  gEfiDxeSmmReadyToLockProtocolGuid
+  gEfiLegacy8259ProtocolGuid
+
+[Guids]
+  gProcessorProducerGuid
+  gEfiAcpiVariableCompatiblityGuid
+  gEfiHtBistHobGuid
+  gEfiProcessorSubClassGuid
+  gEfiCacheSubClassGuid
+  gEfiPowerOnHobGuid
+  gEfiPlatformCpuInfoGuid
+  gEfiVlv2VariableGuid
+
+[Packages]
+  MdePkg/MdePkg.dec
+  IntelFrameworkPkg/IntelFrameworkPkg.dec
+  IA32FamilyCpuPkg/IA32FamilyCpuPkg.dec
+  Vlv2DeviceRefCodePkg/PlatformPkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  IntelFrameworkModulePkg/IntelFrameworkModulePkg.dec
+  AmiCompatibilityPkg/AmiCompatibilityPkg.dec
+  Vlv2DeviceRefCodePkg/Vlv2DeviceRefCodePkg.dec
+
+[LibraryClasses]
+  BaseMemoryLib
+  DebugLib
+  ReportStatusCodeLib
+  BaseLib
+  UefiBootServicesTableLib
+  UefiRuntimeServicesTableLib
+  UefiLib
+  MemoryAllocationLib
+  HiiLib
+  DxeServicesTableLib
+  HobLib
+  UefiDriverEntryPoint
+  PchPlatformLib
+  PcdLib
+  IoLib
+  UefiCpuLib #AMI_OVERRIDE - EIP164769 SCT Execution Test-fail
+
+[Pcd.common]
+  gPlatformModuleTokenSpaceGuid.PcdFlashMicroCodeAddress
+  gEfiMdePkgTokenSpaceGuid.PcdPciExpressBaseAddress
+
+[Depex]
+  gEfiCpuIoProtocolGuid AND gEfiHiiStringProtocolGuid AND gEfiDataHubProtocolGuid AND gEfiLegacy8259ProtocolGuid AND gEfiVariableArchProtocolGuid AND gEfiVariableWriteArchProtocolGuid AND gEfiFirmwareVolumeProtocolGuid AND gEfiPlatformCpuProtocolGuid AND gEfiLoadPeImageProtocolGuid
+
+

@@ -1,0 +1,41 @@
+#
+# This file contains code for South Bridge SMI initialization in the DXE stage.
+#
+
+[Defines]
+  INF_VERSION                     = 0x00010005
+  BASE_NAME                       = PowerButton
+  FILE_GUID                       = 80C905A4-1E0C-47f2-8417-977FB539C06F
+  MODULE_TYPE                     = DXE_SMM_DRIVER
+  VERSION_STRING                  = 1.0
+  PI_SPECIFICATION_VERSION        = 0x0001000A
+  ENTRY_POINT                     = InitializePowerButton
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64
+#
+#  
+#
+
+[Sources]
+  PowerButton.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  IntelFrameworkPkg/IntelFrameworkPkg.dec
+  Vlv2DeviceRefCodePkg/Vlv2DeviceRefCodePkg.dec
+  AmiCompatibilityPkg/AmiCompatibilityPkg.dec
+
+[LibraryClasses]
+  UefiDriverEntryPoint
+  SmmServicesTableLib
+  AmiDxeLib
+
+[Protocols]
+  gEfiSmmPowerButtonDispatch2ProtocolGuid
+
+[Depex.common.DXE_SMM_DRIVER]
+  gEfiSmmPowerButtonDispatch2ProtocolGuid
+

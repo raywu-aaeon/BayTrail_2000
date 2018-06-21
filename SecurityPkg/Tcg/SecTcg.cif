@@ -1,0 +1,17 @@
+<component>
+	name = "SecTcg"
+	category = Modulepart
+	LocalRoot = "SecurityPkg\Tcg
+	RefName = "SecurityPkg.Tcg"
+[inf]
+"MemoryOverwriteControl\TcgMor.inf"
+"TcgConfigDxe\TcgConfigDxe.inf"
+"TcgDxe\TcgDxe.inf"
+"TcgPei\TcgPei.inf"
+"TcgSmm\TcgSmm.inf"
+"TrEEConfig\TrEEConfigDxe.inf"
+"TrEEConfig\TrEEConfigPei.inf"
+"TrEEDxe\TrEEDxe.inf"
+"TrEEPei\TrEEPei.inf"
+"TrEESmm\TrEESmm.inf"
+<endComponent>

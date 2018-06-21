@@ -1,0 +1,31 @@
+[Defines]
+  INF_VERSION = 0x00010005
+  VERSION_STRING = 1.0
+  BASE_NAME = SIOPEIINIT
+  MODULE_TYPE = PEIM
+  FILE_GUID = 9029F23E-E1EE-40d1-9382-36DD61A63EAA
+  ENTRY_POINT = SioPeiInitEntryPoint
+
+[Sources]
+  SioPeiInit.c
+
+[LibraryClasses]
+  IoLib
+  AmiSioPeiLib
+  PeimEntryPoint
+  SioLinkLib
+  #AmiPeiLib
+  #AmiCspLib
+
+[Packages]
+  MdePkg\MdePkg.dec
+  IntelFrameworkPkg\IntelFrameworkPkg.dec
+  IntelFrameworkModulePkg\IntelFrameworkModulePkg.dec
+  AmiModulePkg\AmiModulePkg.dec
+  AmiCompatibilityPkg\AmiCompatibilityPkg.dec
+
+[Depex]
+  TRUE
+
+
+

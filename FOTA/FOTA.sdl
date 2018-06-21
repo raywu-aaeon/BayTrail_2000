@@ -1,0 +1,100 @@
+#*************************************************************************
+#*************************************************************************
+#**                                                                     **
+#**        (C)Copyright 1985-2013, American Megatrends, Inc.            **
+#**                                                                     **
+#**                       All Rights Reserved.                          **
+#**                                                                     **
+#**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093           **
+#**                                                                     **
+#**                       Phone: (770)-246-8600                         **
+#**                                                                     **
+#*************************************************************************
+#*************************************************************************
+
+#*************************************************************************
+# $Header: $
+#
+# $Revision: $
+#
+# $Date: 11/28/2013 KimiWu $
+#*************************************************************************
+#<AMI_FHDR_START>
+#
+# Name: FOTA.sdl
+#
+# Description: SDL file to define FOTA (System Firmware Update Driver)
+#
+#<AMI_FHDR_END>
+#*************************************************************************
+
+TOKEN
+	Name = "FOTA_CAPSULE_BUILD_SUPPORT"
+	Value = "1"
+	TokenType = Boolean
+	TargetMAK = Yes
+	Master = Yes
+End
+
+MODULE
+	Help = "Includes FOTA.mak to Project"
+	File = "FOTA.mak"
+End
+
+PATH
+	Name = "FOTA_CAPSULE_DIR"
+End
+
+TOKEN
+	Name  = "FOTA_CAPSULE_NAME"
+	Value  = "FotaUpdate.cap"
+	Help  = "Fota Capsule File name."
+	TokenType = Expression
+	TargetMAK = Yes
+	TargetH = Yes
+	Range  = "valid file name"
+End
+
+TOKEN
+	Name  = "AMIGCH"
+	Value  = "$(FOTA_CAPSULE_DIR)\AMIGCHv0.1.exe"
+	TokenType = Expression
+	TargetMAK = Yes
+End
+
+TOKEN
+	Name  = "TXE_UPD_IMAGE"
+	Value  = "$(ROM_IMAGE_DIR)$(PATH_SLASH)TXE_Region_1.5MB.bin" #//<EIP153486*>
+	TokenType = Expression
+	TargetMAK = Yes
+	Lock = Yes
+End
+
+TOKEN
+	Name  = "FW_VERSION"
+	Value  = "$(PROJECT_MINOR_VERSION)"
+	TokenType = Expression
+	TargetMAK = Yes
+End
+
+TOKEN
+	Name  = "CAPSULE_DXE_DRIVER_IMAGE"
+	Value  = "$(BUILD_DIR)$(PATH_SLASH)$(PLATFORM_NAME)$(PATH_SLASH)$(TARGET)_$(TOOL_CHAIN_TAG)$(PATH_SLASH)$(DXE_ARCHITECTURE)$(PATH_SLASH)FotaFwUpdateCapsuleDxe.efi"
+	TokenType = Expression
+	TargetMAK = Yes
+	TargetH = Yes
+	Lock = Yes
+End
+
+#*************************************************************************
+#*************************************************************************
+#**                                                                     **
+#**        (C)Copyright 1985-2013, American Megatrends, Inc.            **
+#**                                                                     **
+#**                       All Rights Reserved.                          **
+#**                                                                     **
+#**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093           **
+#**                                                                     **
+#**                       Phone: (770)-246-8600                         **
+#**                                                                     **
+#*************************************************************************

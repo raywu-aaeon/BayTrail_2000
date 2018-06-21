@@ -1,0 +1,8 @@
+<component>
+	name = "CPU-SampleCodeLibrary"
+	category = ModulePart
+	LocalRoot = "Vlv2DeviceRefCodePkg\ValleyView2Soc\CPU\SampleCode\Library"
+	RefName = "Vlv2DeviceRefCodePkg.ValleyView2Soc.ValleyView2Soc-CPU.CPU-SampleCode.CPU-SampleCodeLibrary"
+[inf]
+"PlatformSecLib\PlatformSecLib.inf"
+<endComponent>

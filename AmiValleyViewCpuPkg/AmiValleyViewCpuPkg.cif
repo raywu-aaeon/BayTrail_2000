@@ -1,0 +1,25 @@
+<component>
+	name = "AmiValleyViewCpuPkg"
+	category = CPU
+	LocalRoot = "AmiValleyViewCpuPkg"
+	RefName = "ValleyViewCpuPkg"
+[INF]
+"Pei/CpuPeiBoard/CpuPeiBoard.inf"
+"Dxe/CpuDxeBoard/CpuDxeBoard.inf"
+"Pei/CpuEarlyInit/CpuEarlyInit.inf"
+"Dxe/PlatformCpuPolicy/PlatformCpuPolicy.inf"
+[files]
+"AmiValleyViewCpuPkg.sdl"	
+"AmiValleyViewCpuPkg.dec"
+"Cpu.mak"
+"mbiosequ.equ"
+"MBIOSMAC.MAC"
+"ReleaseNote.CHM"
+[parts]
+"AmiValleyViewCpuPkg.Setup"
+"AmiValleyViewCpuPkg.Include"
+"AmiValleyViewCpuPkg.LibraryInstances"
+"AmiValleyViewCpuPkg.VlvMicrocode"
+"AmiValleyViewCpuPkg.AmiPpmPolicy"
+"AmiValleyViewCpuPkg.AmiCpuSmbios"
+<endComponent>

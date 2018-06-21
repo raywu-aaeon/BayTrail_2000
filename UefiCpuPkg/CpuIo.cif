@@ -1,0 +1,12 @@
+<component>
+	name = "CpuIo"
+	category = ModulePart
+	LocalRoot = "UefiCpuPkg\"
+	RefName = "UefiCpuPkg.CpuIo"
+[files]
+"CpuIo.sdl"	
+[INF]
+"CpuIoPei\CpuIoPei.inf"
+"CpuIo2Dxe\CpuIo2Dxe.inf"
+"CpuIo2Smm\CpuIo2Smm.inf"
+<endComponent>

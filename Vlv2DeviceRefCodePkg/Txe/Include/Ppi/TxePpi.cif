@@ -1,0 +1,10 @@
+<component>
+	name = "TxePpi"
+	category = ModulePart
+	LocalRoot = "Vlv2DeviceRefCodePkg\Txe\Include\Ppi"
+	RefName = "Vlv2DeviceRefCodePkg.Txe.TxeInclude.TxePpi"
+[files]
+"fTPM.h"
+"fTPMPolicy.h"
+"SeCUma.h"
+<endComponent>

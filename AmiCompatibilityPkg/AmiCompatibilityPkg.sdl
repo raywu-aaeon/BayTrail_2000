@@ -1,0 +1,119 @@
+TOKEN
+	Name  = "AmiCompatibilityPkg_SUPPORT"
+	Value  = "1"
+	Help  = "Main switch to enable AmiCompatibilityPkg support in Project"
+	TokenType = Boolean
+	TargetEQU = Yes
+	TargetMAK = Yes
+	Master = Yes
+End
+
+TOKEN
+	Name  = "AMI_COMPATIBILITY_PKG_VERSION"
+	Value  = "18"
+	Help  = "AmiCompatibilityPkg version.\Do not change."
+	TokenType = Integer
+	TargetMAK = Yes
+	TargetH = Yes
+	Lock = Yes
+End
+
+TOKEN
+	Name  = "MAX_PEI_PERF_LOG_ENTRIES"
+	Value  = "28"
+	Help  = "Maximum allowed number of PEI performance management entries in log database"
+	TokenType = Integer
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "LANGUAGE_FONT_LIST"
+	Value  = "drawing $(SUPPORTED_LANGUAGES)"
+	Help  = "Space separated list of language identifiers. \The fonts for these languages will be included into the ROM image."
+	TokenType = Expression
+	TargetMAK = Yes
+End
+
+TOKEN
+	Name  = "CORE_MINOR_VERSION"
+	Value  = "6"
+	Help  = "Do not use! This token is for backward compatibility only."
+	TokenType = Integer
+	TargetEQU = Yes
+	TargetMAK = Yes
+	TargetH = Yes
+	Lock = Yes	
+End
+
+TOKEN
+	Name  = "CORE_REVISION"
+	Value  = "5"
+	Help  = "Do not use! This token is for backward compatibility only."
+	TokenType = Integer
+	TargetEQU = Yes
+	TargetMAK = Yes
+	TargetH = Yes
+	Lock = Yes	
+End
+
+TOKEN
+	Name  = "x64_BUILD"
+	Value  = "1"
+	Help  = "Do not change. Use X64_SUPPORT instead.\This token is for backward compatibility."
+	TokenType = Boolean
+	TargetMAK = Yes
+	Token = "X64_SUPPORT" "=" "1"
+	Lock = Yes	
+End
+
+MODULE
+	Help  = "Includes AmiCompatibilityPkg.mak to Project"
+	File  = "AmiCompatibilityPkg.mak"
+End
+
+
+#Setup.sdl
+ELINK
+	Name  = "SETUP_DEFINITIONS"
+	InvokeOrder = ReplaceParent
+End
+
+INFComponent
+	Name  = "AmiPeiLib"
+	File  = "Library/AmiPeiLib.inf"
+	Package  = "AmiCompatibilityPkg"
+End
+
+INFComponent
+	Name  = "AmiDxeLib"
+	File  = "Library/AmiDxeLib.inf"
+	Package  = "AmiCompatibilityPkg"
+End
+
+INFComponent
+	Name  = "AmiCriticalSectionCompatLib"
+	File  = "Library/AmiCriticalSectionCompatLib.inf"
+	Package  = "AmiCompatibilityPkg"
+End
+
+LibraryMapping
+	Class  = "AmiPeiLib"
+	Instance  = "AmiCompatibilityPkg.AmiPeiLib"
+End
+
+LibraryMapping
+	Class  = "AmiDxeLib"
+	Instance  = "AmiCompatibilityPkg.AmiDxeLib"
+End
+
+LibraryMapping
+	Class  = "AmiCriticalSectionLib"
+	Instance  = "AmiCompatibilityPkg.AmiCriticalSectionCompatLib"
+End
+
+FFS_FILE
+	Name  = "FontFile"
+	FD_AREA  = "FV_MAIN"
+	FILE_Stmt  = "AmiCompatibilityPkg/FontFileStatement.txt"
+End
+

@@ -1,0 +1,603 @@
+//**********************************************************************
+//**********************************************************************
+//**                                                                  **
+//**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+//**                                                                  **
+//**                       All Rights Reserved.                       **
+//**                                                                  **
+//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093        **
+//**                                                                  **
+//**                       Phone: (770)-246-8600                      **
+//**                                                                  **
+//**********************************************************************
+//**********************************************************************
+
+/** @file
+ *   Defines a formset, containing all the traditional forms from Aptio 4.x
+ */
+
+#include "SetupPrivate.h"
+#define MAIN_FORM_SET
+#define ADVANCED_FORM_SET
+#define CHIPSET_FORM_SET
+#define SECURITY_FORM_SET
+#define BOOT_FORM_SET
+#define EXIT_FORM_SET
+#define FORM_SET_TYPEDEF
+#include <SetupDefinitions.h>
+#undef FORM_SET_TYPEDEF
+#undef EXIT_FORM_SET
+#undef BOOT_FORM_SET
+#undef SECURITY_FORM_SET
+#undef CHIPSET_FORM_SET
+#undef ADVANCED_FORM_SET
+#undef MAIN_FORM_SET
+
+formset guid  = SETUP_FORM_SET_GUID,
+    title     = STRING_TOKEN(STR_SETUP),
+    help      = STRING_TOKEN(STR_SETUP_HELP),
+    class     = SETUP_FORM_SET_CLASS,
+    subclass  = 0,
+
+    SETUP_DATA_VARSTORE
+    LANGUAGE_VARSTORE
+    LANGUAGE_CODES_VARSTORE
+    SYSTEM_ACCESS_VARSTORE
+    AMI_CALLBACK_VARSTORE
+    AMITSESETUP_VARSTORE
+    BOOT_MANAGER_VARSTORE
+    TIMEOUT_VARSTORE
+    BOOT_ORDER_VARSTORE
+    NEW_BOOT_OPTION_VARSTORE
+    DEL_BOOT_OPTION_VARSTORE
+    LEGACY_DEV_INFO_VARSTORE
+    LEGACY_GROUP_INFO_VARSTORE
+    LEGACY_DEV_ORDER_VARSTORE
+    BOOT_NOW_COUNT_VARSTORE
+    EFI_SHELL_VARSTORE
+    defaultstore AmiMfgDefault, prompt = STRING_TOKEN(STR_EMPTY), attribute = 0x01;
+    
+	#define MAIN_FORM_SET
+	#define ADVANCED_FORM_SET
+	#define CHIPSET_FORM_SET
+	#define SECURITY_FORM_SET
+	#define BOOT_FORM_SET
+	#define EXIT_FORM_SET
+    #define FORM_SET_VARSTORE
+    #include <SetupDefinitions.h>
+    #undef FORM_SET_VARSTORE
+	#undef EXIT_FORM_SET
+	#undef BOOT_FORM_SET
+	#undef SECURITY_FORM_SET
+	#undef CHIPSET_FORM_SET
+	#undef ADVANCED_FORM_SET
+	#undef MAIN_FORM_SET
+
+#define TOP_LEVEL_FORM_SET
+    form formid = AUTO_ID(SETUP_MAIN),
+        title = STRING_TOKEN(STR_SETUP);
+        
+        goto MAIN_MAIN, 
+            prompt = STRING_TOKEN(STR_MAIN),
+            help = STRING_TOKEN(STR_EMPTY);
+
+    // suppressif statements are added to hide the goto statements
+    // in the case that the AMITSE_HIDE_ROOT_PAGE token is disabled
+    #if defined(SHOW_ADVANCED_FORMSET)&&(SHOW_ADVANCED_FORMSET==0)
+        suppressif TRUE;
+    #endif
+        goto ADVANCED_MAIN, 
+            prompt = STRING_TOKEN(STR_ADVANCED),
+            help = STRING_TOKEN(STR_EMPTY);
+    #if defined(SHOW_ADVANCED_FORMSET)&&(SHOW_ADVANCED_FORMSET==0)
+        endif;
+    #endif
+
+    // suppressif statements are added to hide the goto statements
+    // in the case that the AMITSE_HIDE_ROOT_PAGE token is disabled
+    #if defined(SHOW_CHIPSET_FORMSET)&&(SHOW_CHIPSET_FORMSET==0)
+        suppressif TRUE;
+    #endif
+        goto CHIPSET_MAIN, 
+            prompt = STRING_TOKEN(STR_CHIPSET),
+            help = STRING_TOKEN(STR_EMPTY);
+    #if defined(SHOW_CHIPSET_FORMSET)&&(SHOW_CHIPSET_FORMSET==0)
+        endif;
+    #endif
+
+    // suppressif statements are added to hide the goto statements
+    // in the case that the AMITSE_HIDE_ROOT_PAGE token is disabled
+    #if defined(SHOW_SECURITY_FORMSET)&&(SHOW_SECURITY_FORMSET==0)
+        suppressif TRUE;
+    #endif
+        goto SECURITY_MAIN, 
+            prompt = STRING_TOKEN(STR_SECURITY),
+            help = STRING_TOKEN(STR_EMPTY);
+    #if defined(SHOW_SECURITY_FORMSET)&&(SHOW_SECURITY_FORMSET==0)
+        endif;
+    #endif
+    
+        goto BOOT_MAIN, 
+            prompt = STRING_TOKEN(STR_BOOT),
+            help = STRING_TOKEN(STR_EMPTY);
+            
+        #define FORM_SET_GOTO
+        #include <SetupDefinitions.h>
+        #undef FORM_SET_GOTO
+
+        goto EXIT_MAIN, 
+            prompt = STRING_TOKEN(STR_EXIT),
+            help = STRING_TOKEN(STR_EMPTY);
+
+    endform;
+    
+    #define FORM_SET_FORM
+    #include <SetupDefinitions.h>
+    #undef FORM_SET_FORM
+
+#undef TOP_LEVEL_FORM_SET
+
+    
+#define MAIN_FORM_SET
+    form formid = AUTO_ID(MAIN_MAIN), // MAIN
+        title = STRING_TOKEN(STR_MAIN);
+
+        SUBTITLE(STRING_TOKEN(STR_BIOS))
+        INVENTORY(STRING_TOKEN(STR_BIOS_VENDOR_NAME),STRING_TOKEN(STR_BIOS_VENDOR_VALUE))
+        INVENTORY(STRING_TOKEN(STR_BIOS_CORE_VERSION_NAME),STRING_TOKEN(STR_BIOS_CORE_VERSION_VALUE))
+        INVENTORY(STRING_TOKEN(STR_BIOS_COMPLIANCY_NAME),STRING_TOKEN(STR_BIOS_COMPLIANCY_VALUE))
+        INVENTORY(STRING_TOKEN(STR_BIOS_VERSION_NAME),STRING_TOKEN(STR_BIOS_VERSION_VALUE))
+        INVENTORY(STRING_TOKEN(STR_BIOS_DATE_NAME),STRING_TOKEN(STR_BIOS_DATE_VALUE))
+
+        #define FORM_SET_ITEM
+        #include <SetupDefinitions.h>
+        #undef FORM_SET_ITEM
+        #define FORM_SET_GOTO
+        #include <SetupDefinitions.h>
+        #undef FORM_SET_GOTO
+
+        SEPARATOR
+        suppressif ideqval LANGUAGE_CODES.Value == 0xFFFF;
+            oneof varid   = LANGUAGE.Value,
+                prompt    = STRING_TOKEN(STR_LANGUAGE_PROMPT),
+                help      = STRING_TOKEN(STR_LANGUAGE_HELP),
+                flags = 0, 
+                option text  = STRING_TOKEN(STR_EMPTY), value = 0, flags = 0;
+                option text  = STRING_TOKEN(STR_EMPTY), value = 1, flags = 0;
+                default = 0,
+                default = 0, defaultstore = AmiMfgDefault,
+            endoneof;
+        endif;
+
+        SEPARATOR
+        date 
+            year varid  = Date.Year,
+                prompt  = STRING_TOKEN(STR_DATE),
+                help    = STRING_TOKEN(STR_DATE_HELP),
+                minimum = 2005,
+                maximum = 2099,
+                step    = 1,
+                default = 2014,
+            month varid = Date.Month,
+                prompt  = STRING_TOKEN(STR_DATE),
+                help    = STRING_TOKEN(STR_DATE_HELP),
+                minimum = 1,
+                maximum = 12,
+                step    = 1,
+                default = 1,
+            day varid   = Date.Day,
+                prompt  = STRING_TOKEN(STR_DATE),
+                help    = STRING_TOKEN(STR_DATE_HELP),
+                minimum = 1,
+                maximum = 31,
+                step    = 1,
+                default = 1,
+           flags = STORAGE_TIME,
+        enddate;
+
+        time
+            hour varid  = Time.Hours,
+                prompt  = STRING_TOKEN(STR_TIME),
+                help    = STRING_TOKEN(STR_TIME_HELP),
+                minimum = 0,
+                maximum = 23,
+                step    = 1, 
+                default = 0,
+            minute varid = Time.Minutes,
+                prompt  = STRING_TOKEN(STR_TIME),
+                help    = STRING_TOKEN(STR_TIME_HELP),
+                minimum = 0,
+                maximum = 59,
+                step    = 1,
+                default = 0,
+            second varid = Time.Seconds,
+                prompt  = STRING_TOKEN(STR_TIME),
+                help    = STRING_TOKEN(STR_TIME_HELP),
+                minimum = 0,
+                maximum = 59,
+                step    = 1,
+                default = 0,
+            flags = STORAGE_TIME,
+        endtime;
+
+        SEPARATOR
+        suppressif  ideqval SYSTEM_ACCESS.Access == SYSTEM_PASSWORD_ADMIN;
+            text 
+                help   = STRING_TOKEN(STR_EMPTY),
+                text   = STRING_TOKEN(STR_ACCESS_LEVEL),
+                text   = STRING_TOKEN(STR_ACCESS_USER),
+                flags  = 0,
+                key    = 0;
+        endif;
+        suppressif  ideqval SYSTEM_ACCESS.Access == SYSTEM_PASSWORD_USER;
+            text 
+                help   = STRING_TOKEN(STR_EMPTY),
+                text   = STRING_TOKEN(STR_ACCESS_LEVEL),
+                text   = STRING_TOKEN(STR_ACCESS_ADMIN),
+                flags  = 0,
+                key    = 0;
+        endif;
+
+    endform;
+    #define FORM_SET_FORM
+    #include <SetupDefinitions.h>
+    #undef FORM_SET_FORM
+
+#undef MAIN_FORM_SET
+
+#define ADVANCED_FORM_SET
+#if SETUP_GROUP_DYNAMIC_PAGES
+    varstore DYNAMIC_PAGE_COUNT, key = DYNAMIC_PAGE_COUNT_KEY_ID,  
+        name = DynamicPageCount, guid = DYNAMIC_PAGE_COUNT_GUID;
+#endif
+
+#if DRIVER_HEALTH_SUPPORT
+    varstore DRIVER_HEALTH_ENABLE, key = DRIVER_HEALTH_ENB_KEY_ID,
+        name = DriverHlthEnable, guid = AMITSE_DRIVER_HEALTH_ENB_GUID;
+
+    varstore DRIVER_HEALTH, key = DRIVER_HEALTH_KEY_ID,
+        name = DriverHealthCount, guid = AMITSE_DRIVER_HEALTH_GUID;
+
+    varstore DRIVER_HEALTH_CTRL_COUNT, key = DRIVER_HEALTH_CTRL_KEY_ID,
+        name = DrvHealthCtrlCnt, guid = AMITSE_DRIVER_HEALTH_CTRL_GUID;
+#endif
+
+    form formid = AUTO_ID(ADVANCED_MAIN),
+        title = STRING_TOKEN(STR_ADVANCED);
+
+        #define FORM_SET_ITEM
+        #include <SetupDefinitions.h>
+        #undef FORM_SET_ITEM
+        #define FORM_SET_GOTO
+        #include <SetupDefinitions.h>
+        #undef FORM_SET_GOTO
+
+#if SETUP_GROUP_DYNAMIC_PAGES
+        SEPARATOR
+        suppressif ideqvallist DYNAMIC_PAGE_COUNT.PageCount == 0xFFFF;
+            goto ADVANCED_MAIN,
+                prompt = STRING_TOKEN(STR_EMPTY),
+                help = STRING_TOKEN(STR_EMPTY);
+        endif;
+#endif
+
+#if DRIVER_HEALTH_SUPPORT
+        suppressif ideqvallist DRIVER_HEALTH_ENABLE.Enable == 0xFFFF;
+            goto DRIVER_HEALTH_FORM,
+                prompt = STRING_TOKEN (STR_DRV_HEALTH),
+                help = STRING_TOKEN (STR_DRV_HEALTH_HELP);
+        endif;
+#endif
+
+    endform;
+
+#if DRIVER_HEALTH_SUPPORT
+    form
+        formid = AUTO_ID (DRIVER_HEALTH_FORM),
+        title = STRING_TOKEN (STR_DRV_HEALTH);
+
+        suppressif ideqvallist DRIVER_HEALTH.DrvHandleCount == 0xFFFF;
+            goto DRIVER_HEALTH_SUBFORM,
+                prompt = STRING_TOKEN (STR_EMPTY),
+                help = STRING_TOKEN (STR_DRV_HEALTH_HELP);
+        endif;
+    endform;
+
+    form
+        formid = AUTO_ID (DRIVER_HEALTH_SUBFORM),
+        title = STRING_TOKEN (STR_DRV_HEALTH);
+
+        suppressif ideqvallist DRIVER_HEALTH_CTRL_COUNT.DrvHealthCtrlCnt == 0xFFFF;
+            goto DRIVER_HEALTH_SUBFORM,
+                prompt = STRING_TOKEN (STR_EMPTY),
+                help = STRING_TOKEN (STR_DRV_HEALTH_HELP);
+        endif;
+    endform;
+#endif
+
+    #define FORM_SET_FORM
+    #include <SetupDefinitions.h>
+    #undef FORM_SET_FORM
+#undef ADVANCED_FORM_SET
+
+#define CHIPSET_FORM_SET
+    form formid = AUTO_ID(CHIPSET_MAIN),
+        title = STRING_TOKEN(STR_CHIPSET);
+
+        #define FORM_SET_ITEM
+        #include <SetupDefinitions.h>
+        #undef FORM_SET_ITEM
+        #define FORM_SET_GOTO
+        #include <SetupDefinitions.h>
+        #undef FORM_SET_GOTO
+    endform;
+    #define FORM_SET_FORM
+    #include <SetupDefinitions.h>
+    #undef FORM_SET_FORM
+#undef CHIPSET_FORM_SET
+
+#define SECURITY_FORM_SET
+    form formid = AUTO_ID(SECURITY_MAIN),
+        title = STRING_TOKEN(STR_SECURITY);
+
+        SUBTITLE(STRING_TOKEN(STR_SECURITY_BANNER_ONE))
+
+        SEPARATOR
+
+        SUBTITLE(STRING_TOKEN(STR_SECURITY_BANNER_TWO))
+        SUBTITLE(STRING_TOKEN(STR_SECURITY_BANNER_THREE))
+        SUBTITLE(STRING_TOKEN(STR_SECURITY_BANNER_FOUR))
+        SUBTITLE(STRING_TOKEN(STR_SECURITY_BANNER_FIVE))
+        SUBTITLE(STRING_TOKEN(STR_SECURITY_BANNER_SIX))
+        SUBTITLE(STRING_TOKEN(STR_SECURITY_BANNER_SEVEN))
+        SUBTITLE(STRING_TOKEN(STR_SECURITY_BANNER_EIGHT))
+        SUBTITLE(STRING_TOKEN(STR_SECURITY_BANNER_NINE))
+        SUBTITLE(STRING_TOKEN(STR_SECURITY_BANNER_TEN))
+        INVENTORY(STRING_TOKEN(STR_MIN_PASSWORD_LENGTH_NAME),STRING_TOKEN(STR_MIN_PASSWORD_LENGTH__VALUE))
+        INVENTORY(STRING_TOKEN(STR_MAX_PASSWORD_LENGTH_NAME),STRING_TOKEN(STR_MAX_PASSWORD_LENGTH__VALUE))
+
+        SEPARATOR
+        SEPARATOR
+
+        grayoutif ideqval SYSTEM_ACCESS.Access == SYSTEM_PASSWORD_USER;
+            password varid = AMITSESETUP.AdminPassword,
+                prompt = STRING_TOKEN(STR_ADMIN_PASSWORD),
+                help = STRING_TOKEN(STR_ADMIN_PASSWORD_HELP),
+                flags = 0,
+                minsize = PASSWORD_MIN_SIZE,
+                maxsize = PASSWORD_MAX_SIZE,
+                encoding = 1,
+            endpassword;
+        endif;  // grayout
+
+        password varid = AMITSESETUP.UserPassword,
+            prompt = STRING_TOKEN(STR_USER_PASSWORD),
+            help = STRING_TOKEN(STR_USER_PASSWORD_HELP),
+            flags = 0,
+            minsize = PASSWORD_MIN_SIZE,
+            maxsize = PASSWORD_MAX_SIZE,
+            encoding = 1,
+        endpassword;
+
+        #define FORM_SET_ITEM
+        #include <SetupDefinitions.h>
+        #undef FORM_SET_ITEM
+        #define FORM_SET_GOTO
+        #include <SetupDefinitions.h>
+        #undef FORM_SET_GOTO
+    endform;
+    #define FORM_SET_FORM
+    #include <SetupDefinitions.h>
+    #undef FORM_SET_FORM
+#undef SECURITY_FORM_SET
+
+#define BOOT_FORM_SET
+    form
+        formid = AUTO_ID(BOOT_MAIN),
+        title = STRING_TOKEN(STR_BOOT);
+
+        SUBTITLE(STRING_TOKEN(STR_BOOT_CFG))
+
+        numeric varid = TIMEOUT.Value,
+            prompt = STRING_TOKEN(STR_BOOT_TIMEOUT),
+            help = STRING_TOKEN(STR_BOOT_TIMEOUT_HELP),
+            flags = 0,
+#if SUPPORT_ZERO_BOOT_TIMEOUT
+            minimum = 0x0,
+#else
+            minimum = 0x1,
+#endif
+            maximum = 0xffff,
+            step = 1,
+            default = DEFAULT_BOOT_TIMEOUT,
+            default = DEFAULT_BOOT_TIMEOUT, defaultstore = AmiMfgDefault,
+        endnumeric;
+
+        oneof varid = SETUP_DATA.Numlock,
+            prompt = STRING_TOKEN(STR_CSM_BOOTUP_NUMLOCK),
+            help = STRING_TOKEN(STR_CSM_BOOTUP_NUMLOCK_HELP),
+            flags = RESET_REQUIRED,
+            option text = STRING_TOKEN(STR_CSM_BOOTUP_NUMLOCK_ON), value = 1, flags = 0;
+            option text = STRING_TOKEN(STR_CSM_BOOTUP_NUMLOCK_OFF), value = 0, flags = 0;
+            default = 1,
+            default = 1, defaultstore = AmiMfgDefault,
+        endoneof;
+
+        SEPARATOR
+        checkbox varid = AMITSESETUP.AMISilentBoot,
+            prompt = STRING_TOKEN(STR_QUIET_BOOT),
+            help = STRING_TOKEN(STR_QUIET_BOOT_HELP),
+            flags = 0,
+            key = 0,
+            default = DEFAULT_QUIET_BOOT,
+            default = DEFAULT_QUIET_BOOT, defaultstore = AmiMfgDefault,
+        endcheckbox;
+
+        #define FORM_SET_ITEM
+        #include <SetupDefinitions.h>
+        #undef FORM_SET_ITEM
+
+        SEPARATOR
+        SUBTITLE(STRING_TOKEN(STR_BOOT_ORDER_SUBTITLE))
+        suppressif ideqvallist BOOT_MANAGER.BootCount == 0xFFFF;
+            oneof varid = BOOT_ORDER.Value,
+                prompt = STRING_TOKEN(STR_BOOT_ORDER_X),
+                help = STRING_TOKEN(STR_BOOT_ORDER_HELP),
+                flags = 0,
+                option text = STRING_TOKEN(STR_EMPTY), value = 0, flags = 0;
+                option text = STRING_TOKEN(STR_EMPTY), value = 1, flags = 0;
+                default = 0,
+                default = 0, defaultstore = AmiMfgDefault,
+            endoneof;
+        endif;
+
+#if !defined(GROUP_BOOT_OPTIONS_BY_TAG) || GROUP_BOOT_OPTIONS_BY_TAG==1
+        SEPARATOR
+        suppressif ideqvallist LEGACY_DEV_INFO.GroupCount == 0xFFFF;
+            goto BBS_ORDER_FORM,
+                prompt = STRING_TOKEN(STR_EMPTY),
+                help = STRING_TOKEN(STR_BBS_ORDER_HELP);
+        endif;
+#endif
+        #define FORM_SET_GOTO
+        #include <SetupDefinitions.h>
+        #undef FORM_SET_GOTO
+    endform;
+#if !defined(GROUP_BOOT_OPTIONS_BY_TAG) || GROUP_BOOT_OPTIONS_BY_TAG==1
+    form
+        formid = AUTO_ID(BBS_ORDER_FORM),
+        title = STRING_TOKEN(STR_BOOT);
+
+        suppressif ideqvallist LEGACY_GROUP_INFO.DeviceCount == 0xFFFF;
+            oneof varid = LEGACY_DEV_ORDER.Value,
+                prompt = STRING_TOKEN(STR_BOOT_ORDER_X),
+                help = STRING_TOKEN(STR_BOOT_ORDER_HELP),
+                flags = 0, 
+                option text = STRING_TOKEN(STR_EMPTY), value = 0, flags = 0;
+                option text = STRING_TOKEN(STR_EMPTY), value = 1, flags = 0;
+                default = 0,
+                default = 0, defaultstore = AmiMfgDefault,
+            endoneof;
+        endif;
+    endform;
+#endif
+    #define FORM_SET_FORM
+    #include <SetupDefinitions.h>
+    #undef FORM_SET_FORM
+#undef BOOT_FORM_SET
+
+#define EXIT_FORM_SET
+    form formid = AUTO_ID(EXIT_MAIN),
+        title = STRING_TOKEN(STR_EXIT);
+
+    suppressif ideqval AMI_CALLBACK.Value == SAVE_AND_EXIT_VALUE;
+        goto EXIT_MAIN,
+            prompt = STRING_TOKEN(STR_SAVE_EXIT),
+            help = STRING_TOKEN(STR_SAVE_EXIT_HELP);
+    endif;
+
+    suppressif ideqval AMI_CALLBACK.Value == DISCARD_AND_EXIT_VALUE;
+        goto EXIT_MAIN,
+            prompt = STRING_TOKEN(STR_DISCARD_EXIT),
+            help = STRING_TOKEN(STR_DISCARD_EXIT_HELP);
+    endif;
+
+    suppressif ideqval AMI_CALLBACK.Value == SAVE_AND_RESET_VALUE;
+        goto EXIT_MAIN,
+            prompt = STRING_TOKEN(STR_SAVE_RESET),
+            help = STRING_TOKEN(STR_SAVE_RESET_HELP);
+    endif;
+
+    suppressif ideqval AMI_CALLBACK.Value == DISCARD_AND_RESET_VALUE;
+        goto EXIT_MAIN,
+            prompt = STRING_TOKEN(STR_DISCARD_RESET),
+            help = STRING_TOKEN(STR_DISCARD_RESET_HELP);
+    endif;
+
+    SEPARATOR
+    SUBTITLE(STRING_TOKEN(STR_SAVE_TITLE))
+    suppressif ideqval AMI_CALLBACK.Value == SAVE_VALUE;
+        goto EXIT_MAIN,
+            prompt = STRING_TOKEN(STR_SAVE),
+            help = STRING_TOKEN(STR_SAVE_HELP);
+    endif;
+
+    suppressif ideqval AMI_CALLBACK.Value == DISCARD_VALUE;
+        goto EXIT_MAIN,
+            prompt = STRING_TOKEN(STR_DISCARD),
+            help = STRING_TOKEN(STR_DISCARD_HELP);
+    endif;
+
+    SEPARATOR
+    suppressif ideqval AMI_CALLBACK.Value == RESTORE_DEFAULTS_VALUE;
+        goto EXIT_MAIN,
+            prompt = STRING_TOKEN(STR_RESTORE_DEFAULTS),
+            help = STRING_TOKEN(STR_RESTORE_DEFAULTS_HELP);
+    endif;
+
+    suppressif ideqval AMI_CALLBACK.Value == SAVE_USER_DEFAULTS_VALUE;
+        goto EXIT_MAIN,
+            prompt = STRING_TOKEN(STR_SAVE_USER_DEFAULTS),
+            help = STRING_TOKEN(STR_SAVE_USER_DEFAULTS_HELP);
+    endif;
+
+    suppressif ideqval AMI_CALLBACK.Value == RESTORE_USER_DEFAULTS_VALUE;
+        goto EXIT_MAIN,
+            prompt = STRING_TOKEN(STR_RESTORE_USER_DEFAULTS),
+            help = STRING_TOKEN(STR_RESTORE_USER_DEFAULTS_HELP);
+    endif;
+
+    SEPARATOR
+    SUBTITLE(STRING_TOKEN(STR_BOOT_OPTIONS))
+#if SETUP_SHOW_ALL_BBS_DEVICES
+    suppressif ideqvallist BOOT_NOW_COUNT.BootCount == 0xFFFF;
+#else
+    suppressif ideqvallist BOOT_MANAGER.BootCount == 0xFFFF;
+#endif
+        goto EXIT_MAIN,
+            prompt = STRING_TOKEN(STR_EMPTY),
+            help = STRING_TOKEN(STR_EMPTY);
+    endif;
+
+#if !Shell_SUPPORT
+    SEPARATOR
+    suppressif ideqvallist EFI_SHELL.Value == 1;
+        goto EXIT_MAIN,
+            prompt = STRING_TOKEN(STR_EFI_SHELL),
+#if EFI64
+            help = STRING_TOKEN(STR_EFI_SHELL_HELP_IPF);
+#elif EFIx64
+            help = STRING_TOKEN(STR_EFI_SHELL_HELP_X64);
+#else
+            help = STRING_TOKEN(STR_EFI_SHELL_HELP);
+#endif
+    endif;
+#endif
+
+        #define FORM_SET_ITEM
+        #include <SetupDefinitions.h>
+        #undef FORM_SET_ITEM
+        #define FORM_SET_GOTO
+        #include <SetupDefinitions.h>
+        #undef FORM_SET_GOTO
+    endform;
+
+    #define FORM_SET_FORM
+    #include <SetupDefinitions.h>
+    #undef FORM_SET_FORM
+#undef EXIT_FORM_SET
+
+endformset;
+//**********************************************************************
+//**********************************************************************
+//**                                                                  **
+//**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+//**                                                                  **
+//**                       All Rights Reserved.                       **
+//**                                                                  **
+//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093        **
+//**                                                                  **
+//**                       Phone: (770)-246-8600                      **
+//**                                                                  **
+//**********************************************************************
+//**********************************************************************

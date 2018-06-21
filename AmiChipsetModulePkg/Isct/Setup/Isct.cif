@@ -1,0 +1,10 @@
+<component>
+	name = "IsctSetup"
+	category = ModulePart
+	LocalRoot = "AmiChipsetModulePkg/Isct/Setup"
+	RefName = "IsctSetup"
+[files]
+"Isct.sd"
+"IsctSetup.sdl"
+"Isct.uni"
+<endComponent>

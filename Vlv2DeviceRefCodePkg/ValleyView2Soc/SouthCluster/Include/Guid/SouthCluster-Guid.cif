@@ -1,0 +1,12 @@
+<component>
+	name = "SouthCluster-Guid"
+	category = ModulePart
+	LocalRoot = "Vlv2DeviceRefCodePkg\ValleyView2Soc\SouthCluster\Include\Guid"
+	RefName = "Vlv2DeviceRefCodePkg.ValleyView2Soc.ValleyView2Soc-SouthCluster.SouthCluster-Include.SouthCluster-Guid"
+[files]
+"PchInitVar.h"
+"SataControllerGuid.h"
+"SmbusArpMap.h"
+"Vlv2Variable.h"
+"S3SupportHob.h"
+<endComponent>

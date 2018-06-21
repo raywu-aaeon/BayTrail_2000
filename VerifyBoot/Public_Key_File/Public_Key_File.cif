@@ -1,0 +1,9 @@
+<component>
+	name = "Public Key File"
+	category = ModulePart
+	LocalRoot = "VerifyBoot\Public_Key_File\"
+	RefName = "VerifyBoot.Public_Key_File"
+[files]
+"prikey.pem"
+"pubkey.pem"
+<endComponent>

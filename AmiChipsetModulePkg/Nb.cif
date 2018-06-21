@@ -1,0 +1,20 @@
+<component>
+	name = "Intel-NorthCluster Client"
+	category = eChipset
+	LocalRoot = "AmiChipsetModulePkg\"
+	RefName = "AmiChipsetModulePkg.NorthCluster"
+[inf]
+"NB\LegacyRegion2OnLegacyRegionThunk\LegacyRegion2OnLegacyRegionThunk.inf"
+[files]
+"Nb.sdl"	
+"Nb.mak"	
+"NB\ReleaseNotes.chm"	
+[parts]
+"AmiChipsetModulePkg.NbInit"
+"AmiChipsetModulePkg.NbSetup"
+"AmiChipsetModulePkg.NbAsl"
+"AmiChipsetModulePkg.NbLibrary"
+"AmiChipsetModulePkg.NbInclude"
+"AmiChipsetModulePkg.GopDriver"
+"AmiChipsetModulePkg.IgdRom"
+<endComponent>

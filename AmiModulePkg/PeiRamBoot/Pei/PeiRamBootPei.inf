@@ -1,0 +1,81 @@
+#*************************************************************************
+#*************************************************************************
+#**                                                                     **
+#**        (C)Copyright 1985-2012, American Megatrends, Inc.            **
+#**                                                                     **
+#**                       All Rights Reserved.                          **
+#**                                                                     **
+#**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093           **
+#**                                                                     **
+#**                       Phone: (770)-246-8600                         **
+#**                                                                     **
+#*************************************************************************
+#*************************************************************************
+## @file
+#   
+##
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = PeiRamBootPei
+  FILE_GUID                      = 08efd15d-ec55-4023-b648-7ba40df7d05d
+  MODULE_TYPE                    = PEIM
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = PeiRamBootEntry
+
+[Sources]  
+  PeiRamBoot.c
+  PeiRamBootHook.c
+#-  PeiMain.h # Need PEI_CORE_INSTANCE struct
+
+[Packages]
+  AmiModulePkg/AmiModulePkg.dec
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec # For consuming PeiMain.h
+  AmiCompatibilityPkg/AmiCompatibilityPkg.dec
+  AmiCryptoPkg/AmiCryptoPkg.dec
+
+[LibraryClasses]
+  AmiPeiLib
+  PeimEntryPoint
+  AmiRomLayoutLib
+
+[Guids]
+#-  gPrKeyFfsFileRawGuid 
+#-  gSmbiosFlashDataFfsGuid 
+#-  gHobRomImageGuid 
+#-  gRomCacheEnablePpiGuid 
+#-  gRomImageAddressGuid 
+
+[Ppis]
+  gEfiPeiReadOnlyVariable2PpiGuid
+  gEfiPeiMemoryDiscoveredPpiGuid
+  gEfiPeiBootInRecoveryModePpiGuid
+  gEfiPeiRecoveryModulePpiGuid 
+  gEfiPeiFirmwareVolumeInfoPpiGuid
+  
+
+[Depex]
+  gEfiPeiCpuIoPpiInstalledGuid AND
+  gEfiPeiReadOnlyVariable2PpiGuid AND
+  gEfiPciCfg2PpiGuid AND
+  gEfiPeiStallPpiGuid 
+
+# For consuming PeiMain.h
+[FixedPcd]
+  gEfiMdeModulePkgTokenSpaceGuid.PcdPeiCoreMaxFvSupported             ## CONSUMES
+  gEfiMdeModulePkgTokenSpaceGuid.PcdPeiCoreMaxPeimPerFv               ## CONSUMES
+  gEfiMdeModulePkgTokenSpaceGuid.PcdPeiCoreMaxPpiSupported            ## CONSUMES
+  
+#*************************************************************************
+#*************************************************************************
+#**                                                                     **
+#**        (C)Copyright 1985-2012, American Megatrends, Inc.            **
+#**                                                                     **
+#**                       All Rights Reserved.                          **
+#**                                                                     **
+#**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093           **
+#**                                                                     **
+#**                       Phone: (770)-246-8600                         **
+#**                                                                     **
+#*************************************************************************
+#*************************************************************************

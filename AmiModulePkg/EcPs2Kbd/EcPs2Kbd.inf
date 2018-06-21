@@ -1,0 +1,61 @@
+#*************************************************************************
+#*************************************************************************
+#**                                                                     **
+#**        (C)Copyright 1985-2013, American Megatrends, Inc.            **
+#**                                                                     **
+#**                       All Rights Reserved.                          **
+#**                                                                     **
+#**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093           **
+#**                                                                     **
+#**                       Phone: (770)-246-8600                         **
+#**                                                                     **
+#*************************************************************************
+#*************************************************************************
+## @file
+#   
+##
+
+[Defines]
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = EcPs2Kbd
+  FILE_GUID                      = 2F72309E-D5B0-4a9d-84A9-1AB38C698F78  
+  MODULE_TYPE                    = DXE_DRIVER
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = EcPs2KbdEntry
+
+[Sources]
+  EcPs2Kbd.c
+  EcPs2Kbd.h
+
+[LibraryClasses]
+  AmiDxeLib
+  UefiDriverEntryPoint
+
+[Packages]
+  AmiCompatibilityPkg\AmiCompatibilityPkg.dec
+  MdePkg\MdePkg.dec
+
+[Guids]
+  gEfiDxeServicesTableGuid
+  
+[Protocols]
+  gEfiDevicePathProtocolGuid
+
+[Depex]
+  TRUE
+
+#*************************************************************************
+#*************************************************************************
+#**                                                                     **
+#**        (C)Copyright 1985-2013, American Megatrends, Inc.            **
+#**                                                                     **
+#**                       All Rights Reserved.                          **
+#**                                                                     **
+#**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093           **
+#**                                                                     **
+#**                       Phone: (770)-246-8600                         **
+#**                                                                     **
+#*************************************************************************
+#*************************************************************************

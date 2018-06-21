@@ -1,0 +1,18 @@
+<component>
+	name = "NVRAM"
+	category = ModulePart
+	LocalRoot = "AmiModulePkg\NVRAM\"
+	RefName = "AmiModulePkg.NVRAM"
+[files]
+"NvramElinkTempl.txt"
+"NVRAM.chm"		
+"NVRAM.sdl"		
+"NvramFdfFileStatement.txt"
+"FvMainDefaultsFdfFileStatement.txt"
+[INF]
+"NvramPei.inf"
+"NvramDxe.inf"
+"NvramSmm.inf"
+"NvramSmi.inf"
+"NvramSmiDxe.inf"
+<endComponent>

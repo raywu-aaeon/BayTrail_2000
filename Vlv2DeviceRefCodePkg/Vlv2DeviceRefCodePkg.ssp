@@ -1,0 +1,65 @@
+//
+// This AMI Setup Script Processor (SSP) file contains setup items that
+// are related to the CMOS Manager.
+//
+//*************************************************************************
+//*************************************************************************
+//**                                                                     **
+//**        (C)Copyright 1985-2012, American Megatrends, Inc.            **
+//**                                                                     **
+//**                       All Rights Reserved.                          **
+//**                                                                     **
+//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093           **
+//**                                                                     **
+//**                       Phone: (770)-246-8600                         **
+//**                                                                     **
+//*************************************************************************
+//*************************************************************************
+// $Header: $
+//
+// $Revision: $
+//
+// $Date: $
+//***************************************************************************
+
+//***************************************************************************
+
+//---------------------------------------------------------------------------
+// Vlv2DeviceRefCodePkg CMOS Manager non-volatile statuss
+//
+//---------------------------------------------------------------------------
+
+NvramField (VLV_XHCI_MODE_OFFSET)
+  OptionBits  = 8
+    Default     = 00h
+  Checksum    = NO
+    Location    = MKF_XHCI_MODE_CMOS, 0FFh
+EndNvramField
+
+NvramField (VLV_PS2_VCC_VNN_OFFSET)
+  OptionBits  = 8
+    Default     = 00h
+  Checksum    = NO
+    Location    = MKF_CMOS_PS2_VCC_VNN_CONTROL, 0FFh
+EndNvramField
+
+NvramField (VLV_CMOS_MEM_CHANNEL2_CONTROL)
+  OptionBits  = 8
+    Default     = MKF_DEFAULT_CMOS_MEM_CHANNEL2_CONTROL
+  Checksum    = NO
+    Location    = MKF_CMOS_MEM_CHANNEL2_CONTROL, 0FFh
+EndNvramField
+//---------------------------------------------------------------------------
+//*************************************************************************
+//*************************************************************************
+//**                                                                     **
+//**        (C)Copyright 1985-2012, American Megatrends, Inc.            **
+//**                                                                     **
+//**                       All Rights Reserved.                          **
+//**                                                                     **
+//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093           **
+//**                                                                     **
+//**                       Phone: (770)-246-8600                         **
+//**                                                                     **
+//*************************************************************************
+//*************************************************************************

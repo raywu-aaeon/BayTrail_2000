@@ -1,0 +1,75 @@
+#/*++
+#
+# Copyright (c)  1999 - 2011 Intel Corporation. All rights reserved
+# This software and associated documentation (if any) is furnished
+# under a license and may only be used or copied in accordance
+# with the terms of the license. Except as permitted by such
+# license, no part of this software or documentation may be
+# reproduced, stored in a retrieval system, or transmitted in any
+# form or by any means without the express written consent of
+# Intel Corporation.
+
+#
+#  Module Name:
+#
+#   SeCPolicyInitDxe.inf
+#
+#  Abstract:
+#
+#    Implement platform SeC t policy
+#
+#--*/
+
+[defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = SeCPolicyInitDxe
+  FILE_GUID                      = 17D09362-326C-4920-A50C-76F8A116A093
+  MODULE_TYPE                    = DXE_DRIVER
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = SeCPlatformPolicyEntryPoint
+
+[Sources]
+  SeCPolicyInitDxe.c
+  SeCPolicyInitDxe.h
+
+[Packages]
+  SecurityPkg/SecurityPkg.dec
+  MdePkg/MdePkg.dec
+  Vlv2DeviceRefCodePkg/PlatformPkg.dec
+  IA32FamilyCpuPkg/IA32FamilyCpuPkg.dec 
+  Vlv2DeviceRefCodePkg/Vlv2DeviceRefCodePkg.dec
+  AmiCompatibilityPkg/AmiCompatibilityPkg.dec
+  CryptoPkg/CryptoPkg.dec
+
+[LibraryClasses]
+  DebugLib
+  BaseLib
+  PciLib
+  IoLib
+  UefiDriverEntryPoint
+  MemoryAllocationLib
+  SeCLib
+  UefiLib
+##  Tpm2CommandLib ##EIP154718
+##  Tpm2DeviceLib ##EIP154718
+  BaseCryptLib
+
+[Protocols]
+  gDxePlatformSeCPolicyGuid
+  gEfiSeCOperationProtocolGuid
+  gEfiHeciProtocolGuid
+  gEfiGlobalNvsAreaProtocolGuid
+  
+[Guids]
+  gEfiSetupVariableGuid
+  gSeCPlatformReadyToBootGuid ##EIP142314
+
+[Pcd]
+  gEfiMdePkgTokenSpaceGuid.PcdPciExpressBaseAddress
+  gEfiVLVTokenSpaceGuid.PcdFTPMNotRespond
+  gEfiVLVTokenSpaceGuid.PcdFTPMErrorSkip
+  
+[Depex]
+  gEfiVariableArchProtocolGuid        AND
+  gEfiVariableWriteArchProtocolGuid
+

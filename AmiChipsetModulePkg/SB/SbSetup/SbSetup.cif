@@ -1,0 +1,12 @@
+<component>
+	name = "SB Setup"
+	category = ModulePart
+	LocalRoot = "AmiChipsetModulePkg\SB\SbSetup"
+	RefName = "AmiChipsetModulePkg.SbSetup"
+[files]
+"Sb.sd"
+"Sb.uni"
+"SbSetup.c"
+"SbSetup.sdl"	
+"SbSetupEmmcMid.txt"     #EIP 177820 (show eMMC storage infomation)
+<endComponent>

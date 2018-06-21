@@ -1,0 +1,15 @@
+<component>
+	name = "SouthCluster-SampleCode"
+	category = ModulePart
+	LocalRoot = "Vlv2DeviceRefCodePkg\ValleyView2Soc\SouthCluster\SampleCode"
+	RefName = "Vlv2DeviceRefCodePkg.ValleyView2Soc.ValleyView2Soc-SouthCluster.SouthCluster-SampleCode"
+[files]
+"SampleCode.dec"
+[parts]
+"Vlv2DeviceRefCodePkg.ValleyView2Soc.ValleyView2Soc-SouthCluster.SouthCluster-SampleCode.SouthCluster-SampleCodeInclude"
+"Vlv2DeviceRefCodePkg.ValleyView2Soc.ValleyView2Soc-SouthCluster.SouthCluster-SampleCode.SouthCluster-SampleCodeLibrary"
+[inf]
+"BiosWriteProtect\Smm\PchBiosWriteProtect.inf"
+"PchPolicyInit\Dxe\PchPolicyInitDxe.inf"
+"PchPolicyInit\Pei\PchPolicyInitPei.inf"
+<endComponent>

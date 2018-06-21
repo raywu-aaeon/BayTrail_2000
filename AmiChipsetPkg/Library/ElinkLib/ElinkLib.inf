@@ -1,0 +1,31 @@
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = ElinkLib
+  FILE_GUID                      = 806595AC-4B47-4467-B84F-B569ADA7196E
+  MODULE_TYPE                    = DXE_DRIVER
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = ElinkLib|DXE_DRIVER DXE_RUNTIME_DRIVER DXE_SMM_DRIVER
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64
+#
+#  
+#
+
+[Sources]
+  ElinkLib.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  AmiChipsetPkg/AmiChipsetPkg.dec
+  AmiCompatibilityPkg/AmiCompatibilityPkg.dec 
+  
+[LibraryClasses]
+  MemoryAllocationLib
+
+
+
+

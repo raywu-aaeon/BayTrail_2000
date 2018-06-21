@@ -1,0 +1,60 @@
+<component>
+	name = "Wrapper"
+	category = ModulePart
+	LocalRoot = "Vlv2DeviceRefCodePkg\Wrapper\"
+	RefName = "Vlv2DeviceRefCodePkg.Wrapper"
+[INF]
+"AcpiPlatform\AcpiPlatform.inf"
+"AcpiS3SaveDxe\AcpiS3SaveDxe.inf"
+"AcpiSupportDxe\AcpiSupportDxe.inf"
+"AcpiVariableHobOnSmramReserveHobThunk\AcpiVariableHobOnSmramReserveHobThunk.inf"
+"CpuIoDxe\CpuIoDxe.inf"
+"AcpiTables\DptfAsl.inf"
+"AcpiTables\DsdtAslW7.inf"
+"AcpiTables\SgAsl.inf"
+"DeviceFwUpdate\EsrtDxe\EsrtDxe.inf"  #//<EIP150193+>
+"FotaDxe\FotaDxe.inf"  #//<EIP150193+>
+"FvOnFv2Thunk\FvOnFv2Thunk.inf"
+"Lpit\Dxe\Lpit.inf"
+"LpssDxe\LpssDxe.inf"
+"LpssSmm\LpssSmm.inf"
+"NullMemoryTestDxe\NullMemoryTestDxe.inf"
+"PciBusDxe\PciBusDxe.inf"
+"PlatformCpuPolicy\PlatformCpuPolicy.inf"
+"PlatformDxe\Platform.inf"
+"PlatformGopPolicy\PlatformGopPolicy.inf"
+"PlatformInitPei\PlatformEarlyInit.inf"
+"PlatformPei\PlatformPei.inf"
+"SaveConfigMemData\SaveConfigMemData.inf"
+"PlatformPmic\PlatformPmic.inf"
+"ScBiosWriteProtect\Smm\ScBiosWriteProtect.inf"
+"SeCPolicyInitDxe\SeCPolicyInitDxe.inf"
+"SmBios131\SmBios131.inf"
+"Smbus2Ppi\PchSmbus2ArpDisabled.inf"
+"DPTF\Dxe\DPTF.inf"
+"SmmBaseHelper\SmmBaseHelper.inf"
+"SmmBaseOnSmmBase2Thunk\SmmBaseOnSmmBase2Thunk.inf"
+"SmmControl2OnSmmControlThunk\SmmControl2OnSmmControlThunk.inf"
+"SmmSwDispatch2OnSmmSwDispatchThunk\SmmSwDispatch2OnSmmSwDispatchThunk.inf"
+"SmmSxDispatch2OnSmmSxDispatchThunk\SmmSxDispatch2OnSmmSxDispatchThunk.inf"
+"SmmGpiDispatch2OnSmmGpiDispatchThunk\SmmGpiDispatch2OnSmmGpiDispatchThunk.inf"
+"SmmPBDispatch2OnSmmPBDispatchThunk\SmmPBDispatch2OnSmmPBDispatchThunk.inf"
+"SmmUsbDispatch2OnSmmUsbDispatchThunk\SmmUsbDispatch2OnSmmUsbDispatchThunk.inf"
+"SmramSaveInfoHandlerSmm\SmramSaveInfoHandlerSmm.inf"
+"SmmPTDispatch2OnSmmPTDispatchThunk\SmmPTDispatch2OnSmmPTDispatchThunk.inf"
+"Override\IntelFrameworkModulePkg\Library\DxeCapsuleLib\DxeCapsuleLib.inf"  #//<EIP150193+>
+"Override\MdeModulePkg\Universal\CapsuleRuntimeDxe\CapsuleRuntimeDxe.inf"  #//<EIP150193+>
+"TdtPlatformPolicy\TdtPlatformPolicy.inf"
+"AcpiTables\DptfAsl.inf"
+"TxeFwDowngradeDxe\TxeFwDowngradeDxe.inf"
+"HpetTimerProtocol\HpetTimerProtocol.inf" #EIP144604
+"WrapperAcpi\Dxe\WrapperAcpi.inf" #EIP314798
+[files]
+"Wrapper.sdl"	
+[parts]
+"Vlv2DeviceRefCodePkg.AcpiAslWrap"
+"Vlv2DeviceRefCodePkg.Wrapper.Library"
+"Vlv2DeviceRefCodePkg.Wrapper-Include"
+"Vlv2DeviceRefCodePkg.PlatformSetup"
+"Vlv2DeviceRefCodePkg.IntelSaGopSetup" #CSP20131224
+<endComponent>

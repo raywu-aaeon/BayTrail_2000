@@ -1,0 +1,67 @@
+#/** @file
+#
+#  Copyright (c) 2012, Intel Corporation. All rights reserved. <BR>
+#  This software and associated documentation
+#  (if any) is furnished under a license and may only be used or
+#  copied in accordance with the terms of the license. Except as
+#  permitted by such license, no part of this software or
+#  documentation may be reproduced, stored in a retrieval system, or
+#  transmitted in any form or by any means without the express
+#  written consent of Intel Corporation.
+#
+#**/
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = RngDxeBaseCrypto
+  FILE_GUID                      = 1CD8A210-60CC-4f73-A7BB-7A912B9CBBA6
+  MODULE_TYPE                    = UEFI_DRIVER
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = UefiMain
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64 IPF EBC
+#
+#  DRIVER_BINDING                =  gSampleDrvDriverBinding
+#  COMPONENT_NAME                =  gSampleDrvComponentName
+#  COMPONENT_NAME2               =  gSampleDrvComponentName2
+#
+
+[Sources.common]
+  RngDxeBaseCrypto.c
+  ComponentName.h
+  ComponentName.c
+  Config.c
+  Driver.h
+  Driver.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  CryptoPkg/CryptoPkg.dec
+  Vlv2TbltDevicePkg/Restricted/Override/SecurityPkg/SecurityPkg.dec
+
+[LibraryClasses]
+  UefiBootServicesTableLib
+  UefiRuntimeServicesTableLib
+  BaseLib
+  BaseMemoryLib
+  BaseCryptLib
+  MemoryAllocationLib
+  UefiDriverEntryPoint
+  DebugLib
+  UefiLib
+
+[Guids]
+  gEfiRngAlgorithmSp800_90Hash256Guid
+  gEfiRngAlgorithmSp800_90Hmac256Guid 
+  gEfiRngAlgorithmSp800_90Ctr256Guid
+  gEfiRngAlgorithmX9_31_3DesGuid
+  gEfiRngAlgorithmX9_31AesGuid
+  gEfiRngAlgorithmRawGuid
+
+[Protocols]
+  gEfiRngProtocolGuid
+  gEfiRngServiceBindingProtocolGuid
+

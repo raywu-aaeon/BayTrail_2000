@@ -1,0 +1,19 @@
+<component>
+	name = "AmiCompatibilityPkg"
+	category = eCore
+	LocalRoot = "AmiCompatibilityPkg\"
+	RefName = "AmiCompatibilityPkg"
+[files]
+"AmiCompatibilityPkg.sdl"	
+"AmiCompatibilityPkg.mak"	
+"AmiCompatibilityPkg.dec"	
+"FontFileStatement.txt"
+[parts]
+"AmiCompatibilityPkg.Include"
+"AmiCompatibilityPkg.AmiCspLib" 
+"AmiCompatibilityPkg.Board"
+[INF]
+"Library\AmiPeiLib.inf"	
+"Library\AmiDxeLib.inf"	
+"Library\AmiCriticalSectionCompatLib.inf"	
+<endComponent>

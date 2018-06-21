@@ -1,0 +1,20 @@
+
+[defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = SgAsl
+  FILE_GUID                      = 4F95DEEF-04AE-4b2d-94C2-923081C3443A
+  MODULE_TYPE                    = USER_DEFINED
+  VERSION_STRING                 = 1.0
+  EDK_RELEASE_VERSION            = 0x00020000
+  EFI_SPECIFICATION_VERSION      = 0x00020000
+
+[sources.common]
+  ../../AcpiTablesPCAT\SwitchableGraphics\Pch\SgSsdtPch.asl
+
+[Packages]
+  MdePkg/MdePkg.dec
+  Vlv2DeviceRefCodePkg/PlatformPkg.dec
+  AmiCompatibilityPkg/AmiCompatibilityPkg.dec #EIP149863 Switchable Graphic generic support for BYT-DM platform
+  
+[BuildOptions.common]
+ *_*_*_ASLPP_FLAGS = /D AMI_ACPI_SUPPORT /FITokenAsl.h #EIP149863 Switchable Graphic generic support for BYT-DM platform

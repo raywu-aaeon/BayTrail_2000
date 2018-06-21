@@ -1,0 +1,11 @@
+<component>
+	name = "CRB Setup"
+	category = ModulePart
+	LocalRoot = "BayTrailPkg\CrbSetup\"
+	RefName = "BayTrailPkg.Setup"
+[files]
+"CrbSetup.sdl"	
+"Crb.sd"	
+"Crb.uni"	
+"CrbSetup.c"	
+<endComponent>

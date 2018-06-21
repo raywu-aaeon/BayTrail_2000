@@ -1,0 +1,10 @@
+<component>
+	name = "TxeLibrary"
+	category = ModulePart
+	LocalRoot = "Vlv2DeviceRefCodePkg\Txe\Library\"
+	RefName = "Vlv2DeviceRefCodePkg.Txe.TxeLibrary"
+[inf]
+"FmiLib\FmiLib.inf"
+"SeCLib\SeCLib.inf"
+"Tpm2DeviceLibSeC\Tpm2DeviceLibSeC.inf"
+<endComponent>

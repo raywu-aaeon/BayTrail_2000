@@ -1,0 +1,14 @@
+<component>
+	name = "FsRecovery"
+	category = ModulePart
+	LocalRoot = "AmiModulePkg\Recovery\FsRecovery\"
+	RefName = "FsRecovery"
+[INF]
+"FsRecovery.inf"
+"NTFSRecovery.inf"
+"EXTRecovery.inf"
+"ExFatRecovery.inf"
+[files]
+"FsRecovery.sdl"	
+"FsRecovery.txt"
+<endComponent>

@@ -1,0 +1,26 @@
+[Defines]
+INF_VERSION     = 0x00010015
+VERSION_STRING  = 1.0
+BASE_NAME       = ShaLib
+MODULE_TYPE     = DXE_DRIVER
+LIBRARY_CLASS   = ShaLib
+FILE_GUID 		= A646AB01-E90D-4da1-A2FA-9B0264287004
+
+[binaries.IA32]
+LIB | ShaLibPei.lib
+
+[LibraryClasses.IA32, LibraryClasses.X64]
+BaseAmiTcmlib
+   
+[LibraryClasses]
+AmiDxeLib
+
+[binaries.X64]
+LIB | ShaLib.lib
+
+[Packages]
+AmiCompatibilityPkg\AmiCompatibilityPkg.dec
+MdePkg\MdePkg.dec
+AmiModulePkg\AmiModulePkg.dec
+MdeModulePkg\MdeModulePkg.dec
+

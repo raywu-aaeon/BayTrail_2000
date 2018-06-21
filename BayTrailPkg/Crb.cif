@@ -1,0 +1,25 @@
+<component>
+	name = "Bay Trail Client"
+	category = eBoard
+	Rank = 59
+	LocalRoot = "BayTrailPkg\"
+	RefName = "BayTrailPkg"
+[INF]
+"Dxe\CrbDxe.inf"
+"Pei\CrbPei.inf"
+"Smm\CrbSmi.inf"
+[files]
+"BayTrailPkg.dec"	
+"Csp.sdl"	
+"Crb.sdl"	
+"Crb.chm"	
+"Crb.mak"	
+"FvRsv.bin"	
+"BYTI_36_2_8_3798.bsf"	
+"BYTI_36_2_8_3798.dat"	
+[parts]
+"BayTrailPkg.Setup"
+"BayTrailPkg.Include"
+"BayTrailPkg.LibraryInstances"
+"BayTrailPkg.CrbSmiFlashHook"
+<endComponent>

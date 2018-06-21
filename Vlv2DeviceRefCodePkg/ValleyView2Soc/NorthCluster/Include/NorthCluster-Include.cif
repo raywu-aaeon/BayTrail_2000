@@ -1,0 +1,26 @@
+<component>
+	name = "NorthCluster-Include"
+	category = ModulePart
+	LocalRoot = "Vlv2DeviceRefCodePkg\ValleyView2Soc\NorthCluster\Include"
+	RefName = "Vlv2DeviceRefCodePkg.ValleyView2Soc.ValleyView2Soc-NorthCluster.NorthCluster-Include"
+[files]
+"CpuBaseLib.h"
+"CpuCsr.h"
+"CpuDataStruct.h"
+"CpuRegs.h"
+"CpuType.h"
+"Imemory.h"
+"McAccess.h"
+"MchRegs.h"
+"MMRC_Types.h"
+"Mrc.h"
+"PlatformBaseAddresses.h"
+"Spd.h"
+"Valleyview.h"
+"VlvAccess.h"
+"VlvCommonDefinitions.h"
+[parts]
+"Vlv2DeviceRefCodePkg.ValleyView2Soc.ValleyView2Soc-NorthCluster.NorthCluster-Include.NorthCluster-Guid"
+"Vlv2DeviceRefCodePkg.ValleyView2Soc.ValleyView2Soc-NorthCluster.NorthCluster-Include.NorthCluster-Ppi"
+"Vlv2DeviceRefCodePkg.ValleyView2Soc.ValleyView2Soc-NorthCluster.NorthCluster-Include.NorthCluster-Protocol"
+<endComponent>

@@ -1,0 +1,207 @@
+//**********************************************************************
+//**********************************************************************
+//**                                                                  **
+//**        (C)Copyright 1987-2014, American Megatrends, Inc.         **
+//**                                                                  **
+//**                       All Rights Reserved.                       **
+//**                                                                  **
+//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093           **
+//**                                                                  **
+//**                       Phone: (770)-246-8600                      **
+//**                                                                  **
+//**********************************************************************
+//**********************************************************************
+
+//**********************************************************************
+// $HeadURL:: $
+//
+// $Rev:: $
+//
+// $Date:: $ 
+//**********************************************************************
+// Revision History
+// ----------------
+// $Log: /Alaska/SOURCE/CPU/Intel/Cedarview/PPM/AmiPpmPolicy/AmiPpmPolicy.sd $
+// 
+// 2     1/06/11 12:52a Davidhsieh
+// [TAG]  		None
+// [Category]  	New Feature
+// [Description]  	Add more setup items for PPM policy.
+// 
+// 1     11/23/10 2:00a Davidhsieh
+//
+//
+//**********************************************************************
+
+//<AMI_FHDR_START>
+//---------------------------------------------------------------------------
+// Name:	AmiPpmPolicy.sd
+//
+// Description:	Setup definition for Sandybridge PPM.
+//
+//---------------------------------------------------------------------------
+//<AMI_FHDR_END>
+
+#ifdef SETUP_DATA_DEFINITION
+/***********************************************************/
+/* Put NVRAM data definitions here.
+/* For example:	UINT8 Data1;
+/* These definitions will be converted by the build process
+/* to a definitions of SETUP_DATA fields.
+/***********************************************************/
+//    UINT8   PpmEIST;
+    UINT8   PpmCxEnable;
+    UINT8   PpmEnhCxEnable;
+    UINT8   PpmHardC4E;
+    UINT8   PpmC4Enable;    
+    UINT8   PpmC6Enable;
+    UINT8   PpmC7Enable;
+    UINT8   PpmTStates;
+    UINT8   PpmMaxCx;
+    UINT8   PpmS0ix;
+#endif
+
+#if defined(VFRCOMPILE) && !defined(CONTROLS_ARE_DEFINED)
+#define CONTROL_DEFINITION
+#endif
+
+#ifdef CONTROL_DEFINITION
+
+#define PPM_ONEOF_PPMEIST\
+    oneof varid     = SETUP_DATA.EIST,\
+        prompt      = STRING_TOKEN(STR_PPM_EIST_PROMPT),\
+        help        = STRING_TOKEN(STR_PPM_EIST_PROMPT_HELP),\
+        option text = STRING_TOKEN(STR_CPU_DISABLED),	value = 0, flags = RESET_REQUIRED; \
+        option text = STRING_TOKEN(STR_CPU_ENABLED),	value = 1, flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;\
+    endoneof;    
+
+#define PPM_ONEOF_PPMCXENABLE\
+    oneof varid     = SETUP_DATA.PpmCxEnable,\
+        prompt      = STRING_TOKEN(STR_PPM_CSTATE_PROMPT),\
+        help        = STRING_TOKEN(STR_PPM_CSTATE_PROMPT_HELP),\
+        option text = STRING_TOKEN(STR_PPM_DISABLED),	value = 0, flags = RESET_REQUIRED;\
+        option text = STRING_TOKEN(STR_PPM_ENABLED),	value = 1, flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;\
+    endoneof;
+
+#define PPM_ONEOF_PPMENHCXENABLE\
+    oneof varid     = SETUP_DATA.PpmEnhCxEnable,\
+        prompt      = STRING_TOKEN(STR_PPM_ENCSTATE_PROMPT),\
+        help        = STRING_TOKEN(STR_PPM_ENCSTATE_PROMPT_HELP),\
+        option text = STRING_TOKEN(STR_PPM_DISABLED),	value = 0, flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;\
+        option text = STRING_TOKEN(STR_PPM_ENABLED),	value = 1, flags = RESET_REQUIRED;\
+    endoneof;
+    
+#if IVI_PF_ENABLE
+#define PPM_ONEOF_PPMMAXCX\
+        oneof varid     = SETUP_DATA.PpmMaxCx,\
+            prompt      = STRING_TOKEN(STR_PPM_MAXCX_PROMPT),\
+            help        = STRING_TOKEN(STR_PPM_MAXCX_PROMPT_HELP),\
+            option text = STRING_TOKEN(STR_PPM_C7),	value = 7, flags = RESET_REQUIRED;\
+            option text = STRING_TOKEN(STR_PPM_C6),	value = 6, flags = RESET_REQUIRED;\
+            option text = STRING_TOKEN(STR_PPM_C1),	value = 1, flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;\
+        endoneof;
+#else
+#define PPM_ONEOF_PPMMAXCX\
+        oneof varid     = SETUP_DATA.PpmMaxCx,\
+            prompt      = STRING_TOKEN(STR_PPM_MAXCX_PROMPT),\
+            help        = STRING_TOKEN(STR_PPM_MAXCX_PROMPT_HELP),\
+            option text = STRING_TOKEN(STR_PPM_C7),	value = 7, flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;\
+            option text = STRING_TOKEN(STR_PPM_C6),	value = 6, flags = RESET_REQUIRED;\
+            option text = STRING_TOKEN(STR_PPM_C1),	value = 1, flags = RESET_REQUIRED;\
+        endoneof;
+#endif
+
+//CSP20130926 - iBIOS S0ix default disable. >>
+#define PPM_ONEOF_PPMS0IX\
+        oneof varid     = SETUP_DATA.PpmS0ix,\
+            prompt      = STRING_TOKEN(STR_PPM_S0IX_PROMPT),\
+            help        = STRING_TOKEN(STR_PPM_S0IX_PROMPT_HELP),\
+            option text = STRING_TOKEN(STR_PPM_DISABLED),	value = 0, flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;\
+            option text = STRING_TOKEN(STR_PPM_ENABLED),	value = 1, flags = RESET_REQUIRED;\
+        endoneof;
+//CSP20130926 - iBIOS S0ix default disable. <<
+                
+#endif //#ifdef CONTROL_DEFINITION
+
+#ifdef CONTROLS_WITH_DEFAULTS
+    PPM_ONEOF_PPMEIST
+    PPM_ONEOF_PPMCXENABLE
+    PPM_ONEOF_PPMENHCXENABLE
+    PPM_ONEOF_PPMMAXCX
+    PPM_ONEOF_PPMS0IX
+#endif //#ifdef CONTROLS_WITH_DEFAULTS
+
+#ifdef ADVANCED_FORM_SET
+
+#ifndef SUPPRESS_GRAYOUT_ENDIF
+#define SUPPRESS_GRAYOUT_ENDIF endif;
+#endif
+
+#ifdef FORM_SET_TYPEDEF
+    #include "AmiPpmPolicy.h"
+#endif
+
+#ifdef FORM_SET_VARSTORE
+//  varstore SETUP_SNBPPM_FEATURES,
+//    key   = AUTO_ID(SNBPPM_FEATURES_ID),
+//    name  = SetupSnbPpmFeatures,
+//    guid  = SETUP_GUID;
+#endif
+
+#ifdef FORM_SET_ITEM
+
+#endif
+
+#ifdef FORM_SET_GOTO
+// Define goto commands for the forms defined in this file
+    goto PPM_FORM_ID,
+      prompt = STRING_TOKEN(STR_PPM_FORM),
+      help = STRING_TOKEN(STR_PPM_FORM_HELP);
+#endif
+
+#ifdef FORM_SET_FORM
+// Define forms
+    form formid = AUTO_ID(PPM_FORM_ID),
+    title = STRING_TOKEN(STR_PPM_FORM);
+
+    SUBTITLE(STRING_TOKEN(STR_PPM_FORM))
+
+    SEPARATOR
+
+    suppressif ideqval SYSTEM_ACCESS.Access == SYSTEM_PASSWORD_USER OR ideqval SETUP_CPU_FEATURES.EISTAvailable == 0;
+	PPM_ONEOF_PPMEIST
+    endif;
+
+    grayoutif ideqval SYSTEM_ACCESS.Access == SYSTEM_PASSWORD_USER;
+        PPM_ONEOF_PPMCXENABLE
+    endif;
+#if 0    
+    suppressif ideqval SYSTEM_ACCESS.Access == SYSTEM_PASSWORD_USER OR ideqval SETUP_DATA.PpmCxEnable == 0;
+        PPM_ONEOF_PPMENHCXENABLE
+    endif;
+#endif      
+    suppressif ideqval SYSTEM_ACCESS.Access == SYSTEM_PASSWORD_USER OR ideqval SETUP_DATA.PpmCxEnable == 0;
+        PPM_ONEOF_PPMMAXCX
+    endif;
+    
+    grayoutif ideqval SYSTEM_ACCESS.Access == SYSTEM_PASSWORD_USER;
+        PPM_ONEOF_PPMS0IX
+    endif;
+            
+	endform;
+#endif
+
+#endif
+//**********************************************************************
+//**********************************************************************
+//**                                                                  **
+//**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+//**                                                                  **
+//**                       All Rights Reserved.                       **
+//**                                                                  **
+//**             6145-F Northbelt Pkwy, Norcross, GA 30071            **
+//**                                                                  **
+//**                       Phone: (770)-246-8600                      **
+//**                                                                  **
+//**********************************************************************
+//**********************************************************************

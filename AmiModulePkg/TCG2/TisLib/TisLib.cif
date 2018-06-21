@@ -1,0 +1,11 @@
+<component>
+	name = "TisLib"
+	category = ModulePart
+	LocalRoot = "AmiModulePkg\TCG2\TisLib\"
+	RefName = "TisLib"
+[INF]
+"TisLib.inf"
+"TisLib32.inf"
+[files]
+"TisLib.sdl"	
+<endComponent>

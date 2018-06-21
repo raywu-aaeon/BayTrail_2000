@@ -1,0 +1,12 @@
+<component>
+	name = "Bds"
+	category = ModulePart
+	LocalRoot = "AmiModulePkg\Bds\"
+	RefName = "AmiModulePkg.Bds"
+[files]
+"Bds.sdl"	
+"Bds.mak"	
+"Bds.chm"
+[INF]
+"Bds.inf"	
+<endComponent>

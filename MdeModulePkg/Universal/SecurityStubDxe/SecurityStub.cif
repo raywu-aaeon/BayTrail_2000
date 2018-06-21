@@ -1,0 +1,10 @@
+<component>
+	name = "SecurityStub"
+	category = ModulePart
+	LocalRoot = "MdeModulePkg\Universal\SecurityStubDxe\"
+	RefName = "MdeModulePkg.SecurityStub"
+[files]
+"SecurityStub.sdl"	
+[INF]
+"SecurityStubDxe.inf"
+<endComponent>

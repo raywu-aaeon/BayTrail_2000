@@ -1,0 +1,17 @@
+<component>
+	name = "FOTA (System Firmware Update Driver)"
+	category = eModule
+	Rank = 58
+	LocalRoot = "FOTA\"
+	RefName = "FOTA"
+[files]
+"FotaReleaseNotes.chm"
+"Bay Trail System Firmware Update Driver Release Notes v0.6.pdf"
+"FOTA.mak"
+"FOTA.sdl"
+"FotaCapsuleBuild.exe"
+"AMIGCHv0.1.exe"
+[parts]
+"FOTA.CapsuleGen"
+"FOTA.SysFwUpdStitcher"
+<endComponent>

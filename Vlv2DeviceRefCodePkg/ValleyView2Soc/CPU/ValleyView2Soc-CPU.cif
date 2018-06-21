@@ -1,0 +1,28 @@
+<component>
+	name = "ValleyView2Soc-CPU"
+	category = ModulePart
+	LocalRoot = "Vlv2DeviceRefCodePkg\ValleyView2Soc\CPU\"
+	RefName = "Vlv2DeviceRefCodePkg.ValleyView2Soc.ValleyView2Soc-CPU"
+[INF]
+"CpuInit\Dxe\MpCpu.inf"
+"CpuInit\Pei\CpuPeim.inf"
+"CpuS3\MpS3.inf"
+"Dts\Smm\DigitalThermalSensor.inf"
+"PowerManagement\AcpiTables\PowerManagementAcpiTables.inf"
+"PowerManagement\Dxe\PowerManagement.inf"
+"PowerManagement\Guid\PowerManagementGuidLib.inf"
+"PowerManagement\Library\Silvermont\Smm\SilvermontPpmLib.inf"
+"PowerManagement\Library\SouthCluster\Smm\IchLib.inf"
+"PowerManagement\Library\ValleyView\Smm\MchLib.inf"
+"PowerManagement\Protocol\PowerManagementProtocolLib.inf"
+"PowerManagement\Smm\PowerManagement.inf"
+"SmmAccess\Dxe\SmmAccess.inf"
+"SmmAccess\Pei\SmmAccess.inf"
+"SmmControl\RuntimeDxe\SmmControl.inf"
+[parts]
+"Vlv2DeviceRefCodePkg.ValleyView2Soc.ValleyView2Soc-CPU.VCPU-Include"
+"Vlv2DeviceRefCodePkg.ValleyView2Soc.ValleyView2Soc-CPU.PM-Include"
+"Vlv2DeviceRefCodePkg.ValleyView2Soc.ValleyView2Soc-CPU.PM-SampleCode"
+"Vlv2DeviceRefCodePkg.ValleyView2Soc.ValleyView2Soc-CPU.DTS-SampleCode"
+"Vlv2DeviceRefCodePkg.ValleyView2Soc.ValleyView2Soc-CPU.CPU-SampleCode"
+<endComponent>

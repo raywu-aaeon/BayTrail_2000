@@ -1,0 +1,338 @@
+        TITLE    NBINT15.ASM -- OEM INTERRUPT NB IMPLEMENTATION
+;*************************************************************************
+;*************************************************************************
+;**                                                                     **
+;**        (C)Copyright 1985-2011, American Megatrends, Inc.            **
+;**                                                                     **
+;**                       All Rights Reserved.                          **
+;**                                                                     **
+;**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093           **
+;**                                                                     **
+;**                       Phone: (770)-246-8600                         **
+;**                                                                     **
+;*************************************************************************
+;*************************************************************************
+
+;*************************************************************************
+;<AMI_FHDR_START>
+;
+; Name: NbInt15.asm
+;
+; Description:   IGFX INT15 function hook
+;
+;<AMI_FHDR_END>
+;*************************************************************************
+
+
+include token.equ
+.386
+
+CSMOEM_CSEG SEGMENT PARA PUBLIC 'CODE' USE16
+        ASSUME cs:CSMOEM_CSEG, ds:CSMOEM_CSEG
+
+OldIntHandler   LABEL DWORD
+        IntSegSav       dw      0
+        IntOfsSav       dw      0
+
+;<AMI_PHDR_START>
+;----------------------------------------------------------------------------
+;
+; Procedure:   NBINT15
+;
+; Description: TIGD INT15 function implememtation.
+;
+; Input:       None
+;
+; Output:      None
+;----------------------------------------------------------------------------
+;<AMI_PHDR_END>
+NBINT15 PROC   PUBLIC
+
+        cmp             ah, 5fh
+        je              igd_call
+        jmp             DWORD PTR cs:[OldIntHandler]
+
+igd_call:
+;       we are going to handle this call
+        cmp             al, 00
+        jne             not_5f00
+
+        mov             bx, 1302h
+        jmp             exit_success
+
+not_5f00:    
+        
+;IFDEF MKF_CRB_EC_SUPPORT
+;IF MKF_CRB_EC_SUPPORT
+;        cmp             al, 14h
+;        jne             not_5f14
+
+;        cmp             bx, 078Fh
+;        jne             exit_not_supported
+
+;        mov             cl, 00h
+;        call            read_ec_port
+;        jmp             exit_success
+;ENDIF
+;ENDIF
+
+not_5f14:
+        cmp             al,40h
+        jne             not_5f40
+
+;        cmp             bl, 00h
+;        jne             get_sdvo_paneltype
+
+;       Get LFP Panel Type
+        mov             al, MKF_IGFX_LCD_PANEL_TYPE
+        jmp             read_paneltype
+
+;get_sdvo_paneltype:
+;        cmp             bl, 01h
+;        jne             exit_fail
+;        mov             al, MKF_IGFX_SDVO_PANEL_TYPE
+
+read_paneltype:
+        call            get_igfx_setup_data
+        mov             cl, al
+        cmp             cl, 0
+        jz              not_5f01
+        jmp             exit_success
+
+not_5f40:
+        cmp             al, 34h
+        jne             not_5f34
+
+;       Get Panel Scaling feature
+        mov             al, MKF_IGFX_LCD_PANEL_SCALING
+        call            get_igfx_setup_data
+        mov             cl, al
+        jmp             exit_success
+
+not_5f34:
+        cmp             al,35h
+        jne             not_5f35
+
+;       Get IGD boot type
+        mov             al,MKF_IGFX_BOOT_TYPE
+        call            get_igfx_setup_data
+        mov             cl, al
+IF MKF_DUAL_DISPLAY_SUPPORT
+        cmp             cl, 00h
+        jne             check_pipe_B_display
+        mov             ch, 00h
+ENDIF
+        jmp             exit_success
+
+IF MKF_DUAL_DISPLAY_SUPPORT
+check_pipe_B_display:
+
+;       Get Pipe B device type
+        mov             al,MKF_IGFX_DISPLAY_PIPE_B_TYPE
+        call            get_igfx_setup_data
+        mov             ch, al
+
+;        Check Pipe A & Pipe B are same
+        cmp             cl, ch
+        jne             exit_success
+        mov             ch, 00h
+        jmp             exit_success
+ENDIF
+
+not_5f35:
+        cmp             al,49h
+        jne             not_5f49
+
+; ----------------------------------------------------
+; Int 15h, AX = 5F49h, Get backlight type and polarity
+; ----------------------------------------------------
+        mov             al,MKF_IGFX_BACKLIGHT_TYPE
+        call            get_igfx_setup_data
+        movzx           cx, al
+        jmp             exit_success
+
+not_5f49:
+        cmp             al,51h
+        jne             not_5f51
+; ----------------------------------------------------
+; Int 15h, AX = 5F51h, Select Active LFP Configuration
+; ----------------------------------------------------
+        mov             al,MKF_IGFX_EDP_ACTIVE_LFP_CONFIG_TYPE
+        call            get_igfx_setup_data
+        movzx           cx, al
+        jmp             exit_success
+
+not_5f51:
+
+;;========Porting ===========;;
+		cmp				al,31h
+        jne             not_5f31
+        
+        jmp             exit_success
+
+not_5f31:
+		cmp				al,33h
+        jne             not_5f33
+        
+        jmp             exit_success
+
+
+not_5f33:
+		cmp				al,38h
+        jne             not_5f38
+        
+        jmp             exit_success
+
+
+not_5f38:
+		cmp				al,45h
+        jne             not_5f45
+        
+        jmp             exit_success
+
+
+not_5f45:
+		cmp				al,46h
+        jne             not_5f46
+        
+        jmp             exit_success
+
+
+not_5f46:
+		cmp				al,47h
+        jne             not_5f47
+        
+        jmp             exit_success
+
+not_5f47:
+		cmp				al,48h
+        jne             not_5f48
+        
+        jmp             exit_success
+        
+not_5f48:    
+
+;;========Porting ===========;;
+
+not_5f01:
+exit_not_supported:
+        mov             ax, 0000h
+        jmp             exit
+exit_fail:
+        mov             ax, 015fh
+        jmp             exit
+exit_success:
+        mov             ax, 005fh
+
+exit:
+        retf            2
+NBINT15    ENDP
+
+;<AMI_PHDR_START>
+;---------------------------------------------------------------------------;
+;
+; Procedure:      read_ec_port
+;
+; Description:    procedure to read status values from EC ports
+;
+; Input:          N/A
+;
+; Output:         data in CL register
+;
+;---------------------------------------------------------------------------;
+;<AMI_PHDR_END>
+
+read_ec_port    proc    near
+
+        push           eax
+
+        mov            al, 0Ah
+        out            66h, al
+ec_read_loop1:
+        in             al, 66h
+        and            al, 01h
+        jz             ec_read_loop1
+        in             al, 62h
+        mov            ah, al
+
+        mov            al, 8Ah
+        out            66h, al
+ec_read_loop2:
+        in             al, 66h
+        and            al, 01h
+        jz             ec_read_loop2
+        in             al, 62h
+
+; SS Docking status
+        and            al, 01h
+        jz             check_lid_status
+        or             cl, 01h
+
+;Lid status
+check_lid_status:
+        mov            al, ah
+        and            al, 01h
+        jnz            check_AC_status
+        or             cl, 02h
+
+;AC power status
+check_AC_status:
+        mov            al, ah
+        and            al, 10h
+        jz             exit_read_ec_port
+        or             cl, 04h
+
+exit_read_ec_port:
+        pop            eax
+        ret
+
+read_ec_port    endp
+
+;<AMI_PHDR_START>
+;---------------------------------------------------------------------------;
+;
+; Procedure:      get_igfx_setup_data
+;
+; Description:    get IGFX setup data after call NB SMI 
+;
+; Input:          AL  - INDEX
+;
+; Output:         data in reg al
+;
+;---------------------------------------------------------------------------;
+;<AMI_PHDR_END>
+get_igfx_setup_data        proc    near
+
+        push           bx
+;       save index to bl
+        mov            bl, al
+
+;       NB SW SMI
+        mov            al, MKF_NB_SWSMI_IGFX_GET_SETUP
+        out            0b2h, al
+
+;       setup data move to al
+        mov            al, bl
+
+        pop            bx
+
+        ret
+
+get_igfx_setup_data        endp
+
+CSMOEM_CSEG ENDS
+
+END
+;**********************************************************************
+;**********************************************************************
+;**                                                                  **
+;**        (C)Copyright 1985-2011, American Megatrends, Inc.         **
+;**                                                                  **
+;**                       All Rights Reserved.                       **
+;**                                                                  **
+;**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093        **
+;**                                                                  **
+;**                       Phone: (770)-246-8600                      **
+;**                                                                  **
+;**********************************************************************
+;**********************************************************************

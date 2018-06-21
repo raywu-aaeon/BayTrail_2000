@@ -1,0 +1,8 @@
+<component>
+	name = "Ppi"
+	category = ModulePart
+	LocalRoot = "BayTrailPkg\Include\Ppi\"
+	RefName = "BayTrailPkg.Include.Ppi"
+[files]
+"CrbInfo.h"
+<endComponent>

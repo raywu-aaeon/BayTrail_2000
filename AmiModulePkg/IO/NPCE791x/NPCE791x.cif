@@ -1,0 +1,19 @@
+<component>
+	name = "Sio NPCE791x"
+	category = ModulePart
+	LocalRoot = "AmiModulePkg\IO\NPCE791x\"
+	RefName = "NPCE791x"
+[files]
+"NPCE791x.sdl"	
+"NPCE791x.sd"	
+"NPCE791x.uni"	
+"PeiIoTable.h"	
+"NPCE791xDxeInit.c"	
+"NPCE791xDxeInit.h"	
+"NPCE791xDEV.asl"	
+"NPCE791xEVT.asl"	
+"SioDxeInit.h"	
+"SioVarStore.sd"	
+"SioVarType.h"	
+"CIR.asl"	
+<endComponent>

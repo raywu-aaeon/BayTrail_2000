@@ -1,0 +1,25 @@
+<component>
+	name = "SouthCluster-Protocol"
+	category = ModulePart
+	LocalRoot = "Vlv2DeviceRefCodePkg\ValleyView2Soc\SouthCluster\Include\Protocol"
+	RefName = "Vlv2DeviceRefCodePkg.ValleyView2Soc.ValleyView2Soc-SouthCluster.SouthCluster-Include.SouthCluster-Protocol"
+[files]
+"ActiveBios.h"
+"ActiveBiosProtocol.h"
+"EmmcCardInfoProtocol.h"
+"Gpio.h"
+"HwWatchdogTimer.h"
+"I2cBus.h"
+"PchExtendedReset.h"
+"PchInfo.h"
+"PchPlatformPolicy.h"
+"PchReset.h"
+"PchS3Support.h"
+"SdHostIo.h"
+"SmbiosSlotPopulation.h"
+"SmmIchnDispatchEx.h"
+"SmmSmbus.h"
+"Spi.h"
+"TcoReset.h"
+"UsbLegacyPlatform.h"
+<endComponent>

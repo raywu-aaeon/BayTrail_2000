@@ -1,0 +1,14 @@
+<component>
+	name = "SouthCluster-SampleCodeInclude"
+	category = ModulePart
+	LocalRoot = "Vlv2DeviceRefCodePkg\ValleyView2Soc\SouthCluster\SampleCode\Include"
+	RefName = "Vlv2DeviceRefCodePkg.ValleyView2Soc.ValleyView2Soc-SouthCluster.SouthCluster-SampleCode.SouthCluster-SampleCodeInclude"
+[files]
+"Guid\SmbusArpMap.h"
+"Library\PchAslUpdateLib.h"
+"Ppi\SmbusPolicy.h"
+"Ppi\SmmControl.h"
+"Ppi\UsbController.h"
+"Protocol\DxePchPolicyUpdateProtocol.h"
+"Protocol\SmmSmbus.h"
+<endComponent>

@@ -1,0 +1,29 @@
+TOKEN
+    Name  = "AhciCspLib_SUPPORT"
+    Value  = "1"
+    Help  = "Main switch to enable AhciCspLib support in Project"
+    TokenType = Boolean
+    Master = Yes
+End
+
+PATH
+    Name  = "AHCI_CSP_DIR"
+End
+
+ELINK
+    Name  = "$(AHCI_CSP_DIR)/AhciAcc.csm16"
+    Parent  = "CSM_OEM16_SRC"
+    InvokeOrder = AfterParent
+End
+
+INFComponent
+    Name  = "AhciCspLib"
+    File  = "AhciCspLib.inf"
+    Package  = "AmiModulePkg"
+End
+
+LibraryMapping
+    Class  = "AhciCspLib"
+    Instance  = "AmiModulePkg.AhciCspLib"
+End
+

@@ -1,0 +1,12 @@
+<component>
+	name = "IntelSaGopSetup"
+	category = ModulePart
+	LocalRoot = "Vlv2DeviceRefCodePkg\Wrapper\IntelSaGopSetup"
+	RefName = "Vlv2DeviceRefCodePkg.IntelSaGopSetup"
+[INF]
+"IntelSaGopSetup.inf"
+[files]
+"IntelSaGopSetup.sdl"		
+"IntelSaGopSetup.sd"	
+"IntelSaGopSetup.uni"
+<endComponent>

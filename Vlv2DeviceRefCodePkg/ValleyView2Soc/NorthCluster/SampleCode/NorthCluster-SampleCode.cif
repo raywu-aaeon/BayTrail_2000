@@ -1,0 +1,10 @@
+<component>
+	name = "NorthCluster-SampleCode"
+	category = ModulePart
+	LocalRoot = "Vlv2DeviceRefCodePkg\ValleyView2Soc\NorthCluster\SampleCode"
+	RefName = "Vlv2DeviceRefCodePkg.ValleyView2Soc.ValleyView2Soc-NorthCluster.NorthCluster-SampleCode"
+[files]
+"SampleCode.dec"
+[parts]
+"Vlv2DeviceRefCodePkg.ValleyView2Soc.ValleyView2Soc-NorthCluster.NorthCluster-SampleCode.NorthCluster-SampleCodeInclude"
+<endComponent>

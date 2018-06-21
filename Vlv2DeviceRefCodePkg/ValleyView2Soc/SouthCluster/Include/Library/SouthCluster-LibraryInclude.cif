@@ -1,0 +1,15 @@
+<component>
+	name = "SouthCluster-LibraryInclude"
+	category = ModulePart
+	LocalRoot = "Vlv2DeviceRefCodePkg\ValleyView2Soc\SouthCluster\Include\Library"
+	RefName = "Vlv2DeviceRefCodePkg.ValleyView2Soc.ValleyView2Soc-SouthCluster.SouthCluster-Include.SouthCluster-LibraryInclude"
+[files]
+"AslUpdateLib.h"
+"DfuCapsuleLib.h"
+"DxeRuntimePciLibPciExpress.h"
+"I2CLib.h"
+"PchPciExpressHelpersLib.h"
+"PchPlatformLib.h"
+"PchSmbusLibrary.h"
+"PmicLib.h"
+<endComponent>

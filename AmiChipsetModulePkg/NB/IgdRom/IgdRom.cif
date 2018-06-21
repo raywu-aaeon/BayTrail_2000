@@ -1,0 +1,8 @@
+<component>
+	name = "IgdRom"
+	category = ModulePart
+	LocalRoot = "AmiChipsetModulePkg\NB\IgdRom\"
+	RefName = "AmiChipsetModulePkg.IgdRom"
+[files]
+"Legacy_Vbios.dat"
+<endComponent>

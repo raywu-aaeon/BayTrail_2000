@@ -1,0 +1,8 @@
+<component>
+	name = "SeCUma"
+	category = ModulePart
+	LocalRoot = "Vlv2DeviceRefCodePkg\Txe\SeCUma"
+	RefName = "Vlv2DeviceRefCodePkg.Txe.SeCUma"
+[inf]
+"SeCUma.inf"
+<endComponent>

@@ -1,0 +1,15 @@
+<component>
+	name = "IdeBus"
+	category = eModule
+	LocalRoot = "AmiModulePkg\IdeBus\"
+	RefName = "AmiModulePkg.IdeBusSrc"
+[INF]
+"IdeBusSrc.inf"
+"IdeBusBoard\IdeBusBoard.inf"
+[files]
+"IdeBusSrc.sdl"	
+"IdeBusSrc.chm"	
+[parts]
+"IdeBusProtocol"
+"IdeBusBoardProtocol"
+<endComponent>

@@ -1,0 +1,1334 @@
+
+//**********************************************************************
+//**********************************************************************
+//**                                                                  **
+//**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+//**                                                                  **
+//**                       All Rights Reserved.                       **
+//**                                                                  **
+//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093        **
+//**                                                                  **
+//**                       Phone: (770)-246-8600                      **
+//**                                                                  **
+//**********************************************************************
+//**********************************************************************
+
+//**********************************************************************
+// $Header: $
+//
+// $Revision: $
+//
+// $Date: $
+//**********************************************************************
+// Revision History
+// ----------------
+// $Log: $
+// 
+// 
+//**********************************************************************
+
+//<AMI_FHDR_START>
+//---------------------------------------------------------------------------
+// Name:	CPU.sd
+//
+// Description:	Setup definition for CPU.
+//
+//---------------------------------------------------------------------------
+//<AMI_FHDR_END>
+
+#ifdef SETUP_DATA_DEFINITION
+/***********************************************************/
+/* Put NVRAM data definitions here.
+/* For example:	UINT8 Data1;
+/* These definitions will be converted by the build process
+/* to a definitions of SETUP_DATA fields.
+/***********************************************************/
+#if CPU_SETUP_SET_MAX_RATIO
+    UINT8   CpuMaxRatio;
+#endif
+#if CPU_SETUP_SET_BOOT_RATIO
+    UINT8   CpuSetBootRatio;
+#endif
+    UINT8   TurboMode;
+    UINT8   ProcessorTDPLimit;
+    UINT8   ProcessorTDCLimit;
+    UINT8   _1CoreRatioLimit;
+    UINT8   _2CoreRatioLimit;
+    UINT8   _3CoreRatioLimit;
+    UINT8   _4CoreRatioLimit;
+    UINT8   _5CoreRatioLimit;
+    UINT8   _6CoreRatioLimit;
+    UINT8   _7CoreRatioLimit;
+    UINT8   _8CoreRatioLimit;
+    UINT8   CpuVid;
+    UINT8   CpuPm;
+    UINT8   C3Enable;
+    UINT8   C6Enable;
+    UINT8   C7Enable;
+    UINT8   CxInterFilter;
+    UINT8   PackageCState;
+    UINT8   XDBit;
+    UINT8   HTD;
+    UINT8   ActiveCoreCount;
+    UINT8   ActiveCoreCountGrp1;
+    UINT8   ActiveCoreCountGrp2;
+    UINT8   ActiveCoreCountGrp3;
+    UINT8   ActiveCoreCountGrp4;
+    UINT8   ActiveCoreCountGrp5;
+    UINT8   ActiveCoreCountGrp6;
+    UINT8   ActiveCoreCountGrp7;
+    UINT8   LimitCpuid;
+    UINT8   VT;
+    UINT8   EIST;
+    UINT8   CpuEngPerfBias;
+    UINT8   SeverPref;
+    UINT8   MlcStreamerPrefetcher;
+    UINT8   MlcSpatialPrefetcher;
+    UINT8   DcuStreamerPrefetch;
+    UINT8   DcuIpPrefetch;
+    UINT8   DataReuseOpt;
+    UINT8   PsdCoordType;
+    UINT8   LocalX2Apic;
+    UINT8   MpOrder;
+    UINT16  CpuLongDurPwr;
+    UINT16  CpuShortDurPwr;
+    UINT16  CpuLongDurTime;
+    UINT8   EnableDigitalThermalSensor; 
+#endif
+
+#if defined(VFRCOMPILE) && !defined(CONTROLS_ARE_DEFINED)
+#define CONTROL_DEFINITION
+#endif
+
+#ifdef CONTROL_DEFINITION
+
+#if CPU_SETUP_SET_MAX_RATIO
+#define NEHALEM_NUMERIC_CPU_SET_MAX_RATIO\
+	numeric varid = SETUP_DATA.CpuMaxRatio,\
+        prompt    = STRING_TOKEN(STR_CPU_MAX_RATIO),\
+        help      = STRING_TOKEN(STR_CPU_MAX_RATIO_HELP),\
+        flags     = RESET_REQUIRED,\
+        minimum   = 0,\
+        maximum   = 255,\
+        step      = 1,\
+        default   = 255,\
+        default   = 255, defaultstore = AmiMfgDefault,\
+    endnumeric;
+#else
+#define NEHALEM_NUMERIC_CPU_SET_MAX_RATIO
+#endif
+
+#if CPU_SETUP_SET_BOOT_RATIO
+#define NEHALEM_NUMERIC_CPU_SET_BOOT_RATIO\
+	numeric varid = SETUP_DATA.CpuSetBootRatio,\
+        prompt    = STRING_TOKEN(STR_CPU_SET_BOOT_RATIO),\
+        help      = STRING_TOKEN(STR_CPU_SET_BOOT_RATIO_HELP),\
+        flags     = RESET_REQUIRED,\
+        minimum   = 0,\
+        maximum   = 255,\
+        step      = 1,\
+        default   = 255,\
+        default   = 255, defaultstore = AmiMfgDefault,\
+    endnumeric;
+#else
+#define NEHALEM_NUMERIC_CPU_SET_BOOT_RATIO
+#endif
+
+#define NEHALEM_ONEOF_HTD\
+    oneof varid     = SETUP_DATA.HTD,\
+        prompt      = STRING_TOKEN(STR_CPU_HTD_PROMPT),\
+        help        = STRING_TOKEN(STR_CPU_HTD_PROMPT_HELP),\
+        option text = STRING_TOKEN(STR_CPU_DISABLED),	value = 0, flags = RESET_REQUIRED; /*set 1 to the SMT disable bit to disable */\
+        option text = STRING_TOKEN(STR_CPU_ENABLED),	value = 1, flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;\
+    endoneof;
+
+#define NEHALEM_ONEOF_ACTIVECORECOUNT\
+    oneof varid     = SETUP_DATA.ActiveCoreCount,\
+        prompt      = STRING_TOKEN(STR_CPU_ACTIVE_CORE_COUNT_PROMPT),\
+        help        = STRING_TOKEN(STR_CPU_ACTIVE_CORE_COUNT_PROMPT_HELP),\
+        option text = STRING_TOKEN(STR_CPU_ALL),	value = 0, flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;\
+        option text = STRING_TOKEN(STR_CPU_1),		value = 1, flags = RESET_REQUIRED;\
+    endoneof;
+
+#define NEHALEM_ONEOF_ACTIVECORECOUNTGRP2\
+    oneof varid     = SETUP_DATA.ActiveCoreCountGrp2,\
+        prompt      = STRING_TOKEN(STR_CPU_ACTIVE_CORE_COUNT_PROMPT),\
+        help        = STRING_TOKEN(STR_CPU_ACTIVE_CORE_COUNT_PROMPT_HELP),\
+        option text = STRING_TOKEN(STR_CPU_ALL),	value = 0, flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;\
+        option text = STRING_TOKEN(STR_CPU_1),		value = 1, flags = RESET_REQUIRED;\
+        option text = STRING_TOKEN(STR_CPU_2),		value = 2, flags = RESET_REQUIRED;\
+        option text = STRING_TOKEN(STR_CPU_3),		value = 3, flags = RESET_REQUIRED;\
+    endoneof;
+
+#define NEHALEM_ONEOF_ACTIVECORECOUNTGRP3\
+    oneof varid     = SETUP_DATA.ActiveCoreCountGrp3,\
+        prompt      = STRING_TOKEN(STR_CPU_ACTIVE_CORE_COUNT_PROMPT),\
+        help        = STRING_TOKEN(STR_CPU_ACTIVE_CORE_COUNT_PROMPT_HELP),\
+        option text = STRING_TOKEN(STR_CPU_ALL),	value = 0, flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;\
+        option text = STRING_TOKEN(STR_CPU_1),		value = 1, flags = RESET_REQUIRED;\
+        option text = STRING_TOKEN(STR_CPU_2),		value = 2, flags = RESET_REQUIRED;\
+        option text = STRING_TOKEN(STR_CPU_3),		value = 3, flags = RESET_REQUIRED;\
+        option text = STRING_TOKEN(STR_CPU_4),		value = 4, flags = RESET_REQUIRED;\
+        option text = STRING_TOKEN(STR_CPU_5),		value = 5, flags = RESET_REQUIRED;\
+    endoneof;
+
+#define NEHALEM_ONEOF_ACTIVECORECOUNTGRP1\
+    oneof varid     = SETUP_DATA.ActiveCoreCountGrp1,\
+        prompt      = STRING_TOKEN(STR_CPU_ACTIVE_CORE_COUNT_PROMPT),\
+        help        = STRING_TOKEN(STR_CPU_ACTIVE_CORE_COUNT_PROMPT_HELP),\
+        option text = STRING_TOKEN(STR_CPU_ALL),	value = 8, flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;\
+        option text = STRING_TOKEN(STR_CPU_1),		value = 1, flags = RESET_REQUIRED;\
+        option text = STRING_TOKEN(STR_CPU_2),		value = 2, flags = RESET_REQUIRED;\
+        option text = STRING_TOKEN(STR_CPU_3),		value = 3, flags = RESET_REQUIRED;\
+        option text = STRING_TOKEN(STR_CPU_4),		value = 4, flags = RESET_REQUIRED;\
+        option text = STRING_TOKEN(STR_CPU_5),		value = 5, flags = RESET_REQUIRED;\
+        option text = STRING_TOKEN(STR_CPU_6),		value = 6, flags = RESET_REQUIRED;\
+        option text = STRING_TOKEN(STR_CPU_7),		value = 7, flags = RESET_REQUIRED;\
+    endoneof;
+
+#define NEHALEM_ONEOF_ACTIVECORECOUNTGRP4\
+    oneof varid     = SETUP_DATA.ActiveCoreCountGrp4,\
+        prompt      = STRING_TOKEN(STR_CPU_ACTIVE_CORE_COUNT_PROMPT),\
+        help        = STRING_TOKEN(STR_CPU_ACTIVE_CORE_COUNT_PROMPT_HELP),\
+        option text = STRING_TOKEN(STR_CPU_ALL),	value = 10, flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;\
+        option text = STRING_TOKEN(STR_CPU_1),		value = 1, flags = RESET_REQUIRED;\
+        option text = STRING_TOKEN(STR_CPU_2),		value = 2, flags = RESET_REQUIRED;\
+        option text = STRING_TOKEN(STR_CPU_3),		value = 3, flags = RESET_REQUIRED;\
+        option text = STRING_TOKEN(STR_CPU_4),		value = 4, flags = RESET_REQUIRED;\
+        option text = STRING_TOKEN(STR_CPU_5),		value = 5, flags = RESET_REQUIRED;\
+        option text = STRING_TOKEN(STR_CPU_6),		value = 6, flags = RESET_REQUIRED;\
+        option text = STRING_TOKEN(STR_CPU_7),		value = 7, flags = RESET_REQUIRED;\
+        option text = STRING_TOKEN(STR_CPU_8),		value = 8, flags = RESET_REQUIRED;\
+        option text = STRING_TOKEN(STR_CPU_9),		value = 9, flags = RESET_REQUIRED;\
+    endoneof;
+
+#define NEHALEM_ONEOF_ACTIVECORECOUNTGRP5\
+    oneof varid     = SETUP_DATA.ActiveCoreCountGrp5,\
+        prompt      = STRING_TOKEN(STR_CPU_ACTIVE_CORE_COUNT_PROMPT),\
+        help        = STRING_TOKEN(STR_CPU_ACTIVE_CORE_COUNT_PROMPT_HELP),\
+        option text = STRING_TOKEN(STR_CPU_ALL),	value = 0, flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;\
+        option text = STRING_TOKEN(STR_CPU_1),		value = 1, flags = RESET_REQUIRED;\
+    endoneof;
+
+
+#define NEHALEM_ONEOF_ACTIVECORECOUNTGRP6\
+    oneof varid     = SETUP_DATA.ActiveCoreCountGrp6,\
+        prompt      = STRING_TOKEN(STR_CPU_ACTIVE_CORE_COUNT_PROMPT),\
+        help        = STRING_TOKEN(STR_CPU_ACTIVE_CORE_COUNT_PROMPT_HELP),\
+        option text = STRING_TOKEN(STR_CPU_ALL),	value = 6, flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;\
+        option text = STRING_TOKEN(STR_CPU_1),		value = 1, flags = RESET_REQUIRED;\
+        option text = STRING_TOKEN(STR_CPU_2),		value = 2, flags = RESET_REQUIRED;\
+        option text = STRING_TOKEN(STR_CPU_4),		value = 4, flags = RESET_REQUIRED;\
+    endoneof;
+
+#define NEHALEM_ONEOF_ACTIVECORECOUNTGRP7\
+    oneof varid     = SETUP_DATA.ActiveCoreCountGrp7,\
+        prompt      = STRING_TOKEN(STR_CPU_ACTIVE_CORE_COUNT_PROMPT),\
+        help        = STRING_TOKEN(STR_CPU_ACTIVE_CORE_COUNT_PROMPT_HELP),\
+        option text = STRING_TOKEN(STR_CPU_ALL),	value = 8, flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;\
+        option text = STRING_TOKEN(STR_CPU_1),		value = 1, flags = RESET_REQUIRED;\
+        option text = STRING_TOKEN(STR_CPU_2),		value = 2, flags = RESET_REQUIRED;\
+        option text = STRING_TOKEN(STR_CPU_4),		value = 4, flags = RESET_REQUIRED;\
+        option text = STRING_TOKEN(STR_CPU_6),		value = 6, flags = RESET_REQUIRED;\
+    endoneof;
+
+
+#define NEHALEM_ONEOF_LIMITCPUID\
+    oneof varid     = SETUP_DATA.LimitCpuid,\
+        prompt      = STRING_TOKEN(STR_CPU_LIMIT_CPUID_MAX_PROMPT),\
+        help        = STRING_TOKEN(STR_CPU_LIMIT_CPUID_MAX_PROMPT_HELP),\
+        option text = STRING_TOKEN(STR_CPU_DISABLED),	value = 0, flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;\
+        option text = STRING_TOKEN(STR_CPU_ENABLED),	value = 1, flags = RESET_REQUIRED;\
+    endoneof;
+
+#define NEHALEM_ONE_XDBIT\
+    oneof varid     = SETUP_DATA.XDBit,\
+        prompt      = STRING_TOKEN(STR_CPU_XD_BIT_PROMPT),\
+        help        = STRING_TOKEN(STR_CPU_XD_BIT_PROMPT_HELP),\
+        option text = STRING_TOKEN(STR_CPU_DISABLED),	value = 0, flags = RESET_REQUIRED;\
+        option text = STRING_TOKEN(STR_CPU_ENABLED),	value = 1, flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;\
+    endoneof;
+
+#define NEHALEM_ONEOF_SEVERPREF\
+    oneof varid     = SETUP_DATA.SeverPref,\
+        prompt      = STRING_TOKEN(STR_CPU_SRV_PREFETCH_PROMPT),\
+        help        = STRING_TOKEN(STR_CPU_SRV_PREFETCH_PROMPT_HELP),\
+        option text = STRING_TOKEN(STR_CPU_PREF_ENTERPRISE),    value = 1, flags = RESET_REQUIRED;\
+        option text = STRING_TOKEN(STR_CPU_PREF_HPC),	        value = 2, flags = RESET_REQUIRED;\
+        option text = STRING_TOKEN(STR_CPU_PREF_CUSTOM),	    value = 0, flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;\
+    endoneof;
+
+#define NEHALEM_ONEOF_CPUMLCSTREAMER\
+    oneof varid     = SETUP_DATA.MlcStreamerPrefetcher,\
+        prompt      = STRING_TOKEN(STR_PROC_HW_PREFETCH_PROMPT),\
+        help        = STRING_TOKEN(STR_PROC_HW_PREFETCH_PROMPT_HELP),\
+        option text = STRING_TOKEN(STR_CPU_DISABLED),	value = 0, flags = RESET_REQUIRED;\
+        option text = STRING_TOKEN(STR_CPU_ENABLED),	value = 1, flags = DEFAULT |  MANUFACTURING | RESET_REQUIRED;\
+    endoneof;
+
+#define NEHALEM_ONEOF_CPUMLCSPATIAL\
+    oneof varid     = SETUP_DATA.MlcSpatialPrefetcher,\
+        prompt      = STRING_TOKEN(STR_PROC_ADJ_CACHE_LINE_PROMPT),\
+        help        = STRING_TOKEN(STR_PROC_ADJ_CACHE_LINE_PROMPT_HELP),\
+        option text = STRING_TOKEN(STR_CPU_DISABLED),	value = 0, flags = RESET_REQUIRED;\
+        option text = STRING_TOKEN(STR_CPU_ENABLED),	value = 1, flags = DEFAULT |  MANUFACTURING | RESET_REQUIRED;\
+    endoneof;
+
+#define NEHALEM_ONEOF_DCU_STREAMER_PREFETCH\
+    oneof varid     = SETUP_DATA.DcuStreamerPrefetch,\
+        prompt      = STRING_TOKEN(STR_CPU_DCU_STREAMER_PREFETCH_PROMPT),\
+        help        = STRING_TOKEN(STR_CPU_DCU_STREAMER_PREFETCH_PROMPT_HELP),\
+        option text = STRING_TOKEN(STR_CPU_DISABLED),	value = 0, flags = RESET_REQUIRED;\
+        option text = STRING_TOKEN(STR_CPU_ENABLED),	value = 1, flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;\
+    endoneof;
+
+#define NEHALEM_ONEOF_DCU_IP_PREFETCH\
+    oneof varid     = SETUP_DATA.DcuIpPrefetch,\
+        prompt      = STRING_TOKEN(STR_CPU_DCU_IP_PREFETCH_PROMPT),\
+        help        = STRING_TOKEN(STR_CPU_DCU_IP_PREFETCH_PROMPT_HELP),\
+        option text = STRING_TOKEN(STR_CPU_DISABLED),	value = 0, flags = RESET_REQUIRED;\
+        option text = STRING_TOKEN(STR_CPU_ENABLED),	value = 1, flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;\
+    endoneof;
+
+#define NEHALEM_ONEOF_DATAREUSEOPT\
+    oneof varid     = SETUP_DATA.DataReuseOpt,\
+        prompt      = STRING_TOKEN(STR_CPU_DATA_REUSE_PROMPT),\
+        help        = STRING_TOKEN(STR_CPU_DATA_REUSE_PROMPT_HELP),\
+        option text = STRING_TOKEN(STR_CPU_DISABLED),	value = 0, flags = RESET_REQUIRED;\
+        option text = STRING_TOKEN(STR_CPU_ENABLED),	value = 1, flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;\
+    endoneof;  
+
+#define NEHALEM_ONEOF_VT_DEFAULT\
+    oneof varid     = SETUP_DATA.VT,\
+        prompt      = STRING_TOKEN(STR_CPU_VT_PROMPT),\
+        help        = STRING_TOKEN(STR_CPU_VT_PROMPT_HELP),\
+        option text = STRING_TOKEN(STR_CPU_DISABLED),	value = 0, flags = RESET_REQUIRED | INTERACTIVE;\
+        option text = STRING_TOKEN(STR_CPU_ENABLED),	value = 1, flags = DEFAULT | MANUFACTURING | INTERACTIVE | RESET_REQUIRED;\
+    endoneof;
+
+#define NEHALEM_ONEOF_VT\
+    oneof varid     = SETUP_DATA.VT,\
+        questionid  = AUTO_ID(KEY_VT_SETTING_CHANGE_KEY),\
+        prompt      = STRING_TOKEN(STR_CPU_VT_PROMPT),\
+        help        = STRING_TOKEN(STR_CPU_VT_PROMPT_HELP),\
+        option text = STRING_TOKEN(STR_CPU_DISABLED),	value = 0, flags = RESET_REQUIRED | INTERACTIVE;\
+        option text = STRING_TOKEN(STR_CPU_ENABLED),	value = 1, flags = DEFAULT | MANUFACTURING | INTERACTIVE | RESET_REQUIRED;\
+    endoneof;
+
+#define NEHALEM_ONEOF_CPUPM\
+    oneof varid     = SETUP_DATA.CpuPm,\
+        prompt = STRING_TOKEN(STR_CPU_PM_PROMPT),\
+        help = STRING_TOKEN(STR_CPU_PM_PROMPT_HELP),\
+        option text = STRING_TOKEN(STR_CPU_PM_DISABLED),    value = 0, flags = RESET_REQUIRED;\
+        option text = STRING_TOKEN(STR_CPU_PM_ENABLED),     value = 1, flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;\
+        option text = STRING_TOKEN(STR_CPU_PM_CUSTOM),      value = 2, flags = RESET_REQUIRED;\
+    endoneof;
+   
+#define NEHALEM_ONEOF_EIST\
+    oneof varid     = SETUP_DATA.EIST,\
+        prompt = STRING_TOKEN(STR_CPU_EIST_PROMPT),\
+        help = STRING_TOKEN(STR_CPU_EIST_PROMPT_HELP),\
+        option text = STRING_TOKEN(STR_CPU_DISABLED),	value = 0, flags = RESET_REQUIRED;\
+        option text = STRING_TOKEN(STR_CPU_ENABLED),	value = 1, flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;\
+    endoneof;
+
+#define NEHALEM_ONEOF_TURBOMODE\
+    oneof varid     = SETUP_DATA.TurboMode,\
+        prompt      = STRING_TOKEN(STR_CPU_TURBO_MODE_PROMPT),\
+        help        = STRING_TOKEN(STR_CPU_TURBO_MODE_PROMPT_HELP),\
+        option text = STRING_TOKEN(STR_CPU_DISABLED),	value = 0, flags = RESET_REQUIRED;\
+        option text = STRING_TOKEN(STR_CPU_ENABLED),	value = 1, flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;\
+    endoneof;
+
+#define NEHALEM_ONEOF_CPUENGPERFBIAS\
+    oneof varid     = SETUP_DATA.CpuEngPerfBias,\
+        prompt      = STRING_TOKEN(STR_CPU_ENG_PERF_BIAS_PROMPT),\
+        help        = STRING_TOKEN(STR_CPU_ENG_PERF_BIAS_PROMPT_HELP),\
+        option text = STRING_TOKEN(STR_CPU_ENG_PERF_BIAS_TRADITIONAL), value = 0, flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;\
+        option text = STRING_TOKEN(STR_CPU_ENG_PERF_BIAS_OPTIMIZED),   value = 4, flags = RESET_REQUIRED;\
+    endoneof;
+
+#define NEHALEM_ONEOF_PSDCOORDTYPE\
+    oneof varid  = SETUP_DATA.PsdCoordType,\
+        prompt = STRING_TOKEN(STR_CPU_PSD_COORD_TYPE_PROMPT),\
+        help = STRING_TOKEN(STR_CPU_PSD_COORD_TYPE_PROMPT_HELP),\
+        option text = STRING_TOKEN(STR_CPU_PSD_HW_ALL),	value = 0xfe, flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;\
+        option text = STRING_TOKEN(STR_CPU_PSD_SW_ALL),	value = 0xfc, flags = RESET_REQUIRED;\
+        option text = STRING_TOKEN(STR_CPU_PSD_SW_ANY),	value = 0xfd, flags = RESET_REQUIRED;\
+    endoneof;
+
+#define NEHALEM_ONEOF_C3ENABLE\
+    oneof varid     = SETUP_DATA.C3Enable,\
+        prompt      = STRING_TOKEN(STR_CPU_C3_PROMPT),\
+        help        = STRING_TOKEN(STR_CPU_C3_PROMPT_HELP),\
+        option text = STRING_TOKEN(STR_CPU_DISABLED),   value = 0,  flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;\
+        option text = STRING_TOKEN(STR_CPU_ACPI_C2),    value = 2,  flags = RESET_REQUIRED;\
+        option text = STRING_TOKEN(STR_CPU_ACPI_C3),    value = 3,  flags = RESET_REQUIRED;\
+    endoneof;
+
+#define NEHALEM_ONEOF_C6ENABLE\
+    oneof varid     = SETUP_DATA.C6Enable,\
+        prompt      = STRING_TOKEN(STR_CPU_C6_PROMPT),\
+        help        = STRING_TOKEN(STR_CPU_C6_PROMPT_HELP),\
+        option text = STRING_TOKEN(STR_CPU_DISABLED),  	value = 0,  flags = RESET_REQUIRED;\
+        option text = STRING_TOKEN(STR_CPU_ENABLED),   	value = 3,  flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;\
+    endoneof;
+
+#define NEHALEM_ONEOF_C7ENABLE\
+    oneof varid     = SETUP_DATA.C7Enable,\
+        prompt      = STRING_TOKEN(STR_CPU_C7_PROMPT),\
+        help        = STRING_TOKEN(STR_CPU_C7_PROMPT_HELP),\
+        option text = STRING_TOKEN(STR_CPU_DISABLED),  	value = 0,  flags = RESET_REQUIRED;\
+        option text = STRING_TOKEN(STR_CPU_ENABLED),   	value = 3,  flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;\
+    endoneof;
+
+#define NEHALEM_ONEOF_CXINTERFILTER\
+    oneof varid     = SETUP_DATA.CxInterFilter,\
+        prompt      = STRING_TOKEN(STR_CPU_CX_INTR_FILTER_PROMPT),\
+        help        = STRING_TOKEN(STR_CPU_CX_INTR_FILTER_PROMPT_HELP),\
+        option text = STRING_TOKEN(STR_CPU_DISABLED),  	value = 0,  flags = RESET_REQUIRED;\
+        option text = STRING_TOKEN(STR_CPU_ENABLED),   	value = 1,  flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;\
+    endoneof;
+
+#define NEHALEM_ONEOF_PACKAGECSTATE_NOTSANDYBRIDGE\
+    oneof varid     = SETUP_DATA.PackageCState,\
+        prompt      = STRING_TOKEN(STR_CPU_PACKAGE_CSTATE_REPORT),\
+        help        = STRING_TOKEN(STR_CPU_PACKAGE_CSTATE_REPORT_HELP),\
+        option text = STRING_TOKEN(STR_CPU_C0SUPPORT),  value = 0,  flags = RESET_REQUIRED;\
+        option text = STRING_TOKEN(STR_CPU_C1SUPPORT),  value = 1,  flags = RESET_REQUIRED;\
+        option text = STRING_TOKEN(STR_CPU_C3SUPPORT),  value = 3,  flags = RESET_REQUIRED;\
+        option text = STRING_TOKEN(STR_CPU_C6SUPPORT),  value = 6,  flags = RESET_REQUIRED;\
+        option text = STRING_TOKEN(STR_CPU_C7SUPPORT),  value = 7,  flags = RESET_REQUIRED;\
+        option text = STRING_TOKEN(STR_CPU_NOLIMIT),    value = 0xff,  flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;\
+  endoneof;
+
+#define NEHALEM_ONEOF_PACKAGECSTATE_SANDYBRIDGE\
+    oneof varid     = SETUP_DATA.PackageCState,\
+        prompt      = STRING_TOKEN(STR_CPU_PACKAGE_CSTATE_REPORT),\
+        help        = STRING_TOKEN(STR_CPU_PACKAGE_CSTATE_REPORT_HELP),\
+        option text = STRING_TOKEN(STR_CPU_C0SUPPORT),  value = 0,  flags = RESET_REQUIRED;\
+        option text = STRING_TOKEN(STR_CPU_C2SUPPORT),  value = 1,  flags = RESET_REQUIRED;\
+        option text = STRING_TOKEN(STR_CPU_C6SUPPORT),  value = 6,  flags = RESET_REQUIRED;\
+        option text = STRING_TOKEN(STR_CPU_C7SUPPORT),  value = 7,  flags = RESET_REQUIRED;\
+        option text = STRING_TOKEN(STR_CPU_NOLIMIT),    value = 0xff,  flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;\
+  endoneof;
+
+#define NEHALEM_ONEOF_LOCALAPIC\
+    oneof varid  = SETUP_DATA.LocalX2Apic,\
+        prompt = STRING_TOKEN(STR_CPU_LOCAL_APIC_PROMPT),\
+        help = STRING_TOKEN(STR_CPU_LOCAL_APIC_PROMPT_HELP),\
+        option text = STRING_TOKEN(STR_CPU_AUTO),       value = 2, flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;\
+        option text = STRING_TOKEN(STR_CPU_X2APIC),	    value = 1, flags = RESET_REQUIRED;\
+        option text = STRING_TOKEN(STR_CPU_XAPIC),	    value = 0, flags = RESET_REQUIRED;\
+    endoneof;
+
+
+#define NEHALEM_NUMERIC_PROCESSORTDCLIMIT\
+    numeric varid   = SETUP_DATA.ProcessorTDCLimit,\
+        prompt  = STRING_TOKEN(STR_CPU_TDC),\
+        help    = STRING_TOKEN(STR_CPU_TDC_HELP),\
+        flags   = 0 | RESET_REQUIRED,\
+        minimum = 0,\
+        maximum = 255,\
+        step    = 0,\
+        default = 0,\
+        default = 0, defaultstore = AmiMfgDefault,\
+    endnumeric;
+        
+#define NEHALEM_NUMERIC_PROCESSORTDPLIMIT\
+    numeric varid   = SETUP_DATA.ProcessorTDPLimit,\
+        prompt  = STRING_TOKEN(STR_CPU_TDP),\
+        help    = STRING_TOKEN(STR_CPU_TDP_HELP),\
+        flags   = 0 | RESET_REQUIRED,\
+        minimum = 0,\
+        maximum = 255,\
+        step    = 0,\
+        default = 0,\
+        default = 0, defaultstore = AmiMfgDefault,\
+    endnumeric;
+
+#define NEHALEM_NUMERIC_CPULONGDURPWR\
+    numeric varid   = SETUP_DATA.CpuLongDurPwr,\
+        prompt  = STRING_TOKEN(STR_CPU_LONG_DUR_PWR),\
+        help    = STRING_TOKEN(STR_CPU_LONG_DUR_PWR_HELP),\
+        flags   = 0 | RESET_REQUIRED,\
+        minimum = 0,\
+        maximum = 255,\
+        step    = 0,\
+        default = 0,\
+        default = 0, defaultstore = AmiMfgDefault,\
+    endnumeric;
+
+#define NEHALEM_NUMERIC_CPULONGDURTIME\
+    numeric varid   = SETUP_DATA.CpuLongDurTime,\
+        prompt  = STRING_TOKEN(STR_CPU_LONG_DUR_TIME),\
+        help    = STRING_TOKEN(STR_CPU_LONG_DUR_TIME_HELP),\
+        flags   = 0 | RESET_REQUIRED,\
+        minimum = 0,\
+        maximum = 32000,\
+        step    = 0,\
+        default = 0,\
+        default = 0, defaultstore = AmiMfgDefault,\
+    endnumeric;
+
+#define NEHALEM_NUMERIC_CPUSHORTDURPWR\
+    numeric varid   = SETUP_DATA.CpuShortDurPwr,\
+        prompt  = STRING_TOKEN(STR_CPU_SHRT_DUR_PWR),\
+        help    = STRING_TOKEN(STR_CPU_SHRT_DUR_PWR_HELP),\
+        flags   = 0 | RESET_REQUIRED,\
+        minimum = 0,\
+        maximum = 255,\
+        step    = 0,\
+        default = 0,\
+        default = 0, defaultstore = AmiMfgDefault,\
+    endnumeric;
+
+#define NEHALEM_NUMERIC_1CORERATIOLIMIT\
+    numeric varid   = SETUP_DATA._1CoreRatioLimit,\
+        prompt  = STRING_TOKEN(STR_CPU_1_CORE_RATIO_LIMIT),\
+        help    = STRING_TOKEN(STR_CPU_1_CORE_RATIO_LIMIT_HELP),\
+        flags   = 0 | RESET_REQUIRED,\
+        minimum = 0,\
+        maximum = 255,\
+        step    = 0,\
+        default = 0,\
+        default = 0, defaultstore = AmiMfgDefault,\
+    endnumeric;
+
+#define NEHALEM_NUMERIC_2CORERATIOLIMIT\
+    numeric varid   = SETUP_DATA._2CoreRatioLimit,\
+        prompt  = STRING_TOKEN(STR_CPU_2_CORE_RATIO_LIMIT),\
+        help    = STRING_TOKEN(STR_CPU_2_CORE_RATIO_LIMIT_HELP),\
+        flags   = 0 | RESET_REQUIRED,\
+        minimum = 0,\
+        maximum = 255,\
+        step    = 0,\
+        default = 0,\
+        default = 0, defaultstore = AmiMfgDefault,\
+    endnumeric;
+
+#define NEHALEM_NUMERIC_3CORERATIOLIMIT\
+    numeric varid   = SETUP_DATA._3CoreRatioLimit,\
+        prompt  = STRING_TOKEN(STR_CPU_3_CORE_RATIO_LIMIT),\
+        help    = STRING_TOKEN(STR_CPU_3_CORE_RATIO_LIMIT_HELP),\
+        flags   = 0 | RESET_REQUIRED,\
+        minimum = 0,\
+        maximum = 255,\
+        step    = 0,\
+        default = 0,\
+        default = 0, defaultstore = AmiMfgDefault,\
+    endnumeric;
+
+#define NEHALEM_NUMERIC_4CORERATIOLIMIT\
+    numeric varid   = SETUP_DATA._4CoreRatioLimit,\
+        prompt  = STRING_TOKEN(STR_CPU_4_CORE_RATIO_LIMIT),\
+        help    = STRING_TOKEN(STR_CPU_4_CORE_RATIO_LIMIT_HELP),\
+        flags   = 0 | RESET_REQUIRED,\
+        minimum = 0,\
+        maximum = 255,\
+        step    = 0,\
+        default = 0,\
+        default = 0, defaultstore = AmiMfgDefault,\
+    endnumeric;
+
+#define NEHALEM_NUMERIC_5CORERATIOLIMIT\
+    numeric varid   = SETUP_DATA._5CoreRatioLimit,\
+        prompt  = STRING_TOKEN(STR_CPU_5_CORE_RATIO_LIMIT),\
+        help    = STRING_TOKEN(STR_CPU_5_CORE_RATIO_LIMIT_HELP),\
+        flags   = 0 | RESET_REQUIRED,\
+        minimum = 0,\
+        maximum = 255,\
+        step    = 0,\
+        default = 0,\
+        default = 0, defaultstore = AmiMfgDefault,\
+    endnumeric;
+
+#define NEHALEM_NUMERIC_6CORERATIOLIMIT\
+    numeric varid   = SETUP_DATA._6CoreRatioLimit,\
+        prompt  = STRING_TOKEN(STR_CPU_6_CORE_RATIO_LIMIT),\
+        help    = STRING_TOKEN(STR_CPU_6_CORE_RATIO_LIMIT_HELP),\
+        flags   = 0 | RESET_REQUIRED,\
+        minimum = 0,\
+        maximum = 255,\
+        step    = 0,\
+        default = 0,\
+        default = 0, defaultstore = AmiMfgDefault,\
+    endnumeric;
+
+#define NEHALEM_NUMERIC_7CORERATIOLIMIT\
+    numeric varid   = SETUP_DATA._7CoreRatioLimit,\
+        prompt  = STRING_TOKEN(STR_CPU_7_CORE_RATIO_LIMIT),\
+        help    = STRING_TOKEN(STR_CPU_7_CORE_RATIO_LIMIT_HELP),\
+        flags   = 0 | RESET_REQUIRED,\
+        minimum = 0,\
+        maximum = 255,\
+        step    = 0,\
+        default = 0,\
+        default = 0, defaultstore = AmiMfgDefault,\
+    endnumeric;
+
+#define NEHALEM_NUMERIC_8CORERATIOLIMIT\
+    numeric varid   = SETUP_DATA._8CoreRatioLimit,\
+        prompt  = STRING_TOKEN(STR_CPU_8_CORE_RATIO_LIMIT),\
+        help    = STRING_TOKEN(STR_CPU_8_CORE_RATIO_LIMIT_HELP),\
+        flags   = 0 | RESET_REQUIRED,\
+        minimum = 0,\
+        maximum = 255,\
+        step    = 0,\
+        default = 0,\
+        default = 0, defaultstore = AmiMfgDefault,\
+        endnumeric;
+
+    #define NEHALEM_NUMERIC_CPUVID\
+    numeric varid   = SETUP_DATA.CpuVid,\
+        prompt  = STRING_TOKEN(STR_CPU_VID),\
+        help    = STRING_TOKEN(STR_CPU_VID_HELP),\
+        flags   = 0 | RESET_REQUIRED,\
+        minimum = 0,\
+        maximum = 255,\
+        step    = 0,\
+        default = 0,\
+        default = 0, defaultstore = AmiMfgDefault,\
+    endnumeric;
+
+#define CPU_ONEOF_DTSENABLE\
+      oneof varid    = SETUP_DATA.EnableDigitalThermalSensor,\
+          prompt       = STRING_TOKEN (STR_ENABLE_DTS_PROMPT),\
+          help         = STRING_TOKEN (STR_ENABLE_DTS_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+      endoneof;
+
+#endif //#ifdef CONTROL_DEFINITION
+
+#ifdef CONTROLS_WITH_DEFAULTS
+    NEHALEM_NUMERIC_CPU_SET_MAX_RATIO
+    NEHALEM_NUMERIC_CPU_SET_BOOT_RATIO
+    NEHALEM_ONEOF_HTD
+    NEHALEM_ONEOF_ACTIVECORECOUNT
+    NEHALEM_ONEOF_ACTIVECORECOUNTGRP2
+    NEHALEM_ONEOF_ACTIVECORECOUNTGRP3
+    NEHALEM_ONEOF_ACTIVECORECOUNTGRP1
+    NEHALEM_ONEOF_ACTIVECORECOUNTGRP4
+    NEHALEM_ONEOF_ACTIVECORECOUNTGRP5
+    NEHALEM_ONEOF_ACTIVECORECOUNTGRP6
+    NEHALEM_ONEOF_ACTIVECORECOUNTGRP7
+    NEHALEM_ONEOF_LIMITCPUID
+    NEHALEM_ONE_XDBIT
+    NEHALEM_ONEOF_SEVERPREF
+    NEHALEM_ONEOF_CPUMLCSTREAMER
+    NEHALEM_ONEOF_CPUMLCSPATIAL
+    NEHALEM_ONEOF_DCU_STREAMER_PREFETCH
+    NEHALEM_ONEOF_DCU_IP_PREFETCH
+    NEHALEM_ONEOF_DATAREUSEOPT
+    NEHALEM_ONEOF_VT_DEFAULT
+    NEHALEM_ONEOF_CPUPM
+    NEHALEM_ONEOF_EIST
+    NEHALEM_ONEOF_TURBOMODE
+    NEHALEM_ONEOF_CPUENGPERFBIAS
+    NEHALEM_ONEOF_PSDCOORDTYPE
+    NEHALEM_ONEOF_C3ENABLE
+    NEHALEM_ONEOF_C6ENABLE
+    NEHALEM_ONEOF_C7ENABLE
+    NEHALEM_ONEOF_CXINTERFILTER
+    NEHALEM_ONEOF_PACKAGECSTATE_SANDYBRIDGE
+    NEHALEM_ONEOF_PACKAGECSTATE_NOTSANDYBRIDGE
+    NEHALEM_ONEOF_LOCALAPIC
+    NEHALEM_NUMERIC_PROCESSORTDCLIMIT
+    NEHALEM_NUMERIC_PROCESSORTDPLIMIT
+    NEHALEM_NUMERIC_CPULONGDURPWR
+    NEHALEM_NUMERIC_CPULONGDURTIME
+    NEHALEM_NUMERIC_CPUSHORTDURPWR
+    NEHALEM_NUMERIC_1CORERATIOLIMIT
+    NEHALEM_NUMERIC_2CORERATIOLIMIT
+    NEHALEM_NUMERIC_3CORERATIOLIMIT
+    NEHALEM_NUMERIC_4CORERATIOLIMIT
+    NEHALEM_NUMERIC_5CORERATIOLIMIT
+    NEHALEM_NUMERIC_6CORERATIOLIMIT
+    NEHALEM_NUMERIC_7CORERATIOLIMIT
+    NEHALEM_NUMERIC_8CORERATIOLIMIT
+    NEHALEM_NUMERIC_CPUVID
+    CPU_ONEOF_DTSENABLE
+#endif //#ifdef CONTROLS_WITH_DEFAULTS
+
+#ifdef ADVANCED_FORM_SET
+
+#ifndef SUPPRESS_GRAYOUT_ENDIF
+#define SUPPRESS_GRAYOUT_ENDIF endif;
+#endif
+
+#ifdef FORM_SET_TYPEDEF
+    #include <Token.h>
+    #include "..\Include\Library\CpuPolicy.h"
+#endif
+
+#ifdef FORM_SET_VARSTORE
+    varstore SETUP_CPU_FEATURES,
+        key   = AUTO_ID(CPU_FEATURES_ID),
+        name  = SetupCpuFeatures,
+        guid  = SETUP_GUID;
+#endif
+
+#ifdef FORM_SET_ITEM
+//	Define controls to be added to the main page of the formset
+
+#endif
+
+#ifdef FORM_SET_GOTO
+// Define goto commands for the forms defined in this file
+    goto CPU_FORM_ID, 
+      prompt = STRING_TOKEN(STR_CPU_FORM),
+      help = STRING_TOKEN(STR_CPU_FORM_HELP);
+#endif
+
+#ifdef FORM_SET_FORM
+// Define forms
+    #ifndef CPU_FORM_CPU
+    #define CPU_FORM_CPU
+
+    form formid = AUTO_ID(CPU_FORM_ID),
+    title = STRING_TOKEN(STR_CPU_FORM);
+
+    SUBTITLE(STRING_TOKEN(STR_CPU_FORM))
+    SEPARATOR
+
+    suppressif  ideqval SETUP_CPU_FEATURES.Skt0Pop == 0;
+        goto CPU_SKT0_FORM_ID,
+            prompt = STRING_TOKEN(STR_CPU_SKT0_FORM),
+            help = STRING_TOKEN(STR_CPU_SKT_FORM_HELP);
+        endif;
+    suppressif  ideqval SETUP_CPU_FEATURES.Skt0Pop == 1;
+    text 
+          help   = STRING_TOKEN(STR_CPU_SKT_NOT_PRESENT_HELP),
+          text   = STRING_TOKEN(STR_CPU_SKT0_NOT_PRESENT_STRING),
+          text   = STRING_TOKEN(STR_CPU_SKT_NOT_PRESENT_VALUE);
+    endif;
+
+#if NUMBER_CPU_SOCKETS > 1
+    suppressif  ideqval SETUP_CPU_FEATURES.Skt1Pop == 0;
+        goto CPU_SKT1_FORM_ID,
+            prompt = STRING_TOKEN(STR_CPU_SKT1_FORM),
+            help = STRING_TOKEN(STR_CPU_SKT_FORM_HELP);
+    endif;
+    suppressif  ideqval SETUP_CPU_FEATURES.Skt1Pop == 1;
+    text 
+          help   = STRING_TOKEN(STR_CPU_SKT_NOT_PRESENT_HELP),
+          text   = STRING_TOKEN(STR_CPU_SKT1_NOT_PRESENT_STRING),
+          text   = STRING_TOKEN(STR_CPU_SKT_NOT_PRESENT_VALUE),
+          flags  = 0;
+    endif;
+#endif
+
+#if (CPU_SETUP_SHOW_DTSENABLE == 1)
+    goto CPU_THERMAL_CONFIG_FORM_ID,
+    	prompt  = STRING_TOKEN(STR_CPU_THERMAL_CONFIG_FORM_TITLE),
+    	help    = STRING_TOKEN(STR_CPU_THERMAL_CONFIG_FORM_HELP);  
+#endif
+
+    SEPARATOR
+
+    text 
+      help   = STRING_TOKEN(STR_PROCESSOR_SPEED_HELP),
+      text   = STRING_TOKEN(STR_PROCESSOR_SPEED_STRING),
+      text   = STRING_TOKEN(STR_PROCESSOR_SPEED_VALUE);
+
+    text 
+        help = STRING_TOKEN(STR_CPU_EMT64_HELP),
+        text = STRING_TOKEN(STR_CPU_EMT64_STRING),
+        text = STRING_TOKEN(STR_CPU_EMT64_VALUE);
+
+    SEPARATOR
+
+    suppressif  ideqval SETUP_CPU_FEATURES.CpuMismatch == 0;
+        text 
+          help   = STRING_TOKEN(STR_CPU_MISMATCH_VALUE),
+          text   = STRING_TOKEN(STR_CPU_MISMATCH_STRING),
+          text   = STRING_TOKEN(STR_CPU_MISMATCH_VALUE);
+    endif;
+
+#if CPU_SETUP_SET_MAX_RATIO
+    NEHALEM_NUMERIC_CPU_SET_MAX_RATIO
+#endif
+
+#if CPU_SETUP_SET_BOOT_RATIO
+    NEHALEM_NUMERIC_CPU_SET_BOOT_RATIO
+#endif
+
+    suppressif  ideqval SETUP_CPU_FEATURES.HTAvailable == 0;
+    grayoutif ideqval SYSTEM_ACCESS.Access == SYSTEM_PASSWORD_USER;
+        NEHALEM_ONEOF_HTD
+    SUPPRESS_GRAYOUT_ENDIF
+
+    suppressif  ideqval SETUP_CPU_FEATURES.MultiCoreAvailable == 0 OR NOT ideqval SETUP_CPU_FEATURES.CpuGroup == 0;
+    grayoutif ideqval SYSTEM_ACCESS.Access == SYSTEM_PASSWORD_USER;
+        NEHALEM_ONEOF_ACTIVECORECOUNT
+    SUPPRESS_GRAYOUT_ENDIF
+
+    suppressif  ideqval SETUP_CPU_FEATURES.MultiCoreAvailable == 0 OR NOT ideqval SETUP_CPU_FEATURES.CpuGroup == 2;
+    grayoutif ideqval SYSTEM_ACCESS.Access == SYSTEM_PASSWORD_USER;
+        NEHALEM_ONEOF_ACTIVECORECOUNTGRP2
+    SUPPRESS_GRAYOUT_ENDIF
+    
+    suppressif  ideqval SETUP_CPU_FEATURES.MultiCoreAvailable == 0 OR NOT ideqval SETUP_CPU_FEATURES.CpuGroup == 5;
+    grayoutif ideqval SYSTEM_ACCESS.Access == SYSTEM_PASSWORD_USER;
+        NEHALEM_ONEOF_ACTIVECORECOUNTGRP5
+    SUPPRESS_GRAYOUT_ENDIF
+
+    suppressif  ideqval SETUP_CPU_FEATURES.MultiCoreAvailable == 0 OR NOT ideqval SETUP_CPU_FEATURES.CpuGroup == 3;
+    grayoutif ideqval SYSTEM_ACCESS.Access == SYSTEM_PASSWORD_USER;
+        NEHALEM_ONEOF_ACTIVECORECOUNTGRP3
+    SUPPRESS_GRAYOUT_ENDIF
+
+    suppressif  ideqval SETUP_CPU_FEATURES.MultiCoreAvailable == 0 OR NOT ideqval SETUP_CPU_FEATURES.CpuGroup == 1;
+    grayoutif ideqval SYSTEM_ACCESS.Access == SYSTEM_PASSWORD_USER;
+        NEHALEM_ONEOF_ACTIVECORECOUNTGRP1
+    SUPPRESS_GRAYOUT_ENDIF
+
+    suppressif  ideqval SETUP_CPU_FEATURES.MultiCoreAvailable == 0 OR NOT ideqval SETUP_CPU_FEATURES.CpuGroup == 4;
+    grayoutif ideqval SYSTEM_ACCESS.Access == SYSTEM_PASSWORD_USER;
+        NEHALEM_ONEOF_ACTIVECORECOUNTGRP4
+    SUPPRESS_GRAYOUT_ENDIF
+
+    suppressif  ideqval SETUP_CPU_FEATURES.MultiCoreAvailable == 0 OR NOT ideqval SETUP_CPU_FEATURES.CpuGroup == 6;
+    grayoutif ideqval SYSTEM_ACCESS.Access == SYSTEM_PASSWORD_USER;
+        NEHALEM_ONEOF_ACTIVECORECOUNTGRP6
+    SUPPRESS_GRAYOUT_ENDIF
+
+    suppressif  ideqval SETUP_CPU_FEATURES.MultiCoreAvailable == 0 OR NOT ideqval SETUP_CPU_FEATURES.CpuGroup == 7;
+    grayoutif ideqval SYSTEM_ACCESS.Access == SYSTEM_PASSWORD_USER;
+        NEHALEM_ONEOF_ACTIVECORECOUNTGRP7
+    SUPPRESS_GRAYOUT_ENDIF
+
+    suppressif  ideqval SETUP_CPU_FEATURES.LimitCpuidAvailable == 0;
+    grayoutif ideqval SYSTEM_ACCESS.Access == SYSTEM_PASSWORD_USER;
+        NEHALEM_ONEOF_LIMITCPUID
+    SUPPRESS_GRAYOUT_ENDIF
+
+    suppressif  ideqval SETUP_CPU_FEATURES.XDBitAvailable == 0;
+    grayoutif ideqval SYSTEM_ACCESS.Access == SYSTEM_PASSWORD_USER;
+        NEHALEM_ONE_XDBIT
+    SUPPRESS_GRAYOUT_ENDIF
+
+#if SERVER_CLASS_PREFETCH_SETUP
+    NEHALEM_ONEOF_SEVERPREF
+
+    suppressif NOT ideqval SETUP_DATA.SeverPref == 0;
+#endif
+
+    suppressif  ideqval SETUP_CPU_FEATURES.DataReuseOptAvailable == 0;
+        NEHALEM_ONEOF_CPUMLCSTREAMER
+    endif;
+    
+    suppressif  ideqval SETUP_CPU_FEATURES.DataReuseOptAvailable == 0;
+        NEHALEM_ONEOF_CPUMLCSPATIAL
+    endif;
+    
+#if SERVER_CLASS_PREFETCH_SETUP
+    endif;
+#endif
+
+    suppressif  ideqval SETUP_CPU_FEATURES.DataReuseOptAvailable == 0
+#if SERVER_CLASS_PREFETCH_SETUP
+    OR NOT ideqval SETUP_DATA.SeverPref == 0
+#endif
+    ;
+        NEHALEM_ONEOF_DATAREUSEOPT       
+    endif;
+
+    suppressif  ideqval SETUP_CPU_FEATURES.VTAvailable == 0;
+    grayoutif ideqval SYSTEM_ACCESS.Access == SYSTEM_PASSWORD_USER;
+        NEHALEM_ONEOF_VT
+    SUPPRESS_GRAYOUT_ENDIF
+
+    //NEHALEM_ONEOF_CPUPM //EIP205589
+
+    suppressif  NOT ideqval SETUP_DATA.CpuPm == 2 OR ideqval SETUP_CPU_FEATURES.EISTAvailable == 0;
+        NEHALEM_ONEOF_EIST
+    endif;	
+
+	suppressif NOT ideqval SETUP_DATA.CpuPm == 2
+    OR ideqval SETUP_CPU_FEATURES.TurboModeAvailable == 0
+    OR ideqval SETUP_DATA.EIST == 0;
+        NEHALEM_ONEOF_TURBOMODE
+     endif;	
+
+	suppressif NOT ideqval SETUP_DATA.CpuPm == 2
+    OR ideqval SETUP_CPU_FEATURES.CpuEngPerfBiasAvailable == 0
+    OR ideqval SETUP_DATA.EIST == 0;
+        NEHALEM_ONEOF_CPUENGPERFBIAS
+     endif;	
+
+    suppressif NOT ideqval SETUP_DATA.CpuPm == 2
+    OR ideqval SETUP_CPU_FEATURES.EISTAvailable == 0
+    OR ideqval SETUP_DATA.EIST == 0;
+        NEHALEM_ONEOF_PSDCOORDTYPE
+    endif;
+
+    // Enable/Disable CPU C3(ACPI C2) report to OS
+    suppressif NOT ideqval SETUP_DATA.CpuPm == 2 OR ideqval SETUP_CPU_FEATURES.C3Available == 0;
+        NEHALEM_ONEOF_C3ENABLE
+    endif;
+
+    // Enable/Disable NHM C6(ACPI C3) report to OS
+    suppressif NOT ideqval SETUP_DATA.CpuPm == 2 OR ideqval SETUP_CPU_FEATURES.C6Available == 0;
+        NEHALEM_ONEOF_C6ENABLE
+    endif;
+
+    // Enable/Disable NHM C7(ACPI C3) report to OS
+    suppressif NOT ideqval SETUP_DATA.CpuPm == 2 OR ideqval SETUP_CPU_FEATURES.C7Available == 0;
+        NEHALEM_ONEOF_C7ENABLE
+    endif;
+
+
+    suppressif NOT ideqval SETUP_DATA.CpuPm == 2 OR ideqval SETUP_CPU_FEATURES.CxIntrFilterAvailable == 0;
+        NEHALEM_ONEOF_CXINTERFILTER
+    endif;
+
+    // Package C state limit option
+	suppressif NOT ideqval SETUP_DATA.CpuPm == 2 OR ideqval SETUP_CPU_FEATURES.CxAvailable == 0 OR ideqval SETUP_CPU_FEATURES.IsSandyBridge == 1;
+        NEHALEM_ONEOF_PACKAGECSTATE_NOTSANDYBRIDGE
+    endif;
+
+    suppressif NOT ideqval SETUP_DATA.CpuPm == 2 OR ideqval SETUP_CPU_FEATURES.CxAvailable == 0 OR ideqval SETUP_CPU_FEATURES.IsSandyBridge == 0;
+        NEHALEM_ONEOF_PACKAGECSTATE_SANDYBRIDGE
+    endif;
+
+    suppressif  ideqval SETUP_CPU_FEATURES.LocalX2ApicAvailable == 0;
+        NEHALEM_ONEOF_LOCALAPIC
+    endif;
+
+    suppressif  ideqval SETUP_CPU_FEATURES.XETdcTdpLimitAvailable == 0
+        OR ideqval SETUP_DATA.EIST == 0
+        OR ideqval SETUP_DATA.TurboMode == 0
+        OR ideqval SETUP_CPU_FEATURES.IsSandyBridge == 1;
+    grayoutif ideqval SYSTEM_ACCESS.Access == SYSTEM_PASSWORD_USER;
+        text 
+            help = STRING_TOKEN(STR_CPU_FACTORY_TDC_HELP),
+            text = STRING_TOKEN(STR_CPU_FACTORY_TDC_STRING),
+            text = STRING_TOKEN(STR_CPU_FACTORY_TDC_VALUE);
+
+        NEHALEM_NUMERIC_PROCESSORTDCLIMIT
+
+        text 
+            help = STRING_TOKEN(STR_CPU_FACTORY_TDP_HELP),
+            text = STRING_TOKEN(STR_CPU_FACTORY_TDP_STRING),
+            text = STRING_TOKEN(STR_CPU_FACTORY_TDP_VALUE);
+
+        NEHALEM_NUMERIC_PROCESSORTDPLIMIT
+
+    SUPPRESS_GRAYOUT_ENDIF
+
+
+    suppressif  ideqval SETUP_CPU_FEATURES.XETdcTdpLimitAvailable == 0
+        OR ideqval SETUP_DATA.EIST == 0
+        OR ideqval SETUP_DATA.TurboMode == 0
+        OR ideqval SETUP_CPU_FEATURES.IsSandyBridge == 0;
+    grayoutif ideqval SYSTEM_ACCESS.Access == SYSTEM_PASSWORD_USER;
+        text 
+            help = STRING_TOKEN(STR_CPU_FACTY_LONG_DUR_PWR_HELP),
+            text = STRING_TOKEN(STR_CPU_FACTY_LONG_DUR_PWR_STRING),
+            text = STRING_TOKEN(STR_CPU_FACTY_LONG_DUR_PWR_VALUE);
+
+        NEHALEM_NUMERIC_CPULONGDURPWR
+
+        text 
+            help = STRING_TOKEN(STR_CPU_FACTY_LONG_DUR_TIME_HELP),
+            text = STRING_TOKEN(STR_CPU_FACTY_LONG_DUR_TIME_STRING),
+            text = STRING_TOKEN(STR_CPU_FACTY_LONG_DUR_TIME_VALUE);
+
+        NEHALEM_NUMERIC_CPULONGDURTIME
+
+        text 
+            help = STRING_TOKEN(STR_CPU_FACTY_SHRT_DUR_PWR_HELP),
+            text = STRING_TOKEN(STR_CPU_FACTY_SHRT_DUR_PWR_STRING),
+            text = STRING_TOKEN(STR_CPU_FACTY_SHRT_DUR_PWR_VALUE);
+
+        NEHALEM_NUMERIC_CPUSHORTDURPWR
+    SUPPRESS_GRAYOUT_ENDIF
+
+
+    suppressif  ideqval SETUP_CPU_FEATURES.XECoreRatioLimitAvailable == 0
+        OR ideqval SETUP_DATA.EIST == 0
+    OR ideqval SETUP_DATA.TurboMode == 0;
+    grayoutif ideqval SYSTEM_ACCESS.Access == SYSTEM_PASSWORD_USER;
+        text 
+            help = STRING_TOKEN(STR_CPU_BASE_FREQ_HELP),
+            text = STRING_TOKEN(STR_CPU_BASE_FREQ_STRING),
+            text = STRING_TOKEN(STR_CPU_CPU_BASE_FREQ_VALUE);
+
+        NEHALEM_NUMERIC_1CORERATIOLIMIT
+        NEHALEM_NUMERIC_2CORERATIOLIMIT
+        NEHALEM_NUMERIC_3CORERATIOLIMIT
+        NEHALEM_NUMERIC_4CORERATIOLIMIT
+    SUPPRESS_GRAYOUT_ENDIF
+
+    suppressif  ideqval SETUP_CPU_FEATURES.XECoreRatioLimitAvailable == 0
+        OR ideqval SETUP_DATA.EIST == 0
+        OR ideqval SETUP_DATA.TurboMode == 0
+        OR ideqval SETUP_CPU_FEATURES.NumCores == 4;
+    grayoutif ideqval SYSTEM_ACCESS.Access == SYSTEM_PASSWORD_USER;
+
+        NEHALEM_NUMERIC_5CORERATIOLIMIT
+        NEHALEM_NUMERIC_6CORERATIOLIMIT
+
+    SUPPRESS_GRAYOUT_ENDIF
+
+    suppressif  ideqval SETUP_CPU_FEATURES.XECoreRatioLimitAvailable == 0
+        OR ideqval SETUP_DATA.EIST == 0
+        OR ideqval SETUP_DATA.TurboMode == 0
+        OR ideqval SETUP_CPU_FEATURES.NumCores == 4
+        OR ideqval SETUP_CPU_FEATURES.NumCores == 6;
+    grayoutif ideqval SYSTEM_ACCESS.Access == SYSTEM_PASSWORD_USER;
+
+        NEHALEM_NUMERIC_7CORERATIOLIMIT
+        NEHALEM_NUMERIC_8CORERATIOLIMIT
+
+    SUPPRESS_GRAYOUT_ENDIF
+
+#if SANDY_BRIDGE_VID_SUPPORT
+    suppressif  ideqval SETUP_CPU_FEATURES.XECoreRatioLimitAvailable == 0
+        OR ideqval SETUP_DATA.EIST == 0
+        OR ideqval SETUP_DATA.TurboMode == 0
+        OR ideqval SETUP_CPU_FEATURES.IsSandyBridge == 0;
+	grayoutif ideqval SYSTEM_ACCESS.Access == SYSTEM_PASSWORD_USER;
+
+        text 
+            help = STRING_TOKEN(STR_CPU_FACTY_VID_HELP),
+            text = STRING_TOKEN(STR_CPU_FACTY_VID_STRING),
+            text = STRING_TOKEN(STR_CPU_FACTY_VID_VALUE);
+
+        NEHALEM_NUMERIC_CPUVID
+
+    SUPPRESS_GRAYOUT_ENDIF
+#endif
+
+	endform;
+
+    form formid = AUTO_ID(CPU_SKT0_FORM_ID),
+    title = STRING_TOKEN(STR_CPU_SKT0_FORM);
+
+    SUBTITLE(STRING_TOKEN(STR_CPU_SKT0_FORM))
+    SEPARATOR
+
+    SUBTITLE(STRING_TOKEN(STR_CPU_SKT0_VERSION_VALUE))
+
+    text 
+      help   = STRING_TOKEN(STR_CPU_SKT_CPUID_HELP),
+      text   = STRING_TOKEN(STR_CPU_SKT_CPUID_STRING),
+      text   = STRING_TOKEN(STR_CPU_SKT0_CPUID_VALUE);
+
+    text 
+      help   = STRING_TOKEN(STR_CPU_SKT_MICROCODE_HELP),
+      text   = STRING_TOKEN(STR_CPU_SKT_MICROCODE_STRING),
+      text   = STRING_TOKEN(STR_CPU_SKT0_MICROCODE_VALUE);
+
+    text 
+      help   = STRING_TOKEN(STR_CPU_SKT_MAXSPEED_HELP),
+      text   = STRING_TOKEN(STR_CPU_SKT_MAXSPEED_STRING),
+      text   = STRING_TOKEN(STR_CPU_SKT0_MAXSPEED_VALUE);
+
+    text 
+      help   = STRING_TOKEN(STR_CPU_SKT_MINSPEED_HELP),
+      text   = STRING_TOKEN(STR_CPU_SKT_MINSPEED_STRING),
+      text   = STRING_TOKEN(STR_CPU_SKT0_MINSPEED_VALUE);
+
+    text 
+      help   = STRING_TOKEN(STR_CPU_SKT_NUMCORE_HELP),
+      text   = STRING_TOKEN(STR_CPU_SKT_NUMCORE_STRING),
+      text   = STRING_TOKEN(STR_CPU_SKT0_NUMCORE_VALUE);
+
+    text 
+      help   = STRING_TOKEN(STR_CPU_SKT_HT_HELP),
+      text   = STRING_TOKEN(STR_CPU_SKT_HT_STRING),
+      text   = STRING_TOKEN(STR_CPU_SKT0_HT_VALUE);
+
+    text 
+      help   = STRING_TOKEN(STR_CPU_SKT_VTX_HELP),
+      text   = STRING_TOKEN(STR_CPU_SKT_VTX_STRING),
+      text   = STRING_TOKEN(STR_CPU_SKT0_VTX_VALUE);
+
+#if CPU_DISPLAY_SETUP_SMX
+    text 
+      help   = STRING_TOKEN(STR_CPU_SKT_SMX_HELP),
+      text   = STRING_TOKEN(STR_CPU_SKT_SMX_STRING),
+      text   = STRING_TOKEN(STR_CPU_SKT0_SMX_VALUE);
+#endif
+
+    SEPARATOR
+
+    text 
+      help   = STRING_TOKEN(STR_CPU_SKT_L1_DATA_CACHE_HELP),
+      text   = STRING_TOKEN(STR_CPU_SKT_L1_DATA_CACHE_STRING),
+      text   = STRING_TOKEN(STR_CPU_SKT0_L1_DATA_CACHE_VALUE);
+
+    text 
+      help   = STRING_TOKEN(STR_CPU_SKT_L1_CODE_CACHE_HELP),
+      text   = STRING_TOKEN(STR_CPU_SKT_L1_CODE_CACHE_STRING),
+      text   = STRING_TOKEN(STR_CPU_SKT0_L1_CODE_CACHE_VALUE);
+
+    text 
+      help   = STRING_TOKEN(STR_CPU_SKT_L2_CACHE_HELP),
+      text   = STRING_TOKEN(STR_CPU_SKT_L2_CACHE_STRING),
+      text   = STRING_TOKEN(STR_CPU_SKT0_L2_CACHE_VALUE);
+
+    text 
+      help   = STRING_TOKEN(STR_CPU_SKT_L3_CACHE_HELP),
+      text   = STRING_TOKEN(STR_CPU_SKT_L3_CACHE_STRING),
+      text   = STRING_TOKEN(STR_CPU_SKT0_L3_CACHE_VALUE);
+
+    endform;
+
+#if NUMBER_CPU_SOCKETS > 1
+    form formid = AUTO_ID(CPU_SKT1_FORM_ID),
+    title = STRING_TOKEN(STR_CPU_SKT1_FORM);
+
+    SUBTITLE(STRING_TOKEN(STR_CPU_SKT1_FORM))
+    SEPARATOR
+
+    SUBTITLE(STRING_TOKEN(STR_CPU_SKT1_VERSION_VALUE))
+
+    text 
+      help   = STRING_TOKEN(STR_CPU_SKT_CPUID_HELP),
+      text   = STRING_TOKEN(STR_CPU_SKT_CPUID_STRING),
+      text   = STRING_TOKEN(STR_CPU_SKT1_CPUID_VALUE);
+
+    text 
+      help   = STRING_TOKEN(STR_CPU_SKT_MICROCODE_HELP),
+      text   = STRING_TOKEN(STR_CPU_SKT_MICROCODE_STRING),
+      text   = STRING_TOKEN(STR_CPU_SKT1_MICROCODE_VALUE);
+
+    text 
+      help   = STRING_TOKEN(STR_CPU_SKT_MAXSPEED_HELP),
+      text   = STRING_TOKEN(STR_CPU_SKT_MAXSPEED_STRING),
+      text   = STRING_TOKEN(STR_CPU_SKT1_MAXSPEED_VALUE);
+
+    text 
+      help   = STRING_TOKEN(STR_CPU_SKT_MINSPEED_HELP),
+      text   = STRING_TOKEN(STR_CPU_SKT_MINSPEED_STRING),
+      text   = STRING_TOKEN(STR_CPU_SKT1_MINSPEED_VALUE);
+
+    text 
+      help   = STRING_TOKEN(STR_CPU_SKT_NUMCORE_HELP),
+      text   = STRING_TOKEN(STR_CPU_SKT_NUMCORE_STRING),
+      text   = STRING_TOKEN(STR_CPU_SKT1_NUMCORE_VALUE);
+
+    text 
+      help   = STRING_TOKEN(STR_CPU_SKT_HT_HELP),
+      text   = STRING_TOKEN(STR_CPU_SKT_HT_STRING),
+      text   = STRING_TOKEN(STR_CPU_SKT1_HT_VALUE);
+
+    text 
+      help   = STRING_TOKEN(STR_CPU_SKT_VTX_HELP),
+      text   = STRING_TOKEN(STR_CPU_SKT_VTX_STRING),
+      text   = STRING_TOKEN(STR_CPU_SKT1_VTX_VALUE);
+
+#if CPU_DISPLAY_SETUP_SMX
+    text 
+      help   = STRING_TOKEN(STR_CPU_SKT_SMX_HELP),
+      text   = STRING_TOKEN(STR_CPU_SKT_SMX_STRING),
+      text   = STRING_TOKEN(STR_CPU_SKT1_SMX_VALUE);
+#endif
+
+    SEPARATOR
+
+    text 
+      help   = STRING_TOKEN(STR_CPU_SKT_L1_DATA_CACHE_HELP),
+      text   = STRING_TOKEN(STR_CPU_SKT_L1_DATA_CACHE_STRING),
+      text   = STRING_TOKEN(STR_CPU_SKT1_L1_DATA_CACHE_VALUE);
+
+    text 
+      help   = STRING_TOKEN(STR_CPU_SKT_L1_CODE_CACHE_HELP),
+      text   = STRING_TOKEN(STR_CPU_SKT_L1_CODE_CACHE_STRING),
+      text   = STRING_TOKEN(STR_CPU_SKT1_L1_CODE_CACHE_VALUE);
+
+    text 
+      help   = STRING_TOKEN(STR_CPU_SKT_L2_CACHE_HELP),
+      text   = STRING_TOKEN(STR_CPU_SKT_L2_CACHE_STRING),
+      text   = STRING_TOKEN(STR_CPU_SKT1_L2_CACHE_VALUE);
+
+    text 
+      help   = STRING_TOKEN(STR_CPU_SKT_L3_CACHE_HELP),
+      text   = STRING_TOKEN(STR_CPU_SKT_L3_CACHE_STRING),
+      text   = STRING_TOKEN(STR_CPU_SKT1_L3_CACHE_VALUE);
+
+    endform;
+#endif
+#if NUMBER_CPU_SOCKETS > 2
+    form formid = AUTO_ID(CPU_SKT2_FORM_ID),
+    title = STRING_TOKEN(STR_CPU_SKT2_FORM);
+
+    SUBTITLE(STRING_TOKEN(STR_CPU_SKT2_FORM))
+    SEPARATOR
+
+    SUBTITLE(STRING_TOKEN(STR_CPU_SKT2_VERSION_VALUE))
+
+    text 
+      help   = STRING_TOKEN(STR_CPU_SKT_CPUID_HELP),
+      text   = STRING_TOKEN(STR_CPU_SKT_CPUID_STRING),
+      text   = STRING_TOKEN(STR_CPU_SKT2_CPUID_VALUE);
+
+    text 
+      help   = STRING_TOKEN(STR_CPU_SKT_MICROCODE_HELP),
+      text   = STRING_TOKEN(STR_CPU_SKT_MICROCODE_STRING),
+      text   = STRING_TOKEN(STR_CPU_SKT2_MICROCODE_VALUE);
+
+    text 
+      help   = STRING_TOKEN(STR_CPU_SKT_MAXSPEED_HELP),
+      text   = STRING_TOKEN(STR_CPU_SKT_MAXSPEED_STRING),
+      text   = STRING_TOKEN(STR_CPU_SKT2_MAXSPEED_VALUE);
+
+    text 
+      help   = STRING_TOKEN(STR_CPU_SKT_MINSPEED_HELP),
+      text   = STRING_TOKEN(STR_CPU_SKT_MINSPEED_STRING),
+      text   = STRING_TOKEN(STR_CPU_SKT2_MINSPEED_VALUE);
+
+    text 
+      help   = STRING_TOKEN(STR_CPU_SKT_NUMCORE_HELP),
+      text   = STRING_TOKEN(STR_CPU_SKT_NUMCORE_STRING),
+      text   = STRING_TOKEN(STR_CPU_SKT2_NUMCORE_VALUE);
+
+    text 
+      help   = STRING_TOKEN(STR_CPU_SKT_HT_HELP),
+      text   = STRING_TOKEN(STR_CPU_SKT_HT_STRING),
+      text   = STRING_TOKEN(STR_CPU_SKT2_HT_VALUE);
+
+    text 
+      help   = STRING_TOKEN(STR_CPU_SKT_VTX_HELP),
+      text   = STRING_TOKEN(STR_CPU_SKT_VTX_STRING),
+      text   = STRING_TOKEN(STR_CPU_SKT2_VTX_VALUE);
+
+#if CPU_DISPLAY_SETUP_SMX
+    text 
+      help   = STRING_TOKEN(STR_CPU_SKT_SMX_HELP),
+      text   = STRING_TOKEN(STR_CPU_SKT_SMX_STRING),
+      text   = STRING_TOKEN(STR_CPU_SKT2_SMX_VALUE);
+#endif
+
+    SEPARATOR
+
+    text 
+      help   = STRING_TOKEN(STR_CPU_SKT_L1_DATA_CACHE_HELP),
+      text   = STRING_TOKEN(STR_CPU_SKT_L1_DATA_CACHE_STRING),
+      text   = STRING_TOKEN(STR_CPU_SKT2_L1_DATA_CACHE_VALUE);
+
+    text 
+      help   = STRING_TOKEN(STR_CPU_SKT_L1_CODE_CACHE_HELP),
+      text   = STRING_TOKEN(STR_CPU_SKT_L1_CODE_CACHE_STRING),
+      text   = STRING_TOKEN(STR_CPU_SKT2_L1_CODE_CACHE_VALUE);
+
+    text 
+      help   = STRING_TOKEN(STR_CPU_SKT_L2_CACHE_HELP),
+      text   = STRING_TOKEN(STR_CPU_SKT_L2_CACHE_STRING),
+      text   = STRING_TOKEN(STR_CPU_SKT2_L2_CACHE_VALUE);
+
+    text 
+      help   = STRING_TOKEN(STR_CPU_SKT_L3_CACHE_HELP),
+      text   = STRING_TOKEN(STR_CPU_SKT_L3_CACHE_STRING),
+      text   = STRING_TOKEN(STR_CPU_SKT2_L3_CACHE_VALUE);
+
+    endform;
+#endif
+#if NUMBER_CPU_SOCKETS > 3
+    form formid = AUTO_ID(CPU_SKT3_FORM_ID),
+    title = STRING_TOKEN(STR_CPU_SKT3_FORM);
+
+    SUBTITLE(STRING_TOKEN(STR_CPU_SKT3_FORM))
+    SEPARATOR
+
+    SUBTITLE(STRING_TOKEN(STR_CPU_SKT3_VERSION_VALUE))
+
+    text 
+      help   = STRING_TOKEN(STR_CPU_SKT_CPUID_HELP),
+      text   = STRING_TOKEN(STR_CPU_SKT_CPUID_STRING),
+      text   = STRING_TOKEN(STR_CPU_SKT3_CPUID_VALUE);
+
+    text 
+      help   = STRING_TOKEN(STR_CPU_SKT_MICROCODE_HELP),
+      text   = STRING_TOKEN(STR_CPU_SKT_MICROCODE_STRING),
+      text   = STRING_TOKEN(STR_CPU_SKT3_MICROCODE_VALUE);
+
+    text 
+      help   = STRING_TOKEN(STR_CPU_SKT_MAXSPEED_HELP),
+      text   = STRING_TOKEN(STR_CPU_SKT_MAXSPEED_STRING),
+      text   = STRING_TOKEN(STR_CPU_SKT3_MAXSPEED_VALUE);
+
+    text 
+      help   = STRING_TOKEN(STR_CPU_SKT_MINSPEED_HELP),
+      text   = STRING_TOKEN(STR_CPU_SKT_MINSPEED_STRING),
+      text   = STRING_TOKEN(STR_CPU_SKT3_MINSPEED_VALUE);
+
+    text 
+      help   = STRING_TOKEN(STR_CPU_SKT_NUMCORE_HELP),
+      text   = STRING_TOKEN(STR_CPU_SKT_NUMCORE_STRING),
+      text   = STRING_TOKEN(STR_CPU_SKT3_NUMCORE_VALUE);
+
+    text 
+      help   = STRING_TOKEN(STR_CPU_SKT_HT_HELP),
+      text   = STRING_TOKEN(STR_CPU_SKT_HT_STRING),
+      text   = STRING_TOKEN(STR_CPU_SKT3_HT_VALUE);
+
+     text 
+      help   = STRING_TOKEN(STR_CPU_SKT_VTX_HELP),
+      text   = STRING_TOKEN(STR_CPU_SKT_VTX_STRING),
+      text   = STRING_TOKEN(STR_CPU_SKT3_VTX_VALUE);
+
+#if CPU_DISPLAY_SETUP_SMX
+    text 
+      help   = STRING_TOKEN(STR_CPU_SKT_SMX_HELP),
+      text   = STRING_TOKEN(STR_CPU_SKT_SMX_STRING),
+      text   = STRING_TOKEN(STR_CPU_SKT3_SMX_VALUE);
+#endif
+
+    SEPARATOR
+
+    text 
+      help   = STRING_TOKEN(STR_CPU_SKT_L1_DATA_CACHE_HELP),
+      text   = STRING_TOKEN(STR_CPU_SKT_L1_DATA_CACHE_STRING),
+      text   = STRING_TOKEN(STR_CPU_SKT3_L1_DATA_CACHE_VALUE);
+
+    text 
+      help   = STRING_TOKEN(STR_CPU_SKT_L1_CODE_CACHE_HELP),
+      text   = STRING_TOKEN(STR_CPU_SKT_L1_CODE_CACHE_STRING),
+      text   = STRING_TOKEN(STR_CPU_SKT3_L1_CODE_CACHE_VALUE);
+
+    text 
+      help   = STRING_TOKEN(STR_CPU_SKT_L2_CACHE_HELP),
+      text   = STRING_TOKEN(STR_CPU_SKT_L2_CACHE_STRING),
+      text   = STRING_TOKEN(STR_CPU_SKT3_L2_CACHE_VALUE);
+
+    text 
+      help   = STRING_TOKEN(STR_CPU_SKT_L3_CACHE_HELP),
+      text   = STRING_TOKEN(STR_CPU_SKT_L3_CACHE_STRING),
+      text   = STRING_TOKEN(STR_CPU_SKT3_L3_CACHE_VALUE);
+
+    endform;
+#endif  //#if NUMBER_CPU_SOCKETS > 3
+
+#if CPU_SETUP_SHOW_DTSENABLE == 1
+    form formid = AUTO_ID(CPU_THERMAL_CONFIG_FORM_ID),
+    title = STRING_TOKEN(STR_CPU_THERMAL_CONFIGURATION);
+
+    SUBTITLE(STRING_TOKEN(STR_CPU_THERMAL_CONFIGURATION))
+    
+    CPU_ONEOF_DTSENABLE
+    
+    endform;    
+#endif //  #if CPU_SETUP_SHOW_DTSENABLE == 1
+   
+#endif
+#endif
+#endif
+    
+//**********************************************************************
+//**********************************************************************
+//**                                                                  **
+//**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+//**                                                                  **
+//**                       All Rights Reserved.                       **
+//**                                                                  **
+//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093        **
+//**                                                                  **
+//**                       Phone: (770)-246-8600                      **
+//**                                                                  **
+//**********************************************************************
+//**********************************************************************

@@ -1,0 +1,13 @@
+<component>
+	name = "ShellPkg"
+	category = eModule
+	LocalRoot = "ShellPkg\"
+	RefName = "ShellPkg"
+[files]
+"ShellPkg.chm"	
+"ShellPkg.dec"	
+"ShellPkg.sdl"	
+[parts]
+"ShellPkg.Include"
+"ShellPkg.LibraryInstances"
+<endComponent>

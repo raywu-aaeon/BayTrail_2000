@@ -1,0 +1,9 @@
+<component>
+	name = "Csp Override"
+	category = ModulePart
+	LocalRoot = "AmiChipsetModulePkg\Override\"
+	RefName = "AmiChipsetModulePkg.Override"
+[files]
+"EdkShellBinPkg\EdkShellBinFdfFileStatement.txt"  
+"FatBinPkg\FatBinFdfFileStatement.txt"  
+<endComponent>

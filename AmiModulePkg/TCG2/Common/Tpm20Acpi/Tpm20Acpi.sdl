@@ -1,0 +1,54 @@
+PCIDEVICE
+	Title  = "TCG Container"
+	Parent  = "PciHost (Virtual)"
+	Attribute  = "0x0"
+	Dev_type  = "Container"
+	Dev  = 00h
+	Fun  = 00h
+	SleepNum  = 01h
+	ASLfile  = "'AmiModulePkg\TCG2\Common\Tpm20Acpi\tpm.asl;After Pci Tree','AmiModulePkg\TCG2\Common\Tpm20Acpi\tcg_ppi1_2.asl;After Pci Tree'"
+	DeviceType = OnBoard
+	PCIBusSize = 32bit
+	ROMMain = No
+	Virtual = Yes
+End
+
+TOKEN
+	Name  = "TPM20ACPI_SUPPORT"
+	Value  = "1"
+	Help  = "Main switch to enable TCGSMM support in Project"
+	TokenType = Boolean
+	TargetEQU = Yes
+	TargetMAK = Yes
+	Master = Yes
+End
+
+TOKEN
+    Name  = "INTELFTPMBASE"
+    Value  = "0xFED70000"
+    Help  = "Ftpm base"
+    TokenType = Integer
+    TargetEQU = Yes
+    TargetMAK = Yes
+    TargetH = Yes
+End
+
+
+PATH
+	Name  = "TPM20ACPI_DIR"
+End
+
+INFComponent
+	Name  = "Tpm20Acpi"
+	File  = "Tpm20Acpi.inf"
+	Package  = "AmiModulePkg"
+	ModuleTypes  = "DXE_DRIVER"
+End
+
+INFComponent
+	Name  = "PttSsdt"
+	File  = "PttSsdt.inf"
+	Package  = "AmiModulePkg"
+	ModuleTypes  = "USER_DEFINED"
+End
+

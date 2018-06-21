@@ -1,0 +1,10 @@
+<component>
+	name = "Intel Architecture Support"
+	category = ModulePart
+	LocalRoot = "AmiPkg\Configuration\"
+	RefName = "AmiPkg.IntelArchitecture"
+[files]
+"IntelArchitecture.sdl"	
+[parts]
+"MdePkg.IaMde"
+<endComponent>

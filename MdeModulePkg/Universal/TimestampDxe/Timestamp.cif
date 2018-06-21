@@ -1,0 +1,10 @@
+<component>
+	name = "Timestamp"
+	category = ModulePart
+	LocalRoot = "MdeModulePkg\Universal\TimestampDxe\"
+	RefName = "MdeModulePkg.Timestamp"
+[INF]
+"TimestampDxe.inf"
+[files]
+"Timestamp.sdl"	
+<endComponent>

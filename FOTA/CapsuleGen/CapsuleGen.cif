@@ -1,0 +1,9 @@
+<component>
+	name = "CapsuleGen Tool"
+	category = ModulePart
+	LocalRoot = "FOTA\CapsuleGen\"
+	RefName = "FOTA.CapsuleGen"
+[files]
+"CapsuleGen Tool User Guide.pdf"
+"GenCapsule.exe"
+<endComponent>

@@ -1,0 +1,14 @@
+<component>
+	name = "Intel Architecture Library Instances"
+	category = ModulePart
+	LocalRoot = "MdePkg\Library\"
+	RefName = "MdePkg.IaLibraryInstances"
+	
+[INF]
+"BaseMemoryLibMmx\BaseMemoryLibMmx.inf"
+"BaseMemoryLibOptDxe\BaseMemoryLibOptDxe.inf"
+"BaseMemoryLibOptPei\BaseMemoryLibOptPei.inf"
+"BaseMemoryLibRepStr\BaseMemoryLibRepStr.inf"
+"BaseMemoryLibSse2\BaseMemoryLibSse2.inf"
+"PeiServicesTablePointerLibIdt\PeiServicesTablePointerLibIdt.inf"	
+<endComponent>

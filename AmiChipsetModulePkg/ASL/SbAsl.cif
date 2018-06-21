@@ -1,0 +1,13 @@
+<component>
+	name = "SB ASL"
+	category = ModulePart
+	LocalRoot = "AmiChipsetModulePkg\ASL\"
+	RefName = "AmiChipsetModulePkg.SbAsl"
+[files]
+"Rmisc.asl"	
+"HPTIMER.ASL"	
+"RTC0.ASL"	
+"SB_EXT.ASL"	
+"PchUart.asl"	
+"SbPcie.asl"	
+<endComponent>

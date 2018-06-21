@@ -1,0 +1,10 @@
+<component>
+	name = "HiiDatabase"
+	category = ModulePart
+	LocalRoot = "MdeModulePkg\Universal\HiiDatabaseDxe\"
+	RefName = "MdeModulePkg.HiiDatabase"
+[files]
+"HiiDatabase.sdl"
+[INF]
+"HiiDatabaseDxe.inf"	
+<endComponent>

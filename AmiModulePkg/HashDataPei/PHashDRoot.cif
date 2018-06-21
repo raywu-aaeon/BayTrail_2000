@@ -1,0 +1,18 @@
+<component>
+	name = "Hash Data PEI - SHA256"
+	category = eModule
+	Rank = 56
+	LocalRoot = "AmiModulePkg\HashDataPei\"
+	RefName = "PeiHashDxe"
+[INF]
+"PHashDPei.inf"
+"BlockReportFvBB.inf" #CSP20140330_22
+[files]
+"PeiHashDxeReleaseNotes.chm"
+"PHashDPei.sdl"
+"PHashDPei.mak"
+"GenBiosImageInfo.asm"
+"insert.exe"
+[parts]
+"AmiModulePkg.PeiHashPpi"
+<endComponent>

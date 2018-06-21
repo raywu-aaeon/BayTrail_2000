@@ -1,0 +1,10 @@
+<component>
+	name = "DevicePath"
+	category = ModulePart
+	LocalRoot = "MdeModulePkg\Universal\DevicePathDxe\"
+	RefName = "MdeModulePkg.DevicePath"
+[files]
+"DevicePath.sdl"	
+[INF]
+"DevicePathDxe.inf"
+<endComponent>

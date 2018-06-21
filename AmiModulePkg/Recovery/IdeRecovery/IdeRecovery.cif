@@ -1,0 +1,9 @@
+<component>
+	name = "IdeRecovery"
+	category = ModulePart
+	LocalRoot = "AmiModulePkg\Recovery\IdeRecovery\"
+	RefName = "IdeRecovery"
+[INF]
+"IdeRecovery.inf"
+[files]
+<endComponent>

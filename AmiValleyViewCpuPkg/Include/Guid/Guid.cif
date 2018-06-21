@@ -1,0 +1,6 @@
+<component>
+	name = "Guid"
+	category = ModulePart
+	LocalRoot = "AmiValleyViewCpuPkg\Include\Guid\"
+	RefName = "AmiValleyViewCpuPkg.Guid"
+<endComponent>

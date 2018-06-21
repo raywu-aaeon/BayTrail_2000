@@ -1,0 +1,64 @@
+#*************************************************************************
+#*************************************************************************
+#**                                                                     **
+#**        (C)Copyright 1985-2012, American Megatrends, Inc.            **
+#**                                                                     **
+#**                       All Rights Reserved.                          **
+#**                                                                     **
+#**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093           **
+#**                                                                     **
+#**                       Phone: (770)-246-8600                         **
+#**                                                                     **
+#*************************************************************************
+#*************************************************************************
+## @file
+#
+##
+[Defines]
+INF_VERSION = 0x00010005
+VERSION_STRING = 1.0
+BASE_NAME = TcgLegacy
+MODULE_TYPE = DXE_DRIVER
+FILE_GUID = 858EBE6F-360F-415b-B7DC-463AAEB03412
+ENTRY_POINT = InitTCGLegacyInterface
+
+[Sources]
+TcgLegacy.c	
+TcgLegacy.h
+
+[Packages]
+  MdePkg/MdePkg.dec
+  AmiCompatibilityPkg/AmiCompatibilityPkg.dec
+  AmiModulePkg/AmiModulePkg.dec
+    IntelFrameworkPkg/IntelFrameworkPkg.dec
+
+[LibraryClasses]
+  UefiDriverEntryPoint
+  BaseAmiTcmlib
+  HobLib
+  
+[Protocols]
+  gEfiTcgProtocolGuid
+  gEfiLegacyBiosProtocolGuid
+  gEfiFirmwareVolume2ProtocolGuid
+  gEfiLegacyRegion2ProtocolGuid
+	
+[Depex]
+  gEfiTcgProtocolGuid AND
+  gEfiLegacyBiosProtocolGuid
+
+[BuildOptions.X64]
+*_*_X64_CC_FLAGS = /D EFIx64 
+
+#*************************************************************************
+#**                                                                     **
+#**        (C)Copyright 1985-2012, American Megatrends, Inc.            **
+#**                                                                     **
+#**                       All Rights Reserved.                          **
+#**                                                                     **
+#**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093           **
+#**                                                                     **
+#**                       Phone: (770)-246-8600                         **
+#**                                                                     **
+#*************************************************************************
+#*************************************************************************

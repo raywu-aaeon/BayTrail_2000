@@ -1,0 +1,8 @@
+<component>
+	name = "VCPU-Ppi"
+	category = ModulePart
+	LocalRoot = "Vlv2DeviceRefCodePkg\ValleyView2Soc\CPU\Include\Ppi"
+	RefName = "Vlv2DeviceRefCodePkg.ValleyView2Soc.ValleyView2Soc-CPU.VCPU-Include.VCPU-Ppi"
+[files]
+"VlvPolicy.h"
+<endComponent>

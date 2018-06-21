@@ -1,0 +1,31 @@
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = FastBoot
+  FILE_GUID                      = aad784d2-87c8-44d0-b82f-edc51f6cb572
+  MODULE_TYPE                    = DXE_DRIVER
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = NULL
+
+[Sources]
+  FastBoot.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  IntelFrameworkPkg/IntelFrameworkPkg.dec
+  AmiCompatibilityPkg/AmiCompatibilityPkg.dec
+  AmiModulePkg/AmiModulePkg.dec
+
+  
+[LibraryClasses]
+  AmiDxeLib
+  UefiDriverEntryPoint
+  UefiBootServicesTableLib
+
+[Guids]
+  gEfiGlobalVariableGuid   
+  
+[Protocols]
+  gAmiFastBootProtocolGuid
+  gEfiUsbPolicyProtocolGuid
+  gEfiPciIoProtocolGuid  
+

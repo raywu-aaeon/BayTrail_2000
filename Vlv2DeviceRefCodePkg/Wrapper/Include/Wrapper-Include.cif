@@ -1,0 +1,19 @@
+<component>
+	name = "Wrapper-Include"
+	category = ModulePart
+	LocalRoot = "Vlv2DeviceRefCodePkg\Wrapper\Include\"
+	RefName = "Vlv2DeviceRefCodePkg.Wrapper-Include"
+[files]
+"AlertStandardFormatTable.h"	
+"AzaliaVerbTable.h"
+"Platform.h"	
+"PlatformBootMode.h"	
+"PlatformGpio.h"
+"SetupMode.h"	
+"Slic.h"	
+[parts]
+"Vlv2DeviceRefCodePkg.Wrapper-Guid"
+"Vlv2DeviceRefCodePkg.Wrapper-Library"
+"Vlv2DeviceRefCodePkg.Wrapper-Ppi"
+"Vlv2DeviceRefCodePkg.Wrapper-Protocol"
+<endComponent>

@@ -1,0 +1,11 @@
+<component>
+	name = "LibraryInstances"
+	category = ModulePart
+	LocalRoot = "IA32FamilyCpuPkg\Library\"
+	RefName = "IA32FamilyCpuPkg.LibraryInstances"
+[INF]
+"CpuConfigLib\CpuConfigLib.inf"
+"CpuLocalApicTimerLib\CpuLocalApicTimerLib.inf"
+"CpuOnlyResetLibNull\CpuOnlyResetLibNull.inf"
+"PlatformSecLibNull\PlatformSecLibNull.inf"
+<endComponent>

@@ -1,0 +1,8 @@
+<component>
+	name = "TDT"
+	category = ModulePart
+	LocalRoot = "Vlv2DeviceRefCodePkg\Txe\TDT"
+	RefName = "Vlv2DeviceRefCodePkg.Txe.TDT"
+[inf]
+"Dxe\Tdt.inf"
+<endComponent>

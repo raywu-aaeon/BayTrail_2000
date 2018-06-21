@@ -1,0 +1,36 @@
+[defines]
+  INF_VERSION                    = 0x00010015
+  BASE_NAME                      = TxeFwDowngradeDxe
+  FILE_GUID                      = 8373FD38-D98B-4C8A-851E-2E9396748AF3
+  MODULE_TYPE                    = DXE_DRIVER
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = TxeFwDowngradeDxeEntryPoint
+
+[sources]
+  TxeFwDowngradeDxe.c
+  TxeFwDowngradeDxe.h
+
+[Packages]
+  Vlv2DeviceRefCodePkg/PlatformPkg.dec
+  MdePkg/MdePkg.dec
+  IntelFrameworkPkg/IntelFrameworkPkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  Vlv2DeviceRefCodePkg/Vlv2DeviceRefCodePkg.dec
+  IntelFrameworkModulePkg/IntelFrameworkModulePkg.dec
+  AmiCompatibilityPkg/AmiCompatibilityPkg.dec
+  
+[LibraryClasses]
+  UefiDriverEntryPoint
+  UefiBootServicesTableLib
+  UefiRuntimeServicesTableLib
+  SeCLib
+  
+[Guids]
+  gEfiSetupVariableGuid
+
+[Protocols]
+  gEfiHeciProtocolGuid
+
+[Depex]
+  gEfiVariableArchProtocolGuid AND
+  gEfiHeciProtocolGuid

@@ -1,0 +1,17 @@
+ELINK
+    Name   = "CrbUpdateBlockTypeId,"
+    Parent = "SMIFlashEndHandlerList"
+    InvokeOrder = AfterParent
+End
+
+INFComponent
+    Name  = "CrbSmiFlashHook"
+    File  = "CrbSmiFlashHook.inf"
+    Package  = "BayTrailPkg"
+End
+
+LibraryMapping
+    Class = "NULL"
+    Instance = "BayTrailPkg.CrbSmiFlashHook"
+    Override = "AmiModulePkg.SMIFlash"
+End

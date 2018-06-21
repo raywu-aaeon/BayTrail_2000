@@ -1,0 +1,70 @@
+#/*++
+#
+#  Copyright (c)  1999 - 2006 Intel Corporation. All rights reserved
+#  This software and associated documentation (if any) is furnished
+#  under a license and may only be used or copied in accordance
+#  with the terms of the license. Except as permitted by such
+#  license, no part of this software or documentation may be
+#  reproduced, stored in a retrieval system, or transmitted in any
+#  form or by any means without the express written consent of
+#  Intel Corporation.
+#
+#  Module Name:
+#
+#    PlatformPmic.inf
+#
+#  Abstract:
+#
+#    Component description file for platform DXE driver
+#  ------------------------------------------------------------------------------
+#  Rev   Date<MM/DD/YYYY>    Name    Description
+#  ------------------------------------------------------------------------------
+#  R01     <04/22/2011>       LB     Update code for SIO83627UHG support.
+#  ------------------------------------------------------------------------------
+#
+#--*/
+
+[defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = PlatformPmic
+  FILE_GUID                      = 81846A76-0227-4f42-9F05-1F0009333463 
+  MODULE_TYPE                    = DXE_DRIVER
+  VERSION_STRING                 = 1.0
+  PI_SPECIFICATION_VERSION       = 0x0001000A
+  ENTRY_POINT                    = InitializePmic
+
+[sources.common]
+  PlatformPmic.c
+  PlatformPmic.h
+  
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  Vlv2DeviceRefCodePkg/Vlv2DeviceRefCodePkg.dec
+  AmiCompatibilityPkg/AmiCompatibilityPkg.dec
+  AmiChipsetModulePkg/AmiChipsetModulePkg.dec
+
+[LibraryClasses]
+  BaseLib
+  UefiDriverEntryPoint
+  DebugLib
+  I2CLib
+  PmicLib
+  UefiRuntimeServicesTableLib
+  UefiBootServicesTableLib
+  ScPolicyInitDxe
+  HobLib
+  PchPlatformLib
+  UefiLib
+  
+[Guids]
+gEfiPlatformInfoGuid
+
+[Protocols]
+
+
+[Depex]
+  TRUE
+
+  
+

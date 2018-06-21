@@ -1,0 +1,9 @@
+<component>
+	name = "SecTcgInclude - Protocol"
+	category = Modulepart
+	LocalRoot = "SecurityPkg\Include\Protocol"
+	RefName = "SecurityPkg.SecTcgIncludeProtocol"
+[files]
+"RngProtocol.h"
+"TrEEProtocol.h"
+<endComponent>

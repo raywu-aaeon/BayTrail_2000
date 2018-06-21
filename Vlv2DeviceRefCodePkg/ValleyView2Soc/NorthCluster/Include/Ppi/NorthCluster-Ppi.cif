@@ -1,0 +1,14 @@
+<component>
+	name = "NorthCluster-Ppi"
+	category = ModulePart
+	LocalRoot = "Vlv2DeviceRefCodePkg\ValleyView2Soc\NorthCluster\Include\Ppi"
+	RefName = "Vlv2DeviceRefCodePkg.ValleyView2Soc.ValleyView2Soc-NorthCluster.NorthCluster-Include.NorthCluster-Ppi"
+[files]
+"Capsule.h"
+"PlatformMemoryRange.h"
+"PlatformMemorySize.h"
+"SmmAccess.h"
+"VlvMmioPolicy.h"
+"VlvPeiInit.h"
+"VlvPolicy.h"
+<endComponent>

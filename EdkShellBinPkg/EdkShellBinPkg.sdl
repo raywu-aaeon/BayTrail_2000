@@ -1,0 +1,34 @@
+TOKEN
+	Name  = "EdkShellBinPkg_SUPPORT"
+	Value  = "1"
+	Help  = "Main switch to enable EdkShellBinPkg support in Project"
+	TokenType = Boolean
+	TargetEQU = Yes
+	TargetMAK = Yes
+	Master = Yes
+End
+
+TOKEN
+	Name  = "USE_FULL_SHELL"
+	Value  = "1"
+	Help  = "Selects whether to use full or minimal shell binary.\Full shell has more commands but larger in size.\"
+	TokenType = Boolean
+End
+
+INFComponent
+	Name  = "EdkShell"
+	File  = "FullShell\FullShell.inf"
+	Package  = "EdkShellBinPkg"
+	Arch  = "IA32 X64"
+	ModuleTypes  = "UEFI_APPLICATION"
+	Token = "USE_FULL_SHELL" "=" "1"
+End
+
+INFComponent
+	Name  = "EdkShell"
+	File  = "MinimumShell\MinimumShell.inf"
+	Package  = "EdkShellBinPkg"
+	Arch  = "IA32 X64"
+	ModuleTypes  = "UEFI_APPLICATION"
+	Token = "USE_FULL_SHELL" "=" "0"
+End

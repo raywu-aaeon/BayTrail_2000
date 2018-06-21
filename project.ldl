@@ -1,0 +1,276 @@
+AmiCompatibilityPkg\AmiCompatibilityPkg.sdl\
+AmiCompatibilityPkg\AmiCspLib\CspLib.sdl AmiCompatibilityPkg\AmiCompatibilityPkg.sdl\
+AmiCompatibilityPkg\Board\Board.sdl AmiCompatibilityPkg\AmiCompatibilityPkg.sdl\
+AmiPkg\Configuration\Core.sdl\
+AmiPkg\Configuration\Configuration.sdl AmiPkg\Configuration\Core.sdl\
+AmiModulePkg\AmiModulePkg.sdl AmiPkg\Configuration\Core.sdl\
+AmiModulePkg\Library\LibraryInstances.sdl AmiModulePkg\AmiModulePkg.sdl\
+AmiModulePkg\ReportFV\ReportFV.sdl AmiModulePkg\AmiModulePkg.sdl\
+MdePkg\MdePkg.sdl AmiPkg\Configuration\Core.sdl\
+MdeModulePkg\MdeModulePkg.sdl AmiPkg\Configuration\Core.sdl\
+IntelFrameworkPkg\IntelFrameworkPkg.sdl AmiPkg\Configuration\Core.sdl\
+IntelFrameworkModulePkg\IntelFrameworkModulePkg.sdl AmiPkg\Configuration\Core.sdl\
+AmiModulePkg\AmiStatusCode\StatusCodeAmi.sdl AmiPkg\Configuration\Core.sdl\
+AmiModulePkg\Bds\Bds.sdl AmiPkg\Configuration\Core.sdl\
+AmiModulePkg\Console\ConSplitter\ConSplitter.sdl AmiPkg\Configuration\Core.sdl\
+AmiModulePkg\Fid\Fid.sdl AmiPkg\Configuration\Core.sdl\
+AmiModulePkg\FlashDriver\FlashDriver.sdl AmiPkg\Configuration\Core.sdl\
+AmiModulePkg\Console\GraphicsConsole\GraphicsConsole.sdl AmiPkg\Configuration\Core.sdl\
+AmiModulePkg\NVRAM\NVRAM.sdl AmiPkg\Configuration\Core.sdl\
+AmiModulePkg\RomLayout\RomLayout.sdl AmiPkg\Configuration\Core.sdl\
+IntelFrameworkModulePkg\Universal\DataHubDxe\DataHub.sdl AmiPkg\Configuration\Core.sdl\
+MdeModulePkg\Universal\Capsule.sdl AmiPkg\Configuration\Core.sdl\
+MdeModulePkg\Core\Foundation.sdl AmiPkg\Configuration\Core.sdl\
+MdeModulePkg\Universal\DevicePathDxe\DevicePath.sdl AmiPkg\Configuration\Core.sdl\
+MdeModulePkg\Universal\Disk\Disk.sdl AmiPkg\Configuration\Core.sdl\
+MdeModulePkg\Universal\EbcDxe\Ebc.sdl AmiPkg\Configuration\Core.sdl\
+MdeModulePkg\Universal\HiiDatabaseDxe\HiiDatabase.sdl AmiPkg\Configuration\Core.sdl\
+MdeModulePkg\Universal\PCD\Pcd.sdl AmiPkg\Configuration\Core.sdl\
+MdeModulePkg\Universal\SecurityStubDxe\SecurityStub.sdl AmiPkg\Configuration\Core.sdl\
+MdeModulePkg\Universal\TimestampDxe\Timestamp.sdl AmiPkg\Configuration\Core.sdl\
+UefiCpuPkg\CpuIo.sdl AmiPkg\Configuration\Core.sdl\
+AmiModulePkg\IO\AmiSioCore.sdl\
+AmiModulePkg\IO\NPCE791x\NPCE791x.sdl AmiModulePkg\IO\AmiSioCore.sdl\
+AmiModulePkg\Flash\Flash.sdl\
+AmiModulePkg\Flash\FWH\FwhFlash.sdl AmiModulePkg\Flash\Flash.sdl\
+AmiModulePkg\Flash\LPC\LpcFlash.sdl AmiModulePkg\Flash\Flash.sdl\
+AmiModulePkg\Flash\STD\StdFlash.sdl AmiModulePkg\Flash\Flash.sdl\
+AmiModulePkg\Flash\SPI\SpiFlash.sdl AmiModulePkg\Flash\Flash.sdl\
+AmiModulePkg\Flash\SPI\ICHx\ICHxSpi.sdl AmiModulePkg\Flash\SPI\SpiFlash.sdl\
+IA32FamilyCpuPkg\IA32FamilyCpuPkg.sdl\
+IA32FamilyCpuPkg\SecCore\SecCore.sdl IA32FamilyCpuPkg\IA32FamilyCpuPkg.sdl\
+AmiValleyViewCpuPkg\AmiValleyViewCpuPkg.sdl\
+AmiValleyViewCpuPkg\Setup\CpuSetup.sdl AmiValleyViewCpuPkg\AmiValleyViewCpuPkg.sdl\
+AmiValleyViewCpuPkg\Microcode\Microcode.sdl AmiValleyViewCpuPkg\AmiValleyViewCpuPkg.sdl\
+AmiValleyViewCpuPkg\Dxe\AmiPpmPolicy\AmiPpmPolicy.sdl AmiValleyViewCpuPkg\AmiValleyViewCpuPkg.sdl\
+AmiValleyViewCpuPkg\Dxe\AmiCpuSmbios\AmiCpuSmbios.sdl AmiValleyViewCpuPkg\AmiValleyViewCpuPkg.sdl\
+AmiChipsetModulePkg\AmiChipsetModulePkg.sdl\
+AmiChipsetModulePkg\AmiCspLib.sdl AmiChipsetModulePkg\AmiChipsetModulePkg.sdl\
+AmiChipsetModulePkg\Nb.sdl AmiChipsetModulePkg\AmiChipsetModulePkg.sdl\
+AmiChipsetModulePkg\NB\NbSetup\NbSetup.sdl AmiChipsetModulePkg\Nb.sdl\
+AmiChipsetModulePkg\Sb.sdl AmiChipsetModulePkg\AmiChipsetModulePkg.sdl\
+AmiChipsetModulePkg\GPIO.sdl AmiChipsetModulePkg\AmiChipsetModulePkg.sdl\
+AmiChipsetModulePkg\SB\SbSetup\SbSetup.sdl AmiChipsetModulePkg\Sb.sdl\
+AmiChipsetModulePkg\SB\AcpiModeEnable\AcpiModeEnable.sdl AmiChipsetModulePkg\Sb.sdl\
+AmiChipsetModulePkg\SB\SmmChildDispatch\SmmChildDispatcher.sdl AmiChipsetModulePkg\Sb.sdl\
+AmiChipsetPkg\AmiChipsetPkg.sdl\
+AmiModulePkg\AHCI\Ahci.sdl\
+AmiModulePkg\AHCI\AhciSmm\AhciSmm.sdl AmiModulePkg\AHCI\Ahci.sdl\
+AmiModulePkg\AHCI\Aint13\Aint13.sdl AmiModulePkg\AHCI\Ahci.sdl\
+AmiModulePkg\AHCI\Aint13\AhciInt13Smm.sdl AmiModulePkg\AHCI\Aint13\Aint13.sdl\
+AmiModulePkg\AHCI\SB\AhciCsp.sdl AmiModulePkg\AHCI\Ahci.sdl\
+AmiTsePkg\Core\em\AMITSE\AMITSE.sdl\
+AmiTsePkg\Board\Em\AMITSEBoard\AMITSEBoard.sdl AmiTsePkg\Core\em\AMITSE\AMITSE.sdl\
+AmiTsePkg\EDK\MiniSetup\TseAdvanced\TseAdvancedBin.sdl AmiTsePkg\Core\em\AMITSE\AMITSE.sdl\
+AmiTsePkg\EDK\MiniSetup\BootOnly\MiniSetupBin.sdl AmiTsePkg\Core\em\AMITSE\AMITSE.sdl\
+AmiTsePkg\EDK\MiniSetup\TseLite\TseLiteBin.sdl AmiTsePkg\Core\em\AMITSE\AMITSE.sdl\
+AmiTsePkg\EDK\MiniSetup\TseOEM\TseOEM.sdl AmiTsePkg\Core\em\AMITSE\AMITSE.sdl\
+AmiTsePkg\EDK\MiniSetup\uefi2.1\uefi21Bin.sdl AmiTsePkg\Core\em\AMITSE\AMITSE.sdl\
+AmiTsePkg\EDK\MiniSetup\Ezport\EzportBin.sdl AmiTsePkg\Core\em\AMITSE\AMITSE.sdl\
+AmiTsePkg\EDK\MiniSetup\Legacy\LegacyBin.sdl AmiTsePkg\Core\em\AMITSE\AMITSE.sdl\
+AmiTsePkg\EDK\MiniSetup\EzportPlus\EzportPlusBin.sdl AmiTsePkg\Core\em\AMITSE\AMITSE.sdl\
+AmiCompatibilityPkg\Setup\Setup.sdl\
+AmiCryptoPkg\AmiCryptoPkg.sdl\
+AmiCryptoPkg\CryptoProtocols\CryptoProtocols.sdl AmiCryptoPkg\AmiCryptoPkg.sdl\
+AmiCryptoPkg\CryptoLib\CryptoLib.sdl AmiCryptoPkg\AmiCryptoPkg.sdl\
+AmiCryptoPkg\Utils\CryptoUtils.sdl AmiCryptoPkg\AmiCryptoPkg.sdl\
+AmiModulePkg\ACPI\ACPI.sdl\
+AmiModulePkg\AmiBufferValidationLib.sdl\
+AmiModulePkg\AmiGopPolicy\AmiGopPolicy.sdl\
+AmiModulePkg\BootScriptHide\BootScriptHide.sdl\
+AmiModulePkg\EfiOsBootOptionNames\EfiOsBootOptionNames.sdl\
+AmiModulePkg\GenericSio\GenericSio.sdl\
+AmiModulePkg\GenericSio\SioStaticSetup.sdl AmiModulePkg\GenericSio\GenericSio.sdl\
+AmiModulePkg\Library\SioLibraryInstances.sdl AmiModulePkg\GenericSio\GenericSio.sdl\
+AmiModulePkg\IdeBus\IdeBusSrc.sdl\
+AmiModulePkg\LegacySerialRedirection\LegacySredir.sdl\
+AmiModulePkg\OemActivation\OA1\OA1.sdl\
+AmiModulePkg\OemActivation\OA2\OA2.sdl\
+AmiModulePkg\OemActivation\OA3\OA3.sdl\
+AmiModulePkg\OemActivation\OA3\OA3_SMM.sdl AmiModulePkg\OemActivation\OA3\OA3.sdl\
+AmiModulePkg\OemActivation\OA3\OA3_SmiFlashHook.sdl AmiModulePkg\OemActivation\OA3\OA3.sdl\
+AmiModulePkg\PS2CTL\PS2Ctl.sdl\
+AmiModulePkg\PCI\PciBus.sdl\
+AmiModulePkg\Library\PciBusLibraryInstances.sdl AmiModulePkg\PCI\PciBus.sdl\
+AmiModulePkg\PCI\PciStaticSetup.sdl AmiModulePkg\PCI\PciBus.sdl\
+AmiModulePkg\Terminal\Terminal.sdl\
+AmiModulePkg\TseDefaultBootOrder\TseDefaultBootOrder.sdl\
+AmiNetworkPkg\AmiNetworkPkg.sdl\
+AmiNetworkPkg\UefiNetworkStack\UefiNetworkStack.sdl\
+AmiNetworkPkg\UefiNetworkStack\Common\NetworkStackSetupScreen\NetworkStackSetupScreen.sdl AmiNetworkPkg\UefiNetworkStack\UefiNetworkStack.sdl\
+AmiNetworkPkg\UefiNetworkStack\Ipv4\Ipv4.sdl AmiNetworkPkg\UefiNetworkStack\UefiNetworkStack.sdl\
+AmiNetworkPkg\UefiNetworkStack\Ipv6\Ipv6.sdl AmiNetworkPkg\UefiNetworkStack\UefiNetworkStack.sdl\
+AmiModulePkg\BoardInfo\AmiBoardInfo.sdl\
+AmiModulePkg\Recovery\Recovery.sdl\
+AmiModulePkg\Recovery\ReFlash\ReFlash.sdl AmiModulePkg\Recovery\Recovery.sdl\
+AmiModulePkg\Recovery\FsRecovery\FsRecovery.sdl AmiModulePkg\Recovery\Recovery.sdl\
+AmiModulePkg\Recovery\FtRecovery\FtRecovery.sdl AmiModulePkg\Recovery\Recovery.sdl\
+AmiModulePkg\Recovery\UsbRecovery\UsbRecov.sdl AmiModulePkg\Recovery\Recovery.sdl\
+AmiModulePkg\RuntimeSmm\RuntimeSmm.sdl\
+AmiPkg\Configuration\IntelArchitecture.sdl\
+MdeModulePkg\Universal\PcatSingleSegmentPciCfg2Pei\SingleSegmentPciCfg2.sdl\
+AmiModulePkg\AtaPassThru\AtaPassThru.sdl\
+AmiModulePkg\BlockS3Var\BlockS3Var.sdl\
+AmiModulePkg\CSM\Csm.sdl\
+AmiModulePkg\CSM\CsmPolicy\CsmSetup.sdl AmiModulePkg\CSM\Csm.sdl\
+AmiCompatibilityPkg\CmosManager\CmosManager.sdl\
+AmiCompatibilityPkg\CmosManager\CmosBoard.sdl AmiCompatibilityPkg\CmosManager\CmosManager.sdl\
+AmiCompatibilityPkg\CmosManager\CmosMessages.sdl AmiCompatibilityPkg\CmosManager\CmosBoard.sdl\
+CryptoPkg\CryptoPkg.sdl\
+CryptoPkg\Library\OpensslLib\OpensslLib.sdl CryptoPkg\CryptoPkg.sdl\
+CryptoPkg\Library\BaseCryptLib\BaseCryptLib.sdl CryptoPkg\CryptoPkg.sdl\
+AmiModulePkg\EC\EC.sdl\
+AmiModulePkg\EcPs2Kbd\EcPs2Kbd.sdl\
+EdkShellBinPkg\EdkShellBinPkg.sdl\
+AmiModulePkg\FastBoot\FastBoot.sdl\
+AmiModulePkg\FastBoot\FastBootSMI.sdl AmiModulePkg\FastBoot\FastBoot.sdl\
+AmiModulePkg\FastBoot\FastBootOption\FastBootOption.sdl AmiModulePkg\FastBoot\FastBoot.sdl\
+FatBinPkg\FatBinPkg.sdl\
+AmiModulePkg\FlashSMI\FlashSmi.sdl\
+AmiModulePkg\HardwareSignature\HardwareSignatureManagement.sdl\
+AmiModulePkg\HddSecurity\HddSecurity.sdl\
+AmiModulePkg\HddSecurity\SmmHddSecurity.sdl AmiModulePkg\HddSecurity\HddSecurity.sdl\
+AmiModulePkg\HddSecurity\AmiTseHddSecurity\AmiTseHddSecurity.sdl AmiModulePkg\HddSecurity\HddSecurity.sdl\
+AmiModulePkg\HddSecurity\HddSecDynamicSetup\HddSecDynamicSetup.sdl AmiModulePkg\HddSecurity\HddSecurity.sdl\
+AmiModulePkg\HddSecurity\HddSecStaticSetup.sdl AmiModulePkg\HddSecurity\HddSecurity.sdl\
+AmiChipsetModulePkg\Isct\IsctPlatform.sdl\
+AmiChipsetModulePkg\Isct\Setup\IsctSetup.sdl AmiChipsetModulePkg\Isct\IsctPlatform.sdl\
+AmiModulePkg\Nvme\Nvme.sdl\
+AmiModulePkg\Nvme\NvmeInt13\NvmeInt13.sdl AmiModulePkg\Nvme\Nvme.sdl\
+AmiModulePkg\Nvme\NvmeDynamicSetup\NvmeDynamicSetup.sdl AmiModulePkg\Nvme\Nvme.sdl\
+AmiModulePkg\Ofbd\SecureFlash\SecureFlash.sdl\
+AmiModulePkg\Ofbd\Ofbd.sdl\
+AmiModulePkg\Ofbd\DefCfg\DefCfg.sdl AmiModulePkg\Ofbd\Ofbd.sdl\
+AmiModulePkg\Ofbd\OemCmd\OemCmd.sdl AmiModulePkg\Ofbd\Ofbd.sdl\
+AmiModulePkg\Ofbd\StdEc\StdEc.sdl AmiModulePkg\Ofbd\Ofbd.sdl\
+AmiModulePkg\Ofbd\OemRomId\OemRomId.sdl AmiModulePkg\Ofbd\Ofbd.sdl\
+AmiModulePkg\Ofbd\OemPwdCk\OemPwdCk.sdl AmiModulePkg\Ofbd\Ofbd.sdl\
+AmiModulePkg\Ofbd\OemSetup\OemSetup.sdl AmiModulePkg\Ofbd\Ofbd.sdl\
+AmiModulePkg\Ofbd\OemRomHole\OemRomHole.sdl AmiModulePkg\Ofbd\Ofbd.sdl\
+AmiModulePkg\Ofbd\CleanErrorLog\CleanErrorLog.sdl AmiModulePkg\Ofbd\Ofbd.sdl\
+AmiModulePkg\Ofbd\OemOaHandle\OemOaHandle.sdl AmiModulePkg\Ofbd\Ofbd.sdl\
+AmiModulePkg\Ofbd\BatteryCheck\BatteryCheck.sdl AmiModulePkg\Ofbd\Ofbd.sdl\
+AmiModulePkg\Ofbd\OemGetPattern\OemGetPattern.sdl AmiModulePkg\Ofbd\Ofbd.sdl\
+AmiModulePkg\Ofbd\Meud\Meud.sdl\
+AmiModulePkg\Ofbd\Meud\Platform\CspMeud.sdl AmiModulePkg\Ofbd\Meud\Meud.sdl\
+AmiModulePkg\Ofbd\Meud\AutoMeud\AutoMeud.sdl AmiModulePkg\Ofbd\Meud\Meud.sdl\
+AmiModulePkg\Ofbd\Meud\MEFwUpdLcl\MEFwUpdLcl.sdl AmiModulePkg\Ofbd\Meud\Meud.sdl\
+AmiModulePkg\Ofbd\Meud\MEFwUpdLcl\ME_09\FWUpdateLib.sdl AmiModulePkg\Ofbd\Meud\MEFwUpdLcl\MEFwUpdLcl.sdl\
+AmiModulePkg\Ofbd\Meud\MEFwUpdLcl\ME_11\FWUpdateLib.sdl AmiModulePkg\Ofbd\Meud\MEFwUpdLcl\MEFwUpdLcl.sdl\
+AmiModulePkg\Ofbd\Meud\MEFwUpdLcl\TXE_02\FWUpdateLib.sdl AmiModulePkg\Ofbd\Meud\MEFwUpdLcl\MEFwUpdLcl.sdl\
+AmiModulePkg\OpalSecurity\OpalSecurity.sdl\
+AmiModulePkg\PeiRamBoot\PeiRamBoot.sdl\
+AmiModulePkg\RestoreSpecialBootOptions\RestoreSpecialBootOptions.sdl\
+RomImage\ROMIMAGE.SDL\
+AmiModulePkg\RsdpPlus\RsdpPlus.sdl\
+AmiModulePkg\Sdio\SdioDriver.sdl\
+AmiModulePkg\Sdio\int13\SdioInt13.sdl AmiModulePkg\Sdio\SdioDriver.sdl\
+AmiModulePkg\Sdio\SdMmcTemplate.sdl AmiModulePkg\Sdio\SdioDriver.sdl\
+AmiModulePkg\SecureBoot\SecureBoot.sdl\
+AmiModulePkg\SecureBoot\AuthenticatedVariable\AuthVariable.sdl AmiModulePkg\SecureBoot\SecureBoot.sdl\
+AmiModulePkg\SecureBoot\ImageVerificationLib\ImageVerificationLib.sdl AmiModulePkg\SecureBoot\SecureBoot.sdl\
+Keys\Variables\Variables.sdl AmiModulePkg\SecureBoot\SecureBoot.sdl\
+AmiModulePkg\SecureFlash\SecureFlash.sdl\
+AmiModulePkg\SecureFlash\SecFlashUpd\SecFlashUpd.sdl AmiModulePkg\SecureFlash\SecureFlash.sdl\
+AmiModulePkg\SecureFlash\SecSMIFlash\SecSMIFlash.sdl AmiModulePkg\SecureFlash\SecureFlash.sdl\
+Keys\FW\FWkey.sdl AmiModulePkg\SecureFlash\SecureFlash.sdl\
+SecurityPkg\SecurityPkg.sdl\
+AmiChipsetModulePkg\SgTpv\SgTpv.sdl\
+AmiChipsetModulePkg\SgTpv\AcpiTables\SgTpvAcpiTables.sdl AmiChipsetModulePkg\SgTpv\SgTpv.sdl\
+ShellPkg\ShellPkg.sdl\
+ShellPkg\Library\Library.sdl ShellPkg\ShellPkg.sdl\
+AmiCompatibilityPkg\Smbios\Smbios.sdl\
+AmiCompatibilityPkg\Smbios\SmbiosBoard\SmbiosBoard.sdl AmiCompatibilityPkg\Smbios\Smbios.sdl\
+AmiCompatibilityPkg\Smbios\SmbiosBoard\SmbiosStaticData\SmbiosStaticData.sdl AmiCompatibilityPkg\Smbios\SmbiosBoard\SmbiosBoard.sdl\
+AmiCompatibilityPkg\Smbios\SmbiosBoard\SmbiosStaticDataDt\SmbiosStaticDataDt.sdl AmiCompatibilityPkg\Smbios\SmbiosBoard\SmbiosBoard.sdl\
+AmiCompatibilityPkg\Smbios\SmbiosBoard\SmbiosDmiEditBoard\SmbiosDmiEditBoard.sdl AmiCompatibilityPkg\Smbios\SmbiosBoard\SmbiosBoard.sdl\
+AmiCompatibilityPkg\Smbios\SmbiosDmiEdit\SmbiosDmiEdit.sdl AmiCompatibilityPkg\Smbios\Smbios.sdl\
+AmiCompatibilityPkg\Smbios\SmbiosDmiEdit\SmbiosDmiEditAfri.sdl AmiCompatibilityPkg\Smbios\Smbios.sdl\
+AmiCompatibilityPkg\Smbios\SmbiosDmiEdit\SmbiosDmiEditSsi.sdl AmiCompatibilityPkg\Smbios\Smbios.sdl\
+AmiCompatibilityPkg\Smbios\SmbiosDmiEdit\SmbiosRecoveryDmiEdit.sdl AmiCompatibilityPkg\Smbios\Smbios.sdl\
+AmiCompatibilityPkg\Smbios\SmbiosGetFlashData\SmbiosGetFlashData.sdl AmiCompatibilityPkg\Smbios\Smbios.sdl\
+AmiCompatibilityPkg\Smbios\SmbiosFlashData\SmbiosFlashData.sdl AmiCompatibilityPkg\Smbios\Smbios.sdl\
+AmiCompatibilityPkg\Smbios\SmbiosPeim\SmbiosPeim.sdl AmiCompatibilityPkg\Smbios\Smbios.sdl\
+AmiModulePkg\SmiFlash\SmiFlash.sdl\
+AmiPkg\Configuration\Smm.sdl\
+MdeModulePkg\Core\PiSmmCore\SmmCore.sdl AmiPkg\Configuration\Smm.sdl\
+MdeModulePkg\Universal\LockBox\SmmLockBox\SmmLockBox.sdl AmiPkg\Configuration\Smm.sdl\
+AmiModulePkg\TCG2\Tcg.sdl\
+AmiModulePkg\TCG2\TisLib\TisLib.sdl AmiModulePkg\TCG2\Tcg.sdl\
+AmiModulePkg\TCG2\CRB_lib\Tpm20CRBLib.sdl AmiModulePkg\TCG2\Tcg.sdl\
+AmiModulePkg\TCG2\CommonLibraries\ShaLib\ShaLib.sdl AmiModulePkg\TCG2\Tcg.sdl\
+AmiModulePkg\TCG2\CommonLibraries\TcgAslLib\TcgAslLib.sdl AmiModulePkg\TCG2\Tcg.sdl\
+AmiModulePkg\TCG2\Common\TcgPei\TcgPei.sdl AmiModulePkg\TCG2\Tcg.sdl\
+AmiModulePkg\TCG2\Common\TcgPlatformSetupPeiPolicy\TcgPlatformSetupPeiPolicy.sdl AmiModulePkg\TCG2\Common\TcgPei\TcgPei.sdl\
+AmiModulePkg\TCG2\Common\TcgDxe\TcgDxe.sdl AmiModulePkg\TCG2\Tcg.sdl\
+AmiModulePkg\TCG2\Common\TcgPlatformSetupPolicy\TcgPlatformSetupPolicy.sdl AmiModulePkg\TCG2\Common\TcgDxe\TcgDxe.sdl\
+AmiModulePkg\TCG2\Common\AmiTcmlib\AmiTcmlib.sdl AmiModulePkg\TCG2\Tcg.sdl\
+AmiModulePkg\TCG2\Common\AmiTcgBinaries\TcgBins.sdl AmiModulePkg\TCG2\Tcg.sdl\
+AmiModulePkg\TCG2\Common\Sample\AmiTcgNvflagSample.sdl AmiModulePkg\TCG2\Tcg.sdl\
+AmiModulePkg\TCG2\Common\AmiTcgPlatform\AmiTcgPlatform.sdl AmiModulePkg\TCG2\Tcg.sdl\
+AmiModulePkg\TCG2\Common\AmiTcgPlatformPei\AmiTcgPlatformPei.sdl AmiModulePkg\TCG2\Common\AmiTcgPlatform\AmiTcgPlatform.sdl\
+AmiModulePkg\TCG2\Common\AmiTcgPlatformDxe\AmiTcgPlatformDxe.sdl AmiModulePkg\TCG2\Common\AmiTcgPlatform\AmiTcgPlatform.sdl\
+AmiModulePkg\TCG2\Common\TcgDxeplatform\TcgDxeplatform.sdl AmiModulePkg\TCG2\Tcg.sdl\
+AmiModulePkg\TCG2\Common\TcgLegacy\TcgLegacy.sdl AmiModulePkg\TCG2\Tcg.sdl\
+AmiModulePkg\TCG2\Common\TcgPeiplatform\TcgPeiplatform.sdl AmiModulePkg\TCG2\Tcg.sdl\
+AmiModulePkg\TCG2\Common\Setup\TcgSetup.sdl AmiModulePkg\TCG2\Tcg.sdl\
+AmiModulePkg\TCG2\Common\TCGSmm\TCGSmm.sdl AmiModulePkg\TCG2\Tcg.sdl\
+AmiModulePkg\TCG2\Common\TpmClearOnRollback\TpmClearOnRollback.sdl AmiModulePkg\TCG2\Tcg.sdl\
+AmiModulePkg\TCG2\Common\Tpm20PlatformDxe\Tpm20PlatformDxe.sdl AmiModulePkg\TCG2\Tcg.sdl\
+AmiModulePkg\TCG2\Common\Tpm20Acpi\Tpm20Acpi.sdl AmiModulePkg\TCG2\Common\Tpm20PlatformDxe\Tpm20PlatformDxe.sdl\
+AmiModulePkg\Usb\Usb.sdl\
+AmiModulePkg\Usb\UsbSrc.sdl AmiModulePkg\Usb\Usb.sdl\
+AmiModulePkg\Usb\Int13\UsbInt13.sdl AmiModulePkg\Usb\Usb.sdl\
+AmiModulePkg\Usb\Pei\UsbPei.sdl AmiModulePkg\Usb\Usb.sdl\
+AmiModulePkg\Usb\AmiUsbLib\AmiUsbLib.sdl AmiModulePkg\Usb\Usb.sdl\
+UefiCpuPkg\UefiCpuPkg.sdl\
+AmiModulePkg\VirtualSerial\VirtualSerial.sdl\
+Vlv2DeviceRefCodePkg\Vlv2DeviceRefCodePkg.sdl\
+Vlv2DeviceRefCodePkg\Wrapper\Wrapper.sdl Vlv2DeviceRefCodePkg\Vlv2DeviceRefCodePkg.sdl\
+Vlv2DeviceRefCodePkg\Wrapper\PlatformSetup\PlatformSetup.sdl Vlv2DeviceRefCodePkg\Wrapper\Wrapper.sdl\
+Vlv2DeviceRefCodePkg\Wrapper\IntelSaGopSetup\IntelSaGopSetup.sdl Vlv2DeviceRefCodePkg\Wrapper\Wrapper.sdl\
+Keys\Variables\Certificates\Certificates.sdl\
+Keys\Variables\Certificates\OEM\OemCert.sdl Keys\Variables\Certificates\Certificates.sdl\
+Keys\Variables\Certificates\VendorMcert\VendorMcert.sdl Keys\Variables\Certificates\Certificates.sdl\
+AmiModulePkg\Library\AmiSmmCorePlatformHookLib\AmiSmmCorePlatformHookLib.sdl AmiPkg\Configuration\Smm.sdl\
+AMIDebugRxPkg\AMIDebugRx\AMIDebugRx.sdl\
+AMIDebugRxPkg\AMIDebugRxPkg.sdl AMIDebugRxPkg\AMIDebugRx\AMIDebugRx.sdl\
+AMIDebugRxPkg\AMIDebugRx\AMIDebugAgent\AMIDebugAgent.sdl AMIDebugRxPkg\AMIDebugRx\AMIDebugRx.sdl\
+AMIDebugRxPkg\AMIDebugRx\DbgRxPortLib\DbgRxPortLib.sdl AMIDebugRxPkg\AMIDebugRx\AMIDebugRx.sdl\
+AMIDebugRxPkg\AMIDebugRx\DbgRxXportLib\DbgRxXportLib.sdl AMIDebugRxPkg\AMIDebugRx\AMIDebugRx.sdl\
+AMIDebugRxPkg\AMIDebugRx\DbgRxDbgrLib\DbgRxDbgrLib.sdl AMIDebugRxPkg\AMIDebugRx\AMIDebugRx.sdl\
+AMIDebugRxPkg\AMIDebugRx\DebuggerLib\DebuggerLib.sdl AMIDebugRxPkg\AMIDebugRx\AMIDebugRx.sdl\
+AMIDebugRxPkg\AMIDebugRx\DebugStatusCodeLib\DebugStatusCodeLib.sdl AMIDebugRxPkg\AMIDebugRx\AMIDebugRx.sdl\
+AMIDebugRxPkg\AMIDebugRx\DbgRxDebugSupportLib\DbgRxDebugSupportLib.sdl AMIDebugRxPkg\AMIDebugRx\AMIDebugRx.sdl\
+AMIDebugRxPkg\AMIDebugRx\DbgHostStatusLib\DbgHostStatusLib.sdl AMIDebugRxPkg\AMIDebugRx\AMIDebugRx.sdl\
+AMIDebugRxPkg\AMIDebugRx\DbgRxAuthenticationLib\DbgRxAuthenticationLib.sdl AMIDebugRxPkg\AMIDebugRx\AMIDebugRx.sdl\
+AMIDebugRxPkg\Debugger\Debugger.sdl\
+AMIDebugRxPkg\Debugger\DbgDbgrLib\DbgDbgrLib.sdl AMIDebugRxPkg\Debugger\Debugger.sdl\
+AMIDebugRxPkg\Debugger\ConsoleRedirectionLib\ConsoleRedirectionLib.sdl AMIDebugRxPkg\Debugger\Debugger.sdl\
+AMIDebugRxPkg\Debugger\GenericUSBDebugger\GenericUSBDebugger.sdl AMIDebugRxPkg\Debugger\Debugger.sdl\
+AMIDebugRxPkg\Debugger\DbgPerformanceLib\DbgPerformanceLib.sdl AMIDebugRxPkg\Debugger\Debugger.sdl\
+AMIDebugRxPkg\Debugger\DbgModuleLocator\DbgModuleLocator.sdl AMIDebugRxPkg\Debugger\Debugger.sdl\
+AMIDebugRxPkg\Debugger\PeCoffExtraActionLibDebug\PeCoffExtraActionLibDebug.sdl AMIDebugRxPkg\Debugger\Debugger.sdl\
+AMIDebugRxPkg\SerialDebugger\SerialDebugger.sdl\
+AMIDebugRxPkg\SerialDebugger\AMIDebugAgent\AMIDebugAgent.sdl AMIDebugRxPkg\SerialDebugger\SerialDebugger.sdl\
+AMIDebugRxPkg\SerialDebugger\DbgPortLib\DbgPortLib.sdl AMIDebugRxPkg\SerialDebugger\SerialDebugger.sdl\
+AMIDebugRxPkg\SerialDebugger\DbgXportLib\DbgXportLib.sdl AMIDebugRxPkg\SerialDebugger\SerialDebugger.sdl\
+AMIDebugRxPkg\SerialDebugger\DbgDbgrLib\DbgDbgrLib.sdl AMIDebugRxPkg\SerialDebugger\SerialDebugger.sdl\
+AMIDebugRxPkg\SerialDebugger\DebuggerLib\DebuggerLib.sdl AMIDebugRxPkg\SerialDebugger\SerialDebugger.sdl\
+AMIDebugRxPkg\SerialDebugger\DebugStatusCodeLib\DebugStatusCodeLib.sdl AMIDebugRxPkg\SerialDebugger\SerialDebugger.sdl\
+AMIDebugRxPkg\SerialDebugger\DbgRxDebugSupportLib\DbgRxDebugSupportLib.sdl AMIDebugRxPkg\SerialDebugger\SerialDebugger.sdl\
+AMIDebugRxPkg\SerialDebugger\DbgHostStatusLib\DbgHostStatusLib.sdl AMIDebugRxPkg\SerialDebugger\SerialDebugger.sdl\
+AMIDebugRxPkg\SerialDebugger\DbgModuleLocator\DbgModuleLocator.sdl AMIDebugRxPkg\SerialDebugger\SerialDebugger.sdl\
+AMIDebugRxPkg\SerialDebugger\ConsoleRedirectionLib\ConsoleRedirectionLib.sdl AMIDebugRxPkg\SerialDebugger\SerialDebugger.sdl\
+AMIDebugRxPkg\SerialDebugger\DbgPerformanceLib\DbgPerformanceLib.sdl AMIDebugRxPkg\SerialDebugger\SerialDebugger.sdl\
+AMIDebugRxPkg\SerialDebugger\PeCoffExtraActionLibDebug\PeCoffExtraActionLibDebug.sdl AMIDebugRxPkg\SerialDebugger\SerialDebugger.sdl\
+AMIDebugRxPkg\SerialDebugger\DbgRxAuthenticationLib\DbgRxAuthenticationLib.sdl AMIDebugRxPkg\SerialDebugger\SerialDebugger.sdl\
+AMIDebugRxPkg\SerialDebugger\DbgSerInitLib\DbgSerInitLib.sdl AMIDebugRxPkg\SerialDebugger\SerialDebugger.sdl\
+AmiModulePkg\HashDataPei\PHashDPei.sdl\
+VerifyBoot\VerifyBoot.sdl\
+FOTA\FOTA.sdl\
+BayTrailPkg\Csp.sdl\
+BayTrailPkg\Crb.sdl\
+BayTrailPkg\CrbSetup\CrbSetup.sdl BayTrailPkg\Csp.sdl\
+BayTrailPkg\Library\KscLib\KscLib.sdl BayTrailPkg\Csp.sdl\
+BayTrailPkg\CrbSmiFlashHook\CrbSmiFlashHook.sdl BayTrailPkg\Csp.sdl\

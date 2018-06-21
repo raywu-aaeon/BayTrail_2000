@@ -1,0 +1,12 @@
+<component>
+	name = "SecTcgInclude"
+	category = Modulepart
+	LocalRoot = "SecurityPkg\Include"
+	RefName = "SecurityPkg.Include"
+[parts]
+"SecurityPkg.SecTcgIncludeGuid"
+"SecurityPkg.SecTcgIncludeIndustryStandard"
+"SecurityPkg.SecTcgIncludeLigrary"
+"SecurityPkg.SecTcgIncludePpi"
+"SecurityPkg.SecTcgIncludeProtocol"
+<endComponent>

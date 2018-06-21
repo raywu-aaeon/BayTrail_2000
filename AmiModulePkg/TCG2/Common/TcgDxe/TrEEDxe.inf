@@ -1,0 +1,73 @@
+#*************************************************************************
+#*************************************************************************
+#**                                                                     **
+#**        (C)Copyright 1985-2012, American Megatrends, Inc.            **
+#**                                                                     **
+#**                       All Rights Reserved.                          **
+#**                                                                     **
+#**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093           **
+#**                                                                     **
+#**                       Phone: (770)-246-8600                         **
+#**                                                                     **
+#*************************************************************************
+#*************************************************************************
+## @file
+#
+##
+[Defines]
+INF_VERSION 	= 0x00010005
+VERSION_STRING 	= 1.0
+BASE_NAME 		= TrEEDxe
+MODULE_TYPE 	= DXE_DRIVER
+FILE_GUID 		= 39045756-FCA3-49bd-8DAE-C7BAE8389AFF
+ENTRY_POINT 	= TreeDxeEntry
+
+[Sources]
+TrEEDxe.c	
+TrEEDxe.h
+
+[Packages]
+  MdePkg/MdePkg.dec
+  UefiCpuPkg/UefiCpuPkg.dec
+  AmiCompatibilityPkg/AmiCompatibilityPkg.dec
+  AmiModulePkg/AmiModulePkg.dec
+
+[LibraryClasses]
+  UefiDriverEntryPoint
+  BaseTisLib
+  Shalib
+  BaseCrbLibDxe
+  MemoryAllocationLib
+  UefiLib
+  TcgAslLib
+  
+[Protocols]
+ gTcgPlatformSetupPolicyGuid
+ gAmiTpmSupportTypeProtocolguid
+ gEfiBlockIoProtocolGuid
+ gEfiFirmwareVolume2ProtocolGuid
+ gEfiAcpiSupportGuid
+ gEfiDiskIoProtocolGuid
+
+ [Guids]
+ gEfiImageSecurityDatabaseGuid
+  
+[Depex]
+  gEfiFirmwareVolumeBlock2ProtocolGuid AND
+  gEfiVariableArchProtocolGuid AND
+  gTcgPlatformSetupPolicyGuid AND
+  gEfiAcpiSupportGuid
+
+
+#*************************************************************************
+#**                                                                     **
+#**        (C)Copyright 1985-2012, American Megatrends, Inc.            **
+#**                                                                     **
+#**                       All Rights Reserved.                          **
+#**                                                                     **
+#**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093           **
+#**                                                                     **
+#**                       Phone: (770)-246-8600                         **
+#**                                                                     **
+#*************************************************************************
+#*************************************************************************

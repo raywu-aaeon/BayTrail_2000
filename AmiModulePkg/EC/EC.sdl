@@ -1,0 +1,49 @@
+TOKEN
+	Name  = "EC_SUPPORT"
+	Value  = "1"
+	TokenType = Boolean
+	TargetEQU = Yes
+	TargetH = Yes
+	Master = Yes
+End
+
+#EIP130096 >>
+TOKEN
+	Name  = "CRB_EC_SUPPORT"
+	Value  = "1"
+	TokenType = Boolean
+	TargetMAK = Yes
+	TargetH = Yes
+End
+
+PATH
+	Name  = "EC_DIR"
+End
+
+INFComponent
+	Name  = "Ec"
+	File  = "Ec.inf"
+	Package  = "AmiModulePkg"
+	ModuleTypes  = "DXE_SMM_DRIVER"
+	Token = "CRB_EC_SUPPORT" "=" "1"
+End
+#EIP130096 <<
+
+#EIP175650 >>
+INFComponent
+	Name  = "DxeKscLib"
+	File  = "DxeKscLib.inf"
+	Package  = "AmiModulePkg"
+	ModuleTypes  = "DXE_DRIVER"
+	Token = "CRB_EC_SUPPORT" "=" "1"
+End
+
+LibraryMapping
+	Class  = "NULL"
+	Instance  = "AmiModulePkg.DxeKscLib"
+	Override  = "Vlv2DeviceRefCodePkg.FotaFwUpdateCapsuleDxe"
+	Token = "AOS_FOTA_SUPPORT" "=" "1"
+	Token = "CRB_EC_SUPPORT" "=" "1"
+End
+#EIP175650 <<
+

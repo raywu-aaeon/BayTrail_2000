@@ -1,0 +1,10 @@
+<component>
+	name = "SecTcgInclude - Ppi"
+	category = Modulepart
+	LocalRoot = "SecurityPkg\Include\Ppi"
+	RefName = "SecurityPkg.SecTcgIncludePpi"
+[files]
+"FirmwareVolumeInfoMeasurementExcluded.h"
+"LockPhysicalPresence.h"
+"TpmInitialized.h"
+<endComponent>

@@ -1,0 +1,17 @@
+<component>
+	name = "AmiChipsetModulePkg"
+	category = eChipset
+	LocalRoot = "AmiChipsetModulePkg\"
+	RefName = "AmiChipsetModulePkg"
+[INF]
+"Elink\ElinkPei.inf"
+[files]
+"Elink\SbElinks.txt"
+"AmiChipsetModulePkg.sdl"	
+"AmiChipsetModulePkg.dec"	
+[parts]
+"AmiChipsetModulePkg.AmiCspLib"
+"AmiChipsetModulePkg.NorthCluster"
+"AmiChipsetModulePkg.SouthCluster"
+"AmiChipsetModulePkg.Override"
+<endComponent>

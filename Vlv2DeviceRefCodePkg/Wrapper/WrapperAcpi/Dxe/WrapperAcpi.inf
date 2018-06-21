@@ -1,0 +1,33 @@
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = WrapperAcpi
+  FILE_GUID                      = e49f93dc-2b6a-47c0-8ca8-d7ad0d016656
+  MODULE_TYPE                    = DXE_DRIVER
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = WrapperAcpiDriverEntry
+
+[Sources]
+  WrapperAcpi.c
+  WrapperCSRT.h
+
+[Packages]
+  MdePkg/MdePkg.dec
+  Vlv2DeviceRefCodePkg/Vlv2DeviceRefCodePkg.dec
+  Vlv2DeviceRefCodePkg/PlatformPkg.dec
+  AmiCompatibilityPkg/AmiCompatibilityPkg.dec
+  IntelFrameworkPkg/IntelFrameworkPkg.dec
+  
+[LibraryClasses]
+  UefiLib
+  UefiBootServicesTableLib
+  UefiRuntimeServicesTableLib
+  BaseLib
+  UefiDriverEntryPoint
+  DebugLib
+
+[Protocols]
+  gEfiAcpiSupportProtocolGuid
+  
+[Depex]
+  gEfiAcpiTableProtocolGuid AND
+  gEfiGlobalNvsAreaProtocolGuid

@@ -1,0 +1,175 @@
+/** @file
+  Configure the I2C busses
+
+  Copyright (c) 2012, Intel Corporation
+  All rights reserved. This program and the accompanying materials
+  are licensed and made available under the terms and conditions of the BSD License
+  which accompanies this distribution.  The full text of the license may be found at
+  http://opensource.org/licenses/bsd-license.php
+
+  THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
+  WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
+
+**/
+#include <Library/UefiBootServicesTableLib.h>
+#include "I2cMmioConfig.h"
+#include "I2cEnumLib.h"
+
+/**
+  Enable access to an I2C bus configuration.
+
+  This routine must be called at or below TPL_NOTIFY.  For synchronous
+  requests this routine must be called at or below TPL_CALLBACK.
+
+  Reconfigure the switches and multiplexers in the I2C bus to enable
+  access to a specific I2C bus configuration.  Also select the maximum
+  clock frequency for this I2C bus configuration.
+
+  This routine uses the I2C Master protocol when the platform routine
+  needs to perform I2C operations on the local bus.  This eliminates
+  any recursion in the I2C stack for configuration operations on the
+  local bus.  This works because the local I2C bus is idle while the
+  I2C bus configuration is being enabled.
+
+  The platform layer must perform I2C operations on other I2C busses
+  by using the EFI_I2C_HOST_PROTOCOL or third party driver interface
+  for the specific device.  This requirement is because the I2C host
+  driver controls the flow of requests to the I2C controller.  Use the
+  EFI_I2C_HOST_PROTOCOL when the device is not defined in the platform's
+  ACPI tables.  Use the third party driver when it is available or
+  EFI_I2C_IO_PROTOCOL when the third party driver is not available
+  but the device is defined in the platform's ACPI tables.
+
+  @param[in]  This            Address of an EFI_I2C_BUS_CONFIGURATION_MANAGEMENT_PROTOCOL
+                              structure
+  @param[in]  I2cBusConfiguration Index value into a list or array of I2C bus
+                                  configurations.
+  @param[in]  Event           Event to set when the operation is
+                              complete.
+  @param[out] Status          Buffer to receive the operation
+                              status.
+
+  @return  When Event is NULL, EnableI2cBusConfiguration operates synchrouously
+  and returns the I2C completion status as its return value.  In this case it is
+  recommended to use NULL for I2cStatus.  The values returned from
+  EnableI2cBusConfiguration are:
+
+  @retval EFI_SUCCESS           The operation completed successfully.
+  @retval EFI_BAD_BUFFER_SIZE   The WriteBytes or ReadBytes buffer size is too large.
+  @retval EFI_DEVICE_ERROR      There was an I2C error (NACK) during the operation.
+                                One possible cause is that the slave device is not present.
+  @retval EFI_INVALID_PARAMETER RequestPacket is NULL
+  @retval EFI_INVALID_PARAMETER TPL is too high
+  @retval EFI_LOAD_ERROR        Controller handle is NULL
+  @retval EFI_NO_MAPPING        Invalid I2cBusConfiguration value
+  @retval EFI_NO_RESPONSE       The I2C device is not responding to the
+                                slave address.  EFI_DEVICE_ERROR may also be
+                                returned if the controller cannot distinguish
+                                when the NACK occurred.
+  @retval EFI_OUT_OF_RESOURCES  Insufficient memory for I2C operation
+  @retval EFI_TIMEOUT           The transaction did not complete within an internally
+                                specified timeout period.
+
+  @return   When Event is not NULL, EnableI2cBusConfiguration synchronously returns
+  EFI_NOT_READY indicating that the I2C operation was started asynchronously.  The
+  following values are returned upon the completion of the I2C operation when I2cStatus
+  is not NULL:
+
+  @retval EFI_SUCCESS           The operation completed successfully.
+  @retval EFI_BAD_BUFFER_SIZE   The WriteBytes or ReadBytes buffer size is too large.
+  @retval EFI_DEVICE_ERROR      There was an I2C error (NACK) during the operation.
+                                One possible cause is that the slave device is not present.
+  @retval EFI_INVALID_PARAMETER RequestPacket is NULL
+  @retval EFI_INVALID_PARAMETER TPL is too high
+  @retval EFI_LOAD_ERROR        Controller handle is NULL
+  @retval EFI_NO_MAPPING        Invalid I2cBusConfiguration value
+  @retval EFI_NO_RESPONSE       The I2C device is not responding to the
+                                slave address.  EFI_DEVICE_ERROR may also be
+                                returned if the controller cannot distinguish
+                                when the NACK occurred.
+  @retval EFI_OUT_OF_RESOURCES  Insufficient memory for I2C operation
+  @retval EFI_TIMEOUT           The transaction did not complete within an internally
+                                specified timeout period.
+
+**/
+EFI_STATUS
+EFIAPI
+I2cBusConfiguration (
+  IN CONST EFI_I2C_BUS_CONFIGURATION_MANAGEMENT_PROTOCOL *This,
+  IN UINTN I2cBusConfiguration,
+  IN CONST EFI_I2C_MASTER_PROTOCOL * I2cMaster,
+  IN EFI_EVENT Event OPTIONAL,
+  IN EFI_STATUS *Status OPTIONAL
+  )
+{
+  CONST I2C_BUS_CONFIGURATION * BusConfiguration;
+  I2C_ENUM_CONTEXT * EnumContext;
+//  EFI_I2C_MASTER_PROTOCOL * I2cMaster;
+  EFI_STATUS OpStatus;
+
+  //
+  //  Locate the enumeration context
+  //
+  EnumContext = I2C_ENUM_CONTEXT_FROM_CONFIG_PROTOCOL ( This );
+
+  //
+  //  Validate the bus configuration
+  //
+  if ( I2cBusConfiguration >= EnumContext->ConfigApi.I2cBusConfigurationCount ) {
+    OpStatus = EFI_INVALID_PARAMETER;
+  } else {
+    //
+    //  Get the master protocol
+    //
+    OpStatus = EFI_SUCCESS;
+    /*
+        if ( NULL == EnumContext->I2cMaster ) {
+          //
+          //  Validate the controller handle
+          //
+          OpStatus = EFI_LOAD_ERROR;
+          if ( NULL != EnumContext->Controller ) {
+            //
+            //  Attempt to locate the I2C master protocol
+            //
+            OpStatus = gBS->OpenProtocol ( EnumContext->Controller,
+                                           &gEfiI2cMasterProtocolGuid,
+                                           (VOID **)&I2cMaster,
+                                           NULL,
+                                           NULL,
+                                           EFI_OPEN_PROTOCOL_GET_PROTOCOL );
+            if ( !EFI_ERROR ( OpStatus )) {
+              EnumContext->I2cMaster = I2cMaster;
+            }
+          }
+        }
+    */
+    if ( !EFI_ERROR ( OpStatus )) {
+      //
+      //  Locate the bus configuration data
+      //
+      BusConfiguration = &EnumContext->I2cBusConfigurationArray [ I2cBusConfiguration ];
+
+      //
+      //  Set the I2C bus clock frequency
+      //
+      /*
+            I2cMaster = EnumContext->I2cMaster;
+      */
+      OpStatus = I2cMaster->BusFrequencySet ( I2cMaster,
+                                              BusConfiguration->I2cBusFrequencyHertz );
+    }
+  }
+
+  //
+  //  Return the operation status
+  //
+  if ( NULL != Status ) {
+    *Status = OpStatus;
+  }
+  if ( NULL != Event ) {
+    OpStatus = EFI_NOT_READY;
+    gBS->SignalEvent ( Event );
+  }
+  return OpStatus;
+}

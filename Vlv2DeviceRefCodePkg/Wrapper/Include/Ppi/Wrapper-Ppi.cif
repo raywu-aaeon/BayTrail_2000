@@ -1,0 +1,8 @@
+<component>
+	name = "Wrapper-Ppi"
+	category = ModulePart
+	LocalRoot = "Vlv2DeviceRefCodePkg\Wrapper\Include\Ppi"
+	RefName = "Vlv2DeviceRefCodePkg.Wrapper-Ppi"
+[files]
+"UsbController.h"
+<endComponent>

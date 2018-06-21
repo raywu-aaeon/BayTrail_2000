@@ -1,0 +1,11 @@
+<component>
+	name = "Setup"
+	category = ModulePart
+	LocalRoot = "AmiValleyViewCpuPkg/Setup"
+	RefName = "AmiValleyViewCpuPkg.Setup"
+[files]
+"CpuSetup.sdl"
+"Cpu.sd"	
+"Cpu.uni"
+"CpuSetup.c"	
+<endComponent>

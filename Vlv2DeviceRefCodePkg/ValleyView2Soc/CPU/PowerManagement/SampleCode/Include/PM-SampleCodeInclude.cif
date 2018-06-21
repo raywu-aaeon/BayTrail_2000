@@ -1,0 +1,16 @@
+<component>
+	name = "PM-SampleCodeInclude"
+	category = ModulePart
+	LocalRoot = "Vlv2DeviceRefCodePkg\ValleyView2Soc\CPU\PowerManagement\SampleCode\Include"
+	RefName = "Vlv2DeviceRefCodePkg.ValleyView2Soc.ValleyView2Soc-CPU.PM-SampleCode.PM-SampleCodeInclude"
+[files]
+"acpi3_0.h"
+"acpibuild.dsc"
+"aslupdatelib.h"
+"IchAccess.h"
+"IchCommonDefinitions.h"
+"IchTpt.h"
+"McAccess.h"
+"PciAccess.h"
+"Valleyview.h"
+<endComponent>

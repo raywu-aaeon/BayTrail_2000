@@ -1,0 +1,10 @@
+<component>
+	name = "AmiCpuSmbios"
+	category = ModulePart
+	LocalRoot = "AmiValleyViewCpuPkg/Dxe/AmiCpuSmbios"
+	RefName = "AmiValleyViewCpuPkg.AmiCpuSmbios"
+[files]
+"AmiCpuSmbios.sdl"	
+[INF]
+"AmiCpuSmbios.inf"
+<endComponent>

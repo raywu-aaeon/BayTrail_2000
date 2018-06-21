@@ -1,0 +1,1 @@
+#define GlobalEmmcMid  @Elink(EMMC_MID_TABLE_GEN, "@Child", " ", " ")

@@ -1,0 +1,133 @@
+//
+// This AMI Setup Script Processor (SSP) file contains setup items that
+// are related to the CMOS Manager.
+//
+//*************************************************************************
+//*************************************************************************
+//**                                                                     **
+//**        (C)Copyright 1985-2012, American Megatrends, Inc.            **
+//**                                                                     **
+//**                       All Rights Reserved.                          **
+//**                                                                     **
+//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093           **
+//**                                                                     **
+//**                       Phone: (770)-246-8600                         **
+//**                                                                     **
+//*************************************************************************
+//*************************************************************************
+// $Header: $
+//
+// $Revision: $
+//
+// $Date: $
+//***************************************************************************
+
+//***************************************************************************
+
+//---------------------------------------------------------------------------
+// SB CMOS Manager non-volatile statuss
+//
+//---------------------------------------------------------------------------
+//EIP129481 >>
+NvramField (SB_CMOS_CPU_CORE_HT_OFFSET)
+  OptionBits  = 8
+    Default     = 00h
+  Checksum    = NO
+    Location    = MKF_SB_CMOS_CPU_CORE_HT_REG, 0FFh
+EndNvramField
+
+NvramField (SB_CMOS_CPU_BIST_OFFSET)
+  OptionBits  = 8
+    Default     = 00h
+  Checksum    = NO
+    Location    = MKF_SB_CMOS_CPU_BIST_REG, 0FFh
+EndNvramField
+
+NvramField (SB_CMOS_CPU_VMX_OFFSET)
+  OptionBits  = 8
+    Default     = 00h
+  Checksum    = NO
+    Location    = MKF_SB_CMOS_CPU_VMX_REG, 0FFh
+EndNvramField
+
+NvramField (SB_CMOS_CPU_BSP_SELECT)
+  OptionBits  = 8
+    Default     = 00h
+  Checksum    = NO
+    Location    = MKF_SB_CMOS_CPU_BSP_REG, 0FFh
+EndNvramField
+
+NvramField (SB_CMOS_CPU_RATIO_OFFSET)
+  OptionBits  = 8
+    Default     = 00h
+  Checksum    = NO
+    Location    = MKF_SB_CMOS_CPU_RATIO_REG, 0FFh
+EndNvramField
+
+NvramField (SB_CMOS_S4_WAKEUP_FLAG_ADDRESS)
+  OptionBits  = 8
+    Default     = 00h
+  Checksum    = NO
+    Location    = MKF_SB_EFI_CMOS_S4_WAKEUP_FLAG_ADDRESS_REG, 0FFh
+EndNvramField
+
+//EIP134333 >>
+NvramField (SB_SSP_NMI_CONTROL_BITS)
+    OptionBits = 8
+    Default = 00h
+    CheckSum = NO
+    Location = MKF_SB_CMOS_MISC_FLAG_REG, 003h
+EndNvramField
+//EIP134333 <<
+
+//================================
+
+NvramField (SB_EFI_CMOS_PERFORMANCE_FLAGS)
+  OptionBits  = 8
+    Default     = 00h
+  Checksum    = NO
+    Location    = MKF_SB_CMOS_PERFORMANCE_FLAGS_REG, 0FFh
+EndNvramField
+
+
+NvramField (SB_EFI_ACPI_TPM_REQUEST)
+  OptionBits  = 8
+    Default     = 00h
+  Checksum    = NO
+    Location    = MKF_SB_ACPI_TPM_REQUEST_REG, 0FFh
+EndNvramField
+
+NvramField (SB_EFI_ACPI_TPM_LAST_REQUEST)
+  OptionBits  = 8
+    Default     = 00h
+  Checksum    = NO
+    Location    = MKF_SB_ACPI_TPM_LAST_REQUEST_REG, 0FFh
+EndNvramField
+
+//---------------------------------------------------------------------------
+// AcpiPlatform CMOS Manager non-volatile statuss
+//
+//---------------------------------------------------------------------------
+
+NvramField (ACPI_EFI_CMOS_TABLE_FLAG_ADDRESS)
+  OptionBits  = 8
+    Default     = 00h
+  Checksum    = NO
+    Location    = MKF_ACPI_CMOS_ACPI_TABLE_FLAG_ADDRESS_REG, 0FFh
+EndNvramField
+
+//EIP129481 <<
+//---------------------------------------------------------------------------
+//*************************************************************************
+//*************************************************************************
+//**                                                                     **
+//**        (C)Copyright 1985-2012, American Megatrends, Inc.            **
+//**                                                                     **
+//**                       All Rights Reserved.                          **
+//**                                                                     **
+//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093           **
+//**                                                                     **
+//**                       Phone: (770)-246-8600                         **
+//**                                                                     **
+//*************************************************************************
+//*************************************************************************

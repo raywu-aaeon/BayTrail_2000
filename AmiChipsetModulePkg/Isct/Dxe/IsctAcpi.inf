@@ -1,0 +1,81 @@
+#**********************************************************************
+#**********************************************************************
+#**                                                                  **
+#**        (C)Copyright 1985-2013, American Megatrends, Inc.         **
+#**                                                                  **
+#**                       All Rights Reserved.                       **
+#**                                                                  **
+#**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093        **
+#**                                                                  **
+#**                       Phone: (770)-246-8600                      **
+#**                                                                  **
+#**********************************************************************
+#**********************************************************************
+
+[Defines]
+  INF_VERSION     = 0x00010005
+  BASE_NAME       = IsctAcpi
+  FILE_GUID       = 4839023B-4C12-4EB2-B2B8-C91B42D878A0
+  MODULE_TYPE     = DXE_DRIVER
+  VERSION_STRING  = 1.0
+  ENTRY_POINT     = IsctDxeEntryPoint
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64
+#
+
+[Sources]
+  IsctAcpi.c
+  IsctAcpi.h
+
+[Packages]
+  MdePkg/MdePkg.dec
+  IntelFrameworkPkg/IntelFrameworkPkg.dec
+  AmiChipsetModulePkg/AmiChipsetModulePkg.dec
+  Vlv2DeviceRefCodePkg/Vlv2DeviceRefCodePkg.dec
+  AmiCompatibilityPkg/AmiCompatibilityPkg.dec
+
+[LibraryClasses]
+  DebugLib
+  BaseLib
+  PciLib
+  IoLib
+  UefiLib
+  MemoryAllocationLib
+  UefiDriverEntryPoint
+  PchDxeRuntimePciLibPciExpress
+  UefiBootServicesTableLib
+  UefiRuntimeServicesTableLib
+  HobLib
+
+[Protocols]
+  gEfiFirmwareVolumeProtocolGuid
+  gEfiAcpiTableProtocolGuid
+  gIgdOpRegionProtocolGuid
+  gIsctNvsAreaProtocolGuid
+  gEfiGlobalNvsAreaProtocolGuid
+
+[Guids]
+  gIsctAcpiTableStorageGuid
+  gIsctPersistentDataGuid
+  gEfiPlatformInfoGuid
+
+[Depex]
+  gEfiAcpiTableProtocolGuid AND
+  gEfiGlobalNvsAreaProtocolGuid
+
+#**********************************************************************
+#**********************************************************************
+#**                                                                  **
+#**        (C)Copyright 1985-2013, American Megatrends, Inc.         **
+#**                                                                  **
+#**                       All Rights Reserved.                       **
+#**                                                                  **
+#**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093        **
+#**                                                                  **
+#**                       Phone: (770)-246-8600                      **
+#**                                                                  **
+#**********************************************************************
+#**********************************************************************

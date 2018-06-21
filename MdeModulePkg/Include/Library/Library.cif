@@ -1,0 +1,26 @@
+<component>
+	name = "Library"
+	category = ModulePart
+	LocalRoot = "MdeModulePkg\Include\Library\"
+	RefName = "MdeModulePkg.Library"
+[files]
+"CapsuleLib.h"
+"CpuExceptionHandlerLib.h"
+"CustomizedDisplayLib.h"
+"DebugAgentLib.h"
+"DpcLib.h"
+"HiiLib.h"
+"IpIoLib.h"
+"LockBoxLib.h"
+"NetLib.h"
+"OemHookStatusCodeLib.h"
+"PlatformHookLib.h"
+"RecoveryLib.h"
+"ResetSystemLib.h"
+"S3Lib.h"
+"SecurityManagementLib.h"
+"SmmCorePlatformHookLib.h"
+"TcpIoLib.h"
+"UdpIoLib.h"
+"UefiHiiServicesLib.h"
+<endComponent>

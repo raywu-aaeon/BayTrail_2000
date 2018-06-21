@@ -1,0 +1,8 @@
+<component>
+	name = "Library"
+	category = ModulePart
+	LocalRoot = "BayTrailPkg\Include\Library\"
+	RefName = "BayTrailPkg.Include.Library"
+[files]
+"CrbLib.h"
+<endComponent>

@@ -1,0 +1,72 @@
+#*************************************************************************
+#*************************************************************************
+#**                                                                     **
+#**        (C)Copyright 1985-2012, American Megatrends, Inc.            **
+#**                                                                     **
+#**                       All Rights Reserved.                          **
+#**                                                                     **
+#**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093           **
+#**                                                                     **
+#**                       Phone: (770)-246-8600                         **
+#**                                                                     **
+#*************************************************************************
+#*************************************************************************
+## @file
+#   
+##
+[Defines]
+  INF_VERSION                 = 0x00010015
+  VERSION_STRING              = 1.0
+  BASE_NAME                   = SmmChildDispatcher
+  MODULE_TYPE                 = DXE_SMM_DRIVER
+  FILE_GUID                   = E53734A3-E594-4c25-B1A2-081445650F7F
+  PI_SPECIFICATION_VERSION    = 0x0001000A
+  ENTRY_POINT                 = SmmChildDispatchEntryPoint
+
+[Sources]
+  SmiHandlerGeneric.c
+  SmiHandlerPorting.c	
+  SmmChildDispatch.h	
+  SmmChildDispatchMain.c
+  SmmChildDispatchProtocol.c
+  SmmChildDispatchProtocol.h
+
+[Packages]
+  MdePkg/MdePkg.dec
+  AmiChipsetPkg/AmiChipsetPkg.dec
+  AmiChipsetModulePkg/AmiChipsetModulePkg.dec
+  AmiCompatibilityPkg/AmiCompatibilityPkg.dec
+
+[LibraryClasses]
+  AmiDxeLib
+  UefiDriverEntryPoint
+  AmiCspLib
+
+[Protocols]
+  gEfiSmmCpuProtocolGuid
+  gEfiSmmSwDispatch2ProtocolGuid
+  gEfiSmmSxDispatch2ProtocolGuid
+  gEfiSmmPeriodicTimerDispatch2ProtocolGuid
+  gEfiSmmUsbDispatch2ProtocolGuid
+  gEfiSmmGpiDispatch2ProtocolGuid
+  gEfiSmmStandbyButtonDispatch2ProtocolGuid
+  gEfiSmmPowerButtonDispatch2ProtocolGuid
+  gEfiSmmIoTrapDispatch2ProtocolGuid
+  
+[Depex]
+  gEfiSmmBase2ProtocolGuid
+
+	
+#*************************************************************************
+#*************************************************************************
+#**                                                                     **
+#**        (C)Copyright 1985-2011, American Megatrends, Inc.            **
+#**                                                                     **
+#**                       All Rights Reserved.                          **
+#**                                                                     **
+#**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093           **
+#**                                                                     **
+#**                       Phone: (770)-246-8600                         **
+#**                                                                     **
+#*************************************************************************
+#*************************************************************************

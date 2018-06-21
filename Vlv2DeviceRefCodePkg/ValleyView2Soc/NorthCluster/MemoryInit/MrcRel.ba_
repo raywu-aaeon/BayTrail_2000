@@ -1,0 +1,12 @@
+PATH="C:\Program Files\GnuWin32\bin";%PATH%
+
+sed -i -e /INTERNAL_BEGIN/,/INTERNAL_END/d Readme.txt
+sed -i -e /INTERNAL_BEGIN/,/INTERNAL_END/d Pei\*
+sed -i -e /INTERNAL_BEGIN/,/INTERNAL_END/d Src16\*
+sed -i -e /INTERNAL_BEGIN/,/INTERNAL_END/d Src32\*
+sed -i -e /INTERNAL_BEGIN/,/INTERNAL_END/d Mmrc\Hooks\Include\*
+sed -i -e /INTERNAL_BEGIN/,/INTERNAL_END/d Mmrc\Hooks\Source\*
+sed -i -e /INTERNAL_BEGIN/,/INTERNAL_END/d Mmrc\IpBlocks\Include\*
+sed -i -e /INTERNAL_BEGIN/,/INTERNAL_END/d Mmrc\IpBlocks\Source\*
+
+

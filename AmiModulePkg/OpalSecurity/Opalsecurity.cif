@@ -1,0 +1,11 @@
+<component>
+	name = "OpalSecurity"
+	category = eModule
+	LocalRoot = "AmiModulePkg\OpalSecurity\"
+	RefName = "OpalSecurity"
+[INF]
+"OpalSecurity.inf"
+[files]
+"OpalSecurity.sdl"	
+"OpalSecurity.chm"	
+<endComponent>

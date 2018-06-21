@@ -1,0 +1,9 @@
+<component>
+	name = "IsctProtocolInclude"
+	category = ModulePart
+	LocalRoot = "AmiChipsetModulePkg/Include/Protocol"
+	RefName = "IsctProtocolInclude"
+[files]
+"IsctNvsArea.h"
+
+<endComponent>

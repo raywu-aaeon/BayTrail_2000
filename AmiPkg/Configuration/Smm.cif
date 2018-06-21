@@ -1,0 +1,14 @@
+<component>
+	name = "SMM Support"
+	category = eModule
+	LocalRoot = "AmiPkg\Configuration\"
+	RefName = "Smm"
+[files]
+"Smm.sdl"	
+[parts]
+"MdePkg.SmmMde"
+"MdeModulePkg.SmmMdeModule"
+"AmiModulePkg.SmmLibraryInstances"
+"MdeModulePkg.SmmCore"
+"MdeModulePkg.SmmLockBox"
+<endComponent>

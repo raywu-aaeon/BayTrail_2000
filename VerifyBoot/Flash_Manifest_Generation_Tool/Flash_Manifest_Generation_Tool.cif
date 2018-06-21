@@ -1,0 +1,11 @@
+<component>
+	name = "Flash Manifest Generation Tool (1.0.0.1054)"
+	category = ModulePart
+	LocalRoot = "VerifyBoot\Flash_Manifest_Generation_Tool\"
+	RefName = "VerifyBoot.Flash_Manifest_Generation_Tool"
+[files]
+"FLAMInGO.exe"
+"FLAMInGO.pdb"
+"FpfMirrorNvarValues.txt"
+"SimpleSigner.exe"
+<endComponent>

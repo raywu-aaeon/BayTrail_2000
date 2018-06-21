@@ -1,0 +1,11 @@
+<component>
+	name = "TxeLibraryInclude"
+	category = ModulePart
+	LocalRoot = "Vlv2DeviceRefCodePkg\Txe\Include\Library"
+	RefName = "Vlv2DeviceRefCodePkg.Txe.TxeInclude.TxeLibraryInclude"
+[files]
+"FmiLib.h"
+"HeciMsgLib.h"
+"SeCLib.h"
+"SeCPolicyLib.h"
+<endComponent>

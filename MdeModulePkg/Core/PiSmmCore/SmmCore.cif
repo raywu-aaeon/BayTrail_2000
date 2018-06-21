@@ -1,0 +1,11 @@
+<component>
+	name = "SmmCore"
+	category = ModulePart
+	LocalRoot = "MdeModulePkg\Core\PiSmmCore\"
+	RefName = "MdeModulePkg.SmmCore"
+[files]
+"SmmCore.sdl"	
+[INF]
+"PiSmmCore.inf"
+"PiSmmIpl.inf"
+<endComponent>

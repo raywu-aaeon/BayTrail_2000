@@ -1,0 +1,40 @@
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = CpuPeiGetSetupData
+  FILE_GUID                      = 05e94107-5cba-4e33-a280-73bd2fadd8ba
+  MODULE_TYPE                    = PEIM
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = CpuGetSetupData|PEIM
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64
+#
+#  
+#
+
+[Sources]
+  GetSetupData.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  AmiCompatibilityPkg/AmiCompatibilityPkg.dec  
+#  AmiChipsetPkg/AmiChipsetPkg.dec
+#  AmiChipsetModulePkg/AmiChipsetModulePkg.dec
+  AmiValleyViewCpuPkg/AmiValleyViewCpuPkg.dec
+    
+[LibraryClasses]
+  AmiPeiLib
+  ElinkLib
+
+[Ppis]
+  gEfiPeiReadOnlyVariable2PpiGuid
+ 
+[Pcd]
+#  gAmiChipsetModulePkgTokenSpaceGuid.PcdNbOemSetupElink
+
+[BuildOptions] 
+  *_*_*_CC_FLAGS = /D AMI_CPU_SETUPDATA_PEI
+  

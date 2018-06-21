@@ -1,0 +1,15 @@
+<component>
+	name = "SecurityPkg"
+	category = eModule
+	LocalRoot = "SecurityPkg\"
+	RefName = "SecurityPkg"
+[files]
+"SecurityPkg.sdl"	
+"SecurityPkg.dec"	
+[parts]
+"SecurityPkg.Include"
+"SecurityPkg.LibraryInstances"
+"SecurityPkg.RngDxeBaseCrypto"
+"SecurityPkg.Tcg"
+"SecurityPkg.VariableAuthenticated"
+<endComponent>

@@ -1,0 +1,11 @@
+<component>
+	name = "Libraries"
+	category = ModulePart
+	LocalRoot = "AmiModulePkg\TCG2\"
+	RefName = "Libraries"
+[parts]
+"TisLib"
+"Tpm20CRBLib"
+"ShaLib"
+"TcgAslLib"
+<endComponent>

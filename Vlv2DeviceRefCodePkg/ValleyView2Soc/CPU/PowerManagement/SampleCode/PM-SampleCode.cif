@@ -1,0 +1,10 @@
+<component>
+	name = "PM-SampleCode"
+	category = ModulePart
+	LocalRoot = "Vlv2DeviceRefCodePkg\ValleyView2Soc\CPU\PowerManagement\SampleCode"
+	RefName = "Vlv2DeviceRefCodePkg.ValleyView2Soc.ValleyView2Soc-CPU.PM-SampleCode"
+[inf]
+"Library\AslUpdate\Dxe\AslUpdateLib.inf"
+[parts]
+"Vlv2DeviceRefCodePkg.ValleyView2Soc.ValleyView2Soc-CPU.PM-SampleCode.PM-SampleCodeInclude"
+<endComponent>

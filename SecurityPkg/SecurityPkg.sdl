@@ -1,0 +1,190 @@
+TOKEN
+	Name  = "SecurityPkg_SUPPORT"
+	Value  = "1"
+	Help  = "Switch for Enabling SecurityPkg support in the project"
+	TokenType = Boolean
+	TargetH = Yes #EIP153143
+	Master = Yes
+End
+
+TOKEN
+    Name  = "DefaultMeasureFvSize"
+    Value  = "0x1000"
+    Help  = "default is measure the rom header size 0x1000."
+    TokenType = Integer
+    TargetMAK = Yes
+    TargetH = Yes
+End
+
+#AMI_OVERRIDE_TXE0000_START : Support FTPM
+#Use AMI TCG2's drivers
+#INFComponent
+#    Name  = "TrEEPei"
+#    File  = "Tcg/TrEEPei/TrEEPei.inf"
+#    Package  = "SecurityPkg"
+#    ModuleTypes  = "PEIM"
+#End
+
+#INFComponent
+#    Name  = "TrEEDxe"
+#    File  = "Tcg/TrEEDxe/TrEEDxe.inf"
+#    Package  = "SecurityPkg"
+#    ModuleTypes  = "DXE_DRIVER"
+#End
+#AMI_OVERRIDE_TXE0000_END
+
+#EIP139219 EIP139833 >>
+INFComponent
+    Name  = "TcgMor"
+    File  = "Tcg/MemoryOverwriteControl/TcgMor.inf"
+    Package  = "SecurityPkg"
+    ModuleTypes  = "DXE_DRIVER"
+End
+#EIP139219 EIP139833 <<
+
+INFComponent
+    Name  = "Tpm2CommandLib"
+    File  = "LibraryInstances\Tpm2CommandLib/Tpm2CommandLib.inf"
+    Package  = "SecurityPkg"
+End
+
+INFComponent
+    Name  = "HashInstanceLibSha1"
+    File  = "LibraryInstances/HashInstanceLibSha1/HashInstanceLibSha1.inf"
+    Package  = "SecurityPkg"
+End
+
+INFComponent
+    Name  = "HashInstanceLibSha256"
+    File  = "LibraryInstances/HashInstanceLibSha256/HashInstanceLibSha256.inf"
+    Package  = "SecurityPkg"
+End
+
+INFComponent
+    Name  = "HashInstanceLibSha1Dxe"
+    File  = "LibraryInstances/HashInstanceLibSha1/HashInstanceLibSha1Dxe.inf"
+    Package  = "SecurityPkg"
+End
+
+INFComponent
+    Name  = "HashInstanceLibSha256Dxe"
+    File  = "LibraryInstances/HashInstanceLibSha256/HashInstanceLibSha256Dxe.inf"
+    Package  = "SecurityPkg"
+End
+
+INFComponent
+    Name  = "HashLibBaseCryptoRouterPei"
+    File  = "LibraryInstances/HashLibBaseCryptoRouter/HashLibBaseCryptoRouterPei.inf"
+    Package  = "SecurityPkg"
+End
+
+INFComponent
+    Name  = "HashLibBaseCryptoRouterDxe"
+    File  = "LibraryInstances/HashLibBaseCryptoRouter/HashLibBaseCryptoRouterDxe.inf"
+    Package  = "SecurityPkg"
+End
+
+INFComponent
+    Name  = "TrEEPhysicalPresenceLib"
+    File  = "LibraryInstances/DxeTrEEPhysicalPresenceLib/DxeTrEEPhysicalPresenceLib.inf"
+    Package  = "SecurityPkg"
+End
+
+INFComponent
+    Name  = "DxeImageVerificationLib"
+    File  = "LibraryInstances/DxeImageVerificationLib/DxeImageVerificationLib.inf"
+    Package  = "SecurityPkg"
+    Disable = Yes    
+End
+
+#EIP211523
+#Use AMI TCG2's drivers
+#INFComponent
+#    Name  = "DxeTpm2MeasureBootLib"
+#    File  = "LibraryInstances/DxeTpm2MeasureBootLib/DxeTpm2MeasureBootLib.inf"
+#    Package  = "SecurityPkg"
+#End
+
+INFComponent
+    Name  = "TpmMeasurementLib"
+    File  = "LibraryInstances/DxeTpmMeasurementLib/DxeTpmMeasurementLib.inf"
+    Package  = "SecurityPkg"
+End
+
+#PcdMapping
+#    Name  = "PcdTpmInstanceGuid"
+#    GuidSpace  = "gEfiSecurityPkgTokenSpaceGuid"
+#    PcdType  = "PcdsDynamicDefault"
+#    Value  = "{0x7b, 0x3a, 0xcd, 0x72, 0xA5, 0xFE, 0x5e, 0x4f, 0x91, 0x65, 0x4d, 0xd1, 0x21, 0x87, 0xbb, 0x13}"
+#    Offset  = 00h
+#    Length  = 00h
+#    TargetDSC = Yes
+#End
+
+LibraryMapping
+    Class  = "Tpm2CommandLib"
+    Instance  = "SecurityPkg.Tpm2CommandLib"
+End
+
+LibraryMapping
+    Class  = "HashLib"
+    Instance  = "SecurityPkg.HashLibBaseCryptoRouterPei"
+    ModuleTypes  = "PEIM"
+End
+
+LibraryMapping
+    Class  = "HashLib"
+    Instance  = "SecurityPkg.HashLibBaseCryptoRouterDxe"
+    ModuleTypes  = "DXE_DRIVER DXE_RUNTIME_DRIVER DXE_SMM_DRIVER"
+End
+
+LibraryMapping
+    Class  = "TrEEPhysicalPresenceLib"
+    Instance  = "SecurityPkg.TrEEPhysicalPresenceLib"
+    ModuleTypes  = "DXE_DRIVER DXE_RUNTIME_DRIVER DXE_SMM_DRIVER"
+End
+
+#AMI_OVERRIDE_TXE0000_START : Support FTPM
+#LibraryMapping
+#    Class  = "NULL"
+#    Instance  = "SecurityPkg.HashInstanceLibSha1"
+#    Override  = "SecurityPkg.TrEEPei"
+#End
+
+#LibraryMapping
+#    Class  = "NULL"
+#    Instance  = "SecurityPkg.HashInstanceLibSha256"
+#    Override  = "SecurityPkg.TrEEPei"
+#End
+
+#LibraryMapping
+#    Class  = "NULL"
+#    Instance  = "SecurityPkg.HashInstanceLibSha1Dxe"
+#    Override  = "SecurityPkg.TrEEDxe"
+#End
+
+#LibraryMapping
+#    Class  = "NULL"
+#    Instance  = "SecurityPkg.HashInstanceLibSha256Dxe"
+#    Override  = "SecurityPkg.TrEEDxe"
+#End
+
+LibraryMapping
+    Class  = "NULL"
+    Instance  = "SecurityPkg.DxeImageVerificationLib"
+    Override  = "MdeModulePkg.SecurityStubDxe"
+    Disable = Yes
+End
+
+#LibraryMapping
+#    Class  = "NULL"
+#    Instance  = "SecurityPkg.DxeTpm2MeasureBootLib"
+#    Override  = "MdeModulePkg.SecurityStubDxe"
+#End
+
+LibraryMapping
+    Class  = "TpmMeasurementLib"
+    Instance  = "SecurityPkg.TpmMeasurementLib"
+    ModuleTypes  = "DXE_DRIVER DXE_RUNTIME_DRIVER DXE_SMM_DRIVER"
+End
+#AMI_OVERRIDE_TXE0000_END

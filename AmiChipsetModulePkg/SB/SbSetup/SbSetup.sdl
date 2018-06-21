@@ -1,0 +1,112 @@
+
+#*************************************************************************
+#*************************************************************************
+#**                                                                     **
+#**        (C)Copyright 1985-2012, American Megatrends, Inc.            **
+#**                                                                     **
+#**                       All Rights Reserved.                          **
+#**                                                                     **
+#**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093           **
+#**                                                                     **
+#**                       Phone: (770)-246-8600                         **
+#**                                                                     **
+#*************************************************************************
+#*************************************************************************
+#
+#*************************************************************************
+# $Header: $
+#
+# $Revision: $
+#
+# $Date: $
+#*************************************************************************
+TOKEN
+	Name  = "SB_SETUP_SUPPORT"
+	Value  = "1"
+	Help  = "Main switch to enable SBSetup support in Project"
+	TokenType = Boolean
+	TargetMAK = Yes
+	TargetH = Yes
+	Master = Yes
+End
+
+PATH
+	Name  = "SB_SETUP_DIR"
+End
+
+ELINK
+	Name  = "$(SB_SETUP_DIR)/SbSetup.c"
+	Parent  = "SetupCallbackFiles"
+	InvokeOrder = AfterParent
+End
+
+ELINK
+	Name  = "AmiChipsetModulePkg/AmiChipsetModulePkg.dec"
+	Parent  = "AdditionalSetupPackages"
+	InvokeOrder = AfterParent
+End
+
+ELINK
+	Name  = "InitSbStrings,"
+	Parent  = "SetupStringInit"
+	InvokeOrder = AfterParent
+End
+
+#EIP 177820 (show eMMC storage infomation)   >>
+ELINK
+	Name  = "SB_SETUP_EMMC_MID_TABLE_GEN"
+	InvokeOrder = ReplaceParent
+End
+
+OUTPUTREGISTER
+	Name  = "SbSetupEmmcMidTableGen"
+	Path  = "Build"
+	File  = "SbEmmcMid.h"
+	Template  = "SbSetupEmmcMid.txt"
+End
+#EIP 177820 (show eMMC storage infomation)   <<
+
+ELINK
+	Name  = "$(SB_SETUP_DIR)/Sb.sd"
+	Parent  = "SETUP_DEFINITIONS"
+	InvokeOrder = AfterParent
+End
+
+ELINK
+	Name  = "$(SB_SETUP_DIR)/Sb.uni"
+	Parent  = "SetupStringFiles"
+	InvokeOrder = AfterParent
+End
+
+ELINK
+	Name  = "gEfiPciRootBridgeIoProtocolGuid"
+	Parent  = "AdditionalSetupProtocols"
+	InvokeOrder = AfterParent
+End
+
+ELINK
+	Name  = "gEfiDiskInfoProtocolGuid"
+	Parent  = "AdditionalSetupProtocols"
+	InvokeOrder = AfterParent
+End
+
+ELINK
+	Name  = "gEfiDevicePathProtocolGuid"
+	Parent  = "AdditionalSetupProtocols"
+	InvokeOrder = AfterParent
+End
+
+#*************************************************************************
+#*************************************************************************
+#**                                                                     **
+#**        (C)Copyright 1985-2012, American Megatrends, Inc.            **
+#**                                                                     **
+#**                       All Rights Reserved.                          **
+#**                                                                     **
+#**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093           **
+#**                                                                     **
+#**                       Phone: (770)-246-8600                         **
+#**                                                                     **
+#*************************************************************************
+#*************************************************************************
+

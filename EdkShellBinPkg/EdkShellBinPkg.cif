@@ -1,0 +1,13 @@
+<component>
+	name = "EdkShellBinPkg"
+	category = eModule
+	LocalRoot = "EdkShellBinPkg\"
+	RefName = "EdkShellBinPkg"
+[files]
+"EdkShellBinPkg.sdl"	
+"EdkShellBinPkg.dec"	
+"ReadMe.txt"	
+[INF]
+"FullShell\FullShell.inf"
+"MinimumShell\MinimumShell.inf"
+<endComponent>

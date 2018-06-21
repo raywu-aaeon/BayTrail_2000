@@ -1,0 +1,20 @@
+<component>
+	name = "Library"
+	category = ModulePart
+	LocalRoot = "Vlv2DeviceRefCodePkg\Wrapper\Library\"
+	RefName = "Vlv2DeviceRefCodePkg.Wrapper.Library"
+[INF]
+"AmiS3BootScriptLib\AmiS3BootScriptLib.inf"
+"I2cStackLib\I2cDriverLib\I2cDriverLib.inf"
+"MultiPlatformLib\MultiPlatformLib.inf"
+"NcPolicyInit\Pei\NcPolicyInitPei.inf"
+"NcPolicyInit\Dxe\NcPolicyInitDxe.inf"
+"ScAslUpdate\Dxe\ScAslUpdateLib.inf"
+"ScPolicyInit\Pei\ScPolicyInitPei.inf"
+"ScPolicyInit\Dxe\ScPolicyInitDxe.inf"
+"DfuCapsuleLib\DfuCapsuleLib.inf"
+"MmcMediaDeviceDxeLib\MmcMediaDeviceDxeLib.inf"
+"DxeTrEEPhysicalPresenceLib\DxeTrEEPhysicalPresenceLibNull.inf"
+"MemoryDownLib\MemoryDownLib.inf" #EIP168616
+"OemMemoryDownLib\OemMemoryDownLib.inf" #EIP168616
+<endComponent>

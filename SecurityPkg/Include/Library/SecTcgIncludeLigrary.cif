@@ -1,0 +1,12 @@
+<component>
+	name = "SecTcgInclude - Library"
+	category = Modulepart
+	LocalRoot = "SecurityPkg\Include\Library"
+	RefName = "SecurityPkg.SecTcgIncludeLigrary"
+[files]
+"HashLib.h"
+"Tpm2CommandLib.h"
+"Tpm2DeviceLib.h"
+"TpmMeasurementLib.h"
+"TrEEPhysicalPresenceLib.h"
+<endComponent>

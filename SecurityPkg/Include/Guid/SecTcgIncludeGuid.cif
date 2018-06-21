@@ -1,0 +1,13 @@
+<component>
+	name = "SecTcgInclude - Guid"
+	category = Modulepart
+	LocalRoot = "SecurityPkg\Include\Guid"
+	RefName = "SecurityPkg.SecTcgIncludeGuid"
+[files]
+"MeasuredFvHob.h"
+"TpmInstance.h"
+"TrEEConfigHii.h"
+"TrEEPhysicalPresenceData.h"
+"TcgConfigHii.h"
+"TcgEventHob.h"
+<endComponent>

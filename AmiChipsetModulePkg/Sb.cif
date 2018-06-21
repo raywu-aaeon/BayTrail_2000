@@ -1,0 +1,22 @@
+<component>
+	name = "Intel-SouthCluster Client"
+	category = eChipset
+	LocalRoot = "AmiChipsetModulePkg\"
+	RefName = "AmiChipsetModulePkg.SouthCluster"
+[inf]
+"SB\AcpiPlatform\AcpiPlatform.inf"
+[files]
+"Sb.sdl"	
+"Sb.mak"	
+"SbCmos.ssp"	
+"SB\ReleaseNotes.chm"	
+"GPIO.sdl"	
+[parts]
+"AmiChipsetModulePkg.SbInit"
+"AmiChipsetModulePkg.SbSetup"
+"AmiChipsetModulePkg.AcpiModeEnable"
+"AmiChipsetModulePkg.SmmChildDispatcher"
+"AmiChipsetModulePkg.SbAsl"
+"AmiChipsetModulePkg.SbLibrary"
+"AmiChipsetModulePkg.SbInclude"
+<endComponent>

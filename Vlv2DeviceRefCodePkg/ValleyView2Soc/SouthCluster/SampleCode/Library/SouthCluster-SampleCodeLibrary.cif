@@ -1,0 +1,8 @@
+<component>
+	name = "SouthCluster-SampleCodeLibrary"
+	category = ModulePart
+	LocalRoot = "Vlv2DeviceRefCodePkg\ValleyView2Soc\SouthCluster\SampleCode\Library"
+	RefName = "Vlv2DeviceRefCodePkg.ValleyView2Soc.ValleyView2Soc-SouthCluster.SouthCluster-SampleCode.SouthCluster-SampleCodeLibrary"
+[inf]
+"AslUpdate\Dxe\PchAslUpdateLib.inf"
+<endComponent>

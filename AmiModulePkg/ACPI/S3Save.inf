@@ -1,0 +1,42 @@
+
+## @file
+#  S3Save implementation
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = S3Save
+  FILE_GUID                      = 26A2481E-4424-46a2-9943-CC4039EAD8F8
+  MODULE_TYPE                    = DXE_DRIVER
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = AcpiS3SaveEntryPoint
+
+  
+[Sources]
+  AcpiS3Save.c	
+  BootScriptPrivate.h	
+  BootScriptSave.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  IntelFrameworkPkg/IntelFrameworkPkg.dec
+  AmiCompatibilityPkg/AmiCompatibilityPkg.dec
+  AmiModulePkg/AmiModulePkg.dec
+
+[LibraryClasses]
+  UefiBootServicesTableLib
+  UefiDriverEntryPoint
+  UefiRuntimeServicesTableLib
+  
+  AmiDxeLib
+
+[Protocols]
+  gEfiS3SaveStateProtocolGuid		#PRODUCED
+  gEfiSmmBase2ProtocolGuid			#CONSUMED
+  gEfiS3SmmSaveStateProtocolGuid	#PRODUCED
+  gEfiBootScriptSaveProtocolGuid	#PRODUCED
+  
+[Depex] 
+  TRUE
+

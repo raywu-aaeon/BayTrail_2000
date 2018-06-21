@@ -1,0 +1,13 @@
+<component>
+	name = "EcPs2Kbd"
+	category = eModule
+	LocalRoot = "AmiModulePkg\EcPs2Kbd\"
+	RefName = "EcPs2Kbd"
+[INF]
+"EcPs2Kbd.inf"
+[files]
+"EcPs2Kbd.sdl"	
+"EcPs2Kbd.chm"
+"EcPs2Kb.asl"
+"EcPs2Ms.asl"	
+<endComponent>

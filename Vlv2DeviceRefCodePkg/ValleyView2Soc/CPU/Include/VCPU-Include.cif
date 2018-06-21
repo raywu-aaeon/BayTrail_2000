@@ -1,0 +1,32 @@
+<component>
+	name = "VCPU-Include"
+	category = ModulePart
+	LocalRoot = "Vlv2DeviceRefCodePkg\ValleyView2Soc\CPU\Include"
+	RefName = "Vlv2DeviceRefCodePkg.ValleyView2Soc.ValleyView2Soc-CPU.VCPU-Include"
+[files]
+"ChipsetAccess.h"
+"CMOSMap.h"
+"CpuBaseLib.h"
+"CpuCsr.h"
+"CpuDataStruct.h"
+"CpuPpmLib.h"
+"CpuRegs.h"
+"CpuType.h"
+"DigitalThermalSensorLib.h"
+"Hpet.h"
+"IchPpmLib.h"
+"IstAppletLib.h"
+"Mcfg.h"
+"McfgTable.h"
+"MchPpmLib.h"
+"MmioAccess.h"
+"MobileProcessorDefinitions.h"
+"PpmCommon.h"
+"Types.h"
+[parts]
+"Vlv2DeviceRefCodePkg.ValleyView2Soc.ValleyView2Soc-CPU.VCPU-Include.VCPU-Guid"
+"Vlv2DeviceRefCodePkg.ValleyView2Soc.ValleyView2Soc-CPU.VCPU-Include.VCPU-Library"
+"Vlv2DeviceRefCodePkg.ValleyView2Soc.ValleyView2Soc-CPU.VCPU-Include.VCPU-Ppi"
+"Vlv2DeviceRefCodePkg.ValleyView2Soc.ValleyView2Soc-CPU.VCPU-Include.VCPU-Protocol"
+"Vlv2DeviceRefCodePkg.ValleyView2Soc.ValleyView2Soc-CPU.VCPU-Include.VCPU-DxeCPUInclude"
+<endComponent>

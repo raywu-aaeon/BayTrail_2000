@@ -1,0 +1,18 @@
+<component>
+	name = "TxeInclude"
+	category = ModulePart
+	LocalRoot = "Vlv2DeviceRefCodePkg\Txe\Include"
+	RefName = "Vlv2DeviceRefCodePkg.Txe.TxeInclude"
+[parts]
+"Vlv2DeviceRefCodePkg.Txe.TxeInclude.TxePpi"
+"Vlv2DeviceRefCodePkg.Txe.TxeInclude.TxeProtocol"
+"Vlv2DeviceRefCodePkg.Txe.TxeInclude.TxeLibraryInclude"
+[files]
+"CoreBiosMsg.h"
+"HeciRegs.h"
+"MkhiMsgs.h"
+"SeCAccess.h"
+"SeCChipset.h"
+"SeCState.h"
+"TdtHi.h"
+<endComponent>

@@ -1,0 +1,105 @@
+## @file
+#
+# Copyright (c)  1999 - 2008 Intel Corporation. All rights reserved
+# This software and associated documentation (if any) is furnished
+# under a license and may only be used or copied in accordance
+# with the terms of the license. Except as permitted by such
+# license, no part of this software or documentation may be
+# reproduced, stored in a retrieval system, or transmitted in any
+# form or by any means without the express written consent of
+# Intel Corporation.
+
+#
+#  Module Name:
+#
+#   AcpiPlatform.inf
+#
+#  Abstract:
+#
+#
+#
+[defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = AcpiPlatform
+  FILE_GUID                      = F0F6F006-DAB4-44b2-A7A1-0F72EEDCA716
+  MODULE_TYPE                    = DXE_DRIVER
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = AcpiPlatformEntryPoint
+
+[sources.common]
+  AcpiPlatform.c
+  AcpiPlatform.h
+  AcpiPlatformHooks.c
+  AcpiPlatformHooks.h
+  AcpiPlatformHooksLib.h
+  Osfr.h
+  
+
+[Packages]
+  Vlv2DeviceRefCodePkg/PlatformPkg.dec
+  MdePkg/MdePkg.dec
+  IntelFrameworkPkg/IntelFrameworkPkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  Vlv2DeviceRefCodePkg/Vlv2DeviceRefCodePkg.dec
+  Vlv2DeviceRefCodePkg/PlatformPkg.dec
+  IntelFrameworkModulePkg/IntelFrameworkModulePkg.dec
+  AmiCompatibilityPkg/AmiCompatibilityPkg.dec
+  AmiChipsetPkg/AmiChipsetPkg.dec
+  AmiChipsetModulePkg/AmiChipsetModulePkg.dec  
+  AmiModulePkg/AmiModulePkg.dec
+  
+[LibraryClasses]
+  HobLib
+  UefiRuntimeServicesTableLib
+  UefiDriverEntryPoint
+  BaseMemoryLib
+  DebugLib
+  HobLib
+  IoLib
+  CmosManagerLib
+  ElinkTableLib
+  NbGetSetupData
+  SbGetSetupData
+  AmiDxeLib	#(EIP112015)
+  PchPlatformLib
+[Guids]
+  gACPIOSFRMfgStringVariableGuid
+  gEfiAcpiTableStorageGuid
+  gACPIOSFRMfgStringVariableGuid
+  gEfiBoardFeaturesGuid
+  gSLP20EncryptedOEMPublicKeyVariableGuid
+  gEfiPlatformInfoGuid
+  gEfiSetupVariableGuid
+  gSLP20MarkerVariableGuid
+  gSLP20OEMPublicKeyVariableGuid
+  gACPIOSFRRefDataBlockVariableGuid
+  gACPIOSFRModelStringVariableGuid
+  gEfiPlatformCpuInfoGuid
+  gEfiVlv2VariableGuid
+
+[Protocols]
+  gEfiAcpiTableProtocolGuid                     # PROTOCOL ALWAYS_CONSUMED
+  gEnhancedSpeedstepProtocolGuid
+  gEfiPlatformCpuProtocolGuid
+  gEfiAcpiSupportProtocolGuid
+  gEfiAcpiS3SaveProtocolGuid
+  gEfiCpuIoProtocolGuid
+  gEfiPs2PolicyProtocolGuid
+  gEfiFirmwareVolume2ProtocolGuid
+  gEfiMpServiceProtocolGuid
+  gEfiGlobalNvsAreaProtocolGuid
+  gEfiDpsdRSA1024AndSHA256SignatureVerificationProtocolGuid
+  gEfiTcgProtocolGuid
+  gEfiFirmwareVolumeProtocolGuid
+  gAmiCmosAccessDxeProtocolGuid
+  gEfiCpuArchProtocolGuid
+
+[Pcd]
+  gEfiMdeModulePkgTokenSpaceGuid.PcdAcpiTableStorageFile
+  gEfiMdePkgTokenSpaceGuid.PcdPciExpressBaseAddress
+
+[Depex]
+  gEfiAcpiSupportProtocolGuid AND
+  gEfiMpServiceProtocolGuid AND
+  gEfiCpuIoProtocolGuid
+

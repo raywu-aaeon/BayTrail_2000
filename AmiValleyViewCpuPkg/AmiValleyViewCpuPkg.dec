@@ -1,0 +1,30 @@
+
+[Defines]
+  DEC_SPECIFICATION              = 0x00010005
+  PACKAGE_NAME                   = AmiValleyViewCpuPkg
+  PACKAGE_GUID                   = AC2323D6-5BD1-42e1-B858-50EE9BF410EF
+  PACKAGE_VERSION                = 0.4
+
+[Includes]
+  Include                        
+  Include/Library
+  
+[LibraryClasses]
+
+  
+[Guids]
+  gAmiValleyViewCpuPkgTokenSpaceGuid = { 0x8ace36af, 0x4b3c, 0x4901, { 0x99, 0xa1, 0xbe, 0x91, 0xf0, 0x1a, 0xa0, 0x69 } }
+
+[Ppis]
+
+
+[Protocols]
+
+
+[PcdsFixedAtBuild]
+  gAmiValleyViewCpuPkgTokenSpaceGuid.PcdFlashNvStorageMicrocodeBase|0xFFF20000|UINT32|0x30000004
+  gAmiValleyViewCpuPkgTokenSpaceGuid.PcdFlashNvStorageMicrocodeSize|0x00040000|UINT32|0x30000005
+  gAmiValleyViewCpuPkgTokenSpaceGuid.PcdFlashAreaBaseAddress|0xFF800000|UINT32|0x10000001
+  gAmiValleyViewCpuPkgTokenSpaceGuid.PcdFlashAreaSize|0x00800000|UINT32|0x10000002
+  
+  

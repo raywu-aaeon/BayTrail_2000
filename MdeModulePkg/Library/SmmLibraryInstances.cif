@@ -1,0 +1,16 @@
+<component>
+	name = "MdeModulePkg SMM Library Instances"
+	category = ModulePart
+	LocalRoot = "MdeModulePkg\Library\"
+	RefName = "MdeModulePkg.SmmLibraryInstances"
+[INF]
+"DxeSmmPerformanceLib\DxeSmmPerformanceLib.inf"
+"PiSmmCoreMemoryAllocationLib\PiSmmCoreMemoryAllocationLib.inf"
+"PiSmmCoreSmmServicesTableLib\PiSmmCoreSmmServicesTableLib.inf"
+"SmmCorePerformanceLib\SmmCorePerformanceLib.inf"
+"SmmLockBoxLib\SmmLockBoxDxeLib.inf"
+"SmmLockBoxLib\SmmLockBoxPeiLib.inf"
+"SmmLockBoxLib\SmmLockBoxSmmLib.inf"
+"SmmPerformanceLib\SmmPerformanceLib.inf"
+"SmmReportStatusCodeLib\SmmReportStatusCodeLib.inf"
+<endComponent>

@@ -1,0 +1,29 @@
+[Defines]
+    INF_VERSION = 0x00010005
+    VERSION_STRING = 1.0
+    PI_SPECIFICATION_VERSION = 0x0001000A
+    BASE_NAME = NvramSmi
+    MODULE_TYPE = DXE_SMM_DRIVER
+    FILE_GUID = 842A454A-75E5-408B-8B1C-36420E4E3F21
+    ENTRY_POINT = NvramSmiEntry
+
+[Sources]
+    NvramSmi.h
+    NvramSmi.c
+
+[Packages]
+    MdePkg/MdePkg.dec
+    IntelFrameworkPkg/IntelFrameworkPkg.dec
+    AmiCompatibilityPkg/AmiCompatibilityPkg.dec
+    AmiModulePkg/AmiModulePkg.dec
+
+[LibraryClasses]
+    AmiDxeLib
+    UefiDriverEntryPoint
+    
+[Protocols]  
+ gEfiSmmCommunicationProtocolGuid
+
+[Depex.common.DXE_SMM_DRIVER]
+    gEfiSmmBase2ProtocolGuid AND 
+    gAmiSmiVariableDxeDriverStartedGuid

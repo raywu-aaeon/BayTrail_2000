@@ -1,0 +1,47 @@
+ ## @file
+ #**********************************************************************
+ #**********************************************************************
+ #**                                                                  **
+ #**        (C)Copyright 1985-2012, American Megatrends, Inc.         **
+ #**                                                                  **
+ #**                       All Rights Reserved.                       **
+ #**                                                                  **
+ #**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093        **
+ #**                                                                  **
+ #**                       Phone: (770)-246-8600                      **
+ #**                                                                  **
+ #**********************************************************************
+ #**********************************************************************
+ ##
+ 
+ [Defines]
+ DEC_SPECIFICATION              = 0x00010005
+ PACKAGE_NAME                   = BayTrailPkg
+ PACKAGE_GUID                   = 3B6E2E3D-5EC4-4f72-A662-F95B3EEFE61C
+ PACKAGE_VERSION                = 0.1
+ 
+ #
+ # The following information is for reference only and not required by the build tools.
+ #
+ #  VALID_ARCHITECTURES           = IA32 X64 IPF EBC
+ #
+ 
+ [Includes]
+  Include
+  Include/Library
+ 
+ [LibraryClasses]
+ 
+ 
+ [Guids]
+ 
+ 
+ [Protocols]
+   gAmiEfiCrbInfoProtocolGuid   = { 0xe516acef, 0xfa3c, 0x4068, { 0x8c, 0xe4, 0x88, 0x8d, 0x62, 0xb0, 0xe4, 0x97 } } #EIP137196
+ 
+ [Ppis]
+   gAmiPeiCrbInfoPpiGuid        = { 0x1b1924c3, 0x6321, 0x484f, { 0x83, 0xef, 0x88, 0x94, 0xb2, 0x1d, 0xe2, 0x58 } } #EIP137196
+ 
+ 
+ [PcdsFixedAtBuild]
+ 

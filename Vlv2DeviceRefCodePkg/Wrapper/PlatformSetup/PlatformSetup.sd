@@ -1,0 +1,250 @@
+//*************************************************************************
+//*************************************************************************
+//**                                                                     **
+//**        (C)Copyright 1985-2012, American Megatrends, Inc.            **
+//**                                                                     **
+//**                       All Rights Reserved.                          **
+//**                                                                     **
+//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093           **
+//**                                                                     **
+//**                       Phone: (770)-246-8600                         **
+//**                                                                     **
+//*************************************************************************
+//*************************************************************************
+
+//**********************************************************************
+// $Header: $
+//
+// $Revision:  $
+//
+// $Date: $
+//**********************************************************************
+// Revision History
+// ----------------
+// $Log: $
+// 
+//**********************************************************************
+
+//<AMI_FHDR_START>
+//----------------------------------------------------------------------------
+//
+// Name:    PlaftormSetup.sd
+//
+// Description: PlaftormSetup Chipset Template Setup options
+//
+//----------------------------------------------------------------------------
+//<AMI_FHDR_END>
+
+#ifdef SETUP_DATA_DEFINITION
+/***********************************************************/
+/* Put NVRAM data definitions here.
+/* For example: UINT8 Data1;
+/* These definitions will be converted by the build process
+/* to a definitions of SETUP_DATA fields.
+/***********************************************************/
+ UINT8				fTPM;
+ UINT8               SecEnable;
+ UINT8               SeCOpEnable;
+ UINT8               SeCEOPDone;
+ UINT8               SeCModeEnable;
+ UINT8               SecFlashUpdate;
+ UINT8               SecFirmwareUpdate;
+ UINT8               SeCEOPEnable;
+ UINT8               Tdt;
+ UINT8               PBAEnable;
+ UINT8               TdtState;
+ UINT8               Suspend;
+ UINT8               TdtEnrolled; 
+ UINT8               TxeFwDowngrade;  //#<EIP142108+> >>>
+#endif
+
+#if defined(VFRCOMPILE) && !defined(CONTROLS_ARE_DEFINED)
+#define CONTROL_DEFINITION
+#endif
+
+#ifdef CONTROL_DEFINITION
+
+#define INTEL_CHECKBOX_SECENABLE_SUPPORT\
+      oneof varid    = SETUP_DATA.SecEnable,\
+          prompt       = STRING_TOKEN (STR_SEC_SETTING_PROMPT),\
+          help         = STRING_TOKEN (STR_SEC_SETTING_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = RESET_REQUIRED;\
+      endoneof;
+      
+#define INTEL_CHECKBOX_SECFLASHUPDATE_SUPPORT\
+      oneof varid    = SETUP_DATA.SecFlashUpdate,\
+          prompt       = STRING_TOKEN (STR_SEC_FLASH_UPDATE_PROMPT),\
+          help         = STRING_TOKEN (STR_SEC_FLASH_UPDATE_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+      endoneof;
+
+// (EIP141625+)>>
+#define INTEL_CHECKBOX_SECFIRMWAREUPDATE_SUPPORT\
+      oneof varid    = SETUP_DATA.SecFirmwareUpdate,\
+          prompt       = STRING_TOKEN (STR_SEC_FIRMWARE_UPDATE_PROMPT),\
+          help         = STRING_TOKEN (STR_SEC_FIRMWARE_UPDATE_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = RESET_REQUIRED;\
+      endoneof;
+// (EIP141625+)<<
+
+#define INTEL_CHECKBOX_SECEOPENABLE_SUPPORT\
+      oneof varid    = SETUP_DATA.SeCEOPEnable,\
+          prompt       = STRING_TOKEN (STR_SEC_EOP_PROMPT),\
+          help         = STRING_TOKEN (STR_SEC_EOP_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = RESET_REQUIRED;\
+      endoneof;
+
+#define INTEL_CHECKBOX_FTPM_SUPPORT\
+      oneof varid    = SETUP_DATA.fTPM,\
+          prompt       = STRING_TOKEN (STR_FIRMWARE_TPM_PROMPT),\
+          help         = STRING_TOKEN (STR_FIRMWARE_TPM_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = 0;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+      endoneof;
+
+#define INTEL_CHECKBOX_ATAM_SUPPORT\
+      oneof varid    = SETUP_DATA.Tdt,\
+          prompt       = STRING_TOKEN (STR_ATAM_PROMPT),\
+          help         = STRING_TOKEN (STR_ATAM_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+      endoneof;
+
+#define INTEL_CHECKBOX_ATAM_PBA_SUPPORT\
+      oneof varid    = SETUP_DATA.PBAEnable,\
+          prompt       = STRING_TOKEN (STR_ATAM_PBA_PROMPT),\
+          help         = STRING_TOKEN (STR_ATAM_PBA_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = RESET_REQUIRED;\
+      endoneof;
+
+#define INTEL_CHECKBOX_TDT_SUSPEND_SUPPORT\
+      oneof varid    = SETUP_DATA.Suspend,\
+          prompt       = STRING_TOKEN (STR_TDT_SUSPEND_PROMPT),\
+          help         = STRING_TOKEN (STR_TDT_SUSPEND_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+      endoneof;
+
+#endif // #ifdef CONTROL_DEFINITION
+
+#ifdef CONTROLS_WITH_DEFAULTS
+    INTEL_CHECKBOX_FTPM_SUPPORT
+    INTEL_CHECKBOX_ATAM_SUPPORT
+    INTEL_CHECKBOX_ATAM_PBA_SUPPORT
+    INTEL_CHECKBOX_TDT_SUSPEND_SUPPORT
+    INTEL_CHECKBOX_SECENABLE_SUPPORT
+    INTEL_CHECKBOX_SECFLASHUPDATE_SUPPORT
+    INTEL_CHECKBOX_SECFIRMWAREUPDATE_SUPPORT
+    INTEL_CHECKBOX_SECEOPENABLE_SUPPORT
+    
+#endif //#ifdef CONTROLS_WITH_DEFAULTS
+
+//**********************************************************************
+//                ADVANCED - Atapi Configuration Form
+//**********************************************************************
+#ifdef ADVANCED_FORM_SET
+
+  #ifdef FORM_SET_ITEM
+    //
+    // Define controls to be added to the main page of the formset
+    //
+  #endif
+
+  #ifdef FORM_SET_GOTO
+    //
+    // Define goto commands for the forms defined in this file
+    //
+    goto PTT_CONFIG_FORM_ID,
+    prompt  = STRING_TOKEN(STR_PTT_FORM),
+    help    = STRING_TOKEN(STR_PTT_FORM_HELP);
+
+    //
+    // Define goto commands for the forms defined in this file
+    //
+    goto TDT_CONFIG_FORM_ID,
+    prompt  = STRING_TOKEN(STR_TDT_CONFIGURATION_FORM),
+    help    = STRING_TOKEN(STR_TDT_CONFIGURATION_PROMPT_HELP);    
+  #endif
+  
+  #ifdef FORM_SET_FORM
+  
+    //
+    // Define forms
+    //
+  
+  #ifndef INTEL_FORM_PTT_CONFIG
+  #define INTEL_FORM_PTT_CONFIG
+    form formid = AUTO_ID(PTT_CONFIG_FORM_ID),
+    title = STRING_TOKEN(STR_PTT_FORM);
+
+    SUBTITLE(STRING_TOKEN(STR_TPM_CONFIGURATION_PROMPT))
+    
+    INTEL_CHECKBOX_FTPM_SUPPORT
+    
+    endform;    
+    
+  #endif //  #ifndef INTEL_FORM_PTT_CONFIG 
+
+
+  #ifndef INTEL_FORM_TDT_CONFIG
+  #define INTEL_FORM_TDT_CONFIG
+    form formid = AUTO_ID(TDT_CONFIG_FORM_ID),
+    title = STRING_TOKEN(STR_TDT_CONFIGURATION_FORM);
+
+    SUBTITLE(STRING_TOKEN(STR_TXE_CONFIGURATION_PROMPT))
+    suppressif  ideqval SETUP_DATA.SeCModeEnable == 0;
+    grayoutif ideqval SETUP_DATA.SeCEOPDone == 1 OR ideqval SETUP_DATA.TdtEnrolled == 0x01;
+    INTEL_CHECKBOX_SECENABLE_SUPPORT
+    endif;
+    endif;
+    suppressif  ideqval SETUP_DATA.SeCOpEnable == 0x00;
+    grayoutif ideqval SETUP_DATA.SeCEOPDone == 1;
+    INTEL_CHECKBOX_SECFLASHUPDATE_SUPPORT
+    INTEL_CHECKBOX_SECFIRMWAREUPDATE_SUPPORT
+    endif;
+    INTEL_CHECKBOX_SECEOPENABLE_SUPPORT
+    
+    grayoutif ideqval SETUP_DATA.SeCEOPDone == 1;
+    text
+      help   = STRING_TOKEN(STR_SEC_UNCONFIGURATION_HELP),
+      text   = STRING_TOKEN(STR_SEC_UNCONFIGURATION_PROMPT),
+      flags  = INTERACTIVE,
+      key    = AUTO_ID(UN_CONFIGURATION_TXE_KEY);
+    endif;
+    endif;
+    
+    SEPARATOR
+    SUBTITLE(STRING_TOKEN(STR_TDT_CONFIGURATION_PROMPT))
+    grayoutif NOT ideqval SETUP_DATA.TdtEnrolled == 0;
+    INTEL_CHECKBOX_ATAM_SUPPORT
+    INTEL_CHECKBOX_ATAM_PBA_SUPPORT
+    endif;
+    grayoutif ideqval SETUP_DATA.TdtState == 3 OR ideqval SETUP_DATA.TdtEnrolled == 0x0;
+    INTEL_CHECKBOX_TDT_SUSPEND_SUPPORT
+    endif;
+    endform;    
+    
+  #endif //  #ifndef INTEL_FORM_TDT_CONFIG 
+   
+  #endif //  #ifdef FORM_SET_FORM
+
+#endif // ADVANCED_FORM_SET
+
+//*************************************************************************
+//*************************************************************************
+//**                                                                     **
+//**        (C)Copyright 1985-2012, American Megatrends, Inc.            **
+//**                                                                     **
+//**                       All Rights Reserved.                          **
+//**                                                                     **
+//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093           **
+//**                                                                     **
+//**                       Phone: (770)-246-8600                         **
+//**                                                                     **
+//*************************************************************************
+//*************************************************************************

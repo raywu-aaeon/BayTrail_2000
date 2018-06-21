@@ -1,0 +1,12 @@
+<component>
+	name = "Capsule"
+	category = ModulePart
+	LocalRoot = "MdeModulePkg\Universal\"
+	RefName = "MdeModulePkg.Capsule"
+[files]
+"Capsule.sdl"	
+[INF]
+"CapsulePei/CapsulePei.inf"
+"CapsulePei/CapsuleX64.inf"
+"CapsuleRuntimeDxe/CapsuleRuntimeDxe.inf"
+<endComponent>

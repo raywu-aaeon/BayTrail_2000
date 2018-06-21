@@ -1,0 +1,8 @@
+<component>
+	name = "SMM MdePkg"
+	category = ModulePart
+	LocalRoot = "MdePkg\"
+	RefName = "MdePkg.SmmMde"
+[parts]
+"MdePkg.SmmLibraryInstances"
+<endComponent>

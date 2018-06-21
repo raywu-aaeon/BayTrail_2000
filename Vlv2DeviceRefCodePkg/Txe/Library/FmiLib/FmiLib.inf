@@ -1,0 +1,43 @@
+## @file
+#  Base Synchronization Library implementation.
+#
+#  Copyright (c) 2013, Intel Corporation. All rights reserved.<BR>
+#
+#  This program and the accompanying materials
+#  are licensed and made available under the terms and conditions of the BSD License
+#  which accompanies this distribution. The full text of the license may be found at
+#  http://opensource.org/licenses/bsd-license.php.
+#  THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
+#
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = FmiLib
+  FILE_GUID                      = C2856E1C-CBF2-4317-865E-A68D8E174231
+  MODULE_TYPE                    = DXE_DRIVER
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = FmiLib| DXE_CORE DXE_DRIVER UEFI_APPLICATION UEFI_DRIVER 
+
+
+#
+#  VALID_ARCHITECTURES           = IA32 X64
+#
+[Sources]
+  FmiLib.c
+  Fmi.h
+
+[Packages]
+  MdePkg/MdePkg.dec
+  Vlv2DeviceRefCodePkg/Vlv2DeviceRefCodePkg.dec
+
+[LibraryClasses]
+  DebugLib
+  BaseMemoryLib
+  UefiBootServicesTableLib
+  PciLib
+
+
+

@@ -1,0 +1,10 @@
+<component>
+	name = "SecVariableAuthenticated"
+	category = Modulepart
+	LocalRoot = "SecurityPkg\VariableAuthenticated"
+	RefName = "SecurityPkg.VariableAuthenticated"
+[inf]
+"RuntimeDxe\VariableRuntimeDxe.inf"	
+"RuntimeDxe\VariableSmm.inf"	
+"RuntimeDxe\VariableSmmRuntimeDxe.inf"	
+<endComponent>

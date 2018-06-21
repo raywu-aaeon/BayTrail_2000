@@ -1,0 +1,2589 @@
+//*************************************************************************
+//*************************************************************************
+//**                                                                     **
+//**        (C)Copyright 1985-2014, American Megatrends, Inc.            **
+//**                                                                     **
+//**                       All Rights Reserved.                          **
+//**                                                                     **
+//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093           **
+//**                                                                     **
+//**                       Phone: (770)-246-8600                         **
+//**                                                                     **
+//*************************************************************************
+//*************************************************************************
+
+//**********************************************************************
+// $Header: $
+//
+// $Revision:  $
+//
+// $Date: $
+//**********************************************************************
+// Revision History
+// ----------------
+// $Log: $
+// 
+//**********************************************************************
+
+//<AMI_FHDR_START>
+//----------------------------------------------------------------------------
+//
+// Name:    Sb.sd
+//
+// Description: South Bridge Chipset Template Setup options
+//
+//----------------------------------------------------------------------------
+//<AMI_FHDR_END>
+#define PCH_PCIE_MAX_ROOT_PORTS 4
+#define PCH_AHCI_MAX_PORTS      2 //EIP144257
+#define OFFSET_0				0
+#define OFFSET_1				1
+#define OFFSET_2				2
+#define OFFSET_3				3
+#define OFFSET_4				4
+#define OFFSET_5				5
+#define OFFSET_6				6
+    
+#ifdef SETUP_DATA_DEFINITION
+/***********************************************************/
+/* Put NVRAM data definitions here.
+/* For example: UINT8 Data1;
+/* These definitions will be converted by the build process
+/* to a definitions of SETUP_DATA fields.
+/***********************************************************/
+  //SATA
+  UINT8       PchSata;
+  //EIP144257 >>
+  UINT8       SataPort[PCH_AHCI_MAX_PORTS]; 
+  UINT8       SataHotPlug[PCH_AHCI_MAX_PORTS];
+  UINT8       SataMechanicalSw[PCH_AHCI_MAX_PORTS];
+  UINT8       ExternalSata[PCH_AHCI_MAX_PORTS];
+  UINT8       SataSpinUp[PCH_AHCI_MAX_PORTS];
+  UINT8       SolidStateDrive[PCH_AHCI_MAX_PORTS];
+  //EIP144257 <<
+  UINT8       SataInterfaceMode;
+  UINT8       SataTestMode;
+  UINT8       SataSpeedSupport; //EIP147898
+  UINT8       SataOddPort; //EIP149024
+  
+  UINT8       HpetEnable;
+  
+  //LPSS1
+  UINT8       LpssDma0Enabled;
+  UINT8       LpssPwm0Enabled;
+  UINT8       LpssPwm1Enabled;
+  UINT8       LpssHsuart0Enabled;
+  UINT8       LpssHsuart1Enabled;
+  UINT8       LpssSpiEnabled;
+  
+  //LPSS2
+  UINT8       LpssDma1Enabled;
+  UINT8       LpssI2C0Enabled;
+  UINT8       LpssI2C1Enabled;
+  UINT8       LpssI2C2Enabled;
+  UINT8       LpssI2C3Enabled;
+  UINT8       LpssI2C4Enabled;
+  UINT8       LpssI2C5Enabled;
+  UINT8       LpssI2C6Enabled;
+//EIP158981 >>  
+  UINT8       NfcEnable;
+  UINT8       TouchPadEnable;
+  UINT8       I2CTouchAddress;
+//EIP158981 <<
+
+  //Scc
+  UINT8       eMMCEnabled;
+  UINT8       SdioEnabled;
+  UINT8       SdcardEnabled;
+  UINT8       MipiHsi;
+  UINT8       eMMC45DDR50Enabled;    //(EIP120879+)
+  UINT8       eMMC45HS200Enabled;    //(EIP120879+)
+  UINT8       SecureErase; //CSP20130910 - Match RC 1.1.0
+  
+  // BIOS INT13 Emulation for USB Mass Devices
+  UINT8       UsbBIOSINT13DeviceEmulation;
+  UINT8       UsbBIOSINT13DeviceEmulationLockHide;
+  
+  // BIOS INT13 Emulation Size for USB Mass Devices
+  UINT16      UsbBIOSINT13DeviceEmulationSize;
+  UINT8       UsbBIOSINT13DeviceEmulationSizeLockHide;
+  
+  // USB Zip Emulation Type
+  UINT8       UsbZipEmulation;
+  UINT8       UsbZipEmulationLockHide;
+  
+  // System ports
+  UINT8       Serial;
+  UINT8       Serial2;
+  UINT8       ParallelMode;
+  UINT8       UsbLegacy;
+  
+  //Temp
+  UINT8       BspSelection;
+  UINT8       ProcessorFlexibleRatio;
+  UINT8       ProcessorBistEnable;
+  UINT8       ProcessorVmxEnable;
+  UINT8       ActiveProcessorCores;
+  UINT8       ProcessorHyperThreadingDisable;
+  UINT8       PcuUart1;
+  UINT8       Lan;
+  UINT8       LastState;
+  
+  // PCIe
+  UINT8       PcieRootPortEn[PCH_PCIE_MAX_ROOT_PORTS];
+  UINT8       PcieRootPortAspm[PCH_PCIE_MAX_ROOT_PORTS];
+  UINT8       PcieRootPortPMCE[PCH_PCIE_MAX_ROOT_PORTS];
+  UINT8       PcieRootPortESE[PCH_PCIE_MAX_ROOT_PORTS];
+  UINT8       PcieRootPortHPE[PCH_PCIE_MAX_ROOT_PORTS];
+  UINT8       PcieRootPortURE[PCH_PCIE_MAX_ROOT_PORTS];
+  UINT8       PcieRootPortFEE[PCH_PCIE_MAX_ROOT_PORTS];
+  UINT8       PcieRootPortNFE[PCH_PCIE_MAX_ROOT_PORTS];
+  UINT8       PcieRootPortCEE[PCH_PCIE_MAX_ROOT_PORTS];
+  UINT8       PcieRootPortSFE[PCH_PCIE_MAX_ROOT_PORTS];
+  UINT8       PcieRootPortSNE[PCH_PCIE_MAX_ROOT_PORTS];
+  UINT8       PcieRootPortSCE[PCH_PCIE_MAX_ROOT_PORTS];
+  UINT8       PcieRootPortSpeed[PCH_PCIE_MAX_ROOT_PORTS];
+//EIP191291
+#if defined(PCIE_ROOT_PORT_DETECT_NON_COMPLAINT) && (PCIE_ROOT_PORT_DETECT_NON_COMPLAINT != 0)
+    UINT8   PcieRPDetectNonComplaint[4]; //EIP191291
+#endif
+//EIP191291
+  
+  //EIP150027 >>
+  // PCI Bridge Resources
+  UINT8   	  ExtraBusRsvd[PCH_PCIE_MAX_ROOT_PORTS];
+  UINT16  	  PcieMemRsvd[PCH_PCIE_MAX_ROOT_PORTS];
+  UINT8   	  PcieMemRsvdalig[PCH_PCIE_MAX_ROOT_PORTS];
+  UINT16  	  PciePFMemRsvd[PCH_PCIE_MAX_ROOT_PORTS];
+  UINT8   	  PciePFMemRsvdalig[PCH_PCIE_MAX_ROOT_PORTS];
+  UINT8   	  PcieIoRsvd[PCH_PCIE_MAX_ROOT_PORTS];
+  //EIP150027 <<   
+    
+  // Azalia Configuration
+  UINT8       PchAzalia;
+  UINT8       AzaliaPme;
+  UINT8       HdmiCodec;        //HDMI Codec Enabling
+  UINT8       HdmiCodecPortB;
+  UINT8       HdmiCodecPortC;
+  UINT8       HdmiCodecPortD;
+  UINT8       AzaliaDs;         //Azalia Docking Support
+  UINT8       AzaliaVCiEnable;  //Set VCi Enable bit (VCIEN) of VCi Resource Control
+  UINT8       Lpe;
+  // Wake On Lan
+  UINT8       WakeOnLanS5;
+  UINT8       WakeOnLanS5LockHide;
+  UINT8       SlpLanLowDc;
+  UINT8       PxeRom;
+  // LPSS Configuration
+  UINT8       OsSelect;   //CSP20130910 - Match RC 1.1.0
+  UINT8       LpssPciModeEnabled;
+  // S.M.A.R.T. Mode
+  UINT8       SmartMode;
+   
+  //
+  // Usb Config
+  //
+  UINT8       SbUsbPreBootSupport; //CSP20130723_C
+  UINT8       PchUsb30Mode;
+  UINT8       PchUsb30ModeW8; //EIP158981
+  UINT8       PchUsb30Streams;
+  UINT8       UsbXhciLpmSupport;
+  UINT8       PchUsb20;
+  UINT8       PchUsb20W8; //CSP20140423
+  UINT8       PchUsbPerPortCtl;
+  UINT8       PchUsbPort[4];
+  UINT8       PchUsbOtg;  
+//P20130628 >>
+  UINT8       PchEhciDebug;
+  UINT8       EhciPllCfgEnable;
+  UINT8       PchUsbVbusOn;
+//P20130628 <<
+  
+  //Miscellaneous
+  UINT8       PciExpNative;     // Barret+ Native PCIE //EIP150027 
+  UINT8       NativeAspmEnable; // Barret+ Native ASPM //EIP150027 
+  UINT8       HighPrecisionTimer;
+  UINT8       BootTimerWithHpetTimer;
+  UINT8       SirqMode;
+  UINT8       UartDebugEnable; //EIP133060
+  
+  //System
+  UINT8       PmicEnable;
+  UINT8       PnpSettings;
+  UINT8       BatterySolution;
+  UINT8	      NFCnSelect;
+  UINT8	      WittEnable;    //(EIP120879+)
+
+  UINT8       GlobalSmi; //EIP144291  
+  UINT8       BiosWpd; //EIP130725
+  UINT8       PssEnabled; //EIP140009
+  UINT8       PcieDynamicGating; //CSP20131018
+  UINT8	      LpssSdCardSDR25Enabled; //EIP144689
+  UINT8	      LpssSdCardDDR50Enabled; //EIP144689
+   
+  UINT8	      PchCrid; //EIP150551
+#endif
+
+#if defined(VFRCOMPILE) && !defined(CONTROLS_ARE_DEFINED)
+#define CONTROL_DEFINITION
+#endif
+
+#ifdef CONTROL_DEFINITION
+
+//EIP150027 >>
+#define ACPI_ONEOF_PCIEXPNATIVE\
+  oneof varid  = SETUP_DATA.PciExpNative,\
+    prompt = STRING_TOKEN(STR_ACPI_PCIE_NATIVE_PROMPT),\
+    help = STRING_TOKEN(STR_ACPI_PCIE_NATIVE_HELP),\
+    option text = STRING_TOKEN(STR_COMMON_DISABLED), value = 0, flags = RESET_REQUIRED;\
+    option text = STRING_TOKEN(STR_COMMON_ENABLED), value = 1, flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;\
+  endoneof;
+
+#define ACPI_ONEOF_NATIVEASPMENABLE\
+  oneof varid    = SETUP_DATA.NativeAspmEnable,\
+    prompt   = STRING_TOKEN(STR_NATIVE_ASPM_PROMPT),\
+    help     = STRING_TOKEN(STR_NATIVE_ASPM_HELP),\
+    option text = STRING_TOKEN(STR_COMMON_DISABLED), value = 0, flags = RESET_REQUIRED;\
+    option text = STRING_TOKEN(STR_COMMON_ENABLED), value = 1, flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;\
+  endoneof;
+//EIP150027 <<
+
+#define SB_CHECKBOX_HIGH_PRECISION_TIMER\
+      oneof varid    = SETUP_DATA.HighPrecisionTimer,\
+          prompt       = STRING_TOKEN (STR_HIGHT_PRECISION_TIMER_PROMPT),\
+          help         = STRING_TOKEN (STR_HIGHT_PRECISION_TIMER_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = RESET_REQUIRED;\
+      endoneof;
+      
+#define SB_CHECKBOX_BOOT_TIMER_WITH_HPET_TIMER\
+      oneof varid    = SETUP_DATA.BootTimerWithHpetTimer,\
+          prompt       = STRING_TOKEN (STR_BOOT_TIMER_WITH_HPET_TIMER_PROMPT),\
+          help         = STRING_TOKEN (STR_BOOT_TIMER_WITH_HPET_TIMER_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+      endoneof;
+
+//EIP133059 >>
+#if defined (DEFAULT_SIRQ_MODE) && (DEFAULT_SIRQ_MODE == 1)
+#define SB_CHECKBOX_IRQMODE\
+  oneof varid    = SETUP_DATA.SirqMode,\
+    prompt       = STRING_TOKEN (STR_PCH_IRQMODE_PROMPT),\
+    help         = STRING_TOKEN (STR_PCH_IRQMODE_HELP),\
+    option text  = STRING_TOKEN (STR_IRQ_QUIET), value = 0, flags = RESET_REQUIRED;\
+    option text  = STRING_TOKEN (STR_IRQ_CONTINUOUS), value = 1, flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;\
+  endoneof;
+#else
+#define SB_CHECKBOX_IRQMODE\
+  oneof varid    = SETUP_DATA.SirqMode,\
+    prompt       = STRING_TOKEN (STR_PCH_IRQMODE_PROMPT),\
+    help         = STRING_TOKEN (STR_PCH_IRQMODE_HELP),\
+    option text  = STRING_TOKEN (STR_IRQ_QUIET), value = 0, flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;\
+    option text  = STRING_TOKEN (STR_IRQ_CONTINUOUS), value = 1, flags = RESET_REQUIRED;\
+  endoneof;
+#endif
+//EIP133059 <<
+
+//EIP150551 >>
+#define SB_ONEOF_PCHCRID\
+  oneof varid    = SETUP_DATA.PchCrid,\
+    prompt       = STRING_TOKEN (STR_SB_CRID),\
+    help         = STRING_TOKEN (STR_SB_CRID_HELP),\
+    option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;\
+    option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = RESET_REQUIRED;\
+  endoneof;
+//EIP150551 <<
+
+//EIP133060 >>
+#if defined (DEFAULT_INTERNAL_UART_DEBUG_ENABLE) && (DEFAULT_INTERNAL_UART_DEBUG_ENABLE == 1)
+#define SB_CHECKBOX_UART_INTERFACE_SELECTION\
+      oneof varid    = SETUP_DATA.UartDebugEnable,\
+          prompt       = STRING_TOKEN (STR_UART_DEBUG_SELECTION_PROMPT),\
+          help         = STRING_TOKEN (STR_UART_DEBUG_SELECTION_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+      endoneof;
+#else
+#define SB_CHECKBOX_UART_INTERFACE_SELECTION\
+      oneof varid    = SETUP_DATA.UartDebugEnable,\
+          prompt       = STRING_TOKEN (STR_UART_DEBUG_SELECTION_PROMPT),\
+          help         = STRING_TOKEN (STR_UART_DEBUG_SELECTION_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = RESET_REQUIRED;\
+      endoneof;
+#endif //DEFAULT_INTERNAL_UART_DEBUG_ENABLE
+//EIP133060 <<
+
+#define SB_CHECKBOX_NFC_INTERFACE_SELECTION\
+      oneof varid    = SETUP_DATA.NFCnSelect,\
+          prompt       = STRING_TOKEN (STR_NFC_INTERFACE_SELECTION_PROMPT),\
+          help         = STRING_TOKEN (STR_NFC_INTERFACE_SELECTION_HELP),\
+          option text  = STRING_TOKEN (STR_NFC_INTERFACE_DISAABLE_NFC), value = 0, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_NFC_INTERFACE_SELECTION_NFC1), value = 1, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_NFC_INTERFACE_SELECTION_NFC2), value = 2, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+      endoneof;
+
+//CSP20130910 - Match RC 1.1.0 >>
+#if CSM_SUPPORT
+#define SB_CHECKBOX_OSSELECT_SUPPORT\
+      oneof varid    = SETUP_DATA.OsSelect,\
+          prompt       = STRING_TOKEN (STR_OS_SELECT_PROMPT),\
+          help         = STRING_TOKEN (STR_OS_SELECT_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_WIN8), value = 0, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_ANDROID), value = 1, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_WIN7), value = 2, flags = RESET_REQUIRED;\
+      endoneof;
+#else
+#define SB_CHECKBOX_OSSELECT_SUPPORT\
+      oneof varid    = SETUP_DATA.OsSelect,\
+          prompt       = STRING_TOKEN (STR_OS_SELECT_PROMPT),\
+          help         = STRING_TOKEN (STR_OS_SELECT_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_WIN8), value = 0, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_ANDROID), value = 1, flags = RESET_REQUIRED;\
+      endoneof;
+#endif
+//CSP20130910 - Match RC 1.1.0 <<      
+      
+#define SB_CHECKBOX_LPSS_SCC_DEVICES_MODE\
+      oneof varid    = SETUP_DATA.LpssPciModeEnabled,\
+          prompt       = STRING_TOKEN (STR_LPSS_SCC_DEVICE_MODE_PROMPT),\
+          help         = STRING_TOKEN (STR_LPSS_SCC_DEVICE_MODE_HELP),\
+          option text  = STRING_TOKEN (STR_LPSS_SCC_DEVICE_MODE_ACPI), value = 0, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_LPSS_SCC_DEVICE_MODE_PCI), value = 1, flags = RESET_REQUIRED;\
+      endoneof;
+      
+//EIP150184 >>
+//(EIP120879+)>>
+//EIP144689 >>
+#define SB_CHECKBOX_SCC_EMMC_SUPPORT\
+      oneof varid    = SETUP_DATA.eMMCEnabled,\
+          prompt       = STRING_TOKEN (STR_SCC_EMMC_PROMPT),\
+          help         = STRING_TOKEN (STR_SCC_EMMC_HELP),\
+          option text  = STRING_TOKEN (STR_SCC_EMMC45_PROMPT), value = 3, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_SCC_EMMC441_PROMPT), value = 2, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_SCC_EMMC_AUTO), value = 1, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = RESET_REQUIRED;\
+      endoneof;
+//EIP144689 <<
+//EIP150184 <<
+      
+#define SB_CHECKBOX_SCC_EMMC45DDR50_SUPPORT\
+      oneof varid    = SETUP_DATA.eMMC45DDR50Enabled,\
+          prompt       = STRING_TOKEN (STR_SCC_EMMC45DDR50_PROMPT),\
+          help         = STRING_TOKEN (STR_SCC_EMMC45DDR50_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = RESET_REQUIRED;\
+      endoneof;
+
+#define SB_CHECKBOX_SCC_EMMC45HS200_SUPPORT\
+      oneof varid    = SETUP_DATA.eMMC45HS200Enabled,\
+          prompt       = STRING_TOKEN (STR_SCC_EMMC45HS200_PROMPT),\
+          help         = STRING_TOKEN (STR_SCC_EMMC45HS200_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+      endoneof;
+//(EIP120879+)<<
+
+//CSP20130910 - Match RC 1.1.0 >>
+#define SB_CHECKBOX_SCC_SECURE_ERASE\
+      oneof varid    = SETUP_DATA.SecureErase,\
+          prompt       = STRING_TOKEN (STR_SCC_SECURE_ERASE_PROMPT),\
+          help         = STRING_TOKEN (STR_SCC_SECURE_ERASE_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+      endoneof;
+//CSP20130910 - Match RC 1.1.0 <<
+
+#define SB_CHECKBOX_SCC_SDIO_SUPPORT\
+      oneof varid    = SETUP_DATA.SdioEnabled,\
+          prompt       = STRING_TOKEN (STR_SCC_SDIO_PROMPT),\
+          help         = STRING_TOKEN (STR_SCC_SDIO_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = RESET_REQUIRED;\
+      endoneof;
+
+#define SB_CHECKBOX_SCC_SD_CARD_SUPPORT\
+      oneof varid    = SETUP_DATA.SdcardEnabled,\
+          prompt       = STRING_TOKEN (STR_SCC_SD_CARD_PROMPT),\
+          help         = STRING_TOKEN (STR_SCC_SD_CARD_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = RESET_REQUIRED;\
+      endoneof;
+
+//EIP173645 >>
+//EIP144689 >>
+#define SB_CHECKBOX_LPSS_SDCARD25_SUPPORT\
+      oneof varid    = SETUP_DATA.LpssSdCardSDR25Enabled,\
+          prompt       = STRING_TOKEN (STR_SCC_SD_SDR25_PROMPT),\
+          help         = STRING_TOKEN (STR_SCC_SD_SDR25_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+      endoneof;
+
+#define SB_CHECKBOX_LPSS_SDCARD50_SUPPORT\
+      oneof varid    = SETUP_DATA.LpssSdCardDDR50Enabled,\
+          prompt       = STRING_TOKEN (STR_SCC_SD_DDR50_PROMPT),\
+          help         = STRING_TOKEN (STR_SCC_SD_DDR50_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = RESET_REQUIRED;\
+      endoneof;      
+//EIP144689 <<
+//EIP173645 <<
+
+#define SB_CHECKBOX_MIPI_HSI_SUPPORT\
+      oneof varid    = SETUP_DATA.MipiHsi,\
+          prompt       = STRING_TOKEN (STR_MIPI_HSI_PROMPT),\
+          help         = STRING_TOKEN (STR_MIPI_HSI_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+      endoneof;
+
+#define SB_CHECKBOX_LPSS_DMA1_SUPPORT\
+      oneof varid    = SETUP_DATA.LpssDma0Enabled,\
+          prompt       = STRING_TOKEN (STR_LPSS_DMA1_PROMPT),\
+          help         = STRING_TOKEN (STR_LPSS_DMA1_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = RESET_REQUIRED;\
+      endoneof;
+
+#define SB_CHECKBOX_LPSS_DMA2_SUPPORT\
+      oneof varid    = SETUP_DATA.LpssDma1Enabled,\
+          prompt       = STRING_TOKEN (STR_LPSS_DMA2_PROMPT),\
+          help         = STRING_TOKEN (STR_LPSS_DMA2_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = RESET_REQUIRED;\
+      endoneof;
+
+#define SB_CHECKBOX_LPSS_I2C1_SUPPORT\
+      oneof varid    = SETUP_DATA.LpssI2C0Enabled,\
+          prompt       = STRING_TOKEN (STR_LPSS_I2C1_PROMPT),\
+          help         = STRING_TOKEN (STR_LPSS_I2C1_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = RESET_REQUIRED;\
+      endoneof;
+
+#define SB_CHECKBOX_LPSS_I2C2_SUPPORT\
+      oneof varid    = SETUP_DATA.LpssI2C1Enabled,\
+          prompt       = STRING_TOKEN (STR_LPSS_I2C2_PROMPT),\
+          help         = STRING_TOKEN (STR_LPSS_I2C2_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = RESET_REQUIRED;\
+      endoneof;
+
+#define SB_CHECKBOX_LPSS_I2C3_SUPPORT\
+      oneof varid    = SETUP_DATA.LpssI2C2Enabled,\
+          prompt       = STRING_TOKEN (STR_LPSS_I2C3_PROMPT),\
+          help         = STRING_TOKEN (STR_LPSS_I2C3_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = RESET_REQUIRED;\
+      endoneof;
+
+#define SB_CHECKBOX_LPSS_I2C4_SUPPORT\
+      oneof varid    = SETUP_DATA.LpssI2C3Enabled,\
+          prompt       = STRING_TOKEN (STR_LPSS_I2C4_PROMPT),\
+          help         = STRING_TOKEN (STR_LPSS_I2C4_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = RESET_REQUIRED;\
+      endoneof;
+
+#define SB_CHECKBOX_LPSS_I2C5_SUPPORT\
+      oneof varid    = SETUP_DATA.LpssI2C4Enabled,\
+          prompt       = STRING_TOKEN (STR_LPSS_I2C5_PROMPT),\
+          help         = STRING_TOKEN (STR_LPSS_I2C5_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = RESET_REQUIRED;\
+      endoneof;
+
+#define SB_CHECKBOX_LPSS_I2C6_SUPPORT\
+      oneof varid    = SETUP_DATA.LpssI2C5Enabled,\
+          prompt       = STRING_TOKEN (STR_LPSS_I2C6_PROMPT),\
+          help         = STRING_TOKEN (STR_LPSS_I2C6_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = RESET_REQUIRED;\
+      endoneof;
+
+#define SB_CHECKBOX_LPSS_I2C7_SUPPORT\
+      oneof varid    = SETUP_DATA.LpssI2C6Enabled,\
+          prompt       = STRING_TOKEN (STR_LPSS_I2C7_PROMPT),\
+          help         = STRING_TOKEN (STR_LPSS_I2C7_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = RESET_REQUIRED;\
+      endoneof;
+
+//EIP158981 >>
+#define SB_CHECKBOX_LPSS_I2C7_NFC_SUPPORT\
+      oneof varid    = SETUP_DATA.NfcEnable,\
+          prompt       = STRING_TOKEN (STR_LPSS_I2C7_NFC_PROMPT),\
+          help         = STRING_TOKEN (STR_LPSS_I2C7_NFC_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+      endoneof;
+      
+#define SB_CHECKBOX_LPSS_I2C7_TOUCH_PAD_SUPPORT\
+      oneof varid    = SETUP_DATA.TouchPadEnable,\
+          prompt       = STRING_TOKEN (STR_LPSS_I2C7_TOUCH_PAD_PROMPT),\
+          help         = STRING_TOKEN (STR_LPSS_I2C7_TOUCH_PAD_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+      endoneof;      
+
+#define SB_CHECKBOX_LPSS_I2C_TOUGCH_ADDRESS_SUPPORT\
+      oneof varid    = SETUP_DATA.I2CTouchAddress,\
+          prompt       = STRING_TOKEN (STR_LPSS_I2C_TOUGCH_ADDRESS_PROMPT),\
+          help         = STRING_TOKEN (STR_LPSS_I2C_TOUGCH_ADDRESS_HELP),\
+          option text  = STRING_TOKEN (STR_LPSS_I2C_TOUGCH_ADDRESS_AUTO), value = 0x4C, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_LPSS_I2C_TOUGCH_ADDRESS_RVP), value = 0x4B, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_LPSS_I2C_TOUGCH_ADDRESS_FFRD), value = 0x4A, flags = RESET_REQUIRED;\
+      endoneof;
+//EIP158981 <<
+
+#define SB_CHECKBOX_LPSS_HSUART1_SUPPORT\
+      oneof varid    = SETUP_DATA.LpssHsuart0Enabled,\
+          prompt       = STRING_TOKEN (STR_LPSS_HSUART1_PROMPT),\
+          help         = STRING_TOKEN (STR_LPSS_HSUART1_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+      endoneof;
+
+#define SB_CHECKBOX_LPSS_HSUART2_SUPPORT\
+      oneof varid    = SETUP_DATA.LpssHsuart1Enabled,\
+          prompt       = STRING_TOKEN (STR_LPSS_HSUART2_PROMPT),\
+          help         = STRING_TOKEN (STR_LPSS_HSUART2_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+      endoneof;
+
+#define SB_CHECKBOX_LPSS_PWM1_SUPPORT\
+      oneof varid    = SETUP_DATA.LpssPwm0Enabled,\
+          prompt       = STRING_TOKEN (STR_LPSS_PWM1_PROMPT),\
+          help         = STRING_TOKEN (STR_LPSS_PWM1_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = RESET_REQUIRED;\
+      endoneof;
+
+#define SB_CHECKBOX_LPSS_PWM2_SUPPORT\
+      oneof varid    = SETUP_DATA.LpssPwm1Enabled,\
+          prompt       = STRING_TOKEN (STR_LPSS_PWM2_PROMPT),\
+          help         = STRING_TOKEN (STR_LPSS_PWM2_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = RESET_REQUIRED;\
+      endoneof;
+
+#define SB_CHECKBOX_LPSS_SPI_SUPPORT\
+      oneof varid    = SETUP_DATA.LpssSpiEnabled,\
+          prompt       = STRING_TOKEN (STR_LPSS_SPI_PROMPT),\
+          help         = STRING_TOKEN (STR_LPSS_SPI_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = RESET_REQUIRED;\
+      endoneof;
+
+#define SB_CHECKBOX_LPE_AUDIO\
+    oneof varid  = SETUP_DATA.Lpe,\
+        prompt      = STRING_TOKEN(STR_LPE_AUDIO_SUPPORT_PROMPT),\
+        help        = STRING_TOKEN(STR_LPE_AUDIO_SUPPORT_HELP),\
+        option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+        option text  = STRING_TOKEN (STR_LPE_AUDIO_SUPPORT_PCI), value = 1, flags = RESET_REQUIRED;\
+        option text  = STRING_TOKEN (STR_LPE_AUDIO_SUPPORT_ACPI), value = 2, flags = RESET_REQUIRED;\
+    endoneof;
+
+#define SB_CHECKBOX_AZALIA\
+    oneof varid  = SETUP_DATA.PchAzalia,\
+        prompt      = STRING_TOKEN(STR_AUDIO_CONTROLLER_PROMPT),\
+        help        = STRING_TOKEN(STR_AUDIO_CONTROLLER_HELP),\
+        option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = RESET_REQUIRED;\
+        option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+    endoneof;
+
+#define SB_CHECKBOX_AZALIA_VCI\
+  oneof varid    = SETUP_DATA.AzaliaVCiEnable,\
+    prompt       = STRING_TOKEN (STR_AZALIA_VCI_ENABLE_PROMPT),\
+    help         = STRING_TOKEN (STR_AZALIA_VCI_ENABLE_HELP),\
+    option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = RESET_REQUIRED;\
+    option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+  endoneof;
+    
+#define SB_CHECKBOX_AZALIAP_DOCKING_SUPPORT\
+  oneof varid    = SETUP_DATA.AzaliaDs,\
+    prompt       = STRING_TOKEN (STR_AZALIA_DOCKING_ENABLE_PROMPT),\
+    help         = STRING_TOKEN (STR_AZALIA_DOCKING_ENABLE_HELP),\
+    option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+    option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = RESET_REQUIRED;\
+  endoneof;
+    
+#define SB_CHECKBOX_AZALIAP_POWER_MANAGEMENT\
+  oneof varid    = SETUP_DATA.AzaliaPme,\
+    prompt       = STRING_TOKEN (STR_AZALIA_PME_ENABLE_PROMPT),\
+    help         = STRING_TOKEN (STR_AZALIA_PME_ENABLE_HELP),\
+    option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = RESET_REQUIRED;\
+    option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+  endoneof;
+
+#define SB_CHECKBOX_HDMI_CODEC\
+  oneof varid    = SETUP_DATA.HdmiCodec,\
+    prompt       = STRING_TOKEN (STR_AZALIA_HDMI_ENABLE_PROMPT),\
+    help         = STRING_TOKEN (STR_AZALIA_HDMI_ENABLE_HELP),\
+    option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = RESET_REQUIRED;\
+    option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+  endoneof;
+
+//(EIP136267+)>>
+#define SB_CHECKBOX_HDMI_CODEC_PORT_B\
+  oneof varid    = SETUP_DATA.HdmiCodecPortB,\
+    prompt       = STRING_TOKEN (STR_HDMI_PORT_B_ENABLE_PROMPT),\
+    help         = STRING_TOKEN (STR_HDMI_PORT_B_ENABLE_HELP),\
+    option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = RESET_REQUIRED;\
+    option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+  endoneof;
+
+//CSP20131104 >>
+#if defined (DEFAULT_HDMI_CODEC_PORT_C) && (DEFAULT_HDMI_CODEC_PORT_C == 1)
+#define SB_CHECKBOX_HDMI_CODEC_PORT_C\
+  oneof varid    = SETUP_DATA.HdmiCodecPortC,\
+    prompt       = STRING_TOKEN (STR_HDMI_PORT_C_ENABLE_PROMPT),\
+    help         = STRING_TOKEN (STR_HDMI_PORT_C_ENABLE_HELP),\
+    option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = RESET_REQUIRED;\
+    option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+  endoneof;
+#else
+#define SB_CHECKBOX_HDMI_CODEC_PORT_C\
+  oneof varid    = SETUP_DATA.HdmiCodecPortC,\
+    prompt       = STRING_TOKEN (STR_HDMI_PORT_C_ENABLE_PROMPT),\
+    help         = STRING_TOKEN (STR_HDMI_PORT_C_ENABLE_HELP),\
+    option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+    option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = RESET_REQUIRED;\
+  endoneof;
+#endif
+//CSP20131104 <<
+//(EIP136267+)<<
+
+#define SB_CHECKBOX_OTG\
+      oneof varid    = SETUP_DATA.PchUsbOtg,\
+          prompt       = STRING_TOKEN (STR_USB_OTG_SUPPORT_PROMPT),\
+          help         = STRING_TOKEN (STR_USB_OTG_SUPPORT_HELP),\
+          option text  = STRING_TOKEN (STR_USB_OTG_SUPPORT_PCI), value = 1, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+      endoneof;
+      
+#define SB_CHECKBOX_VBUS\
+      oneof varid    = SETUP_DATA.PchUsbVbusOn,\
+          prompt       = STRING_TOKEN (STR_USB_VBUS_PROMPT),\
+          help         = STRING_TOKEN (STR_USB_VBUS_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ON), value = 1, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_OFF), value = 0, flags = RESET_REQUIRED;\
+      endoneof;
+
+#if defined(AMIDEBUG_RX_SUPPORT) && AMIDEBUG_RX_SUPPORT
+#define SB_CHECKBOX_EHCI\
+      oneof varid    = SETUP_DATA.PchUsb20,\
+          prompt       = STRING_TOKEN (STR_EHCI_PROMPT),\
+          help         = STRING_TOKEN (STR_EHCI_PROMPT_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = RESET_REQUIRED;\
+      endoneof;
+      
+#define SB_CHECKBOX_EHCI_W8\
+      oneof varid    = SETUP_DATA.PchUsb20W8,\
+          prompt       = STRING_TOKEN (STR_EHCI_PROMPT),\
+          help         = STRING_TOKEN (STR_EHCI_PROMPT_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = RESET_REQUIRED;\
+      endoneof;      
+#else
+
+//CSP20130723_C >>
+#define SB_CHECKBOX_XHCI\
+      oneof varid    = SETUP_DATA.SbUsbPreBootSupport,\
+          prompt       = STRING_TOKEN (STR_XHCI_CONTROLLER_PROMPT),\
+          help         = STRING_TOKEN (STR_XHCI_CONTROLLER_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = RESET_REQUIRED;\
+      endoneof;
+//CSP20130723_C <<
+
+//EIP154014 >>
+//EIP132703 >>      
+#define SB_CHECKBOX_XHCI_MODE\
+      oneof varid    = SETUP_DATA.PchUsb30Mode,\
+          prompt       = STRING_TOKEN (STR_XHCI_MODE_PROMPT),\
+          help         = STRING_TOKEN (STR_XHCI_MODE_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_AUTO), value = 2, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_XHCI_SMART_AUTO), value = 3, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+      endoneof;   
+      
+//EIP158981 >>
+#define SB_CHECKBOX_XHCI_W8_MODE\
+      oneof varid    = SETUP_DATA.PchUsb30ModeW8,\
+          prompt       = STRING_TOKEN (STR_XHCI_MODE_PROMPT),\
+          help         = STRING_TOKEN (STR_XHCI_MODE_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = RESET_REQUIRED;\
+      endoneof;
+//EIP158981 <<       
+//EIP132703 <<
+//EIP154014 <<
+
+#define SB_CHECKBOX_XHCI_STREAMS\
+      oneof varid    = SETUP_DATA.PchUsb30Streams,\
+          prompt       = STRING_TOKEN (STR_XHCI_STREAMS_PROMPT),\
+          help         = STRING_TOKEN (STR_XHCI_STREAMS_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+      endoneof;    
+
+#define SB_CHECKBOX_XHCI_LPM\
+      oneof varid    = SETUP_DATA.UsbXhciLpmSupport,\
+          prompt       = STRING_TOKEN (STR_XHCI_LPM_PROMPT),\
+          help         = STRING_TOKEN (STR_XHCI_LPM_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = RESET_REQUIRED;\
+      endoneof;    
+
+#define SB_CHECKBOX_EHCI\
+      oneof varid    = SETUP_DATA.PchUsb20,\
+          prompt       = STRING_TOKEN (STR_EHCI_PROMPT),\
+          help         = STRING_TOKEN (STR_EHCI_PROMPT_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+      endoneof;
+#endif
+
+//CSP20140423_23 >>
+#define SB_CHECKBOX_EHCI_W8\
+      oneof varid    = SETUP_DATA.PchUsb20W8,\
+          prompt       = STRING_TOKEN (STR_EHCI_PROMPT),\
+          help         = STRING_TOKEN (STR_EHCI_PROMPT_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+      endoneof;
+//CSP20140423_23 << 
+
+//P20130628 >>
+#define SB_CHECKBOX_EHCI_DEBUG\
+      oneof varid    = SETUP_DATA.PchEhciDebug,\
+          prompt       = STRING_TOKEN (STR_USB_EHCIDEBUG_PROMPT),\
+          help         = STRING_TOKEN (STR_USB_EHCIDEBUG_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+      endoneof;
+
+#define SB_CHECKBOX_EHCI_PLLCFG_ENABLE\
+      oneof varid    = SETUP_DATA.EhciPllCfgEnable,\
+          prompt       = STRING_TOKEN (STR_USB_PLL_CFG_ENABLE_PROMPT),\
+          help         = STRING_TOKEN (STR_USB_PLL_CFG_ENABLE_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+      endoneof;      
+//P20130628 <<
+
+#define SB_CHECKBOX_EHCI_PER_PORT\
+      oneof varid    = SETUP_DATA.PchUsbPerPortCtl,\
+          prompt       = STRING_TOKEN (STR_USB_PROMPT),\
+          help         = STRING_TOKEN (STR_USB_PROMPT_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = RESET_REQUIRED;\
+      endoneof;
+
+#define SB_CHECKBOX_USB0\
+      oneof varid    = SETUP_DATA.PchUsbPort[OFFSET_0],\
+          prompt       = STRING_TOKEN (STR_USB_0_PROMPT),\
+          help         = STRING_TOKEN (STR_USB_0_PROMPT_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = RESET_REQUIRED;\
+      endoneof;
+
+#define SB_CHECKBOX_USB1\
+      oneof varid    = SETUP_DATA.PchUsbPort[OFFSET_1],\
+          prompt       = STRING_TOKEN (STR_USB_1_PROMPT),\
+          help         = STRING_TOKEN (STR_USB_1_PROMPT_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = RESET_REQUIRED;\
+      endoneof;
+
+#define SB_CHECKBOX_USB2\
+      oneof varid    = SETUP_DATA.PchUsbPort[OFFSET_2],\
+          prompt       = STRING_TOKEN (STR_USB_2_PROMPT),\
+          help         = STRING_TOKEN (STR_USB_2_PROMPT_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = RESET_REQUIRED;\
+      endoneof;
+
+#define SB_CHECKBOX_USB3\
+      oneof varid    = SETUP_DATA.PchUsbPort[OFFSET_3],\
+          prompt       = STRING_TOKEN (STR_USB_3_PROMPT),\
+          help         = STRING_TOKEN (STR_USB_3_PROMPT_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = RESET_REQUIRED;\
+      endoneof;
+
+//-----------------------------------------------------
+#define SB_CHECKBOX_PCIE_PORT0\
+      oneof varid    = SETUP_DATA.PcieRootPortEn[OFFSET_0],\
+          prompt       = STRING_TOKEN (STR_PCIE_PORT_0_PROMPT),\
+          help         = STRING_TOKEN (STR_PCIE_PORT_0_PROMPT_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = RESET_REQUIRED;\
+      endoneof;
+
+//EIP144689 >>
+#define SB_CHECKBOX_PCIE_ASPM00\
+  oneof varid    = SETUP_DATA.PcieRootPortAspm[OFFSET_0],\
+    prompt       = STRING_TOKEN (STR_PCH_PCIE_ASPM_PROMPT),\
+    help         = STRING_TOKEN (STR_PCH_PCIE_ASPM_HELP),\
+    option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = RESET_REQUIRED;\
+    option text  = STRING_TOKEN (STR_PCH_PCIE_ASPM_L0S_STRING), value = 1, flags = RESET_REQUIRED;\
+    option text  = STRING_TOKEN (STR_PCH_PCIE_ASPM_L1_STRING), value = 2, flags = RESET_REQUIRED;\
+    option text  = STRING_TOKEN (STR_PCH_PCIE_ASPM_L0SL1_STRING), value = 3, flags = RESET_REQUIRED;\
+    option text  = STRING_TOKEN (STR_COMMON_AUTO), value = 4, flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;\
+  endoneof;      
+//EIP144689 <<
+
+#define SB_CHECKBOX_PCIE_PMCE00\
+  oneof varid    = SETUP_DATA.PcieRootPortPMCE[OFFSET_0],\
+    prompt       = STRING_TOKEN (STR_PCH_PCIE_PMCE_PROMPT),\
+    help         = STRING_TOKEN (STR_PCH_PCIE_PMCE_HELP),\
+    option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = RESET_REQUIRED;\
+    option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;\
+  endoneof;
+
+//EIP144689 >>
+#define SB_CHECKBOX_PCIE_ESE00\
+  oneof varid    = SETUP_DATA.PcieRootPortESE[OFFSET_0],\
+    prompt       = STRING_TOKEN (STR_PCIE_EXT_SYNCH_PROMPT),\
+    help         = STRING_TOKEN (STR_PCIE_EXT_SYNCH_HELP),\
+    option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;\
+    option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = RESET_REQUIRED;\
+  endoneof;
+//EIP144689 <<
+
+//CSP20140402_22 >>
+//EIP150027 >>
+#define SB_CHECKBOX_PCIE_HPE00\
+  oneof varid    = SETUP_DATA.PcieRootPortHPE[OFFSET_0],\
+    prompt       = STRING_TOKEN (STR_PCH_PCIE_HPE_PROMPT),\
+    help         = STRING_TOKEN (STR_PCH_PCIE_HPE_HELP),\
+    option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = RESET_REQUIRED;\
+    option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;\
+  endoneof;
+//EIP150027 <<
+//CSP20140402_22 <<
+
+#define SB_CHECKBOX_PCIE_URE00\
+  oneof varid    = SETUP_DATA.PcieRootPortURE[OFFSET_0],\
+    prompt       = STRING_TOKEN (STR_PCH_PCIE_URE_PROMPT),\
+    help         = STRING_TOKEN (STR_PCH_PCIE_URE_HELP),\
+    option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;\
+    option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = RESET_REQUIRED;\
+  endoneof;
+
+#define SB_CHECKBOX_PCIE_FEE00\
+  oneof varid    = SETUP_DATA.PcieRootPortFEE[OFFSET_0],\
+    prompt       = STRING_TOKEN (STR_PCH_PCIE_FEE_PROMPT),\
+    help         = STRING_TOKEN (STR_PCH_PCIE_FEE_HELP),\
+    option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;\
+    option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = RESET_REQUIRED;\
+  endoneof;
+
+#define SB_CHECKBOX_PCIE_NFE00\
+  oneof varid    = SETUP_DATA.PcieRootPortNFE[OFFSET_0],\
+    prompt       = STRING_TOKEN (STR_PCH_PCIE_NFE_PROMPT),\
+    help         = STRING_TOKEN (STR_PCH_PCIE_NFE_HELP),\
+    option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;\
+    option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = RESET_REQUIRED;\
+  endoneof;
+
+#define SB_CHECKBOX_PCIE_CEE00\
+  oneof varid    = SETUP_DATA.PcieRootPortCEE[OFFSET_0],\
+    prompt       = STRING_TOKEN (STR_PCH_PCIE_CEE_PROMPT),\
+    help         = STRING_TOKEN (STR_PCH_PCIE_CEE_HELP),\
+    option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;\
+    option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = RESET_REQUIRED;\
+  endoneof;
+
+#define SB_CHECKBOX_PCIE_SFE00\
+  oneof varid    = SETUP_DATA.PcieRootPortSFE[OFFSET_0],\
+    prompt       = STRING_TOKEN (STR_PCH_PCIE_SFE_PROMPT),\
+    help         = STRING_TOKEN (STR_PCH_PCIE_SFE_HELP),\
+    option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;\
+    option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = RESET_REQUIRED;\
+  endoneof;
+
+#define SB_CHECKBOX_PCIE_SNE00\
+  oneof varid    = SETUP_DATA.PcieRootPortSNE[OFFSET_0],\
+    prompt       = STRING_TOKEN (STR_PCH_PCIE_SNE_PROMPT),\
+    help         = STRING_TOKEN (STR_PCH_PCIE_SNE_HELP),\
+    option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;\
+    option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = RESET_REQUIRED;\
+  endoneof;
+
+#define SB_CHECKBOX_PCIE_SCE00\
+  oneof varid    = SETUP_DATA.PcieRootPortSCE[OFFSET_0],\
+    prompt       = STRING_TOKEN (STR_PCH_PCIE_SCE_PROMPT),\
+    help         = STRING_TOKEN (STR_PCH_PCIE_SCE_HELP),\
+    option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;\
+    option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = RESET_REQUIRED;\
+  endoneof;
+
+//CSP20140121 >>
+//EIP149389 >>
+#define SB_CHECKBOX_PCIE_SPEED00\
+      oneof varid    = SETUP_DATA.PcieRootPortSpeed[OFFSET_0],\
+          prompt       = STRING_TOKEN (STR_PCIE_PORT_SPEED_PROMPT),\
+          help         = STRING_TOKEN (STR_PCIE_PORT_SPEED_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_AUTO), value = 0, flags = MANUFACTURING | DEFAULT | RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_PCIE_PORT_SPEED_GEN2), value = 2, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_PCIE_PORT_SPEED_GEN1), value = 1, flags = RESET_REQUIRED;\
+      endoneof;
+//EIP149389 <<
+//CSP20140121 <<
+
+//EIP191291
+#if defined(PCIE_ROOT_PORT_DETECT_NON_COMPLAINT) && (PCIE_ROOT_PORT_DETECT_NON_COMPLAINT != 0)
+#define SB_ONEOF_PCIEROOTPORTDNCD00\
+  oneof varid    = SETUP_DATA.PcieRPDetectNonComplaint[OFFSET_0],\
+    prompt       = STRING_TOKEN (STR_PCH_PCIE_NON_COMPLIANCE_PROMPT),\
+    help         = STRING_TOKEN (STR_PCH_PCIE_NON_COMPLIANCE_HELP),\
+    option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;\
+    option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = RESET_REQUIRED;\
+  endoneof;
+#endif
+//EIP191291
+
+//EIP150027 >>
+#define SB_ONEOF_EXTRABUSRSVD00\
+  numeric varid  = SETUP_DATA.ExtraBusRsvd[OFFSET_0],\
+    prompt       = STRING_TOKEN (STR_PCH_PCIE_RBUS_PROMPT),\
+    help         = STRING_TOKEN (STR_PCH_PCIE_RBUS_HELP),\
+    flags        = RESET_REQUIRED,\
+    minimum      = 0,\
+    maximum      = MAX_EXTRA_BUS_RESERVED,\
+    step         = 1,\
+    default      = 1,\
+    default      = 1, defaultstore = AmiMfgDefault,\
+  endnumeric;
+
+#define SB_ONEOF_PCIEMEMRSVD00\
+  numeric varid  = SETUP_DATA.PcieMemRsvd[OFFSET_0],\
+    prompt       = STRING_TOKEN (STR_PCH_PCIE_RMEM_PROMPT),\
+    help         = STRING_TOKEN (STR_PCH_PCIE_RMEM_HELP),\
+    flags        = RESET_REQUIRED,\
+    minimum      = 0,\
+    maximum      = MAX_PCIE_MEM_RESERVED,\
+    step         = 1,\
+    default      = 10,\
+    default      = 10, defaultstore = AmiMfgDefault,\
+  endnumeric;
+
+#define SB_ONEOF_PCIEMEMRSVDALIG00\
+  numeric varid  = SETUP_DATA.PcieMemRsvdalig[OFFSET_0],\
+    prompt       = STRING_TOKEN (STR_PCH_PCIE_RMEM_ALIG_PROMPT),\
+    help         = STRING_TOKEN (STR_PCH_PCIE_RMEM_ALIG_HELP),\
+    flags        = RESET_REQUIRED,\
+    minimum      = 1,\
+    maximum      = 31,\
+    step         = 1,\
+    default      = 1,\
+    default      = 1, defaultstore = AmiMfgDefault,\
+  endnumeric;
+
+#define SB_ONEOF_PCIEPFMEMRSVD00\
+  numeric varid  = SETUP_DATA.PciePFMemRsvd[OFFSET_0],\
+    prompt       = STRING_TOKEN (STR_PCH_PCIE_PF_RMEM_PROMPT),\
+    help         = STRING_TOKEN (STR_PCH_PCIE_PF_RMEM_HELP),\
+    flags        = RESET_REQUIRED,\
+    minimum      = 0,\
+    maximum      = MAX_PCIE_PF_MEM_RESERVED,\
+    step         = 1,\
+    default      = 10,\
+    default      = 10, defaultstore = AmiMfgDefault,\
+  endnumeric;
+
+#define SB_ONEOF_PCIEPFMEMRSVDALIG00\
+  numeric varid  = SETUP_DATA.PciePFMemRsvdalig[OFFSET_0],\
+    prompt       = STRING_TOKEN (STR_PCH_PCIE_PF_RMEM_ALIG_PROMPT),\
+    help         = STRING_TOKEN (STR_PCH_PCIE_PF_RMEM_ALIG_HELP),\
+    flags        = RESET_REQUIRED,\
+    minimum      = 1,\
+    maximum      = 31,\
+    step         = 1,\
+    default      = 1,\
+    default      = 1, defaultstore = AmiMfgDefault,\
+  endnumeric;
+
+#define SB_ONEOF_PCIEIORSVD00\
+  numeric varid  = SETUP_DATA.PcieIoRsvd[OFFSET_0],\
+    prompt       = STRING_TOKEN (STR_PCH_PCIE_RVIO_PROMPT),\
+    help         = STRING_TOKEN (STR_PCH_PCIE_RVIO_HELP),\
+    flags        = RESET_REQUIRED,\
+    minimum      = 0,\
+    maximum      = MAX_PCIE_IO_RESERVED,\
+    step         = 4,\
+    default      = 4,\
+    default      = 4, defaultstore = AmiMfgDefault,\
+  endnumeric;
+//EIP150027 <<
+
+//-----------------------------------------------------
+#define SB_CHECKBOX_PCIE_PORT1\
+      oneof varid    = SETUP_DATA.PcieRootPortEn[OFFSET_1],\
+          prompt       = STRING_TOKEN (STR_PCIE_PORT_1_PROMPT),\
+          help         = STRING_TOKEN (STR_PCIE_PORT_1_PROMPT_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = RESET_REQUIRED;\
+      endoneof;
+
+//EIP144689 >>
+#define SB_CHECKBOX_PCIE_ASPM01\
+  oneof varid    = SETUP_DATA.PcieRootPortAspm[OFFSET_1],\
+    prompt       = STRING_TOKEN (STR_PCH_PCIE_ASPM_PROMPT),\
+    help         = STRING_TOKEN (STR_PCH_PCIE_ASPM_HELP),\
+    option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = RESET_REQUIRED;\
+    option text  = STRING_TOKEN (STR_PCH_PCIE_ASPM_L0S_STRING), value = 1, flags = RESET_REQUIRED;\
+    option text  = STRING_TOKEN (STR_PCH_PCIE_ASPM_L1_STRING), value = 2, flags = RESET_REQUIRED;\
+    option text  = STRING_TOKEN (STR_PCH_PCIE_ASPM_L0SL1_STRING), value = 3, flags = RESET_REQUIRED;\
+    option text  = STRING_TOKEN (STR_COMMON_AUTO), value = 4, flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;\
+  endoneof;      
+//EIP144689 <<
+
+#define SB_CHECKBOX_PCIE_PMCE01\
+  oneof varid    = SETUP_DATA.PcieRootPortPMCE[OFFSET_1],\
+    prompt       = STRING_TOKEN (STR_PCH_PCIE_PMCE_PROMPT),\
+    help         = STRING_TOKEN (STR_PCH_PCIE_PMCE_HELP),\
+    option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = RESET_REQUIRED;\
+    option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;\
+  endoneof;
+
+//EIP144689 >>
+#define SB_CHECKBOX_PCIE_ESE01\
+  oneof varid    = SETUP_DATA.PcieRootPortESE[OFFSET_1],\
+    prompt       = STRING_TOKEN (STR_PCIE_EXT_SYNCH_PROMPT),\
+    help         = STRING_TOKEN (STR_PCIE_EXT_SYNCH_HELP),\
+    option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;\
+    option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = RESET_REQUIRED;\
+  endoneof;
+//EIP144689 <<
+
+//CSP20140402_22 >>
+//EIP150027 >>
+#define SB_CHECKBOX_PCIE_HPE01\
+  oneof varid    = SETUP_DATA.PcieRootPortHPE[OFFSET_1],\
+    prompt       = STRING_TOKEN (STR_PCH_PCIE_HPE_PROMPT),\
+    help         = STRING_TOKEN (STR_PCH_PCIE_HPE_HELP),\
+    option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = RESET_REQUIRED;\
+    option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;\
+  endoneof;
+//EIP150027 <<
+//CSP20140402_22 <<
+
+#define SB_CHECKBOX_PCIE_URE01\
+  oneof varid    = SETUP_DATA.PcieRootPortURE[OFFSET_1],\
+    prompt       = STRING_TOKEN (STR_PCH_PCIE_URE_PROMPT),\
+    help         = STRING_TOKEN (STR_PCH_PCIE_URE_HELP),\
+    option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;\
+    option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = RESET_REQUIRED;\
+  endoneof;
+
+#define SB_CHECKBOX_PCIE_FEE01\
+  oneof varid    = SETUP_DATA.PcieRootPortFEE[OFFSET_1],\
+    prompt       = STRING_TOKEN (STR_PCH_PCIE_FEE_PROMPT),\
+    help         = STRING_TOKEN (STR_PCH_PCIE_FEE_HELP),\
+    option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;\
+    option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = RESET_REQUIRED;\
+  endoneof;
+
+#define SB_CHECKBOX_PCIE_NFE01\
+  oneof varid    = SETUP_DATA.PcieRootPortNFE[OFFSET_1],\
+    prompt       = STRING_TOKEN (STR_PCH_PCIE_NFE_PROMPT),\
+    help         = STRING_TOKEN (STR_PCH_PCIE_NFE_HELP),\
+    option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;\
+    option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = RESET_REQUIRED;\
+  endoneof;
+
+#define SB_CHECKBOX_PCIE_CEE01\
+  oneof varid    = SETUP_DATA.PcieRootPortCEE[OFFSET_1],\
+    prompt       = STRING_TOKEN (STR_PCH_PCIE_CEE_PROMPT),\
+    help         = STRING_TOKEN (STR_PCH_PCIE_CEE_HELP),\
+    option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;\
+    option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = RESET_REQUIRED;\
+  endoneof;
+
+#define SB_CHECKBOX_PCIE_SFE01\
+  oneof varid    = SETUP_DATA.PcieRootPortSFE[OFFSET_1],\
+    prompt       = STRING_TOKEN (STR_PCH_PCIE_SFE_PROMPT),\
+    help         = STRING_TOKEN (STR_PCH_PCIE_SFE_HELP),\
+    option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;\
+    option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = RESET_REQUIRED;\
+  endoneof;
+
+#define SB_CHECKBOX_PCIE_SNE01\
+  oneof varid    = SETUP_DATA.PcieRootPortSNE[OFFSET_1],\
+    prompt       = STRING_TOKEN (STR_PCH_PCIE_SNE_PROMPT),\
+    help         = STRING_TOKEN (STR_PCH_PCIE_SNE_HELP),\
+    option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;\
+    option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = RESET_REQUIRED;\
+  endoneof;
+
+#define SB_CHECKBOX_PCIE_SCE01\
+  oneof varid    = SETUP_DATA.PcieRootPortSCE[OFFSET_1],\
+    prompt       = STRING_TOKEN (STR_PCH_PCIE_SCE_PROMPT),\
+    help         = STRING_TOKEN (STR_PCH_PCIE_SCE_HELP),\
+    option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;\
+    option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = RESET_REQUIRED;\
+  endoneof;
+
+//CSP20140121 >>
+//EIP149389 >>
+#define SB_CHECKBOX_PCIE_SPEED01\
+      oneof varid    = SETUP_DATA.PcieRootPortSpeed[OFFSET_1],\
+          prompt       = STRING_TOKEN (STR_PCIE_PORT_SPEED_PROMPT),\
+          help         = STRING_TOKEN (STR_PCIE_PORT_SPEED_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_AUTO), value = 0, flags = MANUFACTURING | DEFAULT | RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_PCIE_PORT_SPEED_GEN2), value = 2, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_PCIE_PORT_SPEED_GEN1), value = 1, flags = RESET_REQUIRED;\
+      endoneof;
+//EIP149389 <<
+//CSP20140121 <<
+
+//EIP191291
+#if defined(PCIE_ROOT_PORT_DETECT_NON_COMPLAINT) && (PCIE_ROOT_PORT_DETECT_NON_COMPLAINT != 0)
+#define SB_ONEOF_PCIEROOTPORTDNCD01\
+  oneof varid    = SETUP_DATA.PcieRPDetectNonComplaint[OFFSET_1],\
+    prompt       = STRING_TOKEN (STR_PCH_PCIE_NON_COMPLIANCE_PROMPT),\
+    help         = STRING_TOKEN (STR_PCH_PCIE_NON_COMPLIANCE_HELP),\
+    option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;\
+    option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = RESET_REQUIRED;\
+  endoneof;
+#endif
+//EIP191291
+
+//EIP150027 >>
+#define SB_ONEOF_EXTRABUSRSVD01\
+  numeric varid  = SETUP_DATA.ExtraBusRsvd[OFFSET_1],\
+    prompt       = STRING_TOKEN (STR_PCH_PCIE_RBUS_PROMPT),\
+    help         = STRING_TOKEN (STR_PCH_PCIE_RBUS_HELP),\
+    flags        = RESET_REQUIRED,\
+    minimum      = 0,\
+    maximum      = MAX_EXTRA_BUS_RESERVED,\
+    step         = 1,\
+    default      = 0,\
+    default      = 0, defaultstore = AmiMfgDefault,\
+  endnumeric;
+      
+#define SB_ONEOF_PCIEMEMRSVD01\
+  numeric varid  = SETUP_DATA.PcieMemRsvd[OFFSET_1],\
+    prompt       = STRING_TOKEN (STR_PCH_PCIE_RMEM_PROMPT),\
+    help         = STRING_TOKEN (STR_PCH_PCIE_RMEM_HELP),\
+    flags        = RESET_REQUIRED,\
+    minimum      = 1,\
+    maximum      = MAX_PCIE_MEM_RESERVED,\
+    step         = 1,\
+    default      = 10,\
+    default      = 10, defaultstore = AmiMfgDefault,\
+  endnumeric;
+
+#define SB_ONEOF_PCIEMEMRSVDALIG01\
+  numeric varid  = SETUP_DATA.PcieMemRsvdalig[OFFSET_1],\
+    prompt       = STRING_TOKEN (STR_PCH_PCIE_RMEM_ALIG_PROMPT),\
+    help         = STRING_TOKEN (STR_PCH_PCIE_RMEM_ALIG_HELP),\
+    flags        = RESET_REQUIRED,\
+    minimum      = 1,\
+    maximum      = 31,\
+    step         = 1,\
+    default      = 1,\
+    default      = 1, defaultstore = AmiMfgDefault,\
+  endnumeric;
+
+#define SB_ONEOF_PCIEPFMEMRSVD01\
+  numeric varid  = SETUP_DATA.PciePFMemRsvd[OFFSET_1],\
+    prompt       = STRING_TOKEN (STR_PCH_PCIE_PF_RMEM_PROMPT),\
+    help         = STRING_TOKEN (STR_PCH_PCIE_PF_RMEM_HELP),\
+    flags        = RESET_REQUIRED,\
+    minimum      = 1,\
+    maximum      = MAX_PCIE_PF_MEM_RESERVED,\
+    step         = 1,\
+    default      = 10,\
+    default      = 10, defaultstore = AmiMfgDefault,\
+  endnumeric;
+
+#define SB_ONEOF_PCIEPFMEMRSVDALIG01\
+  numeric varid  = SETUP_DATA.PciePFMemRsvdalig[OFFSET_1],\
+    prompt       = STRING_TOKEN (STR_PCH_PCIE_PF_RMEM_ALIG_PROMPT),\
+    help         = STRING_TOKEN (STR_PCH_PCIE_PF_RMEM_ALIG_HELP),\
+    flags        = RESET_REQUIRED,\
+    minimum      = 1,\
+    maximum      = 31,\
+    step         = 1,\
+    default      = 1,\
+    default      = 1, defaultstore = AmiMfgDefault,\
+  endnumeric;
+
+#define SB_ONEOF_PCIEIORSVD01\
+  numeric varid  = SETUP_DATA.PcieIoRsvd[OFFSET_1],\
+    prompt       = STRING_TOKEN (STR_PCH_PCIE_RVIO_PROMPT),\
+    help         = STRING_TOKEN (STR_PCH_PCIE_RVIO_HELP),\
+    flags        = RESET_REQUIRED,\
+    minimum      = 0,\
+    maximum      = MAX_PCIE_IO_RESERVED,\
+    step         = 4,\
+    default      = 4,\
+    default      = 4, defaultstore = AmiMfgDefault,\
+  endnumeric;
+//EIP150027 <<
+
+//-----------------------------------------------------
+#define SB_CHECKBOX_PCIE_PORT2\
+      oneof varid    = SETUP_DATA.PcieRootPortEn[OFFSET_2],\
+          prompt       = STRING_TOKEN (STR_PCIE_PORT_2_PROMPT),\
+          help         = STRING_TOKEN (STR_PCIE_PORT_2_PROMPT_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = RESET_REQUIRED;\
+      endoneof;
+
+//EIP144689 >>
+#define SB_CHECKBOX_PCIE_ASPM02\
+  oneof varid    = SETUP_DATA.PcieRootPortAspm[OFFSET_2],\
+    prompt       = STRING_TOKEN (STR_PCH_PCIE_ASPM_PROMPT),\
+    help         = STRING_TOKEN (STR_PCH_PCIE_ASPM_HELP),\
+    option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = RESET_REQUIRED;\
+    option text  = STRING_TOKEN (STR_PCH_PCIE_ASPM_L0S_STRING), value = 1, flags = RESET_REQUIRED;\
+    option text  = STRING_TOKEN (STR_PCH_PCIE_ASPM_L1_STRING), value = 2, flags = RESET_REQUIRED;\
+    option text  = STRING_TOKEN (STR_PCH_PCIE_ASPM_L0SL1_STRING), value = 3, flags = RESET_REQUIRED;\
+    option text  = STRING_TOKEN (STR_COMMON_AUTO), value = 4, flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;\
+  endoneof;      
+//EIP144689 <<
+
+#define SB_CHECKBOX_PCIE_PMCE02\
+  oneof varid    = SETUP_DATA.PcieRootPortPMCE[OFFSET_2],\
+    prompt       = STRING_TOKEN (STR_PCH_PCIE_PMCE_PROMPT),\
+    help         = STRING_TOKEN (STR_PCH_PCIE_PMCE_HELP),\
+    option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = RESET_REQUIRED;\
+    option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;\
+  endoneof;
+
+//EIP144689 >>
+#define SB_CHECKBOX_PCIE_ESE02\
+  oneof varid    = SETUP_DATA.PcieRootPortESE[OFFSET_2],\
+    prompt       = STRING_TOKEN (STR_PCIE_EXT_SYNCH_PROMPT),\
+    help         = STRING_TOKEN (STR_PCIE_EXT_SYNCH_HELP),\
+    option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;\
+    option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = RESET_REQUIRED;\
+  endoneof;
+//EIP144689 <<
+
+//CSP20140402_22 >>
+//EIP150027 >>
+#define SB_CHECKBOX_PCIE_HPE02\
+  oneof varid    = SETUP_DATA.PcieRootPortHPE[OFFSET_2],\
+    prompt       = STRING_TOKEN (STR_PCH_PCIE_HPE_PROMPT),\
+    help         = STRING_TOKEN (STR_PCH_PCIE_HPE_HELP),\
+    option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = RESET_REQUIRED;\
+    option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;\
+  endoneof;
+//EIP150027 <<
+//CSP20140402_22 <<
+
+#define SB_CHECKBOX_PCIE_URE02\
+  oneof varid    = SETUP_DATA.PcieRootPortURE[OFFSET_2],\
+    prompt       = STRING_TOKEN (STR_PCH_PCIE_URE_PROMPT),\
+    help         = STRING_TOKEN (STR_PCH_PCIE_URE_HELP),\
+    option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;\
+    option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = RESET_REQUIRED;\
+  endoneof;
+
+#define SB_CHECKBOX_PCIE_FEE02\
+  oneof varid    = SETUP_DATA.PcieRootPortFEE[OFFSET_2],\
+    prompt       = STRING_TOKEN (STR_PCH_PCIE_FEE_PROMPT),\
+    help         = STRING_TOKEN (STR_PCH_PCIE_FEE_HELP),\
+    option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;\
+    option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = RESET_REQUIRED;\
+  endoneof;
+
+#define SB_CHECKBOX_PCIE_NFE02\
+  oneof varid    = SETUP_DATA.PcieRootPortNFE[OFFSET_2],\
+    prompt       = STRING_TOKEN (STR_PCH_PCIE_NFE_PROMPT),\
+    help         = STRING_TOKEN (STR_PCH_PCIE_NFE_HELP),\
+    option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;\
+    option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = RESET_REQUIRED;\
+  endoneof;
+
+#define SB_CHECKBOX_PCIE_CEE02\
+  oneof varid    = SETUP_DATA.PcieRootPortCEE[OFFSET_2],\
+    prompt       = STRING_TOKEN (STR_PCH_PCIE_CEE_PROMPT),\
+    help         = STRING_TOKEN (STR_PCH_PCIE_CEE_HELP),\
+    option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;\
+    option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = RESET_REQUIRED;\
+  endoneof;
+
+#define SB_CHECKBOX_PCIE_SFE02\
+  oneof varid    = SETUP_DATA.PcieRootPortSFE[OFFSET_2],\
+    prompt       = STRING_TOKEN (STR_PCH_PCIE_SFE_PROMPT),\
+    help         = STRING_TOKEN (STR_PCH_PCIE_SFE_HELP),\
+    option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;\
+    option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = RESET_REQUIRED;\
+  endoneof;
+
+#define SB_CHECKBOX_PCIE_SNE02\
+  oneof varid    = SETUP_DATA.PcieRootPortSNE[OFFSET_2],\
+    prompt       = STRING_TOKEN (STR_PCH_PCIE_SNE_PROMPT),\
+    help         = STRING_TOKEN (STR_PCH_PCIE_SNE_HELP),\
+    option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;\
+    option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = RESET_REQUIRED;\
+  endoneof;
+
+#define SB_CHECKBOX_PCIE_SCE02\
+  oneof varid    = SETUP_DATA.PcieRootPortSCE[OFFSET_2],\
+    prompt       = STRING_TOKEN (STR_PCH_PCIE_SCE_PROMPT),\
+    help         = STRING_TOKEN (STR_PCH_PCIE_SCE_HELP),\
+    option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;\
+    option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = RESET_REQUIRED;\
+  endoneof;
+
+//CSP20140121 >>
+//EIP149389 >>
+#define SB_CHECKBOX_PCIE_SPEED02\
+      oneof varid    = SETUP_DATA.PcieRootPortSpeed[OFFSET_2],\
+          prompt       = STRING_TOKEN (STR_PCIE_PORT_SPEED_PROMPT),\
+          help         = STRING_TOKEN (STR_PCIE_PORT_SPEED_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_AUTO), value = 0, flags = MANUFACTURING | DEFAULT | RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_PCIE_PORT_SPEED_GEN2), value = 2, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_PCIE_PORT_SPEED_GEN1), value = 1, flags = RESET_REQUIRED;\
+      endoneof;
+//EIP149389 <<
+//CSP20140121 <<
+
+//EIP191291
+#if defined(PCIE_ROOT_PORT_DETECT_NON_COMPLAINT) && (PCIE_ROOT_PORT_DETECT_NON_COMPLAINT != 0)
+#define SB_ONEOF_PCIEROOTPORTDNCD02\
+  oneof varid    = SETUP_DATA.PcieRPDetectNonComplaint[OFFSET_2],\
+    prompt       = STRING_TOKEN (STR_PCH_PCIE_NON_COMPLIANCE_PROMPT),\
+    help         = STRING_TOKEN (STR_PCH_PCIE_NON_COMPLIANCE_HELP),\
+    option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;\
+    option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = RESET_REQUIRED;\
+  endoneof;
+#endif
+//EIP191291
+
+//EIP150027 >>
+#define SB_ONEOF_EXTRABUSRSVD02\
+  numeric varid  = SETUP_DATA.ExtraBusRsvd[OFFSET_2],\
+    prompt       = STRING_TOKEN (STR_PCH_PCIE_RBUS_PROMPT),\
+    help         = STRING_TOKEN (STR_PCH_PCIE_RBUS_HELP),\
+    flags        = RESET_REQUIRED,\
+    minimum      = 0,\
+    maximum      = MAX_EXTRA_BUS_RESERVED,\
+    step         = 1,\
+    default      = 0,\
+    default      = 0, defaultstore = AmiMfgDefault,\
+  endnumeric;
+      
+#define SB_ONEOF_PCIEMEMRSVD02\
+  numeric varid  = SETUP_DATA.PcieMemRsvd[OFFSET_2],\
+    prompt       = STRING_TOKEN (STR_PCH_PCIE_RMEM_PROMPT),\
+    help         = STRING_TOKEN (STR_PCH_PCIE_RMEM_HELP),\
+    flags        = RESET_REQUIRED,\
+    minimum      = 1,\
+    maximum      = MAX_PCIE_MEM_RESERVED,\
+    step         = 1,\
+    default      = 10,\
+    default      = 10, defaultstore = AmiMfgDefault,\
+  endnumeric;
+
+#define SB_ONEOF_PCIEMEMRSVDALIG02\
+  numeric varid  = SETUP_DATA.PcieMemRsvdalig[OFFSET_2],\
+    prompt       = STRING_TOKEN (STR_PCH_PCIE_RMEM_ALIG_PROMPT),\
+    help         = STRING_TOKEN (STR_PCH_PCIE_RMEM_ALIG_HELP),\
+    flags        = RESET_REQUIRED,\
+    minimum      = 1,\
+    maximum      = 31,\
+    step         = 1,\
+    default      = 1,\
+    default      = 1, defaultstore = AmiMfgDefault,\
+  endnumeric;
+
+#define SB_ONEOF_PCIEPFMEMRSVD02\
+  numeric varid  = SETUP_DATA.PciePFMemRsvd[OFFSET_2],\
+    prompt       = STRING_TOKEN (STR_PCH_PCIE_PF_RMEM_PROMPT),\
+    help         = STRING_TOKEN (STR_PCH_PCIE_PF_RMEM_HELP),\
+    flags        = RESET_REQUIRED,\
+    minimum      = 1,\
+    maximum      = MAX_PCIE_PF_MEM_RESERVED,\
+    step         = 1,\
+    default      = 10,\
+    default      = 10, defaultstore = AmiMfgDefault,\
+  endnumeric;
+
+#define SB_ONEOF_PCIEPFMEMRSVDALIG02\
+  numeric varid  = SETUP_DATA.PciePFMemRsvdalig[OFFSET_2],\
+    prompt       = STRING_TOKEN (STR_PCH_PCIE_PF_RMEM_ALIG_PROMPT),\
+    help         = STRING_TOKEN (STR_PCH_PCIE_PF_RMEM_ALIG_HELP),\
+    flags        = RESET_REQUIRED,\
+    minimum      = 1,\
+    maximum      = 31,\
+    step         = 1,\
+    default      = 1,\
+    default      = 1, defaultstore = AmiMfgDefault,\
+  endnumeric;
+      
+#define SB_ONEOF_PCIEIORSVD02\
+  numeric varid  = SETUP_DATA.PcieIoRsvd[OFFSET_2],\
+    prompt       = STRING_TOKEN (STR_PCH_PCIE_RVIO_PROMPT),\
+    help         = STRING_TOKEN (STR_PCH_PCIE_RVIO_HELP),\
+    flags        = RESET_REQUIRED,\
+    minimum      = 0,\
+    maximum      = MAX_PCIE_IO_RESERVED,\
+    step         = 4,\
+    default      = 4,\
+    default      = 4, defaultstore = AmiMfgDefault,\
+  endnumeric;
+//EIP150027 <<
+
+//-----------------------------------------------------
+#define SB_CHECKBOX_PCIE_PORT3\
+      oneof varid    = SETUP_DATA.PcieRootPortEn[OFFSET_3],\
+          prompt       = STRING_TOKEN (STR_PCIE_PORT_3_PROMPT),\
+          help         = STRING_TOKEN (STR_PCIE_PORT_3_PROMPT_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = RESET_REQUIRED;\
+      endoneof;
+
+//EIP144689 >>
+#define SB_CHECKBOX_PCIE_ASPM03\
+  oneof varid    = SETUP_DATA.PcieRootPortAspm[OFFSET_3],\
+    prompt       = STRING_TOKEN (STR_PCH_PCIE_ASPM_PROMPT),\
+    help         = STRING_TOKEN (STR_PCH_PCIE_ASPM_HELP),\
+    option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = RESET_REQUIRED;\
+    option text  = STRING_TOKEN (STR_PCH_PCIE_ASPM_L0S_STRING), value = 1, flags = RESET_REQUIRED;\
+    option text  = STRING_TOKEN (STR_PCH_PCIE_ASPM_L1_STRING), value = 2, flags = RESET_REQUIRED;\
+    option text  = STRING_TOKEN (STR_PCH_PCIE_ASPM_L0SL1_STRING), value = 3, flags = RESET_REQUIRED;\
+    option text  = STRING_TOKEN (STR_COMMON_AUTO), value = 4, flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;\
+  endoneof;      
+//EIP144689 <<
+
+#define SB_CHECKBOX_PCIE_PMCE03\
+  oneof varid    = SETUP_DATA.PcieRootPortPMCE[OFFSET_3],\
+    prompt       = STRING_TOKEN (STR_PCH_PCIE_PMCE_PROMPT),\
+    help         = STRING_TOKEN (STR_PCH_PCIE_PMCE_HELP),\
+    option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = RESET_REQUIRED;\
+    option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;\
+  endoneof;
+
+//EIP144689 >>
+#define SB_CHECKBOX_PCIE_ESE03\
+  oneof varid    = SETUP_DATA.PcieRootPortESE[OFFSET_3],\
+    prompt       = STRING_TOKEN (STR_PCIE_EXT_SYNCH_PROMPT),\
+    help         = STRING_TOKEN (STR_PCIE_EXT_SYNCH_HELP),\
+    option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;\
+    option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = RESET_REQUIRED;\
+  endoneof;
+//EIP144689 <<
+
+//CSP20140402_22 >>
+//EIP150027 >>
+#define SB_CHECKBOX_PCIE_HPE03\
+  oneof varid    = SETUP_DATA.PcieRootPortHPE[OFFSET_3],\
+    prompt       = STRING_TOKEN (STR_PCH_PCIE_HPE_PROMPT),\
+    help         = STRING_TOKEN (STR_PCH_PCIE_HPE_HELP),\
+    option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = RESET_REQUIRED;\
+    option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;\
+  endoneof;
+//EIP150027 <<
+//CSP20140402_22 <<
+
+#define SB_CHECKBOX_PCIE_URE03\
+  oneof varid    = SETUP_DATA.PcieRootPortURE[OFFSET_3],\
+    prompt       = STRING_TOKEN (STR_PCH_PCIE_URE_PROMPT),\
+    help         = STRING_TOKEN (STR_PCH_PCIE_URE_HELP),\
+    option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;\
+    option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = RESET_REQUIRED;\
+  endoneof;
+
+#define SB_CHECKBOX_PCIE_FEE03\
+  oneof varid    = SETUP_DATA.PcieRootPortFEE[OFFSET_3],\
+    prompt       = STRING_TOKEN (STR_PCH_PCIE_FEE_PROMPT),\
+    help         = STRING_TOKEN (STR_PCH_PCIE_FEE_HELP),\
+    option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;\
+    option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = RESET_REQUIRED;\
+  endoneof;
+
+#define SB_CHECKBOX_PCIE_NFE03\
+  oneof varid    = SETUP_DATA.PcieRootPortNFE[OFFSET_3],\
+    prompt       = STRING_TOKEN (STR_PCH_PCIE_NFE_PROMPT),\
+    help         = STRING_TOKEN (STR_PCH_PCIE_NFE_HELP),\
+    option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;\
+    option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = RESET_REQUIRED;\
+  endoneof;
+
+#define SB_CHECKBOX_PCIE_CEE03\
+  oneof varid    = SETUP_DATA.PcieRootPortCEE[OFFSET_3],\
+    prompt       = STRING_TOKEN (STR_PCH_PCIE_CEE_PROMPT),\
+    help         = STRING_TOKEN (STR_PCH_PCIE_CEE_HELP),\
+    option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;\
+    option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = RESET_REQUIRED;\
+  endoneof;
+
+#define SB_CHECKBOX_PCIE_SFE03\
+  oneof varid    = SETUP_DATA.PcieRootPortSFE[OFFSET_3],\
+    prompt       = STRING_TOKEN (STR_PCH_PCIE_SFE_PROMPT),\
+    help         = STRING_TOKEN (STR_PCH_PCIE_SFE_HELP),\
+    option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;\
+    option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = RESET_REQUIRED;\
+  endoneof;
+
+#define SB_CHECKBOX_PCIE_SNE03\
+  oneof varid    = SETUP_DATA.PcieRootPortSNE[OFFSET_3],\
+    prompt       = STRING_TOKEN (STR_PCH_PCIE_SNE_PROMPT),\
+    help         = STRING_TOKEN (STR_PCH_PCIE_SNE_HELP),\
+    option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;\
+    option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = RESET_REQUIRED;\
+  endoneof;
+
+#define SB_CHECKBOX_PCIE_SCE03\
+  oneof varid    = SETUP_DATA.PcieRootPortSCE[OFFSET_3],\
+    prompt       = STRING_TOKEN (STR_PCH_PCIE_SCE_PROMPT),\
+    help         = STRING_TOKEN (STR_PCH_PCIE_SCE_HELP),\
+    option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;\
+    option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = RESET_REQUIRED;\
+  endoneof;
+
+//CSP20140121 >>
+//EIP149389 >>
+#define SB_CHECKBOX_PCIE_SPEED03\
+      oneof varid    = SETUP_DATA.PcieRootPortSpeed[OFFSET_3],\
+          prompt       = STRING_TOKEN (STR_PCIE_PORT_SPEED_PROMPT),\
+          help         = STRING_TOKEN (STR_PCIE_PORT_SPEED_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_AUTO), value = 0, flags = MANUFACTURING | DEFAULT | RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_PCIE_PORT_SPEED_GEN2), value = 2, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_PCIE_PORT_SPEED_GEN1), value = 1, flags = RESET_REQUIRED;\
+      endoneof;
+//EIP149389 <<
+//CSP20140121 <<
+
+//EIP191291
+#if defined(PCIE_ROOT_PORT_DETECT_NON_COMPLAINT) && (PCIE_ROOT_PORT_DETECT_NON_COMPLAINT != 0)
+#define SB_ONEOF_PCIEROOTPORTDNCD03\
+  oneof varid    = SETUP_DATA.PcieRPDetectNonComplaint[OFFSET_3],\
+    prompt       = STRING_TOKEN (STR_PCH_PCIE_NON_COMPLIANCE_PROMPT),\
+    help         = STRING_TOKEN (STR_PCH_PCIE_NON_COMPLIANCE_HELP),\
+    option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;\
+    option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = RESET_REQUIRED;\
+  endoneof;
+#endif
+//EIP191291
+
+//EIP150027 >>
+#define SB_ONEOF_EXTRABUSRSVD03\
+  numeric varid  = SETUP_DATA.ExtraBusRsvd[OFFSET_3],\
+    prompt       = STRING_TOKEN (STR_PCH_PCIE_RBUS_PROMPT),\
+    help         = STRING_TOKEN (STR_PCH_PCIE_RBUS_HELP),\
+    flags        = RESET_REQUIRED,\
+    minimum      = 0,\
+    maximum      = MAX_EXTRA_BUS_RESERVED,\
+    step         = 1,\
+    default      = 0,\
+    default      = 0, defaultstore = AmiMfgDefault,\
+  endnumeric;
+      
+#define SB_ONEOF_PCIEMEMRSVD03\
+  numeric varid  = SETUP_DATA.PcieMemRsvd[OFFSET_3],\
+    prompt       = STRING_TOKEN (STR_PCH_PCIE_RMEM_PROMPT),\
+    help         = STRING_TOKEN (STR_PCH_PCIE_RMEM_HELP),\
+    flags        = RESET_REQUIRED,\
+    minimum      = 1,\
+    maximum      = MAX_PCIE_MEM_RESERVED,\
+    step         = 1,\
+    default      = 10,\
+    default      = 10, defaultstore = AmiMfgDefault,\
+  endnumeric;
+
+#define SB_ONEOF_PCIEMEMRSVDALIG03\
+  numeric varid  = SETUP_DATA.PcieMemRsvdalig[OFFSET_3],\
+    prompt       = STRING_TOKEN (STR_PCH_PCIE_RMEM_ALIG_PROMPT),\
+    help         = STRING_TOKEN (STR_PCH_PCIE_RMEM_ALIG_HELP),\
+    flags        = RESET_REQUIRED,\
+    minimum      = 1,\
+    maximum      = 31,\
+    step         = 1,\
+    default      = 1,\
+    default      = 1, defaultstore = AmiMfgDefault,\
+  endnumeric;
+
+#define SB_ONEOF_PCIEPFMEMRSVD03\
+  numeric varid  = SETUP_DATA.PciePFMemRsvd[OFFSET_3],\
+    prompt       = STRING_TOKEN (STR_PCH_PCIE_PF_RMEM_PROMPT),\
+    help         = STRING_TOKEN (STR_PCH_PCIE_PF_RMEM_HELP),\
+    flags        = RESET_REQUIRED,\
+    minimum      = 1,\
+    maximum      = MAX_PCIE_PF_MEM_RESERVED,\
+    step         = 1,\
+    default      = 10,\
+    default      = 10, defaultstore = AmiMfgDefault,\
+  endnumeric;
+
+#define SB_ONEOF_PCIEPFMEMRSVDALIG03\
+  numeric varid  = SETUP_DATA.PciePFMemRsvdalig[OFFSET_3],\
+    prompt       = STRING_TOKEN (STR_PCH_PCIE_PF_RMEM_ALIG_PROMPT),\
+    help         = STRING_TOKEN (STR_PCH_PCIE_PF_RMEM_ALIG_HELP),\
+    flags        = RESET_REQUIRED,\
+    minimum      = 1,\
+    maximum      = 31,\
+    step         = 1,\
+    default      = 1,\
+    default      = 1, defaultstore = AmiMfgDefault,\
+  endnumeric;
+
+#define SB_ONEOF_PCIEIORSVD03\
+  numeric varid  = SETUP_DATA.PcieIoRsvd[OFFSET_3],\
+    prompt       = STRING_TOKEN (STR_PCH_PCIE_RVIO_PROMPT),\
+    help         = STRING_TOKEN (STR_PCH_PCIE_RVIO_HELP),\
+    flags        = RESET_REQUIRED,\
+    minimum      = 0,\
+    maximum      = MAX_PCIE_IO_RESERVED,\
+    step         = 4,\
+    default      = 4,\
+    default      = 4, defaultstore = AmiMfgDefault,\
+  endnumeric;
+//EIP150027 <<
+
+//-----------------------------------------------------
+#define SB_ONEOF_SATA_MODE\
+      oneof varid     = SETUP_DATA.SataInterfaceMode,\
+          prompt      = STRING_TOKEN(STR_SATA_MODE),\
+          help        = STRING_TOKEN(STR_SATA_MODE_HELP),\
+          option text = STRING_TOKEN(STR_SATA_IDE), value = 0, flags = RESET_REQUIRED;\
+          option text = STRING_TOKEN(STR_SATA_AHCI), value = 1, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+      endoneof;
+// Intel BIOS didn't open Raid option.          option text = STRING_TOKEN(STR_SATA_RAID), value = 2, flags = 0;\
+
+#define SB_CHECKBOX_SATA_EN\
+      oneof varid    = SETUP_DATA.PchSata,\
+          prompt       = STRING_TOKEN (STR_SATA_PROMPT),\
+          help         = STRING_TOKEN (STR_SATA_PROMPT_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = RESET_REQUIRED;\
+      endoneof;
+
+#define SB_CHECKBOX_SATA_TEST_EN\
+      oneof varid    = SETUP_DATA.SataTestMode,\
+          prompt       = STRING_TOKEN (STR_SATA_TEST_PROMPT),\
+          help         = STRING_TOKEN (STR_SATA_TEST_PROMPT_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+      endoneof;
+
+//EIP147898 >>
+#define SB_CHECKBOX_SATA_SPEED_SUPPORT\
+      oneof varid    = SETUP_DATA.SataSpeedSupport,\
+          prompt       = STRING_TOKEN (STR_SATA_SPEED_SUPPORT_PROMPT),\
+          help         = STRING_TOKEN (STR_SATA_SPEED_SUPPORT_PROMPT_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_GEN1), value = 1, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_GEN2), value = 2, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+      endoneof;  
+//EIP147898 <<
+
+//EIP149024 >>
+#define SB_CHECKBOX_SATA_ODD_PORT\
+      oneof varid    = SETUP_DATA.SataOddPort,\
+          prompt       = STRING_TOKEN (STR_SATA_ODD_PORT_PROMPT),\
+          help         = STRING_TOKEN (STR_SATA_ODD_PORT_PROMPT_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ODD_PORT0), value = 0, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_ODD_PORT1), value = 1, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_NO_ODD), value = 2, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+      endoneof;  
+//EIP149024 <<
+
+#define SB_CHECKBOX_SATAPORT0\
+      oneof varid    = SETUP_DATA.SataPort[0],\
+          prompt       = STRING_TOKEN (STR_SATA_0_PROMPT),\
+          help         = STRING_TOKEN (STR_SATA_0_PROMPT_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = RESET_REQUIRED;\
+      endoneof;
+//EIP205589 >>
+//EIP144257 >>
+#define SB_CHECKBOX_SATAPORT0_HOTPLUG\
+      oneof varid    = SETUP_DATA.SataHotPlug[0],\
+          prompt       = STRING_TOKEN (STR_SATA_0_HOTPLUG_PROMPT),\
+          help         = STRING_TOKEN (STR_SATA_1_HOTPLUG_PROMPT_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = RESET_REQUIRED;\
+      endoneof;       
+//EIP144257 <<
+//EIP205589 <<
+#define SB_CHECKBOX_SATAPORT1\
+      oneof varid    = SETUP_DATA.SataPort[1],\
+          prompt       = STRING_TOKEN (STR_SATA_1_PROMPT),\
+          help         = STRING_TOKEN (STR_SATA_1_PROMPT_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = RESET_REQUIRED;\
+      endoneof;
+//EIP205589 >>
+//EIP144257 >>
+#define SB_CHECKBOX_SATAPORT1_HOTPLUG\
+      oneof varid    = SETUP_DATA.SataHotPlug[1],\
+          prompt       = STRING_TOKEN (STR_SATA_1_HOTPLUG_PROMPT),\
+          help         = STRING_TOKEN (STR_SATA_1_HOTPLUG_PROMPT_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = RESET_REQUIRED;\
+      endoneof;
+//EIP144257 <<
+//EIP205589 <<
+#define SB_CHECKBOX_LAN_CONTROLLER\
+      oneof varid    = SETUP_DATA.Lan,\
+          prompt       = STRING_TOKEN (STR_LAN_CONTROLLER_PROMPT),\
+          help         = STRING_TOKEN (STR_LAN_CONTROLLER_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+      endoneof;
+
+#define SB_CHECKBOX_LAN_WOL\
+      oneof varid    = SETUP_DATA.WakeOnLanS5,\
+          prompt       = STRING_TOKEN (STR_LAN_WOL_PROMPT),\
+          help         = STRING_TOKEN (STR_LAN_WOL_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = RESET_REQUIRED;\
+      endoneof;
+      
+#define SB_CHECKBOX_LAN_SLP_LAN\
+      oneof varid    = SETUP_DATA.SlpLanLowDc,\
+          prompt       = STRING_TOKEN (STR_LAN_SLP_LAN_PROMPT),\
+          help         = STRING_TOKEN (STR_LAN_SLP_LAN_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = RESET_REQUIRED;\
+      endoneof;
+
+#define SB_CHECKBOX_LAN_PXE_ROM\
+      oneof varid    = SETUP_DATA.PxeRom,\
+          prompt       = STRING_TOKEN (STR_LAN_PXE_PROMPT),\
+          help         = STRING_TOKEN (STR_LAN_PXE_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+      endoneof;
+
+#define SB_CHECKBOX_PMIC_ACPI\
+      oneof varid    = SETUP_DATA.PmicEnable,\
+          prompt       = STRING_TOKEN (STR_PMIC_ACPI_PROMT),\
+          help         = STRING_TOKEN (STR_PMIC_ACPI_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = RESET_REQUIRED;\
+      endoneof;
+
+//EIP136908 >>
+////(EIP120879+)>>
+#define SB_CHECKBOX_PNP_SETTING\
+      oneof varid    = SETUP_DATA.PnpSettings,\
+          prompt       = STRING_TOKEN (STR_PNP_SETTING_PROMT),\
+          help         = STRING_TOKEN (STR_PNP_SETTING_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_PNP_SETTING_AUTO), value = 3, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_PNP_SETTING_AX), value = 4, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_PNP_SETTING_BX), value = 5, flags = RESET_REQUIRED;\
+      endoneof;
+//(EIP120879+)<<
+//EIP136908 <<
+
+////(EIP140009+)>>
+#define SB_CHECKBOX_PSS_SUPPORT\
+      oneof varid    = SETUP_DATA.PssEnabled,\
+          prompt       = STRING_TOKEN (STR_PSS_SUPPORT_PROMT),\
+          help         = STRING_TOKEN (STR_PSS_SUPPORT_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+      endoneof;
+//(EIP140009+)<<
+
+#define SB_CHECKBOX_WITTENABLE_SETTING\
+      oneof varid    = SETUP_DATA.WittEnable,\
+          prompt       = STRING_TOKEN (STR_WITTENABLE_SETTING_PROMT),\
+          help         = STRING_TOKEN (STR_WITTENABLE_SETTING_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+      endoneof;
+
+#if HPET_SUPPORT
+#define SB_CHECKBOX_HPET\
+        oneof   varid   = SETUP_DATA.HpetEnable,\
+            prompt      = STRING_TOKEN(STR_HPET_PROMPT),\
+            help        = STRING_TOKEN(STR_HPET_HELP),\
+            option text = STRING_TOKEN(STR_COMMON_ENABLED), value = 1, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+            option text = STRING_TOKEN(STR_COMMON_DISABLED), value = 0, flags = RESET_REQUIRED;\
+        endoneof;
+#endif
+
+#define SB_CHECKBOX_LASTSTATE\
+        oneof   varid   = SETUP_DATA.LastState,\
+            prompt  = STRING_TOKEN(STR_LAST_STATE_PROMPT),\
+            help    = STRING_TOKEN(STR_LAST_STATE_HELP),\
+            option text = STRING_TOKEN(STR_POWER_OFF), value = 0, flags = RESET_REQUIRED;\
+            option text = STRING_TOKEN(STR_POWER_ON), value = 1, flags = RESET_REQUIRED;\
+            option text = STRING_TOKEN(STR_LAST_STATE), value = 2, flags = RESET_REQUIRED | MANUFACTURING | DEFAULT;\
+        endoneof;
+
+//EIP144291 >>
+#define SB_CHECKBOX_GLOBAL_SMI_SUPPORT\
+      oneof varid    = SETUP_DATA.GlobalSmi,\
+          prompt       = STRING_TOKEN (STR_GLOBAL_SMI_PROMPT),\
+          help         = STRING_TOKEN (STR_GLOBAL_SMI_HELP),\
+          default      = SMI_LOCK_ENABLE,\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = MANUFACTURING | RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = RESET_REQUIRED;\
+      endoneof;
+//EIP144291 <<
+
+//EIP144689 >>
+//EIP130725 >>
+#define SB_CHECKBOX_BIOS_WPD_SUPPORT\
+      oneof varid    = SETUP_DATA.BiosWpd,\
+          prompt       = STRING_TOKEN (STR_BIOS_WPD_PROMPT),\
+          help         = STRING_TOKEN (STR_BIOS_WPD_HELP),\
+          default      = BIOS_LOCK_ENABLE,\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = MANUFACTURING | RESET_REQUIRED;\
+      endoneof;
+//EIP130725 <<
+//EIP144689 <<
+
+//CSP20131018 >>
+#define SB_CHECKBOX_PCIE_DYNAMIC_GATING\
+      oneof varid    = SETUP_DATA.PcieDynamicGating,\
+          prompt       = STRING_TOKEN (STR_PCIE_DYNAMIC_GATING_PROMPT),\
+          help         = STRING_TOKEN (STR_PCIE_DYNAMIC_GATING_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+      endoneof;
+//CSP20131018 <<      
+
+#endif // #ifdef CONTROL_DEFINITION
+
+#ifdef CONTROLS_WITH_DEFAULTS
+    SB_CHECKBOX_HIGH_PRECISION_TIMER
+    SB_CHECKBOX_BOOT_TIMER_WITH_HPET_TIMER
+    SB_CHECKBOX_IRQMODE //EIP133059
+    SB_ONEOF_PCHCRID //EIP150551 
+    SB_CHECKBOX_UART_INTERFACE_SELECTION
+    SB_CHECKBOX_NFC_INTERFACE_SELECTION
+
+    SB_CHECKBOX_OSSELECT_SUPPORT //CSP20130910 - Match RC 1.1.0
+    SB_CHECKBOX_LPSS_SCC_DEVICES_MODE
+    SB_CHECKBOX_SCC_EMMC_SUPPORT
+    SB_CHECKBOX_SCC_EMMC45DDR50_SUPPORT    //(EIP120879+)
+    SB_CHECKBOX_SCC_EMMC45HS200_SUPPORT    //(EIP120879+)
+    SB_CHECKBOX_SCC_SECURE_ERASE //CSP20130910 - Match RC 1.1.0
+    SB_CHECKBOX_SCC_SDIO_SUPPORT
+    SB_CHECKBOX_SCC_SD_CARD_SUPPORT
+    SB_CHECKBOX_LPSS_SDCARD25_SUPPORT //EIP144689 
+    SB_CHECKBOX_LPSS_SDCARD50_SUPPORT //EIP144689 
+    SB_CHECKBOX_MIPI_HSI_SUPPORT
+    SB_CHECKBOX_LPSS_DMA1_SUPPORT
+    SB_CHECKBOX_LPSS_DMA2_SUPPORT
+    SB_CHECKBOX_LPSS_I2C1_SUPPORT
+    SB_CHECKBOX_LPSS_I2C2_SUPPORT
+    SB_CHECKBOX_LPSS_I2C3_SUPPORT
+    SB_CHECKBOX_LPSS_I2C4_SUPPORT
+    SB_CHECKBOX_LPSS_I2C5_SUPPORT
+    SB_CHECKBOX_LPSS_I2C6_SUPPORT
+    SB_CHECKBOX_LPSS_I2C7_SUPPORT
+//EIP158981 >>
+    SB_CHECKBOX_LPSS_I2C7_NFC_SUPPORT
+    SB_CHECKBOX_LPSS_I2C7_TOUCH_PAD_SUPPORT
+    SB_CHECKBOX_LPSS_I2C_TOUGCH_ADDRESS_SUPPORT
+//EIP158981 <<
+    SB_CHECKBOX_LPSS_HSUART1_SUPPORT
+    SB_CHECKBOX_LPSS_HSUART2_SUPPORT
+    SB_CHECKBOX_LPSS_PWM1_SUPPORT
+    SB_CHECKBOX_LPSS_PWM2_SUPPORT
+    SB_CHECKBOX_LPSS_SPI_SUPPORT 
+    
+    SB_CHECKBOX_LPE_AUDIO
+    SB_CHECKBOX_AZALIA
+    SB_CHECKBOX_AZALIA_VCI
+    SB_CHECKBOX_AZALIAP_DOCKING_SUPPORT
+    SB_CHECKBOX_AZALIAP_POWER_MANAGEMENT
+    SB_CHECKBOX_HDMI_CODEC
+    SB_CHECKBOX_HDMI_CODEC_PORT_B //EIP136267
+    SB_CHECKBOX_HDMI_CODEC_PORT_C //EIP136267
+
+    SB_CHECKBOX_OTG
+    SB_CHECKBOX_VBUS
+
+#if !(defined(AMIDEBUG_RX_SUPPORT) && AMIDEBUG_RX_SUPPORT)
+    SB_CHECKBOX_XHCI
+    SB_CHECKBOX_XHCI_MODE
+    SB_CHECKBOX_XHCI_W8_MODE //EIP158981
+    SB_CHECKBOX_XHCI_STREAMS
+    SB_CHECKBOX_XHCI_LPM
+#endif
+    SB_CHECKBOX_EHCI    
+    SB_CHECKBOX_EHCI_W8 //CSP20140423_23
+//P20130628 >>
+    SB_CHECKBOX_EHCI_DEBUG
+    SB_CHECKBOX_EHCI_PLLCFG_ENABLE
+//P20130628 <<
+    SB_CHECKBOX_EHCI_PER_PORT
+    SB_CHECKBOX_USB0
+    SB_CHECKBOX_USB1
+    SB_CHECKBOX_USB2
+    SB_CHECKBOX_USB3
+    
+    SB_CHECKBOX_PCIE_PORT0
+    SB_CHECKBOX_PCIE_ASPM00
+    SB_CHECKBOX_PCIE_PMCE00
+    SB_CHECKBOX_PCIE_ESE00
+    SB_CHECKBOX_PCIE_HPE00
+    SB_CHECKBOX_PCIE_URE00
+    SB_CHECKBOX_PCIE_FEE00
+    SB_CHECKBOX_PCIE_NFE00
+    SB_CHECKBOX_PCIE_CEE00
+    SB_CHECKBOX_PCIE_SFE00
+    SB_CHECKBOX_PCIE_SNE00
+    SB_CHECKBOX_PCIE_SCE00
+    SB_CHECKBOX_PCIE_SPEED00
+//EIP191291
+#if defined(PCIE_ROOT_PORT_DETECT_NON_COMPLAINT) && (PCIE_ROOT_PORT_DETECT_NON_COMPLAINT != 0)
+    SB_ONEOF_PCIEROOTPORTDNCD00
+#endif
+//EIP191291
+//EIP150027 >>    
+    SB_ONEOF_EXTRABUSRSVD00
+    SB_ONEOF_PCIEMEMRSVD00 
+    SB_ONEOF_PCIEPFMEMRSVD00
+    SB_ONEOF_PCIEIORSVD00
+    SB_ONEOF_PCIEMEMRSVDALIG00
+    SB_ONEOF_PCIEPFMEMRSVDALIG00
+//EIP150027 <<
+    
+    SB_CHECKBOX_PCIE_PORT1
+    SB_CHECKBOX_PCIE_ASPM01
+    SB_CHECKBOX_PCIE_PMCE01
+    SB_CHECKBOX_PCIE_ESE01
+    SB_CHECKBOX_PCIE_HPE01
+    SB_CHECKBOX_PCIE_URE01
+    SB_CHECKBOX_PCIE_FEE01
+    SB_CHECKBOX_PCIE_NFE01
+    SB_CHECKBOX_PCIE_CEE01
+    SB_CHECKBOX_PCIE_SFE01
+    SB_CHECKBOX_PCIE_SNE01
+    SB_CHECKBOX_PCIE_SCE01
+    SB_CHECKBOX_PCIE_SPEED01
+//EIP191291
+#if defined(PCIE_ROOT_PORT_DETECT_NON_COMPLAINT) && (PCIE_ROOT_PORT_DETECT_NON_COMPLAINT != 0)
+    SB_ONEOF_PCIEROOTPORTDNCD01 
+#endif
+//EIP191291
+//EIP150027 >>    
+    SB_ONEOF_EXTRABUSRSVD01
+    SB_ONEOF_PCIEMEMRSVD01
+    SB_ONEOF_PCIEPFMEMRSVD01
+    SB_ONEOF_PCIEIORSVD01
+    SB_ONEOF_PCIEMEMRSVDALIG01
+    SB_ONEOF_PCIEPFMEMRSVDALIG01
+//EIP150027 <<
+    
+    SB_CHECKBOX_PCIE_PORT2
+    SB_CHECKBOX_PCIE_ASPM02
+    SB_CHECKBOX_PCIE_PMCE02
+    SB_CHECKBOX_PCIE_ESE02
+    SB_CHECKBOX_PCIE_HPE02
+    SB_CHECKBOX_PCIE_URE02
+    SB_CHECKBOX_PCIE_FEE02
+    SB_CHECKBOX_PCIE_NFE02
+    SB_CHECKBOX_PCIE_CEE02
+    SB_CHECKBOX_PCIE_SFE02
+    SB_CHECKBOX_PCIE_SNE02
+    SB_CHECKBOX_PCIE_SCE02
+    SB_CHECKBOX_PCIE_SPEED02
+//EIP191291
+#if defined(PCIE_ROOT_PORT_DETECT_NON_COMPLAINT) && (PCIE_ROOT_PORT_DETECT_NON_COMPLAINT != 0)
+    SB_ONEOF_PCIEROOTPORTDNCD02
+#endif
+//EIP191291
+//EIP150027 >>
+    SB_ONEOF_EXTRABUSRSVD02
+    SB_ONEOF_PCIEMEMRSVD02
+    SB_ONEOF_PCIEPFMEMRSVD02
+    SB_ONEOF_PCIEIORSVD02
+    SB_ONEOF_PCIEMEMRSVDALIG02
+    SB_ONEOF_PCIEPFMEMRSVDALIG02
+//EIP150027 <<    
+
+    SB_CHECKBOX_PCIE_PORT3
+    SB_CHECKBOX_PCIE_ASPM03
+    SB_CHECKBOX_PCIE_PMCE03
+    SB_CHECKBOX_PCIE_ESE03
+    SB_CHECKBOX_PCIE_HPE03
+    SB_CHECKBOX_PCIE_URE03
+    SB_CHECKBOX_PCIE_FEE03
+    SB_CHECKBOX_PCIE_NFE03
+    SB_CHECKBOX_PCIE_CEE03
+    SB_CHECKBOX_PCIE_SFE03
+    SB_CHECKBOX_PCIE_SNE03
+    SB_CHECKBOX_PCIE_SCE03
+    SB_CHECKBOX_PCIE_SPEED03
+//EIP191291
+#if defined(PCIE_ROOT_PORT_DETECT_NON_COMPLAINT) && (PCIE_ROOT_PORT_DETECT_NON_COMPLAINT != 0)
+    SB_ONEOF_PCIEROOTPORTDNCD03
+#endif
+//EIP191291
+//EIP150027 >>    
+    SB_ONEOF_EXTRABUSRSVD03
+    SB_ONEOF_PCIEMEMRSVD03 
+    SB_ONEOF_PCIEPFMEMRSVD03
+    SB_ONEOF_PCIEIORSVD03
+    SB_ONEOF_PCIEMEMRSVDALIG03
+    SB_ONEOF_PCIEPFMEMRSVDALIG03
+//EIP150027 <<
+    
+    SB_ONEOF_SATA_MODE
+    SB_CHECKBOX_SATA_EN
+    SB_CHECKBOX_SATA_TEST_EN
+    SB_CHECKBOX_SATA_SPEED_SUPPORT //EIP147898
+    SB_CHECKBOX_SATA_ODD_PORT //EIP149024
+    SB_CHECKBOX_SATAPORT0
+    SB_CHECKBOX_SATAPORT0_HOTPLUG //EIP144257
+    SB_CHECKBOX_SATAPORT1
+    SB_CHECKBOX_SATAPORT1_HOTPLUG //EIP144257
+    
+    SB_CHECKBOX_LAN_CONTROLLER
+    SB_CHECKBOX_LAN_WOL 
+    SB_CHECKBOX_LAN_SLP_LAN
+    SB_CHECKBOX_LAN_PXE_ROM    
+    
+    SB_CHECKBOX_PMIC_ACPI
+    SB_CHECKBOX_PNP_SETTING    
+    SB_CHECKBOX_PSS_SUPPORT   ////(EIP140009+)
+    
+    SB_CHECKBOX_WITTENABLE_SETTING
+#if HPET_SUPPORT
+    SB_CHECKBOX_HPET
+#endif
+
+    SB_CHECKBOX_LASTSTATE
+
+
+    SB_CHECKBOX_BIOS_WPD_SUPPORT //EIP130725
+    SB_CHECKBOX_GLOBAL_SMI_SUPPORT //EIP144291
+    SB_CHECKBOX_PCIE_DYNAMIC_GATING //CSP20131018
+#endif //#ifdef CONTROLS_WITH_DEFAULTS
+
+
+//**********************************************************************
+//                  CHIPSET - South Bridge Form
+//**********************************************************************
+
+#ifdef CHIPSET_FORM_SET
+
+  #ifdef FORM_SET_ITEM
+  // Define controls to be added to the main page of the formset
+  #endif
+
+  #ifdef FORM_SET_GOTO
+  // Define goto commands for the forms defined in this file
+    goto SB_FORM_ID, 
+      prompt  = STRING_TOKEN(STR_SB_FORM),
+      help    = STRING_TOKEN(STR_SB_FORM_HELP);
+  #endif
+
+  #ifdef FORM_SET_FORM
+
+  // Define forms
+    form formid = AUTO_ID(SB_FORM_ID),
+    title = STRING_TOKEN(STR_SB_FORM);
+
+      goto AZALIA_AUDIO_ID,
+      prompt  = STRING_TOKEN(STR_AZALIA_AUDIO_FORM),
+      help    = STRING_TOKEN(STR_AZALIA_AUDIO_FORM_HELP);
+
+      goto USB_CONFIG_ID,
+      prompt  = STRING_TOKEN(STR_USB_CONFIG_FORM),
+      help    = STRING_TOKEN(STR_USB_CONFIG_FORM_HELP);
+
+      goto PCIE_DEVICE_OPTIONS_FORM_ID,
+      prompt = STRING_TOKEN (STR_PCIE_OPTIONS_FORM_TITLE),
+      help   = STRING_TOKEN (STR_PCIE_OPTIONS_FORM_HELP);
+      
+  #ifndef SB_FORM_SB
+  #define SB_FORM_SB
+
+    SEPARATOR
+
+      #if HPET_SUPPORT
+        SB_CHECKBOX_HPET
+      #endif
+      
+      SB_CHECKBOX_LASTSTATE
+      
+      SEPARATOR
+      SB_CHECKBOX_IRQMODE //EIP133059
+#if CRID_SUPPORT
+      SB_ONEOF_PCHCRID //EIP150551 
+#endif
+      
+      SEPARATOR
+#if (HIDE_BIOS_SECURITY_PAGE == 0)  //EIP167096
+      SB_CHECKBOX_GLOBAL_SMI_SUPPORT //EIP144291
+      SB_CHECKBOX_BIOS_WPD_SUPPORT //EIP130725
+#endif  //EIP167096
+    endform;
+
+    form formid = AUTO_ID(AZALIA_AUDIO_ID),
+    title = STRING_TOKEN(STR_AZALIA_AUDIO_FORM);
+      SUBTITLE(STRING_TOKEN(STR_AUDIO_SUBTITLE))
+      
+      SB_CHECKBOX_LPE_AUDIO
+      SEPARATOR
+          
+      SB_CHECKBOX_AZALIA
+      suppressif  ideqval SETUP_DATA.PchAzalia == 0;
+      SB_CHECKBOX_AZALIA_VCI
+      SB_CHECKBOX_AZALIAP_DOCKING_SUPPORT
+      SB_CHECKBOX_AZALIAP_POWER_MANAGEMENT
+      SB_CHECKBOX_HDMI_CODEC 
+      SB_CHECKBOX_HDMI_CODEC_PORT_B //EIP136267
+      SB_CHECKBOX_HDMI_CODEC_PORT_C //EIP136267
+      endif; //suppressif SETUP_DATA.PchAzalia == 0;
+      
+    endform;
+
+    form formid = AUTO_ID(USB_CONFIG_ID),
+    title = STRING_TOKEN(STR_USB_CONFIG_FORM);
+      SUBTITLE(STRING_TOKEN(STR_USB_SUBTITLE))
+      
+      SB_CHECKBOX_OTG
+      SB_CHECKBOX_VBUS
+      SEPARATOR
+      
+#if defined(AMIDEBUG_RX_SUPPORT) && AMIDEBUG_RX_SUPPORT
+      SB_CHECKBOX_EHCI
+      suppressif  ideqval SETUP_DATA.PchUsb20 == 0;
+      SB_CHECKBOX_EHCI_DEBUG //P20130628
+      endif; //suppressif SETUP_DATA.PchUsb20 == 0;
+#else
+      grayoutif ideqval SETUP_DATA.PchUsb20 == 1 AND ideqval SETUP_DATA.OsSelect == 2 OR //CSP20140423_23
+                ideqval SETUP_DATA.PchUsb20W8 == 1 AND NOT ideqval SETUP_DATA.OsSelect == 2; //CSP20140423_23
+//CSP20130723_C >>      
+//      SB_CHECKBOX_XHCI
+//EIP158981 >>
+      suppressif NOT ideqval SETUP_DATA.OsSelect == 2; //CSP20140404_22
+        SB_CHECKBOX_XHCI_MODE
+      endif;
+      suppressif ideqval SETUP_DATA.OsSelect == 2; //CSP20140404_22
+        SB_CHECKBOX_XHCI_W8_MODE
+      endif;
+//EIP158981 <<
+      suppressif ideqval SETUP_DATA.PchUsb30Mode == 0 AND ideqval SETUP_DATA.OsSelect == 2 OR //CSP20140404_22
+                 ideqval SETUP_DATA.PchUsb30ModeW8 == 0 AND NOT ideqval SETUP_DATA.OsSelect == 2; //CSP20140404_22
+//      SB_CHECKBOX_XHCI_STREAMS
+      SB_CHECKBOX_XHCI_LPM
+      endif; //suppressif SETUP_DATA.PchUsb30Mode == 0;
+      endif; //grayoutif SETUP_DATA.Ehci
+      SEPARATOR
+
+      grayoutif NOT ideqval SETUP_DATA.PchUsb30Mode == 0 AND ideqval SETUP_DATA.OsSelect == 2 OR //CSP20140404_22
+                NOT ideqval SETUP_DATA.PchUsb30ModeW8 == 0 AND NOT ideqval SETUP_DATA.OsSelect == 2; //CSP20140404_22                
+      //CSP20140423_23 >>
+      suppressif NOT ideqval SETUP_DATA.OsSelect == 2; 
+        SB_CHECKBOX_EHCI
+      endif;
+      suppressif ideqval SETUP_DATA.OsSelect == 2;
+        SB_CHECKBOX_EHCI_W8
+      endif;             
+      suppressif ideqval SETUP_DATA.PchUsb20 == 0 AND ideqval SETUP_DATA.OsSelect == 2 OR //CSP20140423_23
+                ideqval SETUP_DATA.PchUsb20W8 == 0 AND NOT ideqval SETUP_DATA.OsSelect == 2; //CSP20140423_23
+        SB_CHECKBOX_EHCI_DEBUG //P20130628
+      endif; //suppressif SETUP_DATA.PchUsb20 == 0;
+      endif; //grayoutif SETUP_DATA.PchUsb30Mode == 1;
+      //CSP20140423_23 <<   
+//CSP20130723_C <<
+#endif
+      SB_CHECKBOX_EHCI_PER_PORT
+      SB_CHECKBOX_USB0
+      SB_CHECKBOX_USB1
+      SB_CHECKBOX_USB2
+      SB_CHECKBOX_USB3
+
+    endform;
+    
+    form formid = AUTO_ID(PCIE_DEVICE_OPTIONS_FORM_ID),
+    title = STRING_TOKEN(STR_PCIE_OPTIONS_FORM_TITLE);
+      SUBTITLE(STRING_TOKEN(STR_PCIE_OPTIONS_FORM_TITLE))
+        
+      SB_CHECKBOX_PCIE_PORT0
+  
+        suppressif  ideqval SETUP_DATA.PcieRootPortEn[0] == 0;
+  
+//          SB_CHECKBOX_PCIE_ASPM00
+//          SB_CHECKBOX_PCIE_PMCE00
+//          SB_CHECKBOX_PCIE_ESE00
+            SB_CHECKBOX_PCIE_HPE00 //EIP150027
+//          SB_CHECKBOX_PCIE_URE00
+//          SB_CHECKBOX_PCIE_FEE00
+//          SB_CHECKBOX_PCIE_NFE00
+//          SB_CHECKBOX_PCIE_CEE00
+//          SB_CHECKBOX_PCIE_SFE00
+//          SB_CHECKBOX_PCIE_SNE00
+//          SB_CHECKBOX_PCIE_SCE00
+            SB_CHECKBOX_PCIE_SPEED00
+//EIP191291
+#if defined(PCIE_ROOT_PORT_DETECT_NON_COMPLAINT) && (PCIE_ROOT_PORT_DETECT_NON_COMPLAINT != 0)
+            SB_ONEOF_PCIEROOTPORTDNCD00
+#endif
+//EIP191291
+	    //EIP150027 >>
+            SB_ONEOF_EXTRABUSRSVD00
+            SB_ONEOF_PCIEMEMRSVD00 
+            SB_ONEOF_PCIEMEMRSVDALIG00
+            SB_ONEOF_PCIEPFMEMRSVD00
+            SB_ONEOF_PCIEPFMEMRSVDALIG00
+            SB_ONEOF_PCIEIORSVD00
+	    //EIP150027 <<
+          SEPARATOR
+      
+          SB_CHECKBOX_PCIE_PORT1
+          
+  
+        endif;  // suppress
+  
+        suppressif  ideqval SETUP_DATA.PcieRootPortEn[0] == 0;
+                    
+//          SB_CHECKBOX_PCIE_ASPM01
+//          SB_CHECKBOX_PCIE_PMCE01
+//          SB_CHECKBOX_PCIE_ESE01
+            SB_CHECKBOX_PCIE_HPE01 //EIP150027 
+//          SB_CHECKBOX_PCIE_URE01
+//          SB_CHECKBOX_PCIE_FEE01
+//          SB_CHECKBOX_PCIE_NFE01
+//          SB_CHECKBOX_PCIE_CEE01
+//          SB_CHECKBOX_PCIE_SFE01
+//          SB_CHECKBOX_PCIE_SNE01
+//          SB_CHECKBOX_PCIE_SCE01
+          	SB_CHECKBOX_PCIE_SPEED01
+//EIP191291
+#if defined(PCIE_ROOT_PORT_DETECT_NON_COMPLAINT) && (PCIE_ROOT_PORT_DETECT_NON_COMPLAINT != 0)
+          	SB_ONEOF_PCIEROOTPORTDNCD01
+#endif
+//EIP191291
+	    //EIP150027 >>
+            SB_ONEOF_EXTRABUSRSVD01
+            SB_ONEOF_PCIEMEMRSVD01
+            SB_ONEOF_PCIEMEMRSVDALIG01
+            SB_ONEOF_PCIEPFMEMRSVD01
+            SB_ONEOF_PCIEPFMEMRSVDALIG01
+            SB_ONEOF_PCIEIORSVD01
+	    //EIP150027 <<
+
+
+          SEPARATOR
+      
+          SB_CHECKBOX_PCIE_PORT2
+  
+        endif;  // suppress
+  
+        suppressif  ideqval SETUP_DATA.PcieRootPortEn[0] == 0;
+                    
+//          SB_CHECKBOX_PCIE_ASPM02
+//          SB_CHECKBOX_PCIE_PMCE02
+//          SB_CHECKBOX_PCIE_ESE02
+            SB_CHECKBOX_PCIE_HPE02  //EIP150027
+//          SB_CHECKBOX_PCIE_URE02
+//          SB_CHECKBOX_PCIE_FEE02
+//          SB_CHECKBOX_PCIE_NFE02
+//          SB_CHECKBOX_PCIE_CEE02
+//          SB_CHECKBOX_PCIE_SFE02
+//          SB_CHECKBOX_PCIE_SNE02
+//          SB_CHECKBOX_PCIE_SCE02
+            SB_CHECKBOX_PCIE_SPEED02
+//EIP191291
+#if defined(PCIE_ROOT_PORT_DETECT_NON_COMPLAINT) && (PCIE_ROOT_PORT_DETECT_NON_COMPLAINT != 0)
+            SB_ONEOF_PCIEROOTPORTDNCD02 
+#endif
+//EIP191291
+	    //EIP150027 >>
+            SB_ONEOF_EXTRABUSRSVD02
+            SB_ONEOF_PCIEMEMRSVD02
+            SB_ONEOF_PCIEMEMRSVDALIG02
+            SB_ONEOF_PCIEPFMEMRSVD02
+            SB_ONEOF_PCIEPFMEMRSVDALIG02
+            SB_ONEOF_PCIEIORSVD02
+	    //EIP150027 <<
+          
+          SEPARATOR
+      
+          SB_CHECKBOX_PCIE_PORT3
+  
+        endif;  // suppress
+  
+        suppressif  ideqval SETUP_DATA.PcieRootPortEn[0] == 0;
+                    
+//          SB_CHECKBOX_PCIE_ASPM03
+//          SB_CHECKBOX_PCIE_PMCE03
+//          SB_CHECKBOX_PCIE_ESE03
+            SB_CHECKBOX_PCIE_HPE03 //EIP150027 
+//          SB_CHECKBOX_PCIE_URE03
+//          SB_CHECKBOX_PCIE_FEE03
+//          SB_CHECKBOX_PCIE_NFE03
+//          SB_CHECKBOX_PCIE_CEE03
+//          SB_CHECKBOX_PCIE_SFE03
+//          SB_CHECKBOX_PCIE_SNE03
+//          SB_CHECKBOX_PCIE_SCE03
+          	SB_CHECKBOX_PCIE_SPEED03
+//EIP191291
+#if defined(PCIE_ROOT_PORT_DETECT_NON_COMPLAINT) && (PCIE_ROOT_PORT_DETECT_NON_COMPLAINT != 0)
+          	SB_ONEOF_PCIEROOTPORTDNCD03 
+#endif
+//EIP191291
+	    //EIP150027 >>
+            SB_ONEOF_EXTRABUSRSVD03
+            SB_ONEOF_PCIEMEMRSVD03
+            SB_ONEOF_PCIEMEMRSVDALIG03
+            SB_ONEOF_PCIEPFMEMRSVD03
+            SB_ONEOF_PCIEPFMEMRSVDALIG03
+            SB_ONEOF_PCIEIORSVD03
+	    //EIP150027 <<
+  
+        endif;  // suppress
+    endform;
+    
+  #endif //  #ifndef SB_FORM_SB
+  #endif //  #ifdef FORM_SET_FORM
+#endif // CHIPSET_FORM_SET
+
+
+//**********************************************************************
+//                ADVANCED - Atapi Configuration Form
+//**********************************************************************
+#ifdef ADVANCED_FORM_SET
+
+  #ifdef FORM_SET_ITEM
+    //
+    // Define controls to be added to the main page of the formset
+    //
+  #endif
+
+  #ifdef FORM_SET_GOTO
+    //
+    // Define goto commands for the forms defined in this file
+    //
+    goto IDE_CONFIG_FORM_ID,
+    prompt  = STRING_TOKEN(STR_IDE_CONFIG_FORM),
+    help    = STRING_TOKEN(STR_IDE_CONFIG_FORM_HELP);
+    
+    goto MISCELLANEOUS_CONFIG_FORM_ID,
+    prompt  = STRING_TOKEN(STR_MISCELLANEOUS_CONFIG_FORM),
+    help    = STRING_TOKEN(STR_MISCELLANEOUS_CONFIG_FORM_HELP);
+
+    goto LPSS_SCC_CONFIG_FORM_ID,
+    prompt  = STRING_TOKEN(STR_LPSS_SCC_CONFIG_FORM),
+    help    = STRING_TOKEN(STR_LPSS_SCC_CONFIG_FORM_HELP);    
+    
+//    goto LAN_FORM_ID,
+//    prompt  = STRING_TOKEN(STR_LAN_FORM),
+//    help    = STRING_TOKEN(STR_LAN_FORM_HELP);   
+ 
+    goto SYSTEM_COMPONENT_FORM_ID,
+    prompt  = STRING_TOKEN(STR_SYSTEM_COMPONENT_PROMPT),
+    help    = STRING_TOKEN(STR_SYSTEM_COMPONENT_HELP);   
+    
+  #endif
+
+  #ifdef FORM_SET_FORM
+    //
+    // Define forms
+    //
+  #ifndef SB_FORM_IDE_CONFIG
+  #define SB_FORM_IDE_CONFIG
+
+    form formid = AUTO_ID(IDE_CONFIG_FORM_ID),
+    title = STRING_TOKEN(STR_IDE_CONFIG_FORM);
+
+    SUBTITLE(STRING_TOKEN(STR_IDE_CONFIG_FORM))
+    SEPARATOR
+
+      SB_CHECKBOX_SATA_EN
+      SB_CHECKBOX_SATA_TEST_EN
+
+      SEPARATOR
+      
+      suppressif  ideqval SETUP_DATA.PchSata == 0;
+        SB_CHECKBOX_SATA_SPEED_SUPPORT //EIP147898
+        SB_CHECKBOX_SATA_ODD_PORT //EIP149024
+        SB_ONEOF_SATA_MODE
+	
+	//EIP144257 >>
+        SEPARATOR
+        SB_CHECKBOX_SATAPORT0
+	    suppressif  ideqval SETUP_DATA.SataPort[0] == 0;
+          SB_CHECKBOX_SATAPORT0_HOTPLUG
+        endif; //SataPort[0] 
+	
+        SEPARATOR
+        SB_CHECKBOX_SATAPORT1
+        suppressif  ideqval SETUP_DATA.SataPort[1] == 0;
+          SB_CHECKBOX_SATAPORT1_HOTPLUG
+        endif; //SataPort[1] 
+	//EIP144257 <<
+	//EIP129785 >>	
+    	SEPARATOR
+
+    	SUBTITLE(STRING_TOKEN(STR_SATA_0_STRING))
+		SUBTITLE(STRING_TOKEN(STR_SATA_0_NAME))
+    	SEPARATOR
+
+    	SUBTITLE(STRING_TOKEN(STR_SATA_1_STRING))	
+		SUBTITLE(STRING_TOKEN(STR_SATA_1_NAME))		
+	//EIP129785 <<
+		
+      endif;  // suppress
+      
+    endform;
+
+  #endif //  #ifndef SB_FORM_IDE_CONFIG
+  
+  
+  #ifndef SB_FORM_MISCELLANEOUS_CONFIG
+  #define SB_FORM_MISCELLANEOUS_CONFIG
+    form formid = AUTO_ID(MISCELLANEOUS_CONFIG_FORM_ID),
+    title = STRING_TOKEN(STR_MISCELLANEOUS_CONFIG_FORM);
+
+    SUBTITLE(STRING_TOKEN(STR_MISCELLANEOUS_CONFIG_TITLE))
+    
+    SB_CHECKBOX_HIGH_PRECISION_TIMER
+    SB_CHECKBOX_BOOT_TIMER_WITH_HPET_TIMER
+    
+    //EIP133060 >>
+    #if defined (SOC_UART_PRESENT) && (SOC_UART_PRESENT == 1)
+      SB_CHECKBOX_UART_INTERFACE_SELECTION
+    #endif
+    //EIP133060 <<
+    SB_CHECKBOX_PCIE_DYNAMIC_GATING
+    SB_CHECKBOX_OSSELECT_SUPPORT //CSP20140120
+    endform;    
+    
+  #endif //  #ifndef SB_FORM_MISCELLANEOUS_CONFIG
+  
+  
+  #ifndef SB_FORM_LPSS_SCC_CONFIG
+  #define SB_FORM_LPSS_SCC_CONFIG
+    form formid = AUTO_ID(LPSS_SCC_CONFIG_FORM_ID),
+    title = STRING_TOKEN(STR_LPSS_SCC_CONFIG_FORM);
+
+    //SB_CHECKBOX_OSSELECT_SUPPORT //CSP20130910 - Match RC 1.1.0 //CSP20140120(-)
+    SB_CHECKBOX_LPSS_SCC_DEVICES_MODE
+    SEPARATOR   
+
+    SUBTITLE(STRING_TOKEN(STR_SCC_CONFIG_TITLE))
+    SB_CHECKBOX_SCC_EMMC_SUPPORT   
+    suppressif  ideqval SETUP_DATA.eMMCEnabled == 0 OR ideqval SETUP_DATA.eMMCEnabled == 2;
+      SB_CHECKBOX_SCC_EMMC45DDR50_SUPPORT    //(EIP120879+)
+      SB_CHECKBOX_SCC_EMMC45HS200_SUPPORT    //(EIP120879+)
+    endif;  // suppress
+#if (SDIO_DRIVER_SUPPORT == 0)
+    SB_CHECKBOX_SCC_SECURE_ERASE  //CSP20130910 - Match RC 1.1.0
+#endif
+    SB_CHECKBOX_SCC_SDIO_SUPPORT
+    SB_CHECKBOX_SCC_SD_CARD_SUPPORT
+
+//EIP144689 >>
+    grayoutif NOT ideqval SETUP_DATA.SdcardEnabled == 0x1;
+        grayoutif ideqval SETUP_DATA.LpssSdCardDDR50Enabled == 0x1;
+  	    SB_CHECKBOX_LPSS_SDCARD25_SUPPORT
+        endif; // grayoutif ideqval SETUP_DATA.LpsseMMC45DDR50Enabled == 0x1;
+
+        grayoutif ideqval SETUP_DATA.LpssSdCardSDR25Enabled == 0x1;
+	    SB_CHECKBOX_LPSS_SDCARD50_SUPPORT
+        endif; // grayoutif ideqval SETUP_DATA.LpssSdCardSDR25Enabled == 0x1;
+    endif;     // grayoutif NOT ideqval SETUP_DATA.SdcardEnabled == 0x1;
+//EIP144689 <<
+
+    SB_CHECKBOX_MIPI_HSI_SUPPORT
+    
+    SEPARATOR   
+    SUBTITLE(STRING_TOKEN(STR_LPSS_CONFIG_TITLE))
+    SB_CHECKBOX_LPSS_DMA1_SUPPORT
+    SB_CHECKBOX_LPSS_DMA2_SUPPORT
+    SB_CHECKBOX_LPSS_I2C1_SUPPORT
+    SB_CHECKBOX_LPSS_I2C2_SUPPORT
+    SB_CHECKBOX_LPSS_I2C3_SUPPORT
+    SB_CHECKBOX_LPSS_I2C4_SUPPORT
+    SB_CHECKBOX_LPSS_I2C5_SUPPORT
+    SB_CHECKBOX_LPSS_I2C6_SUPPORT
+    SB_CHECKBOX_LPSS_I2C7_SUPPORT
+//EIP158981 >>    
+    suppressif  ideqval SETUP_DATA.LpssI2C6Enabled == 0;
+    SB_CHECKBOX_LPSS_I2C7_NFC_SUPPORT
+    SB_CHECKBOX_LPSS_I2C7_TOUCH_PAD_SUPPORT
+    endif;
+    
+    SEPARATOR      
+    
+    SB_CHECKBOX_LPSS_I2C_TOUGCH_ADDRESS_SUPPORT
+//EIP158981 <<    
+    SB_CHECKBOX_LPSS_HSUART1_SUPPORT
+    SB_CHECKBOX_LPSS_HSUART2_SUPPORT
+    SB_CHECKBOX_LPSS_PWM1_SUPPORT
+    SB_CHECKBOX_LPSS_PWM2_SUPPORT
+    SB_CHECKBOX_LPSS_SPI_SUPPORT
+    
+    endform;    
+    
+  #endif //  #ifndef SB_FORM_LPSS_SCC_CONFIG 
+ 
+/*
+  #ifndef SB_FORM_LAN_CONFIG
+  #define SB_FORM_LAN_CONFIG
+    form formid = AUTO_ID(LAN_FORM_ID),
+    title = STRING_TOKEN(STR_LAN_FORM);
+
+    SUBTITLE(STRING_TOKEN(STR_LAN_SUBTITLE))
+    
+    SB_CHECKBOX_LAN_CONTROLLER
+    
+    suppressif  ideqval SETUP_DATA.Lan == 0;    
+    SB_CHECKBOX_LAN_WOL
+    SB_CHECKBOX_LAN_SLP_LAN
+    SB_CHECKBOX_LAN_PXE_ROM
+    endif; //suppressif SETUP_DATA.Lan == 0
+    
+    endform;    
+    
+  #endif //  #ifndef SB_FORM_LAN_CONFIG
+*/ 
+   
+  #ifndef SB_FORM_SYSTEM_COMPONENT
+  #define SB_FORM_SYSTEM_COMPONENT
+    form formid = AUTO_ID(SYSTEM_COMPONENT_FORM_ID),
+    title = STRING_TOKEN(STR_SYSTEM_COMPONENT_PROMPT);
+
+    SUBTITLE(STRING_TOKEN(STR_PMIC_SUBTITLE))   
+    SB_CHECKBOX_PMIC_ACPI
+    SB_CHECKBOX_PNP_SETTING    
+////(EIP140009+) >>
+#if PSS_SUPPORT
+    SB_CHECKBOX_PSS_SUPPORT 
+#endif
+////(EIP140009+) <<
+    
+
+    SEPARATOR
+    SB_CHECKBOX_WITTENABLE_SETTING
+    endform;    
+    
+  #endif //  #ifndef SB_FORM_SYSTEM_COMPONENT 
+   
+   
+  #endif //  #ifdef FORM_SET_FORM
+
+#endif // ADVANCED_FORM_SET
+
+//*************************************************************************
+//*************************************************************************
+//**                                                                     **
+//**        (C)Copyright 1985-2014, American Megatrends, Inc.            **
+//**                                                                     **
+//**                       All Rights Reserved.                          **
+//**                                                                     **
+//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093           **
+//**                                                                     **
+//**                       Phone: (770)-246-8600                         **
+//**                                                                     **
+//*************************************************************************
+//*************************************************************************

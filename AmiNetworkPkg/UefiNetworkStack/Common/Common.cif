@@ -1,0 +1,16 @@
+<component>
+	name = "Common"
+	category = ModulePart
+	LocalRoot = "AmiNetworkPkg\UefiNetworkStack\Common\"
+	RefName = "AmiNetworkPkg.UefiNetworkStack.Common"
+[INF]
+"DpcDxe\DpcDxe.inf"
+"ArpDxe\ArpDxe.inf"
+"SnpDxe\SnpDxe.inf"
+"MnpDxe\MnpDxe.inf"
+"UefiPxeBcDxe\UefiPxeBcDxe.inf"
+"IpSecDxe\IpSecDxe.inf"
+"TcpDxe\TcpDxe.inf"
+[parts]
+"NetworkStackSetupScreen"
+<endComponent>

@@ -1,0 +1,13 @@
+<component>
+	name = "Library"
+	category = ModulePart
+	LocalRoot = "BayTrailPkg\Library\"
+	RefName = "BayTrailPkg.LibraryInstances"
+[INF]
+"CrbAcpiLib\CrbAcpiLib.inf"
+"CrbLib\CrbLib.inf"
+"CrbSecLib\CrbSecLib.inf"
+"PlatformHookLib\PlatformHookLib.inf"
+[parts]
+"BayTrailPkg.KscLib"
+<endComponent>

@@ -1,0 +1,79 @@
+#**********************************************************************
+#**********************************************************************
+#**                                                                  **
+#**        (C)Copyright 1985-2011, American Megatrends, Inc.         **
+#**                                                                  **
+#**                       All Rights Reserved.                       **
+#**                                                                  **
+#**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093        **
+#**                                                                  **
+#**                       Phone: (770)-246-8600                      **
+#**                                                                  **
+#**********************************************************************
+#**********************************************************************
+
+#
+# 
+#
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = StatusCodePei
+  FILE_GUID                      = E9DD7F62-25EC-4F9D-A4AB-AAD20BF59A10
+  MODULE_TYPE                    = PEIM
+  VERSION_STRING                 = 1.0
+#  LIBRARY_CLASS                  = StatusCodePeiLib|PEIM PEI_CORE
+  ENTRY_POINT                    = PeiInitStatusCode
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64
+#
+#  
+
+[Sources]  
+  StatusCodeInt.h	
+  StatusCodeMapPei.c
+  StatusCodeCommon.c	
+  StatusCodePei.c
+
+[Packages]
+  MdePkg/MdePkg.dec   
+  MdeModulePkg/MdeModulePkg.dec
+  IntelFrameworkPkg/IntelFrameworkPkg.dec
+  AmiCompatibilityPkg/AmiCompatibilityPkg.dec 
+  
+[LibraryClasses]
+  AmiPeiLib
+  SerialPortLib
+  PeimEntryPoint
+  PlatformHookLib
+  PeiServicesLib
+  HobLib
+  PrintLib
+
+[Ppis]
+  gEfiPeiStallPpiGuid
+  gEfiPeiRscHandlerPpiGuid                ## PRODUCES 
+  gEfiPeiStatusCodePpiGuid		 ## PRODUCES
+
+[Guids]
+  gStatusCodeCallbackGuid
+  
+[Depex]
+  TRUE
+  
+#**********************************************************************
+#**********************************************************************
+#**                                                                  **
+#**        (C)Copyright 1985-2011, American Megatrends, Inc.         **
+#**                                                                  **
+#**                       All Rights Reserved.                       **
+#**                                                                  **
+#**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093        **
+#**                                                                  **
+#**                       Phone: (770)-246-8600                      **
+#**                                                                  **
+#**********************************************************************
+#**********************************************************************

@@ -1,0 +1,3 @@
+!include GCC_DEF.txt
+*_LINAROWIN_*_*_FAMILY                = GCC
+*_LINAROWIN_*_*_BUILDRULEFAMILY = LINAROWIN

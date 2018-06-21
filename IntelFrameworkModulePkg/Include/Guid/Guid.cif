@@ -1,0 +1,20 @@
+<component> 
+	name = "Guid" 
+	category = ModulePart 
+	LocalRoot = "IntelFrameworkModulePkg\Include\Guid\" 
+	RefName = "IntelFrameworkModulePkg.Guid" 
+[files] 
+"AcpiVariableCompatibility.h"
+"BdsHii.h"
+"BdsLibHii.h"
+"BlockIoVendor.h"
+"CapsuleDataFile.h"
+"DataHubStatusCodeRecord.h" 
+"HdBootVariable.h"
+"IntelFrameworkModulePkgTokenSpace.h" 
+"LastEnumLang.h"
+"LegacyBios.h" 
+"LegacyDevOrder.h"
+"LzmaDecompress.h" 
+"TianoDecompress.h" 
+<endComponent> 

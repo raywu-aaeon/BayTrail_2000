@@ -1,0 +1,44 @@
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = SbPeiGetSetupData
+  FILE_GUID                      = 1297DDAF-B822-4a69-9968-826D8AC4CE76 
+  MODULE_TYPE                    = PEIM
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = SbGetSetupData|PEIM
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64
+#
+#  
+#
+
+[Sources]
+  GetSetupData.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec #EIP131494
+  AmiChipsetPkg/AmiChipsetPkg.dec
+  AmiCompatibilityPkg/AmiCompatibilityPkg.dec
+  AmiChipsetModulePkg/AmiChipsetModulePkg.dec
+  
+[LibraryClasses]
+  AmiPeiLib
+  ElinkLib
+
+[Ppis]
+  gEfiPeiReadOnlyVariable2PpiGuid
+  #gPeiCapsulePpiGuid  #CSP20140829 EIP200855
+  
+[Guids]
+  gEfiMemoryTypeInformationGuid #EIP131494  
+ 
+[Pcd]
+  gAmiChipsetModulePkgTokenSpaceGuid.PcdSbOemSetupElink
+
+[BuildOptions] 
+  *_*_*_CC_FLAGS = /D AMI_SB_SETUPDATA_PEI
+  

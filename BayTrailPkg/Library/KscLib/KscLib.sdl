@@ -1,0 +1,87 @@
+#*************************************************************************
+#*************************************************************************
+#**                                                                     **
+#**        (C)Copyright 1985-2013, American Megatrends, Inc.            **
+#**                                                                     **
+#**                       All Rights Reserved.                          **
+#**                                                                     **
+#**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093           **
+#**                                                                     **
+#**                       Phone: (770)-246-8600                         **
+#**                                                                     **
+#*************************************************************************
+#*************************************************************************
+
+#*************************************************************************
+# $Header: $
+#
+# $Revision:  $
+#
+# $Date: $
+#*************************************************************************
+TOKEN
+    Name = "KscLib_SUPPORT"
+    Value = "1"
+    Help = "Main switch to enable KscLib support in Project"
+    TokenType = Boolean
+    TargetEQU = Yes
+    TargetMAK = Yes
+    Master = Yes
+End
+
+PATH
+    Name = "KSC_LIB_DIR"
+End
+
+INFComponent
+	Name  = "DxeKscLib"
+	File  = "Dxe\DxeKscLib.inf"
+	Package  = "BayTrailPkg"
+	Path  = "KSC_LIB_DIR"
+End
+
+INFComponent
+	Name  = "PeiKscLib"
+	File  = "Pei\PeiKscLib.inf"
+	Package  = "BayTrailPkg"
+	Path  = "KSC_LIB_DIR"
+End
+
+INFComponent
+	Name  = "SmmKscLib"
+	File  = "Smm\SmmKscLib.inf"
+	Package  = "BayTrailPkg"
+	Path  = "KSC_LIB_DIR"
+End
+
+LibraryMapping
+	Class  = "DxeKscLib"
+	Instance  = "BayTrailPkg.DxeKscLib"
+	ModuleTypes  = "DXE_DRIVER"
+End
+
+LibraryMapping
+	Class  = "PeiKscLib"
+	Instance  = "BayTrailPkg.PeiKscLib"
+	ModuleTypes  = "PEIM"
+End
+
+LibraryMapping
+	Class  = "SmmKscLib"
+	Instance  = "BayTrailPkg.SmmKscLib"
+	ModuleTypes  = "DXE_SMM_DRIVER"
+End
+
+#*************************************************************************
+#*************************************************************************
+#**                                                                     **
+#**        (C)Copyright 1985-2013, American Megatrends, Inc.            **
+#**                                                                     **
+#**                       All Rights Reserved.                          **
+#**                                                                     **
+#**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093           **
+#**                                                                     **
+#**                       Phone: (770)-246-8600                         **
+#**                                                                     **
+#*************************************************************************
+#*************************************************************************

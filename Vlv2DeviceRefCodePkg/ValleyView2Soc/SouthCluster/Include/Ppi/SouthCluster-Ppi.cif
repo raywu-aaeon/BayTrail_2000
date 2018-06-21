@@ -1,0 +1,16 @@
+<component>
+	name = "SouthCluster-Ppi"
+	category = ModulePart
+	LocalRoot = "Vlv2DeviceRefCodePkg\ValleyView2Soc\SouthCluster\Include\Ppi"
+	RefName = "Vlv2DeviceRefCodePkg.ValleyView2Soc.ValleyView2Soc-SouthCluster.SouthCluster-Include.SouthCluster-Ppi"
+[files]
+"PchInit.h"
+"PchPeiInit.h"
+"PchPlatformPolicy.h"
+"PchUsbPolicy.h"
+"PeiBlockIo.h"
+"S3ResumeDone.h"
+"Sdhc.h"
+"SmbusPolicy.h"
+"Spi.h"
+<endComponent>

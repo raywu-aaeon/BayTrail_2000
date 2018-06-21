@@ -1,0 +1,14 @@
+<component>
+    name = "Hardware Signature Management"
+    category = eModule
+    LocalRoot = "AmiModulePkg\HardwareSignature\"
+    RefName = "HardwareSignatureManagement"
+[INF]
+"HardwareSignatureEntry.inf"  
+"HardwareSignatureLib.inf"
+[files]
+"HardwareSignatureManagement.chm"
+"HardwareSignatureManagement.sdl"
+[parts]
+"HW_SIGNATURE_PROTOCOL"
+<endComponent>

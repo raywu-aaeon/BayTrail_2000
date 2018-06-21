@@ -1,0 +1,12 @@
+<component>
+	name = "Disk"
+	category = ModulePart
+	LocalRoot = "MdeModulePkg\Universal\Disk\"
+	RefName = "MdeModulePkg.Disk"
+[files]
+"Disk.sdl"	
+[INF]
+"DiskIoDxe\DiskIoDxe.inf"
+"PartitionDxe\PartitionDxe.inf"
+"UnicodeCollation\EnglishDxe\EnglishDxe.inf"
+<endComponent>

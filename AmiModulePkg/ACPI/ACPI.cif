@@ -1,0 +1,21 @@
+<component>
+	name = "ACPI"
+	category =  eModule
+	LocalRoot = "AmiModulePkg\ACPI\"
+	RefName = "AmiModulePkg.ACPI"
+[INF]
+"ACPI.inf"
+"AcpiLib.inf"
+"TimeAndAlarmSmi.inf"
+"S3Save.inf"
+"S3Resume.inf"
+"DsdtAsl.inf"
+[files]
+"ACPI.chm"  
+"ACPI.sdl"	
+"ACPI.sd"	
+"ACPI.uni"	
+"AcpiElinkTempl.txt"
+[parts]
+"GenericAsl"
+<endComponent>

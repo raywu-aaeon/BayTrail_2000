@@ -1,0 +1,208 @@
+#*************************************************************************
+#*************************************************************************
+#**                                                                     **
+#**        (C)Copyright 1985-2013, American Megatrends, Inc.            **
+#**                                                                     **
+#**                       All Rights Reserved.                          **
+#**                                                                     **
+#**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093           **
+#**                                                                     **
+#**                       Phone: (770)-246-8600                         **
+#**                                                                     **
+#*************************************************************************
+#*************************************************************************
+
+#*************************************************************************
+# $Header: $
+#
+# $Revision: $
+#
+# $Date: 11/28/2013 KimiWu $
+#*************************************************************************
+#<AMI_FHDR_START>
+#
+# Name: VerifyBoot.sdl
+#
+# Description: SDL file to define Verify Boot function
+#
+#<AMI_FHDR_END>
+#*************************************************************************
+
+TOKEN
+	Name  = "VERIFY_BOOT_SUPPORT"
+	Value  = "1"
+	TokenType = Boolean
+	TargetMAK = Yes
+	TargetH = Yes
+	Master = Yes
+End
+
+MODULE
+	Help  = "Includes VerifyBoot.mak to Project"
+	File  = "VerifyBoot.mak"
+End
+
+PATH
+	Name  = "VERIFY_BOOT_DIR"
+End
+
+PATH
+	Name  = "FLASH_MANIFEST_GENERATION_TOOL_DIR"
+	Path  = "$(VERIFY_BOOT_DIR)$(PATH_SLASH)Flash_Manifest_Generation_Tool"
+End
+
+PATH
+	Name  = "PUBLIC_KEY_FILES_DIR"
+	Path  = "$(VERIFY_BOOT_DIR)$(PATH_SLASH)Public_Key_File"
+End
+
+TOKEN
+	Name  = "PASS_FPFMIRROR_FILE_TO_FITC"
+	Value  = "1"
+	TokenType = Boolean
+	TargetMAK = Yes
+End
+
+TOKEN
+	Name  = "FD_PRE_BB_SIZE"
+	Value  = "131072"
+	Help  = "Size of the FD_PRE_BB area"
+	TokenType = Integer
+	TargetMAK = Yes
+End
+
+TOKEN
+	Name  = "FD_NON_PRE_BB_SIZE"
+	Value  = "$(FLASH_SIZE) - $(FD_PRE_BB_SIZE)"
+	Help  = "Size of the non-FD_PRE_BB area"
+	TokenType = Integer
+	TargetMAK = Yes
+End
+
+TOKEN
+	Name  = "FD_NON_PRE_BB_SIZE"
+	Value  = "$(FLASH_SIZE) - $(FD_PRE_BB_SIZE) + 4096"
+	Help  = "Size of the non-FD_PRE_BB area"
+	TokenType = Integer
+	TargetMAK = Yes
+	Token = "FWCAPSULE_FILE_FORMAT" "=" "1"
+End
+
+TOKEN
+	Name  = "FD_PRE_BB_1K_SIZE"
+	Value  = "1024"
+	Help  = "Size of the FD_PRE_BB 1KB area"
+	TokenType = Integer
+	TargetMAK = Yes
+End
+
+TOKEN
+	Name  = "FD_FILE"
+	Value  = "$(BUILD_DIR)$(PATH_SLASH)$(PLATFORM_NAME)$(PATH_SLASH)$(TARGET)_$(TOOL_CHAIN_TAG)$(PATH_SLASH)FV$(PATH_SLASH)AMIROM.fd"
+	TokenType = Expression
+	TargetMAK = Yes
+End
+
+TOKEN
+	Name  = "FD_PRE_BB_FILE"
+	Value  = "$(BUILD_DIR)$(PATH_SLASH)$(PLATFORM_NAME)$(PATH_SLASH)$(TARGET)_$(TOOL_CHAIN_TAG)$(PATH_SLASH)FV$(PATH_SLASH)FD_PRE_BB.fd"
+	TokenType = Expression
+	TargetMAK = Yes
+End
+
+TOKEN
+	Name  = "FD_NON_PRE_BB_FILE"
+	Value  = "$(BUILD_DIR)$(PATH_SLASH)$(PLATFORM_NAME)$(PATH_SLASH)$(TARGET)_$(TOOL_CHAIN_TAG)$(PATH_SLASH)FV$(PATH_SLASH)FD_NON_PRE_BB.fd"
+	TokenType = Expression
+	TargetMAK = Yes
+End
+
+TOKEN
+	Name  = "FD_PRE_BB_1K_FILE"
+	Value  = "$(BUILD_DIR)$(PATH_SLASH)$(PLATFORM_NAME)$(PATH_SLASH)$(TARGET)_$(TOOL_CHAIN_TAG)$(PATH_SLASH)FV$(PATH_SLASH)FD_PRE_BB_1K.fd"
+	TokenType = Expression
+	TargetMAK = Yes
+End
+
+TOKEN
+	Name  = "FD_PRE_BB_127K_FILE"
+	Value  = "$(BUILD_DIR)$(PATH_SLASH)$(PLATFORM_NAME)$(PATH_SLASH)$(TARGET)_$(TOOL_CHAIN_TAG)$(PATH_SLASH)FV$(PATH_SLASH)FD_PRE_BB_127K.fd"
+	TokenType = Expression
+	TargetMAK = Yes
+End
+
+TOKEN
+	Name  = "FD_MANIFEST_FILE"
+	Value  = "$(BUILD_DIR)$(PATH_SLASH)$(PLATFORM_NAME)$(PATH_SLASH)$(TARGET)_$(TOOL_CHAIN_TAG)$(PATH_SLASH)FV$(PATH_SLASH)$(PROJECT_TAG).manifest"
+	TokenType = Expression
+	TargetMAK = Yes
+End
+
+TOKEN
+	Name  = "====== Flash Manifest Generation Tool Configuration ======"
+	TokenType = Expression
+End
+
+TOKEN
+	Name  = "FLAMInGoKit"
+	Value  = "$(FLASH_MANIFEST_GENERATION_TOOL_DIR)$(PATH_SLASH)FLAMInGO.exe"
+	TokenType = Expression
+	TargetMAK = Yes
+End
+
+TOKEN
+	Name  = "SimpleSignerKit"
+	Value  = "$(FLASH_MANIFEST_GENERATION_TOOL_DIR)$(PATH_SLASH)SimpleSigner.exe"
+	TokenType = Expression
+	TargetMAK = Yes
+End
+
+TOKEN
+	Name  = "FUSE_CONFIG_FILE"
+	Value  = "$(FLASH_MANIFEST_GENERATION_TOOL_DIR)$(PATH_SLASH)FpfMirrorNvarValues.txt"
+	TokenType = Expression
+	TargetMAK = Yes
+End
+
+TOKEN
+	Name  = "PUBLIC_KEY_FILE"
+	Value  = "$(PUBLIC_KEY_FILES_DIR)$(PATH_SLASH)pubkey.pem"
+	TokenType = Expression
+	TargetMAK = Yes
+End
+
+TOKEN
+	Name  = "PRIVATE_KEY_FILE"
+	Value  = "$(PUBLIC_KEY_FILES_DIR)$(PATH_SLASH)prikey.pem"
+	TokenType = Expression
+	TargetMAK = Yes
+End
+
+TOKEN
+	Name  = "MANIFEST_NAME"
+	Value  = "AmiManifest"
+	TokenType = Expression
+	TargetMAK = Yes
+End
+
+TOKEN
+	Name  = "SVN"
+	Value  = "2"
+	Help  = "Security Version Number"
+	TokenType = Expression
+	TargetMAK = Yes
+End
+
+#*************************************************************************
+#*************************************************************************
+#**                                                                     **
+#**        (C)Copyright 1985-2013, American Megatrends, Inc.            **
+#**                                                                     **
+#**                       All Rights Reserved.                          **
+#**                                                                     **
+#**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093           **
+#**                                                                     **
+#**                       Phone: (770)-246-8600                         **
+#**                                                                     **
+#*************************************************************************
+#*************************************************************************

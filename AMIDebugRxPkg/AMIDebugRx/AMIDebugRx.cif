@@ -1,0 +1,26 @@
+<component>
+	name = "AMIDebugRx"
+	category = eModule
+	Rank = 46
+	LocalRoot = "AMIDebugRxPkg\AMIDebugRx\"
+	RefName = "AMIDebugRx.AMIDebugRx"
+[files]
+"AMIDebugRx.chm"	
+"AMIDebugRx.sdl"	
+"AMIDebugRx.sd"	
+"AMIDebugRx.uni"	
+"AMIDebugRx.mak"
+"Driver.zip"	
+"DebugPortDetector.zip"	
+[parts]
+"AMIDebugRxPkg"
+"AMIDebugRx.AMIDebugAgent"
+"AMIDebugRx.DbgRxPortLib"
+"AMIDebugRx.DbgRxXportLib"
+"AMIDebugRx.DbgRxDbgrLib"
+"AMIDebugRx.DebuggerLib"
+"AMIDebugRx.DebugStatusCodeLib"
+"AMIDebugRx.DbgRxDebugSupportLib"
+"AMIDebugRx.DbgHostStatusLib"
+"AMIDebugRx.DbgRxAuthenticationLib"
+<endComponent>

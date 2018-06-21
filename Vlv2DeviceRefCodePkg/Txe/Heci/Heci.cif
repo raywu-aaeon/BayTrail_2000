@@ -1,0 +1,8 @@
+<component>
+	name = "Heci"
+	category = ModulePart
+	LocalRoot = "Vlv2DeviceRefCodePkg\Txe\Heci"
+	RefName = "Vlv2DeviceRefCodePkg.Txe.Heci"
+[inf]
+"Dxe\Hecidrv.inf"
+<endComponent>

@@ -1,0 +1,12 @@
+<component>
+	name = "Ati"
+	category = ModulePart
+	LocalRoot = "AmiChipsetModulePkg\SgTpv\AcpiTables\"
+	RefName = "AtiSG"
+[INF]
+"SgAti.inf"
+[files]	
+"ATdGPUPCH.asl"	
+"ATiGPUPCH.asl"	
+"ATiGDmiscPCH.asl"	
+<endComponent>

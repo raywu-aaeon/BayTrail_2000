@@ -1,0 +1,38 @@
+TOKEN
+	Name  = "TcgDxeSupport"
+	Value  = "1"
+	Help  = "Enable or Diasble TcgPeiSupport"
+	TokenType = Boolean
+	TargetEQU = Yes
+	TargetH = Yes
+	TargetMAK = Yes
+	Master = Yes
+    Token = "TCG2Support" "=" "1"
+End
+
+
+INFComponent
+    Name  = "TcgDxe"
+    File  = "TcgDxe.inf"
+    Package  = "AmiModulePkg"
+    ModuleTypes  = "DXE_DRIVER"
+End
+
+INFComponent
+    Name  = "TrEEDxe"
+    File  = "TrEEDxe.inf"
+    Package  = "AmiModulePkg"
+    ModuleTypes  = "DXE_DRIVER"
+End
+
+INFComponent
+    Name  = "DxeTpmMeasureBootLib"
+    File  = "..\DxeTpmMeasureBootLib\DxeTpmMeasureBootLib.inf"
+    Package = "AmiModulePkg"
+End
+
+LibraryMapping
+    Class  = "NULL"
+    Instance  = "AmiModulePkg.DxeTpmMeasureBootLib"
+    Override = "MdeModulePkg.SecurityStubDxe"
+End

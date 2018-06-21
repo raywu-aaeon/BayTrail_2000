@@ -1,0 +1,47 @@
+###############################################################################################
+#
+# Edit this file to give non-default values to FPF fuses
+# using the FPF flash mirror. This file is used by FpfMirrorGenerateNvar.pl
+# script. Each line in this file describes a fuse file in the following pattern:
+#
+# [ID]:[Value]:[Locked]
+#
+# ID 	 - Fuse file ID (see FUSE_FILE_XXX in FpfHeciMsgs.h)
+# Value  - Desired value of fuse file in **hex** digits, must be byte-aligned (For single bit file, should be 00 or 01)
+# Locked - Boolean indicates if the file should be locked (TRUE/FALSE)
+#
+# For example, If this file contains the following line:
+#
+# FUSE_FILE_OEM_KEY_HASH_1:87c558E1FBBA60F7A87E58372D7CCC3BBB704DDB8E2144907C88FA1465A86FEA:TRUE
+#
+# Then the Key_hash_1 file will be locked and will have the value:
+#
+#		 {0x87,0xc5,0x58,0xE1,0xFB,0xBA,0x60,0xF7,0xA8,0x7E,0x58,0x37,0x2D,0x7C,0xCC,0x3B,
+#         0xBB,0x70,0x4D,0xDB,0x8E,0x21,0x44,0x90,0x7C,0x88,0xFA,0x14,0x65,0xA8,0x6F,0xEA} 
+#	
+# 
+# Alt_bios_limit file is 16 bits wide; applicable values are up to 0x1FFF (13 bits effective).
+# For the following line:
+#
+# FUSE_FILE_ALT_BIOS_LIMIT:1FFF:FALSE
+#
+# The effective integer value will be: 0x1FFF
+#  
+###############################################################################################
+
+#This bit indicates that Secure Boot/Verified Boot is enabled. Change value to "01" to enable Secure/verified boot
+FUSE_FILE_SECURE_BOOT_EN:00:FALSE
+
+#set value to '01' to permanently disable Intel(R) PTT (ftpm)
+FUSE_FILE_TPM_DISABLE:00:FALSE
+
+#Hash of the public part of the OEM signing key obtained with the Flamingo tool
+FUSE_FILE_OEM_KEY_HASH_1:0000000000000000000000000000000000000000000000000000000000000000:FALSE
+
+#The 13 Most Significant Bits of address of alternate copy of IBB within BIOS region
+#Alt_bios_limit file is 16 bits wide; applicable values are up to 0x1FFF (13 bits effective).
+FUSE_FILE_ALT_BIOS_LIMIT:07de:FALSE
+
+#This is the ID of the of the Key Manifest ('0' indicates no key manifest is required)
+FUSE_FILE_KEY_MANIFEST_ID:00:FALSE
+

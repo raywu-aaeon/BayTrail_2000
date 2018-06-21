@@ -1,0 +1,9 @@
+<component>
+	name = "AMI SMM Library Instances"
+	category = ModulePart
+	Rank = 40
+	LocalRoot = "AmiModulePkg\Library\"
+	RefName = "AmiModulePkg.SmmLibraryInstances"
+[parts]
+"AmiModulePkg.AmiSmmCorePlatformHookLib"
+<endComponent>

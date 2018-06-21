@@ -1,0 +1,11 @@
+<component>
+	name = "ReportFV"
+	category = ModulePart
+	LocalRoot = "AmiModulePkg\ReportFV\"
+	RefName = "AmiModulePkg.ReportFV"
+[files]
+"ReportFV.sdl"	
+"ReportFV.mak"	
+[INF]
+"ReportFV.inf"
+<endComponent>

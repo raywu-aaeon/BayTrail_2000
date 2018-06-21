@@ -1,0 +1,1276 @@
+TOKEN
+	Name  = "Wrapper_SUPPORT"
+	Value  = "1"
+	Help  = "Main switch to enable Wrapper support in Project"
+	TokenType = Boolean
+	TargetEQU = Yes
+	TargetMAK = Yes
+	Master = Yes
+End
+
+TOKEN
+	Name  = " "
+	TokenType = Integer
+End
+
+TOKEN
+	Name  = "===================== Wrapper Board Setting ====================="
+	Value  = "==========================================================="
+	TokenType = Expression
+End
+
+TOKEN
+	Name  = "TURN_ON_V5P0S"
+	Value  = "1"
+	Help  = " Turn on or off, 5V VBUS for USB2/3 HOST. For Intel FFRD CRB board please enable this token."
+	TokenType = Boolean
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "PMIC_THERM_INIT"
+	Value  = "1"
+	Help  = " Enable or Disable the PMIC THERM init. For Intel RVP CRB board please enable this token."
+	TokenType = Boolean
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "PMIC_GPIO_INIT"
+	Value  = "1"
+	Help  = " Enable or Disable the PMIC GPIO init. For Intel RVP CRB board please enable this token."
+	TokenType = Boolean
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "PMIC_VHOST_CONTROL"
+	Value  = "0"
+	Help  = " Enable or Disable the PMIC VHOST Control  init. For Intel RVP CRB FFRD board please enable this token."
+	TokenType = Boolean
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "DISABLE_PCEI_FUNCTION"
+	Value  = "0"
+	Help  = " Disable PCIE function and read back to take effect,For Intel FFRD CRB board please enable this token."
+	TokenType = Boolean
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "PlatformBTHStatusGNVS"
+	Value  = "0"
+	Help  = "BlueTooth selection 0 - Other than PR0, 1 - PR0 which swap the GPIO "
+	TokenType = Boolean
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "EnableCacheflashByPlatform"
+	Value  = "1"
+	Help  = "Enable the Cache flash area by platform peim module."
+	TokenType = Boolean
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "SetSeCEOPEnable"
+	Value  = "1"
+	Help  = "Setting the EndOfPostEnabled for ME Configuration."
+	TokenType = Boolean
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "SelectI2CTouchAddress"
+	Value  = "0x4B"
+	Help  = "Setting I2C touch address, 0x4B:RVP   0x4A:FFRD."
+	TokenType = Boolean
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "ENABLE_SEC_SUPPORT_FLAG"
+	Value  = "1"
+	Help  = "Enable the SEC support flag"
+	TokenType = Boolean
+	TargetEQU = Yes
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "ENABLE_OVERRIDE_SUPPORT"
+	Value  = "1"
+	Help  = "Enable the override the BoardId BoardRev MemCfgID"
+	TokenType = Boolean
+	TargetEQU = Yes
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "OVERRIDE_BOARD_ID"
+	Value  = "0x20"
+	Help  = "Override the BoardId, \ 0x00 : Alpine Valley Board\ 0x02  : BayLake Board (RVP)\ 0x04 : BayLake Board (FFRD)\0x07 : PPV- STHI Board\0x20 : Bayley Bay Board"
+	TokenType = Integer
+	TargetEQU = Yes
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "OVERRIDE_BOARD_REV"
+	Value  = "3"
+	Help  = "Override the BoardRev"
+	TokenType = Integer
+	TargetEQU = Yes
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "OVERRIDE_MEMCFG_ID"
+	Value  = "0"
+	Help  = "Override the MemCfgID"
+	TokenType = Integer
+	TargetEQU = Yes
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "SettingSDIOMODE"
+	Value  = "0x03"
+	Help  = "Setting  3 - Default  2 - DDR50, update the asl SDIO device the Hardware Revision."
+	TokenType = Boolean
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "FSA_SUPPORT"
+	Value  = "0"
+	Help  = " 1 For Enable the FSA 0 for Disable the FSA,\ BOARD_ID_BL_FFRD and PR1 please enable this "
+	TokenType = Boolean
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "PMIC_GPIOSETTING_FOR_PR1_SUPPORT"
+	Value  = "0"
+	Help  = " 1 For Enable the PMIC GPIO setting for PR1 0 for use the default PMIC GPIO setting ,\BOARD_ID_BL_FFRD and PR1 please enable this "
+	TokenType = Boolean
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "===================== Cpu Policy ====================="
+	Value  = "==========================================================="
+	TokenType = Expression
+End
+
+TOKEN
+	Name  = "DIMM1_SMBUS_ADDRESS"
+	Value  = "0A0h"
+	Help  = "DIMM Socket 0 - Channel A"
+	TokenType = Integer
+	TargetEQU = Yes
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "DIMM2_SMBUS_ADDRESS"
+	Value  = "0A2h"
+	Help  = "DIMM Socket 1 - Channel A"
+	TokenType = Integer
+	TargetEQU = Yes
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "DIMM3_SMBUS_ADDRESS"
+	Value  = "0A4h"
+	Help  = "DIMM Socket 0 - Channel B"
+	TokenType = Integer
+	TargetEQU = Yes
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "DIMM4_SMBUS_ADDRESS"
+	Value  = "0A6h"
+	Help  = "DIMM Socket 1 - Channel B"
+	TokenType = Integer
+	TargetEQU = Yes
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "DIMM5_SMBUS_ADDRESS"
+	Value  = "0A8h"
+	Help  = "DIMM Socket 0 - Channel C"
+	TokenType = Integer
+	TargetEQU = Yes
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "DIMM6_SMBUS_ADDRESS"
+	Value  = "0AAh"
+	Help  = "DIMM Socket 1 - Channel C"
+	TokenType = Integer
+	TargetEQU = Yes
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "DIMM7_SMBUS_ADDRESS"
+	Value  = "0ACh"
+	Help  = "DIMM Socket 0 - Channel D"
+	TokenType = Integer
+	TargetEQU = Yes
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "DIMM8_SMBUS_ADDRESS"
+	Value  = "0AEh"
+	Help  = "DIMM Socket 1 - Channel D"
+	TokenType = Integer
+	TargetEQU = Yes
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = " "
+	TokenType = Integer
+End
+
+TOKEN
+	Name  = "===================== Gop Policy ====================="
+	Value  = "==========================================================="
+	TokenType = Expression
+End
+
+TOKEN
+	Name  = " "
+	TokenType = Integer
+End
+
+TOKEN
+	Name  = "===================== SeC Policy ====================="
+	Value  = "==========================================================="
+	TokenType = Expression
+End
+
+TOKEN
+	Name  = " "
+	TokenType = Integer
+End
+
+TOKEN
+	Name  = "===================== SC Policy ====================="
+	Value  = "==========================================================="
+	TokenType = Expression
+End
+
+TOKEN
+	Name  = "VLV_DEFAULT_VID"
+	Value  = "0x8086"
+	TokenType = Integer
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "VLV_DEFAULT_SID"
+	Value  = "0x7270"
+	TokenType = Integer
+	TargetH = Yes
+End
+
+
+#EIP132398 >>
+TOKEN
+	Name  = "EMMC_441_SW_SMI"
+	Value  = "0x66"
+	TokenType = Integer
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "EMMC_45_SW_SMI"
+	Value  = "0x67"
+	TokenType = Integer
+	TargetH = Yes
+End
+#EIP132398 <<
+
+#EIP143364 >>
+TOKEN
+	Name  = "SD_CARD_SW_SMI"
+	Value  = "0x68"
+	TokenType = Integer
+	TargetH = Yes
+End
+#EIP143364 <<
+
+#EIP158981 >>
+TOKEN
+	Name  = "XHCI_WORKAROUND_SW_SMI"
+	Value  = "0xBD"
+	TokenType = Integer
+	TargetH = Yes
+End
+#EIP158981 <<
+
+TOKEN
+	Name  = " "
+	TokenType = Integer
+End
+
+TOKEN
+	Name  = "===================== Temp ====================="
+	Value  = "==========================================================="
+	TokenType = Expression
+End
+
+TOKEN
+	Name  = "MAINBLOCK_BASE_ADDR"
+	Value  = "0xffe00000"
+	TokenType = Integer
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "BOOTBLOCK2_BACKUP_BASE_ADDR"
+	Value  = "0xfff90000"
+	TokenType = Integer
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "BOOTBLOCK2_BASE_ADDR"
+	Value  = "0xfff10000"
+	TokenType = Integer
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "PLATFORM_MAX_BUS_NUM"
+	Value  = "(($(PCIEX_LENGTH)/0x100000)-1)"
+	TokenType = Integer
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "S3_BASE_MEMORY_SIZE"
+	Value  = "0x40000"
+	Help  = "Number of bytes for S3 resume base memory."
+	TokenType = Integer
+	TargetH = Yes
+	Range  = "0x40000 = 256K, increase/decrease it in units of 0x1000 = 4K"
+End
+
+TOKEN
+	Name  = "S3_MEMORY_SIZE_PER_CPU"
+	Value  = "4096"
+	Help  = "Number of S3 bytes reserved per CPU"
+	TokenType = Integer
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = " "
+	TokenType = Integer
+End
+
+TOKEN
+	Name  = "===================== Wrapper Cmos ====================="
+	Value  = "==========================================================="
+	TokenType = Expression
+End
+
+TOKEN
+	Name  = "ACPI_CMOS_ACPI_TABLE_FLAG_ADDRESS_REG"
+	Value  = "0x7D"
+	Help  = "SB CMOS Year Register"
+	TokenType = Integer
+	TargetEQU = Yes
+	TargetH = Yes
+	Lock = Yes
+	Token = "CMOS_MANAGER_SUPPORT" "=" "1"
+End
+
+TOKEN
+	Name  = " "
+	TokenType = Integer
+End
+
+TOKEN
+    Name  = "===================== Windows Info ====================="
+    Value  = "==========================================================="
+    TokenType = Expression
+End
+
+#CSP20140122 >>
+TOKEN
+    Name  = "OS_WINDOWS8"
+    Value  = "0"
+    Help  = "This is only noted the setup option number for Windows 8.X."
+    TokenType = Integer
+    TargetH = Yes
+    Lock = Yes
+End
+
+TOKEN
+    Name  = "OS_ANDROID"
+    Value  = "1"
+    Help  = "This is only noted the setup option number for Android."
+    TokenType = Integer
+    TargetH = Yes
+    Lock = Yes
+End
+
+TOKEN
+    Name  = "OS_WINDOWS7"
+    Value  = "2"
+    Help  = "This is only noted the setup option number for Windows 7."
+    TokenType = Integer
+    TargetH = Yes
+    Lock = Yes
+End
+#CSP20140122 <<
+
+TOKEN
+    Name  = " "
+    TokenType = Integer
+End
+
+TOKEN
+	Name  = "===================== Switchable Graphics ====================="
+	Value  = "==========================================================="
+	TokenType = Expression
+End
+
+TOKEN
+	Name  = "SWITCHABLE_GRAPHICS_SUPPORT"
+	Value  = "0"
+	Help  = "Switch for Enabling SG support in the project"
+	TokenType = Boolean
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "SG_SUPPORT"
+	Value  = "1"
+	TokenType = Expression
+	TargetH = Yes
+	Section  = "Defines"
+	Token = "SWITCHABLE_GRAPHICS_SUPPORT" "=" "1"
+End
+
+#EIP162773 >>
+TOKEN
+	Name  = "===================== DPTF EC Method Support ====================="
+	Value  = "==========================================================="
+	TokenType = Expression
+End
+
+TOKEN
+	Name  = "DPTF_EC_METHOD_SUPPORT"
+	Value  = "0"
+	Help  = "Determine using Name or Method for EC variable of DPTF function"
+	TokenType = Boolean
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "B1CC_METHOD"
+	Value  = "0"
+	Help  = "OEM can return an integer directly or call any method/variable to get/return B1CC value."
+	TokenType = Expression
+	TargetH = Yes
+	Token = "DPTF_EC_METHOD_SUPPORT" "=" "1"
+End
+
+TOKEN
+	Name  = "B1ST_METHOD"
+	Value  = "0"
+	Help  = "OEM can return an integer directly or call any method/variable to get/return B1ST value."
+	TokenType = Expression
+	TargetH = Yes
+	Token = "DPTF_EC_METHOD_SUPPORT" "=" "1"
+End
+
+TOKEN
+	Name  = "B2CC_METHOD"
+	Value  = "0"
+	Help  = "OEM can return an integer directly or call any method/variable to get/return B2CC value."
+	TokenType = Expression
+	TargetH = Yes
+	Token = "DPTF_EC_METHOD_SUPPORT" "=" "1"
+End
+
+TOKEN
+	Name  = "B2ST_METHOD"
+	Value  = "0"
+	Help  = "OEM can return an integer directly or call any method/variable to get/return B2ST value."
+	TokenType = Expression
+	TargetH = Yes
+	Token = "DPTF_EC_METHOD_SUPPORT" "=" "1"
+End
+
+TOKEN
+	Name  = "RPWR_METHOD"
+	Value  = "0"
+	Help  = "OEM can return an integer directly or call any method/variable to get/return RPWR value."
+	TokenType = Expression
+	TargetH = Yes
+	Token = "DPTF_EC_METHOD_SUPPORT" "=" "1"
+End
+
+TOKEN
+	Name  = "LIDS_METHOD"
+	Value  = "1"
+	Help  = "OEM can return an integer directly or call any method/variable to get/return LIDS value."
+	TokenType = Expression
+	TargetH = Yes
+	Token = "DPTF_EC_METHOD_SUPPORT" "=" "1"
+End
+
+TOKEN
+	Name  = "LSTE_METHOD"
+	Value  = "1"
+	Help  = "OEM can return an integer directly or call any method/variable to get/return LSTE value."
+	TokenType = Expression
+	TargetH = Yes
+	Token = "DPTF_EC_METHOD_SUPPORT" "=" "1"
+End
+
+TOKEN
+	Name  = "VPWR_METHOD"
+	Value  = "0"
+	Help  = "OEM can return an integer directly or call any method/variable to get/return VPWR value."
+	TokenType = Expression
+	TargetH = Yes
+	Token = "DPTF_EC_METHOD_SUPPORT" "=" "1"
+End
+
+TOKEN
+	Name  = "S3WR_METHOD"
+	Value  = "0"
+	Help  = "OEM can return an integer directly or call any method/variable to get/return S3WR value."
+	TokenType = Expression
+	TargetH = Yes
+	Token = "DPTF_EC_METHOD_SUPPORT" "=" "1"
+End
+
+TOKEN
+	Name  = "TMPR_METHOD"
+	Value  = "0"
+	Help  = "OEM can return an integer directly or call any method/variable to get/return TMPR value."
+	TokenType = Expression
+	TargetH = Yes
+	Token = "DPTF_EC_METHOD_SUPPORT" "=" "1"
+End
+
+TOKEN
+	Name  = "LTMP_METHOD"
+	Value  = "0"
+	Help  = "OEM can return an integer directly or call any method/variable to get/return LTMP value."
+	TokenType = Expression
+	TargetH = Yes
+	Token = "DPTF_EC_METHOD_SUPPORT" "=" "1"
+End
+#EIP162773 <<
+
+#EIP174562 >>
+TOKEN
+	Name  = "TRTI"
+	Value  = "TRTI"
+	Help  = "The package name OEM would like to return in _TRT."
+	TokenType = Expression
+	TargetH = Yes
+End
+#EIP174562 <<
+
+TOKEN
+    Name  = " "
+    TokenType = Integer
+End
+
+PATH
+	Name  = "VlvRefCodePkg_DIR"
+End
+
+#EIP180243 >>
+ELINK
+	Name  = "DSDT_ASL_W7_INCLUDE_FILE"
+	InvokeOrder = ReplaceParent
+End
+
+ELINK
+	Name  = "TokenAsl.h"
+	Parent  = "DSDT_ASL_W7_INCLUDE_FILE"
+	InvokeOrder = AfterParent
+End
+
+ELINK
+	Name  = "DSDT.ASL"
+	Parent  = "DSDT_ASL_W7_INCLUDE_FILE"
+	InvokeOrder = AfterParent
+End
+#EIP180243 <<
+
+#EIP174562 >>
+ELINK
+	Name  = "OEM_DPTF_ASL_INCLUDE_FILE"
+	InvokeOrder = ReplaceParent
+End
+
+ELINK
+	Name  = "Vlv2DeviceRefCodePkg/Wrapper/AcpiAslWrap/Dummy.asl"
+	Parent  = "OEM_DPTF_ASL_INCLUDE_FILE"
+	Help  = "This is used to avoid the build error while the child elink of OEM_DPTF_ASL_INCLUDE_FILE is empty."
+	InvokeOrder = AfterParent
+End
+#EIP174562 <<
+
+#EIP136267 >>
+ELINK
+	Name  = "{{0x80862882, 0x0000, 0xFF, TRUE, 0x0003, 0x0000}, mAzaliaVerbTableDataVlv},"
+	Parent  = "OEM_HDA_VERB_TABLE"
+	Help  = "CRB HDA Verb Table"
+	Token = "CRB_VERB_TABLE_SUPPORT" "=" "1"
+	InvokeOrder = AfterParent
+End
+
+
+#P20130627_3 >>
+ELINK
+	Name  = "{{0x10EC0262, 0x0000, 0xFF, TRUE, 0x000B, 0x0002}, mAzaliaVerbTableDataALC262},"
+	Parent  = "OEM_HDA_VERB_TABLE"
+	Help  = "CRB HDA Verb Table"
+	Token = "CRB_VERB_TABLE_SUPPORT" "=" "1"
+	InvokeOrder = AfterParent
+End
+
+
+#EIP136267 <<
+#P20130627_3 <<
+
+#EIP174562 >>
+OUTPUTREGISTER
+	Name  = "OemDptfAslIncludeList"
+	Path  = "Build"
+	File  = "OemDptfAsl.asl"
+	Template  = "AcpiAslWrap/OemDptfAsl.txt"
+End
+#EIP174562 <<
+
+#EIP180243 >>
+OUTPUTREGISTER
+	Name  = "DsdtAslW7IncludeList"
+	Path  = "Build"
+	File  = "DsdtAslW7Tmp.asl"
+	Template  = "AcpiAslWrap/DsdtAslW7.txt"
+End
+#EIP180243 <<
+
+INFComponent
+	Name  = "NcPolicyInitPei"
+	File  = "Library/NcPolicyInit/Pei/NcPolicyInitPei.inf"
+	Package  = "Vlv2DeviceRefCodePkg"
+End
+
+INFComponent
+	Name  = "ScPolicyInitPei"
+	File  = "Library/ScPolicyInit/Pei/ScPolicyInitPei.inf"
+	Package  = "Vlv2DeviceRefCodePkg"
+End
+
+INFComponent
+	Name  = "NcPolicyInitDxe"
+	File  = "Library/NcPolicyInit/Dxe/NcPolicyInitDxe.inf"
+	Package  = "Vlv2DeviceRefCodePkg"
+End
+
+INFComponent
+	Name  = "ScPolicyInitDxe"
+	File  = "Library/ScPolicyInit/Dxe/ScPolicyInitDxe.inf"
+	Package  = "Vlv2DeviceRefCodePkg"
+End
+
+INFComponent
+	Name  = "ScAslUpdateLib"
+	File  = "Library/ScAslUpdate/Dxe/ScAslUpdateLib.inf"
+	Package  = "Vlv2DeviceRefCodePkg"
+End
+
+INFComponent
+	Name  = "PlatformGopPolicy"
+	File  = "PlatformGopPolicy/PlatformGopPolicy.inf"
+	Package  = "Vlv2DeviceRefCodePkg"
+	ModuleTypes  = "DXE_DRIVER"
+End
+
+INFComponent
+	Name  = "SeCPolicyInitDxe"
+	File  = "SeCPolicyInitDxe/SeCPolicyInitDxe.inf"
+	Package  = "Vlv2DeviceRefCodePkg"
+	ModuleTypes  = "DXE_DRIVER"
+End
+
+INFComponent
+	Name  = "NullMemoryTestDxe"
+	File  = "NullMemoryTestDxe/NullMemoryTestDxe.inf"
+	Package  = "Vlv2DeviceRefCodePkg"
+	ModuleTypes  = "DXE_DRIVER"
+End
+
+INFComponent
+	Name  = "FvOnFv2Thunk"
+	File  = "FvOnFv2Thunk/FvOnFv2Thunk.inf"
+	Package  = "Vlv2DeviceRefCodePkg"
+	ModuleTypes  = "DXE_DRIVER"
+End
+
+INFComponent
+	Name  = "CpuIoDxe"
+	File  = "CpuIoDxe/CpuIoDxe.inf"
+	Package  = "Vlv2DeviceRefCodePkg"
+	ModuleTypes  = "DXE_RUNTIME_DRIVER"
+End
+
+INFComponent
+	Name  = "AcpiSupportDxe"
+	File  = "AcpiSupportDxe/AcpiSupportDxe.inf"
+	Package  = "Vlv2DeviceRefCodePkg"
+	ModuleTypes  = "DXE_DRIVER"
+	Disable = Yes
+End
+
+
+#//EIP113194+>>
+INFComponent
+	Name  = "AcpiSupportDxe"
+	File  = "AcpiSupportDxe/AcpiSupportDxe.inf"
+	Package  = "Vlv2DeviceRefCodePkg"
+	ModuleTypes  = "DXE_DRIVER"
+	Token = "WP_ACPI_SUPPORT_ENABLE" "=" "0"
+	Disable = Yes
+End
+
+
+#//EIP113194+<<
+#//<EIP142108+> >>>
+INFComponent
+	Name  = "TxeFwDowngradeDxe"
+	File  = "TxeFwDowngradeDxe/TxeFwDowngradeDxe.inf"
+	Package  = "Vlv2DeviceRefCodePkg"
+	ModuleTypes  = "DXE_DRIVER"
+End
+
+
+#//<EIP142108+> <<<
+INFComponent
+	Name  = "SMBIOS131"
+	File  = "SMBIOS131/SMBIOS131.inf"
+	Package  = "MdeModulePkg"
+	ModuleTypes  = "DXE_RUNTIME_DRIVER"
+	Disable = Yes
+End
+
+
+#EIP142372 >>
+INFComponent
+	Name  = "PchSmbus2ArpDisabled"
+	File  = "Smbus2Ppi/PchSmbus2ArpDisabled.inf"
+	Package  = "Vlv2DeviceRefCodePkg"
+	ModuleTypes  = "PEIM"
+End
+
+
+#EIP142372 <<
+INFComponent
+	Name  = "AcpiS3SaveDxe"
+	File  = "AcpiS3SaveDxe/AcpiS3SaveDxe.inf"
+	Package  = "Vlv2DeviceRefCodePkg"
+	ModuleTypes  = "DXE_DRIVER"
+End
+
+#//<EIP150193+> >>>
+INFComponent
+	Name  = "EsrtDxe"
+	File  = "DeviceFwUpdate/EsrtDxe/EsrtDxe.inf"
+	Package  = "VlvPlatformPkg"
+	ModuleTypes  = "DXE_DRIVER"
+	Token = "AOS_FOTA_SUPPORT" "=" "1"
+End
+
+INFComponent
+	Name  = "FotaDxe"
+	File  = "FotaDxe/FotaDxe.inf"
+	Package  = "VlvPlatformPkg"
+	ModuleTypes  = "DXE_DRIVER"
+	Token = "AOS_FOTA_SUPPORT" "=" "1"
+End
+
+INFComponent
+	Name  = "CapsuleRuntimeDxe"
+	File  = "Override/MdeModulePkg/Universal/CapsuleRuntimeDxe/CapsuleRuntimeDxe.inf"
+	Package  = "MdeModulePkg"
+	ModuleTypes  = "DXE_RUNTIME_DRIVER"
+	Token = "AOS_FOTA_SUPPORT" "=" "1"
+End
+
+INFComponent
+	Name  = "DxeCapsuleLib"
+	File  = "Override/IntelFrameworkModulePkg/Library/DxeCapsuleLib/DxeCapsuleLib.inf"
+	Package  = "IntelFrameworkModulePkg"
+	ModuleTypes  = "DXE_DRIVER DXE_RUNTIME_DRIVER UEFI_APPLICATION"
+	Token = "AOS_FOTA_SUPPORT" "=" "1"
+End
+#//<EIP150193+> <<<
+
+INFComponent
+	Name  = "PlatformPei"
+	File  = "PlatformPei/PlatformPei.inf"
+	Package  = "Vlv2DeviceRefCodePkg"
+	ModuleTypes  = "PEIM"
+End
+
+INFComponent
+	Name  = "PciBusDxe"
+	File  = "PciBusDxe/PciBusDxe.inf"
+	Package  = "Vlv2DeviceRefCodePkg"
+	ModuleTypes  = "UEFI_DRIVER"
+	Disable = Yes
+End
+
+INFComponent
+	Name  = "AcpiPlatform"
+	File  = "AcpiPlatform/AcpiPlatform.inf"
+	Package  = "Vlv2DeviceRefCodePkg"
+	ModuleTypes  = "DXE_DRIVER"
+	Disable = Yes
+End
+
+
+#EIP132398 >>
+INFComponent
+	Name  = "LpssDxe"
+	File  = "LpssDxe/LpssDxe.inf"
+	Package  = "Vlv2DeviceRefCodePkg"
+	ModuleTypes  = "DXE_DRIVER"
+	Token = "MMC_SUPPORT" "=" "1"
+End
+
+INFComponent
+	Name  = "LpssSmm"
+	File  = "LpssSmm/LpssSmm.inf"
+	Package  = "Vlv2DeviceRefCodePkg"
+	ModuleTypes  = "DXE_SMM_DRIVER"
+	Token = "MMC_SUPPORT" "=" "1"
+End
+
+
+#EIP132398 <<
+INFComponent
+	Name  = "BaseS3BootScriptLibNull"
+	File  = "../../MdePkg/Library/BaseS3BootScriptLibNull/BaseS3BootScriptLibNull.inf"
+	Package  = "MdePkg"
+End
+
+INFComponent
+	Name  = "DxeS3BootScriptLib"
+	File  = "../../MdeModulePkg/Library/PiDxeS3BootScriptLib/DxeS3BootScriptLib.inf"
+	Package  = "MdeModulePkg"
+End
+
+INFComponent
+	Name  = "ResetSystemLib"
+	File  = "../../MdeModulePkg/Library\BaseResetSystemLibNull\BaseResetSystemLibNull.inf"
+	Package  = "MdeModulePkg"
+End
+
+INFComponent
+	Name  = "AmiS3BootScriptLib"
+	File  = "Library/AmiS3BootScriptLib/AmiS3BootScriptLib.inf"
+	Package  = "Vlv2DeviceRefCodePkg"
+End
+
+INFComponent
+	Name  = "MultiPlatformLib"
+	File  = "Library/MultiPlatformLib/MultiPlatformLib.inf"
+	Package  = "Vlv2DeviceRefCodePkg"
+End
+
+INFComponent
+	Name  = "DxePlatform"
+	File  = "PlatformDxe/Platform.inf"
+	Package  = "Vlv2DeviceRefCodePkg"
+	ModuleTypes  = "DXE_DRIVER"
+End
+
+INFComponent
+	Name  = "PlatformInitPei"
+	File  = "PlatformInitPei/PlatformEarlyInit.inf"
+	Package  = "Vlv2DeviceRefCodePkg"
+	ModuleTypes  = "PEIM"
+End
+
+INFComponent
+	Name  = "AcpiVariableHobOnSmramReserveHobThunk"
+	File  = "AcpiVariableHobOnSmramReserveHobThunk/AcpiVariableHobOnSmramReserveHobThunk.inf"
+	Package  = "Vlv2DeviceRefCodePkg"
+	ModuleTypes  = "PEIM"
+End
+
+INFComponent
+	Name  = "SaveConfigMemData"
+	File  = "SaveConfigMemData/SaveConfigMemData.inf"
+	Package  = "Vlv2DeviceRefCodePkg"
+	ModuleTypes  = "DXE_DRIVER"
+End
+
+
+#EIP135119 >>
+INFComponent
+	Name  = "PlatformPmic"
+	File  = "PlatformPmic/PlatformPmic.inf"
+	Package  = "Vlv2DeviceRefCodePkg"
+	ModuleTypes  = "DXE_DRIVER"
+	Disable = Yes
+End
+
+
+#EIP135119 <<
+#EIP130725 >>
+INFComponent
+	Name  = "ScBiosWriteProtect"
+	File  = "ScBiosWriteProtect/Smm/ScBiosWriteProtect.inf"
+	Package  = "Vlv2DeviceRefCodePkg"
+	ModuleTypes  = "DXE_SMM_DRIVER"
+End
+
+
+#EIP130725 <<
+INFComponent
+	Name  = "SmramSaveInfoHandlerSmm"
+	File  = "SmramSaveInfoHandlerSmm/SmramSaveInfoHandlerSmm.inf"
+	Package  = "Vlv2DeviceRefCodePkg"
+	ModuleTypes  = "DXE_SMM_DRIVER"
+End
+
+INFComponent
+	Name  = "SmmBaseHelper"
+	File  = "SmmBaseHelper/SmmBaseHelper.inf"
+	Package  = "Vlv2DeviceRefCodePkg"
+	ModuleTypes  = "DXE_SMM_DRIVER"
+End
+
+INFComponent
+	Name  = "SmmBaseOnSmmBase2Thunk"
+	File  = "SmmBaseOnSmmBase2Thunk/SmmBaseOnSmmBase2Thunk.inf"
+	Package  = "Vlv2DeviceRefCodePkg"
+	ModuleTypes  = "DXE_RUNTIME_DRIVER"
+End
+
+
+#EIP133068 >>
+INFComponent
+	Name  = "SmmControl2OnSmmControlThunk"
+	File  = "SmmControl2OnSmmControlThunk/SmmControl2OnSmmControlThunk.inf"
+	Package  = "Vlv2DeviceRefCodePkg"
+	ModuleTypes  = "DXE_RUNTIME_DRIVER"
+End
+
+
+#EIP133068 <<
+INFComponent
+	Name  = "SmmSwDispatch2OnSmmSwDispatchThunk"
+	File  = "SmmSwDispatch2OnSmmSwDispatchThunk/SmmSwDispatch2OnSmmSwDispatchThunk.inf"
+	Package  = "Vlv2DeviceRefCodePkg"
+	ModuleTypes  = "DXE_SMM_DRIVER"
+End
+
+INFComponent
+	Name  = "SmmSxDispatch2OnSmmSxDispatchThunk"
+	File  = "SmmSxDispatch2OnSmmSxDispatchThunk/SmmSxDispatch2OnSmmSxDispatchThunk.inf"
+	Package  = "Vlv2DeviceRefCodePkg"
+	ModuleTypes  = "DXE_SMM_DRIVER"
+End
+
+INFComponent
+	Name  = "SmmGpiDispatch2OnSmmGpiDispatchThunk"
+	File  = "SmmGpiDispatch2OnSmmGpiDispatchThunk/SmmGpiDispatch2OnSmmGpiDispatchThunk.inf"
+	Package  = "Vlv2DeviceRefCodePkg"
+	ModuleTypes  = "DXE_SMM_DRIVER"
+End
+
+INFComponent
+	Name  = "SmmPBDispatch2OnSmmPBDispatchThunk"
+	File  = "SmmPBDispatch2OnSmmPBDispatchThunk/SmmPBDispatch2OnSmmPBDispatchThunk.inf"
+	Package  = "Vlv2DeviceRefCodePkg"
+	ModuleTypes  = "DXE_SMM_DRIVER"
+End
+
+INFComponent
+	Name  = "SmmUsbDispatch2OnSmmUsbDispatchThunk"
+	File  = "SmmUsbDispatch2OnSmmUsbDispatchThunk/SmmUsbDispatch2OnSmmUsbDispatchThunk.inf"
+	Package  = "Vlv2DeviceRefCodePkg"
+	ModuleTypes  = "DXE_SMM_DRIVER"
+End
+
+
+#EIP128872 >>
+INFComponent
+	Name  = "SmmPTDispatch2OnSmmPTDispatchThunk"
+	File  = "SmmPTDispatch2OnSmmPTDispatchThunk/SmmPTDispatch2OnSmmPTDispatchThunk.inf"
+	Package  = "Vlv2DeviceRefCodePkg"
+	ModuleTypes  = "DXE_SMM_DRIVER"
+End
+
+
+#EIP128872 <<
+#INFComponent
+#    Name  = "DfuLib"
+#    File  = "Library/DfuCapsuleLib/DfuCapsuleLib.inf"
+#    Package  = "Vlv2DeviceRefCodePkg"
+#End
+INFComponent
+	Name  = "I2cDriverLib"
+	File  = "Library/I2cStackLib/I2cDriverLib/I2cDriverLib.inf"
+	Package  = "Vlv2DeviceRefCodePkg"
+End
+
+INFComponent
+	Name  = "BaseDebugLibNull"
+	File  = "../../MdePkg/Library/BaseDebugLibNull/BaseDebugLibNull.inf"
+	Package  = "MdePkg"
+End
+
+INFComponent
+	Name  = "Dptf"
+	File  = "Dptf/Dxe/Dptf.inf"
+	Package  = "Vlv2DeviceRefCodePkg"
+	ModuleTypes  = "DXE_DRIVER"
+End
+
+INFComponent
+	Name  = "Lpit"
+	File  = "Lpit/Dxe/Lpit.inf"
+	Package  = "Vlv2DeviceRefCodePkg"
+	ModuleTypes  = "DXE_DRIVER"
+End
+
+INFComponent
+	Name  = "DptfAsl"
+	File  = "AcpiTables/DptfAsl.inf"
+	Package  = "Vlv2DeviceRefCodePkg"
+	ModuleTypes  = "DXE_DRIVER"
+End
+
+INFComponent
+    Name  = "SgAsl"
+    File  = "AcpiTables/SgAsl.inf"
+    Package  = "Vlv2DeviceRefCodePkg"
+    ModuleTypes  = "DXE_DRIVER"
+    Token = "SWITCHABLE_GRAPHICS_SUPPORT" "=" "1"
+End
+
+INFComponent
+    Name  = "DsdtAslW7"
+    File  = "AcpiTables/DsdtAslW7.inf"
+    Package  = "AmiModulePkg"
+    ModuleTypes  = "USER_DEFINED"
+End
+
+#EIP154718 >>
+INFComponent
+	Name  = "TdtPlatformPolicy"
+	File  = "TdtPlatformPolicy/TdtPlatformPolicy.inf"
+	Package  = "VlvPlatformPkg"
+	ModuleTypes  = "DXE_DRIVER"
+	Token = "AT_SUPPORT" "=" "1"
+End
+#EIP154718 <<
+
+#EIP142474 >>
+INFComponent
+	Name  = "MmcMediaDeviceDxeLib"
+	File  = "Library/MmcMediaDeviceDxeLib/MmcMediaDeviceDxeLib.inf"
+	Package  = "Vlv2DeviceRefCodePkg"
+End
+#EIP142474 <<
+
+#EIP144604 >>
+INFComponent
+	Name  = "HpetTimerProtocol"
+	File  = "HpetTimerProtocol/HpetTimerProtocol.inf"
+	Package  = "Vlv2DeviceRefCodePkg"
+	ModuleTypes  = "DXE_DRIVER"
+	Token = "HPET_PROTOCOL_SUPPORT" "=" "1"
+End
+
+
+#EIP144604 <<
+
+#EIP150790 >>
+INFComponent
+	Name  = "TrEEPhysicalPresenceLibNull"
+	File  = "Library/DxeTrEEPhysicalPresenceLib/DxeTrEEPhysicalPresenceLibNull.inf"
+	Package  = "Vlv2DeviceRefCodePkg"
+	Token = "SecurityPkg_SUPPORT" "=" "0"
+End
+#EIP150790 <<
+
+#EIP168616 >>
+INFComponent
+	Name  = "MemoryDownLib"
+	File  = "Library/MemoryDownLib/MemoryDownLib.inf"
+	Package  = "Vlv2DeviceRefCodePkg"
+	Token = "MRC_MEMORY_DOWN_SUPPORT" "!=" "0"
+End
+
+INFComponent
+	Name  = "OemMemoryDownLib"
+	File  = "Library/OemMemoryDownLib/OemMemoryDownLib.inf"
+	Package  = "Vlv2DeviceRefCodePkg"
+	Token = "MRC_MEMORY_DOWN_SUPPORT" "!=" "0"
+End
+#EIP168616 <<
+
+LibraryMapping
+	Class  = "S3BootScriptLib"
+	Instance  = "Vlv2DeviceRefCodePkg.AmiS3BootScriptLib"
+End
+
+LibraryMapping
+	Class  = "ResetSystemLib"
+	Instance  = "MdeModulePkg.ResetSystemLib"
+End
+
+LibraryMapping
+	Class  = "MultiPlatformLib"
+	Instance  = "Vlv2DeviceRefCodePkg.MultiPlatformLib"
+End
+
+LibraryMapping
+	Class  = "NcPolicyInitPei"
+	Instance  = "Vlv2DeviceRefCodePkg.NcPolicyInitPei"
+	ModuleTypes  = "PEIM"
+End
+
+LibraryMapping
+	Class  = "ScPolicyInitPei"
+	Instance  = "Vlv2DeviceRefCodePkg.ScPolicyInitPei"
+	ModuleTypes  = "PEIM"
+End
+
+LibraryMapping
+	Class  = "NcPolicyInitDxe"
+	Instance  = "Vlv2DeviceRefCodePkg.NcPolicyInitDxe"
+	ModuleTypes  = "DXE_DRIVER DXE_RUNTIME_DRIVER DXE_SMM_DRIVER"
+End
+
+LibraryMapping
+	Class  = "ScPolicyInitDxe"
+	Instance  = "Vlv2DeviceRefCodePkg.ScPolicyInitDxe"
+	ModuleTypes  = "DXE_DRIVER DXE_RUNTIME_DRIVER DXE_SMM_DRIVER"
+End
+
+LibraryMapping
+	Class  = "PchAslUpdateLib"
+	Instance  = "Vlv2DeviceRefCodePkg.ScAslUpdateLib"
+End
+
+LibraryMapping
+	Class  = "I2cDriverLib"
+	Instance  = "Vlv2DeviceRefCodePkg.I2cDriverLib"
+End
+
+#//<EIP150193+> >>>
+LibraryMapping
+	Class  = "CapsuleLib"
+	Instance  = "IntelFrameworkModulePkg.DxeCapsuleLib"
+	Override  = "MdeModulePkg.CapsuleRuntimeDxe"
+	Token = "AOS_FOTA_SUPPORT" "=" "1"
+End
+#//<EIP150193+> <<<
+
+#EIP142474 >>
+LibraryMapping
+	Class  = "MmcMediaDeviceDxeLib"
+	Instance  = "Vlv2DeviceRefCodePkg.MmcMediaDeviceDxeLib"
+	ModuleTypes  = "DXE_DRIVER DXE_RUNTIME_DRIVER DXE_SMM_DRIVER"
+End
+#EIP142474 <<
+
+#EIP150790 >>
+LibraryMapping
+	Class  = "TrEEPhysicalPresenceLib"
+	Instance  = "Vlv2DeviceRefCodePkg.TrEEPhysicalPresenceLibNull"
+	ModuleTypes  = "DXE_DRIVER DXE_RUNTIME_DRIVER DXE_SMM_DRIVER"
+	Token = "SecurityPkg_SUPPORT" "=" "0"
+End
+#EIP150790 <<
+
+#EIP154718 >>
+LibraryMapping
+	Class  = "NULL"
+	Instance  = "SecurityPkg.Tpm2CommandLib"
+	Override  = "Vlv2DeviceRefCodePkg.SeCPolicyInitDxe"
+	Token = "SecurityPkg_SUPPORT" "=" "1"
+End
+
+LibraryMapping
+	Class  = "NULL"
+	Instance  = "Vlv2DeviceRefCodePkg.Tpm2DeviceLibSeC"
+	Override  = "Vlv2DeviceRefCodePkg.SeCPolicyInitDxe"
+	Token = "SecurityPkg_SUPPORT" "=" "1"
+End
+#EIP154718 <<
+
+#EIP168616 >>
+LibraryMapping
+	Class  = "NULL"
+	Instance  = "Vlv2DeviceRefCodePkg.MemoryDownLib"
+	Override  = "Vlv2DeviceRefCodePkg.MemoryInit"
+	Token = "MRC_MEMORY_DOWN_SUPPORT" "!=" "0"
+End
+
+LibraryMapping
+	Class  = "OemMemoryDownLib"
+	Instance  = "Vlv2DeviceRefCodePkg.OemMemoryDownLib"
+	Token = "MRC_MEMORY_DOWN_SUPPORT" "!=" "0"
+End
+#EIP168616 <<
+
+#LibraryMapping
+#    Class  = "DfuLib"
+#    Instance  = "Vlv2DeviceRefCodePkg.DfuLib"
+#End
+#EIP205408 >>
+TOKEN
+	Name  = "DEFAULT_REFRESH_2X_POLICY"
+	Value  = "0"
+	Help  = "Control memory refresh rate."
+	TokenType = Integer
+	TargetH = Yes
+End
+#EIP205408 <<
+#EIP209971 >>
+TOKEN
+	Name  = "DTMI"
+	Value  = "0xB7"
+	TokenType = Integer
+	TargetH = Yes
+	TargetASL = Yes
+End
+#EIP209971 <<
+
+INFComponent    # EIP314798
+    Name  = "WrapperAcpi"
+    File  = "WrapperAcpi/Dxe/WrapperAcpi.inf"
+    Package  = "Vlv2DeviceRefCodePkg"
+    ModuleTypes  = "DXE_DRIVER"
+End

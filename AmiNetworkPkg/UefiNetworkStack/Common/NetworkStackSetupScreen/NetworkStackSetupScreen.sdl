@@ -1,0 +1,41 @@
+TOKEN
+	Name  = "NetworkStackSetupScreen_SUPPORT"
+	Value  = "1"
+	Help  = "Switch for Enabling NetworkStackSetupScreen support in the project"
+	TokenType = Boolean
+	TargetMAK = Yes
+    TargetH = Yes
+	Master = Yes
+	Token = "UefiNetworkStack_SUPPORT" "=" "1"
+End
+
+PATH
+	Name  = "NETWORK_STACK_SETUP_SCREEN_DIR"
+End
+
+INFComponent
+	Name  = "NetworkStackSetupScreen"
+	File  = "NetworkStackSetupScreen.inf"
+	Package  = "AmiNetworkPkg"
+	ModuleTypes  = "DXE_DRIVER"
+	Token = "NetworkStackSetupScreen_SUPPORT" "=" "1"
+End
+
+ELINK
+	Name  = "AmiNetworkPkg/AmiNetworkPkg.dec"
+	Parent  = "AdditionalSetupPackages"
+	InvokeOrder = AfterParent
+End
+
+ELINK
+	Name = "$(NETWORK_STACK_SETUP_SCREEN_DIR)/NetworkStackSetupScreen.sd"
+	Parent = "SETUP_DEFINITIONS"
+	InvokeOrder = AfterParent
+End
+
+ELINK
+    Name  = "$(NETWORK_STACK_SETUP_SCREEN_DIR)/NetworkStackSetupScreen.uni"
+	Parent  = "SetupStringFiles"
+	InvokeOrder = AfterParent
+End
+

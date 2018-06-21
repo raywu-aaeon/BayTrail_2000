@@ -1,0 +1,8 @@
+<component>
+	name = "Intel Architecture MdePkg"
+	category = ModulePart
+	LocalRoot = "MdePkg\"
+	RefName = "MdePkg.IaMde"
+[parts]
+"MdePkg.IaLibraryInstances"
+<endComponent>

@@ -1,0 +1,19 @@
+<component>
+	name = "SouthCluster-PchRegs"
+	category = ModulePart
+	LocalRoot = "Vlv2DeviceRefCodePkg\ValleyView2Soc\SouthCluster\Include\PchRegs"
+	RefName = "Vlv2DeviceRefCodePkg.ValleyView2Soc.ValleyView2Soc-SouthCluster.SouthCluster-Include.SouthCluster-PchRegs"
+[files]
+"PchRegsHda.h"
+"PchRegsLan.h"
+"PchRegsLpe.h"
+"PchRegsLpss.h"
+"PchRegsPcie.h"
+"PchRegsPcu.h"
+"PchRegsRcrb.h"
+"PchRegsSata.h"
+"PchRegsScc.h"
+"PchRegsSmbus.h"
+"PchRegsSpi.h"
+"PchRegsUsb.h"
+<endComponent>

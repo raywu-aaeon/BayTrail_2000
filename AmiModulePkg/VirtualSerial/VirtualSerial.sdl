@@ -1,0 +1,99 @@
+TOKEN
+	Name  = "VirtualSerial_SUPPORT"
+	Value  = "1"
+	Help  = "Main switch to enable Virtual Serial Device support in Project"
+	TokenType = Boolean
+	Master = Yes
+End
+
+TOKEN
+	Name  = "VIRTUAL_SERIAL_DEVICE1_UID"
+	Value  = "0"
+	Help  = "Virtual Serial Device 1 UID. Make sure this UID is not used by any SIO serial ports"
+	TokenType = Integer
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "VIRTUAL_SERIAL_DEVICE1_BASE_ADDRESS"
+	Value  = "0x3F8"
+	Help  = "Virtual Serial Device 1 Base Address."
+	TokenType = Integer
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "VIRTUAL_SERIAL_DEVICE1_IRQ"
+	Value  = "4"
+	Help  = "Virtual Serial Device 1 IRQ."
+	TokenType = Integer
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "VIRTUAL_SERIAL_DEVICE2_UID"
+	Value  = "1"
+	Help  = "Virtual Serial Device 2 UID. Make sure this UID is not used by any SIO serial ports"
+	TokenType = Integer
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "VIRTUAL_SERIAL_DEVICE2_BASE_ADDRESS"
+	Value  = "0x3F8"
+	Help  = "Virtual Serial Device 2 Base Address."
+	TokenType = Integer
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "VIRTUAL_SERIAL_DEVICE2_IRQ"
+	Value  = "4"
+	Help  = "Virtual Serial Device 2 IRQ."
+	TokenType = Integer
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "VIRTUAL_SERIAL_DEVICE3_UID"
+	Value  = "0"
+	Help  = "Virtual Serial Device 3 UID. Make sure this UID is not used by any SIO serial ports"
+	TokenType = Integer
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "VIRTUAL_SERIAL_DEVICE3_BASE_ADDRESS"
+	Value  = "0"
+	Help  = "Virtual Serial Device 3 Base Address."
+	TokenType = Integer
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "VIRTUAL_SERIAL_DEVICE3_IRQ"
+	Value  = "0"
+	Help  = "Virtual Serial Device 3 IRQ."
+	TokenType = Integer
+	TargetH = Yes
+End
+
+PATH
+	Name  = "VirtualSerial_DIR"
+	Path  = "AmiModulePkg\VirtualSerial"
+End
+
+ELINK
+	Name  = "$(BUILD_DIR)\VirtualSerial.ffs"
+	Parent  = "FV_MAIN"
+	InvokeOrder = AfterParent
+End
+
+INFComponent
+	Name  = "VirtualSerial"
+	File  = "VirtualSerial.inf"
+	Package  = "AmiModulePkg"
+	ModuleTypes  = "DXE_DRIVER"
+	Token = "VirtualSerial_SUPPORT" "=" "1"
+End
+

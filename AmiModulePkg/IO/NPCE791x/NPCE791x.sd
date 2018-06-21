@@ -1,0 +1,191 @@
+//*************************************************************************
+//*************************************************************************
+//**                                                                     **
+//**        (C)Copyright 1985-2011, American Megatrends, Inc.            **
+//**                                                                     **
+//**                       All Rights Reserved.                          **
+//**                                                                     **
+//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093           **
+//**                                                                     **
+//**                       Phone: (770)-246-8600                         **
+//**                                                                     **
+//*************************************************************************
+//*************************************************************************
+//
+//*************************************************************************
+// $Header: $
+//
+// $Revision: $
+//
+// $Date: $
+//*************************************************************************
+// Revision History
+// ----------------
+// $Log: $
+// 
+//*************************************************************************
+//<AMI_FHDR_START>
+//
+// Name:  <NPCE791x.SD>
+//
+// Description: SIO Form Template, Setup screen definition file
+//
+//<AMI_FHDR_END>
+//*************************************************************************
+
+#ifdef SETUP_DATA_DEFINITION
+/***********************************************************/
+/* Put NVRAM data definitions here.
+/* For example:    UINT8 Data1;
+/* These definitions will be converted by the build process
+/* to a definitions of SETUP_DATA fields.
+/***********************************************************/
+#endif //SETUP_DATA_DEFINITION
+
+//-------------------------------------------------------------------------
+//Select Top level menu itmem (forset) for you pages
+//-------------------------------------------------------------------------
+#ifdef ADVANCED_FORM_SET
+
+//-------------------------------------------------------------------------
+//If you need any additional type definitions add them here
+//-------------------------------------------------------------------------
+#ifdef FORM_SET_TYPEDEF
+    #include "SioSetup.h"
+    #include "Token.h"
+    #include "SioVarType.h"
+#endif
+
+//-------------------------------------------------------------------------
+//If you need custom varstore's define them here
+//-------------------------------------------------------------------------
+#ifdef FORM_SET_VARSTORE
+#endif
+
+//-------------------------------------------------------------------------
+//Define controls to be added to the top level page of the formset
+//-------------------------------------------------------------------------
+#ifdef FORM_SET_ITEM
+#endif
+
+//-------------------------------------------------------------------------
+//Define goto commands for the forms defined in this file
+//-------------------------------------------------------------------------
+#ifdef FORM_SET_GOTO
+    goto NPCE791x_FORM_ID,
+    prompt  = STRING_TOKEN(STR_NPCE791X_SIO_FORM),
+    help    = STRING_TOKEN(STR_NPCE791X_SIO_FORM_HELP);
+
+#endif
+
+//-------------------------------------------------------------------------
+// Define forms
+//-------------------------------------------------------------------------
+#ifdef FORM_SET_FORM
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////
+    /////////////////////////////////////////Define SIO formset form////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////
+    form formid = AUTO_ID(NPCE791x_FORM_ID),
+        title = STRING_TOKEN(STR_NPCE791X_SIO_FORM);
+        SUBTITLE(STRING_TOKEN(STR_NPCE791X_SIO_FORM))
+    
+        SEPARATOR
+    
+        text
+        help   = STRING_TOKEN(STR_NPCE791X_SIO_FORM_HELP),
+        text   = STRING_TOKEN(STR_NPCE791X_SIO_PROMPT),
+        text   = STRING_TOKEN(STR_NPCE791X),
+        flags  = 0,
+        key    = 0;
+    
+    #if  NPCE791x_SERIAL_PORT1_PRESENT   
+        //Goto Serial 0 Form
+        suppressif ideqval COMA_V_DATA.DevImplemented == 0x00;
+            goto NPCE791x_SERIAL0_FORM_ID,
+            prompt  = STRING_TOKEN(STR_SERIAL1_FORM),
+            help    = STRING_TOKEN(STR_SERIAL1_FORM_HELP);
+        endif;
+        #endif
+ 	 
+    #if NPCE791x_CIR_PORT_PRESENT 
+        //Goto CIR Form
+        suppressif ideqval CIR_V_DATA.DevImplemented == 0x00;
+            goto NPCE791x_CIR_FORM_ID,
+            prompt  = STRING_TOKEN(STR_CIR_FORM),
+            help    = STRING_TOKEN(STR_CIR_FORM_HELP);
+        endif;
+    #endif
+    
+    endform;//SIO Form
+      
+#if NPCE791x_SERIAL_PORT1_PRESENT
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////
+    /////////////////////////////////////////Define SP0 formset form////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////
+    form formid = AUTO_ID(NPCE791x_SERIAL0_FORM_ID),
+        title = STRING_TOKEN(STR_SERIAL1_FORM);
+        SUBTITLE(STRING_TOKEN(STR_SERIAL1_FORM))
+    
+        SEPARATOR
+    
+    	COMA_CHECKBOX_DEVEN
+    
+        suppressif ideqval COMA_NV_DATA.DevEnable == 0x00;
+        COMA_TEXT_CURRENT
+        endif;    // suppressif SIO_SETUP_VAR.ComAEnable == 0x00;
+    
+        SEPARATOR
+    
+        suppressif ideqval COMA_NV_DATA.DevEnable == 0x00;
+		COMA_ONEOF_PRSID
+        endif;    // suppressif SIO_SETUP_VAR.ComAEnable == 0x00;
+
+    endform;  //Serial 0 Form
+#endif
+ 
+#if NPCE791x_CIR_PORT_PRESENT     
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////
+    /////////////////////////////////////////Define CIR formset form////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////
+    form formid = AUTO_ID(NPCE791x_CIR_FORM_ID),
+        title = STRING_TOKEN(STR_CIR_FORM);
+        SUBTITLE(STRING_TOKEN(STR_CIR_FORM))
+    
+        SEPARATOR
+    
+    	CIR_CHECKBOX_DEVEN
+    
+        suppressif ideqval CIR_NV_DATA.DevEnable == 0x00;
+        CIR_TEXT_CURRENT
+        endif;    // suppressif SIO_SETUP_VAR.CIREnable == 0x00;
+    
+        SEPARATOR
+    
+        suppressif ideqval CIR_NV_DATA.DevEnable == 0x00;
+		CIR_ONEOF_PRSID
+        endif;    // suppressif SIO_SETUP_VAR.CIREnable == 0x00;
+
+    endform;  //CIR Form
+#endif
+
+#endif //FORM_SET_FORM
+
+#endif//ADVANCED_FORM_SET
+
+//*************************************************************************
+//*************************************************************************
+//**                                                                     **
+//**        (C)Copyright 1985-2011, American Megatrends, Inc.            **
+//**                                                                     **
+//**                       All Rights Reserved.                          **
+//**                                                                     **
+//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093           **
+//**                                                                     **
+//**                       Phone: (770)-246-8600                         **
+//**                                                                     **
+//*************************************************************************
+//*************************************************************************
+
+
+
+

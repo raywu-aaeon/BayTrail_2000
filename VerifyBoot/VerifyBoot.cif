@@ -1,0 +1,15 @@
+<component>
+	name = "Verify Boot"
+	category = eModule
+	Rank = 57
+	LocalRoot = "VerifyBoot\"
+	RefName = "VerifyBoot"
+[files]
+"VerifyBootReleaseNotes.chm"
+"FusesConfiguration.bat"
+"VerifyBoot.mak"
+"VerifyBoot.sdl"
+[parts]
+"VerifyBoot.Flash_Manifest_Generation_Tool"
+"VerifyBoot.Public_Key_File"
+<endComponent>

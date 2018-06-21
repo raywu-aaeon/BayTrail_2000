@@ -1,0 +1,11 @@
+<component>
+	name = "Library"
+	category = ModulePart
+	LocalRoot = "AmiChipsetPkg\Library\"
+	RefName = "AmiChipsetPkg.LibraryInstances"
+[INF]
+"AmiChipsetIoLib\AmiChipsetIoLib.inf"
+"ElinkLib\ElinkPeiLib.inf"
+"ElinkLib\ElinkLib.inf"
+"ElinkLib\ElinkTableLib.inf"
+<endComponent>

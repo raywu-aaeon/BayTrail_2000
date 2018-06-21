@@ -1,0 +1,16 @@
+<component>
+	name = "NorthCluster-SampleCodeInclude"
+	category = ModulePart
+	LocalRoot = "Vlv2DeviceRefCodePkg\ValleyView2Soc\NorthCluster\SampleCode\Include"
+	RefName = "Vlv2DeviceRefCodePkg.ValleyView2Soc.ValleyView2Soc-NorthCluster.NorthCluster-SampleCode.NorthCluster-SampleCodeInclude"
+[files]
+"Guid\AcpiVariable.h"
+"Guid\MemoryConfigData.h"
+"Ppi\Capsule.h"
+"Ppi\PlatformMemoryRange.h"
+"Ppi\PlatformMemorySize.h"
+"Protocol\GlobalNvsArea.h"
+"IchAccess.h"
+"IchCommonDefinitions.h"
+"IchTpt.h"
+<endComponent>

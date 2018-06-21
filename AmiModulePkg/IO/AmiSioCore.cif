@@ -1,0 +1,14 @@
+<component>
+	name = "SuperI/O - AmiSio"
+	category = IO
+	LocalRoot = "AmiModulePkg\IO\"
+	RefName = "AmiSioCore"
+[INF]
+"SioPeiInit.inf"
+"PlatformHookSerialPortLib.inf"
+[files]
+"AmiSioCore.sdl"	
+"SioCore.mak"	
+[parts]
+"NPCE791x"
+<endComponent>

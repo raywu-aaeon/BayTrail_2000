@@ -1,0 +1,14 @@
+<component>
+	name = "AmiModulePkg"
+	category = eCore
+	LocalRoot = "AmiModulePkg\"
+	RefName = "AmiModulePkg"
+[files]
+"AmiModulePkg.dec"	
+"AmiModulePkg.sdl"	
+"AmiModulePkg.chm"	
+[parts]
+"AmiModulePkg.Include"
+"AmiModulePkg.LibraryInstances"
+"AmiModulePkg.ReportFV"
+<endComponent>

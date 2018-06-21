@@ -1,0 +1,186 @@
+TOKEN
+	Name  = SgTpv_SUPPORT
+	Value  = "1"
+	TokenType = Boolean
+	Master = Yes
+	TargetH = Yes
+	Help  = "Main switch to enable SwitchableGraphics TPV support in Project"
+    Token = "SWITCHABLE_GRAPHICS_SUPPORT" "=" "1"
+End
+
+TOKEN
+	Name  = "SG_MUXLESS_SSVID_DID"
+	Value  = "0x21118086"
+	Help  = "SUBSYSTEM VENDOR & DEVICE ID. Using Intel iGPU"
+	TokenType = Integer
+	TargetEQU = Yes
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "LOADVBIOS"
+	Value  = "1"
+	Help  = "1 = Load secondary display device VBIOS; 0 = Do not load"
+	TokenType = Integer
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "EXECUTEVBIOS"
+	Value  = "0"
+	Help  = "0 = Do no execute\1 = Execute the secondary display device VBIOS (only if LoadVbios == 1)"
+	TokenType = Integer
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "VBIOSSOURCE"
+	Value  = "0"
+	Help  = "0 = secondary display device VBIOS Source is PCI Card\1 = secondary display device VBIOS Source is FW Volume"
+	TokenType = Integer
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "SGMUXDID1"
+	Value  = "0x00030301"
+	Help  = "CRT Display; SGMUXDID format\0x|<HPD Mux> |<Aux Mux>|<Disp Mux>|<Port Type>|\0x|31            24|23          16|15             8|7               0|\HPD/Aux/Disp Mux: 1 = iGPU Only, 2 = dGPU Only, 3 = Shared"
+	TokenType = Integer
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "SGMUXDID2"
+	Value  = "0x00030302"
+	Help  = "LFP Display"
+	TokenType = Integer
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "SGMUXDID3"
+	Value  = "0x03030308"
+	Help  = "DisplayPort_B Display"
+	TokenType = Integer
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "SGMUXDID4"
+	Value  = "0x03030304"
+	Help  = "HDMI_B Display"
+	TokenType = Integer
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "SGMUXDID5"
+	Value  = "0x03030305"
+	Help  = "HDMI_C Display"
+	TokenType = Integer
+	TargetH = Yes
+End
+
+TOKEN
+    Name  = "SGMUXDID6"
+    Value  = "0x0303030A"
+    Help  = "DisplayPort_D Display"
+    TokenType = Integer
+    TargetH = Yes
+End
+
+TOKEN
+    Name  = "SGMUXDID7"
+    Value  = "0x00030306"
+    Help  = "HDMI_D Display"
+    TokenType = Integer
+    TargetH = Yes
+End
+
+TOKEN
+    Name  = "SGMUXDID8"
+    Value  = "0x00000000"
+    Help  = "Unused"
+    TokenType = Integer
+    TargetH = Yes
+End
+
+TOKEN
+    Name  = "VALIDDIDS"
+    Value  = "7"
+    Help  = "Number of valis Device IDs"
+    TokenType = Integer
+    TargetH = Yes
+End
+
+TOKEN
+	Name  = "GPIO_dGPU_PWR_EN"
+	Value  = "54"
+	TokenType = Integer
+	TargetEQU = Yes
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "ACTIVE_dGPU_PWR_EN"
+	Value  = "0"
+	TokenType = Integer
+	TargetEQU = Yes
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "GPIO_dGPU_HOLD_RST"
+	Value  = "50"
+	TokenType = Integer
+	TargetEQU = Yes
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "ACTIVE_dGPU_HOLD_RST"
+	Value  = "0"
+	TokenType = Integer
+	TargetEQU = Yes
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "AMI_SG_DELAY_HOLD_RST"
+	Value  = "100"
+	TokenType = Integer
+	TargetEQU = Yes
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "AMI_SG_DELAY_PWR_ENABLE"
+	Value  = "300"
+	TokenType = Integer
+	TargetEQU = Yes
+	TargetH = Yes
+End
+
+PATH
+	Name  = SgTpv_DIR
+	Help  = "Path to SgTpv Module in Project"
+End
+
+ELINK
+    Name  = "$(SgTpv_DIR)\SgTpv.sd"
+    Parent  = "SETUP_DEFINITIONS"
+    InvokeOrder = AfterParent
+End
+
+ELINK
+    Name  = "$(SgTpv_DIR)\SgTpv.uni"
+    Parent  = "SetupStringFiles"
+    InvokeOrder = AfterParent
+End
+
+ELINK
+    Name  = "-D SGTPV_SUPPORT"
+    Parent  = "*_*_*_CC_FLAGS"
+    Type  = "BuildOptions"
+    InvokeOrder = AfterParent
+End

@@ -1,0 +1,19 @@
+<component>
+	name = "Vlv2DeviceRefCodePkg Client"
+	category = eModule
+	LocalRoot = "Vlv2DeviceRefCodePkg\"
+	RefName = "Vlv2DeviceRefCodePkg"
+[files]
+"EdkCompatibilityPkg.dec"
+"Vlv2DeviceRefCodePkg.sdl"	
+"Vlv2DeviceRefCodePkg.dec"
+"Vlv2DeviceRefCodePkg.ssp"  #EIP158981 >>
+"PlatformPkg.dec"
+"FdfRulesForRc.txt"
+"ReleaseNotes.chm"
+[parts]
+"Vlv2DeviceRefCodePkg.AcpiTables"
+"Vlv2DeviceRefCodePkg.Txe"
+"Vlv2DeviceRefCodePkg.ValleyView2Soc"
+"Vlv2DeviceRefCodePkg.Wrapper"
+<endComponent>

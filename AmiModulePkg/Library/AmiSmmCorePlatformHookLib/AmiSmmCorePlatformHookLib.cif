@@ -1,0 +1,11 @@
+<component>
+	name = "AmiSmmCorePlatformHookLib"
+	category = ModulePart
+	LocalRoot = "AmiModulePkg\Library\AmiSmmCorePlatformHookLib"
+	RefName = "AmiModulePkg.AmiSmmCorePlatformHookLib"
+[files]
+"AmiSmmCorePlatformHookLib.sdl"	
+"AmiSmmCorePlatformHookLib.mak"
+[INF]
+"AmiSmmCorePlatformHookLib.inf"
+<endComponent>

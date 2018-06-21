@@ -1,0 +1,18 @@
+<component>
+	name = "IA32FamilyCpuPkg"
+	category = CPU
+	LocalRoot = "IA32FamilyCpuPkg\"
+	RefName = "IA32FamilyCpuPkg"
+[INF]
+"PiSmmCpuDxeSmm\PiSmmCpuDxeSmm.inf"
+"PiSmmCommunication\PiSmmCommunicationPei.inf"
+"PiSmmCommunication\PiSmmCommunicationSmm.inf"
+"CpuS3Pei\CpuS3Pei.inf"
+[files]
+"IA32FamilyCpuPkg.sdl"	
+"IA32FamilyCpuPkg.dec"	
+[parts]
+"IA32FamilyCpuPkg.SecCore"
+"IA32FamilyCpuPkg.Include"
+"IA32FamilyCpuPkg.LibraryInstances"
+<endComponent>

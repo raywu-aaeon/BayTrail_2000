@@ -1,0 +1,10 @@
+<component>
+	name = "ValleyView2Soc"
+	category = ModulePart
+	LocalRoot = "Vlv2DeviceRefCodePkg\ValleyView2Soc\"
+	RefName = "Vlv2DeviceRefCodePkg.ValleyView2Soc"
+[parts]
+"Vlv2DeviceRefCodePkg.ValleyView2Soc.ValleyView2Soc-CPU"
+"Vlv2DeviceRefCodePkg.ValleyView2Soc.ValleyView2Soc-NorthCluster"
+"Vlv2DeviceRefCodePkg.ValleyView2Soc.ValleyView2Soc-SouthCluster"
+<endComponent>

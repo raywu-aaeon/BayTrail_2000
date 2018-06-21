@@ -1,0 +1,78 @@
+##
+#
+# Copyright (c)  1999 - 2008 Intel Corporation. All rights reserved
+# This software and associated documentation (if any) is furnished
+# under a license and may only be used or copied in accordance
+# with the terms of the license. Except as permitted by such
+# license, no part of this software or documentation may be
+# reproduced, stored in a retrieval system, or transmitted in any
+# form or by any means without the express written consent of
+# Intel Corporation.
+
+#
+#  Module Name:
+#
+#   LpssDxe.inf
+#
+#  Abstract:
+#
+#
+##
+
+
+[defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = LpssDxe
+  FILE_GUID                      = 3E3099F5-CBCC-4ae8-AEA0-2B7D1E7F8294
+  MODULE_TYPE                    = DXE_DRIVER
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = LpssDxeEntryPoint
+
+[sources.common]
+  LpssDxe.c
+  LpssDxe.h
+
+[Packages]
+  MdePkg/MdePkg.dec
+  IntelFrameworkPkg/IntelFrameworkPkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  Vlv2DeviceRefCodePkg/PlatformPkg.dec
+  Vlv2DeviceRefCodePkg/Vlv2DeviceRefCodePkg.dec
+  IntelFrameworkModulePkg/IntelFrameworkModulePkg.dec
+  AmiModulePkg/AmiModulePkg.dec
+  AmiCompatibilityPkg/AmiCompatibilityPkg.dec
+
+[LibraryClasses]
+  UefiDriverEntryPoint
+  UefiBootServicesTableLib
+  DxeServicesTableLib
+  UefiLib
+  DebugLib
+  PchPlatformLib
+  IoLib #EIP132398
+  S3BootScriptLib #EIP132398
+
+[Guids]
+  gEfiEventExitBootServicesGuid                 # CONSUMES  ## Event
+
+[Protocols]
+  gEfiPciHostBridgeResourceAllocationProtocolGuid
+  gEfiPciEnumerationCompleteProtocolGuid
+  gEfiGlobalNvsAreaProtocolGuid
+  gEfiPciIoProtocolGuid
+  mLpssDummyProtocolGuid
+  gDxePchPlatformPolicyProtocolGuid
+  gExitPmAuthProtocolGuid #EIP143364 
+
+[Pcd]
+
+[Depex]
+  gEfiGlobalNvsAreaProtocolGuid AND
+  gDxePchPlatformPolicyProtocolGuid  #AMI_OVERRIDE - CSP20130712 For EMMC 4.50
+  
+#[nmake.common]
+#  CHIPSET_MEMORY_CONTROLLER=$(CHIPSET_MEMORY_CONTROLLER)
+#  CHIPSET_IO_CONTROLLER=$(CHIPSET_IO_CONTROLLER)
+#  CPU_ARCH=$(CPU_ARCH)
+#  IMAGE_ENTRY_POINT = AcpiPlatformEntryPoint
+#  DPX_SOURCE=AcpiPlatform.dxs

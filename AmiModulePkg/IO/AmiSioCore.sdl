@@ -1,0 +1,116 @@
+TOKEN
+	Name  = "SIO_SUPPORT"
+	Value  = "1"
+	Help  = "Main switch to enable SIO support in Project"
+	TokenType = Boolean
+	TargetEQU = Yes
+	TargetMAK = Yes
+	TargetH = Yes
+	Master = Yes
+End
+
+PATH
+	Name  = "SIO_DIR"
+End
+
+#EIP144758 >>
+#CSP20131230 >>
+TOKEN
+	Name  = "COM_PORT_DBG_DECODE"
+	Value  = "0"
+	Help  = "COM PORT DBG DECODE"
+	TokenType = Boolean
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "COM_PORT_DBG_INIT"
+	Value  = "0"
+	Help  = "COM PORT DBG INIT"
+	TokenType = Boolean
+	TargetH = Yes
+End
+#CSP20131230 <<
+
+TOKEN
+	Name  = "SIO_PEI_DECODE_TABLE"
+	Value  = "1"
+	Help  = "SIO PEI DECODE TABLE"
+	TokenType = Boolean
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "SIO_PEI_INIT_TABLE"
+	Value  = "1"
+	Help  = "SIO PEI INIT TABLE"
+	TokenType = Boolean
+	TargetH = Yes
+End
+#EIP144758 <<
+
+MODULE
+	Help  = "Includes SioCore.MAK to Project"
+	File  = "SioCore.mak"
+End
+
+ELINK
+	Name  = "SIOLINK_LIB_SRC"
+	InvokeOrder = ReplaceParent
+End
+
+ELINK
+	Name  = "SIOLINK_LIB_H"
+	InvokeOrder = ReplaceParent
+End
+
+ELINK
+	Name  = "SioStrInitList"
+	InvokeOrder = ReplaceParent
+End
+
+#Currently, SioDxeInit.h is located in SIODXEINIT component. It should be produced by SIO Wizard.
+INFComponent
+	Name  = "SIOPEIINIT"
+	File  = "SioPeiInit.inf"
+	Package  = "AmiModulePkg"
+	ModuleTypes  = "PEIM"
+	Token = "SIO_SUPPORT" "=" "1"
+End
+
+#EIP144758 >>
+INFComponent
+	Name  = "PlatformHookSerialPortLib"
+	File  = "PlatformHookSerialPortLib.inf"
+	Package  = "AmiModulePkg"
+	Token = "DEBUG_MODE" "=" "1"
+End
+
+LibraryMapping
+    Class  = "PlatformHookLib"
+    Instance  = "AmiModulePkg.PlatformHookSerialPortLib"
+    Token = "DEBUG_MODE" "=" "1"
+    Token = "SOC_UART_PRESENT" "=" "0"
+    ModuleTypes  = "PEIM PEI_CORE"
+End
+#EIP144758 <<
+
+INFComponent
+	Name  = "SioLinkLib"
+	File  = "../../Build\SioLinkLib.inf"
+	Package  = "AmiSioPkg"
+	ModuleTypes  = "NULL"
+End
+
+LibraryMapping
+	Class  = "SioLinkLib"
+	Instance  = "AmiSioPkg.SioLinkLib"
+End
+
+LibraryMapping
+    Class  = "NULL"
+    Instance  = "AmiSioPkg.SioLinkLib"
+    Override  = "AmiModulePkg.SioDxeInit"
+End
+
+

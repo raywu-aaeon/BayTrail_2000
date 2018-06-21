@@ -1,0 +1,12 @@
+<component>
+	name = "AmiBufferValidationLib"
+	category = eModule
+	LocalRoot = "AmiModulePkg\"
+	RefName = "AmiModulePkg.AmiBufferValidationLib"
+[files]
+"AmiBufferValidationLib.chm"
+"AmiBufferValidationLib.sdl"	
+"Include\Library\AmiBufferValidationLib.h"
+[INF]
+"Library\SmmAmiBufferValidationLib\SmmAmiBufferValidationLib.inf"
+<endComponent>

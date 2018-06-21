@@ -1,0 +1,34 @@
+TOKEN
+	Name  = "CryptoPkg_SUPPORT"
+	Value  = "1"
+	Help  = "Switch for Enabling CryptoPkg support in the project"
+	TokenType = Boolean
+	Master = Yes
+End
+
+INFComponent
+	Name  = "BaseCryptLibRuntimeCryptProtocol"
+	File  = "Library\BaseCryptLibRuntimeCryptProtocol\BaseCryptLibRuntimeCryptProtocol.inf"
+	Package  = "CryptoPkg"
+	ModuleTypes  = "DXE_RUNTIME_DRIVER"
+End
+
+INFComponent
+	Name  = "BaseIntrinsicLib"
+	File  = "Library/IntrinsicLib/IntrinsicLib.inf"
+	Package  = "CryptoPkg"
+	Arch  = "IA32 X64 IPF"
+	ModuleTypes  = "BASE"
+End
+
+LibraryMapping
+	Class  = "BaseCryptLib"
+	Instance  = "CryptoPkg.BaseCryptLibRuntimeCryptProtocol"
+	ModuleTypes  = "DXE_RUNTIME_DRIVER DXE_SAL_DRIVER"
+End
+
+LibraryMapping
+	Class  = "IntrinsicLib"
+	Instance  = "CryptoPkg.BaseIntrinsicLib"
+	Arch  = "IA32 X64 IPF"
+End

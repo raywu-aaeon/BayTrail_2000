@@ -1,0 +1,10 @@
+<component>
+    name = "CRB SmiFlashHook"
+    category = ModulePart
+    LocalRoot = "BayTrailPkg\CrbSmiFlashHook\"
+    RefName = "BayTrailPkg.CrbSmiFlashHook"
+[INF]
+"CrbSmiFlashHook.inf"
+[files]
+"CrbSmiFlashHook.sdl"
+<endComponent>

@@ -1,0 +1,11 @@
+<component>
+	name = "Acpi Tables"
+	category = ModulePart
+	LocalRoot = "AmiChipsetModulePkg\SgTpv\AcpiTables\"
+	RefName = "SgTpvAcpiTables"
+[files]
+"SgTpvAcpiTables.sdl"		
+[parts]
+"AtiSG"
+"nVidiaSG"
+<endComponent>

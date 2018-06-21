@@ -1,0 +1,17 @@
+<component>
+	name = "SouthCluster-Library"
+	category = ModulePart
+	LocalRoot = "Vlv2DeviceRefCodePkg\ValleyView2Soc\SouthCluster\Library"
+	RefName = "Vlv2DeviceRefCodePkg.ValleyView2Soc.ValleyView2Soc-SouthCluster.SouthCluster-Library"
+[inf]
+"DfuCapsuleLib\DfuCapsuleLib.inf"
+"I2CLib\I2CLib.inf"
+"I2CLibPei\I2CLibPei.inf"
+"PchPciExpressHelpersLib\PchPciExpressHelpersLib.inf"
+"PchSmbusLib\Dxe\PchSmbusLibDxe.inf"
+"PchSmbusLib\Pei\PchSmbusLibPei.inf"
+"PmicLib\PmicLib.inf"
+"PmicLibPei\PmicLibPei.inf"
+"DxeRuntimePciLibPciExpress\DxeRuntimePciLibPciExpress.inf"
+"PchPlatformLib\PchPlatformLib.inf"
+<endComponent>

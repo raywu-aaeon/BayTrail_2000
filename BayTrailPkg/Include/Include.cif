@@ -1,0 +1,10 @@
+<component>
+	name = "Include"
+	category = ModulePart
+	LocalRoot = "BayTrailPkg\Include\"
+	RefName = "BayTrailPkg.Include"
+[parts]
+"BayTrailPkg.Include.Ppi"
+"BayTrailPkg.Include.Protocol"
+"BayTrailPkg.Include.Library"
+<endComponent>

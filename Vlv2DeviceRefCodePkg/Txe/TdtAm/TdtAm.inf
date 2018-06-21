@@ -1,0 +1,71 @@
+## @file
+#
+# Copyright (c)  1999 - 2008 Intel Corporation. All rights reserved
+# This software and associated documentation (if any) is furnished
+# under a license and may only be used or copied in accordance
+# with the terms of the license. Except as permitted by such
+# license, no part of this software or documentation may be
+# reproduced, stored in a retrieval system, or transmitted in any
+# form or by any means without the express written consent of
+# Intel Corporation.
+#
+#  Module Name:
+#
+#   TdtAm.inf
+#
+#  Abstract:
+#
+#
+##
+
+
+[defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = TdtAm
+  FILE_GUID                      = 06818C78-1C8A-4591-9833-DC0E4B9566E4
+  MODULE_TYPE                    = DXE_DRIVER
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = TdtAmEntryPoint
+
+[sources.common]
+  TdtAm.c
+  TdtAm.h
+  TdtAmHelper.c
+  TdtAmHelper.h
+
+[Packages]
+  MdePkg/MdePkg.dec
+  IntelFrameworkPkg/IntelFrameworkPkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  Vlv2DeviceRefCodePkg/Vlv2DeviceRefCodePkg.dec
+  IntelFrameworkModulePkg/IntelFrameworkModulePkg.dec
+
+[LibraryClasses]
+  UefiDriverEntryPoint
+  UefiBootServicesTableLib
+  DxeServicesTableLib
+  UefiLib
+  DebugLib
+  SeCLib
+  UefiRuntimeServicesTableLib
+  MemoryAllocationLib
+  BaseMemoryLib
+  PrintLib
+  BaseLib
+
+[Guids]
+  gEfiVlv2VariableGuid
+
+[Protocols]
+  gDxePlatformTdtPolicyGuid
+  gEfiHeciProtocolGuid
+  gEfiTdtProtocolGuid
+  gEfiTdtOperationProtocolGuid
+
+[Pcd]
+
+[Depex]
+  gEfiGlobalNvsAreaProtocolGuid AND
+  gEfiGlobalNvsAreaProtocolGuid AND
+  gDxePlatformTdtPolicyGuid
+ 

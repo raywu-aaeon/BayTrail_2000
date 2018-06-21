@@ -1,0 +1,17 @@
+<component>
+	name = "RsdpPlus"
+	category = eModule
+	LocalRoot = "AmiModulePkg\RsdpPlus\"
+	RefName = "RsdpPlus"
+[INF]
+"RsdpPlus.inf"
+[files]
+"RsdpPlus.sdl"	
+"RsdpPlus.mak"	
+"RsdpPlus.chm"	
+"RsdpPlus.c"	
+"RsdpPlusLink.c"	
+"ShadowRamProtocol.h"	
+[parts]
+"RSDP_INCLUDES"
+<endComponent>

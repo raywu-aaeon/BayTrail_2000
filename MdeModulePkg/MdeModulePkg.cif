@@ -1,0 +1,14 @@
+<component>
+	name = "MdeModulePkg"
+	category = ModulePart
+	LocalRoot = "MdeModulePkg\"
+	RefName = "MdeModulePkg"
+[files]
+"MdeModulePkg.dec"	
+"MdeModulePkg.sdl"	
+"License.txt"	
+"MdeModulePkg.chm"	
+[parts]
+"MdeModulePkg.Include"
+"MdeModulePkg.LibraryInstances"
+<endComponent>

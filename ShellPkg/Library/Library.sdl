@@ -1,0 +1,85 @@
+TOKEN
+	Name  = "Library_SUPPORT"
+	Value  = "1"
+	Help  = "Switch for Enabling Library support in the project"
+	TokenType = Boolean
+	Master = Yes
+End
+
+INFComponent
+	Name  = "BasePathLib"
+	File  = "BasePathLib\BasePathLib.inf"
+	Package  = "ShellPkg"
+	ModuleTypes  = "UEFI_DRIVER"
+End
+
+INFComponent
+	Name  = "BaseFileHandleLib"
+	File  = "UefiFileHandleLib\UefiFileHandleLib.inf"
+	Package  = "ShellPkg"
+	ModuleTypes  = "DXE_DRIVER"
+End
+
+INFComponent
+	Name  = "UefiHandleParsingLib"
+	File  = "UefiHandleParsingLib\UefiHandleParsingLib.inf"
+	Package  = "ShellPkg"
+	ModuleTypes  = "UEFI_DRIVER"
+End
+
+INFComponent
+	Name  = "UefiShellCEntryLib"
+	File  = "UefiShellCEntryLib\UefiShellCEntryLib.inf"
+	Package  = "ShellPkg"
+	ModuleTypes  = "UEFI_APPLICATION"
+End
+
+INFComponent
+	Name  = "UefiShellLib"
+	File  = "UefiShellLib\UefiShellLib.inf"
+	Package  = "ShellPkg"
+	ModuleTypes  = "UEFI_DRIVER"
+End
+
+INFComponent
+	Name  = "UefiSortLib"
+	File  = "UefiSortLib\UefiSortLib.inf"
+	Package  = "ShellPkg"
+	ModuleTypes  = "UEFI_DRIVER"
+End
+
+LibraryMapping
+	Class  = "PathLib"
+	Instance  = "ShellPkg.BasePathLib"
+	ModuleTypes  = "UEFI_APPLICATION UEFI_DRIVER"
+End
+
+LibraryMapping
+	Class  = "FileHandleLib"
+	Instance  = "ShellPkg.BaseFileHandleLib"
+	ModuleTypes  = "DXE_DRIVER UEFI_APPLICATION UEFI_DRIVER"
+End
+
+LibraryMapping
+	Class  = "HandleParsingLib"
+	Instance  = "ShellPkg.UefiHandleParsingLib"
+	ModuleTypes  = "UEFI_APPLICATION UEFI_DRIVER"
+End
+
+LibraryMapping
+	Class  = "ShellCEntryLib"
+	Instance  = "ShellPkg.UefiShellCEntryLib"
+	ModuleTypes  = "UEFI_APPLICATION UEFI_DRIVER"
+End
+
+LibraryMapping
+	Class  = "ShellLib"
+	Instance  = "ShellPkg.UefiShellLib"
+	ModuleTypes  = "UEFI_APPLICATION UEFI_DRIVER"
+End
+
+LibraryMapping
+	Class  = "SortLib"
+	Instance  = "ShellPkg.UefiSortLib"
+	ModuleTypes  = "UEFI_APPLICATION UEFI_DRIVER"
+End

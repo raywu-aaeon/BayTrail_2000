@@ -1,0 +1,76 @@
+#
+# This file contains a 'Sample Driver' and is licensed as such
+# under the terms of your license agreement with Intel or your
+# vendor.  This file may be modified by the user, subject to  
+# the additional terms of the license agreement               
+#
+#/*++
+#
+# Copyright (c) 2012 - 2013 Intel Corporation. All rights reserved
+# This software and associated documentation (if any) is furnished
+# under a license and may only be used or copied in accordance
+# with the terms of the license. Except as permitted by such
+# license, no part of this software or documentation may be
+# reproduced, stored in a retrieval system, or transmitted in any
+# form or by any means without the express written consent of
+# Intel Corporation.
+#
+#  Module Name:
+#
+#    PchSmbusArpEnabled.inf
+#
+#  Abstract:
+#
+#    Component description file for PchSmbus module
+#    This version will include ARP support.
+#
+#--*/
+
+[defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = Smbus2Arp
+  FILE_GUID                      = 5FD72392-6196-4684-AF2F-7999815B5D45
+  MODULE_TYPE                    = PEIM
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = InitializePchSmbusPeim
+
+[sources]
+  PchSmbus2.h
+  PchSmbus2Entry.c
+  PchSmbus2ArpDisabled.c
+  PchSmbus2Exec.c
+  PchSmbus2Common.h
+
+[Packages]
+  MdePkg/MdePkg.dec
+  IntelFrameworkPkg/IntelFrameworkPkg.dec
+  Vlv2DeviceRefCodePkg/Vlv2DeviceRefCodePkg.dec
+  
+   
+[LibraryClasses]
+  PeimEntryPoint
+  DebugLib
+  IoLib
+  MemoryAllocationLib
+  PeiServicesLib
+  PchPlatformLib
+  HobLib
+
+[Ppis]
+  gEfiPeiStallPpiGuid
+  gEfiPeiMemoryDiscoveredPpiGuid
+  gEfiPeiSmbus2PpiGuid
+  gEfiEndOfPeiSignalPpiGuid  
+
+[Guids]
+  gEfiSmbusArpMapGuid
+
+[Pcd]
+  gEfiVLVTokenSpaceGuid.PcdTCSmbaIoBaseAddress
+  gEfiMdePkgTokenSpaceGuid.PcdPciExpressBaseAddress
+
+[Depex]
+  gPeiSmbusPolicyPpiGuid    AND
+  gEfiPeiStallPpiGuid
+
+

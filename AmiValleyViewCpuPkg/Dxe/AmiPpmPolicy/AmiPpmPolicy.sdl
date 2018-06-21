@@ -1,0 +1,33 @@
+TOKEN
+	Name  = "AmiPpmPolicy_SUPPORT"
+	Value  = "1"
+	TokenType = Boolean
+	TargetEQU = Yes
+	TargetMAK = Yes
+	Master = Yes
+	Help  = "Main switch to enable AMI Ppm policy support in Project"
+End
+
+PATH
+	Name = "PpmPolicyInitDxe_DIR"
+End
+
+ELINK
+	Name  = "$(PpmPolicyInitDxe_DIR)\AmiPpmPolicy.uni"
+	Parent  = "SetupStringFiles"
+	InvokeOrder = AfterParent
+End
+
+ELINK
+	Name  = "$(PpmPolicyInitDxe_DIR)\AmiPpmPolicy.sd"
+	Parent  = "SETUP_DEFINITIONS"	
+	InvokeOrder = AfterParent
+End
+
+INFComponent
+	Name  = "AmiPpmPolicy"
+	File  = "PpmPolicyInitDxe.inf"
+	Package  = "AmiValleyViewCpuPkg"
+	ModuleTypes  = "DXE_DRIVER"
+	Token = "AmiPpmPolicy_SUPPORT" "=" "1"	
+End

@@ -1,0 +1,12 @@
+<component>
+	name = "Block S3 Variable"
+	category = eModule
+	LocalRoot = "AmiModulePkg\BlockS3Var\"
+	RefName = "BlockS3Var"
+[files]
+"BlockS3Var.chm"	
+"BlockS3Var.sdl"
+"BlockS3VarElinkTempl.txt"
+[Inf]
+"BlockS3VarLib.inf"	
+<endComponent>

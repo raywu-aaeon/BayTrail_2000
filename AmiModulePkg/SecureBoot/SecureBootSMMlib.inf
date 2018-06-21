@@ -1,0 +1,34 @@
+[Defines]
+INF_VERSION     = 0x00010015
+BASE_NAME       = SecureBootSMMlib
+FILE_GUID       = 52D52C59-C745-45F4-8B96-862E677D4DD9
+MODULE_TYPE     = DXE_SMM_DRIVER
+VERSION_STRING  = 1.0
+LIBRARY_CLASS   = NULL|DXE_SMM_DRIVER
+
+[Sources]
+SecureBoot.c
+SecureBoot.h
+
+[Packages]
+ MdePkg/MdePkg.dec
+ AmiCompatibilityPkg/AmiCompatibilityPkg.dec
+ AmiCryptoPkg/AmiCryptoPkg.dec
+
+[LibraryClasses]
+ AmiDxeLib
+
+[Guids]  
+ gEfiImageSecurityDatabaseGuid
+ gEfiGlobalVariableGuid
+ gEfiCertPkcs7Guid
+
+[Protocols]
+ gEfiFirmwareVolume2ProtocolGuid
+
+[Depex]
+TRUE
+
+[BuildOptions]
+*_*_*_CC_FLAGS = -D NO_SETUP_COMPILE -D SMIFLASH_COMPILE -D PRESERVE_SECURE_VARIABLES=1
+

@@ -1,0 +1,16 @@
+TOKEN
+    Name  = "AmiCryptoPkg_SUPPORT"
+    Value  = "1"
+    Help  = "Switch for Enabling AmiCryptoPkg support in the project"
+    TokenType = Boolean
+    Master = Yes
+End
+
+TOKEN
+    Name  = "AMI_CRYPTOPACKAGE_MODULE_REVISION"
+    Value  = "26"
+    Help  = "Version of AmiCrypto Pkg interfaces"
+    TokenType = Integer
+    TargetMAK = Yes
+    TargetH = Yes
+End

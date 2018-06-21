@@ -1,0 +1,804 @@
+
+#*************************************************************************
+#*************************************************************************
+#**                                                                     **
+#**        (C)Copyright 1985-2014, American Megatrends, Inc.            **
+#**                                                                     **
+#**                       All Rights Reserved.                          **
+#**                                                                     **
+#**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093           **
+#**                                                                     **
+#**                       Phone: (770)-246-8600                         **
+#**                                                                     **
+#*************************************************************************
+#*************************************************************************
+#
+#*************************************************************************
+# $Header: $
+#
+# $Revision: $
+#
+# $Date: $
+#*************************************************************************
+TOKEN
+	Name  = "NB_SUPPORT"
+	Value  = "1"
+	Help  = "Main switch to enable Template - NorthBridge support in Project"
+	TokenType = Boolean
+	TargetEQU = Yes
+	TargetMAK = Yes
+	Master = Yes
+End
+
+#// (P051313A+)>>
+TOKEN
+	Name  = "E_F_SEGMENT_LOCK"
+	Value  = "0"
+	Help  = "0: Set E & F segments free. / 1: Lock E segment / 2: Lock F segment / 3: Lock E & F segments."
+	TokenType = Integer
+	TargetH = Yes
+End
+#// (P051313A+)<<
+
+#EIP145111 >>
+TOKEN
+	Name  = "TSEG_SIZE"
+	Value  = "0x800000"
+	Help  = "Size of SMM TSEG area used (in bytes) \Default size 1MB."
+	TokenType = Integer
+	TargetH = Yes
+End
+#EIP145111 <<
+
+TOKEN
+	Name  = "ROOT_BRIDGE_COUNT"
+	Value  = "1"
+	Help  = "Indicates how many root bridges (peer to peer) are in the system."
+	TokenType = Integer
+	TargetMAK = Yes
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "DMI_BASE_ADDRESS"
+	Value  = "0xFED18000"
+	TokenType = Integer
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "EP_BASE_ADDRESS"
+	Value  = "0xFED19000"
+	TokenType = Integer
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "MC_MMIO_BASE"
+	Value  = "0xFED14000"
+	TokenType = Integer
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "PCIEX_BASE_ADDRESS"
+	Value  = "0xE0000000"
+	Help  = "Contains the base address programmed for PCI Express. \Set this value to 0 if PCI Express support is not present. \Enables/disables PCI configuration access through memory. \Make sure PCIEX_BASE_ADDRESS is set appropriately. \If PCI is accessed through PCI \config mechanism then the maximum register offset that can be accessed is 256."
+	TokenType = Integer
+	TargetEQU = Yes
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "PEBS"
+	Value  = "$(PCIEX_BASE_ADDRESS)"
+	TokenType = Integer
+	TargetASL = Yes
+End
+
+TOKEN
+	Name  = "PCIEX_LENGTH"
+	Value  = "0x10000000"
+	TokenType = Integer
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "PCI_REGISTER_MAX"
+	Value  = "4096"
+	Help  = "Contains the maximum value of PCI register that can be accessed. \ Enabled only when PCI config memory access is enabled"
+	TokenType = Integer
+	TargetEQU = Yes
+	TargetH = Yes
+	Token = "PCIEX_BASE_ADDRESS" "!=" "0"
+End
+
+TOKEN
+	Name  = "PCI_REGISTER_MAX"
+	Value  = "256"
+	Help  = "Contains the maximum value of PCI register that can be accessed. \ Enabled only when PCI config memory access is disabled"
+	TokenType = Integer
+	TargetEQU = Yes
+	TargetH = Yes
+	Token = "PCIEX_BASE_ADDRESS" "=" "0"
+End
+
+TOKEN
+	Name  = "NB_DEBUG_MESSAGE"
+	Value  = "1"
+	Help  = "Enables/disables debug message in NB module"
+	TokenType = Boolean
+	TargetEQU = Yes
+	TargetH = Yes
+	Token = "DEBUG_MODE" "!=" "0"
+End
+
+TOKEN
+	Name  = "NB_TEMPLATE_VER"
+	Value  = "0001"
+	Help  = "North Bridge Template Version Number.\ DO NOT CHANGE THIS VALUE"
+	TokenType = Integer
+	TargetEQU = Yes
+	TargetMAK = Yes
+	TargetH = Yes
+	Lock = Yes
+End
+
+TOKEN
+	Name  = "INCLUDE_NB_ASM_FILE_IN_SEC"
+	Value  = "0"
+	Help  = "Includes an ASM file and an eLink in SEC build process for NB code modification:"
+	TokenType = Boolean
+End
+
+TOKEN
+	Name  = "LAPB"
+	Value  = "$(LOCAL_APIC_BASE)"
+	Help  = "Local APIC Base Address"
+	TokenType = Expression
+	TargetASL = Yes
+End
+
+TOKEN
+	Name  = "CPU_MAX_MEMORY_SIZE"
+	Value  = "0x1000000000"
+	Help  = "Maximum memory size addressable by the CPU"
+	TokenType = Expression
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "MM_LEGACY_RESERVE_MEM"
+	Value  = "0x100000"
+	Help  = "This value will state how much Memory Manager \has to skip from Physical Bottom Of Memory before \start allocating BootServices Memory from the bottom.\The value is platform specific but it is suggested to \skip first 1 M of phisical memory for CSM and legacy BIOS \use.\Also some drivers may expect to find Some memory Below 16 Meg.\"
+	TokenType = Integer
+	TargetMAK = Yes
+	TargetH = Yes
+	Range  = "from 1M (0x100000) to 16M(0x1000000 ) or more"
+End
+
+TOKEN
+	Name  = "MEMORY_ARRAY_NUM"
+	Value  = "1"
+	Help  = "No of Memory Array"
+	TokenType = Integer
+	TargetH = Yes
+End
+
+#P20120624 >>
+TOKEN
+	Name  = "DIMM_SLOT_NUM"
+	Value  = "1"
+	Help  = "No of DIMM slots per channel"
+	TokenType = Integer
+	TargetH = Yes
+End
+#P20120624 <<
+#EIP205591 >>
+#CSP20140329_22 >>
+TOKEN
+	Name  = "NB_PCI_DEVICES_SSID_TABLE"
+	Value  = "{NB_BUS_DEV_FUN, 0x22128086}, {AMI_IGD_BUS_DEV_FUN, 0x22128086}, {-1, -1}" 
+	Help  = "List of PCI device's Sub-System ID in the following format:\{Device#1 Bus/Device/Function, Device#1 Sub-ID}, {Device#2 Bus/Device/Function, Device#2 Sub-ID}...\The format of the PCI bus/device/function is followed by EFI_PCI_CONFIGURATION_ADDRESS.\If the value of Sub-ID is -1, that means BIOS will use PCI Vendor-ID and Device-ID instead.\The last structure {-1, -1} is end of the table, don't remove it!"
+	TokenType = Expression
+	TargetH = Yes
+End
+#CSP20140329_22 <<
+#EIP205591 <<
+#EIP130719 >>
+TOKEN
+	Name  = "SALVE_ADDRESS"
+	Value  = "{DIMM1_SMBUS_ADDRESS>>1, DIMM2_SMBUS_ADDRESS>>1}"
+	Help  = "List of SALVE ADDRESS"
+	TokenType = Expression
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "DIMM1_SMBUS_ADDRESS"
+	Value  = "0A0h"
+	Help  = "DIMM Socket 0 - Channel A"
+	TokenType = Integer
+	TargetEQU = Yes
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "DIMM2_SMBUS_ADDRESS"
+	Value  = "0A2h"
+	Help  = "DIMM Socket 1 - Channel A"
+	TokenType = Integer
+	TargetEQU = Yes
+	TargetH = Yes
+End
+#EIP130719 <<
+
+#EIP152282 152283 >>
+#EIP150350 >> 
+TOKEN
+	Name  = "=============== IGFX Setup data Type Tokens =============="
+	TokenType = Expression
+End
+
+#EIP150350 >>	
+TOKEN
+	Name  = "DUAL_DISPLAY_SUPPORT"
+	Value  = "0"
+	Help  = "Dual Display, 0:Enable / 1:Disable (The feature need VBIOS support)"
+	TokenType = Integer
+	TargetEQU = Yes
+	TargetH = Yes
+    Token = "NbSmi_Support" "=" "1"   	
+End
+#EIP150350 <<
+
+TOKEN
+	Name  = "IGFX_LCD_PANEL_TYPE"
+	Value  = "0x80"
+	Help  = "IGFX LCD panel type"
+	TokenType = Integer
+	TargetEQU = Yes
+	TargetH = Yes
+        Token = "NbSmi_Support" "=" "1"   	
+End
+
+TOKEN
+	Name  = "IGFX_LCD_PANEL_SCALING"
+	Value  = "0x81"
+	Help  = "IGFX LCD panel scaling type"
+	TokenType = Integer
+	TargetEQU = Yes
+	TargetH = Yes
+        Token = "NbSmi_Support" "=" "1"   	
+End
+
+TOKEN
+	Name  = "IGFX_BOOT_TYPE"
+	Value  = "0x82"
+	Help  = "IGFX boot type"
+	TokenType = Integer
+	TargetEQU = Yes
+	TargetH = Yes
+        Token = "NbSmi_Support" "=" "1"   	
+End
+
+TOKEN
+	Name  = "IGFX_BACKLIGHT_TYPE"
+	Value  = "0x83"
+	Help  = "IGFX Get Inverter Type and Polarity for Backlight type"
+	TokenType = Integer
+	TargetEQU = Yes
+	TargetH = Yes
+        Token = "NbSmi_Support" "=" "1"   	
+End
+
+#TOKEN
+#	Name  = "IGFX_LFP_PANEL_COLOR_DEPTH_TYPE"
+#	Value  = "0x84"
+#	Help  = "IGFX LFP Panel Color Depth type"
+#	TokenType = Integer
+#	TargetEQU = Yes
+#	TargetH = Yes
+#       Token = "NbSmi_Support" "=" "1"   	
+#End
+
+TOKEN
+	Name  = "IGFX_EDP_ACTIVE_LFP_CONFIG_TYPE"
+	Value  = "0x85"
+	Help  = "IGFX Active LCD flat panel(LFP) config type"
+	TokenType = Integer
+	TargetEQU = Yes
+	TargetH = Yes
+        Token = "NbSmi_Support" "=" "1"   	
+End
+
+TOKEN
+	Name  = "IGFX_PRIMARY_DISPLAY_TYPE"
+	Value  = "0x86"
+	Help  = "IGFX Primary Display config type"
+	TokenType = Integer
+	TargetEQU = Yes
+	TargetH = Yes
+        Token = "NbSmi_Support" "=" "1"   	
+End
+
+TOKEN
+	Name  = "IGFX_DISPLAY_PIPE_B_TYPE"
+	Value  = "0x87"
+	Help  = "IGFX Display Pipe B device type"
+	TokenType = Integer
+	TargetEQU = Yes
+	TargetH = Yes
+        Token = "NbSmi_Support" "=" "1"   	
+End
+
+TOKEN
+	Name  = "IGFX_SDVO_PANEL_TYPE"
+	Value  = "0x88"
+	Help  = "IGFX SDVO Panel type"
+	TokenType = Integer
+	TargetEQU = Yes
+	TargetH = Yes
+        Token = "NbSmi_Support" "=" "1"   	
+End
+
+TOKEN
+	Name  = "NB_SWSMI_IGFX_GET_SETUP"
+	Value  = "$(NB_SWSMI)"
+	Help  = "Value to write into SMI command register to generate software SMI for NB"
+	TokenType = Integer
+	TargetEQU = Yes
+	TargetH = Yes
+	Range  = "0xB0 - 0xB6"
+        Token = "NbSmi_Support" "=" "1"   	
+End
+#EIP150350 <<
+#EIP152282 152283 <<
+
+TOKEN
+	Name  = " "
+	TokenType = Integer
+End
+
+TOKEN
+	Name  = "=============== SMI Configuration =============="
+	TokenType = Expression
+End
+
+TOKEN
+	Name  = "NB_SWSMI"
+	Value  = "0xb0"
+	Help  = "Value to write into SMI command register to generate software SMI for NB"
+	TokenType = Integer
+	TargetH = Yes
+	Range  = "0xB0 - 0xB6"
+End
+
+TOKEN
+	Name  = "NbPei_Support"
+	Value  = "1"
+	TokenType = Boolean
+End
+
+TOKEN
+	Name  = "NbDxe_Support"
+	Value  = "1"
+	TokenType = Boolean
+End
+
+TOKEN
+	Name  = "NbSmi_Support"
+	Value  = "0"
+	TokenType = Boolean
+End
+
+TOKEN
+	Name  = "NbAcpi_Support"
+	Value  = "0"
+	TokenType = Boolean
+End
+
+TOKEN
+	Name  = "NB_POLICY_VERSION"
+	Value  = "0001"
+	Help  = "The policy of North Bridge Version Number."
+	TokenType = Integer
+	TargetEQU = Yes
+	TargetMAK = Yes
+	TargetH = Yes
+	Lock = Yes
+End
+
+TOKEN
+	Name  = "NbGetSetupData_Support"
+	Value  = "1"
+	TokenType = Boolean
+End
+
+#EIP148189 >>
+TOKEN
+    Name  = "SMBIOS_PARTITION_ROW_POSITION"
+    Value  = "0xFF"
+    Help  = "Position of the referenced Memory Device in a row of the address partition. If the position is unknown, the field contains FFh."
+    TargetH = Yes
+End
+#EIP148189 <<
+
+#EIP154389 >>
+TOKEN
+	Name  = "DCLK_FREQUENCY"
+	Value  = "0"
+	Help  = "Default: 0, 0 : DDR Frequency (DCLK Frequency)  1: DDR IO Bus Clock (QCLK Frequency)"
+	TokenType = Integer
+	TargetH = Yes
+End
+#EIP154389 <<
+
+#EIP128048 >>
+TOKEN
+	Name  = "VBT_FILE_PATH"
+	Value  = "AmiChipsetModulePkg/NB/GopDriver/vbt.bin"
+	Help  = "The full file path and file name of VBT file."
+	TokenType = Expression
+	TargetFDF = Yes
+	Token = "X64_SUPPORT" "=" "0"	
+End
+
+TOKEN
+	Name  = "VBT_FILE_PATH"
+	Value  = "AmiChipsetModulePkg/NB/GopDriver/X64/vbt.bin"
+	Help  = "The full file path and file name of VBT file."
+	TokenType = Expression
+	TargetFDF = Yes
+	Token = "X64_SUPPORT" "=" "1"	
+End
+
+TOKEN
+	Name  = "GOP_DRIVER_PATH"
+	Value  = "AmiChipsetModulePkg/NB/GopDriver/IA32/IntelGopDriver.efi"
+	Help  = "The full file path and file name of 32 bit GOP file."
+	TokenType = Expression
+	TargetFDF = Yes
+	Token = "X64_SUPPORT" "=" "0"
+End
+
+TOKEN
+	Name  = "GOP_DRIVER_PATH"
+	Value  = "AmiChipsetModulePkg/NB/GopDriver/X64/IntelGopDriver.efi"
+	Help  = "The full file path and file name of 64 bit GOP file."
+	TokenType = Expression
+	TargetFDF = Yes
+	Token = "X64_SUPPORT" "=" "1"
+End
+
+#EIP128872 >>
+TOKEN
+	Name  = "LEGACY_VBIOS_PATH"
+	Value  = "AmiChipsetModulePkg\NB\IgdRom\Legacy_Vbios.dat"
+	Help  = "The full file path and file name of legacy vbios file."
+	TokenType = Expression
+	TargetFDF = Yes
+End
+#EIP128872 <<
+
+#EIP128048 <<
+
+TOKEN
+	Name  = "NbPeiGetSetupData_Support"
+	Value  = "1"
+	TokenType = Boolean
+End
+#EIP202736 >>
+TOKEN
+	Name  = "DEFAULT_MAX_TOLUD"
+	Value  = "9"
+	Help  = "The default setting of SETUP_DATA.MaxTolud. 5: 2GB / 6: 2.25GB / 7: 2.5GB / 8: 2.75GB / 9: 3GB."
+	TokenType = Integer
+	TargetH = Yes
+	Token = "MEMORYCEILING_DEFAULT" "=" "0xC0000000"
+End
+
+TOKEN
+	Name  = "DEFAULT_MAX_TOLUD"
+	Value  = "8"
+	Help  = "The default setting of SETUP_DATA.MaxTolud. 5: 2GB / 6: 2.25GB / 7: 2.5GB / 8: 2.75GB / 9: 3GB."
+	TokenType = Integer
+	TargetH = Yes
+	Token = "MEMORYCEILING_DEFAULT" "=" "0xB0000000"
+End
+
+TOKEN
+	Name  = "DEFAULT_MAX_TOLUD"
+	Value  = "7"
+	Help  = "The default setting of SETUP_DATA.MaxTolud. 5: 2GB / 6: 2.25GB / 7: 2.5GB / 8: 2.75GB / 9: 3GB."
+	TokenType = Integer
+	TargetH = Yes
+	Token = "MEMORYCEILING_DEFAULT" "=" "0xA0000000"
+End
+
+TOKEN
+	Name  = "DEFAULT_MAX_TOLUD"
+	Value  = "6"
+	Help  = "The default setting of SETUP_DATA.MaxTolud. 5: 2GB / 6: 2.25GB / 7: 2.5GB / 8: 2.75GB / 9: 3GB."
+	TokenType = Integer
+	TargetH = Yes
+	Token = "MEMORYCEILING_DEFAULT" "=" "0x90000000"
+End
+
+TOKEN
+	Name  = "DEFAULT_MAX_TOLUD"
+	Value  = "5"
+	Help  = "The default setting of SETUP_DATA.MaxTolud. 5: 2GB / 6: 2.25GB / 7: 2.5GB / 8: 2.75GB / 9: 3GB."
+	TokenType = Integer
+	TargetH = Yes
+	Token = "MEMORYCEILING_DEFAULT" "=" "0x80000000"
+End
+#EIP202736 <<
+PATH
+	Name  = "NB_LIBRARY_DIR"
+	Path  = "AmiChipsetModulePkg/Library"
+End
+
+PATH
+	Name  = "NB_INCLUDE_DIR"
+	Path  = "AmiChipsetModulePkg/Include"
+End
+
+PATH
+	Name  = "NB_INIT_DIR"
+	Path  = "AmiChipsetModulePkg/NB/NbInit"
+End
+
+MODULE
+	Help  = "Includes Nb.mak to Project"
+	File  = "Nb.mak"
+End
+
+#EIP152282 152283 >>
+#EIP150350 >> 
+ELINK
+    Name  = "$(NB_INIT_DIR)\NbInt15.csm16"
+    Parent  = "CSM_OEMINT_SRC"
+    InvokeOrder = AfterParent
+    Token = "CSM_SUPPORT" "=" "1"  
+	Token = "NbSmi_Support" "=" "1"      
+End
+
+ELINK
+    Name  = "NBINT15"
+    Parent  = "CsmOemInterrupts"
+    ProcID  = 015h
+    SrcFile  = "$(NB_INIT_DIR)\NbInt15.csm16"
+    InvokeOrder = AfterParent
+    Token = "CSM_SUPPORT" "=" "1"    
+   	Token = "NbSmi_Support" "=" "1"
+End
+#EIP150350 <<
+#EIP152282 152283 <<
+
+ELINK
+	Name  = "$(NB_LIBRARY_DIR)/AmiCspLib/NbGeneric.c"
+	Parent  = "AMI_CSP_PEI_SOURCES"
+	InvokeOrder = AfterParent
+End
+
+ELINK
+	Name  = "$(NB_LIBRARY_DIR)/AmiCspLib/NbGeneric.c"
+	Parent  = "AMI_CSP_DXE_SOURCES"
+	InvokeOrder = AfterParent
+End
+
+#CSP20140329_22 >>
+ELINK
+    	Name  = "PchPlatformLib"
+    	Parent  = "AMI_CSP_PEI_LIBRARIES"
+    	InvokeOrder = AfterParent
+End
+
+ELINK
+    	Name  = "PchPlatformLib"
+    	Parent  = "AMI_CSP_DXE_LIBRARIES"
+    	InvokeOrder = AfterParent
+End
+#CSP20140329_22 <<
+
+#// (EIP129308+)>>
+ELINK
+	Name  = "CheckPeiFvCopyToRam,"
+	Parent  = "PeiRamBootList"
+	Token = "PeiRamBootSupport" "=" "1"
+	InvokeOrder = AfterParent
+	Disable = Yes #EIP146215
+End
+#// (EIP129308+)<<
+
+#EIP176554 >>
+ELINK
+	Name  = "HobLib"
+	Parent  = "AMI_CSP_LIBRARIES"
+	InvokeOrder = AfterParent
+End
+#EIP176554 <<
+
+INFComponent
+        Name  = "LegacyRegion2OnLegacyRegionThunk"
+        File  = "NB/LegacyRegion2OnLegacyRegionThunk/LegacyRegion2OnLegacyRegionThunk.inf"
+        Package  = "AmiChipsetModulePkg"
+        ModuleTypes  = "DXE_DRIVER"
+        Token = "CSM_SUPPORT" "=" "1"
+End
+
+INFComponent
+	Name  = "NbGetSetupData"
+	File  = "NbGetSetupData/NbGetSetupData.inf"
+	Package  = "AmiChipsetModulePkg"
+	Path  = "NB_LIBRARY_DIR"
+	Token = "NbGetSetupData_Support" "=" "1"
+End
+
+INFComponent
+	Name  = "NbPeiGetSetupData"
+	File  = "NbGetSetupData/NbPeiGetSetupData.inf"
+	Package  = "AmiChipsetModulePkg"
+	Path  = "NB_LIBRARY_DIR"
+	Token = "NbPeiGetSetupData_Support" "=" "1"
+End
+
+INFComponent
+	Name  = "NbAcpi"
+	File  = "NbAcpi/NbAcpi.inf"
+	Package  = "AmiChipsetModulePkg"
+	Path  = "NB_LIBRARY_DIR"
+	Token = "NbAcpi_Support" "=" "1"
+End
+
+INFComponent
+	Name  = "NbPei"
+	File  = "NbPei.inf"
+	Package  = "AmiChipsetModulePkg"
+	ModuleTypes  = "PEIM"
+	Path  = "NB_INIT_DIR"
+	Token = "NbPei_Support" "=" "1"
+End
+
+INFComponent
+	Name  = "NbDxe"
+	File  = "NbDxe.inf"
+	Package  = "AmiChipsetModulePkg"
+	ModuleTypes  = "DXE_DRIVER"
+	Path  = "NB_INIT_DIR"
+	Token = "NbDxe_Support" "=" "1"
+End
+
+INFComponent
+	Name  = "NbSmi"
+	File  = "NbSmi.inf"
+	Package  = "AmiChipsetModulePkg"
+	ModuleTypes  = "DXE_SMM_DRIVER"
+	Path  = "NB_INIT_DIR"
+	Token = "NbSmi_Support" "=" "1"
+End
+
+LibraryMapping
+	Class  = "NbGetSetupData"
+	Instance  = "AmiChipsetModulePkg.NbGetSetupData"
+	ModuleTypes  = "DXE_DRIVER DXE_RUNTIME_DRIVER DXE_SMM_DRIVER"
+	Token = "NbGetSetupData_Support" "=" "1"
+End
+
+LibraryMapping
+	Class  = "NbGetSetupData"
+	Instance  = "AmiChipsetModulePkg.NbPeiGetSetupData"
+	ModuleTypes  = "PEIM"
+	Token = "NbPeiGetSetupData_Support" "=" "1"
+End
+
+LibraryMapping
+	Class  = "NbAcpi"
+	Instance  = "AmiChipsetModulePkg.NbAcpi"
+	ModuleTypes  = "DXE_SMM_DRIVER"
+	Token = "NbAcpi_Support" "=" "1"
+End
+
+#// (EIP129308+)>>
+LibraryMapping
+	Class  = "NULL"
+	Instance  = "AmiChipsetModulePkg.AmiCspLibPei"
+	Override  = "AmiModulePkg.PeiRamBootPei"
+	Token = "PeiRamBootSupport" "=" "1"
+End
+#// (EIP129308+)<<
+
+#EIP168616 >>
+LibraryMapping
+	Class  = "NULL"
+	Instance  = "Vlv2DeviceRefCodePkg.MemoryDownLib"
+	Override  = "AmiChipsetModulePkg.NbDxe"
+	Token = "MRC_MEMORY_DOWN_SUPPORT" "!=" "0"
+End
+#EIP168616 <<
+
+#EIP128872 >>
+FFS_FILE
+	Name  = "VlvGopFdfFileStatements"
+	FD_AREA  = "FV_MAIN"
+	FILE_Stmt  = "AmiChipsetModulePkg/NB/GopDriver/GopFdfFileStatements.txt"
+End
+#EIP128872 <<
+
+RSVCHIPSET
+	Name  = "PCI Config Space Index Data"
+	BASEADDR  = "0xCF8"
+	LENGTH  = "0x8"
+	TYPE  = "EfiGcdIoTypeIo"
+	ATTRIBUTES  = "-1"
+End
+
+PCIDEVICE
+	Title  = "PciRoot"
+	Parent  = "PciHost (Virtual)"
+	Attribute  = "0x7877f"
+	Dev_type  = "RootBridge"
+	Bus  = 00h
+	Dev  = 00h
+	Fun  = 00h
+	BridgeBusNum  = 00h
+	SleepNum  = 01h
+	ASLfile  = "'AmiChipsetModulePkg\ASL\Pci0Dep.asl','Vlv2DeviceRefCodePkg\AcpiTablesPCAT\HOST_BUS.ASL'"
+	ASLdeviceName  = "PCI0"
+	DeviceType = OnBoard
+	PCIBusSize = 32bit
+	FixedBus = Yes
+	PCIExpress = Yes
+End
+
+#EIP128872 >>
+PCIDEVICE
+	Title  = "Mobile IGFX"
+	Parent  = "PciRoot"
+	Attribute  = "0"
+	Dev_type  = "PciDevice"
+	Dev  = 02h
+	Fun  = 00h
+	GPEbit  = 00h
+	SleepNum  = 01h
+	ASLfile  = "'Vlv2DeviceRefCodePkg\AcpiTablesPCAT\Vlv.asl'"
+	ASLdeviceName  = "GFX0"
+	ROMFile  = "$(GOP_DRIVER_PATH)"
+	IntA = 	LNKA; 16
+	DeviceType = OnBoard
+	PCIBusSize = 32bit
+	OptionROM = Yes
+	ROMMain = No
+	UefiRom = Yes
+	FFSFileName  = "ROM Storage"
+	ROMSectionGuid  = "380b6b4f-1454-41f2-a6d3-61d1333e8cb4"
+End
+
+PCIDEVICE
+	Title  = "Legacy IGFX"
+	Parent  = "PciRoot"
+	Attribute  = "0x0"
+	Dev_type  = "Container"
+	Dev  = 02h
+	Fun  = 00h
+	SleepNum  = 01h
+	ROMFile  = "$(LEGACY_VBIOS_PATH)"
+	DeviceType = OnBoard
+	PCIBusSize = 32bit
+	OptionROM = Yes
+	ROMMain = No
+	Virtual = Yes
+	LegacyRom = Yes
+	FFSFileName  = "ROM Storage"
+	ROMSectionGuid  = "06767e64-19bf-459f-8564-5f25d4896fb0"
+	Token = "CSM_SUPPORT" "=" "1"
+End
+#EIP128872 <<
+#//<EIP221643+> >>>
+ELINK
+	Name  = '{L"MemoryConfig", {0x10ba6bbe, 0xa97e, 0x41c3, 0x9a, 0x07, 0x60, 0x7a, 0xd9, 0xbd, 0x60, 0xe5}},'
+	Parent  = "BlockS3VariablesList"
+	InvokeOrder = AfterParent
+End
+#//<EIP221643+> <<<

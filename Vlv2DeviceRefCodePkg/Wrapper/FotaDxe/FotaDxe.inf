@@ -1,0 +1,48 @@
+
+[defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = FotaDxe
+  FILE_GUID                      = E2457466-781B-42d2-AB4E-60847299C41C
+  MODULE_TYPE                    = DXE_DRIVER
+  VERSION_STRING                 = 1.0
+  PI_SPECIFICATION_VERSION       = 0x0001000A
+  ENTRY_POINT                    = FotaDxeEntry
+
+[sources.common]
+  FotaDxe.c
+  FotaDxe.h
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  Vlv2DeviceRefCodePkg/PlatformPkg.dec
+  Vlv2DeviceRefCodePkg/Vlv2DeviceRefCodePkg.dec
+  AmiCompatibilityPkg/AmiCompatibilityPkg.dec  
+  ShellPkg/ShellPkg.dec  #//<EIP153486+>
+
+[LibraryClasses]
+  BaseLib
+  BaseMemoryLib
+  MemoryAllocationLib
+  UefiBootServicesTableLib
+  UefiDriverEntryPoint
+  UefiRuntimeServicesTableLib
+  DxeServicesTableLib
+  DebugLib
+  HobLib  
+  FileHandleLib  #//<EIP153486+>
+
+[Guids]
+  gEfiCapsuleVendorGuid
+  gEfiHobListGuid
+  gAosFirmwareClassGuid
+  gEfiFirmwareClassGuid  #//<EIP153486+>
+  gEfiPartTypeSystemPartGuid  #//<EIP153486+>
+
+[Protocols]
+  gBdsAllDriversConnectedProtocolGuid  
+  gDxePchPlatformPolicyProtocolGuid  #//<EIP153486+>
+  gEfiSimpleFileSystemProtocolGuid  #//<EIP153486+>
+
+[Depex]
+  gEfiSimpleFileSystemProtocolGuid  #//<EIP153486+>

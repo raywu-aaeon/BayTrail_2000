@@ -1,0 +1,15 @@
+
+[defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = IsctASL
+  FILE_GUID                      = FA2DDC38-3F19-4218-B53E-D9D79D626767
+  MODULE_TYPE                    = USER_DEFINED
+  VERSION_STRING                 = 1.0
+  EDK_RELEASE_VERSION            = 0x00020000
+  EFI_SPECIFICATION_VERSION      = 0x00020000
+
+[sources.common]
+  Isct.asl
+
+[Packages]
+  MdePkg/MdePkg.dec

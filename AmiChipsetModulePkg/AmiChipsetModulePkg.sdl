@@ -1,0 +1,72 @@
+#*************************************************************************
+#*************************************************************************
+#**                                                                     **
+#**        (C)Copyright 1985-2014, American Megatrends, Inc.            **
+#**                                                                     **
+#**                       All Rights Reserved.                          **
+#**                                                                     **
+#**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093           **
+#**                                                                     **
+#**                       Phone: (770)-246-8600                         **
+#**                                                                     **
+#*************************************************************************
+#*************************************************************************
+
+TOKEN
+	Name  = "AmiChipsetModulePkg_SUPPORT"
+	Value  = "1"
+	Help  = "Main switch to enable AmiChipsetModulePkg support in Project"
+	TokenType = Boolean
+	TargetEQU = Yes
+	TargetMAK = Yes
+	Master = Yes
+End
+
+PATH
+	Name  = "AmiChipsetModulePkg_DIR"
+End
+
+INFComponent
+	Name  = "ElinkPei"
+	File  = "Elink/ElinkPei.inf"
+	Package  = "AmiChipsetModulePkg"
+	ModuleTypes  = "PEIM"
+	Path  = "AmiChipsetModulePkg_DIR"
+End
+
+PcdMapping
+	Name  = "PcdUdfSupport"
+	GuidSpace  = "gAmiModulePkgTokenSpaceGuid"
+	PcdType  = "PcdsFixedAtBuild"
+	Value  = "FALSE"
+	Offset  = 00h
+	Length  = 00h
+	TargetDSC = Yes
+	Token = "FsUdf_SUPPORT" "!=" "1"
+End
+
+#EIP176554 >>
+PcdMapping
+	Name  = "PcdRcrbBaseAddress"
+	GuidSpace  = "gAmiChipsetModulePkgTokenSpaceGuid"
+	PcdType  = "PcdsFixedAtBuild"
+	Value  = "$(SB_RCRB_BASE_ADDRESS)"
+	Offset  = 00h
+	Length  = 00h
+	TargetDSC = Yes
+End
+#EIP176554 <<
+
+#*************************************************************************
+#*************************************************************************
+#**                                                                     **
+#**        (C)Copyright 1985-2014, American Megatrends, Inc.            **
+#**                                                                     **
+#**                       All Rights Reserved.                          **
+#**                                                                     **
+#**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093           **
+#**                                                                     **
+#**                       Phone: (770)-246-8600                         **
+#**                                                                     **
+#*************************************************************************
+#*************************************************************************

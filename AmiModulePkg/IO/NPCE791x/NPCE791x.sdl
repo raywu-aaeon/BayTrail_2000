@@ -1,0 +1,953 @@
+
+#*************************************************************************
+#*************************************************************************
+#**                                                                     **
+#**        (C)Copyright 1985-2011, American Megatrends, Inc.            **
+#**                                                                     **
+#**                       All Rights Reserved.                          **
+#**                                                                     **
+#**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093           **
+#**                                                                     **
+#**                       Phone: (770)-246-8600                         **
+#**                                                                     **
+#*************************************************************************
+#*************************************************************************
+#
+#*************************************************************************
+# $Header: $
+#
+# $Revision: $
+#
+# $Date: $
+#*************************************************************************
+# Revision History
+# ----------------
+# $Log: $
+# 
+#*************************************************************************
+#<AMI_FHDR_START>
+#
+# Name:  <NPCE791x.SDL>
+#
+# Description:     SDL file to define SIO functions
+#
+#
+#<AMI_FHDR_END>
+#*************************************************************************
+############################################################
+#==============================================================================
+#1.SIO Global Control Tokens
+#==============================================================================
+TOKEN
+	Name  = "====== SIO Global Control Tokens ======"
+	Value  = "!!!DO NOT CHANGE NAMES JUST VALUES!!!"
+	Help  = "Specfy global control tokens."
+	TokenType = Expression
+End
+
+TOKEN
+	Name  = "NPCE791x_SUPPORT"
+	Value  = "1"
+	Help  = "Main switch to enable NPCE791x support in Project"
+	TokenType = Boolean
+	TargetEQU = Yes
+	TargetH = Yes
+	Master = Yes
+End
+
+
+#==============================================================================
+#2.Override AMI Sio Core setting
+#==============================================================================
+TOKEN
+	Name  = "====== SIO For Debug Setting =========="
+	Value  = "!!!DO NOT CHANGE NAMES JUST VALUES!!!"
+	Help  = "The debug Serial Port Setting."
+	TokenType = Expression
+End
+
+TOKEN
+	Name  = "DEBUG_COM_PORT_ADDR"
+	Value  = "$(NPCE791x_SERIAL_PORT1_BASE_ADDRESS)"
+	Help  = "Debug Address from Serial Port x."
+	TokenType = Integer
+	TargetH = Yes
+	Token = "NPCE791x_SERIAL_PORT1_PRESENT" "=" "1"
+End
+
+TOKEN
+	Name  = "DEBUG_LDN_UART"
+	Value  = "$(NPCE791x_LDN_UART1)"
+	Help  = "UARTx Login Devive for Debugger."
+	TokenType = Integer
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "NPCE791x_SERIAL_PORT1_BASE_ADDRESS"
+	Value  = "0x03F8"
+	Help  = "Base Address of Serial Port 1 (COMA / UART1)."
+	TokenType = Integer
+	TargetH = Yes
+	Token = "NPCE791x_SERIAL_PORT1_PRESENT" "=" "1"
+End
+
+
+#==============================================================================
+#3.SIO Logic Device Present Settings
+#==============================================================================
+TOKEN
+	Name  = "=== SIO Logic Device Present Settings =========="
+	Value  = "!!!DO NOT CHANGE NAMES JUST VALUES!!!"
+	Help  = "All Logic Device Present / Not Present."
+	TokenType = Expression
+End
+
+TOKEN
+	Name  = "NPCE791x_KEYBOARD_PRESENT"
+	Value  = "1"
+	Help  = "Keyboard Present / Not Present."
+	TokenType = Boolean
+	TargetMAK = Yes
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "NPCE791x_MOUSE_PRESENT"
+	Value  = "1"
+	Help  = "Mouse Present / Not Present."
+	TokenType = Boolean
+	TargetMAK = Yes
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "NPCE791x_SERIAL_PORT1_PRESENT"
+	Value  = "1"
+	Help  = "Serial Port 0 (COMA / UART1) Present / Not Present."
+	TokenType = Boolean
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "NPCE791x_CIR_PORT_PRESENT"
+	Value  = "0"
+	Help  = "CIR Port Present / Not Present."
+	TokenType = Boolean
+	TargetMAK = Yes
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "NPCE791x_MSWC_PRESENT"
+	Value  = "1"
+	Help  = "Mobile System Wake-Up Present / Not Present."
+	TokenType = Boolean
+	TargetMAK = Yes
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "NPCE791x_SHM_PRESENT"
+	Value  = "1"
+	Help  = "Shared Memory Present / Not Present."
+	TokenType = Boolean
+	TargetMAK = Yes
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "NPCE791x_ESHM_PRESENT"
+	Value  = "1"
+	Help  = "Extended Shared Memory Present / Not Present."
+	TokenType = Boolean
+	TargetMAK = Yes
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "NPCE791x_PM1_PRESENT"
+	Value  = "1"
+	Help  = "Power Management Channel 1 Present / Not Present."
+	TokenType = Boolean
+	TargetMAK = Yes
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "NPCE791x_PM2_PRESENT"
+	Value  = "1"
+	Help  = "Power Management Channel 2 Present / Not Present."
+	TokenType = Boolean
+	TargetMAK = Yes
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "NPCE791x_PM3_PRESENT"
+	Value  = "1"
+	Help  = "Power Management Channel 3 Present / Not Present."
+	TokenType = Boolean
+	TargetMAK = Yes
+	TargetH = Yes
+End
+
+
+#==============================================================================
+#4.SIO Registers Layout
+#==============================================================================
+TOKEN
+	Name  = "====== SIO Registers Layout =========="
+	Value  = "!!!DO NOT CHANGE NAMES JUST VALUES!!!"
+	Help  = "Specfy Register address inside SIO Chip."
+	TokenType = Expression
+End
+
+TOKEN
+	Name  = "NPCE791x_CONFIG_INDEX"
+	Value  = "0x2E"
+	TokenType = Integer
+	TargetEQU = Yes
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "NPCE791x_CONFIG_DATA"
+	Value  = "0x2F"
+	TokenType = Integer
+	TargetEQU = Yes
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "NPCE791x_LDN_SEL_REGISTER"
+	Value  = "0x07"
+	Help  = "Logical Device Select Register Address"
+	TokenType = Integer
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "NPCE791x_ACTIVATE_REGISTER"
+	Value  = "0x30"
+	Help  = "Device Identification Register Address"
+	TokenType = Integer
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "NPCE791x_BASE1_HI_REGISTER"
+	Value  = "0x60"
+	Help  = "Device BaseAddres Register#1 MSB Address"
+	TokenType = Integer
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "NPCE791x_BASE1_LO_REGISTER"
+	Value  = "0x61"
+	Help  = "Device BaseAddres Register#1 LSB Address"
+	TokenType = Integer
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "NPCE791x_BASE2_HI_REGISTER"
+	Value  = "0x62"
+	Help  = "Device BaseAddres Register#2 MSB Address"
+	TokenType = Integer
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "NPCE791x_BASE2_LO_REGISTER"
+	Value  = "0x63"
+	Help  = "Device BaseAddres Register#2 LSB Address"
+	TokenType = Integer
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "NPCE791x_IRQ1_REGISTER"
+	Value  = "0x70"
+	Help  = "Device IRQ Register#1 Address"
+	TokenType = Integer
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "NPCE791x_IRQ2_REGISTER"
+	Value  = "0x72"
+	Help  = "Device IRQ Register#2 Address"
+	TokenType = Integer
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "NPCE791x_DMA1_REGISTER"
+	Value  = "0x74"
+	Help  = "Device DMA Register#1 Address"
+	TokenType = Integer
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "NPCE791x_DMA2_REGISTER"
+	Value  = "0x75"
+	Help  = "Device DMA Register#2 Address"
+	TokenType = Integer
+	TargetH = Yes
+End
+
+
+#==============================================================================
+#5. SIO Logical Devices Numbers 
+#==============================================================================
+TOKEN
+	Name  = "====== SIO Logical Devices Numbers ======"
+	Value  = "!!!DO NOT CHANGE NAMES JUST VALUES!!!"
+	Help  = "Specfy Devices Logical Number."
+	TokenType = Expression
+End
+
+TOKEN
+	Name  = "NPCE791x_LDN_UART1"
+	Value  = "0x03"
+	Help  = "LDN for Serial1 Port Controller"
+	TokenType = Integer
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "NPCE791x_LDN_CIR"
+	Value  = "0x03"
+	Help  = "LDN for Consumer IR Register"
+	TokenType = Integer
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "NPCE791x_LDN_PS2K"
+	Value  = "0x06"
+	Help  = "LDN for PS2 Keyboard Controller"
+	TokenType = Integer
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "NPCE791x_LDN_PS2M"
+	Value  = "0x05"
+	Help  = "LDN for PS2 Mouse Controller."
+	TokenType = Integer
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "NPCE791x_LDN_MSWC"
+	Value  = "0x04"
+	Help  = "LDN for Mobile System Wake-Up Controller."
+	TokenType = Integer
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "NPCE791x_LDN_SHM"
+	Value  = "0x0F"
+	Help  = "LDN for Shared Memory."
+	TokenType = Integer
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "NPCE791x_LDN_PM1"
+	Value  = "0x11"
+	Help  = "LDN for Power Management Channel 1."
+	TokenType = Integer
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "NPCE791x_LDN_PM2"
+	Value  = "0x12"
+	Help  = "LDN for Power Management Channel 2."
+	TokenType = Integer
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "NPCE791x_LDN_PM3"
+	Value  = "0x17"
+	Help  = "LDN for Power Management Channel 3."
+	TokenType = Integer
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "NPCE791x_LDN_ESHM"
+	Value  = "0x1D"
+	Help  = "LDN for Extended Shared Memory."
+	TokenType = Integer
+	TargetH = Yes
+End
+
+
+#==============================================================================
+#5. Register value setting
+#==============================================================================
+TOKEN
+	Name  = "=== SIO Global Registers Settings =========="
+	Value  = "!!!DO NOT CHANGE NAMES JUST VALUES!!!"
+	Help  = "SIO Global Registers Setting"
+	TokenType = Expression
+End
+
+TOKEN
+	Name  = "=== SIO Activation Values =========="
+	Value  = "!!!DO NOT CHANGE NAMES JUST VALUES!!!"
+	Help  = "Specfy Logical Device Activation Value."
+	TokenType = Expression
+End
+
+TOKEN
+	Name  = "NPCE791x_ACTIVATE_VALUE"
+	Value  = "0x01"
+	Help  = "Value to activate Device."
+	TokenType = Integer
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "NPCE791x_DEACTIVATE_VALUE"
+	Value  = "0x00"
+	Help  = "Value to deactivate Device."
+	TokenType = Integer
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "====== SIO BASE ADDRESS Setting =========="
+	Value  = "!!!DO NOT CHANGE NAMES JUST VALUES!!!"
+	Help  = "SIO some base address setting "
+	TokenType = Expression
+End
+
+TOKEN
+	Name  = "NPCE791x_TOTAL_BASE_ADDRESS"
+	Value  = "0xA00"
+	Help  = "It's used for IODecode, System will open TOTAL_BASE_ADDRESS+TOTAL_LENGTH IODecode for GPIO+PME+..."
+	TokenType = Integer
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "NPCE791x_TOTAL_LENGTH"
+	Value  = "0x50"
+	Help  = "IODecode base address 's length. 0xFF >= TOTAL_LENGTH >= GPIO_LENGTH + PME_LENGTH + ..."
+	TokenType = Integer
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "NPCE791x_MSWC_BASE_ADDRESS"
+	Value  = "0xA00"
+	Help  = "Base Address of MSWC."
+	TokenType = Integer
+	TargetH = Yes
+	Token = "NPCE791x_MSWC_PRESENT" "=" "1"
+End
+
+TOKEN
+	Name  = "NPCE791x_MSWC_LENGTH"
+	Value  = "0x20"
+	Help  = "Base Address's length of MSWC."
+	TokenType = Integer
+	TargetH = Yes
+	Token = "NPCE791x_MSWC_PRESENT" "=" "1"
+End
+
+TOKEN
+	Name  = "IO1B"
+	Value  = "$(NPCE791x_MSWC_BASE_ADDRESS)"
+	Help  = "Base Address of MSWC Controller."
+	TokenType = Integer
+	TargetASL = Yes
+	TargetH = Yes
+	Token = "NPCE791x_MSWC_PRESENT" "=" "1"
+End
+
+TOKEN
+	Name  = "IO1L"
+	Value  = "$(NPCE791x_MSWC_LENGTH)"
+	Help  = "Length of MSWC Controller."
+	TokenType = Integer
+	TargetASL = Yes
+	TargetH = Yes
+	Token = "NPCE791x_MSWC_PRESENT" "=" "1"
+End
+
+TOKEN
+	Name  = "IO1B"
+	Value  = "0"
+	Help  = "Base Address of MSWC Controller."
+	TokenType = Integer
+	TargetASL = Yes
+	TargetH = Yes
+	Token = "NPCE791x_MSWC_PRESENT" "=" "0"
+End
+
+TOKEN
+	Name  = "IO1L"
+	Value  = "0"
+	Help  = "Length of MSWC Controller."
+	TokenType = Integer
+	TargetASL = Yes
+	TargetH = Yes
+	Token = "NPCE791x_MSWC_PRESENT" "=" "0"
+End
+
+TOKEN
+	Name  = "NPCE791x_PMX_BASE_ADDRESS"
+	Value  = "0xA20"
+	Help  = "Base Address of PMx."
+	TokenType = Integer
+	TargetH = Yes
+	Token = "NPCE791x_PM1_PRESENT" "=" "1"
+End
+
+TOKEN
+	Name  = "NPCE791x_PMX_LENGTH"
+	Value  = "0x10"
+	Help  = "Base Address's length of PMx."
+	TokenType = Integer
+	TargetH = Yes
+	Token = "NPCE791x_PM1_PRESENT" "=" "1"
+End
+
+TOKEN
+	Name  = "IO2B"
+	Value  = "$(NPCE791x_PMX_BASE_ADDRESS)"
+	Help  = "Base Address of PMx Controller."
+	TokenType = Integer
+	TargetASL = Yes
+	TargetH = Yes
+	Token = "NPCE791x_PM1_PRESENT" "=" "1"
+End
+
+TOKEN
+	Name  = "IO2L"
+	Value  = "$(NPCE791x_PMX_LENGTH)"
+	Help  = "Length of PMx Controller."
+	TokenType = Integer
+	TargetASL = Yes
+	TargetH = Yes
+	Token = "NPCE791x_PM1_PRESENT" "=" "1"
+End
+
+TOKEN
+	Name  = "IO2B"
+	Value  = "0"
+	Help  = "Base Address of PMx Controller."
+	TokenType = Integer
+	TargetASL = Yes
+	TargetH = Yes
+	Token = "NPCE791x_PM1_PRESENT" "=" "0"
+End
+
+TOKEN
+	Name  = "IO2L"
+	Value  = "0"
+	Help  = "Length of PMx Controller."
+	TokenType = Integer
+	TargetASL = Yes
+	TargetH = Yes
+	Token = "NPCE791x_PM1_PRESENT" "=" "0"
+End
+
+TOKEN
+	Name  = "NPCE791x_SHM_BASE_ADDRESS"
+	Value  = "0xA30"
+	Help  = "Base Address of SHM."
+	TokenType = Integer
+	TargetH = Yes
+	Token = "NPCE791x_SHM_PRESENT" "=" "1"
+End
+
+TOKEN
+	Name  = "NPCE791x_SHM_LENGTH"
+	Value  = "0x20"
+	Help  = "Base Address's length of SHM."
+	TokenType = Integer
+	TargetH = Yes
+	Token = "NPCE791x_SHM_PRESENT" "=" "1"
+End
+
+TOKEN
+	Name  = "IO3B"
+	Value  = "$(NPCE791x_SHM_BASE_ADDRESS)"
+	Help  = "Base Address of SHM Controller."
+	TokenType = Integer
+	TargetASL = Yes
+	TargetH = Yes
+	Token = "NPCE791x_SHM_PRESENT" "=" "1"
+End
+
+TOKEN
+	Name  = "IO3L"
+	Value  = "$(NPCE791x_SHM_LENGTH)"
+	Help  = "Length of SHM Controller."
+	TokenType = Integer
+	TargetASL = Yes
+	TargetH = Yes
+	Token = "NPCE791x_SHM_PRESENT" "=" "1"
+End
+
+TOKEN
+	Name  = "IO3B"
+	Value  = "0"
+	Help  = "Base Address of SHM Controller."
+	TokenType = Integer
+	TargetASL = Yes
+	TargetH = Yes
+	Token = "NPCE791x_SHM_PRESENT" "=" "0"
+End
+
+TOKEN
+	Name  = "IO3L"
+	Value  = "0"
+	Help  = "Length of SHM Controller."
+	TokenType = Integer
+	TargetASL = Yes
+	TargetH = Yes
+	Token = "NPCE791x_SHM_PRESENT" "=" "0"
+End
+
+TOKEN
+	Name  = "===== SIO token only been used in ASL  ====="
+	Value  = "!!!DO NOT CHANGE NAMES JUST VALUES!!!"
+	Help  = "Provide Resource properties."
+	TokenType = Expression
+End
+
+TOKEN
+	Name  = "SP1O"
+	Value  = "$(NPCE791x_CONFIG_INDEX)"
+	Help  = "Super IO Index/Data configuration port for ASL."
+	TokenType = Integer
+	TargetASL = Yes
+End
+
+TOKEN
+	Name  = "KBFG"
+	Value  = "0"
+	Help  = "Keyboard wake-up flag."
+	TokenType = Integer
+	TargetASL = Yes
+	Token = "NPCE791x_KEYBOARD_PRESENT" "=" "0"
+End
+
+TOKEN
+	Name  = "MSFG"
+	Value  = "0"
+	Help  = "Mouse wake-up flag."
+	TokenType = Integer
+	TargetASL = Yes
+	Token = "NPCE791x_MOUSE_PRESENT" "=" "0"
+End
+
+PATH
+	Name  = "NPCE791x_DIR"
+End
+
+
+#==============================================================================
+#elink S3 Save script table
+#==============================================================================
+#==============================================================================
+#elink Setup Source file and table
+#==============================================================================
+ELINK
+	Name  = "$(NPCE791x_DIR)\NPCE791x.sd"
+	Parent  = "SETUP_DEFINITIONS"
+	Priority  = 40
+	InvokeOrder = AfterParent
+End
+
+ELINK
+	Name  = "$(NPCE791x_DIR)\SioVarStore.sd"
+	Parent  = "SETUP_DEFINITIONS"
+	Priority  = 40
+	Help  = "MikeSun Note:This file should be generated automically."
+	InvokeOrder = AfterParent
+End
+
+ELINK
+	Name  = "{dsUART,0x00, STR_SERIAL1_CONFIG_VALUE},"
+	Parent  = "SioStrInitList"
+	InvokeOrder = AfterParent
+	Token = "NPCE791x_SERIAL_PORT1_PRESENT" "=" "1"
+End
+
+ELINK
+	Name  = "{dsCIR,0x00, STR_CIR_CONFIG_VALUE},"
+	Parent  = "SioStrInitList"
+	InvokeOrder = AfterParent
+	Token = "NPCE791x_CIR_PORT_PRESENT" "=" "1"
+End
+
+
+#==============================================================================
+#elink Pei Initialization table
+#==============================================================================
+ELINK
+	Name  = "$(NPCE791x_DIR)/PeiIoTable.h"
+	Parent  = "SIO_PEI_TABLE_DEFINITIONS"
+	InvokeOrder = AfterParent
+End
+
+
+#==============================================================================
+#elink DXE Initialization Source file
+#==============================================================================
+ELINK
+	Name  = "../$(NPCE791x_DIR)/NPCE791xDxeInit.c"
+	Parent  = "SIOLINK_LIB_SRC"
+	InvokeOrder = AfterParent
+End
+
+ELINK
+	Name  = "../../$(NPCE791x_DIR)/NPCE791xDxeInit.h"
+	Parent  = "SIOLINK_LIB_H"
+	InvokeOrder = AfterParent
+End
+
+ELINK
+	Name  = "$(NPCE791x_DIR)\NPCE791x.uni"
+	Parent  = "SetupStringFiles"
+	InvokeOrder = AfterParent
+End
+
+SIODEVICE
+	Name  = "NPCE791x"
+	Parent  = "LpcBridge"
+	IndexPort  = 04eh
+	DataPort  = 04fh
+	StdSioType  = "Yes"
+	DevSelReg  = 07h
+	ActivateReg  = 030h
+	ActivateVal  = 01h
+	DeActivateVal  = 00h
+	BaseHiReg1  = 060h
+	BaseLoReg1  = 061h
+	BaseHiReg2  = 062h
+	BaseLoReg2  = 063h
+	Irq1Reg  = 070h
+	Irq2Reg  = 072h
+	Dma1Reg  = 074h
+	Dma2Reg  = 075h
+	GblRegFlag  = "0x23f300000000"
+	LocalRegFlag  = "0xffff00000000000000000000000000000033000f000000000000000000000000"
+	SMBIOSStr  = "Test String"
+	GPEbit  = 01dh
+	SleepNum  = 03h
+	ASLfile  = "'AmiModulePkg\IO\NPCE791x\NPCE791xDEV.ASL','AmiModulePkg\IO\NPCE791x\NPCE791xEVT.ASL'"
+	ASLdeviceName  = "SIO1"
+	ASL_PTS  = "Method;\_SB.PCI0.LPCB.SIO1.SIOS(Arg0)"
+	ASL_WAK  = "Method;\_SB.PCI0.LPCB.SIO1.SIOW(Arg0)"
+End
+
+LDEVICE
+	Name  = "Com1"
+	SioDevice  = "NPCE791x"
+	Dev_Type  = "dsUART"
+	LDev_Num  = "03h"
+	UID  = "01h"
+	PnPID  = "0501h"
+	SIO_RES_Flag  = "0x0"
+	HasSetup = Yes
+	ResBaseAddr1  = "00h"
+	ResLength1  = "00h"
+	ResBaseAddr2  = "00h"
+	ResLength2  = "00h"
+	InitRoutine  = "COM_Init"
+	SleepNum  = 01h
+	ASLfile  = "'AmiModulePkg\GenericSio\UART1.ASL'"
+	ASLdeviceName  = "UAR1"
+	Token = "NPCE791x_SERIAL_PORT1_PRESENT" "=" "1"
+End
+
+LDEVICE
+	Name  = "SioCIR"
+	SioDevice  = "NPCE791x"
+	Dev_Type  = "dsCIR"
+	LDev_Num  = "03h"
+	UID  = "00h"
+	PnPID  = "0510h"
+	SIO_RES_Flag  = "0x0"
+	HasSetup = Yes
+	ResBaseAddr1  = "00h"
+	ResLength1  = "00h"
+	ResBaseAddr2  = "00h"
+	ResLength2  = "00h"
+	InitRoutine  = "CIR_Init"
+	SleepNum  = 01h
+	ASLfile  = "'AmiModulePkg\IO\NPCE791x\CIR.asl'"
+	ASLdeviceName  = "CIR_"
+	Token = "NPCE791x_CIR_PORT_PRESENT" "=" "1"
+End
+
+#EIP129301 >>
+LDEVICE
+	Name  = "Ps2Kb"
+	SioDevice  = "NPCE791x"
+	Dev_Type  = "dsPS2CK"
+	LDev_Num  = "06h"
+	UID  = "00h"
+	PnPID  = "0303h"
+	SIO_RES_Flag  = "0x0"
+	ResBaseAddr1  = "00h"
+	ResLength1  = "00h"
+	ResBaseAddr2  = "00h"
+	ResLength2  = "00h"
+	InitRoutine  = "KBC_Init"
+	SleepNum  = 01h
+	ASLfile  = "'AmiModulePkg\GenericSio\PS2_KB.asl'"
+	ASLdeviceName  = "PS2K"
+	ASL_HID = Yes
+	Token = "NPCE791x_KEYBOARD_PRESENT" "=" "1"
+End
+
+LDEVICE
+	Name  = "Ps2Ms"
+	SioDevice  = "NPCE791x"
+	Dev_Type  = "dsPS2CM"
+	LDev_Num  = "05h"
+	UID  = "00h"
+	PnPID  = "0f03h"
+	SIO_RES_Flag  = "0x3"
+	ResBaseAddr1  = "00h"
+	ResLength1  = "00h"
+	ResBaseAddr2  = "00h"
+	ResLength2  = "00h"
+	SleepNum  = 01h
+	ASLfile  = "'AmiModulePkg\GenericSio\PS2_MS.asl'"
+	ASLdeviceName  = "PS2M"
+	ASL_HID = Yes
+	Token = "NPCE791x_MOUSE_PRESENT" "=" "1"
+End
+#EIP129301 <<
+
+
+LDEVICE
+	Name  = "MSWC"
+	SioDevice  = "NPCE791x"
+	Dev_Type  = "dsNone"
+	LDev_Num  = "04h"
+	UID  = "00h"
+	PnPID  = "0c08h"
+	SIO_RES_Flag  = "0x80"
+	ResBaseAddr1  = "$(IO1B)"
+	ResLength1  = "$(IO1L)"
+	ResBaseAddr2  = "00h"
+	ResLength2  = "00h"
+	InitRoutine  = "MSWC_Init"
+	SleepNum  = 01h
+	ASLfile  = "'AmiModulePkg\GenericSio\NO_RES_STA.asl'"
+	ASLdeviceName  = "MSWC"
+	Token = "NPCE791x_MSWC_PRESENT" "=" "1"
+End
+
+LDEVICE
+	Name  = "SHM"
+	SioDevice  = "NPCE791x"
+	Dev_Type  = "dsNone"
+	LDev_Num  = "0fh"
+	UID  = "01h"
+	PnPID  = "0c08h"
+	SIO_RES_Flag  = "0x80"
+	ResBaseAddr1  = "$(IO3B)"
+	ResLength1  = "$(IO3L)"
+	ResBaseAddr2  = "00h"
+	ResLength2  = "00h"
+	InitRoutine  = "SHM_Init"
+	SleepNum  = 01h
+	ASLfile  = "'AmiModulePkg\GenericSio\NO_RES_STA.asl'"
+	ASLdeviceName  = "SHM_"
+	Token = "NPCE791x_SHM_PRESENT" "=" "1"
+End
+
+LDEVICE
+	Name  = "PM1"
+	SioDevice  = "NPCE791x"
+	Dev_Type  = "dsNone"
+	LDev_Num  = "011h"
+	UID  = "02h"
+	PnPID  = "0c08h"
+	SIO_RES_Flag  = "0x80"
+	ResBaseAddr1  = "$(IO2B)+0x02"
+	ResLength1  = "01h"
+	ResBaseAddr2  = "$(IO2B)+0x06"
+	ResLength2  = "01h"
+	InitRoutine  = "PM1_Init"
+	SleepNum  = 01h
+	ASLfile  = "'AmiModulePkg\GenericSio\NO_RES_STA.asl'"
+	ASLdeviceName  = "PM1_"
+	Token = "NPCE791x_PM1_PRESENT" "=" "1"
+End
+
+LDEVICE
+	Name  = "PM2"
+	SioDevice  = "NPCE791x"
+	Dev_Type  = "dsNone"
+	LDev_Num  = "012h"
+	UID  = "03h"
+	PnPID  = "0c08h"
+	SIO_RES_Flag  = "0x80"
+	ResBaseAddr1  = "$(IO2B)+0x08"
+	ResLength1  = "01h"
+	ResBaseAddr2  = "$(IO2B)+0x0C"
+	ResLength2  = "01h"
+	InitRoutine  = "PM2_Init"
+	SleepNum  = 01h
+	ASLfile  = "'AmiModulePkg\GenericSio\NO_RES_STA.asl'"
+	ASLdeviceName  = "PM2_"
+	Token = "NPCE791x_PM2_PRESENT" "=" "1"
+End
+
+LDEVICE
+	Name  = "PM3"
+	SioDevice  = "NPCE791x"
+	Dev_Type  = "dsNone"
+	LDev_Num  = "017h"
+	UID  = "04h"
+	PnPID  = "0c08h"
+	SIO_RES_Flag  = "0x80"
+	ResBaseAddr1  = "$(IO2B)+0x0A"
+	ResLength1  = "01h"
+	ResBaseAddr2  = "$(IO2B)+0x0E"
+	ResLength2  = "01h"
+	InitRoutine  = "PM3_Init"
+	SleepNum  = 01h
+	ASLfile  = "'AmiModulePkg\GenericSio\NO_RES_STA.asl'"
+	ASLdeviceName  = "PM3_"
+	Token = "NPCE791x_PM3_PRESENT" "=" "1"
+End
+
+LDEVICE
+	Name  = "ESHM"
+	SioDevice  = "NPCE791x"
+	Dev_Type  = "dsNone"
+	LDev_Num  = "1Dh"
+	UID  = "05h"
+	PnPID  = "0c08h"
+	SIO_RES_Flag  = "0x80"
+	ResBaseAddr1  = "00h"
+	ResLength1  = "00h"
+	ResBaseAddr2  = "00h"
+	ResLength2  = "00h"
+	InitRoutine  = "ESHM_Init"
+	SleepNum  = 01h
+	ASLfile  = "'AmiModulePkg\GenericSio\NO_RES_STA.asl'"
+	ASLdeviceName  = "ESHM"
+	Token = "NPCE791x_ESHM_PRESENT" "=" "1"
+End
+

@@ -1,0 +1,21 @@
+<component>
+	name = "SecureBoot,UEFI"
+	category = eModule
+	Rank = 30
+	LocalRoot = "AmiModulePkg\SecureBoot\"
+	RefName = "SecureBoot"
+[INF]
+"SecureBootDXE.inf"
+"SecureBootSMMlib.inf"
+[files]
+"SecureBoot.chm"    
+"SecureBoot.sdl"	
+"SecureBoot.uni"	
+"SecureBoot.sd"	
+"SecureBoot.c"	
+"SecureBoot.h"	
+[parts]
+"AuthVariable"
+"ImageVerificationLib"
+"SecVariables"
+<endComponent>

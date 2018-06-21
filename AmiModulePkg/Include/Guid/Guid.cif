@@ -1,0 +1,15 @@
+<component>
+	name = "Guid"
+	category = ModulePart
+	LocalRoot = "AmiModulePkg\Include\Guid\"
+	RefName = "AmiModulePkg.Guid"
+[files]
+"AmiDevicePath.h"	
+"AmiGlobalVariable.h"	
+"AmiModulePkgTokenSpace.h"	
+"AmiPlatformInfo.h"	
+"AmiRecoveryDevice.h"	
+"AmiResetSystemEvent.h"	
+"AmiRomLayout.h"	
+"AmiPerformanceProfiling.h"	
+<endComponent>

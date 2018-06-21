@@ -1,0 +1,80 @@
+ ## @file
+ #**********************************************************************
+ #**********************************************************************
+ #**                                                                  **
+ #**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+ #**                                                                  **
+ #**                       All Rights Reserved.                       **
+ #**                                                                  **
+ #**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093        **
+ #**                                                                  **
+ #**                       Phone: (770)-246-8600                      **
+ #**                                                                  **
+ #**********************************************************************
+ #**********************************************************************
+ ##
+ 
+ [Defines]
+ DEC_SPECIFICATION              = 0x00010005
+ PACKAGE_NAME                   = AmiChipsetModulePkg
+ PACKAGE_GUID                   = D528069B-F350-469a-8EE7-1DB000FA8DE3
+ PACKAGE_VERSION                = 0.1
+ 
+ #
+ # The following information is for reference only and not required by the build tools.
+ #
+ #  VALID_ARCHITECTURES           = IA32 X64 IPF EBC
+ #
+ 
+[Includes]
+  Include
+  Include/Ppi
+  Include/Protocol
+  Include/Guid
+  ../Build
+ 
+[LibraryClasses]
+ 
+ 
+[Guids]
+  gAmiChipsetModulePkgTokenSpaceGuid={0xe938c9be,0xcfc2,0x4a9d,{0xa3,0xcd,0x96,0x53,0xd8,0x13,0x30,0x09}}
+  gIsctAcpiTableStorageGuid = {0xfa2ddc38, 0x3f19, 0x4218, {0xb5, 0x3e, 0xd9, 0xd7, 0x9d, 0x62, 0x67, 0x67}}
+  gIsctPersistentDataGuid = {0x69a20012, 0xb167, 0x4e35, {0xa9, 0x99, 0x98, 0xee, 0x8, 0x35, 0xf0, 0x2e}}
+  gAmiTbtHrStatusGuid = {0xba1d893b, 0x803e, 0x4b26, {0xa3, 0xde, 0x58, 0x57, 0x3, 0xff, 0x7b, 0xd6}} #EIP150027
+  gAmiTbtHobGuid = {0xf85db11d, 0x69bd, 0x4019, {0x9d, 0x57, 0x72, 0x1c, 0x9f, 0x43, 0xb2, 0xc8}} #EIP150027
+ 
+[Protocols]
+  gEfiSmmIoTrapDispatchProtocolGuid={0xbd18369d,0xc242,0x45ca,{0x82,0xad,0x13,0x8a,0xc2,0xe2,0x9b,0xab}}
+  gEfiGlobalNvsAreaProtocolGuid={0x74e1e48, 0x8132, 0x47a1,{0x8c, 0x2c, 0x3f, 0x14, 0xad, 0x9a, 0x66, 0xdc}}
+  gIsctNvsAreaProtocolGuid={0x6614a586, 0x788c, 0x47e2, {0x89, 0x2d, 0x72, 0xe2, 0xc, 0x34, 0x48, 0x90}}
+  gAmiTbtPlatformPolicyProtocolGuid = {0x380D7A5E, 0x1BCA, 0x11E1, {0xA1, 0x10, 0xE8, 0xEB, 0x47, 0x24, 0x01, 0x9B}} #EIP150027
+  ## Include/Protocol/AmiTbtNvs.h
+  gAmiTbtNvsProtocolGuid = {0xba1d893b, 0x803e, 0x4b26, {0xa3, 0xde, 0x58, 0x57, 0x3, 0xff, 0x7b, 0x26}}
+ 
+[Ppis]
+  gOemPchPlatformPolicyOverridePpiGuid={0x61187967, 0x9a77, 0x419d,{0xaa, 0xea, 0x64, 0xdd, 0x56, 0x19, 0x08, 0x15}}
+
+[PcdsFixedAtBuild]
+  gAmiChipsetModulePkgTokenSpaceGuid.PcdGpioPortBaseAddress|0x0500|UINT16|0x20000012
+  gAmiChipsetModulePkgTokenSpaceGuid.PcdRcrbBaseAddress|0xfed1c000|UINT32|0x20000013
+
+[PcdsDynamic]
+  gAmiChipsetModulePkgTokenSpaceGuid.PcdSbOemSetupElink|0x0|UINT32|0x2000000d
+  gAmiChipsetModulePkgTokenSpaceGuid.PcdNbOemSetupElink|0x0|UINT32|0x2000000e
+  gAmiChipsetModulePkgTokenSpaceGuid.PcdSbResetElink|0x0|UINT32|0x2000000f
+  gAmiChipsetModulePkgTokenSpaceGuid.PcdEnableAcpiModeElink|0x0|UINT32|0x20000010
+  gAmiChipsetModulePkgTokenSpaceGuid.PcdDisableAcpiModeElink|0x0|UINT32|0x20000011
+
+#*************************************************************************
+#*************************************************************************
+#**                                                                     **
+#**        (C)Copyright 1985-2014, American Megatrends, Inc.            **
+#**                                                                     **
+#**                       All Rights Reserved.                          **
+#**                                                                     **
+#**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093           **
+#**                                                                     **
+#**                       Phone: (770)-246-8600                         **
+#**                                                                     **
+#*************************************************************************
+#*************************************************************************

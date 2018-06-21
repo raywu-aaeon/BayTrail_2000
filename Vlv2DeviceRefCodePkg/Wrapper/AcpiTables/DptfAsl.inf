@@ -1,0 +1,21 @@
+
+[defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = DptfAsl
+  FILE_GUID                      = 657A3778-DBF3-449c-9EBF-AA7BF1B3D056
+  MODULE_TYPE                    = USER_DEFINED
+  VERSION_STRING                 = 1.0
+  EDK_RELEASE_VERSION            = 0x00020000
+  EFI_SPECIFICATION_VERSION      = 0x00020000
+
+[sources.common]
+  ../../AcpiTablesPCAT/DptfAcpiTable/CpuDptf.asl
+  ../../AcpiTablesPCAT/DptfAcpiTable/Dptf.asl
+
+[Packages]
+  MdePkg/MdePkg.dec
+  Vlv2DeviceRefCodePkg/PlatformPkg.dec
+  AmiCompatibilityPkg/AmiCompatibilityPkg.dec #EIP174562
+
+[BuildOptions.common]
+  *_*_*_ASLPP_FLAGS = /FITokenAsl.h #EIP174562

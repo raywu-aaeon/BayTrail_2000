@@ -1,0 +1,14 @@
+<component>
+	name = "AmiPpmPolicy"
+	category = ModulePart
+	LocalRoot = "AmiValleyViewCpuPkg/Dxe/AmiPpmPolicy"
+	RefName = "AmiValleyViewCpuPkg.AmiPpmPolicy"
+[INF]
+"PpmPolicyInitDxe.inf"	
+[files]
+"AmiPpmPolicy.dxs"
+"AmiPpmPolicy.sdl"
+"AmiPpmPolicy.mak"
+"AmiPpmPolicy.uni"
+"AmiPpmPolicy.sd"
+<endComponent>

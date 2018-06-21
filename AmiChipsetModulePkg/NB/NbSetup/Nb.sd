@@ -1,0 +1,1474 @@
+//**********************************************************************
+//**********************************************************************
+//**                                                                  **
+//**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+//**                                                                  **
+//**                       All Rights Reserved.                       **
+//**                                                                  **
+//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093        **
+//**                                                                  **
+//**                       Phone: (770)-246-8600                      **
+//**                                                                  **
+//**********************************************************************
+//**********************************************************************
+
+//**********************************************************************
+// $Header: $
+//
+// $Revision: $
+//
+// $Date: $
+//**********************************************************************
+
+
+//<AMI_FHDR_START>
+//-----------------------------------------------------------------------
+//
+// Name:        Nb.sd
+//
+// Description: This file contains the setup description for NB Template
+//
+//-----------------------------------------------------------------------
+//<AMI_FHDR_END>
+
+
+
+#ifdef SETUP_DATA_DEFINITION
+/***********************************************************/
+/* Put NVRAM data definitions here.
+/* For example: UINT8 Data1;
+/* These definitions will be converted by the build process
+/* to a definitions of SETUP_DATA fields.
+/***********************************************************/
+    // IGD Policy
+    UINT8       InternalGraphics;
+    UINT8       PrimaryDisplay;
+    UINT8       PavpMode; //CSP20131018
+    UINT8       IgdDvmt50PreAlloc;
+    UINT8       ApertureSize;
+    UINT8       IgdTurboEn;
+    UINT8       GttSize;
+    UINT8       ISPEn;
+    UINT8       ISPDevSel;
+    UINT8       EnablePS2ForVccVnn; //EIP154014
+    UINT8       EnableRenderStandby;
+
+    UINT8       GopDriver;
+    UINT8       GfxBoost;
+    UINT8       IgdDvmtGfxMem;
+    UINT8       IgdThermal;
+    UINT8       SscEn;
+
+    UINT8       Bia;
+    UINT8       AlsSupport;
+    UINT8       IgdFlatPanel;         
+    UINT8       GmchBlcControl;   
+
+    UINT8       MemoryScrambler;
+
+    //MRC
+    UINT8       MrcFastBoot;    // Need to check this that MRC is decided to enable this by BootMode == BOOT_WITH_MINIMAL_CONFIGURATION".
+    UINT8       DynSR;          // Need to check this that MRC is set 1 directly.
+
+    //Temp
+    UINT8       MaxInverterPWM; // Not to be used now.
+    UINT8       MinInverterPWM; // Not to be used now.
+    UINT8       GraphicsPerfAnalyzers; // This variable haven't doing anything.
+    UINT8       ForceWake;
+    UINT8       PmWeights;
+    UINT8       EuControl;
+    UINT8       PmLock;
+    UINT8       DopClockGating;
+    UINT8       PanelScaling;
+    UINT8       LidStatus;
+  
+    //Thermal
+//    UINT8       S0ixSupported;
+    UINT8       CriticalThermalTripPoint;
+    UINT8       PassiveThermalTripPoint;
+ 
+    UINT8       EnableDptf;
+    UINT8       GenericCriticalTemp0;
+    UINT8       GenericCriticalTemp1;
+    UINT8       GenericCriticalTemp2;
+//    UINT8       GenericCriticalTemp3;
+//    UINT8       GenericCriticalTemp4;
+    UINT8       GenericPassiveTemp0;
+    UINT8       GenericPassiveTemp1;
+    UINT8       GenericPassiveTemp2;
+//    UINT8       GenericPassiveTemp3;
+//    UINT8       GenericPassiveTemp4;
+//    UINT8       AmbientTripPointChange; //P20130628
+    UINT8       SuperDebug;
+ 
+    UINT8       LPOEnable;
+    UINT8       LPOStartPState;
+    UINT8       LPOStepSize;
+    UINT8       LPOPowerControlSetting;
+    UINT8       LPOPerformanceControlSetting;
+    
+    UINT8       EnableDppm;
+    UINT8       Clpm;
+   
+    UINT8       SystemThermalSensor1;
+    UINT8       SystemThermalSensor2;
+    UINT8       SystemThermalSensor3;
+//    UINT8       SystemThermalSensor4;
+//    UINT8       SystemThermalSensor5;
+    UINT8       ChargerParticipant;
+    UINT8       DisplayParticipant;
+    UINT8       SocParticipant;
+    UINT8       DptfProcessor;
+    UINT8       DopCG; //P20130628
+    UINT8       MaxTolud; //EIP126704  Select dynamic or fixed mmio size.
+    UINT8       MaxTolud2; //EIP186458
+
+//EIP150350 >>     
+#if CSM_SUPPORT
+    //VBIOS
+    UINT8   LcdPanelType;
+    UINT8   LcdPanelScaling;
+    UINT8   IgdBootType;
+    UINT8   IgdLcdBlc;
+    UINT8   ActiveLFP;
+    UINT8   DisplayPipeB;    
+    UINT8   SdvoPanelType;    
+#endif  
+//EIP150350 <<  
+    
+#endif
+
+#if defined(VFRCOMPILE) && !defined(CONTROLS_ARE_DEFINED)
+#define CONTROL_DEFINITION
+#endif
+
+#ifdef CONTROL_DEFINITION
+
+//#define NC_CHECKBOX_S0IX_SUPPORT\
+//      oneof varid    = SETUP_DATA.S0ixSupported,\
+//          prompt       = STRING_TOKEN (STR_S0IX_PROMPT),\
+//          help         = STRING_TOKEN (STR_S0IX_HELP),\
+//          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+//          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = RESET_REQUIRED;\
+//      endoneof;
+
+#define NC_CHECKBOX_CRITICAL_TRIP_POINT\
+      oneof varid    = SETUP_DATA.CriticalThermalTripPoint,\
+          prompt       = STRING_TOKEN (STR_CRITICAL_TRIP_POINT_PROMPT),\
+          help         = STRING_TOKEN (STR_CRITICAL_TRIP_POINT_HELP),\
+	  option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_105), value = 105, flags = MANUFACTURING | DEFAULT | RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_90), value = 90, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_87), value = 87, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_85), value = 85, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_79), value = 79, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_71), value = 71, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_63), value = 63, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_55), value = 55, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_47), value = 47, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_39), value = 39, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_31), value = 31, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_23), value = 23, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_15), value = 15, flags = RESET_REQUIRED;\
+      endoneof;
+
+#define NC_CHECKBOX_PASSIVE_TRIP_POINT\
+      oneof varid    = SETUP_DATA.PassiveThermalTripPoint,\
+          prompt       = STRING_TOKEN (STR_PASSICE_TRIP_POINT_PROMPT),\
+          help         = STRING_TOKEN (STR_PASSICE_TRIP_POINT_HELP),\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_90), value = 90, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_87), value = 87, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_85), value = 85, flags = MANUFACTURING | DEFAULT | RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_79), value = 79, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_71), value = 71, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_63), value = 63, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_55), value = 55, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_47), value = 47, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_39), value = 39, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_31), value = 31, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_23), value = 23, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_15), value = 15, flags = RESET_REQUIRED;\
+      endoneof;
+
+#define NC_CHECKBOX_ENABLE_DPTF\
+      oneof varid    = SETUP_DATA.EnableDptf,\
+          prompt       = STRING_TOKEN (STR_DPTF_ENABLE_PROMPT),\
+          help         = STRING_TOKEN (STR_DPTF_ENABLE_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+      endoneof;
+
+
+#define NC_CHECKBOX_GENERIC_CRITICAL_TEMPPERATURE_0\
+      oneof varid    = SETUP_DATA.GenericCriticalTemp0,\
+          prompt       = STRING_TOKEN (STR_DPTF_SENSOR_0_CRITICAL_PROMPT),\
+          help         = STRING_TOKEN (STR_DPTF_SENSOR_0_CRITICAL_HELP),\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_125), value = 125, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_120), value = 120, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_115), value = 115, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_110), value = 110, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_105), value = 105, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_100), value = 100, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_95), value = 95, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_90), value = 90, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_85), value = 85, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_80), value = 80, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_75), value = 75, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_70), value = 70, flags = MANUFACTURING | DEFAULT | RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_65), value = 65, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_60), value = 60, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_55), value = 55, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_50), value = 50, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_45), value = 45, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_40), value = 40, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_35), value = 35, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_25), value = 25, flags = RESET_REQUIRED;\
+      endoneof;
+
+#define NC_CHECKBOX_GENERIC_PASSIVE_TEMPPERATURE_0\
+      oneof varid    = SETUP_DATA.GenericPassiveTemp0,\
+          prompt       = STRING_TOKEN (STR_DPTF_SENSOR_0_PASSIVE_PROMPT),\
+          help         = STRING_TOKEN (STR_DPTF_SENSOR_0_PASSIVE_HELP),\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_125), value = 125, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_120), value = 120, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_115), value = 115, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_110), value = 110, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_105), value = 105, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_100), value = 100, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_95), value = 95, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_90), value = 90, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_85), value = 85, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_80), value = 80, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_75), value = 75, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_70), value = 70, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_65), value = 65, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_60), value = 60, flags = MANUFACTURING | DEFAULT | RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_55), value = 55, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_50), value = 50, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_45), value = 45, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_40), value = 40, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_35), value = 35, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_25), value = 25, flags = RESET_REQUIRED;\
+      endoneof;
+
+#define NC_CHECKBOX_GENERIC_CRITICAL_TEMPPERATURE_1\
+      oneof varid    = SETUP_DATA.GenericCriticalTemp1,\
+          prompt       = STRING_TOKEN (STR_DPTF_SENSOR_1_CRITICAL_PROMPT),\
+          help         = STRING_TOKEN (STR_DPTF_SENSOR_1_CRITICAL_HELP),\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_125), value = 125, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_120), value = 120, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_115), value = 115, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_110), value = 110, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_105), value = 105, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_100), value = 100, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_95), value = 95, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_90), value = 90, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_85), value = 85, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_80), value = 80, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_75), value = 75, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_70), value = 70, flags = MANUFACTURING | DEFAULT | RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_65), value = 65, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_60), value = 60, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_55), value = 55, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_50), value = 50, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_45), value = 45, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_40), value = 40, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_35), value = 35, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_25), value = 25, flags = RESET_REQUIRED;\
+      endoneof;
+
+#define NC_CHECKBOX_GENERIC_PASSIVE_TEMPPERATURE_1\
+      oneof varid    = SETUP_DATA.GenericPassiveTemp1,\
+          prompt       = STRING_TOKEN (STR_DPTF_SENSOR_1_PASSIVE_PROMPT),\
+          help         = STRING_TOKEN (STR_DPTF_SENSOR_1_PASSIVE_HELP),\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_125), value = 125, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_120), value = 120, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_115), value = 115, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_110), value = 110, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_105), value = 105, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_100), value = 100, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_95), value = 95, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_90), value = 90, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_85), value = 85, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_80), value = 80, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_75), value = 75, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_70), value = 70, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_65), value = 65, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_60), value = 60, flags = MANUFACTURING | DEFAULT | RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_55), value = 55, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_52), value = 52, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_50), value = 50, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_45), value = 45, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_40), value = 40, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_35), value = 35, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_25), value = 25, flags = RESET_REQUIRED;\
+      endoneof;
+      
+#define NC_CHECKBOX_GENERIC_CRITICAL_TEMPPERATURE_2\
+      oneof varid    = SETUP_DATA.GenericCriticalTemp2,\
+          prompt       = STRING_TOKEN (STR_DPTF_SENSOR_2_CRITICAL_PROMPT),\
+          help         = STRING_TOKEN (STR_DPTF_SENSOR_2_CRITICAL_HELP),\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_125), value = 125, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_120), value = 120, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_115), value = 115, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_110), value = 110, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_105), value = 105, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_100), value = 100, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_95), value = 95, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_90), value = 90, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_85), value = 85, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_80), value = 80, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_75), value = 75, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_70), value = 70, flags = MANUFACTURING | DEFAULT | RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_65), value = 65, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_60), value = 60, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_55), value = 55, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_50), value = 50, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_45), value = 45, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_40), value = 40, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_35), value = 35, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_25), value = 25, flags = RESET_REQUIRED;\
+      endoneof;
+
+#define NC_CHECKBOX_GENERIC_PASSIVE_TEMPPERATURE_2\
+      oneof varid    = SETUP_DATA.GenericPassiveTemp2,\
+          prompt       = STRING_TOKEN (STR_DPTF_SENSOR_2_PASSIVE_PROMPT),\
+          help         = STRING_TOKEN (STR_DPTF_SENSOR_2_PASSIVE_HELP),\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_125), value = 125, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_120), value = 120, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_115), value = 115, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_110), value = 110, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_105), value = 105, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_100), value = 100, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_95), value = 95, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_90), value = 90, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_85), value = 85, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_80), value = 80, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_75), value = 75, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_70), value = 70, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_65), value = 65, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_64), value = 64, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_61), value = 61, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_60), value = 60, flags = MANUFACTURING | DEFAULT | RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_55), value = 55, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_50), value = 50, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_45), value = 45, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_40), value = 40, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_35), value = 35, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_25), value = 25, flags = RESET_REQUIRED;\
+      endoneof;
+
+/*
+#define NC_CHECKBOX_GENERIC_CRITICAL_TEMPPERATURE_3\
+      oneof varid    = SETUP_DATA.GenericCriticalTemp3,\
+          prompt       = STRING_TOKEN (STR_DPTF_SENSOR_3_CRITICAL_PROMPT),\
+          help         = STRING_TOKEN (STR_DPTF_SENSOR_3_CRITICAL_HELP),\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_125), value = 125, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_120), value = 120, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_115), value = 115, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_110), value = 110, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_105), value = 105, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_100), value = 100, flags =  MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_95), value = 95, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_90), value = 90, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_85), value = 85, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_80), value = 80, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_75), value = 75, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_70), value = 70, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_65), value = 65, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_60), value = 60, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_55), value = 55, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_50), value = 50, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_45), value = 45, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_40), value = 40, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_35), value = 35, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_30), value = 30, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_25), value = 25, flags = RESET_REQUIRED;\
+      endoneof;
+
+#define NC_CHECKBOX_GENERIC_PASSIVE_TEMPPERATURE_3\
+      oneof varid    = SETUP_DATA.GenericPassiveTemp3,\
+          prompt       = STRING_TOKEN (STR_DPTF_SENSOR_3_PASSIVE_PROMPT),\
+          help         = STRING_TOKEN (STR_DPTF_SENSOR_3_PASSIVE_HELP),\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_125), value = 125, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_120), value = 120, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_115), value = 115, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_110), value = 110, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_105), value = 105, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_100), value = 100, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_95), value = 95, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_90), value = 90, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_85), value = 85, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_80), value = 80, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_75), value = 75, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_70), value = 70, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_65), value = 65, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_60), value = 60, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_55), value = 55, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_50), value = 50, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_45), value = 45, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_40), value = 40, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_35), value = 35, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_30), value = 30, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_25), value = 25, flags = RESET_REQUIRED;\
+      endoneof;
+
+#define NC_CHECKBOX_GENERIC_CRITICAL_TEMPPERATURE_4\
+      oneof varid    = SETUP_DATA.GenericCriticalTemp4,\
+          prompt       = STRING_TOKEN (STR_DPTF_SENSOR_4_CRITICAL_PROMPT),\
+          help         = STRING_TOKEN (STR_DPTF_SENSOR_4_CRITICAL_HELP),\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_125), value = 125, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_120), value = 120, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_115), value = 115, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_110), value = 110, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_105), value = 105, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_100), value = 100, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_95), value = 95, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_90), value = 90, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_85), value = 85, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_80), value = 80, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_75), value = 75, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_70), value = 70, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_65), value = 65, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_60), value = 60, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_55), value = 55, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_50), value = 50, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_45), value = 45, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_40), value = 40, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_35), value = 35, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_30), value = 30, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_25), value = 25, flags = RESET_REQUIRED;\
+      endoneof;
+
+#define NC_CHECKBOX_GENERIC_PASSIVE_TEMPPERATURE_4\
+      oneof varid    = SETUP_DATA.GenericPassiveTemp4,\
+          prompt       = STRING_TOKEN (STR_DPTF_SENSOR_4_PASSIVE_PROMPT),\
+          help         = STRING_TOKEN (STR_DPTF_SENSOR_4_PASSIVE_HELP),\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_125), value = 125, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_120), value = 120, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_115), value = 115, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_110), value = 110, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_105), value = 105, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_100), value = 100, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_95), value = 95, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_90), value = 90, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_85), value = 85, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_80), value = 80, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_75), value = 75, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_70), value = 70, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_65), value = 65, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_60), value = 60, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_55), value = 55, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_50), value = 50, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_45), value = 45, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_40), value = 40, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_35), value = 35, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_30), value = 30, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_25), value = 25, flags = RESET_REQUIRED;\
+      endoneof;
+*/
+
+#define NC_CHECKBOX_SUPER_DEBUG\
+      oneof varid    = SETUP_DATA.SuperDebug,\
+          prompt       = STRING_TOKEN (STR_SUPER_DEBUG_PROMPT),\
+          help         = STRING_TOKEN (STR_SUPER_DEBUG_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+      endoneof;
+
+#define NC_CHECKBOX_LPO_ENABLE\
+      oneof varid    = SETUP_DATA.LPOEnable,\
+          prompt       = STRING_TOKEN (STR_CURRENT_LOGICAL_PROCESSOR_PROMPT),\
+          help         = STRING_TOKEN (STR_CURRENT_LOGICAL_PROCESSOR_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+      endoneof;
+
+#define NC_CHECKBOX_LPO_START_P_STATE\
+      oneof varid    = SETUP_DATA.LPOStartPState,\
+          prompt       = STRING_TOKEN (STR_START_P_STATE_PROMPT),\
+          help         = STRING_TOKEN (STR_START_P_STATE_HELP),\
+          option text  = STRING_TOKEN (STR_START_P_STATE_P12), value = 12, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_START_P_STATE_P11), value = 11, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_START_P_STATE_P10), value = 10, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_START_P_STATE_P9), value = 9, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_START_P_STATE_P8), value = 8, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_START_P_STATE_P7), value = 7, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_START_P_STATE_P6), value = 6, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_START_P_STATE_P5), value = 5, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_START_P_STATE_P4), value = 4, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_START_P_STATE_P3), value = 3, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_START_P_STATE_P2), value = 2, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_START_P_STATE_P1), value = 1, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_START_P_STATE_P0), value = 0, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+      endoneof;
+
+#define NC_CHECKBOX_LPO_STEP_SIZE\
+      oneof varid    = SETUP_DATA.LPOStepSize,\
+          prompt       = STRING_TOKEN (STR_STEP_SIZE_PROMPT),\
+          help         = STRING_TOKEN (STR_STEP_SIZE_HELP),\
+          option text  = STRING_TOKEN (STR_STEP_SIZE_75), value = 75, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_STEP_SIZE_50), value = 50, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_STEP_SIZE_25), value = 25, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+      endoneof;
+
+#define NC_CHECKBOX_LPO_POWER_CONTROL_SETTING\
+      oneof varid    = SETUP_DATA.LPOPowerControlSetting,\
+          prompt       = STRING_TOKEN (STR_POWER_CONTROL_SETTING_PROMPT),\
+          help         = STRING_TOKEN (STR_POWER_CONTROL_SETTING_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_OFFINING_CORE), value =2, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+      endoneof;
+
+#define NC_CHECKBOX_LPO_PERFORMANCE_CONTROL_SETTING\
+      oneof varid    = SETUP_DATA.LPOPerformanceControlSetting,\
+          prompt       = STRING_TOKEN (STR_PERFORMANCE_CONTROL_SETTING_PROMPT),\
+          help         = STRING_TOKEN (STR_PERFORMANCE_CONTROL_SETTING_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_OFFINING_CORE), value = 2, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+      endoneof;
+
+#define NC_CHECKBOX_ENABLE_DPPM\
+      oneof varid    = SETUP_DATA.EnableDppm,\
+          prompt       = STRING_TOKEN (STR_DPPM_PROMPT),\
+          help         = STRING_TOKEN (STR_DPPM_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = RESET_REQUIRED;\
+      endoneof;
+
+#define NC_CHECKBOX_CLPM\
+      oneof varid    = SETUP_DATA.Clpm,\
+          prompt       = STRING_TOKEN (STR_CLPM_PROMPT),\
+          help         = STRING_TOKEN (STR_CLPM_HELP),\
+          option text  = STRING_TOKEN (STR_CLPM_OS_LEVEL), value = 3, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_CLPM_APPLECATION_SPECIFIC), value = 2, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = RESET_REQUIRED;\
+      endoneof;
+
+#define NC_CHECKBOX_DPTF_PROCESSOR\
+      oneof varid    = SETUP_DATA.DptfProcessor,\
+          prompt       = STRING_TOKEN (STR_DPTF_PROCESSOR_PROMPT),\
+          help         = STRING_TOKEN (STR_DPTF_PROCESSOR_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+      endoneof;
+
+#define NC_CHECKBOX_SYSTEM_THERMAL_SENSOR1\
+      oneof varid    = SETUP_DATA.SystemThermalSensor1,\
+          prompt       = STRING_TOKEN (STR_SYSTEM_THERMAL_SENESOR1_PROMPT),\
+          help         = STRING_TOKEN (STR_SYSTEM_THERMAL_SENESOR1_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = RESET_REQUIRED;\
+      endoneof;
+
+#define NC_CHECKBOX_SYSTEM_THERMAL_SENSOR2\
+      oneof varid    = SETUP_DATA.SystemThermalSensor2,\
+          prompt       = STRING_TOKEN (STR_SYSTEM_THERMAL_SENESOR2_PROMPT),\
+          help         = STRING_TOKEN (STR_SYSTEM_THERMAL_SENESOR2_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = RESET_REQUIRED;\
+      endoneof;
+
+#define NC_CHECKBOX_SYSTEM_THERMAL_SENSOR3\
+      oneof varid    = SETUP_DATA.SystemThermalSensor3,\
+          prompt       = STRING_TOKEN (STR_SYSTEM_THERMAL_SENESOR3_PROMPT),\
+          help         = STRING_TOKEN (STR_SYSTEM_THERMAL_SENESOR3_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = RESET_REQUIRED;\
+      endoneof;
+
+/*
+#define NC_CHECKBOX_SYSTEM_THERMAL_SENSOR4\
+      oneof varid    = SETUP_DATA.SystemThermalSensor4,\
+          prompt       = STRING_TOKEN (STR_SYSTEM_THERMAL_SENESOR4_PROMPT),\
+          help         = STRING_TOKEN (STR_SYSTEM_THERMAL_SENESOR4_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+      endoneof;
+
+#define NC_CHECKBOX_SYSTEM_THERMAL_SENSOR5\
+      oneof varid    = SETUP_DATA.SystemThermalSensor5,\
+          prompt       = STRING_TOKEN (STR_SYSTEM_THERMAL_SENESOR5_PROMPT),\
+          help         = STRING_TOKEN (STR_SYSTEM_THERMAL_SENESOR5_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+      endoneof;
+
+//P20130628 >>
+#define NC_CHECKBOX_AMBIENT_TRIPPOINT_CHANGE\
+      oneof varid    = SETUP_DATA.AmbientTripPointChange,\
+          prompt       = STRING_TOKEN (STR_DPTF_AMBIENTTRIPPOINTCHANGE_PROMPT),\
+          help         = STRING_TOKEN (STR_DPTF_AMBIENTTRIPPOINTCHANGE_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+      endoneof;
+//P20130628 <<
+*/
+
+#define NC_CHECKBOX_CHARGER_PARTICIPANT\
+      oneof varid    = SETUP_DATA.ChargerParticipant,\
+          prompt       = STRING_TOKEN (STR_CHARGER_PARTICIPANT_PROMPT),\
+          help         = STRING_TOKEN (STR_CHARGER_PARTICIPANT_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = RESET_REQUIRED;\
+      endoneof;
+      
+#define NC_CHECKBOX_DISPLAY_PARTICIPANT\
+      oneof varid    = SETUP_DATA.DisplayParticipant,\
+          prompt       = STRING_TOKEN (STR_DISPLAY_PARTICIPANT_PROMPT),\
+          help         = STRING_TOKEN (STR_DISPLAY_PARTICIPANT_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = RESET_REQUIRED;\
+      endoneof;      
+
+#define NC_CHECKBOX_SOC_PARTICIPANT\
+      oneof varid    = SETUP_DATA.SocParticipant,\
+          prompt       = STRING_TOKEN (STR_SOC_PARTICIPANT_PROMPT),\
+          help         = STRING_TOKEN (STR_SOC_PARTICIPANT_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = RESET_REQUIRED;\
+      endoneof;
+
+#define NC_CHECKBOX_MEMORY_SCRAMBLER\
+      oneof varid    = SETUP_DATA.MemoryScrambler,\
+          prompt       = STRING_TOKEN (STR_MEMORY_SCRAMBLER_PROMPT),\
+          help         = STRING_TOKEN (STR_MEMORY_SCRAMBLER_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+      endoneof;
+
+#define NC_CHECKBOX_GOP\
+      oneof varid    = SETUP_DATA.GopDriver,\
+          prompt       = STRING_TOKEN (STR_GOD_DRIVER_PROMPT),\
+          help         = STRING_TOKEN (STR_GOD_DRIVER_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = RESET_REQUIRED;\
+      endoneof;
+
+#define NC_CHECKBOX_IGD\
+      oneof varid    = SETUP_DATA.InternalGraphics,\
+          prompt       = STRING_TOKEN (STR_INT_GRAPHICS_PROMPT),\
+          help         = STRING_TOKEN (STR_INT_GRAPHICS_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = RESET_REQUIRED;\
+      endoneof;
+
+//
+//(EIP114446)>
+#define NC_CHECKBOX_IGDTUREBOEN\
+      oneof varid    = SETUP_DATA.IgdTurboEn,\
+          prompt       = STRING_TOKEN (STR_IGD_TURBO_ENABLE_PROMPT),\
+          help         = STRING_TOKEN (STR_IGD_TURBO_ENABLE_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = RESET_REQUIRED;\
+      endoneof;
+//(EIP114446)<
+
+//EIP205589 >>
+//EIP165319 >>
+//EIP141999 >>
+#define NC_CHECKBOX_PRIMARY_DISPLAY\
+      oneof varid    = SETUP_DATA.PrimaryDisplay,\
+          prompt       = STRING_TOKEN (STR_PRIMARY_DISPLAY_PROMPT),\
+          help         = STRING_TOKEN (STR_PRIMARY_DISPLAY_HELP),\
+          default      = DEFAULT_PRIMARY_DISPLAY,\
+          option text  = STRING_TOKEN (STR_PRIMARY_DISPLAY_AUTO), value = 3, flags = MANUFACTURING | RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_PRIMARY_DISPLAY_IGD), value = 0, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_PRIMARY_DISPLAY_PCIE), value = 1, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_PRIMARY_DISPLAY_SG), value = 4, flags = RESET_REQUIRED;\
+      endoneof;
+//EIP141999 <<
+//EIP165319 <<
+//EIP205589 <<
+#define NC_CHECKBOX_GFX_BOOST\
+      oneof varid    = SETUP_DATA.GfxBoost,\
+          prompt       = STRING_TOKEN (STR_GFX_BOOTS_PROMPT),\
+          help         = STRING_TOKEN (STR_GFX_BOOTS_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+      endoneof;
+
+//CSP20131018 >>
+#define NC_CHECKBOX_PAVC\
+      oneof varid    = SETUP_DATA.PavpMode,\
+          prompt       = STRING_TOKEN (STR_PAVC_PROMPT),\
+          help         = STRING_TOKEN (STR_PAVC_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_PAVC_LITE), value = 1, flags = MANUFACTURING | DEFAULT | RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_PAVC_SERPENT), value = 2, flags = RESET_REQUIRED;\
+      endoneof;     
+//CSP20131018 <<
+      
+//EIP132371 >>
+#define NC_CHECKBOX_IGD_DVMT50_PRE_ALLOC\
+      oneof varid    = SETUP_DATA.IgdDvmt50PreAlloc,\
+          prompt       = STRING_TOKEN (STR_DVMT_PRE_ALLOC_PROMPT),\
+          help         = STRING_TOKEN (STR_DVMT_PRE_ALLOC_HELP),\
+          option text  = STRING_TOKEN (STR_DVMT_PRE_ALLOC_64M), value = 2, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DVMT_PRE_ALLOC_96M), value = 3, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DVMT_PRE_ALLOC_128M), value = 4, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DVMT_PRE_ALLOC_160M), value = 5, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DVMT_PRE_ALLOC_192M), value = 6, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DVMT_PRE_ALLOC_224M), value = 7, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DVMT_PRE_ALLOC_256M), value = 8, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DVMT_PRE_ALLOC_288M), value = 9, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DVMT_PRE_ALLOC_320M), value = 10, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DVMT_PRE_ALLOC_352M), value = 11, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DVMT_PRE_ALLOC_384M), value = 12, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DVMT_PRE_ALLOC_416M), value = 13, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DVMT_PRE_ALLOC_448M), value = 14, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DVMT_PRE_ALLOC_480M), value = 15, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DVMT_PRE_ALLOC_512M), value = 16, flags = RESET_REQUIRED;\
+      endoneof;
+//EIP132371 <<
+
+#define NC_CHECKBOX_IGD_DVMT_GFX_MEM\
+      oneof varid    = SETUP_DATA.IgdDvmtGfxMem,\
+          prompt       = STRING_TOKEN (STR_DVMT_TOTAL_GFX_MEM_PROMPT),\
+          help         = STRING_TOKEN (STR_DVMT_TOTAL_GFX_MEM_HELP),\
+          option text  = STRING_TOKEN (STR_DVMT_TOTAL_GFX_MEM_128MB), value = 1, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DVMT_TOTAL_GFX_MEM_256MB), value = 2, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DVMT_TOTAL_GFX_MEM_MAX), value = 3, flags = RESET_REQUIRED;\
+      endoneof;
+
+#define NC_CHECKBOX_APERTURE_SIZE\
+      oneof varid    = SETUP_DATA.ApertureSize,\
+          prompt       = STRING_TOKEN (STR_APERTURE_SIZE_PROMPT),\
+          help         = STRING_TOKEN (STR_APERTURE_SIZE_HELP),\
+          option text  = STRING_TOKEN (STR_APERTURE_SIZE_128MB), value = 1, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_APERTURE_SIZE_256MB), value = 2, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_APERTURE_SIZE_512MB), value = 3, flags = RESET_REQUIRED;\
+      endoneof;
+
+//EIP131173 >>
+//P20130628 >>
+#define NC_CHECKBOX_DOPCG_SIZE\
+      oneof varid    = SETUP_DATA.DopCG,\
+          prompt       = STRING_TOKEN (STR_DOP_CG_PROMPT),\
+          help         = STRING_TOKEN (STR_DOP_CG_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = RESET_REQUIRED;\
+      endoneof;
+//P20130628 <<
+//EIP131173 <<
+
+#define NC_CHECKBOX_GTT_SIZE\
+      oneof varid    = SETUP_DATA.GttSize,\
+          prompt       = STRING_TOKEN (STR_GTT_SIZE_PROMPT),\
+          help         = STRING_TOKEN (STR_GTT_SIZE_HELP),\
+          option text  = STRING_TOKEN (STR_GTT_SIZE_1MB), value = 1, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_GTT_SIZE_2MB), value = 2, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+      endoneof;
+
+#define NC_CHECKBOX_IGD_THERMAL\
+      oneof varid    = SETUP_DATA.IgdThermal,\
+          prompt       = STRING_TOKEN (STR_IGD_THERMAL_PROMPT),\
+          help         = STRING_TOKEN (STR_IGD_THERMAL_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+      endoneof;
+      
+#define NC_CHECKBOX_SSC_EN\
+      oneof varid    = SETUP_DATA.SscEn,\
+          prompt       = STRING_TOKEN (STR_SPREAD_SPECTRUM_CLOCK_PROMPT),\
+          help         = STRING_TOKEN (STR_SPREAD_SPECTRUM_CLOCK_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+      endoneof;
+
+#define NC_CHECKBOX_FORCE_LID\
+      oneof varid    = SETUP_DATA.LidStatus,\
+          prompt       = STRING_TOKEN (STR_FORCE_LID_STATUS_PROMPT),\
+          help         = STRING_TOKEN (STR_FORCE_LID_STATUS_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ON), value = 1, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_OFF), value = 0, flags = RESET_REQUIRED;\
+      endoneof;
+      
+#define NC_CHECKBOX_BIA\
+      oneof varid    = SETUP_DATA.Bia,\
+          prompt       = STRING_TOKEN (STR_BIA_PROMPT),\
+          help         = STRING_TOKEN (STR_BIA_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_AUTO), value = 1, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_BIA_LEVEL1), value = 2, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_BIA_LEVEL2), value = 3, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_BIA_LEVEL3), value = 4, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_BIA_LEVEL4), value = 5, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_BIA_LEVEL5), value = 6, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = RESET_REQUIRED;\
+      endoneof;
+      
+#define NC_CHECKBOX_ALS_SUPPORT\
+      oneof varid    = SETUP_DATA.AlsSupport,\
+          prompt       = STRING_TOKEN (STR_ALS_SUPPORT_PROMPT),\
+          help         = STRING_TOKEN (STR_ALS_SUPPORT_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+      endoneof;
+      
+#define NC_CHECKBOX_IGD_FLATPANEL\
+      oneof varid    = SETUP_DATA.IgdFlatPanel,\
+          prompt       = STRING_TOKEN (STR_IGD_FLAT_PANEL_PROMPT),\
+          help         = STRING_TOKEN (STR_IGD_FLAT_PANEL_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_AUTO), value = 0, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_IGD_FLAT_PANEL_640_480), value = 1, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_IGD_FLAT_PANEL_800_600), value = 2, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_IGD_FLAT_PANEL_1024_768), value = 3, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_IGD_FLAT_PANEL_1280_1024), value = 4, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_IGD_FLAT_PANEL_1366_768), value = 5, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_IGD_FLAT_PANEL_1680_1050), value = 6, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_IGD_FLAT_PANEL_1600_1200), value = 7, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_IGD_FLAT_PANEL_1280_800), value = 8, flags = RESET_REQUIRED;\
+      endoneof;      
+
+
+#define NC_CHECKBOX_PANNEL_SCALING\
+      oneof varid    = SETUP_DATA.PanelScaling,\
+          prompt       = STRING_TOKEN (STR_PANNEL_SCALING_PROMPT),\
+          help         = STRING_TOKEN (STR_PANNEL_SCALING_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_AUTO), value = 0, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_PANNEL_SCALING_CENTERING), value = 1, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_PANNEL_SCALING_STRETCHING), value = 2, flags = RESET_REQUIRED;\
+      endoneof;
+
+#define NC_CHECKBOX_GMCH_BLC_CONTROL\
+      oneof varid    = SETUP_DATA.GmchBlcControl,\
+          prompt       = STRING_TOKEN (STR_GMCH_BLC_PROMPT),\
+          help         = STRING_TOKEN (STR_GMCH_BLC_HELP),\
+          option text  = STRING_TOKEN (STR_GMCH_BLC_BLC4), value = 3, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_GMCH_BLC_BLC3), value = 2, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_GMCH_BLC_BLC2), value = 1, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_GMCH_BLC_BLC1), value = 0, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+      endoneof;           
+
+#define NC_CHECKBOX_ISP_EN\
+      oneof varid    = SETUP_DATA.ISPEn,\
+          prompt       = STRING_TOKEN (STR_ISP_EN_DIS_PROMPT),\
+          help         = STRING_TOKEN (STR_ISP_EN_DIS_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = RESET_REQUIRED;\
+      endoneof;
+//EIP205589 >>
+#define NC_CHECKBOX_ISP_CONFIG\
+      oneof varid    = SETUP_DATA.ISPDevSel,\
+          prompt       = STRING_TOKEN (STR_ISP_PCI_DEVICE_SELECTION_PROMPT),\
+          help         = STRING_TOKEN (STR_ISP_PCI_DEVICE_SELECTION_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_ISP_PCI_DEVICE_SELECTION_1), value = 1, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_ISP_PCI_DEVICE_SELECTION_2), value = 2, flags = RESET_REQUIRED;\
+      endoneof;
+//EIP205589 <<
+//EIP154014 >>
+#define NC_CHECKBOX_ENABLE_PS2_FOR_VCCVNN\
+      oneof varid    = SETUP_DATA.EnablePS2ForVccVnn,\
+          prompt       = STRING_TOKEN (STR_ENABLE_PS2_VCCVNN_PROMPT),\
+          help         = STRING_TOKEN (STR_ENABLE_PS2_VCCVNN_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 3, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+      endoneof;
+//EIP154014 <<
+
+//EIP133630 >>
+#define NC_CHECKBOX_RENDER_STANDBY\
+      oneof varid = SETUP_DATA.EnableRenderStandby,\
+        prompt   = STRING_TOKEN(STR_VIDEO_RS2_PROMPT),\
+        help     = STRING_TOKEN(STR_VIDEO_RS2_HELP),\
+        option text = STRING_TOKEN(STR_COMMON_ENABLED), value = 1, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+        option text = STRING_TOKEN(STR_COMMON_DISABLED), value = 0, flags = RESET_REQUIRED;\
+      endoneof;
+//EIP133630 <<
+//EIP202736 >>
+//EIP126704  Select dynamic or fixed mmio size.>>
+#define NC_CHECKBOX_MMIOSIZE\
+            oneof varid    = SETUP_DATA.MaxTolud,\
+              prompt   = STRING_TOKEN(STR_MAX_TOLUD_PROMPT),\
+              help     = STRING_TOKEN(STR_MAX_TOLUD_HELP),\
+              default  = DEFAULT_MAX_TOLUD,\
+              option text = STRING_TOKEN(STR_MAX_TOLUD_2G_STRING),      value = 5,  flags = RESET_REQUIRED;\
+              option text = STRING_TOKEN(STR_MAX_TOLUD_2_25G_STRING),   value = 6,  flags = RESET_REQUIRED;\
+              option text = STRING_TOKEN(STR_MAX_TOLUD_2_5G_STRING),    value = 7,  flags = RESET_REQUIRED;\
+              option text = STRING_TOKEN(STR_MAX_TOLUD_2_75G_STRING),   value = 8,  flags = RESET_REQUIRED;\
+              option text = STRING_TOKEN(STR_MAX_TOLUD_3G_STRING),      value = 9,  flags = MANUFACTURING | RESET_REQUIRED;\
+            endoneof;
+//EIP126704  Select dynamic or fixed mmio size. <<
+
+//EIP173398 >> 
+//EIP186458 >>
+#define NC_CHECKBOX_MMIOSIZE_2\
+            oneof varid    = SETUP_DATA.MaxTolud2,\
+              prompt   = STRING_TOKEN(STR_MAX_TOLUD_PROMPT),\
+              help     = STRING_TOKEN(STR_MAX_TOLUD_HELP),\
+              option text = STRING_TOKEN(STR_MAX_TOLUD_2G_STRING),      value = 5,  flags = RESET_REQUIRED;\
+              option text = STRING_TOKEN(STR_MAX_TOLUD_2_25G_STRING),   value = 6,  flags = RESET_REQUIRED;\
+              option text = STRING_TOKEN(STR_MAX_TOLUD_2_5G_STRING),    value = 7,  flags = MANUFACTURING | DEFAULT | RESET_REQUIRED;\
+            endoneof;
+//EIP186458 <<	    
+//EIP173398 << 
+//EIP202736 << 
+//EIP150350 >> 
+#if CSM_SUPPORT
+#define NB_ONEOF_LCDPANELTYPE\
+      oneof varid     = SETUP_DATA.LcdPanelType,\
+        prompt      = STRING_TOKEN(STR_PANELTYPE_PROMPT),\
+        help        = STRING_TOKEN(STR_PANELTYPE_HELP),\
+        option text = STRING_TOKEN(STR_VIDEO_BT_DEFAULT),      value = 0, flags = DEFAULT |RESET_REQUIRED | MANUFACTURING;\
+        option text = STRING_TOKEN(STR_PANELTYPE_01),          value = 1, flags = RESET_REQUIRED;\
+        option text = STRING_TOKEN(STR_PANELTYPE_02),          value = 2, flags = RESET_REQUIRED;\
+        option text = STRING_TOKEN(STR_PANELTYPE_03),          value = 3, flags = RESET_REQUIRED;\
+        option text = STRING_TOKEN(STR_PANELTYPE_04),          value = 4, flags = RESET_REQUIRED;\
+        option text = STRING_TOKEN(STR_PANELTYPE_05),          value = 5, flags = RESET_REQUIRED;\
+        option text = STRING_TOKEN(STR_PANELTYPE_06),          value = 6, flags = RESET_REQUIRED;\
+        option text = STRING_TOKEN(STR_PANELTYPE_07),          value = 7, flags = RESET_REQUIRED;\
+        option text = STRING_TOKEN(STR_PANELTYPE_08),          value = 8, flags = RESET_REQUIRED;\
+        option text = STRING_TOKEN(STR_PANELTYPE_09),          value = 9, flags = RESET_REQUIRED;\
+        option text = STRING_TOKEN(STR_PANELTYPE_10),          value = 10, flags = RESET_REQUIRED;\
+        option text = STRING_TOKEN(STR_PANELTYPE_11),          value = 11, flags = RESET_REQUIRED;\
+        option text = STRING_TOKEN(STR_PANELTYPE_12),          value = 12, flags = RESET_REQUIRED;\
+        option text = STRING_TOKEN(STR_PANELTYPE_13),          value = 13, flags = RESET_REQUIRED;\
+        option text = STRING_TOKEN(STR_PANELTYPE_14),          value = 14, flags = RESET_REQUIRED;\
+        option text = STRING_TOKEN(STR_PANELTYPE_15),          value = 15, flags = RESET_REQUIRED;\
+        option text = STRING_TOKEN(STR_PANELTYPE_16),          value = 16, flags = RESET_REQUIRED;\
+      endoneof;
+      
+#define NB_ONEOF_LCDPANELSCALING\
+      oneof varid     = SETUP_DATA.LcdPanelScaling,\
+        prompt      = STRING_TOKEN(STR_PANELSCALING_PROMPT),\
+        help        = STRING_TOKEN(STR_PANELSCALING_HELP),\
+        option text = STRING_TOKEN(STR_PANELSCALING_AUTO), value = 0, flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;\
+        option text = STRING_TOKEN(STR_PANELSCALING_OFF), value = 1, flags = RESET_REQUIRED;\
+        option text = STRING_TOKEN(STR_PANELSCALING_FORCE), value = 6, flags = RESET_REQUIRED;\
+      endoneof;      
+
+#define NB_ONEOF_IGDBOOTTYPE\
+      oneof varid    = SETUP_DATA.IgdBootType,\
+        prompt   = STRING_TOKEN(STR_VIDEO_BT_PROMPT),\
+        help     = STRING_TOKEN(STR_VIDEO_BT_HELP),\
+        option text = STRING_TOKEN(STR_VIDEO_BT_DEFAULT),      value = 0, flags = RESET_REQUIRED | DEFAULT | MANUFACTURING;\
+        option text = STRING_TOKEN(STR_VIDEO_BT_CRT),          value = 0x01, flags = RESET_REQUIRED;\
+        option text = STRING_TOKEN(STR_VIDEO_BT_EFP),          value = 0x04, flags = RESET_REQUIRED;\
+        option text = STRING_TOKEN(STR_VIDEO_BT_LFP),          value = 0x08, flags = RESET_REQUIRED;\
+        option text = STRING_TOKEN(STR_VIDEO_BT_EFP3),         value = 0x20, flags = RESET_REQUIRED;\
+        option text = STRING_TOKEN(STR_VIDEO_BT_EFP2),         value = 0x40, flags = RESET_REQUIRED;\
+        option text = STRING_TOKEN(STR_VIDEO_BT_LFP2),         value = 0x80, flags = RESET_REQUIRED;\
+      endoneof;
+      
+#define NB_ONEOF_IGDLCDBLC\
+      oneof varid    = SETUP_DATA.IgdLcdBlc,\
+        prompt   = STRING_TOKEN(STR_VIDEO_LCD_BLC),\
+        help     = STRING_TOKEN(STR_VIDEO_LCD_BLCHELP),\
+        option text = STRING_TOKEN(STR_VIDEO_LCD_BLC1), value = 0x00, flags = RESET_REQUIRED;\
+        option text = STRING_TOKEN(STR_VIDEO_LCD_BLC2), value = 0x02, flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;\
+        option text = STRING_TOKEN(STR_VIDEO_LCD_BLC3), value = 0x01, flags = RESET_REQUIRED;\
+        option text = STRING_TOKEN(STR_VIDEO_LCD_BLC4), value = 0x03, flags = RESET_REQUIRED;\
+      endoneof;
+
+#define NB_ONEOF_ACTIVELFP\
+      oneof varid  = SETUP_DATA.ActiveLFP,\
+         prompt   = STRING_TOKEN (STR_ACTIVE_LFP),\
+         help     = STRING_TOKEN (STR_ACTIVE_LFP_HELP),\
+         option text = STRING_TOKEN (STR_NO_LVDS_STRING), value = 0, flags =  RESET_REQUIRED;\
+         option text = STRING_TOKEN (STR_INT_LVDS_STRING), value = 1, flags = RESET_REQUIRED;\
+         option text = STRING_TOKEN (STR_SDVO_LVDS_STRING), value = 2, flags =RESET_REQUIRED;\
+         option text = STRING_TOKEN (STR_EDPA_LFP_STRING), value = 3, flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;\
+         option text = STRING_TOKEN (STR_EDPD_LFP_STRING), value = 7, flags = RESET_REQUIRED;\
+      endoneof;
+
+#define NB_ONEOF_DISPLAYPIPEB\
+      oneof varid    = SETUP_DATA.DisplayPipeB,\
+        prompt   = STRING_TOKEN(STR_VIDEO_BT_PIPE_B_PROMPT),\
+        help     = STRING_TOKEN(STR_VIDEO_BT_PIPE_B_HELP),\
+        option text = STRING_TOKEN(STR_VIDEO_BT_PIPE_B_DISABLED),       value = 0, flags = RESET_REQUIRED | DEFAULT | MANUFACTURING;\
+        option text = STRING_TOKEN(STR_VIDEO_BT_CRT),          value = 0x01, flags = RESET_REQUIRED;\
+        option text = STRING_TOKEN(STR_VIDEO_BT_EFP),          value = 0x04, flags = RESET_REQUIRED;\
+        option text = STRING_TOKEN(STR_VIDEO_BT_LFP),          value = 0x08, flags = RESET_REQUIRED;\
+        option text = STRING_TOKEN(STR_VIDEO_BT_EFP3),         value = 0x20, flags = RESET_REQUIRED;\
+        option text = STRING_TOKEN(STR_VIDEO_BT_EFP2),         value = 0x40, flags = RESET_REQUIRED;\
+        option text = STRING_TOKEN(STR_VIDEO_BT_LFP2),         value = 0x80, flags = RESET_REQUIRED;\
+      endoneof;
+
+#define NB_ONEOF_SDVOPANELTYPE\
+      oneof varid     = SETUP_DATA.SdvoPanelType,\
+        prompt      = STRING_TOKEN(STR_SDVO_PANELTYPE_PROMPT),\
+        help        = STRING_TOKEN(STR_SDVO_PANELTYPE_HELP),\
+        option text = STRING_TOKEN(STR_VIDEO_BT_DEFAULT),  value = 0, flags = RESET_REQUIRED | DEFAULT | MANUFACTURING;\
+        option text = STRING_TOKEN(STR_SDVO_PANELTYPE_01), value = 1, flags = RESET_REQUIRED;\
+        option text = STRING_TOKEN(STR_SDVO_PANELTYPE_02), value = 2, flags = RESET_REQUIRED;\
+        option text = STRING_TOKEN(STR_SDVO_PANELTYPE_03), value = 3, flags = RESET_REQUIRED;\
+        option text = STRING_TOKEN(STR_SDVO_PANELTYPE_04), value = 4, flags = RESET_REQUIRED;\
+      endoneof;
+#endif // #if CSM_SUPPORT
+//EIP150350 <<
+
+#endif // #ifdef CONTROL_DEFINITION
+
+#ifdef CONTROLS_WITH_DEFAULTS
+
+    NC_CHECKBOX_CRITICAL_TRIP_POINT
+    NC_CHECKBOX_PASSIVE_TRIP_POINT
+    NC_CHECKBOX_ENABLE_DPTF
+    NC_CHECKBOX_GENERIC_CRITICAL_TEMPPERATURE_0
+    NC_CHECKBOX_GENERIC_PASSIVE_TEMPPERATURE_0
+    NC_CHECKBOX_GENERIC_CRITICAL_TEMPPERATURE_1
+    NC_CHECKBOX_GENERIC_PASSIVE_TEMPPERATURE_1
+    NC_CHECKBOX_GENERIC_CRITICAL_TEMPPERATURE_2
+    NC_CHECKBOX_GENERIC_PASSIVE_TEMPPERATURE_2
+//    NC_CHECKBOX_GENERIC_CRITICAL_TEMPPERATURE_3
+//    NC_CHECKBOX_GENERIC_PASSIVE_TEMPPERATURE_3
+//    NC_CHECKBOX_GENERIC_CRITICAL_TEMPPERATURE_4
+//    NC_CHECKBOX_GENERIC_PASSIVE_TEMPPERATURE_4
+    NC_CHECKBOX_SUPER_DEBUG
+    NC_CHECKBOX_LPO_ENABLE
+    NC_CHECKBOX_LPO_START_P_STATE
+    NC_CHECKBOX_LPO_STEP_SIZE
+    NC_CHECKBOX_LPO_POWER_CONTROL_SETTING
+    NC_CHECKBOX_LPO_PERFORMANCE_CONTROL_SETTING
+    NC_CHECKBOX_ENABLE_DPPM
+    NC_CHECKBOX_CLPM
+    NC_CHECKBOX_DPTF_PROCESSOR
+    NC_CHECKBOX_SYSTEM_THERMAL_SENSOR1
+    NC_CHECKBOX_SYSTEM_THERMAL_SENSOR2
+    NC_CHECKBOX_SYSTEM_THERMAL_SENSOR3
+//    NC_CHECKBOX_SYSTEM_THERMAL_SENSOR4
+//    NC_CHECKBOX_SYSTEM_THERMAL_SENSOR5
+//    NC_CHECKBOX_AMBIENT_TRIPPOINT_CHANGE //P20130628
+    NC_CHECKBOX_CHARGER_PARTICIPANT
+    NC_CHECKBOX_DISPLAY_PARTICIPANT
+    NC_CHECKBOX_SOC_PARTICIPANT
+
+    NC_CHECKBOX_MEMORY_SCRAMBLER
+
+    NC_CHECKBOX_GOP
+   
+    NC_CHECKBOX_IGD
+    NC_CHECKBOX_IGDTUREBOEN
+    NC_CHECKBOX_PRIMARY_DISPLAY //EIP141999
+    
+    NC_CHECKBOX_GFX_BOOST
+		NC_CHECKBOX_PAVC
+    
+    NC_CHECKBOX_IGD_DVMT50_PRE_ALLOC
+    NC_CHECKBOX_IGD_DVMT_GFX_MEM
+    
+    NC_CHECKBOX_APERTURE_SIZE
+    NC_CHECKBOX_GTT_SIZE
+    NC_CHECKBOX_DOPCG_SIZE //P20130628
+   
+    NC_CHECKBOX_IGD_THERMAL
+    NC_CHECKBOX_SSC_EN
+   
+    NC_CHECKBOX_FORCE_LID 
+		NC_CHECKBOX_BIA
+		NC_CHECKBOX_ALS_SUPPORT
+		NC_CHECKBOX_IGD_FLATPANEL
+		//NC_CHECKBOX_IGD_BOOT_TYPE   //EIP150350   
+		NC_CHECKBOX_PANNEL_SCALING    
+		NC_CHECKBOX_GMCH_BLC_CONTROL
+    
+    NC_CHECKBOX_ISP_EN
+    NC_CHECKBOX_ISP_CONFIG
+    NC_CHECKBOX_ENABLE_PS2_FOR_VCCVNN //EIP154014
+    NC_CHECKBOX_RENDER_STANDBY
+    
+    NC_CHECKBOX_MMIOSIZE  //EIP126704  Select dynamic or fixed mmio size.
+    NC_CHECKBOX_MMIOSIZE_2 //EIP173398 
+    
+//EIP150350 >>     
+#if CSM_SUPPORT    
+    NB_ONEOF_LCDPANELTYPE
+	NB_ONEOF_LCDPANELSCALING
+	NB_ONEOF_IGDBOOTTYPE
+	NB_ONEOF_IGDLCDBLC
+	NB_ONEOF_ACTIVELFP
+	NB_ONEOF_DISPLAYPIPEB
+	NB_ONEOF_SDVOPANELTYPE
+#endif //#if CSM_SUPPORT    
+//EIP150350 <<    
+    
+#endif //#ifdef CONTROLS_WITH_DEFAULTS
+
+//**********************************************************************
+//                Main - Main Form
+//**********************************************************************
+
+#ifdef MAIN_FORM_SET
+
+  #ifdef FORM_SET_ITEM
+    // Define controls to be added to the main page of the formset
+
+    SEPARATOR
+    SUBTITLE(STRING_TOKEN(STR_MEMORY))
+
+    text
+      help   = STRING_TOKEN(STR_MEMORY_SIZE_HELP),
+      text   = STRING_TOKEN(STR_MEMORY_SIZE_NAME),
+      text   = STRING_TOKEN(STR_MEMORY_SIZE_VALUE),
+      flags  = 0,
+      key    = 0;
+
+      SEPARATOR
+      SUBTITLE(STRING_TOKEN(STR_GOP_INFO))    
+      text 
+          help   = STRING_TOKEN(STR_GOP_HELP),
+          text   = STRING_TOKEN(STR_GOP_NAME),
+          text   = STRING_TOKEN(STR_GOP_VALUE),
+          flags  = 0,
+          key    = 0;
+
+      SEPARATOR
+      SUBTITLE(STRING_TOKEN(STR_TXE_INFO))    
+      text 
+          help   = STRING_TOKEN(STR_TXE_HELP),
+          text   = STRING_TOKEN(STR_TXE_NAME),
+          text   = STRING_TOKEN(STR_TXE_VALUE),
+          flags  = 0,
+          key    = 0;
+          
+      text 
+          help   = STRING_TOKEN(STR_TXE_FW_HELP),
+          text   = STRING_TOKEN(STR_TXE_FW_NAME),
+          text   = STRING_TOKEN(STR_TXE_FW_VALUE),
+          flags  = 0,
+          key    = 0;
+      
+  #endif
+
+#endif
+
+
+//**********************************************************************
+//                ADVANCED - Atapi Configuration Form
+//**********************************************************************
+
+#ifdef ADVANCED_FORM_SET
+
+  #ifdef FORM_SET_ITEM
+    //
+    // Define controls to be added to the main page of the formset
+    //
+  #endif
+
+  #ifdef FORM_SET_GOTO
+    //
+    // Define goto commands for the forms defined in this file
+    //
+    goto THERMAL_FORM_ID,
+    prompt  = STRING_TOKEN(STR_THERMAL_CONFIGURATION_FORM),
+    help    = STRING_TOKEN(STR_THERMAL_CONFIGURATION_HELP);     
+    
+  #endif
+
+  #ifdef FORM_SET_FORM
+    //
+    // Define forms
+    //
+  #ifndef NB_FORM_THERMAL_CONFIG
+  #define NB_FORM_THERMAL_CONFIG
+    form formid = AUTO_ID(THERMAL_FORM_ID),
+    title = STRING_TOKEN(STR_THERMAL_CONFIGURATION_FORM);
+
+    SUBTITLE(STRING_TOKEN(STR_THERMAL_CONFIGURATION_TITLE))
+    NC_CHECKBOX_CRITICAL_TRIP_POINT
+    NC_CHECKBOX_PASSIVE_TRIP_POINT
+    SEPARATOR
+    
+    SUBTITLE(STRING_TOKEN(STR_DPTF))
+    NC_CHECKBOX_ENABLE_DPTF
+    
+    grayoutif ideqval SETUP_DATA.EnableDptf == 0;
+    SUBTITLE(STRING_TOKEN(STR_DPTF_SENSOR_0_TITLE))
+    NC_CHECKBOX_GENERIC_CRITICAL_TEMPPERATURE_0
+    NC_CHECKBOX_GENERIC_PASSIVE_TEMPPERATURE_0
+    SUBTITLE(STRING_TOKEN(STR_DPTF_SENSOR_1_TITLE))
+    NC_CHECKBOX_GENERIC_CRITICAL_TEMPPERATURE_1
+    NC_CHECKBOX_GENERIC_PASSIVE_TEMPPERATURE_1
+    SUBTITLE(STRING_TOKEN(STR_DPTF_SENSOR_2_TITLE))
+    NC_CHECKBOX_GENERIC_CRITICAL_TEMPPERATURE_2
+    NC_CHECKBOX_GENERIC_PASSIVE_TEMPPERATURE_2
+//    SUBTITLE(STRING_TOKEN(STR_DPTF_SENSOR_3_TITLE))
+//    NC_CHECKBOX_GENERIC_CRITICAL_TEMPPERATURE_3
+//    NC_CHECKBOX_GENERIC_PASSIVE_TEMPPERATURE_3
+//    SUBTITLE(STRING_TOKEN(STR_DPTF_SENSOR_4_TITLE))
+//    NC_CHECKBOX_GENERIC_CRITICAL_TEMPPERATURE_4
+//    NC_CHECKBOX_GENERIC_PASSIVE_TEMPPERATURE_4
+    SEPARATOR
+    
+    NC_CHECKBOX_SUPER_DEBUG
+    NC_CHECKBOX_LPO_ENABLE
+    NC_CHECKBOX_LPO_START_P_STATE
+    NC_CHECKBOX_LPO_STEP_SIZE
+    NC_CHECKBOX_LPO_POWER_CONTROL_SETTING
+    NC_CHECKBOX_LPO_PERFORMANCE_CONTROL_SETTING  
+    
+    NC_CHECKBOX_ENABLE_DPPM
+    endif;
+    
+    suppressif  ideqval SETUP_DATA.EnableDptf == 0;
+    NC_CHECKBOX_CLPM
+    NC_CHECKBOX_DPTF_PROCESSOR
+    SEPARATOR
+    NC_CHECKBOX_SYSTEM_THERMAL_SENSOR1
+    NC_CHECKBOX_SYSTEM_THERMAL_SENSOR2
+    NC_CHECKBOX_SYSTEM_THERMAL_SENSOR3
+//    NC_CHECKBOX_SYSTEM_THERMAL_SENSOR4
+//    NC_CHECKBOX_SYSTEM_THERMAL_SENSOR5
+//    NC_CHECKBOX_AMBIENT_TRIPPOINT_CHANGE //P20130628
+    SEPARATOR
+    NC_CHECKBOX_CHARGER_PARTICIPANT
+    NC_CHECKBOX_DISPLAY_PARTICIPANT
+    NC_CHECKBOX_SOC_PARTICIPANT       
+    endif; 
+          
+    endform;    
+    
+  #endif //  #ifndef NB_FORM_THERMAL_CONFIG 
+   
+  #endif //  #ifdef FORM_SET_FORM
+
+#endif // ADVANCED_FORM_SET
+
+//**********************************************************************
+//                CHIPSET - North Bridge Form
+//**********************************************************************
+
+#ifdef CHIPSET_FORM_SET
+
+#ifdef FORM_SET_TYPEDEF
+#include <Token.h>
+#endif
+  
+  #ifdef FORM_SET_ITEM
+    // Define controls to be added to the main page of the formset
+  #endif
+
+  #ifdef FORM_SET_GOTO
+    // Define goto commands for the forms defined in this file
+    goto NB_FORM_ID, 
+      prompt = STRING_TOKEN(STR_NB_FORM),
+      help = STRING_TOKEN(STR_NB_FORM_HELP);
+  #endif
+
+  #ifdef FORM_SET_FORM
+  // Define forms
+    form formid = AUTO_ID(NB_FORM_ID),
+    title = STRING_TOKEN(STR_NB_FORM);
+
+      goto INTEL_IGD_ID,
+      prompt  = STRING_TOKEN(STR_INTEL_IGD_FORM),
+      help    = STRING_TOKEN(STR_INTEL_IGD_HELP);
+
+	    goto INTEL_IGD_CONTROL,		
+      prompt  = STRING_TOKEN(STR_IGD_LCD_CONTROL_FORM),
+      help    = STRING_TOKEN(STR_IGD_LCD_CONTROL_HELP);	    
+  
+      goto GT_POWER_CONFIG_FORM_ID,
+      prompt  = STRING_TOKEN(STR_GT_POWER_CONFIG_FORM_TITLE),
+      help    = STRING_TOKEN(STR_GT_POWER_CONFIG_FORM_HELP);
+
+//EIP150350 >> 
+#if CSM_SUPPORT
+#if NbSmi_Support
+      goto IGFX_LCD_FORM_ID,
+      prompt  = STRING_TOKEN(STR_IGFX_LCD),
+      help    = STRING_TOKEN(STR_IGFX_LCD);
+#endif
+#endif 
+//EIP150350 << 
+
+      SEPARATOR
+    
+    SUBTITLE(STRING_TOKEN(STR_MEMORY))
+    SEPARATOR
+
+      text 
+        help   = STRING_TOKEN(STR_MEMORY_SIZE_HELP),
+        text   = STRING_TOKEN(STR_MEMORY_SIZE_NAME),
+        text   = STRING_TOKEN(STR_MEMORY_SIZE_VALUE),
+        flags  = 0,
+        key    = 0;
+
+      SEPARATOR
+//P20130624 >>
+      text 
+        help   = STRING_TOKEN(STR_MEMORY_SIZE_SLOT_HELP),
+        text   = STRING_TOKEN(STR_MEMORY_SIZE_SLOT0_NAME),
+        text   = STRING_TOKEN(STR_MEMORY_SIZE_SLOT0_VALUE),
+        flags  = 0,
+        key    = 0;
+
+#if (DIMM_SLOT_NUM > 1)
+      text 
+        help   = STRING_TOKEN(STR_MEMORY_SIZE_SLOT_HELP),
+        text   = STRING_TOKEN(STR_MEMORY_SIZE_SLOT1_NAME),
+        text   = STRING_TOKEN(STR_MEMORY_SIZE_SLOT1_VALUE),
+        flags  = 0,
+        key    = 0;
+#endif
+
+#if (MEM_CHANNEL_NUM == 2)
+      text 
+        help   = STRING_TOKEN(STR_MEMORY_SIZE_SLOT_HELP),
+        text   = STRING_TOKEN(STR_MEMORY_SIZE_SLOT2_NAME),
+        text   = STRING_TOKEN(STR_MEMORY_SIZE_SLOT2_VALUE),
+        flags  = 0,
+        key    = 0;
+
+#if (DIMM_SLOT_NUM > 1)
+      text 
+        help   = STRING_TOKEN(STR_MEMORY_SIZE_SLOT_HELP),
+        text   = STRING_TOKEN(STR_MEMORY_SIZE_SLOT3_NAME),
+        text   = STRING_TOKEN(STR_MEMORY_SIZE_SLOT3_VALUE),
+        flags  = 0,
+        key    = 0;
+//P20130624 <<
+#endif  //#if (MEM_RANK_NUM > 1)
+#endif	//#if (MEM_CHANNEL_NUM == 2)
+
+//      SEPARATOR
+//      SUBTITLE(STRING_TOKEN(STR_MEMORY_CONFIGURATION))
+//			NC_CHECKBOX_MEMORY_SCRAMBLER
+
+        SEPARATOR
+	
+        //EIP173398 >> 
+        suppressif  ideqval SETUP_DATA.ApertureSize > 2; 
+        NC_CHECKBOX_MMIOSIZE //EIP126704  Select dynamic or fixed mmio size.
+        endif;  // suppress
+        suppressif  ideqval SETUP_DATA.ApertureSize <= 2;
+        NC_CHECKBOX_MMIOSIZE_2
+        endif;  // suppress
+        //EIP173398 <<
+
+    endform;
+    
+    form formid = AUTO_ID(INTEL_IGD_ID),
+    title = STRING_TOKEN(STR_INTEL_IGD_FORM);
+    	SUBTITLE(STRING_TOKEN(STR_GOD_CONFIGURATION_TITLE))
+    	NC_CHECKBOX_GOP
+    	SEPARATOR
+
+	    SUBTITLE(STRING_TOKEN(STR_INTEL_IGD_FORM))
+			SEPARATOR
+      NC_CHECKBOX_IGD
+        SEPARATOR
+      suppressif  ideqval SETUP_DATA.InternalGraphics == 0;
+        NC_CHECKBOX_IGDTUREBOEN
+        NC_CHECKBOX_PRIMARY_DISPLAY //EIP141999
+//        NC_CHECKBOX_GFX_BOOST //EIP195907  
+		    NC_CHECKBOX_PAVC
+        NC_CHECKBOX_IGD_DVMT50_PRE_ALLOC
+        NC_CHECKBOX_IGD_DVMT_GFX_MEM
+        NC_CHECKBOX_APERTURE_SIZE
+        NC_CHECKBOX_DOPCG_SIZE //P20130628
+        NC_CHECKBOX_GTT_SIZE
+        NC_CHECKBOX_IGD_THERMAL
+        NC_CHECKBOX_SSC_EN
+        
+        SEPARATOR
+        NC_CHECKBOX_ISP_EN
+        suppressif  ideqval SETUP_DATA.ISPEn == 0;
+        	NC_CHECKBOX_ISP_CONFIG
+        endif;  // suppress
+      endif;  // suppress
+
+//EIP154014 >>      
+      SEPARATOR
+      SUBTITLE(STRING_TOKEN(STR_ENABLE_PS2_VCCVNN_FORM))
+      NC_CHECKBOX_ENABLE_PS2_FOR_VCCVNN
+//EIP154014 <<
+
+    endform;
+    
+    form formid = AUTO_ID(INTEL_IGD_CONTROL),
+    title = STRING_TOKEN(STR_IGD_LCD_CONTROL_FORM);
+      SUBTITLE(STRING_TOKEN(STR_IGD_LCD_CONTROL_TITLE))
+      
+    		    NC_CHECKBOX_FORCE_LID 
+				NC_CHECKBOX_BIA
+				NC_CHECKBOX_ALS_SUPPORT
+				NC_CHECKBOX_IGD_FLATPANEL
+				//NC_CHECKBOX_IGD_BOOT_TYPE //P20130627_2  
+				NC_CHECKBOX_PANNEL_SCALING    
+				//NC_CHECKBOX_GMCH_BLC_CONTROL //P20130627_2    
+				
+    endform;
+    
+    form formid = AUTO_ID(GT_POWER_CONFIG_FORM_ID),
+    title = STRING_TOKEN(STR_GT_POWER_CONFIG_FORM_TITLE);
+      SUBTITLE(STRING_TOKEN(STR_GT_POWER_CONFIG_FORM_TITLE))
+      
+	  suppressif  ideqval SETUP_DATA.PpmS0ix == 1;    
+    	  NC_CHECKBOX_RENDER_STANDBY
+  	  endif;
+	  suppressif  ideqval SETUP_DATA.PpmS0ix == 0;    
+          text 
+          	  help   = STRING_TOKEN(STR_VIDEO_RS2_HELP),
+              text   = STRING_TOKEN(STR_VIDEO_RS2_PROMPT),
+              text   = STRING_TOKEN(STR_COMMON_ENABLED),
+              flags  = 0,
+              key    = 0;
+  	  endif;        
+    endform;
+
+//EIP150350 >>      
+//----------------------------------------------------------------------------
+//                    IGFX_LCD_CONFIGURATION
+//----------------------------------------------------------------------------
+#if CSM_SUPPORT
+#if NbSmi_Support
+      form formid = AUTO_ID(IGFX_LCD_FORM_ID),
+      title     = STRING_TOKEN(STR_IGFX_LCD);
+
+      SUBTITLE(STRING_TOKEN(STR_IGFX_LCD))
+
+      SEPARATOR
+
+      NB_ONEOF_IGDBOOTTYPE
+
+	#if DUAL_DISPLAY_SUPPORT
+      suppressif ideqval SETUP_DATA.IgdBootType == 0x0;
+         NB_ONEOF_DISPLAYPIPEB
+      endif;
+	#endif
+	
+      NB_ONEOF_LCDPANELTYPE
+
+      //NB_ONEOF_SDVOPANELTYPE
+
+      NB_ONEOF_LCDPANELSCALING
+  
+      NB_ONEOF_IGDLCDBLC
+
+      //NB_ONEOF_IGDLCDIBIA
+
+      //NB_ONEOF_IGDLCDSSCC
+
+      //NB_ONEOF_IGDTV1STANDARD
+
+      //NB_ONEOF_IGDTV2STANDARD
+
+      //NB_ONEOF_ALSENABLE
+
+      NB_ONEOF_ACTIVELFP
+
+      //NB_ONEOF_LFPCOLORDEPTH
+
+    endform;
+#endif //#if CSM_SUPPORT
+//EIP150350 << 
+    
+  #endif
+#endif //NbSmi_Support
+#endif //CSM_SUPPORT
+
+//**********************************************************************
+//**********************************************************************
+//**                                                                  **
+//**        (C)Copyright 1985-2012, American Megatrends, Inc.         **
+//**                                                                  **
+//**                       All Rights Reserved.                       **
+//**                                                                  **
+//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093        **
+//**                                                                  **
+//**                       Phone: (770)-246-8600                      **
+//**                                                                  **
+//**********************************************************************
+//**********************************************************************

@@ -1,0 +1,8 @@
+<component>
+	name = "EcProtocol"
+	category = ModulePart
+	LocalRoot = "AmiModulePkg\Include\Protocol\"
+	RefName = "EcProtocol"
+[files]
+"EcAccess.h"	
+<endComponent>

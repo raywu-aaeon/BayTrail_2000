@@ -1,0 +1,17 @@
+<component>
+	name = "AHCI"
+	category = eModule
+	LocalRoot = "AmiModulePkg\AHCI\"
+	RefName = "AHCI"
+[INF]
+"Ahci.inf"
+[files]
+"Ahci.sdl"	
+"Ahci.chm"	
+[parts]
+"AhciSmm"
+"Aint13"
+"ACSP"
+"AhciIncludes"
+"AhciBusProtocol"
+<endComponent>

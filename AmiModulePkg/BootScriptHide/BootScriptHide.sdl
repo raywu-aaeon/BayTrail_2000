@@ -1,0 +1,45 @@
+TOKEN
+	Name  = "BootScriptHide_SUPPORT"
+	Value  = "1"
+	Help  = "Main switch to enable BootScriptHide support in Project"
+	TokenType = Boolean
+	Master = Yes
+End
+
+TOKEN
+	Name  = "BOOT_SCRIPT_SAVE_SW_SMI_VALUE"
+	Value  = "0xD6"
+	Help  = "SW SMI value used to trigger boot script saving to SMM"
+	TokenType = Integer
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "BOOT_SCRIPT_RESTORE_SW_SMI_VALUE"
+	Value  = "0xD7"
+	Help  = "SW SMI value used to trigger boot script restoring from SMM"
+	TokenType = Integer
+	TargetH = Yes
+End
+
+INFComponent
+	Name  = "BootScriptHideDxe"
+	File  = "BootScriptHideDxe.inf"
+	Package  = "AmiModulePkg"
+	ModuleTypes  = "DXE_DRIVER"
+End
+
+INFComponent
+	Name  = "BootScriptHideSmm"
+	File  = "BootScriptHideSmm.inf"
+	Package  = "AmiModulePkg"
+	ModuleTypes  = "DXE_SMM_DRIVER"
+End
+
+INFComponent
+	Name  = "BootScriptHidePei"
+	File  = "BootScriptHidePei.inf"
+	Package  = "AmiModulePkg"
+	ModuleTypes  = "PEIM"
+End
+

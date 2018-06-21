@@ -1,0 +1,23 @@
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = BlockS3Var
+  COMPONENT_TYPE                 = LIBRARY
+  FILE_GUID                      = CA1B36DC-FF48-4ACD-A51A-2198FF40442D
+  MODULE_TYPE                    = DXE_DRIVER
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = BlockS3VarLib|DXE_RUNTIME_DRIVER DXE_SMM_DRIVER
+
+[Sources]
+  BlockS3VarLib.c
+  
+[Packages]
+  MdePkg/MdePkg.dec
+  AmiModulePkg/AmiModulePkg.dec
+  AmiCompatibilityPkg/AmiCompatibilityPkg.dec 
+
+[Guids]
+
+[Protocols]
+
+[LibraryClasses]
+  AmiDxeLib

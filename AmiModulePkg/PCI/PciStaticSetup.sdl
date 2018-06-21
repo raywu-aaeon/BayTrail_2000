@@ -1,0 +1,38 @@
+TOKEN
+	Name  = "PciStaticSetup_SUPPORT"
+	Value  = "1"
+	Help  = "Main switch to enable PciBus support in Project"
+	TokenType = Boolean
+	TargetEQU = Yes
+	TargetMAK = Yes
+	Master = Yes
+	Token = "PCI_SETUP_USE_APTIO_4_STYLE" "=" "1"
+End
+
+PATH
+	Name  = "PciStaticSetup_DIR"
+End
+
+ELINK
+	Name  = "$(PCIBUS_DIR)/PciStaticSetup.sd"
+	Parent  = "SETUP_DEFINITIONS"
+	InvokeOrder = AfterParent
+End
+
+ELINK
+	Name  = "$(PCIBUS_DIR)\PciStaticSetup.c"
+	Parent  = "SetupCallbackFiles"
+	InvokeOrder = AfterParent
+End
+
+ELINK
+	Name  = "$(PCIBUS_DIR)\PciStaticSetup.uni"
+	Parent  = "SetupStringFiles"
+	InvokeOrder = AfterParent
+End
+
+ELINK
+	Name  = "InitPciBusStrings,"
+	Parent  = "SetupStringInit"
+	InvokeOrder = AfterParent
+End

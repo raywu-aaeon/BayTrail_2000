@@ -1,0 +1,71 @@
+#**********************************************************************
+#**********************************************************************
+#**                                                                  **
+#**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+#**                                                                  **
+#**                       All Rights Reserved.                       **
+#**                                                                  **
+#**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093        **
+#**                                                                  **
+#**                       Phone: (770)-246-8600                      **
+#**                                                                  **
+#**********************************************************************
+#**********************************************************************
+
+#
+# 
+#
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = PHashDPei
+  FILE_GUID                      = 0BF89093-3E5E-457a-8CA6-62352915A3B4
+  MODULE_TYPE                    = PEIM
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = PHashDPeiEntry
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64
+#
+#  
+
+[Sources]
+  PHashDPei.c
+  
+[Packages]
+  MdePkg/MdePkg.dec
+  AmiCompatibilityPkg/AmiCompatibilityPkg.dec
+  AmiCryptoPkg/AmiCryptoPkg.dec
+  MdeModulePkg/MdeModulePkg.dec #EIP178977
+
+[LibraryClasses]
+  PeimEntryPoint
+  PeiServicesLib
+  AmiPeiLib
+  PeiCryptLib
+  AmiRomLayoutLib
+
+[Ppis]
+  gEfiPeiBootInRecoveryModePpiGuid
+  gEfiPeiMemoryDiscoveredPpiGuid  #<EIP134987+> 2013/09/04
+  gPeiCapsulePpiGuid #EIP178977
+    
+[Depex]
+  #gEfiPeiMemoryDiscoveredPpiGuid
+  TRUE
+
+#**********************************************************************
+#**********************************************************************
+#**                                                                  **
+#**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+#**                                                                  **
+#**                       All Rights Reserved.                       **
+#**                                                                  **
+#**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093        **
+#**                                                                  **
+#**                       Phone: (770)-246-8600                      **
+#**                                                                  **
+#**********************************************************************
+#**********************************************************************

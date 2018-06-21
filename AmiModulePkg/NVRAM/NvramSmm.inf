@@ -1,0 +1,81 @@
+#**********************************************************************
+#**********************************************************************
+#**                                                                  **
+#**        (C)Copyright 1985-2012, American Megatrends, Inc.         **
+#**                                                                  **
+#**                       All Rights Reserved.                       **
+#**                                                                  **
+#**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093        **
+#**                                                                  **
+#**                       Phone: (770)-246-8600                      **
+#**                                                                  **
+#**********************************************************************
+#**********************************************************************
+
+#
+# 
+#
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  PI_SPECIFICATION_VERSION       = 0x0001000A
+  BASE_NAME                      = NVRAMSmm
+  FILE_GUID                      = 447A1B58-8F3E-4658-ABAA-9E7B2280B90A
+  MODULE_TYPE                    = DXE_SMM_DRIVER
+  VERSION_STRING                 = 1.0
+#  LIBRARY_CLASS                  = NVRAMDxeLib|DXE_DRIVER DXE_CORE DXE_RUNTIME_DRIVER
+  ENTRY_POINT                    = NvRamSmmEntry
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64
+#
+#  
+
+[Sources]  
+  NVRAM.h	
+  NvramRead.c	
+  NvramDxe.c
+
+[Packages]
+  MdePkg/MdePkg.dec   
+  MdeModulePkg/MdeModulePkg.dec #CSP20131017 - WHCK test TPM ISSUE
+  IntelFrameworkPkg/IntelFrameworkPkg.dec
+  AmiCompatibilityPkg/AmiCompatibilityPkg.dec 
+  AmiModulePkg/AmiModulePkg.dec
+  
+[LibraryClasses]
+  AmiDxeLib
+  UefiDriverEntryPoint
+  UefiBootServicesTableLib
+  FlashLib
+  AmiCriticalSectionLib
+  AmiCspLib
+  
+[Protocols]  
+  gEfiFirmwareVolume2ProtocolGuid
+  gFlashProtocolGuid
+  gFlashSmmProtocolGuid
+  gEfiSmmVariableProtocolGuid #CSP20131017 - WHCK test TPM ISSUE
+    
+[Guids] 
+  gEfiGlobalVariableGuid
+  
+[Depex]
+  gFlashSmmProtocolGuid AND
+  SmmRsTableGuid
+  
+#**********************************************************************
+#**********************************************************************
+#**                                                                  **
+#**        (C)Copyright 1985-2012, American Megatrends, Inc.         **
+#**                                                                  **
+#**                       All Rights Reserved.                       **
+#**                                                                  **
+#**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093        **
+#**                                                                  **
+#**                       Phone: (770)-246-8600                      **
+#**                                                                  **
+#**********************************************************************
+#**********************************************************************

@@ -1,0 +1,13 @@
+<component>
+	name = "VCPU-Library"
+	category = ModulePart
+	LocalRoot = "Vlv2DeviceRefCodePkg\ValleyView2Soc\CPU\Include\Library"
+	RefName = "Vlv2DeviceRefCodePkg.ValleyView2Soc.ValleyView2Soc-CPU.VCPU-Include.VCPU-Library"
+[files]
+"AslUpdateLib.h"
+"CpuIA32.h"
+"DTSHookLib.h"
+"KscLib.h"
+"SmmIoLib.h"
+"StallSmmLib.h"
+<endComponent>

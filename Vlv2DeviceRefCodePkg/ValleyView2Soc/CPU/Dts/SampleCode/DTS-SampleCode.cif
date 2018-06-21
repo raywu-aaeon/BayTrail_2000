@@ -1,0 +1,10 @@
+<component>
+	name = "DTS-SampleCode"
+	category = ModulePart
+	LocalRoot = "Vlv2DeviceRefCodePkg\ValleyView2Soc\CPU\Dts\SampleCode"
+	RefName = "Vlv2DeviceRefCodePkg.ValleyView2Soc.ValleyView2Soc-CPU.DTS-SampleCode"
+[inf]
+"Library\DTSHookLib\Smm\DTSHookLib.inf"
+"Library\Ksc\Smm\SmmKscLib.inf"
+"Library\SmmIo\SmmIo.inf"
+<endComponent>

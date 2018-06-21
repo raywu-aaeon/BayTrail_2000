@@ -1,0 +1,11 @@
+<component>
+	name = "AtaPassThru"
+	category = eModule
+	LocalRoot = "AmiModulePkg\AtaPassThru"
+	RefName = "AtaPassThru"
+[INF]
+"AtaPassThru.inf"
+[files]
+"AtaPassThru.sdl"	
+"AtaPassThru.chm"
+<endComponent>

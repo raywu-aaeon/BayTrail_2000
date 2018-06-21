@@ -1,0 +1,133 @@
+TOKEN
+	Name  = "EfiOsBootOptionNames_SUPPORT"
+	Value  = "1"
+	Help  = "Main switch to enable EfiOsBootOptionNames support in Project"
+	TokenType = Boolean
+	TargetEQU = Yes
+	TargetMAK = Yes
+	Master = Yes
+End
+
+TOKEN
+	Name  = "RemoveLegacyGptHddDevice"
+	Value  = "0"
+	Help  = "On. Filter GPT Format Hard disk of Legacy device."
+	TokenType = Boolean
+	TargetMAK = Yes
+	TargetH = Yes
+End
+
+PATH
+	Name  = "EfiOsBootOptionNames_DIR"
+	Help  = "EfiOsBootOptionNames files source directory"
+End
+
+MODULE
+	Help  = "Includes EfiOsBootOptionNames.mak to Project"
+	File  = "EfiOsBootOptionNames.mak"
+End
+
+ELINK
+	Name  = "ChangeUefiBootNames,"
+	Parent  = "ProcessEnterSetupHook,"
+	InvokeOrder = AfterParent
+End
+
+ELINK
+	Name  = "AdjustEfiOsBootOrder,"
+	Parent  = "ReadBootOptions,"
+	InvokeOrder = BeforeParent
+End
+
+ELINK
+	Name  = "CreateEfiOsBootOption,"
+	Parent  = "FilterBootDeviceList,"
+	InvokeOrder = AfterParent
+End
+
+ELINK
+	Name  = "RemoveLegacyGptHdd,"
+	Parent  = "BootOptionBootDeviceFilteringFunctions"
+	Token = "RemoveLegacyGptHddDevice" "=" "1"
+	Token = "CSM_SUPPORT" "=" "1"
+	InvokeOrder = AfterParent
+End
+
+TOKEN
+	Name  = "BootOption_x64"
+	Value  = "1"
+	Help  = "Enable build support for 64 bit(x64/IA64)"
+	TokenType = Boolean
+	TargetMAK = Yes
+	TargetH = Yes
+	Token = "x64_BUILD" "=" "1"
+End
+
+ELINK
+	Name  = "$(EfiOsBootOptionNames_DIR)\EfiOsBootOptionNames.c"
+	Parent  = "TSE_SOURCE_FILES"
+	InvokeOrder = AfterParent
+End
+
+ELINK
+	Name  = "EfiOsBootOptionNamesFilePathItem"
+	InvokeOrder = ReplaceParent
+End
+
+ELINK
+	Name  = "{<\\EFI\\Microsoft\\Boot\\bootmgfw.efi>, <Windows Boot Manager>},"
+	Parent  = "EfiOsBootOptionNamesFilePathItem"
+	InvokeOrder = AfterParent
+End
+
+ELINK
+	Name  = "{<\\EFI\\Suse\\elilo.efi>, <Suse Boot Manager>},"
+	Parent  = "EfiOsBootOptionNamesFilePathItem"
+	InvokeOrder = AfterParent
+End
+
+ELINK
+	Name  = "{<\\EFI\\Ubuntu\\grubx64.efi>, <ubuntu>},"
+	Parent  = "EfiOsBootOptionNamesFilePathItem"
+	InvokeOrder = AfterParent
+End
+
+ELINK
+	Name  = "{<\\EFI\\Redhat\\elilo.efi>, <RedHat Boot Manager>},"
+	Parent  = "EfiOsBootOptionNamesFilePathItem"
+	InvokeOrder = AfterParent
+End
+
+ELINK
+	Name  = "{<\\EFI\\opensuse\\grubx64.efi>, <opensuse>},"
+	Parent  = "EfiOsBootOptionNamesFilePathItem"
+	InvokeOrder = AfterParent
+End
+
+ELINK
+	Name  = "{<\\EFI\\BOOT\\BOOTX64.EFI>, <UEFI OS>},"
+	Parent  = "EfiOsBootOptionNamesFilePathItem"
+	Token = "x64_BUILD" "=" "1"
+	InvokeOrder = AfterParent
+End
+
+ELINK
+	Name  = "{<\\EFI\\BOOT\\BOOTIA32.EFI>, <UEFI OS>},"
+	Parent  = "EfiOsBootOptionNamesFilePathItem"
+	Token = "x64_BUILD" "=" "0"
+	InvokeOrder = AfterParent
+End
+
+
+INFComponent
+	Name  = "EfiOsBootOptionNames"
+	File  = "EfiOsBootOptionNames.inf"
+	Package  = "AmiModulePkg"
+	ModuleTypes  = "DXE_DRIVER"
+End
+
+LibraryMapping
+	Class  = "NULL"
+	Instance  = "AmiModulePkg.EfiOsBootOptionNames"
+	Override  = "AmiModulePkg.Bds"
+End

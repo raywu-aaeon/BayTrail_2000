@@ -1,0 +1,41 @@
+#**********************************************************************
+#**********************************************************************
+#**                                                                  **
+#**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+#**                                                                  **
+#**                       All Rights Reserved.                       **
+#**                                                                  **
+#**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093        **
+#**                                                                  **
+#**                       Phone: (770)-246-8600                      **
+#**                                                                  **
+#**********************************************************************
+#**********************************************************************
+
+## @file
+#   The module hides boot script in the SMM at the end of DXE and restores it on S3 resume
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = BootScriptHideDxe
+  FILE_GUID                      = A570F393-B0F5-44A4-8550-61600597B409
+  MODULE_TYPE                    = DXE_DRIVER
+  ENTRY_POINT                    = BootScriptHideDxeEntryPoint
+
+[Sources]
+  BootScriptHideDxe.c
+
+[Packages]
+  AmiCompatibilityPkg/AmiCompatibilityPkg.dec
+  MdePkg/MdePkg.dec
+
+[LibraryClasses]
+  AmiDxeLib
+  UefiDriverEntryPoint
+  
+[Protocols]
+  gEfiSmmControl2ProtocolGuid
+  
+[Depex]
+  TRUE

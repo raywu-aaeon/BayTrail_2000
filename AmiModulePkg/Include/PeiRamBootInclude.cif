@@ -1,0 +1,8 @@
+<component>
+	name = "Include"
+	category = ModulePart
+	LocalRoot = "AmiModulePkg\Include"
+	RefName = "PEIRAMBOOT_H_FILE"
+[files]
+"PeiRamBoot.h"
+<endComponent>

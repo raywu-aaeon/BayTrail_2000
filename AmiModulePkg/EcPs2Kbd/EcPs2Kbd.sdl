@@ -1,0 +1,68 @@
+TOKEN
+	Name  = "EcPs2Kbd_SUPPORT"
+	Value  = "1"
+	TokenType = Boolean
+	TargetEQU = Yes
+	TargetH = Yes
+	Master = Yes
+End
+
+TOKEN
+	Name  = "SB_DEV_NUMBER"
+	Value  = "0x1f"
+	Help  = "South Bridge (LPC Bridge) PCI Device Number"
+	TokenType = Integer
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "SB_FUN_NUMBER"
+	Value  = "0x00"
+	Help  = "South Bridge (LPC Bridge) PCI Function Number"
+	TokenType = Integer
+	TargetH = Yes
+End
+
+PATH
+	Name  = "ECPS2KBD_DIR"
+	Path  = "AmiModulePkg\EcPs2Kbd"
+End
+
+PCIDEVICE
+    Title  = "PS2MS Container"
+    Parent  = "PciHost (Virtual)"
+    Attribute  = "0x0"
+    Dev_type  = "Container"
+    Dev  = 00h
+    Fun  = 00h
+    SleepNum  = 01h
+    ASLfile  = "'AmiModulePkg\EcPs2Kbd\EcPs2Ms.asl';After Pci Tree'"
+    DeviceType = OnBoard
+    PCIBusSize = 32bit
+    ROMMain = No
+    Virtual = Yes
+End
+
+PCIDEVICE
+    Title  = "PS2KB Container"
+    Parent  = "PciHost (Virtual)"
+    Attribute  = "0x0"
+    Dev_type  = "Container"
+    Dev  = 00h
+    Fun  = 00h
+    SleepNum  = 01h
+    ASLfile  = "'AmiModulePkg\EcPs2Kbd\EcPs2Kb.asl';After Pci Tree'"
+    DeviceType = OnBoard
+    PCIBusSize = 32bit
+    ROMMain = No
+    Virtual = Yes
+End
+
+INFComponent
+	Name  = "EcPs2Kbd"
+	File  = "EcPs2Kbd.inf"
+	Package  = "AmiModulePkg"
+	ModuleTypes  = "UEFI_DRIVER"
+	Token = "EcPs2Kbd_SUPPORT" "=" "1"
+End
+

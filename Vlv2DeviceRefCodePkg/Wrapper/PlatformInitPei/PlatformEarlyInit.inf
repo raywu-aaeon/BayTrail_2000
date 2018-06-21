@@ -1,0 +1,101 @@
+#/*++
+#
+# Copyright (c)  1999 - 2009 Intel Corporation. All rights reserved
+# This software and associated documentation (if any) is furnished
+# under a license and may only be used or copied in accordance
+# with the terms of the license. Except as permitted by such
+# license, no part of this software or documentation may be
+# reproduced, stored in a retrieval system, or transmitted in any
+# form or by any means without the express written consent of
+# Intel Corporation.
+
+#
+#  Module Name:
+#
+#    PlatformEarlyInit.inf
+#
+#  Abstract:
+#
+#    Component description file for PlatformEarlyInit module
+#
+#--*/
+
+[defines]
+INF_VERSION 				   = 0x00010005
+BASE_NAME					   = PlatformEarlyInit
+FILE_GUID					   = 0A5EA2E1-BE0B-44a0-A775-F429C9A018A0
+MODULE_TYPE 				   = PEIM
+VERSION_STRING				   = 1.0
+PI_SPECIFICATION_VERSION	   = 0x0001000A
+ENTRY_POINT 				   = PlatformEarlyInitEntry
+
+[sources.common]
+  CpuInitPeim.c
+  PchInitPeim.c
+  MemoryCallback.c
+  MemoryPeim.c
+  PlatformEarlyInit.c
+  PlatformEarlyInit.h
+  PlatformInfoInit.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  Vlv2DeviceRefCodePkg/PlatformPkg.dec
+  IntelFrameworkPkg/IntelFrameworkPkg.dec
+  Vlv2DeviceRefCodePkg/Vlv2DeviceRefCodePkg.dec
+  IA32FamilyCpuPkg/IA32FamilyCpuPkg.dec
+  UefiCpuPkg/UefiCpuPkg.dec
+  AmiCompatibilityPkg/AmiCompatibilityPkg.dec
+  AmiModulePkg/AmiModulePkg.dec  
+  AmiChipsetModulePkg/AmiChipsetModulePkg.dec
+
+[LibraryClasses]
+  PeimEntryPoint
+  DebugLib
+  HobLib
+  IoLib
+  PcdLib
+
+[Ppis]
+  gEfiPeiStallPpiGuid
+  gEfiPeiMemoryDiscoveredPpiGuid
+  gVlvPolicyPpiGuid
+  gEfiPeiReadOnlyVariable2PpiGuid
+  gEfiPeiResetPpiGuid
+  gEfiEndOfPeiSignalPpiGuid
+  gPeiSmbusPolicyPpiGuid
+  gEfiFindFvPpiGuid
+  gPeiCapsulePpiGuid
+  gEfiPeiBootInRecoveryModePpiGuid
+  gEfiPeiRecoveryModulePpiGuid
+  gEfiPeiDeviceRecoveryModulePpiGuid
+  gPeiCachePpiGuid
+  gEfiPeiMasterBootModePpiGuid
+  gEfiPeiSmbusPpiGuid
+  gPchInitPpiGuid
+  gPchUsbPolicyPpiGuid
+  gSeCfTPMPolicyPpiGuid
+  gEfiPeiReadOnlyVariable2PpiGuid
+
+[Guids]
+  gEfiSetupVariableGuid
+  gEfiPlatformInfoGuid
+  gEfiPlatformBootModeGuid
+  gEfiPlatformCpuInfoGuid
+  gEfiGlobalVariableGuid
+  gRecoveryOnFatFloppyDiskGuid
+  gRecoveryOnFatUsbDiskGuid
+  gRecoveryOnFatIdeDiskGuid
+  gRecoveryOnDataCdGuid
+  gEfiNormalSetupGuid
+  gEfiMemoryTypeInformationGuid  
+
+[Pcd.common]
+  gPlatformModuleTokenSpaceGuid.PcdFlashFvMainBase
+  gPlatformModuleTokenSpaceGuid.PcdFlashFvMainSize
+  gEfiMdePkgTokenSpaceGuid.PcdPciExpressBaseAddress
+  gEfiIchTokenSpaceGuid.PcdPeiIchEhciControllerMemoryBaseAddress
+
+[Depex]
+  gEfiPeiReadOnlyVariable2PpiGuid  AND gPeiCachePpiGuid

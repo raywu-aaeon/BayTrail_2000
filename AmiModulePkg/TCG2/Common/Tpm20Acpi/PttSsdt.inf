@@ -1,0 +1,35 @@
+
+################################################################################
+#
+# Defines Section - statements that will be processed to create a Makefile.
+#
+################################################################################
+
+[Defines]
+INF_VERSION          = 0x00010005
+BASE_NAME            = PttSsdt
+FILE_GUID            = b733c141-e88f-4786-94af-8b87bc4867fe
+MODULE_TYPE          = USER_DEFINED
+VERSION_STRING       = 1.0
+
+[Sources]
+  fTpmSsdt.asl
+
+[Packages]
+  MdePkg/MdePkg.dec
+
+
+
+[LibraryClasses]
+
+
+[Pcd]
+
+[Protocols]
+
+[PPIs]
+
+[Guids]
+
+[Depex]
+

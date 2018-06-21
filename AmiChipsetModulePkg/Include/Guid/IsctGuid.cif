@@ -1,0 +1,9 @@
+<component>
+	name = "IsctGuidInclude"
+	category = ModulePart
+	LocalRoot = "AmiChipsetModulePkg/Include/Guid"
+	RefName = "IsctGuidInclude"
+[files]
+"IsctAcpiTableStorage.h"
+"IsctPersistentData.h"
+<endComponent>

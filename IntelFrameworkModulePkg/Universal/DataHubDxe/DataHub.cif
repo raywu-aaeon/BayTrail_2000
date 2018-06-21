@@ -1,0 +1,10 @@
+<component>
+	name = "DataHub"
+	category = ModulePart
+	LocalRoot = "IntelFrameworkModulePkg\Universal\DataHubDxe\"
+	RefName = "IntelFrameworkModulePkg.DataHub"
+[files]
+"DataHub.sdl"	
+[INF]
+"DataHubDxe.inf"
+<endComponent>
