@@ -96,3 +96,45 @@ TOKEN
 	TargetH = Yes
 	Range  = "valid file name"
 End
+
+TOKEN
+	Name  = "EC_SUPPORT"
+	Value  = "0"
+	TokenType = Boolean
+	TargetEQU = Yes
+	TargetH = Yes
+End
+
+##// {2815ee9f-c8eb-4782-b85f-81815a6fa91b}
+##static const struct GUID __NAME__ = {0x2815ee9f, 0xc8eb, 0x4782, {0xb8, 0x5f, 0x81, 0x81, 0x5a, 0x6f, 0xa9, 0x1b}};
+TOKEN
+	Name  = "PLATFORM_GUID"
+	Value  = "2815ee9f-c8eb-4782-b85f-81815a6fa91b"
+	Help  = "The unique platform GUID that does into the description file.\MUST BE CLONED IN EVERY PROJECT!"
+	TokenType = Expression
+	TargetDSC = Yes
+End
+
+TOKEN
+	Name  = "FW_VERSION_GUID"
+	Value  = "{0x2815ee9f, 0xc8eb, 0x4782, {0xb8, 0x5f, 0x81, 0x81, 0x5a, 0x6f, 0xa9, 0x1b}}"
+	Help  = "FW Version GUID inserted into Firmware ID structure.\FW version has to be overridden for every project."
+	TokenType = Expression
+	TargetH = Yes
+	Range  = "GUID"
+End
+
+TOKEN
+	Name  = "ADJUST_GPIO_SUPPORT"
+	Value  = "0"
+	TokenType = BOOLEAN
+	TargetH = Yes
+End
+
+TOKEN
+    Name  = "SILENT"
+    Value  = "1"
+    Help  = "Enables/disables silent build mode.\In silent build mode executed commands are not displayed, and certain auxiliary build process messages are suppressed or displayed in a condensed format.\In non-silent build mode executed command are displayed prior to execution, and all auxiliary messages are visible.\Silent build mode is typically faster because less information goes into a build log.\Non-silent mode is useful for debugging of the build issues."
+    TokenType = Boolean
+    TargetMAK = Yes
+End
