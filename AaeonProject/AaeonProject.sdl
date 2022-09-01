@@ -363,6 +363,15 @@ TOKEN
 End
 
 TOKEN
+	Name  = "AaeonDefaultPwd_SUPPORT"
+	Value  = "0"
+	Help  = "Main switch to enable OEMTSEHook support in Project"
+	TokenType = Boolean
+	TargetEQU = Yes
+	TargetMAK = Yes
+End
+
+TOKEN
 	Name  = " "
 	TokenType = Integer
 End
