@@ -166,3 +166,146 @@ TOKEN
 	TargetH = Yes
 	Range  = "valid file name"
 End
+
+TOKEN
+	Name  = "===== Module Disable ====="
+	TokenType = Integer
+End
+
+TOKEN
+    Name  = "CRB_SETUP_SUPPORT"
+    Value  = "0"
+    Help  = "Main switch to enable CRB Setup support in Project"
+    TokenType = Boolean
+    TargetMAK = Yes
+    TargetH = Yes
+End
+
+TOKEN
+    Name  = "WIN8_FIRMWARE_UPDATE_SUPPORT"
+    Value  = "0"
+    Help  = "Enables/Disables the Windows 8.x firmware update support."
+    TokenType = Integer
+    TargetMAK = Yes
+    TargetH = Yes
+End
+
+TOKEN
+	Name  = "KBC_SUPPORT"
+	Value  = "0"
+	Help  = "Enable/Disable KBC support"
+	TokenType = Boolean
+	TargetEQU = Yes
+	TargetMAK = Yes
+	TargetH = Yes
+End
+
+TOKEN
+    Name  = "EdkShellBinPkg_SUPPORT"
+    Value  = "0"
+    Help  = "Main switch to enable EdkShellBinPkg support in Project"
+    TokenType = Boolean
+    TargetEQU = Yes
+    TargetMAK = Yes
+End
+
+TOKEN
+    Name  = SECURE_FLASH_SUPPORT
+    Value  = "0"
+    TokenType = Boolean
+    TargetEQU = Yes
+    TargetMAK = Yes
+    Help  = "Main switch to enable Security Flash in Project"
+End
+
+TOKEN
+	Name  = "ISCT_PLATFORM_SUPPORT"
+	Value  = "0"
+	Help  = "Main switch to enable ISCT support in Project"
+	TokenType = Boolean
+	TargetEQU = Yes
+	TargetMAK = Yes
+End
+
+TOKEN
+    Name  = HARDWARE_SIGNATURE_MANAGEMENT_SUPPORT
+    Value  = "0"
+    TokenType = Boolean
+    TargetEQU = Yes
+    TargetMAK = Yes
+    TargetH = Yes
+    Help  = "Main switch to enable HardwareSignatureManagement support in Project"
+End
+
+TOKEN
+	Name  = "POST_TIME_TUNING_SUPPORT"
+	Value  = "0"
+	Help  = "Main switch to enable Post Time Tuning module in Project"
+	TokenType = Boolean
+	TargetEQU = Yes
+	TargetMAK = Yes
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "Ipv6_SUPPORT"
+	Value  = "0"
+	Help  = "Main switch to enable Ipv6 stack support in Project"
+	TokenType = Boolean
+	TargetMAK = Yes
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "PS2Ctl_SUPPORT"
+	Value  = "0"
+	Help  = "Main switch to enable PS2 Controller support in the project."
+	TokenType = Boolean
+	TargetEQU = Yes
+	TargetMAK = Yes
+End
+
+TOKEN
+	Name  = "MMC_SUPPORT"
+	Value  = "0"
+	Help  = "This driver is not POR for BayTrail D&M and also doesn't test."
+	TokenType = Boolean
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "I2C_SUPPORT"
+	Value  = "0"
+	Help  = "Disable\Enable I2C feature."
+	TokenType = Boolean
+	TargetH = Yes
+End
+
+TOKEN
+    Name  = "OpalSecurity_SUPPORT"
+    Value  = "0"
+    Help  = "Main switch to enable OpalSecurity support in Project"
+    TokenType = Boolean
+    TargetH = Yes
+End
+
+TOKEN
+    Name  = "OA3_SUPPORT"
+    Value = "0"
+    Help  = "Main switch to enable OA3 support in the project"
+    TokenType = Boolean
+    TargetH = Yes
+End
+
+TOKEN
+	Name  = "OA2_SUPPORT"
+	Value  = "0"
+	Help  = "Main switch to enable OA2 support in Project"
+	TokenType = Boolean
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = " "
+	TokenType = Integer
+End

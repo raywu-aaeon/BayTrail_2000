@@ -86,7 +86,7 @@
 "MdeModulePkg\Universal\TimestampDxe\Timestamp.cif"= "SS: AptioV;$/AptioV/Source/Modules/Timestamp;Timestamp_00"
 "UefiCpuPkg\CpuIo.cif"= "SS: AptioV;$/AptioV/Source/Modules/CpuIo;5.004_CpuIo_01"
 "AmiModulePkg\IO\AmiSioCore.cif"= Private
-"AmiModulePkg\IO\NPCE791x\NPCE791x.cif"= Private
+
 "AmiModulePkg\Flash\Flash.cif"= "SS: AptioV;$/AptioV/Source/Hardware/Flash/Flash;5.004_Flash_09"
 "AmiModulePkg\Flash\FWH\FwhFlash.cif"= "SS: AptioV;$/AptioV/Source/Hardware/Flash/Flash/FWH;5.004_Flash_09"
 "AmiModulePkg\Flash\LPC\LpcFlash.cif"= "SS: AptioV;$/AptioV/Source/Hardware/Flash/Flash/LPC;5.004_Flash_09"
