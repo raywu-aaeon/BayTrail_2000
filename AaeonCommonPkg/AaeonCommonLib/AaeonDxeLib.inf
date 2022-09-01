@@ -18,7 +18,7 @@
   IT8518.c
   AaeonCommonLib.h
   WatchDog.c
-  SIO.c
+##  SIO.c
 [Packages]
   MdePkg/MdePkg.dec
   AmiModulePkg/AmiModulePkg.dec
