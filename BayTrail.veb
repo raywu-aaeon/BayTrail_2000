@@ -86,7 +86,11 @@
 "MdeModulePkg\Universal\TimestampDxe\Timestamp.cif"= "SS: AptioV;$/AptioV/Source/Modules/Timestamp;Timestamp_00"
 "UefiCpuPkg\CpuIo.cif"= "SS: AptioV;$/AptioV/Source/Modules/CpuIo;5.004_CpuIo_01"
 "AmiModulePkg\IO\AmiSioCore.cif"= Private
-
+"AaeonIoPkg\SioDynamicSetupLoadDefaults_Mod\SioDynamicSetupLoadDefaults.cif"
+"AaeonIoPkg\F81866\F81866.cif"= "SS: AptioV;$/AptioV/Source/Hardware/SuperIo/Fintek/F81866;5.004_SIO_F81866_Gen03_A00"
+"AaeonIoPkg\F81866\F81866Asl.cif"= "SS: AptioV;$/AptioV/Source/Hardware/SuperIo/Fintek/F81866;5.004_SIO_F81866_Gen03_A00"
+"AaeonIoPkg\F81866\F81866Setup.cif"= "SS: AptioV;$/AptioV/Source/Hardware/SuperIo/Fintek/F81866;5.004_SIO_F81866_Gen03_A00"
+"AaeonIoPkg\F81866\F81866HwMonitor.cif"= "SS: AptioV;$/AptioV/Source/Hardware/SuperIo/Fintek/F81866;5.004_SIO_F81866_Gen03_A00"
 "AmiModulePkg\Flash\Flash.cif"= "SS: AptioV;$/AptioV/Source/Hardware/Flash/Flash;5.004_Flash_09"
 "AmiModulePkg\Flash\FWH\FwhFlash.cif"= "SS: AptioV;$/AptioV/Source/Hardware/Flash/Flash/FWH;5.004_Flash_09"
 "AmiModulePkg\Flash\LPC\LpcFlash.cif"= "SS: AptioV;$/AptioV/Source/Hardware/Flash/Flash/LPC;5.004_Flash_09"
@@ -540,4 +544,5 @@
 "BayTrailPkg\Library\KscLib\KscLib.cif"= Private
 "BayTrailPkg\CrbSmiFlashHook\CrbSmiFlashHook.cif"= Private
 "BayTrail.cif"= Private
+"AaeonIoPkg\AaeonIoPkg.cif"
 "AaeonProject\AaeonProject.cif"
