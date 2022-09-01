@@ -372,6 +372,16 @@ TOKEN
 End
 
 TOKEN
+	Name  = "AAEON_BFPI_SUPPORT"
+	Value  = "0"
+	Help  = "Main switch to enable AaeonBfpi support in Project"
+	TokenType = Boolean
+	TargetEQU = Yes
+	TargetMAK = Yes
+	TargetH = Yes
+End
+
+TOKEN
 	Name  = " "
 	TokenType = Integer
 End
