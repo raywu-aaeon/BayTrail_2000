@@ -138,3 +138,31 @@ TOKEN
     TokenType = Boolean
     TargetMAK = Yes
 End
+
+TOKEN
+    Name  = "BYTI_DUAL_BOOT_TXE_SUPPORT"
+    Value  = "0"
+    Help  = "Enable the token to build BIOS include BayTrail-I Dual Boot 1.375MB TXE"
+    TokenType = Boolean
+    TargetMAK = Yes
+    TargetH = Yes
+End
+
+TOKEN
+	Name  = "TXE_1_375MB_SUPPORT"
+	Value  = "1"
+	Help  = "Enable the token to build BIOS include 1.375MB TXE"
+  	TokenType = Boolean
+	TargetMAK = Yes
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "AMI_DESKTOP_ROM_8MB_TXE_1_375MB"
+	Value  = "$(AAEON_BIN)"
+	Help  = "File name of the Full BIOS rom image."
+	TokenType = Expression
+	TargetMAK = Yes
+	TargetH = Yes
+	Range  = "valid file name"
+End
