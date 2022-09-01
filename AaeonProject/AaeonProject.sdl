@@ -305,6 +305,15 @@ TOKEN
 	TargetH = Yes
 End
 
+INFComponent
+	Name  = "SIOPEIINIT"
+	File  = "SioPeiInit.inf"
+	Package  = "AmiModulePkg"
+	ModuleTypes  = "PEIM"
+	Token = "SIO_SUPPORT" "=" "1"
+	Disable = Yes
+End
+
 TOKEN
 	Name  = " "
 	TokenType = Integer
