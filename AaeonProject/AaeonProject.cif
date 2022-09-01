@@ -1,0 +1,11 @@
+<component>
+	name = "AaeonProject"
+	category = Flavor
+	Rank = 59
+	LocalRoot = "AaeonProject\"
+	RefName = "AaeonProject"
+[files]
+"AaeonProject.sdl"
+[parts]
+
+<endComponent>

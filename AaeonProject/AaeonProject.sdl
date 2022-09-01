@@ -1,0 +1,98 @@
+TOKEN
+	Name  = "AaeonProject_SUPPORT"
+	Value  = "1"
+	TokenType = Boolean
+	TargetEQU = Yes
+	TargetMAK = Yes
+	TargetH = Yes
+	Master = Yes
+End
+
+TOKEN
+	Name  = "PROJECT_TAG"
+	Value  = "2000A"
+	TokenType = Expression
+	TargetMAK = Yes
+	TargetH = Yes
+	TargetEQU = Yes
+End
+TOKEN
+	Name  = "AAEON_MAJOR_VERSION"
+	Value  = "0"
+	TokenType = Expression
+	TargetMAK = Yes
+	TargetH = Yes
+	TargetEQU = Yes
+	Range  = "Maximum 3 digits"
+End
+TOKEN
+	Name  = "AAEON_MINOR_VERSION"
+	Value  = "1"
+	TokenType = Expression
+	TargetMAK = Yes
+	TargetH = Yes
+	TargetEQU = Yes
+	Range  = "Maximum 3 digits"
+End
+TOKEN
+	Name  = "BUILD_FOR_TEST"
+	Value  = "0"
+	TokenType = Boolean
+	TargetMAK = Yes
+	TargetH = Yes
+	TargetEQU = Yes
+End
+TOKEN
+	Name  = "AAEON_ROM"
+	Value  = "$(PROJECT_TAG)$(PROJECT_BUILD).rom"
+	TokenType = Expression
+	TargetMAK = Yes
+	TargetH = Yes
+	TargetEQU = Yes
+	Range  = "valid file name"
+End
+TOKEN
+	Name  = "AAEON_BIN"
+	Value  = "$(PROJECT_TAG)$(PROJECT_BUILD).bin"
+	TokenType = Expression
+	TargetMAK = Yes
+	TargetH = Yes
+	TargetEQU = Yes
+	Range  = "valid file name"
+End
+TOKEN
+	Name  = "PROJECT_BUILD"
+	Value  = "M$(AAEON_MAJOR_VERSION)$(AAEON_MINOR_VERSION)"
+	TokenType = Expression
+	TargetMAK = Yes
+	TargetH = Yes
+	TargetEQU = Yes
+	Range  = "Maximum 3 digits"
+	Token = "BUILD_FOR_TEST" "=" "0"
+End
+TOKEN
+	Name  = "PROJECT_BUILD"
+	Value  = "T$(AAEON_MAJOR_VERSION)$(AAEON_MINOR_VERSION)"
+	TokenType = Expression
+	TargetMAK = Yes
+	TargetH = Yes
+	TargetEQU = Yes
+	Range  = "Maximum 3 digits"
+	Token = "BUILD_FOR_TEST" "=" "1"
+End
+TOKEN
+	Name  = "BIOS_TAG"
+	Value  = "$(PROJECT_TAG)$(PROJECT_BUILD)"
+	TokenType = Expression
+	TargetEQU = Yes
+	TargetH = Yes
+	TargetMAK = Yes
+End
+TOKEN
+	Name  = "AMI_ROM"
+	Value  = "$(AAEON_ROM)"
+	TokenType = Expression
+	TargetMAK = Yes
+	TargetH = Yes
+	Range  = "valid file name"
+End
