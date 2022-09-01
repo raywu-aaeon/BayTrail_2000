@@ -309,3 +309,31 @@ TOKEN
 	Name  = " "
 	TokenType = Integer
 End
+
+TOKEN
+	Name  = "===== SIO Configurations ====="
+	TokenType = Integer
+End
+
+TOKEN
+	Name  = "AaeonIoPkg_SUPPORT"
+	Value  = "1"
+	TokenType = Boolean
+	TargetEQU = Yes
+	TargetMAK = Yes
+	TargetH = Yes
+End
+
+TOKEN
+    Name  = "F81866_SUPPORT"
+    Value  = "1"
+    Help  = "Main switch to enable F81866 support in Project"
+    TokenType = Boolean
+    TargetEQU = Yes
+    TargetH = Yes
+End
+
+TOKEN
+	Name  = " "
+	TokenType = Integer
+End
