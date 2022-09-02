@@ -343,6 +343,26 @@ TOKEN
 End
 
 TOKEN
+	Name  = "F81966_SMF1_SUPPORT"
+	Value  = "1"
+	Help  = "F81966 SmartFan 1 control support"
+	TokenType = Boolean
+	TargetMAK = Yes
+	TargetH = Yes
+	Token = "F81966_SMF_SUPPORT" "=" "1"
+End
+
+TOKEN
+	Name  = "F81966_SMF2_SUPPORT"
+	Value  = "1"
+	Help  = "F81966 SmartFan 2 control support"
+	TokenType = Boolean
+	TargetMAK = Yes
+	TargetH = Yes
+	Token = "F81966_SMF_SUPPORT" "=" "1"
+End
+
+TOKEN
 	Name  = " "
 	TokenType = Integer
 End
