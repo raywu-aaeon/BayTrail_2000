@@ -413,3 +413,67 @@ TOKEN
 	Name  = " "
 	TokenType = Integer
 End
+
+TOKEN
+	Name  = "===== DEBUG MODE ====="
+	TokenType = Integer
+End
+
+TOKEN
+	Name  = "DEBUG_MODE"
+	Value  = "0"
+	TokenType = Boolean
+	TargetH = Yes
+	TargetMAK = Yes
+End
+
+TOKEN
+	Name  = "STRING_STATUS_SUPPORT"
+	Value  = "1"
+	Help  = "Enables/Disables all string-based status code routines \defined by the ReportStringStatus eLink"
+	TokenType = Boolean
+	TargetH = Yes
+	Token = "DEBUG_MODE" "=" "1"
+End
+
+TOKEN
+	Name  = "SERIAL_DEBUG"
+	Value  = "0"
+	Help  = "A switch to print TSE Debug messages over Serial Port."
+	TokenType = Boolean
+	TargetH = Yes
+	Token = "DEBUG_MODE" "=" "1"
+End
+
+TOKEN
+	Name  = "DMIEDIT_DEBUG_TRACE"
+	Value  = "0"
+	Help  = "Enable/Disable debug trace messages"
+	TokenType = Boolean
+	TargetH = Yes
+	Token = "DEBUG_MODE" "=" "1"
+End
+
+TOKEN
+	Name  = "DEFAULT_DEBUGGER_CONSOLE_REDIRECTION_ENABLE"
+	Value  = "0"
+	Help  = "Once Rx/Redir/Debugger port been detected, enable/disable Console Redirection."
+	TokenType = Boolean
+	TargetH = Yes
+	Token = "DEBUG_MODE" "=" "1"
+End
+
+TOKEN
+	Name  = "DEFAULT_INTERNAL_UART_DEBUG_ENABLE"
+	Value  = "0"
+	Help  = "Use internal UART to output debug message in OS."
+	TokenType = Integer
+	TargetEQU = Yes
+	TargetH = Yes
+	Token = "DEBUG_MODE" "=" "1"
+End
+
+TOKEN
+	Name  = " "
+	TokenType = Integer
+End
