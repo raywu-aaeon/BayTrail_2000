@@ -315,6 +315,14 @@ INFComponent
 End
 
 TOKEN
+	Name  = "SOC_UART_PRESENT"
+	Value  = "0"
+	Help  = "SOC UART3(COM1) Present / Not Present. \\When OEM board have debug port from SIO, you only select one port to output debug message. If you use SIO debug port, you must turn off on token."
+	TokenType = Boolean
+	TargetH = Yes
+End
+
+TOKEN
 	Name  = " "
 	TokenType = Integer
 End
