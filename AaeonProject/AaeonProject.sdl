@@ -421,7 +421,7 @@ End
 
 TOKEN
 	Name  = "DEBUG_MODE"
-	Value  = "0"
+	Value  = "1"
 	TokenType = Boolean
 	TargetH = Yes
 	TargetMAK = Yes
