@@ -40,15 +40,15 @@
     endif;
 //#endif // AMI_TSE_DISCARD_AND_EXIT
 
-#ifdef AMI_TSE_RESTORE_DEFAULTS
-#undef AMI_TSE_RESTORE_DEFAULTS
+//#ifdef AMI_TSE_RESTORE_DEFAULTS
+//#undef AMI_TSE_RESTORE_DEFAULTS
 #define AMI_TSE_RESTORE_DEFAULTS\
     suppressif ideqval AMI_CALLBACK.Value == RESTORE_DEFAULTS_VALUE;\
         goto AAEON_EXIT_MAIN,\
             prompt = STRING_TOKEN(STR_RESTORE_DEFAULTS),\
             help = STRING_TOKEN(STR_RESTORE_DEFAULTS_HELP);\
     endif;
-#endif // AMI_TSE_RESTORE_DEFAULTS
+//#endif // AMI_TSE_RESTORE_DEFAULTS
 
 #define QUIET_BOOT\
         checkbox varid = AMITSESETUP.AMISilentBoot,\
@@ -71,6 +71,13 @@
                 default = 0,\
                 default = 0, defaultstore = AmiMfgDefault,\
             endoneof;\
+        endif;
+
+#define AMI_BOOT_ORDER_GROUPS_GOTO\
+        suppressif ideqvallist LEGACY_DEV_INFO.GroupCount == 0xFFFF;\
+            goto BBS_ORDER_FORM,\
+                prompt = STRING_TOKEN(STR_EMPTY),\
+                help = STRING_TOKEN(STR_BBS_ORDER_HELP);\
         endif;
 
 #endif //ENDIF CONTROL_DEFINITION
