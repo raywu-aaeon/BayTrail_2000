@@ -473,6 +473,23 @@ TOKEN
 	Token = "DEBUG_MODE" "=" "1"
 End
 
+INFComponent
+	Name  = "PlatformHookSerialPortLib"
+	File  = "PlatformHookSerialPortLib.inf"
+	Package  = "AmiModulePkg"
+	Token = "DEBUG_MODE" "=" "1"
+	Disable = Yes
+End
+
+LibraryMapping
+	Class  = "PlatformHookLib"
+	Instance  = "AmiModulePkg.PlatformHookSerialPortLib"
+	Token = "DEBUG_MODE" "=" "1"
+	Token = "SOC_UART_PRESENT" "=" "0"
+	ModuleTypes  = "PEIM PEI_CORE"
+	Disable = Yes
+End
+
 TOKEN
 	Name  = " "
 	TokenType = Integer
