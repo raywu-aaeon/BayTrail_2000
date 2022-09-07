@@ -3040,9 +3040,9 @@ EFI_STATUS CreateSioDevStatusVar()
 	                SIO_TRACE((TRACE_SIO,"SIO[%d]Dev[%d] PS2M is Implemented=%d\n",i,j,Implemented));
 					break;
 				case dsUART:	
-					if (UID == 0) SioDevStatusVar.SerialA = Implemented;
+					if (UID == 1) SioDevStatusVar.SerialA = Implemented;
 					else 
-						if (UID == 1) SioDevStatusVar.SerialB = Implemented;
+						if (UID == 2) SioDevStatusVar.SerialB = Implemented;
 	                SIO_TRACE((TRACE_SIO,"SIO[%d]Dev[%d] UART(UID=%x) is Implemented=%d\n",i,j,UID,Implemented));
 					break;
 				case dsLPT:		SioDevStatusVar.Lpt = Implemented;
@@ -3100,9 +3100,9 @@ EFI_STATUS DisableDevInSioDevStatusVar(SIO_DEV2 *Dev)
 			case dsPS2CM:
 			case dsPS2M: 	SioDevStatusVar.Ps2Mouse = 0;
 										break;
-			case dsUART:	if (UID == 0) { 	
+			case dsUART:	if (UID == 1) { 	
 											SioDevStatusVar.SerialA = 0;
-										} else if (UID == 1) {
+										} else if (UID == 2) {
 											SioDevStatusVar.SerialB = 0;
 										}
 										break;
