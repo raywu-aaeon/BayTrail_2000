@@ -55,7 +55,7 @@
 		prompt   = STRING_TOKEN(STR_WDT_ENABLED_PROMPT),\
 		help     = STRING_TOKEN(STR_WDT_ENABLED_PROMPT),\
 		flags    = RESET_REQUIRED,\
-		default  = 0, defaultstore = MyStandardDefault,\
+		default  = 0, defaultstore = AmiMfgDefault,\
 		endcheckbox;
 
 	#define WDT_UNIT\
