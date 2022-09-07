@@ -126,37 +126,37 @@ Returns:
 
 --*/
 {
-
-  UINT32 Data32; //EIP134867
-  
-  // Force enabled UART decode start.
-  // Program and enable PMC Base.
-  IoWrite32 (PCI_IDX,  PCI_LPC_REG(R_PCH_LPC_PMC_BASE));
-  IoWrite32 (PCI_DAT,  (PMC_BASE_ADDRESS | B_PCH_LPC_PMC_BASE_EN));
-
-  // Enable COM1 for debug message output.
-  //EIP134867 >>
-  Data32 = MmioRead32 (PMC_BASE_ADDRESS + R_PCH_PMC_GEN_PMCON_1);
-  // Do not clear SUS Well Power Failure, General Reset Status and RTC Power Status bits
-  //EIP139043 >>
-  // BIOS should clear RTC_PWR_STS bit (PBASE + 0x20[2]) by writing a '0b' to this bit position
-//  Data32 &= (UINT32) ~(B_PCH_PMC_GEN_PMCON_SUS_PWR_FLR | B_PCH_PMC_GEN_PMCON_GEN_RST_STS | B_PCH_PMC_GEN_PMCON_RTC_PWR_STS);
-  Data32 &= (UINT32) ~(B_PCH_PMC_GEN_PMCON_SUS_PWR_FLR | B_PCH_PMC_GEN_PMCON_GEN_RST_STS);
-  //EIP139043 <<
-  Data32 |= BIT24;
-  MmioWrite32 (PMC_BASE_ADDRESS + R_PCH_PMC_GEN_PMCON_1, Data32);
-  //EIP134867 <<
-
-  if (PchStepping()>= PchB0)
-    MmioOr8 (ILB_BASE_ADDRESS + R_PCH_ILB_IRQE, (UINT8) V_PCH_ILB_IRQE_UARTIRQEN_IRQ4);
-  else
-    MmioOr8 (ILB_BASE_ADDRESS + R_PCH_ILB_IRQE, (UINT8) V_PCH_ILB_IRQE_UARTIRQEN_IRQ3);
-  MmioAnd32(IO_BASE_ADDRESS + 0x0520, (UINT32)~(0x00000187));
-  MmioOr32 (IO_BASE_ADDRESS + 0x0520, (UINT32)0x81); // UART3_RXD-L
-  MmioAnd32(IO_BASE_ADDRESS + 0x0530, (UINT32)~(0x00000007));
-  MmioOr32 (IO_BASE_ADDRESS + 0x0530, (UINT32)0x1); // UART3_RXD-L
-  MmioOr8 (PciD31F0RegBase + R_PCH_LPC_UART_CTRL, (UINT8) B_PCH_LPC_UART_CTRL_COM1_EN);
-  // Force enabled UART decode end.
+//
+//  UINT32 Data32; //EIP134867
+//  
+//  // Force enabled UART decode start.
+//  // Program and enable PMC Base.
+//  IoWrite32 (PCI_IDX,  PCI_LPC_REG(R_PCH_LPC_PMC_BASE));
+//  IoWrite32 (PCI_DAT,  (PMC_BASE_ADDRESS | B_PCH_LPC_PMC_BASE_EN));
+//
+//  // Enable COM1 for debug message output.
+//  //EIP134867 >>
+//  Data32 = MmioRead32 (PMC_BASE_ADDRESS + R_PCH_PMC_GEN_PMCON_1);
+//  // Do not clear SUS Well Power Failure, General Reset Status and RTC Power Status bits
+//  //EIP139043 >>
+//  // BIOS should clear RTC_PWR_STS bit (PBASE + 0x20[2]) by writing a '0b' to this bit position
+////  Data32 &= (UINT32) ~(B_PCH_PMC_GEN_PMCON_SUS_PWR_FLR | B_PCH_PMC_GEN_PMCON_GEN_RST_STS | B_PCH_PMC_GEN_PMCON_RTC_PWR_STS);
+//  Data32 &= (UINT32) ~(B_PCH_PMC_GEN_PMCON_SUS_PWR_FLR | B_PCH_PMC_GEN_PMCON_GEN_RST_STS);
+//  //EIP139043 <<
+//  Data32 |= BIT24;
+//  MmioWrite32 (PMC_BASE_ADDRESS + R_PCH_PMC_GEN_PMCON_1, Data32);
+//  //EIP134867 <<
+//
+//  if (PchStepping()>= PchB0)
+//    MmioOr8 (ILB_BASE_ADDRESS + R_PCH_ILB_IRQE, (UINT8) V_PCH_ILB_IRQE_UARTIRQEN_IRQ4);
+//  else
+//    MmioOr8 (ILB_BASE_ADDRESS + R_PCH_ILB_IRQE, (UINT8) V_PCH_ILB_IRQE_UARTIRQEN_IRQ3);
+//  MmioAnd32(IO_BASE_ADDRESS + 0x0520, (UINT32)~(0x00000187));
+//  MmioOr32 (IO_BASE_ADDRESS + 0x0520, (UINT32)0x81); // UART3_RXD-L
+//  MmioAnd32(IO_BASE_ADDRESS + 0x0530, (UINT32)~(0x00000007));
+//  MmioOr32 (IO_BASE_ADDRESS + 0x0530, (UINT32)0x1); // UART3_RXD-L
+//  MmioOr8 (PciD31F0RegBase + R_PCH_LPC_UART_CTRL, (UINT8) B_PCH_LPC_UART_CTRL_COM1_EN);
+//  // Force enabled UART decode end.
 
 //  InitializeSio ();
 
