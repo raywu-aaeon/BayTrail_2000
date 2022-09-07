@@ -815,6 +815,15 @@ TOKEN
 	TokenType = Integer
 End
 
+############################################################
+#	BIOS Setup Menu
+############################################################
+ELINK
+	Name  = "ITEM_CALLBACK(ADVANCED_FORM_SET_CLASS,0,OEM_F81866_INTERACTIVE_KEY,F81866_HWM_CallBack),"
+	Parent  = "SetupItemCallbacks"
+	InvokeOrder = AfterParent
+End
+
 TOKEN
 	Name  = "===== DEBUG MODE ====="
 	TokenType = Integer
