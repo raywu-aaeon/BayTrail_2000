@@ -28,6 +28,7 @@
   IntelFrameworkPkg/IntelFrameworkPkg.dec       # Optional. should use Mde Library instead.
   AmiCompatibilityPkg/AmiCompatibilityPkg.dec   # Optional. should use Mde Library instead.
   AmiChipsetModulePkg/AmiChipsetModulePkg.dec   # Optional. should use Mde Library instead.
+  AaeonCommonPkg\AaeonCommonPkg.dec
 
 [LibraryClasses]
   PeimEntryPoint

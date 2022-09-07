@@ -6,6 +6,9 @@
 // to a definitions of SETUP_DATA fields.
 //----------------------------------------------------------------------------
 	UINT8	AaeonRIWakeEnable;
+	UINT8	WdtEnabled;
+	UINT8	WdtUnit;
+	UINT8	WdtTimer;
 #endif
 //----------------------------------------------------------------------------
 //                CONTROL DEFINITION
@@ -46,10 +49,44 @@
 		default = DEFAULT_ENGINEERING_MODE,\
 		default = DEFAULT_ENGINEERING_MODE, defaultstore = AmiMfgDefault,\
 		endcheckbox;   
+
+	#define WDT_ENABLED\
+		checkbox varid  = SETUP_DATA.WdtEnabled,\
+		prompt   = STRING_TOKEN(STR_WDT_ENABLED_PROMPT),\
+		help     = STRING_TOKEN(STR_WDT_ENABLED_PROMPT),\
+		flags    = RESET_REQUIRED,\
+		default  = 0, defaultstore = MyStandardDefault,\
+		endcheckbox;
+
+	#define WDT_UNIT\
+		suppressif ideqval SETUP_DATA.WdtEnabled == 0;\
+		oneof varid = SETUP_DATA.WdtUnit,\
+		prompt   = STRING_TOKEN(STR_WDT_UNIT_PROMPT),\
+		help     = STRING_TOKEN(STR_WDT_UNIT_PROMPT),\
+		option text = STRING_TOKEN(STR_WDT_UNIT_SECOND_PROMPT),  value = 0, flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;\
+		option text = STRING_TOKEN(STR_WDT_UNIT_MINUTE_PROMPT), value = 1, flags = RESET_REQUIRED;\
+		endoneof;\
+		endif;
+
+	#define WDT_TIMER\
+		suppressif ideqval SETUP_DATA.WdtEnabled == 0;\
+		numeric varid = SETUP_DATA.WdtTimer,\
+		prompt      = STRING_TOKEN (STR_WDT_TIMER_PROMPT),\
+		help        = STRING_TOKEN (STR_WDT_TIMER_PROMPT),\
+		flags       = RESET_REQUIRED,\
+		minimum     = 10,\
+		maximum     = 255,\
+		step        = 1,\
+		default     = 10,\
+		endnumeric;\
+		endif;
 #endif //ENDIF CONTROL_DEFINITION
 
 #ifdef CONTROLS_WITH_DEFAULTS
 	ONEOF_AAEONRIWAKEENABLE
+	WDT_ENABLED
+	WDT_UNIT
+	WDT_TIMER
 #endif // CONTROLS_WITH_DEFAULTS
 //----------------------------------------------------------------------------
 //                VAR_SETUP
@@ -115,7 +152,9 @@
 		prompt  = STRING_TOKEN(STR_DIO_FORM),
 		help    = STRING_TOKEN(STR_DIO_FORM_HELP);
 		#endif
-
+WDT_ENABLED
+WDT_UNIT
+WDT_TIMER
 	#endif //AAEON_FORM_SET_GOTO
   
 	#ifdef FORM_SET_FORM
