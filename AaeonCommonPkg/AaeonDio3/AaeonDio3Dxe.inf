@@ -34,5 +34,4 @@
 
 [Depex]
   gEfiAcpiTableProtocolGuid           AND
-  gEfiFirmwareVolume2ProtocolGuid     AND
-  gEfiAcpiSupportGuid
+  gEfiFirmwareVolume2ProtocolGuid
