@@ -410,6 +410,16 @@ TOKEN
 End
 
 TOKEN
+	Name  = "AAEON_OEM_BEEP_MAP_SUPPORT"
+	Value  = "0"
+	Help  = "Main switch to enable Aaeon OEM Beep Map support in Project"
+	TokenType = Boolean
+	TargetEQU = Yes
+	TargetMAK = Yes
+	TargetH = Yes
+End
+
+TOKEN
 	Name  = " "
 	TokenType = Integer
 End
