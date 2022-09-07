@@ -420,6 +420,23 @@ TOKEN
 End
 
 TOKEN
+	Name  = "AAEON_LAN_UEFI_DRIVER_SUPPORT"
+	Value  = "1"
+	TokenType = Boolean
+#	Master = Yes
+	Help  = "Main switch to enable OemLanUefiDriver support in Project"
+End
+
+TOKEN
+	Name  = "Lan_Option"
+	Value  = "0"
+	Help  = "\0-IntelGigabitLan,\1-RealtekLan \2- Support Intel and RealTekLan"
+	TokenType = Integer
+	TargetMAK = Yes
+	TargetH = Yes
+End
+
+TOKEN
 	Name  = " "
 	TokenType = Integer
 End
