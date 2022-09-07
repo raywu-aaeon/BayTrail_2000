@@ -9,6 +9,15 @@ TOKEN
 End
 
 TOKEN
+	Name  = "BEEP_ENABLE"
+	Value  = "0"
+	Help  = "This flag enables/disables all firmware beeps"
+	TokenType = Boolean
+	TargetH = Yes
+	TargetMAK = Yes
+End
+
+TOKEN
 	Name  = "PROJECT_TAG"
 	Value  = "2000A"
 	TokenType = Expression
