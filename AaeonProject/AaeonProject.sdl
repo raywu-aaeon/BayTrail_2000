@@ -494,3 +494,20 @@ TOKEN
 	Name  = " "
 	TokenType = Integer
 End
+
+TOKEN
+	Name  = "===== HD Audio ====="
+	TokenType = Integer
+End
+
+ELINK
+    Name  = "{{0x10EC, 0x0888, 0xFF, TRUE, 68, 0}, UpxAdl01_A01_OemHdaVerbTblSample},"
+    Parent  = "OEM_HDA_VERB_TABLE"
+    Help  = "CRB HDA Verb Table"
+    InvokeOrder = AfterParent
+End
+
+TOKEN
+	Name  = " "
+	TokenType = Integer
+End

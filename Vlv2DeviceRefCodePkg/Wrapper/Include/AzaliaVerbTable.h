@@ -99,6 +99,126 @@ UINT32 mAzaliaVerbTableDataALC262[] = {
 };
 //P20130627_3 <<
 
+UINT32 UpxAdl01_A01_OemHdaVerbTblSample[] = {
+//===================================================================================================
+//
+//                               Realtek Semiconductor Corp.
+//
+//===================================================================================================
+
+//Realtek High Definition Audio Configuration - Version : 5.0.3.3
+//Realtek HD Audio Codec : ALC888S-VD
+//PCI PnP ID : PCI\VEN_8086&DEV_2668&SUBSYS_00000000
+//HDA Codec PnP ID : HDAUDIO\FUNC_01&VEN_10EC&DEV_0888&SUBSYS_00000000
+//The number of verb command block : 17
+
+//    NID 0x11 : 0x40000000
+//    NID 0x12 : 0x411111F0
+//    NID 0x14 : 0x02211010
+//    NID 0x15 : 0x411111F0
+//    NID 0x16 : 0x411111F0
+//    NID 0x17 : 0x411111F0
+//    NID 0x18 : 0x02A11020
+//    NID 0x19 : 0x411111F0
+//    NID 0x1A : 0x411111F0
+//    NID 0x1B : 0x411111F0
+//    NID 0x1C : 0x411111F0
+//    NID 0x1D : 0x4025122D
+//    NID 0x1E : 0x411111F0
+//    NID 0x1F : 0x411111F0
+
+
+//===== HDA Codec Subsystem ID Verb-table =====
+//HDA Codec Subsystem ID  : 0x00000000
+0x00172000,
+0x00172100,
+0x00172200,
+0x00172300,
+
+
+//===== Pin Widget Verb-table =====
+//Widget node 0x01 :
+0x0017FF00,
+0x0017FF00,
+0x0017FF00,
+0x0017FF00,
+//Pin widget 0x11 - S/PDIF-OUT2
+0x01171C00,
+0x01171D00,
+0x01171E00,
+0x01171F40,
+//Pin widget 0x12 - DMIC
+0x01271CF0,
+0x01271D11,
+0x01271E11,
+0x01271F41,
+//Pin widget 0x14 - FRONT (Port-D)
+0x01471C10,
+0x01471D11,
+0x01471E21,
+0x01471F02,
+//Pin widget 0x15 - SURR (Port-A)
+0x01571CF0,
+0x01571D11,
+0x01571E11,
+0x01571F41,
+//Pin widget 0x16 - CEN/LFE (Port-G)
+0x01671CF0,
+0x01671D11,
+0x01671E11,
+0x01671F41,
+//Pin widget 0x17 - SIDESURR (Port-H)
+0x01771CF0,
+0x01771D11,
+0x01771E11,
+0x01771F41,
+//Pin widget 0x18 - MIC1 (Port-B)
+0x01871C20,
+0x01871D11,
+0x01871EA1,
+0x01871F02,
+//Pin widget 0x19 - MIC2 (Port-F)
+0x01971CF0,
+0x01971D11,
+0x01971E11,
+0x01971F41,
+//Pin widget 0x1A - LINE1 (Port-C)
+0x01A71CF0,
+0x01A71D11,
+0x01A71E11,
+0x01A71F41,
+//Pin widget 0x1B - LINE2 (Port-E)
+0x01B71CF0,
+0x01B71D11,
+0x01B71E11,
+0x01B71F41,
+//Pin widget 0x1C - CD-IN
+0x01C71CF0,
+0x01C71D11,
+0x01C71E11,
+0x01C71F41,
+//Pin widget 0x1D - BEEP-IN
+0x01D71C2D,
+0x01D71D12,
+0x01D71E25,
+0x01D71F40,
+//Pin widget 0x1E - S/PDIF-OUT1
+0x01E71CF0,
+0x01E71D11,
+0x01E71E11,
+0x01E71F41,
+//Pin widget 0x1F - S/PDIF-IN
+0x01F71CF0,
+0x01F71D11,
+0x01F71E11,
+0x01F71F41,
+//Widget node 0x20 :
+0x02050007,
+0x020409C8,
+0x02050007,
+0x020409C8
+};
+
 SB_HDA_VERB_TABLE mAzaliaVerbTable[] = {	//EIP176554
   OEM_HDA_VERB_TABLE
   {
