@@ -28,6 +28,7 @@
   Vlv2DeviceRefCodePkg/Vlv2DeviceRefCodePkg.dec
   AmiCompatibilityPkg/AmiCompatibilityPkg.dec
   AmiChipsetModulePkg/AmiChipsetModulePkg.dec
+  AmiChipsetPkg\AmiChipsetPkg.dec
 
 [LibraryClasses]
   UefiDriverEntryPoint

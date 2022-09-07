@@ -37,6 +37,7 @@
 #include <Protocol/SmmPowerButtonDispatch2.h>
 #include <PchRegs.h>
 #include <Library/SbPolicy.h>
+#include <AmiChipsetIoLib.h>
 
 //----------------------------------------------------------------------------
 // Constant, Macro and Type Definition(s)
