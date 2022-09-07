@@ -388,7 +388,7 @@ CrbPeiInit (
   )
 {
     EFI_STATUS                  Status = EFI_SUCCESS;
-    SETUP_DATA                        SetupData;
+    SB_SETUP_DATA               PchPolicyData;
 
     Status = PeiServicesInstallPpi(gCrbPpiList); //EIP137196
 
