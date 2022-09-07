@@ -805,7 +805,10 @@ VOID GetSbSetupData (
 */
       SbSetupData->PcieDynamicGating = SetupData.PcieDynamicGating; //CSP20131018
       SbSetupData->LpssSdCardSDR25Enabled      = SetupData.LpssSdCardSDR25Enabled; //EIP144689
-      SbSetupData->LpssSdCardDDR50Enabled     = SetupData.LpssSdCardDDR50Enabled; //EIP144689         
+      SbSetupData->LpssSdCardDDR50Enabled     = SetupData.LpssSdCardDDR50Enabled; //EIP144689 
+      SbSetupData->WdtEnabled = SetupData.WdtEnabled;
+      SbSetupData->WdtUnit = SetupData.WdtUnit;
+      SbSetupData->WdtTimer = SetupData.WdtTimer;
     }
 
     if (EFI_ERROR(Status)) {
