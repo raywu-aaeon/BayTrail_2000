@@ -363,46 +363,6 @@ CrbPeiGetBiosRevision (
 }
 //EIP137196 <<
 
-VOID 
-EFIAPI
-CrbPeiGetSetupData (
-    IN CONST EFI_PEI_SERVICES     **PeiServices,
-    IN OUT SETUP_DATA       *SetupData
-    )
-{
-    EFI_STATUS                      Status;    
-    EFI_PEI_READ_ONLY_VARIABLE2_PPI *ReadOnlyVariable2;    
-    UINTN                           VariableSize;
-
-    Status = (*PeiServices)->LocatePpi (PeiServices, 
-                                        &gEfiPeiReadOnlyVariable2PpiGuid, 
-                                        0, 
-                                        NULL, 
-                                        (VOID **)&ReadOnlyVariable2       
-                                        );
-	if (EFI_ERROR(Status)) {
-		DEBUG((DEBUG_ERROR, "GetPchSetupData () :: Locate gEfiPeiReadOnlyVariable2PpiGuid is %r\n", Status));
-		ASSERT_EFI_ERROR(Status);
-		return;
-	}
-    
-    VariableSize = sizeof(SETUP_DATA);
-    
-    Status = ReadOnlyVariable2->GetVariable (
-                                  ReadOnlyVariable2,
-                                  L"Setup",
-                                  &gSetupGuid,
-                                  NULL,
-                                  &VariableSize,  
-                                  SetupData
-                                  );
-    if (EFI_ERROR(Status)) {
-        DEBUG((DEBUG_ERROR, "AmiUpdatePeiPchPolicy - GetPchSetupData() :: Get Setup Variable is %r\n", Status));
-        ASSERT_EFI_ERROR(Status);
-        return;
-    }
-}
-
 //<AMI_PHDR_START>
 //----------------------------------------------------------------------------
 //
