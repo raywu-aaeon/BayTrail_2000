@@ -37,6 +37,7 @@
   PciLib
   AmiPeiLib # Optional. should use Mde Library instead.
   AmiCspLib # Optional. should use Mde Library instead.
+  SbGetSetupData
 
 [Ppis]
   gEfiPeiSmbus2PpiGuid
