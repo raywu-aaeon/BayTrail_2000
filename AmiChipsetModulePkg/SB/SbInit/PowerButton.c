@@ -79,12 +79,10 @@ EFI_STATUS SbPwrBtnHandler (
     IN OUT UINTN        *CommBufferSize OPTIONAL
 )
 {
-#if LastStateForS5
     if (PchPolicyData.LastState == 2){
       //WRITE_MEM32(PMC_BASE_ADDRESS + R_PCH_PMC_GEN_PMCON_1, READ_MEM32 (PMC_BASE_ADDRESS + R_PCH_PMC_GEN_PMCON_1) | BIT00);
       MmioWrite32(PMC_BASE_ADDRESS + R_PCH_PMC_GEN_PMCON_1, MmioRead32 (PMC_BASE_ADDRESS + R_PCH_PMC_GEN_PMCON_1) | BIT00);
     }
-#endif
 
 	//
 	// Enter S5 State
