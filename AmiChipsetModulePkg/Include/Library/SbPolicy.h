@@ -253,6 +253,9 @@ typedef struct _SB_SETUP_DATA {
     UINT8       PcieDynamicGating; //CSP20131018
     UINT8       LpssSdCardSDR25Enabled; //EIP144689
     UINT8       LpssSdCardDDR50Enabled; //EIP144689
+	UINT8	WdtEnabled;
+	UINT8	WdtUnit;
+	UINT8	WdtTimer;
 } SB_SETUP_DATA;
 
 typedef struct _AMI_SB_PLATFORM_INFO_HOB {
