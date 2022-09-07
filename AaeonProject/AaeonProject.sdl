@@ -588,6 +588,13 @@ TOKEN
 	TargetMAK = Yes
 	TargetH = Yes
 End
+INFComponent
+	Name  = "AaeonDio3Dxe"
+	File  = "AaeonDio3Dxe.inf"
+	Package  = "AaeonCommonPkg"
+	ModuleTypes  = "DXE_DRIVER"
+	Disable = Yes
+End
 TOKEN
 	Name  = "FIRST_DIO_NUMBER"
 	Value  = "16"
