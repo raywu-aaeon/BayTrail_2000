@@ -104,17 +104,17 @@
 
 		SEPARATOR
 
-		SUBTITLE(STRING_TOKEN(STR_AAEON_FEATURES_FORM))
+//		SUBTITLE(STRING_TOKEN(STR_AAEON_FEATURES_FORM))
 		// Power Management
 		goto AAEON_POWER_MANAGEMENT_FORM_ID,
 		prompt = STRING_TOKEN(STR_POWER_MANAGEMENT),
 		help = STRING_TOKEN(STR_POWER_MANAGEMENT_HELP);
 		// Digital IO Port Configuration
-		#if AaeonDioPkg_SUPPORT
+		#if defined AaeonDio3_SUPPORT && (AaeonDio3_SUPPORT == 1)
 		goto AAEON_DIO_FORM_ID,
 		prompt  = STRING_TOKEN(STR_DIO_FORM),
 		help    = STRING_TOKEN(STR_DIO_FORM_HELP);
-		#endif
+		#endif // AaeonDio3_SUPPORT
 
 	#endif //AAEON_FORM_SET_GOTO
   
