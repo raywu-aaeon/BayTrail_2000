@@ -51,6 +51,8 @@
 #include <ppi\NBPPI.h>
 #include <ppi\SBPPI.h>
 
+#include <Library/SbPolicy.h>
+#include <AaeonCommonLib.h>
 //---------------------------------------------------------------------------
 // Constant, Macro and Type Definition(s)
 //---------------------------------------------------------------------------
@@ -386,6 +388,7 @@ CrbPeiInit (
   )
 {
     EFI_STATUS                  Status = EFI_SUCCESS;
+    SB_SETUP_DATA               PchPolicyData;
 
     Status = PeiServicesInstallPpi(gCrbPpiList); //EIP137196
 
@@ -393,6 +396,19 @@ CrbPeiInit (
     Status = (*PeiServices)->InstallPpi( PeiServices, CrbCustomPpi );
     ASSERT_PEI_ERROR( PeiServices, Status );
 #endif
+
+    GetSbSetupData((VOID *)PeiServices, &PchPolicyData, TRUE);
+
+    #if defined(F81866_SUPPORT) && (F81866_SUPPORT == 1)
+	if ( PchPolicyData.WdtEnabled )
+    {
+        F81866EnableWdt(PchPolicyData.WdtUnit, PchPolicyData.WdtTimer);	
+    }
+    else
+    {
+        F81866DisableWdt();
+    }
+    #endif
 
     return Status;
 }
