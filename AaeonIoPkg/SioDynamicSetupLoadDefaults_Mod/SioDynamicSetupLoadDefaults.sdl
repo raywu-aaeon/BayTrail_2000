@@ -1,6 +1,6 @@
 TOKEN
 	Name  = "SioDynamicSetup_LoadDefaults"
-	Value  = "1"
+	Value  = "0"
 	Help  = "Main switch to enable SioDynamicSetup load defaults support in Project"
 	TokenType = Boolean
 	TargetEQU = Yes
