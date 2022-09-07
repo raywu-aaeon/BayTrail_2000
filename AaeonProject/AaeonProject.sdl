@@ -831,10 +831,19 @@ End
 
 TOKEN
 	Name  = "DEBUG_MODE"
-	Value  = "0"
+	Value  = "1"
 	TokenType = Boolean
 	TargetH = Yes
 	TargetMAK = Yes
+End
+
+TOKEN
+	Name  = "SIO_DEBUG_MESSAGES"
+	Value  = "1"
+	Help  = "Switch to enable SIO DEBUG MESSAGES in SIO MODULE."
+	TokenType = Boolean
+	TargetH = Yes
+	Token = "DEBUG_CODE" "=" "1"
 End
 
 TOKEN
