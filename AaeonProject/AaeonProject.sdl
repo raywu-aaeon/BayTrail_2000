@@ -840,10 +840,19 @@ End
 
 TOKEN
 	Name  = "DEBUG_MODE"
-	Value  = "0"
+	Value  = "1"
 	TokenType = Boolean
 	TargetH = Yes
 	TargetMAK = Yes
+End
+
+TOKEN
+	Name  = "SIO_DEBUG_MESSAGES"
+	Value  = "1"
+	Help  = "Switch to enable SIO DEBUG MESSAGES in SIO MODULE."
+	TokenType = Boolean
+	TargetH = Yes
+	Token = "DEBUG_CODE" "=" "1"
 End
 
 TOKEN
@@ -857,7 +866,7 @@ End
 
 TOKEN
 	Name  = "SERIAL_DEBUG"
-	Value  = "0"
+	Value  = "1"
 	Help  = "A switch to print TSE Debug messages over Serial Port."
 	TokenType = Boolean
 	TargetH = Yes
