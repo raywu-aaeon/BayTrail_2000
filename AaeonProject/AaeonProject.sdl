@@ -1168,6 +1168,14 @@ TOKEN
 End
 
 TOKEN
+    Name  = "DEFAULT_QUIET_BOOT"
+    Value  = "0"
+    Help  = "Default value of the Quiet Boot option"
+    TokenType = Boolean
+    TargetH = Yes
+End
+
+TOKEN
 	Name  = " "
 	TokenType = Integer
 End
