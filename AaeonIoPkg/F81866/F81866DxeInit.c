@@ -357,10 +357,15 @@ EFI_STATUS F81866_COM_Init(
     SIO_DEV2                        *Dev=(SIO_DEV2*)AmiSio;
 //    UINT8                           rv; //ComMode Register //RayWu, REMOVE 2015/04/14
     //Check if parameters passed are VALID and
+    
+    SIO_TRACE((TRACE_SIO,"F81866_COM_Init Start\n"));
+
     if(Args->Signature != AMI_SIO_PARAM_SIG) return EFI_INVALID_PARAMETER;
 
     switch (InitStep) {
     case isGetSetupData:
+        SIO_TRACE((TRACE_SIO,"F81866_COM_Init...isGetSetupData Start\n"));
+        SIO_TRACE((TRACE_SIO, "(!Dev->DeviceInfo->Implemented(=%d)) || (!Dev->NvData.DevEnable(=%d))\n", Dev->DeviceInfo->Implemented, Dev->NvData.DevEnable));
         //Clear Device Resource?
         if((!Dev->DeviceInfo->Implemented) || (!Dev->NvData.DevEnable)) {
             F81866_ClearDevResource(Dev);
