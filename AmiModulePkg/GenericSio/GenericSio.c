@@ -1823,6 +1823,7 @@ EFI_STATUS ApplyResources(SIO_DEV2 *Dev, T_ITEM_LIST *ResLst, BOOLEAN IrqReserve
 	EFI_STATUS		Status = IrqReserve ? EFI_UNSUPPORTED : EFI_SUCCESS;
 	VOID			*rd;
 	UINT8			irqc=0, basc=0, dmac=0;
+	ASLR_IO			*debugrd;
 //--------------------------------		
     SIO_TRACE((TRACE_SIO,"GSIO: ApplyResources "));
 	//if device shares all resources we'll copy Resource Owner's CRS
@@ -1871,6 +1872,12 @@ EFI_STATUS ApplyResources(SIO_DEV2 *Dev, T_ITEM_LIST *ResLst, BOOLEAN IrqReserve
 				case ASLV_RT_IO:
 					if(!IrqReserve){
                         SIO_TRACE((TRACE_SIO," IO%d >>",basc+1));
+						*debugrd=(ASLR_IO*)Hdr;
+						SIO_TRACE((TRACE_SIO, "RAYDEBUG: debugrd->_DEC = 0x%X\n",debugrd->_DEC));
+						SIO_TRACE((TRACE_SIO, "RAYDEBUG: debugrd->_MIN = 0x%X\n",debugrd->_MIN));
+						SIO_TRACE((TRACE_SIO, "RAYDEBUG: debugrd->_MAX = 0x%X\n",debugrd->_MAX));
+						SIO_TRACE((TRACE_SIO, "RAYDEBUG: debugrd->_ALN = 0x%X\n",debugrd->_ALN));
+						SIO_TRACE((TRACE_SIO, "RAYDEBUG: debugrd->_LEN = 0x%X\n",debugrd->_LEN));
 						rd=ApplyIoRes(hdr, Dev, basc);
 						basc++;
 					} else continue; 
