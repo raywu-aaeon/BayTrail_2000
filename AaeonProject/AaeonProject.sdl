@@ -1151,3 +1151,23 @@ PCIDEVICE
 	FFSFileName  = "ROM Storage"
 	ROMSectionGuid  = "938b1a2c-4221-409f-a683-cf8fc3260e81"
 End
+
+TOKEN
+    Name  = "COM0_DEFAULT_CONSOLE_REDIRECTION_ENABLE"
+    Value  = "0"
+    TokenType = Boolean
+    TargetH = Yes
+End
+
+TOKEN
+	Name = "ONEOF_AAEONRESTOREACPOWERLOSS_DEFAULT"
+	Value = "2"
+	Help = "0: Last State\1: Always On\2: Always Off"
+	TokenType = Integer
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = " "
+	TokenType = Integer
+End
