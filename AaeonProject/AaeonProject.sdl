@@ -1099,3 +1099,55 @@ TOKEN
 	Name  = " "
 	TokenType = Integer
 End
+
+PCIDEVICE
+	Title  = "PCIE Port #1 Slot"
+	Parent  = "PCIE Root Port #1"
+	Attribute  = "0"
+	Dev_type  = "PciDevice"
+	Dev  = 00h
+	Slot  = 03h
+	Fun  = 0ffh
+	GPEbit  = 00h
+	SleepNum  = 01h
+	IntA = 	LNKA; 16
+	IntB = 	LNKB; 17
+	IntC = 	LNKC; 18
+	IntD = 	LNKD; 19
+	DeviceType = Slot
+	PCIBusSize = 32bit
+	ROMMain = No
+	PCIExpress = Yes
+	SuppressDeviceGeneration = Yes	#EIP187266 	
+	ROMFile  = "AaeonProject\Addon\PXE\BA1561L2.LOM"
+	OptionROM = Yes
+	LegacyRom = Yes
+	FFSFileName  = "ROM Storage"
+	ROMSectionGuid  = "938b1a2c-4221-409f-a683-cf8fc3260e81"
+End
+
+PCIDEVICE
+	Title  = "PCIE Port #2 Slot"
+	Parent  = "PCIE Root Port #2"
+	Attribute  = "0"
+	Dev_type  = "PciDevice"
+	Dev  = 00h
+	Slot  = 03h
+	Fun  = 0ffh
+	GPEbit  = 00h
+	SleepNum  = 01h
+	IntA = 	LNKB; 17
+	IntB = 	LNKC; 18
+	IntC = 	LNKD; 19
+	IntD = 	LNKA; 16
+	DeviceType = Slot
+	PCIBusSize = 32bit
+	ROMMain = No
+	PCIExpress = Yes
+	SuppressDeviceGeneration = Yes	#EIP187266 	
+	ROMFile  = "AaeonProject\Addon\PXE\BA1561L2.LOM"
+	OptionROM = Yes
+	LegacyRom = Yes
+	FFSFileName  = "ROM Storage"
+	ROMSectionGuid  = "938b1a2c-4221-409f-a683-cf8fc3260e81"
+End
