@@ -1006,9 +1006,7 @@ ClearPowerState()
     // Check for PowerState option for AC power loss and program the chipset
     //
 
-    PEI_TRACE((-1, PeiServices, "RAYDEBUG: ClearPowerState Start\n"));
     Data32 = MmioRead32(PMC_BASE_ADDRESS + R_PCH_PMC_GEN_PMCON_1);
-    PEI_TRACE((-1, PeiServices, "RAYDEBUG: R_PCH_PMC_GEN_PMCON_1 = 0x%X\n", Data32));
     //
     // Clear PWROK (Set to Clear)
     //
@@ -1077,6 +1075,7 @@ PchPlatformLpcInit(
     UINT8         Data8;
     UINT16                Data16;
 
+    PEI_TRACE((-1, PeiServices, "RAYDEBUG: PchPlatformLpcInit Start\n"));
     (*PeiServices)->GetBootMode(PeiServices, &BootMode);
 
     if((BootMode != BOOT_ON_S3_RESUME)) {
@@ -1086,6 +1085,8 @@ PchPlatformLpcInit(
         //
         ClearSmiAndWake();
     }
+    
+    PEI_TRACE((-1, PeiServices, "RAYDEBUG: R_PCH_PMC_GEN_PMCON_1 = 0x%X\n", Data32));
 
     ClearPowerState();
 
