@@ -111,7 +111,7 @@ variables:
       - 'build.log'
       - '_Aaeon_Release\*.[Bb][Ii][Nn]'
       - 'Build\Token.*'
-      - 'Build\Platform.*'
+      - 'Build\[Pp]latform.*'
       - 'Build\GSIOSETUPVAR.*'
       - 'Build\*.inf'
       - 'Build\PCIBRDSDL.*'
