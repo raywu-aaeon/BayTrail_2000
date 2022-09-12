@@ -1074,6 +1074,7 @@ PchPlatformLpcInit(
     EFI_BOOT_MODE BootMode;
     UINT8         Data8;
     UINT16                Data16;
+    UINT32 Data32;
 
     PEI_TRACE((-1, PeiServices, "RAYDEBUG: PchPlatformLpcInit Start\n"));
     (*PeiServices)->GetBootMode(PeiServices, &BootMode);
