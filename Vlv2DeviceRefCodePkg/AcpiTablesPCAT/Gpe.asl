@@ -366,7 +366,7 @@ Scope(\_GPE)
     //
     Store(Ones, G0S)
 
-    Notify(\_SB.PCI0.LPCB.WPCN, 0x02)
+//    Notify(\_SB.PCI0.LPCB.WPCN, 0x02)
   }
 
   //
@@ -380,7 +380,7 @@ Scope(\_GPE)
     // Clear GPE0_STS
     //
     Store(Ones, G0S)
-    Notify(\_SB.PCI0.LPCB.WPCN, 0x02)
+//    Notify(\_SB.PCI0.LPCB.WPCN, 0x02)
   }
 
   //

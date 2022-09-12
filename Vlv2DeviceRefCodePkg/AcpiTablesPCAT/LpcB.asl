@@ -70,7 +70,7 @@ Field(LPC0, AnyAcc, NoLock, Preserve)
 //AMI_OVERRIDE
 Include ("LPC_DEV.ASL")
 
-Include ("WPCN381U_SIO.asl")
+//Include ("WPCN381U_SIO.asl")
 
 // Define the KBC_COMMAND_REG-64, KBC_DATA_REG-60 Registers as an ACPI Operating
 // Region.  These registers will be used to skip kbd mouse
