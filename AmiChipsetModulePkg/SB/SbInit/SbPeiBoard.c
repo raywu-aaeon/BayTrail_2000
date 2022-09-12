@@ -859,7 +859,7 @@ UARTInit(
             if(PchPolicyData->LpssHsuart0Enabled == 1) {
                 //
                 //Valleyview BIOS Specification Vol2,17.2
-                //LPSS_UART1 ¡LC set each pad PAD_CONF0.Func_Pin_Mux to function 1:
+                //LPSS_UART1 ï¿½LC set each pad PAD_CONF0.Func_Pin_Mux to function 1:
                 //
                 MmioAnd8(IO_BASE_ADDRESS + 0x0090, (UINT8)~0x07);
                 MmioOr8(IO_BASE_ADDRESS + 0x0090, 0x01);
@@ -1006,6 +1006,9 @@ ClearPowerState()
     // Check for PowerState option for AC power loss and program the chipset
     //
 
+    PEI_TRACE((-1, PeiServices, "RAYDEBUG: ClearPowerState Start\n"));
+    Data32 = MmioRead32(PMC_BASE_ADDRESS + R_PCH_PMC_GEN_PMCON_1);
+    PEI_TRACE((-1, PeiServices, "RAYDEBUG: R_PCH_PMC_GEN_PMCON_1 = 0x%X\n", Data32));
     //
     // Clear PWROK (Set to Clear)
     //
