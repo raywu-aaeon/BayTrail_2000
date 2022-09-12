@@ -657,7 +657,7 @@ EFI_STATUS SioDxeLibGetPrsFromAml(SIO_DEV2* Dev, UINT8 *PrsName ,UINTN Index){
 	}
 
 	//it must be _PRS name Object there
-	if(!PrsName) Status = GetAslObj(obj.DataStart,obj.Length,"_PRS",otName,&prs);
+	if(!PrsName) Status = GetAslObj(obj.DataStart,obj.Length, (UINT8*)"_PRS",otName,&prs);
 	else Status = GetAslObj(obj.DataStart,obj.Length,PrsName,otName,&prs);
 	if(EFI_ERROR(Status)) {
 		SIO_TRACE((TRACE_SIO,"SIO[%d]: Aml=> Failed to Locate _PRS Object in %s Object Scope at %08X\n",Index, &de->AslName[0], obj.Object));
@@ -706,6 +706,10 @@ EFI_STATUS SioDxeLibGetPrsFromAml(SIO_DEV2* Dev, UINT8 *PrsName ,UINTN Index){
 				Status=AppendItemLst(&Dev->PRS, (VOID*)pdf);
 				if(EFI_ERROR(Status)) return EFI_OUT_OF_RESOURCES;
 			} else {
+			    //AML _PRS need to start with ASLV_RT_StartDependentFn
+			    if(!pdf) {	
+			        return EFI_INVALID_PARAMETER;
+			    }
 				Status=AppendItemLst(&pdf->DepRes,rd);
 				if(EFI_ERROR(Status)) return EFI_OUT_OF_RESOURCES;
 			}
