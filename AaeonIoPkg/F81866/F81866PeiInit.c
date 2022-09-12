@@ -423,6 +423,8 @@ EFI_STATUS F81866PeiInitEntryPoint(
         AmiSioLibSetLpcDeviceDecoding(NULL, F81866PeiDecodeTable[index].BaseAdd, F81866PeiDecodeTable[index].UID, F81866PeiDecodeTable[index].Type);
 #endif
     
+    RayDebug80(0x05, 0x80);
+    
     ProgramRtRegisterTable(0, F81866PeiInitTable, sizeof(F81866PeiInitTable)/sizeof(SIO_DEVICE_INIT_DATA));
     // Enter Configuration Mode.
 
