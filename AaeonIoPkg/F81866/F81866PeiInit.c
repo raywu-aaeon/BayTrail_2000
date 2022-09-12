@@ -465,7 +465,7 @@ EFI_STATUS F81866PeiInitEntryPoint(
     // Exit Configuration Mode
     IoWrite8(F81866_CONFIG_INDEX, F81866_CONFIG_MODE_EXIT_VALUE);
 
-    F81866MiscSetupFunction(PeiServices);
+//    F81866MiscSetupFunction(PeiServices);
 
     return EFI_SUCCESS;
 }
