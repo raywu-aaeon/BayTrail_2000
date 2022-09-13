@@ -1162,6 +1162,22 @@ static EFI_STATUS EnumerateAll(GSIO2 *Spio){
 		SIO_TRACE((TRACE_SIO,"=================================================\n"));
         SIO_TRACE((TRACE_SIO,"+> SIO_LD[%d]; AslName[%s];Implemented=%d; FLAGS=%X;", i,dev->DeviceInfo->AslName,dev->DeviceInfo->Implemented, dev->DeviceInfo->Flags));
         //Taking care of issue 1 in EIP72716 
+		/**
+		 * @brief Detected F81866 GPIO20 to Implemented COM3/4/5/6
+		 * 
+		 */
+		if (dev->DeviceInfo->Ldn == 0x12 || dev->DeviceInfo->Ldn == 0x13 || dev->DeviceInfo->Ldn == 0x14 || dev->DeviceInfo->Ldn == 0x15)
+		{
+			if(!dev->Owner->InCfgMode) SioCfgMode(dev->Owner, TRUE);
+			IoWrite8(Spio->SpioSdlInfo->SioIndex, dev->Owner->SpioSdlInfo->DevSelReg);
+			IoWrite8(Dev->Owner->SpioSdlInfo->SioData, 0x06);
+			IoWrite8(Spio->SpioSdlInfo->SioIndex, 0xD2);
+			if (IoRead8(Dev->Owner->SpioSdlInfo->SioData) & BIT0)
+			{
+				dev->DeviceInfo->Implemented == FALSE;
+			}
+		}
+		
 		if (!dev->DeviceInfo->Implemented){
 			SIO_TRACE((TRACE_SIO,"<-\n"));
 			continue;
