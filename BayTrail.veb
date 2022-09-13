@@ -534,6 +534,7 @@
 "FOTA\CapsuleGen\CapsuleGen.cif"= Private
 "FOTA\SysFwUpdStitcher\SysFwUpdStitcher.cif"= Private
 "FOTA\SysFwUpdStitcher\v0.6\v0.6.cif"= Private
+"AmiModulePkg\NTFS\NTFS.cif"
 "BayTrailPkg\Crb.cif"= Private
 "BayTrailPkg\CrbSetup\CrbSetup.cif"= Private
 "BayTrailPkg\Include\Include.cif"= Private

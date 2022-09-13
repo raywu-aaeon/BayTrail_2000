@@ -1,0 +1,62 @@
+TOKEN
+	Name  = "NTFS_SUPPORT"
+	Value  = "1"
+	Help  = "Main switch to enable NTFS FileSystem Support"
+	TokenType = Boolean
+	TargetEQU = Yes
+	TargetMAK = Yes
+	Master = Yes
+End
+
+TOKEN
+	Name  = "MFT_RUN_LIST_SIZE"
+	Value  = "256"
+	Help  = "Set how much space to use in the volume info structure for the MFT run list."
+	TokenType = Integer
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "FILE_RUN_LIST_SIZE"
+	Value  = "128"
+	Help  = "Set how much space to use in the file handle structure for the file's run list."
+	TokenType = Integer
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "DIRECTORTY_ENTRIES_CACHED"
+	Value  = "100"
+	Help  = "Indicate the number of Directory entries dir that can be cached."
+	TokenType = Integer
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "MFT_CACHE_SIZE"
+	Value  = "4000h"
+	Help  = "Specify the MFT Cache size for each volume."
+	TokenType = Integer
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "DIR_CACHE_SIZE"
+	Value  = "8000h"
+	Help  = "Specify the DIR Cache size for each volume."
+	TokenType = Integer
+	TargetH = Yes
+End
+
+PATH
+	Name  = "NTFS_DIR"
+	Path  = "AmiModulePkg\NTFS"
+End
+
+INFComponent
+	Name  = "NTFS"
+	File  = "NTFS.inf"
+	Package  = "AmiModulePkg"
+	ModuleTypes  = "DXE_RUNTIME_DRIVER"
+End
+

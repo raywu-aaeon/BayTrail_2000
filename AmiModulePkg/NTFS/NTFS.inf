@@ -1,0 +1,64 @@
+#**********************************************************************
+#**********************************************************************
+#**                                                                  **
+#**        (C)Copyright 1985-2012, American Megatrends, Inc.         **
+#**                                                                  **
+#**                       All Rights Reserved.                       **
+#**                                                                  **
+#**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093        **
+#**                                                                  **
+#**                       Phone: (770)-246-8600                      **
+#**                                                                  **
+#**********************************************************************
+#**********************************************************************
+
+## @file
+# INF file for NTFS driver.
+#
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = NTFS
+  FILE_GUID                      = 768BEDFD-7B4B-4c9f-B2FF-6377E3387243
+  MODULE_TYPE                    = DXE_DRIVER
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = NTFSEntryPoint
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64
+#
+
+[Sources]
+  NTFS.h	
+  Open.c	
+  NTFS.c	
+  FileMFTHandler.c	
+  Info.c	
+  MediaAccess.c	
+  NTFSComponentName.c	
+
+[Packages]
+  AmiCompatibilityPkg/AmiCompatibilityPkg.dec
+  IntelFrameworkPkg/IntelFrameworkPkg.dec
+  MdePkg/MdePkg.dec
+  AmiModulePkg/AmiModulePkg.dec
+  
+[LibraryClasses]
+  AmiDxeLib
+  UefiDriverEntryPoint
+  AmiCspLib
+
+[Protocols]
+  gEfiDriverBindingProtocolGuid           ## PRODUCES
+  gEfiSimpleFileSystemProtocolGuid        ## CONSUMES
+  gEfiComponentNameProtocolGuid           ## CONSUMES
+  gEfiDiskIoProtocolGuid                  ## CONSUMES
+  gEfiUnicodeCollationProtocolGuid        ## CONSUMES
+
+[Depex]
+  TRUE
+
+[BuildOptions.X64]
+*_*_X64_CC_FLAGS = /D EFIx64 
