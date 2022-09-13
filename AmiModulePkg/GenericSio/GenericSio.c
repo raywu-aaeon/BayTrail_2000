@@ -1162,6 +1162,38 @@ static EFI_STATUS EnumerateAll(GSIO2 *Spio){
 		SIO_TRACE((TRACE_SIO,"=================================================\n"));
         SIO_TRACE((TRACE_SIO,"+> SIO_LD[%d]; AslName[%s];Implemented=%d; FLAGS=%X;", i,dev->DeviceInfo->AslName,dev->DeviceInfo->Implemented, dev->DeviceInfo->Flags));
         //Taking care of issue 1 in EIP72716 
+		/**
+		 * @brief Detected F81866 GPIO20 to Implemented COM3/4/5/6
+		 * 
+		 */
+		if (dev->DeviceInfo->Ldn == 0x12 || dev->DeviceInfo->Ldn == 0x13 || dev->DeviceInfo->Ldn == 0x14 || dev->DeviceInfo->Ldn == 0x15)
+		{
+			if(!dev->Owner->InCfgMode) SioCfgMode(dev->Owner, TRUE);
+			IoWrite8(Spio->SpioSdlInfo->SioIndex, dev->Owner->SpioSdlInfo->DevSelReg);
+			IoWrite8(dev->Owner->SpioSdlInfo->SioData, 0x06);
+			IoWrite8(Spio->SpioSdlInfo->SioIndex, 0xD2);
+			if (IoRead8(dev->Owner->SpioSdlInfo->SioData) & BIT0)
+			{
+				dev->DeviceInfo->Implemented = FALSE;
+				dev->VlData.DevImplemented = FALSE;
+				dev->NvData.DevEnable = FALSE;
+				dev->DeviceInfo->HasSetup = FALSE;
+				Spio->DeviceList[i]->DeviceInfo->Implemented = FALSE;
+				Spio->DeviceList[i]->VlData.DevImplemented = FALSE;
+				Spio->DeviceList[i]->NvData.DevEnable = FALSE;
+				Spio->DeviceList[i]->DeviceInfo->HasSetup = FALSE;
+
+				IoWrite8(Spio->SpioSdlInfo->SioIndex, dev->Owner->SpioSdlInfo->DevSelReg);
+ 				IoWrite8(dev->Owner->SpioSdlInfo->SioData, dev->DeviceInfo->Ldn);
+ 				IoWrite8(Spio->SpioSdlInfo->SioIndex, dev->Owner->SpioSdlInfo->Base1HiReg);
+ 				IoWrite8(dev->Owner->SpioSdlInfo->SioData, 0);
+ 				IoWrite8(Spio->SpioSdlInfo->SioIndex, dev->Owner->SpioSdlInfo->Base1LoReg);
+ 				IoWrite8(dev->Owner->SpioSdlInfo->SioData, 0);
+ 				IoWrite8(Spio->SpioSdlInfo->SioIndex, dev->Owner->SpioSdlInfo->Irq1Reg);
+ 				IoWrite8(dev->Owner->SpioSdlInfo->SioData, 0);
+			}
+		}
+		
 		if (!dev->DeviceInfo->Implemented){
 			SIO_TRACE((TRACE_SIO,"<-\n"));
 			continue;
