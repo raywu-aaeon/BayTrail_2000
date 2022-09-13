@@ -135,7 +135,7 @@
 		prompt = STRING_TOKEN(STR_CPU_FORM),
 		help = STRING_TOKEN(STR_CPU_FORM_HELP);
 		// SATA Configuration
-		goto AAEON_IDE_CONFIG_FORM_ID,
+		goto OEM_SATA_CONFIG_FORM_ID,
 		prompt  = STRING_TOKEN(STR_SATA_CONFIG_FORM),
 		help    = STRING_TOKEN(STR_SATA_CONFIG_FORM_HELP);
 		// USB Configuration
@@ -286,12 +286,34 @@
 // CPU Configuration END <<
 
 // SATA Configuration BEGIN >>
-		form formid = AUTO_ID(AAEON_IDE_CONFIG_FORM_ID),
+		form formid = AUTO_ID(OEM_SATA_CONFIG_FORM_ID),
 			title = STRING_TOKEN(STR_SATA_CONFIG_FORM);
 			SUBTITLE(STRING_TOKEN(STR_SATA_CONFIG_FORM))
 		
 			SEPARATOR
 
+    	    SB_CHECKBOX_SATA_EN
+	  
+    	    SEPARATOR
+    	    
+    	    suppressif  ideqval SETUP_DATA.PchSata == 0;
+    	      SB_CHECKBOX_SATA_SPEED_SUPPORT //EIP147898
+    	      SB_ONEOF_SATA_MODE
+		  
+  	    	  SEPARATOR
+    	      SB_CHECKBOX_SATAPORT0
+		    
+    	      SEPARATOR
+    	      SB_CHECKBOX_SATAPORT1
+    	  	  SEPARATOR
+	    
+    	  	  SUBTITLE(STRING_TOKEN(STR_SATA_0_STRING))
+		  	  SUBTITLE(STRING_TOKEN(STR_SATA_0_NAME))
+    	  	  SEPARATOR
+	    
+    	  	  SUBTITLE(STRING_TOKEN(STR_SATA_1_STRING))	
+		  	  SUBTITLE(STRING_TOKEN(STR_SATA_1_NAME))		
+    	    endif;  // suppress
 
 		endform;
 // SATA Configuration END <<

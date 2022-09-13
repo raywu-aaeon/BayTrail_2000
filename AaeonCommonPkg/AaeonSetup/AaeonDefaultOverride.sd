@@ -257,6 +257,24 @@
         option text = STRING_TOKEN(STR_CPU_DISABLED),   value = 0, flags = RESET_REQUIRED | INTERACTIVE;\
         option text = STRING_TOKEN(STR_CPU_ENABLED),    value = 1, flags = DEFAULT | MANUFACTURING | INTERACTIVE | RESET_REQUIRED;\
     endoneof;
+
+#undef SB_CHECKBOX_SATAPORT0
+#define SB_CHECKBOX_SATAPORT0\
+      oneof varid    = SETUP_DATA.SataPort[0],\
+          prompt       = STRING_TOKEN (STR_SATA_0_STRING),\
+          help         = STRING_TOKEN (STR_SATA_0_PROMPT_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = RESET_REQUIRED;\
+      endoneof;
+
+#undef SB_CHECKBOX_SATAPORT1
+#define SB_CHECKBOX_SATAPORT1\
+      oneof varid    = SETUP_DATA.SataPort[1],\
+          prompt       = STRING_TOKEN (STR_SATA_1_STRING),\
+          help         = STRING_TOKEN (STR_SATA_1_PROMPT_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = RESET_REQUIRED;\
+      endoneof;
 #endif //ENDIF CONTROL_DEFINITION
 
 
