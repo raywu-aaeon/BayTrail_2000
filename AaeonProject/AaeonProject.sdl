@@ -1188,3 +1188,11 @@ TOKEN
 	Name  = " "
 	TokenType = Integer
 End
+
+TOKEN
+	Name  = "FACP_FLAG_PCI_EXP_WAK"
+	Value  = "1"
+	Help  = "If set, indicates the platform supports the \PCIEXP_WAKE_STS bit in the PM1 Status \register and the PCIEXP_WAKE_EN bit in \the PM1 Enable register."
+	TokenType = Boolean
+	TargetH = Yes
+End
