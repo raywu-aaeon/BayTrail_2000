@@ -1185,6 +1185,8 @@ static EFI_STATUS EnumerateAll(GSIO2 *Spio){
 				IoWrite8(dev->Owner->SpioSdlInfo->SioData, 0);
 				IoWrite8(Spio->SpioSdlInfo->SioIndex, dev->Owner->SpioSdlInfo->Base1LoReg);
 				IoWrite8(dev->Owner->SpioSdlInfo->SioData, 0);
+				IoWrite8(Spio->SpioSdlInfo->SioIndex, dev->Owner->SpioSdlInfo->Irq1Reg);
+				IoWrite8(dev->Owner->SpioSdlInfo->SioData, 0);
 			}
 		}
 		
