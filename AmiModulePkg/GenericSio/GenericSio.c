@@ -1177,7 +1177,7 @@ static EFI_STATUS EnumerateAll(GSIO2 *Spio){
 				dev->DeviceInfo->Implemented = FALSE;
 				dev->VlData.DevImplemented = FALSE;
 				dev->NvData.DevEnable = FALSE;
-				dev->DeviceInfo->HasSetup = FALSE;
+				//dev->DeviceInfo->HasSetup = FALSE;
 				Spio->DeviceList[i]->DeviceInfo->Implemented = FALSE;
 				Spio->DeviceList[i]->VlData.DevImplemented = FALSE;
 				Spio->DeviceList[i]->NvData.DevEnable = FALSE;
