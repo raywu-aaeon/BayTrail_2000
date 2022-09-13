@@ -1185,6 +1185,15 @@ TOKEN
 End
 
 TOKEN
+	Name  = "TCG2Support"
+	Value  = "1"
+	Help  = "Enable or Disable TCG_generic support"
+	TokenType = Boolean
+	TargetMAK = Yes
+	TargetH = Yes
+End
+
+TOKEN
 	Name  = " "
 	TokenType = Integer
 End

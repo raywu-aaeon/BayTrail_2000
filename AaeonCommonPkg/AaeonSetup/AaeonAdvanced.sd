@@ -115,6 +115,21 @@
   
 	#ifdef AAEON_FORM_SET_GOTO
 
+		#if defined(TCG2Support) && (TCG2Support == 1)
+		// Define goto commands for the forms defined in this file
+		suppressif ideqval SETUP_DATA.SuppressTcg == 1;
+		    suppressif ideqval SETUP_DATA.Tpm20Device == 1;
+			goto TCG_FORM_ID, 
+				prompt = STRING_TOKEN(STR_TCG_FORM),
+				help = STRING_TOKEN(STR_TCG_FORM_HELP);
+		    endif;
+		    suppressif ideqval SETUP_DATA.Tpm20Device == 0;
+		    goto TCG20_FORM_ID, 
+				prompt = STRING_TOKEN(STR_TCG_FORM),
+				help = STRING_TOKEN(STR_TCG_FORM_HELP);
+		    endif;
+		endif;
+		#endif // TCG2Support
 		// CPU Configuration
 		goto AAEON_CPU_FORM_ID, 
 		prompt = STRING_TOKEN(STR_CPU_FORM),
