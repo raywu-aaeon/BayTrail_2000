@@ -146,6 +146,12 @@
 		goto AAEON_HARDWARE_MONITOR_CONFIG_FORM_ID,
 		prompt  = STRING_TOKEN(STR_AAEON_HARDWARE_MONITOR_CONFIG_FORM),
 		help    = STRING_TOKEN(STR_AAEON_HARDWARE_MONITOR_CONFIG_FORM_HELP);
+	  	// Serial Port Console Redirection
+	  	#if defined(Terminal_SUPPORT) && (Terminal_SUPPORT)
+        	goto TERMINAL_FORM_ID, 
+        	    prompt  = STRING_TOKEN(STR_TERMINAL_FORM_TITLE),
+        	    help    = STRING_TOKEN(STR_TERMINAL_FORM_TITLE);
+        	#endif // Terminal_SUPPORT
 		// SIO Configuration
 		#if SIO_SUPPORT
 		goto formsetguid = SIO_FORM_SET_GUID, formid = SIO_MAIN_FORM_ID,

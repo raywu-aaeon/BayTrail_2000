@@ -1161,6 +1161,27 @@ PCIDEVICE
 	ROMSectionGuid  = "938b1a2c-4221-409f-a683-cf8fc3260e81"
 End
 
+############################################################
+#	Terminal (Serial Port Console Redirection)
+############################################################
+TOKEN
+	Name  = "TOTAL_SIO_SERIAL_PORTS"
+	Value  = "6"
+	Help  = "**PORTING NEEDED** Total number of Super IO serial ports or ISA serial port present"
+	TokenType = Integer
+	TargetMAK = Yes
+	TargetH = Yes
+	Range  = "0-10"
+End
+TOKEN
+	Name  = "TOTAL_PCI_SERIAL_PORTS"
+	Value  = "0"
+	Help  = "**PORTING NEEDED** Total number of PCI serial ports present."
+	TokenType = Integer
+	TargetMAK = Yes
+	TargetH = Yes
+	Range  = "0-4"
+End
 TOKEN
     Name  = "COM0_DEFAULT_CONSOLE_REDIRECTION_ENABLE"
     Value  = "0"
