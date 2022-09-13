@@ -1174,7 +1174,7 @@ static EFI_STATUS EnumerateAll(GSIO2 *Spio){
 			IoWrite8(Spio->SpioSdlInfo->SioIndex, 0xD2);
 			if (IoRead8(dev->Owner->SpioSdlInfo->SioData) & BIT0)
 			{
-				dev->DeviceInfo->Implemented == FALSE;
+				dev->DeviceInfo->Implemented = FALSE;
 			}
 		}
 		
