@@ -1214,6 +1214,12 @@ TOKEN
 	TargetH = Yes
 End
 
+ELINK
+	Name  = "ITEM_CALLBACK(ADVANCED_FORM_SET_CLASS,0,OEM_KEY_VT_SETTING_CHANGE_KEY,VtSettingCallback),"
+	Parent  = "SetupItemCallbacks"
+	InvokeOrder = AfterParent
+End
+
 TOKEN
 	Name  = " "
 	TokenType = Integer

@@ -131,7 +131,7 @@
 		endif;
 		#endif // TCG2Support
 		// CPU Configuration
-		goto AAEON_CPU_FORM_ID, 
+		goto OEM_CPU_FORM_ID, 
 		prompt = STRING_TOKEN(STR_CPU_FORM),
 		help = STRING_TOKEN(STR_CPU_FORM_HELP);
 		// SATA Configuration
@@ -182,12 +182,105 @@
 	#ifdef FORM_SET_FORM
 
 // CPU Configuration BEGIN >>
-		form formid = AUTO_ID(AAEON_CPU_FORM_ID),
+		form formid = AUTO_ID(OEM_CPU_FORM_ID),
 			title = STRING_TOKEN(STR_CPU_FORM);
 			SUBTITLE(STRING_TOKEN(STR_CPU_FORM))
 		
 			SEPARATOR
 
+		    SUBTITLE(STRING_TOKEN(STR_CPU_SKT0_VERSION_VALUE))
+		
+		    text 
+		      help   = STRING_TOKEN(STR_CPU_SKT_CPUID_HELP),
+		      text   = STRING_TOKEN(STR_CPU_SKT_CPUID_STRING),
+		      text   = STRING_TOKEN(STR_CPU_SKT0_CPUID_VALUE);
+		
+		    text 
+		      help   = STRING_TOKEN(STR_CPU_SKT_MICROCODE_HELP),
+		      text   = STRING_TOKEN(STR_CPU_SKT_MICROCODE_STRING),
+		      text   = STRING_TOKEN(STR_CPU_SKT0_MICROCODE_VALUE);
+		
+		    text 
+		      help   = STRING_TOKEN(STR_CPU_SKT_MAXSPEED_HELP),
+		      text   = STRING_TOKEN(STR_CPU_SKT_MAXSPEED_STRING),
+		      text   = STRING_TOKEN(STR_CPU_SKT0_MAXSPEED_VALUE);
+		
+		    text 
+		      help   = STRING_TOKEN(STR_CPU_SKT_MINSPEED_HELP),
+		      text   = STRING_TOKEN(STR_CPU_SKT_MINSPEED_STRING),
+		      text   = STRING_TOKEN(STR_CPU_SKT0_MINSPEED_VALUE);
+		
+		    text 
+		      help   = STRING_TOKEN(STR_CPU_SKT_NUMCORE_HELP),
+		      text   = STRING_TOKEN(STR_CPU_SKT_NUMCORE_STRING),
+		      text   = STRING_TOKEN(STR_CPU_SKT0_NUMCORE_VALUE);
+		
+		    text 
+		      help   = STRING_TOKEN(STR_CPU_SKT_HT_HELP),
+		      text   = STRING_TOKEN(STR_CPU_SKT_HT_STRING),
+		      text   = STRING_TOKEN(STR_CPU_SKT0_HT_VALUE);
+		
+		    text 
+		      help   = STRING_TOKEN(STR_CPU_SKT_VTX_HELP),
+		      text   = STRING_TOKEN(STR_CPU_SKT_VTX_STRING),
+		      text   = STRING_TOKEN(STR_CPU_SKT0_VTX_VALUE);
+		
+		#if CPU_DISPLAY_SETUP_SMX
+		    text 
+		      help   = STRING_TOKEN(STR_CPU_SKT_SMX_HELP),
+		      text   = STRING_TOKEN(STR_CPU_SKT_SMX_STRING),
+		      text   = STRING_TOKEN(STR_CPU_SKT0_SMX_VALUE);
+		#endif
+		
+		    SEPARATOR
+		
+		    text 
+		      help   = STRING_TOKEN(STR_CPU_SKT_L1_DATA_CACHE_HELP),
+		      text   = STRING_TOKEN(STR_CPU_SKT_L1_DATA_CACHE_STRING),
+		      text   = STRING_TOKEN(STR_CPU_SKT0_L1_DATA_CACHE_VALUE);
+		
+		    text 
+		      help   = STRING_TOKEN(STR_CPU_SKT_L1_CODE_CACHE_HELP),
+		      text   = STRING_TOKEN(STR_CPU_SKT_L1_CODE_CACHE_STRING),
+		      text   = STRING_TOKEN(STR_CPU_SKT0_L1_CODE_CACHE_VALUE);
+		
+		    text 
+		      help   = STRING_TOKEN(STR_CPU_SKT_L2_CACHE_HELP),
+		      text   = STRING_TOKEN(STR_CPU_SKT_L2_CACHE_STRING),
+		      text   = STRING_TOKEN(STR_CPU_SKT0_L2_CACHE_VALUE);
+		
+		    text 
+		      help   = STRING_TOKEN(STR_CPU_SKT_L3_CACHE_HELP),
+		      text   = STRING_TOKEN(STR_CPU_SKT_L3_CACHE_STRING),
+		      text   = STRING_TOKEN(STR_CPU_SKT0_L3_CACHE_VALUE);
+		
+		    SEPARATOR
+		
+		    text 
+		      help   = STRING_TOKEN(STR_PROCESSOR_SPEED_HELP),
+		      text   = STRING_TOKEN(STR_PROCESSOR_SPEED_STRING),
+		      text   = STRING_TOKEN(STR_PROCESSOR_SPEED_VALUE);
+		
+		    text 
+		        help = STRING_TOKEN(STR_CPU_EMT64_HELP),
+		        text = STRING_TOKEN(STR_CPU_EMT64_STRING),
+		        text = STRING_TOKEN(STR_CPU_EMT64_VALUE);
+		
+		    SEPARATOR
+		
+		    suppressif  ideqval SETUP_CPU_FEATURES.CpuMismatch == 0;
+		        text 
+		          help   = STRING_TOKEN(STR_CPU_MISMATCH_VALUE),
+		          text   = STRING_TOKEN(STR_CPU_MISMATCH_STRING),
+		          text   = STRING_TOKEN(STR_CPU_MISMATCH_VALUE);
+		    endif;
+		
+			SEPARATOR
+
+    		suppressif  ideqval SETUP_CPU_FEATURES.VTAvailable == 0;
+    		grayoutif ideqval SYSTEM_ACCESS.Access == SYSTEM_PASSWORD_USER;
+    		    OEM_NEHALEM_ONEOF_VT
+    		SUPPRESS_GRAYOUT_ENDIF
 
 		endform;
 // CPU Configuration END <<

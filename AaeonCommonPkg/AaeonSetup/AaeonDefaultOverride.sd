@@ -248,6 +248,15 @@
                 option text = STRING_TOKEN(STR_F81866_SMARTFAN_FAN_MODE3), value = 3, flags = DEFAULT |RESET_REQUIRED;\
         endoneof;
 #endif //F81866_SMF2_SUPPORT == 1
+
+#define OEM_NEHALEM_ONEOF_VT\
+    oneof varid     = SETUP_DATA.VT,\
+        questionid  = AUTO_ID(OEM_KEY_VT_SETTING_CHANGE_KEY),\
+        prompt      = STRING_TOKEN(STR_CPU_VT_PROMPT),\
+        help        = STRING_TOKEN(STR_CPU_VT_PROMPT_HELP),\
+        option text = STRING_TOKEN(STR_CPU_DISABLED),   value = 0, flags = RESET_REQUIRED | INTERACTIVE;\
+        option text = STRING_TOKEN(STR_CPU_ENABLED),    value = 1, flags = DEFAULT | MANUFACTURING | INTERACTIVE | RESET_REQUIRED;\
+    endoneof;
 #endif //ENDIF CONTROL_DEFINITION
 
 
