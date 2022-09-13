@@ -159,6 +159,10 @@
 		prompt  = STRING_TOKEN(STR_SIO_CONFIGURATION),
 		help    = STRING_TOKEN(STR_SIO_CONFIGURATION_HELP); 
 		#endif
+		// Network Stack Configuration
+		goto STACK_FORM_ID, 
+		prompt = STRING_TOKEN(STR_STACK_FORM),
+		help = STRING_TOKEN(STR_STACK_FORM_HELP);
 
 		SEPARATOR
 
