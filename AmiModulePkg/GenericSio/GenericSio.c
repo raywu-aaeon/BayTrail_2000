@@ -1170,9 +1170,9 @@ static EFI_STATUS EnumerateAll(GSIO2 *Spio){
 		{
 			if(!dev->Owner->InCfgMode) SioCfgMode(dev->Owner, TRUE);
 			IoWrite8(Spio->SpioSdlInfo->SioIndex, dev->Owner->SpioSdlInfo->DevSelReg);
-			IoWrite8(Dev->Owner->SpioSdlInfo->SioData, 0x06);
+			IoWrite8(dev->Owner->SpioSdlInfo->SioData, 0x06);
 			IoWrite8(Spio->SpioSdlInfo->SioIndex, 0xD2);
-			if (IoRead8(Dev->Owner->SpioSdlInfo->SioData) & BIT0)
+			if (IoRead8(dev->Owner->SpioSdlInfo->SioData) & BIT0)
 			{
 				dev->DeviceInfo->Implemented == FALSE;
 			}
