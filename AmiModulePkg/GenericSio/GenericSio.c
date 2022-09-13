@@ -1175,6 +1175,8 @@ static EFI_STATUS EnumerateAll(GSIO2 *Spio){
 			if (IoRead8(dev->Owner->SpioSdlInfo->SioData) & BIT0)
 			{
 				dev->DeviceInfo->Implemented = FALSE;
+				dev->VlData.DevImplemented = FALSE;
+				dev->NvData.DevEnable = FALSE;
 			}
 		}
 		
