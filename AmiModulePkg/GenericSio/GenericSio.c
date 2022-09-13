@@ -1177,6 +1177,14 @@ static EFI_STATUS EnumerateAll(GSIO2 *Spio){
 				dev->DeviceInfo->Implemented = FALSE;
 				dev->VlData.DevImplemented = FALSE;
 				dev->NvData.DevEnable = FALSE;
+				dev->NvData.HasSetup = FALSE;
+				
+				IoWrite8(Spio->SpioSdlInfo->SioIndex, dev->Owner->SpioSdlInfo->DevSelReg);
+				IoWrite8(dev->Owner->SpioSdlInfo->SioData, dev->DeviceInfo->Ldn);
+				IoWrite8(Spio->SpioSdlInfo->SioIndex, dev->Owner->SpioSdlInfo->Base1HiReg);
+				IoWrite8(dev->Owner->SpioSdlInfo->SioData, 0);
+				IoWrite8(Spio->SpioSdlInfo->SioIndex, dev->Owner->SpioSdlInfo->Base1LoReg);
+				IoWrite8(dev->Owner->SpioSdlInfo->SioData, 0);
 			}
 		}
 		
