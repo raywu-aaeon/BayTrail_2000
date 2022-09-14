@@ -142,6 +142,10 @@
     	goto OEM_MISCELLANEOUS_CONFIG_FORM_ID,
     	prompt  = STRING_TOKEN(STR_MISCELLANEOUS_CONFIG_FORM),
     	help    = STRING_TOKEN(STR_MISCELLANEOUS_CONFIG_FORM_HELP);
+    	// LPSS & SCC Configuration
+    	goto OEM_LPSS_SCC_CONFIG_FORM_ID,
+    	prompt  = STRING_TOKEN(STR_LPSS_SCC_CONFIG_FORM),
+    	help    = STRING_TOKEN(STR_LPSS_SCC_CONFIG_FORM_HELP);
 		// USB Configuration
     	goto USB_CONFIG_FORM_ID,
         prompt  = STRING_TOKEN(STR_USB_CONFIGURATION),
@@ -340,6 +344,24 @@
 			SB_CHECKBOX_OSSELECT_SUPPORT
 		endform;    
 // Miscellaneous Configuration END <<
+
+// LPSS & SCC Configuration BEGIN >>
+    	form formid = AUTO_ID(OEM_LPSS_SCC_CONFIG_FORM_ID),
+    		title = STRING_TOKEN(STR_LPSS_SCC_CONFIG_FORM);
+    		SUBTITLE(STRING_TOKEN(STR_SCC_CONFIG_TITLE))
+			SB_CHECKBOX_SCC_SD_CARD_SUPPORT
+
+    		grayoutif NOT ideqval SETUP_DATA.SdcardEnabled == 0x1;
+    		  grayoutif ideqval SETUP_DATA.LpssSdCardDDR50Enabled == 0x1;
+  			  SB_CHECKBOX_LPSS_SDCARD25_SUPPORT
+    		  endif; // grayoutif ideqval SETUP_DATA.LpsseMMC45DDR50Enabled == 0x1;
+		
+    		  grayoutif ideqval SETUP_DATA.LpssSdCardSDR25Enabled == 0x1;
+			  SB_CHECKBOX_LPSS_SDCARD50_SUPPORT
+    		  endif; // grayoutif ideqval SETUP_DATA.LpssSdCardSDR25Enabled == 0x1;
+    		endif;     // grayoutif NOT ideqval SETUP_DATA.SdcardEnabled == 0x1;
+    	endform;  
+// LPSS & SCC Configuration END <<
 
 // Hardware Monitor BEGIN >>
 		form formid = AUTO_ID(AAEON_HARDWARE_MONITOR_CONFIG_FORM_ID),
