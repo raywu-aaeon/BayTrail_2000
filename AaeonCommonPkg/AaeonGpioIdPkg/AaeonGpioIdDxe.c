@@ -176,7 +176,7 @@ AaeonGpioIdDxeInit (
 
 	DEBUG((DEBUG_INFO, "AaeonGpioIdDxeInit Start\n"));
 
-	Status = pRS->GetVariable( L"AaeonSetup", &AaeonSetupGuid, &SetupAttribute, &AaeonSetupVariableSize, &AaeonSetupData );
+	Status = pRS->GetVariable( L"OemTempSetup", &AaeonSetupGuid, &SetupAttribute, &AaeonSetupVariableSize, &AaeonSetupData );
 	if (EFI_ERROR(Status)) return Status;
 
     AaeonHwIdData = AllocateZeroPool (AaeonHwIdVariableSize);
@@ -201,7 +201,7 @@ AaeonGpioIdDxeInit (
 	}			
 
     if(AaeonSetupUpdateRequire){
-		Status = pRS->SetVariable( L"AaeonSetup", &AaeonSetupGuid, SetupAttribute, AaeonSetupVariableSize, &AaeonSetupData);
+		Status = pRS->SetVariable( L"OemTempSetup", &AaeonSetupGuid, SetupAttribute, AaeonSetupVariableSize, &AaeonSetupData);
 		if (EFI_ERROR(Status)) {
         	DEBUG((DEBUG_ERROR, "SetVariable AaeonSetup failed, status %r\n", Status));
             return Status;  

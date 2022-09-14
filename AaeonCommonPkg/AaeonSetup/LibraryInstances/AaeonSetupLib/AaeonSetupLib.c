@@ -52,7 +52,7 @@ VOID AaeonSetupLibHook()
     UINT32       Attributes;
     AAEON_SETUP_DATA   dAaeonSetup;
     
-    Status = gRT->GetVariable( L"AaeonSetup", &AaeonSetupGuid, &Attributes,              
+    Status = gRT->GetVariable( L"OemTempSetup", &AaeonSetupGuid, &Attributes,              
                                &VariableSize, &dAaeonSetup );
    
     // Support to Handle some child pages as root pages.

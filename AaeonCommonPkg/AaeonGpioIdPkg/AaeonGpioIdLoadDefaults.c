@@ -32,7 +32,7 @@ AaeonGpioIdDefaultInit ( AAEON_HW_ID *AaeonHwIdData )
 	UINTN				AaeonSetupVariableSize = sizeof(AAEON_SETUP_DATA);
 	AAEON_SETUP_DATA	AaeonSetupData;
 
-    Status = HiiLibGetBrowserData(&AaeonSetupVariableSize, &AaeonSetupData, &AaeonSetupGuid, L"AaeonSetup");
+    Status = HiiLibGetBrowserData(&AaeonSetupVariableSize, &AaeonSetupData, &AaeonSetupGuid, L"OemTempSetup");
 
     if(Status == EFI_SUCCESS)
     {
@@ -40,7 +40,7 @@ AaeonGpioIdDefaultInit ( AAEON_HW_ID *AaeonHwIdData )
         // Sync Variable "AaeonHwId" to setup if need, but no need to reset. Used to affect BIOS setup behavior.
         if (AaeonSetupData.BoardId != AaeonHwIdData->HwBoardId) {
             AaeonSetupData.BoardId = AaeonHwIdData->HwBoardId;
-            Status = HiiLibSetBrowserData(AaeonSetupVariableSize, &AaeonSetupData, &AaeonSetupGuid, L"AaeonSetup");
+            Status = HiiLibSetBrowserData(AaeonSetupVariableSize, &AaeonSetupData, &AaeonSetupGuid, L"OemTempSetup");
         }
 #endif //AAEON_BOARD_ID_SUPPORT
 
@@ -48,7 +48,7 @@ AaeonGpioIdDefaultInit ( AAEON_HW_ID *AaeonHwIdData )
         // Sync Variable "AaeonHwId" to setup if need, but no need to reset. Used to affect BIOS setup behavior.
         if (AaeonSetupData.PanelId != AaeonHwIdData->HwPanelId) {
             AaeonSetupData.PanelId = AaeonHwIdData->HwPanelId;
-            Status = HiiLibSetBrowserData(AaeonSetupVariableSize, &AaeonSetupData, &AaeonSetupGuid, L"AaeonSetup");
+            Status = HiiLibSetBrowserData(AaeonSetupVariableSize, &AaeonSetupData, &AaeonSetupGuid, L"OemTempSetup");
         }
 #endif //AAEON_PANEL_ID_SUPPORT     
 
@@ -56,7 +56,7 @@ AaeonGpioIdDefaultInit ( AAEON_HW_ID *AaeonHwIdData )
         // Sync Variable "AaeonHwId" to setup if need, but no need to reset. Used to affect BIOS setup behavior.
         if (AaeonSetupData.OemId != AaeonHwIdData->HwOemId) {
             AaeonSetupData.OemId = AaeonHwIdData->HwOemId;
-            Status = HiiLibSetBrowserData(AaeonSetupVariableSize, &AaeonSetupData, &AaeonSetupGuid, L"AaeonSetup");
+            Status = HiiLibSetBrowserData(AaeonSetupVariableSize, &AaeonSetupData, &AaeonSetupGuid, L"OemTempSetup");
         }   
 #endif //AAEON_OEM_ID_SUPPORT       
     }

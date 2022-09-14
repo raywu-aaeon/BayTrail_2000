@@ -103,7 +103,7 @@
 	#ifdef FORM_SET_VARSTORE
 		varstore AAEON_SETUP_DATA,
 		    key   = AUTO_ID(AAEON_NVAR_KEY),
-		    name  = AaeonSetup,
+		    name  = OemTempSetup,
 		    guid  = AAEON_VAR_GUID;
 	#endif
   

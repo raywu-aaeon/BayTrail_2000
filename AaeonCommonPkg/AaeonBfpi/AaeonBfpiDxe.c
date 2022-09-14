@@ -116,7 +116,7 @@ VOID UpdateBfpiAcpiArea (
             *Address  = (UINT32)AaeonBfpiOpRegion;
             AaeonBfpiOpRegion->BfpiDataBuffer  = (UINT32)AaeonBfpiOpRegion + 0x100;  // Data buffer
 #if defined(AAEON_GPIO_ID_SUPPORT) && (AAEON_GPIO_ID_SUPPORT == 1)
-            Status = pRS->GetVariable( L"AaeonSetup", &AaeonSetupGuid, &SetupAttribute, &AaeonSetupVariableSize, &AaeonSetupData );
+            Status = pRS->GetVariable( L"OemTempSetup", &AaeonSetupGuid, &SetupAttribute, &AaeonSetupVariableSize, &AaeonSetupData );
             if (!EFI_ERROR(Status)) 
             {
 #if defined(AAEON_HW_BOARD_ID_SUPPORT) && (AAEON_HW_BOARD_ID_SUPPORT == 1)
