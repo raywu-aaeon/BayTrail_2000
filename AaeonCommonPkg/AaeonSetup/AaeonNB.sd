@@ -33,16 +33,37 @@
   
     #ifdef AAEON_FORM_SET_GOTO
         // Define goto commands for the forms defined in this file
-        goto AAEON_NB_FORM_ID, 
+        goto OEM_NB_FORM_ID, 
             prompt  = STRING_TOKEN(STR_NB_FORM),
             help    = STRING_TOKEN(STR_NB_FORM_HELP);
     #endif //AAEON_FORM_SET_GOTO
   
     #ifdef FORM_SET_FORM
-        form formid = AUTO_ID(AAEON_NB_FORM_ID),
+        form formid = AUTO_ID(OEM_NB_FORM_ID),
             title = STRING_TOKEN(STR_NB_FORM);
 
-        endform; //ENDFORM AAEON_NB_FORM_ID
+            goto OEM_INTEL_IGD_ID,
+            prompt  = STRING_TOKEN(STR_INTEL_IGD_FORM),
+            help    = STRING_TOKEN(STR_INTEL_IGD_HELP);
+
+        endform; //ENDFORM OEM_NB_FORM_ID
+
+        form formid = AUTO_ID(OEM_INTEL_IGD_ID),
+            title = STRING_TOKEN(STR_INTEL_IGD_FORM);
+            SUBTITLE(STRING_TOKEN(STR_INTEL_IGD_FORM))
+
+            SEPARATOR
+
+            NC_CHECKBOX_IGD
+            SEPARATOR
+          suppressif  ideqval SETUP_DATA.InternalGraphics == 0;
+            NC_CHECKBOX_PRIMARY_DISPLAY
+            NC_CHECKBOX_IGD_DVMT50_PRE_ALLOC
+            NC_CHECKBOX_IGD_DVMT_GFX_MEM
+            NC_CHECKBOX_APERTURE_SIZE
+          endif;  // suppress
+
+        endform;
     
     #endif //FORM_SET_FORM
 

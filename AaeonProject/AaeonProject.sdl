@@ -182,6 +182,25 @@ TOKEN
 End
 
 TOKEN
+	Name  = "AaeonMagicWordPkg_SUPPORT"
+	Value  = "0"
+	TokenType = Boolean
+	TargetEQU = Yes
+	TargetMAK = Yes
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "AaeonSecureBoot_SUPPORT"
+	Value  = "0"
+	Help  = "Main switch to enable Setup support in Project"
+	TokenType = Boolean
+	TargetEQU = Yes
+	TargetMAK = Yes
+	TargetH = Yes
+End
+
+TOKEN
     Name  = "CRB_SETUP_SUPPORT"
     Value  = "0"
     Help  = "Main switch to enable CRB Setup support in Project"
@@ -331,6 +350,12 @@ TOKEN
 	TargetH = Yes
 End
 
+ELINK
+	Name  = "{{SCAN_F10, 0},0, HandleSaveExitKey, 0 },"
+	Parent  = "{{SCAN_F4, 0 },0, AaeonHandleSaveExitKey, 0 },"
+	InvokeOrder = ReplaceParent
+End
+
 TOKEN
 	Name  = " "
 	TokenType = Integer
@@ -467,13 +492,6 @@ TOKEN
 	Name  = "SDA_PIN68_EN"
 	Value  = "0"
 	Help  = "0: Disable SDA\1: Enable SDA"
-	TokenType = Integer
-	TargetH = Yes
-End
-TOKEN
-	Name  = "GPIO65_EN"
-	Value  = "0"
-	Help  = "0: PME#\1: GPIO65"
 	TokenType = Integer
 	TargetH = Yes
 End
@@ -1161,6 +1179,27 @@ PCIDEVICE
 	ROMSectionGuid  = "938b1a2c-4221-409f-a683-cf8fc3260e81"
 End
 
+############################################################
+#	Terminal (Serial Port Console Redirection)
+############################################################
+TOKEN
+	Name  = "TOTAL_SIO_SERIAL_PORTS"
+	Value  = "6"
+	Help  = "**PORTING NEEDED** Total number of Super IO serial ports or ISA serial port present"
+	TokenType = Integer
+	TargetMAK = Yes
+	TargetH = Yes
+	Range  = "0-10"
+End
+TOKEN
+	Name  = "TOTAL_PCI_SERIAL_PORTS"
+	Value  = "0"
+	Help  = "**PORTING NEEDED** Total number of PCI serial ports present."
+	TokenType = Integer
+	TargetMAK = Yes
+	TargetH = Yes
+	Range  = "0-4"
+End
 TOKEN
     Name  = "COM0_DEFAULT_CONSOLE_REDIRECTION_ENABLE"
     Value  = "0"
@@ -1182,6 +1221,21 @@ TOKEN
     Help  = "Default value of the Quiet Boot option"
     TokenType = Boolean
     TargetH = Yes
+End
+
+TOKEN
+	Name  = "TCG2Support"
+	Value  = "1"
+	Help  = "Enable or Disable TCG_generic support"
+	TokenType = Boolean
+	TargetMAK = Yes
+	TargetH = Yes
+End
+
+ELINK
+	Name  = "ITEM_CALLBACK(ADVANCED_FORM_SET_CLASS,0,OEM_KEY_VT_SETTING_CHANGE_KEY,VtSettingCallback),"
+	Parent  = "SetupItemCallbacks"
+	InvokeOrder = AfterParent
 End
 
 TOKEN

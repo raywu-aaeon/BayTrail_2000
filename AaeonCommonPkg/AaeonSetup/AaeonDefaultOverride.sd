@@ -248,6 +248,51 @@
                 option text = STRING_TOKEN(STR_F81866_SMARTFAN_FAN_MODE3), value = 3, flags = DEFAULT |RESET_REQUIRED;\
         endoneof;
 #endif //F81866_SMF2_SUPPORT == 1
+
+#define OEM_NEHALEM_ONEOF_VT\
+    oneof varid     = SETUP_DATA.VT,\
+        questionid  = AUTO_ID(OEM_KEY_VT_SETTING_CHANGE_KEY),\
+        prompt      = STRING_TOKEN(STR_CPU_VT_PROMPT),\
+        help        = STRING_TOKEN(STR_CPU_VT_PROMPT_HELP),\
+        option text = STRING_TOKEN(STR_CPU_DISABLED),   value = 0, flags = RESET_REQUIRED | INTERACTIVE;\
+        option text = STRING_TOKEN(STR_CPU_ENABLED),    value = 1, flags = DEFAULT | MANUFACTURING | INTERACTIVE | RESET_REQUIRED;\
+    endoneof;
+
+#undef SB_CHECKBOX_SATAPORT0
+#define SB_CHECKBOX_SATAPORT0\
+      oneof varid    = SETUP_DATA.SataPort[0],\
+          prompt       = STRING_TOKEN (STR_SATA_0_STRING),\
+          help         = STRING_TOKEN (STR_SATA_0_PROMPT_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = RESET_REQUIRED;\
+      endoneof;
+
+#undef SB_CHECKBOX_SATAPORT1
+#define SB_CHECKBOX_SATAPORT1\
+      oneof varid    = SETUP_DATA.SataPort[1],\
+          prompt       = STRING_TOKEN (STR_SATA_1_STRING),\
+          help         = STRING_TOKEN (STR_SATA_1_PROMPT_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = RESET_REQUIRED;\
+      endoneof;
+
+#undef TCG_ONEOF_TPMSUPPORT
+#define TCG_ONEOF_TPMSUPPORT\
+      oneof varid = SETUP_DATA.TpmSupport,\
+          prompt = STRING_TOKEN(STR_TPM_SUPPORT_PROMPT ),\
+          help = STRING_TOKEN(STR_TPMSUPPORT_HELP),\
+          option text = STRING_TOKEN(STR_TPM_DISABLE), value = 0, flags = RESET_REQUIRED | MANUFACTURING | DEFAULT;\
+          option text = STRING_TOKEN(STR_TPM_ENABLE),  value = 1, flags = RESET_REQUIRED;\
+      endoneof;
+
+#undef TCG_ONEOF_TCMSUPPORT
+#define TCG_ONEOF_TCMSUPPORT\
+      oneof varid = SETUP_DATA.TpmSupport,\
+          prompt = STRING_TOKEN(STR_TCM_SUPPORT_PROMPT ),\
+          help = STRING_TOKEN(STR_TPMSUPPORT_HELP),\
+          option text = STRING_TOKEN(STR_TPM_DISABLE), value = 0, flags = RESET_REQUIRED | MANUFACTURING | DEFAULT;\
+          option text = STRING_TOKEN(STR_TPM_ENABLE),  value = 1, flags = RESET_REQUIRED;\
+      endoneof;
 #endif //ENDIF CONTROL_DEFINITION
 
 

@@ -103,7 +103,7 @@
 	#ifdef FORM_SET_VARSTORE
 		varstore AAEON_SETUP_DATA,
 		    key   = AUTO_ID(AAEON_NVAR_KEY),
-		    name  = AaeonSetup,
+		    name  = OemTempSetup,
 		    guid  = AAEON_VAR_GUID;
 	#endif
   
@@ -115,22 +115,51 @@
   
 	#ifdef AAEON_FORM_SET_GOTO
 
+		#if defined(TCG2Support) && (TCG2Support == 1)
+		// Define goto commands for the forms defined in this file
+		suppressif ideqval SETUP_DATA.SuppressTcg == 1;
+		    suppressif ideqval SETUP_DATA.Tpm20Device == 1;
+			goto TCG_FORM_ID, 
+				prompt = STRING_TOKEN(STR_TCG_FORM),
+				help = STRING_TOKEN(STR_TCG_FORM_HELP);
+		    endif;
+		    suppressif ideqval SETUP_DATA.Tpm20Device == 0;
+		    goto TCG20_FORM_ID, 
+				prompt = STRING_TOKEN(STR_TCG_FORM),
+				help = STRING_TOKEN(STR_TCG_FORM_HELP);
+		    endif;
+		endif;
+		#endif // TCG2Support
 		// CPU Configuration
-		goto AAEON_CPU_FORM_ID, 
+		goto OEM_CPU_FORM_ID, 
 		prompt = STRING_TOKEN(STR_CPU_FORM),
 		help = STRING_TOKEN(STR_CPU_FORM_HELP);
 		// SATA Configuration
-		goto AAEON_IDE_CONFIG_FORM_ID,
+		goto OEM_SATA_CONFIG_FORM_ID,
 		prompt  = STRING_TOKEN(STR_SATA_CONFIG_FORM),
 		help    = STRING_TOKEN(STR_SATA_CONFIG_FORM_HELP);
+		// Miscellaneous Configuration
+    	goto OEM_MISCELLANEOUS_CONFIG_FORM_ID,
+    	prompt  = STRING_TOKEN(STR_MISCELLANEOUS_CONFIG_FORM),
+    	help    = STRING_TOKEN(STR_MISCELLANEOUS_CONFIG_FORM_HELP);
+    	// LPSS & SCC Configuration
+    	goto OEM_LPSS_SCC_CONFIG_FORM_ID,
+    	prompt  = STRING_TOKEN(STR_LPSS_SCC_CONFIG_FORM),
+    	help    = STRING_TOKEN(STR_LPSS_SCC_CONFIG_FORM_HELP);
 		// USB Configuration
-		goto AAEON_USB_CONFIG_FORM_ID,
-		prompt  = STRING_TOKEN(STR_USB_CONFIGURATION),
-		help    = STRING_TOKEN(STR_USB_CONFIGURATION_HELP);
+    	goto USB_CONFIG_FORM_ID,
+        prompt  = STRING_TOKEN(STR_USB_CONFIGURATION),
+        help    = STRING_TOKEN(STR_USB_CONFIGURATION_HELP);
 		// Hardware Monitor
 		goto AAEON_HARDWARE_MONITOR_CONFIG_FORM_ID,
 		prompt  = STRING_TOKEN(STR_AAEON_HARDWARE_MONITOR_CONFIG_FORM),
 		help    = STRING_TOKEN(STR_AAEON_HARDWARE_MONITOR_CONFIG_FORM_HELP);
+	  	// Serial Port Console Redirection
+	  	#if defined(Terminal_SUPPORT) && (Terminal_SUPPORT)
+        	goto TERMINAL_FORM_ID, 
+        	    prompt  = STRING_TOKEN(STR_TERMINAL_FORM_TITLE),
+        	    help    = STRING_TOKEN(STR_TERMINAL_FORM_TITLE);
+        	#endif // Terminal_SUPPORT
 		// SIO Configuration
 		#if SIO_SUPPORT
 		goto formsetguid = SIO_FORM_SET_GUID, formid = SIO_MAIN_FORM_ID,
@@ -138,6 +167,10 @@
 		prompt  = STRING_TOKEN(STR_SIO_CONFIGURATION),
 		help    = STRING_TOKEN(STR_SIO_CONFIGURATION_HELP); 
 		#endif
+		// Network Stack Configuration
+		goto STACK_FORM_ID, 
+		prompt = STRING_TOKEN(STR_STACK_FORM),
+		help = STRING_TOKEN(STR_STACK_FORM_HELP);
 
 		SEPARATOR
 
@@ -161,37 +194,174 @@
 	#ifdef FORM_SET_FORM
 
 // CPU Configuration BEGIN >>
-		form formid = AUTO_ID(AAEON_CPU_FORM_ID),
+		form formid = AUTO_ID(OEM_CPU_FORM_ID),
 			title = STRING_TOKEN(STR_CPU_FORM);
 			SUBTITLE(STRING_TOKEN(STR_CPU_FORM))
 		
 			SEPARATOR
 
+		    SUBTITLE(STRING_TOKEN(STR_CPU_SKT0_VERSION_VALUE))
+		
+		    text 
+		      help   = STRING_TOKEN(STR_CPU_SKT_CPUID_HELP),
+		      text   = STRING_TOKEN(STR_CPU_SKT_CPUID_STRING),
+		      text   = STRING_TOKEN(STR_CPU_SKT0_CPUID_VALUE);
+		
+		    text 
+		      help   = STRING_TOKEN(STR_CPU_SKT_MICROCODE_HELP),
+		      text   = STRING_TOKEN(STR_CPU_SKT_MICROCODE_STRING),
+		      text   = STRING_TOKEN(STR_CPU_SKT0_MICROCODE_VALUE);
+		
+		    text 
+		      help   = STRING_TOKEN(STR_CPU_SKT_MAXSPEED_HELP),
+		      text   = STRING_TOKEN(STR_CPU_SKT_MAXSPEED_STRING),
+		      text   = STRING_TOKEN(STR_CPU_SKT0_MAXSPEED_VALUE);
+		
+		    text 
+		      help   = STRING_TOKEN(STR_CPU_SKT_MINSPEED_HELP),
+		      text   = STRING_TOKEN(STR_CPU_SKT_MINSPEED_STRING),
+		      text   = STRING_TOKEN(STR_CPU_SKT0_MINSPEED_VALUE);
+		
+		    text 
+		      help   = STRING_TOKEN(STR_CPU_SKT_NUMCORE_HELP),
+		      text   = STRING_TOKEN(STR_CPU_SKT_NUMCORE_STRING),
+		      text   = STRING_TOKEN(STR_CPU_SKT0_NUMCORE_VALUE);
+		
+		    text 
+		      help   = STRING_TOKEN(STR_CPU_SKT_HT_HELP),
+		      text   = STRING_TOKEN(STR_CPU_SKT_HT_STRING),
+		      text   = STRING_TOKEN(STR_CPU_SKT0_HT_VALUE);
+		
+		    text 
+		      help   = STRING_TOKEN(STR_CPU_SKT_VTX_HELP),
+		      text   = STRING_TOKEN(STR_CPU_SKT_VTX_STRING),
+		      text   = STRING_TOKEN(STR_CPU_SKT0_VTX_VALUE);
+		
+		#if CPU_DISPLAY_SETUP_SMX
+		    text 
+		      help   = STRING_TOKEN(STR_CPU_SKT_SMX_HELP),
+		      text   = STRING_TOKEN(STR_CPU_SKT_SMX_STRING),
+		      text   = STRING_TOKEN(STR_CPU_SKT0_SMX_VALUE);
+		#endif
+		
+		    SEPARATOR
+		
+		    text 
+		      help   = STRING_TOKEN(STR_CPU_SKT_L1_DATA_CACHE_HELP),
+		      text   = STRING_TOKEN(STR_CPU_SKT_L1_DATA_CACHE_STRING),
+		      text   = STRING_TOKEN(STR_CPU_SKT0_L1_DATA_CACHE_VALUE);
+		
+		    text 
+		      help   = STRING_TOKEN(STR_CPU_SKT_L1_CODE_CACHE_HELP),
+		      text   = STRING_TOKEN(STR_CPU_SKT_L1_CODE_CACHE_STRING),
+		      text   = STRING_TOKEN(STR_CPU_SKT0_L1_CODE_CACHE_VALUE);
+		
+		    text 
+		      help   = STRING_TOKEN(STR_CPU_SKT_L2_CACHE_HELP),
+		      text   = STRING_TOKEN(STR_CPU_SKT_L2_CACHE_STRING),
+		      text   = STRING_TOKEN(STR_CPU_SKT0_L2_CACHE_VALUE);
+		
+		    text 
+		      help   = STRING_TOKEN(STR_CPU_SKT_L3_CACHE_HELP),
+		      text   = STRING_TOKEN(STR_CPU_SKT_L3_CACHE_STRING),
+		      text   = STRING_TOKEN(STR_CPU_SKT0_L3_CACHE_VALUE);
+		
+		    SEPARATOR
+		
+		    text 
+		      help   = STRING_TOKEN(STR_PROCESSOR_SPEED_HELP),
+		      text   = STRING_TOKEN(STR_PROCESSOR_SPEED_STRING),
+		      text   = STRING_TOKEN(STR_PROCESSOR_SPEED_VALUE);
+		
+		    text 
+		        help = STRING_TOKEN(STR_CPU_EMT64_HELP),
+		        text = STRING_TOKEN(STR_CPU_EMT64_STRING),
+		        text = STRING_TOKEN(STR_CPU_EMT64_VALUE);
+		
+		    SEPARATOR
+		
+		    suppressif  ideqval SETUP_CPU_FEATURES.CpuMismatch == 0;
+		        text 
+		          help   = STRING_TOKEN(STR_CPU_MISMATCH_VALUE),
+		          text   = STRING_TOKEN(STR_CPU_MISMATCH_STRING),
+		          text   = STRING_TOKEN(STR_CPU_MISMATCH_VALUE);
+		    endif;
+		
+			SEPARATOR
+
+    		suppressif  ideqval SETUP_CPU_FEATURES.VTAvailable == 0;
+    		grayoutif ideqval SYSTEM_ACCESS.Access == SYSTEM_PASSWORD_USER;
+    		    OEM_NEHALEM_ONEOF_VT
+    		SUPPRESS_GRAYOUT_ENDIF
 
 		endform;
 // CPU Configuration END <<
 
 // SATA Configuration BEGIN >>
-		form formid = AUTO_ID(AAEON_IDE_CONFIG_FORM_ID),
+		form formid = AUTO_ID(OEM_SATA_CONFIG_FORM_ID),
 			title = STRING_TOKEN(STR_SATA_CONFIG_FORM);
 			SUBTITLE(STRING_TOKEN(STR_SATA_CONFIG_FORM))
 		
 			SEPARATOR
 
+    	    SB_CHECKBOX_SATA_EN
+	  
+    	    SEPARATOR
+    	    
+    	    suppressif  ideqval SETUP_DATA.PchSata == 0;
+    	      SB_CHECKBOX_SATA_SPEED_SUPPORT //EIP147898
+    	      SB_ONEOF_SATA_MODE
+		  
+  	    	  SEPARATOR
+    	      SB_CHECKBOX_SATAPORT0
+	    	  suppressif  ideqval SETUP_DATA.SataPort[0] == 0;
+          	    SB_CHECKBOX_SATAPORT0_HOTPLUG
+        	  endif; //SataPort[0] 
+		    
+    	      SEPARATOR
+    	      SB_CHECKBOX_SATAPORT1
+        	  suppressif  ideqval SETUP_DATA.SataPort[1] == 0;
+          		SB_CHECKBOX_SATAPORT1_HOTPLUG
+        	  endif; //SataPort[1] 
+    	  	  SEPARATOR
+	    
+    	  	  SUBTITLE(STRING_TOKEN(STR_SATA_0_STRING))
+		  	  SUBTITLE(STRING_TOKEN(STR_SATA_0_NAME))
+    	  	  SEPARATOR
+	    
+    	  	  SUBTITLE(STRING_TOKEN(STR_SATA_1_STRING))	
+		  	  SUBTITLE(STRING_TOKEN(STR_SATA_1_NAME))		
+    	    endif;  // suppress
 
 		endform;
 // SATA Configuration END <<
 
-// USB Configuration BEGIN >>
-		form formid = AUTO_ID(AAEON_USB_CONFIG_FORM_ID),
-			title = STRING_TOKEN(STR_USB_CONFIGURATION);
-			SUBTITLE(STRING_TOKEN(STR_USB_CONFIGURATION))
+// Miscellaneous Configuration BEGIN >>
+		form formid = AUTO_ID(OEM_MISCELLANEOUS_CONFIG_FORM_ID),
+			title = STRING_TOKEN(STR_MISCELLANEOUS_CONFIG_FORM);
+	
+			SUBTITLE(STRING_TOKEN(STR_MISCELLANEOUS_CONFIG_TITLE))
+			SB_CHECKBOX_OSSELECT_SUPPORT
+		endform;    
+// Miscellaneous Configuration END <<
+
+// LPSS & SCC Configuration BEGIN >>
+    	form formid = AUTO_ID(OEM_LPSS_SCC_CONFIG_FORM_ID),
+    		title = STRING_TOKEN(STR_LPSS_SCC_CONFIG_FORM);
+    		SUBTITLE(STRING_TOKEN(STR_SCC_CONFIG_TITLE))
+			SB_CHECKBOX_SCC_SD_CARD_SUPPORT
+
+    		grayoutif NOT ideqval SETUP_DATA.SdcardEnabled == 0x1;
+    		  grayoutif ideqval SETUP_DATA.LpssSdCardDDR50Enabled == 0x1;
+  			  SB_CHECKBOX_LPSS_SDCARD25_SUPPORT
+    		  endif; // grayoutif ideqval SETUP_DATA.LpsseMMC45DDR50Enabled == 0x1;
 		
-			SEPARATOR
-
-
-		endform;
-// USB Configuration END <<
+    		  grayoutif ideqval SETUP_DATA.LpssSdCardSDR25Enabled == 0x1;
+			  SB_CHECKBOX_LPSS_SDCARD50_SUPPORT
+    		  endif; // grayoutif ideqval SETUP_DATA.LpssSdCardSDR25Enabled == 0x1;
+    		endif;     // grayoutif NOT ideqval SETUP_DATA.SdcardEnabled == 0x1;
+    	endform;  
+// LPSS & SCC Configuration END <<
 
 // Hardware Monitor BEGIN >>
 		form formid = AUTO_ID(AAEON_HARDWARE_MONITOR_CONFIG_FORM_ID),
@@ -221,12 +391,10 @@
 			HWM1_TEXT_FAN2_SPEED
 
 		    #if defined(F81866_SMF_SUPPORT) && (F81866_SMF_SUPPORT == 1)
-		    suppressif ideqval AAEON_SETUP_DATA.EgrMode == 0;
 			SEPARATOR
 			goto OEM_SIO_SMARTFAN_FORM_ID, \
 			  prompt  = STRING_TOKEN(STR_F81866_SMARTFAN_FORM), \
 			  help    = STRING_TOKEN(STR_F81866_SMARTFAN_FORM_HELP);
-		      endif;
 		    #endif //F81866_SMF_SUPPORT == 1
 
 		endform;
@@ -293,10 +461,10 @@
 		
 			SEPARATOR
 
-			ONEOF_AAEONPOWERMODE
+		//	ONEOF_AAEONPOWERMODE
 			#if defined(AAEONPOWERMODE_SUPPORT) && (AAEONPOWERMODE_SUPPORT == 1)
 			suppressif ideqval SETUP_DATA.AaeonPowerMode == 0x01;
-				ONEOF_AAEON_ERPPOWERMODE
+			//	ONEOF_AAEON_ERPPOWERMODE
 
 				ONEOF_AAEONRESTOREACPOWERLOSS
 				suppressif ideqval AAEON_SETUP_DATA.EgrMode == 0;
@@ -306,7 +474,7 @@
 				SEPARATOR
 
 				SUBTITLE(STRING_TOKEN(STR_AAEON_WAKE_EVENTS))
-				ONEOF_AAEONRIWAKEENABLE
+			//	ONEOF_AAEONRIWAKEENABLE
 				#if defined(AaeonRtcWakePkg_SUPPORT) && (AaeonRtcWakePkg_SUPPORT == 1)
 				#define AAEON_RTCWAKE_FORM_SET_ITEM
 				#include "AaeonCommonPkg/AaeonRtcWakePkg/AaeonRtcWakePkg.sd"
