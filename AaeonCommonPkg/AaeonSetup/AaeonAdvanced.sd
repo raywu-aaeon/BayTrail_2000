@@ -369,12 +369,10 @@
 			HWM1_TEXT_FAN2_SPEED
 
 		    #if defined(F81866_SMF_SUPPORT) && (F81866_SMF_SUPPORT == 1)
-		    suppressif ideqval AAEON_SETUP_DATA.EgrMode == 0;
 			SEPARATOR
 			goto OEM_SIO_SMARTFAN_FORM_ID, \
 			  prompt  = STRING_TOKEN(STR_F81866_SMARTFAN_FORM), \
 			  help    = STRING_TOKEN(STR_F81866_SMARTFAN_FORM_HELP);
-		      endif;
 		    #endif //F81866_SMF_SUPPORT == 1
 
 		endform;
