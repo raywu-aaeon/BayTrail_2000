@@ -43,8 +43,8 @@ formset guid = SIO_FORM_SET_GUID,
         formid = SIO_MAIN_FORM_ID,
         title = STRING_TOKEN(STR_SIO_CONFIGURATION);
 
-        SUBTITLE(STRING_TOKEN(STR_SIO_DRIVER_VER))
-        SEPARATOR
+//        SUBTITLE(STRING_TOKEN(STR_SIO_DRIVER_VER))
+//        SEPARATOR
         SUBTITLE(STRING_TOKEN(STR_SUBTITLE1))
 
 
@@ -54,7 +54,7 @@ formset guid = SIO_FORM_SET_GUID,
         ///.....
         label SIO_GOTO_LABEL_END;
         SEPARATOR
-        SUBTITLE(STRING_TOKEN(STR_SIO_DRIVER_WARNING))
+//        SUBTITLE(STRING_TOKEN(STR_SIO_DRIVER_WARNING))
 
     endform;
 
@@ -73,7 +73,7 @@ formset guid = SIO_FORM_SET_GUID,
 
         SEPARATOR
 
-        SUBTITLE(STRING_TOKEN(STR_SIO_LD_WARNING))
+//        SUBTITLE(STRING_TOKEN(STR_SIO_LD_WARNING))
     endform;
 
 endformset;
