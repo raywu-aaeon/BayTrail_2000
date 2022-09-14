@@ -472,7 +472,7 @@ TOKEN
 End
 TOKEN
 	Name  = "GPIO65_EN"
-	Value  = "0"
+	Value  = "1"
 	Help  = "0: PME#\1: GPIO65"
 	TokenType = Integer
 	TargetH = Yes
