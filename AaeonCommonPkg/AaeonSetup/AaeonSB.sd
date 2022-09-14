@@ -50,7 +50,7 @@
             prompt  = STRING_TOKEN(STR_USB_CONFIG_FORM),
             help    = STRING_TOKEN(STR_USB_CONFIG_FORM_HELP);
 
-            goto PCIE_DEVICE_OPTIONS_FORM_ID,
+            goto OEM_PCIE_DEVICE_OPTIONS_FORM_ID,
             prompt = STRING_TOKEN (STR_PCIE_OPTIONS_FORM_TITLE),
             help   = STRING_TOKEN (STR_PCIE_OPTIONS_FORM_HELP);
 
@@ -97,7 +97,56 @@
           SB_CHECKBOX_USB2
           SB_CHECKBOX_USB3
     
-        endform;
+        endform; // OEM_USB_CONFIG_ID
+
+        form formid = AUTO_ID(OEM_PCIE_DEVICE_OPTIONS_FORM_ID),
+        title = STRING_TOKEN(STR_PCIE_OPTIONS_FORM_TITLE);
+          SUBTITLE(STRING_TOKEN(STR_PCIE_OPTIONS_FORM_TITLE))
+    
+          SB_CHECKBOX_PCIE_PORT0
+      
+          suppressif  ideqval SETUP_DATA.PcieRootPortEn[0] == 0;
+            SB_CHECKBOX_PCIE_SPEED00
+            #if defined(PCIE_ROOT_PORT_DETECT_NON_COMPLAINT) && (PCIE_ROOT_PORT_DETECT_NON_COMPLAINT != 0)
+              SB_ONEOF_PCIEROOTPORTDNCD00
+            #endif
+            SEPARATOR
+          
+            SB_CHECKBOX_PCIE_PORT1
+          endif;  // suppress
+      
+          suppressif  ideqval SETUP_DATA.PcieRootPortEn[0] == 0;
+            SB_CHECKBOX_PCIE_SPEED01
+            #if defined(PCIE_ROOT_PORT_DETECT_NON_COMPLAINT) && (PCIE_ROOT_PORT_DETECT_NON_COMPLAINT != 0)
+              SB_ONEOF_PCIEROOTPORTDNCD01
+            #endif
+    
+            SEPARATOR
+          
+            SB_CHECKBOX_PCIE_PORT2
+      
+          endif;  // suppress
+      
+          suppressif  ideqval SETUP_DATA.PcieRootPortEn[0] == 0;
+            SB_CHECKBOX_PCIE_SPEED02
+            #if defined(PCIE_ROOT_PORT_DETECT_NON_COMPLAINT) && (PCIE_ROOT_PORT_DETECT_NON_COMPLAINT != 0)
+              SB_ONEOF_PCIEROOTPORTDNCD02 
+            #endif
+              
+            SEPARATOR
+          
+            SB_CHECKBOX_PCIE_PORT3
+      
+          endif;  // suppress
+      
+          suppressif  ideqval SETUP_DATA.PcieRootPortEn[0] == 0;
+            SB_CHECKBOX_PCIE_SPEED03
+            #if defined(PCIE_ROOT_PORT_DETECT_NON_COMPLAINT) && (PCIE_ROOT_PORT_DETECT_NON_COMPLAINT != 0)
+              SB_ONEOF_PCIEROOTPORTDNCD03 
+            #endif
+          endif;  // suppress
+    
+        endform; // OEM_PCIE_DEVICE_OPTIONS_FORM_ID
     
     #endif //FORM_SET_FORM
 
