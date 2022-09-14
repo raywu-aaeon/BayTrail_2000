@@ -310,9 +310,15 @@
 		  
   	    	  SEPARATOR
     	      SB_CHECKBOX_SATAPORT0
+	    	  suppressif  ideqval SETUP_DATA.SataPort[0] == 0;
+          	    SB_CHECKBOX_SATAPORT0_HOTPLUG
+        	  endif; //SataPort[0] 
 		    
     	      SEPARATOR
     	      SB_CHECKBOX_SATAPORT1
+        	  suppressif  ideqval SETUP_DATA.SataPort[1] == 0;
+          		SB_CHECKBOX_SATAPORT1_HOTPLUG
+        	  endif; //SataPort[1] 
     	  	  SEPARATOR
 	    
     	  	  SUBTITLE(STRING_TOKEN(STR_SATA_0_STRING))
