@@ -350,6 +350,12 @@ TOKEN
 	TargetH = Yes
 End
 
+ELINK
+	Name  = "{{SCAN_F10, 0},0, HandleSaveExitKey, 0 },"
+	Parent  = "{{SCAN_F4, 0 },0, AaeonHandleSaveExitKey, 0 },"
+	InvokeOrder = ReplaceParent
+End
+
 TOKEN
 	Name  = " "
 	TokenType = Integer
