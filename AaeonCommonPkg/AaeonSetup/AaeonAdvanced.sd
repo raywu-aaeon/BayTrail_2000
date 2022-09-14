@@ -138,6 +138,10 @@
 		goto OEM_SATA_CONFIG_FORM_ID,
 		prompt  = STRING_TOKEN(STR_SATA_CONFIG_FORM),
 		help    = STRING_TOKEN(STR_SATA_CONFIG_FORM_HELP);
+		// Miscellaneous Configuration
+    	goto OEM_MISCELLANEOUS_CONFIG_FORM_ID,
+    	prompt  = STRING_TOKEN(STR_MISCELLANEOUS_CONFIG_FORM),
+    	help    = STRING_TOKEN(STR_MISCELLANEOUS_CONFIG_FORM_HELP);
 		// USB Configuration
     	goto USB_CONFIG_FORM_ID,
         prompt  = STRING_TOKEN(STR_USB_CONFIGURATION),
@@ -321,6 +325,15 @@
 
 		endform;
 // SATA Configuration END <<
+
+// Miscellaneous Configuration BEGIN >>
+		form formid = AUTO_ID(OEM_MISCELLANEOUS_CONFIG_FORM_ID),
+			title = STRING_TOKEN(STR_MISCELLANEOUS_CONFIG_FORM);
+	
+			SUBTITLE(STRING_TOKEN(STR_MISCELLANEOUS_CONFIG_TITLE))
+			SB_CHECKBOX_OSSELECT_SUPPORT
+		endform;    
+// Miscellaneous Configuration END <<
 
 // Hardware Monitor BEGIN >>
 		form formid = AUTO_ID(AAEON_HARDWARE_MONITOR_CONFIG_FORM_ID),
