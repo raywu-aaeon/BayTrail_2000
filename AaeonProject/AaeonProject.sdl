@@ -191,6 +191,16 @@ TOKEN
 End
 
 TOKEN
+	Name  = "AaeonSecureBoot_SUPPORT"
+	Value  = "0"
+	Help  = "Main switch to enable Setup support in Project"
+	TokenType = Boolean
+	TargetEQU = Yes
+	TargetMAK = Yes
+	TargetH = Yes
+End
+
+TOKEN
     Name  = "CRB_SETUP_SUPPORT"
     Value  = "0"
     Help  = "Main switch to enable CRB Setup support in Project"
