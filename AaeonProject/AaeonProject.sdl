@@ -590,6 +590,14 @@ TOKEN
 End
 
 TOKEN
+	Name  = "GPIO16_EN"
+	Value  = "1"
+	Help  = "0: BEEP\1: GPIO16"
+	TokenType = Integer
+	TargetH = Yes
+End
+
+TOKEN
 	Name  = " "
 	TokenType = Integer
 End
