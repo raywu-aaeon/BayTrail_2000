@@ -182,6 +182,15 @@ TOKEN
 End
 
 TOKEN
+	Name  = "AaeonMagicWordPkg_SUPPORT"
+	Value  = "0"
+	TokenType = Boolean
+	TargetEQU = Yes
+	TargetMAK = Yes
+	TargetH = Yes
+End
+
+TOKEN
     Name  = "CRB_SETUP_SUPPORT"
     Value  = "0"
     Help  = "Main switch to enable CRB Setup support in Project"
