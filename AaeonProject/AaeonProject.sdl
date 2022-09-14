@@ -490,13 +490,6 @@ TOKEN
 	TargetH = Yes
 End
 TOKEN
-	Name  = "GPIO65_EN"
-	Value  = "0"
-	Help  = "0: PME#\1: GPIO65"
-	TokenType = Integer
-	TargetH = Yes
-End
-TOKEN
 	Name  = "GPIO67_EN"
 	Value  = "1"
 	Help  = "0: S5#\1: GPIO67"
