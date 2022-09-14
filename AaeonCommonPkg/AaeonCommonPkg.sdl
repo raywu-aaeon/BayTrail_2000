@@ -315,60 +315,60 @@ End
 ##		TYPE 1/2/3 TOKENs definitions
 ##		
 ###########################################################################
-TOKEN
-	Name  = "SYSTEM_MANUFACTURER"
-	Value  = "AAEON"
-	Help  = "Specifies the System Manufacturer Name."
-	TokenType = Expression
-	TargetEQU = Yes
-End
-TOKEN
-	Name  = "SYSTEM_PRODUCT_NAME"
-	Value  = "$(DEFAULT_STRING)"
-	Help  = "Specifies the System Product Name"
-	TokenType = Expression
-	TargetEQU = Yes
-	TargetMAK = Yes ## Do not forget this parameter
-End
-TOKEN
-	Name  = "SYSTEM_VERSION"
-	Value  = "V1.0"
-	Help  = "Specifies the System Product Version."
-	TokenType = Expression
-	TargetEQU = Yes
-End
-TOKEN
-	Name  = "BASE_BOARD_MANUFACTURER"
-	Value  = "AAEON"
-	Help  = "Specifies the Board Manufacturer."
-	TokenType = Expression
-	TargetEQU = Yes
-	Token = "BASE_BOARD_INFO" "=" "1"
-	##Token = "NUMBER_OF_BASEBOARDS" "=" "1"
-End
-TOKEN
-	Name  = "BASE_BOARD_VERSION"
-	Value  = "V1.0"
-	Help  = "Specifies the Product Version."
-	TokenType = Expression
-	TargetEQU = Yes
-	Token = "BASE_BOARD_INFO" "=" "1"
-	##Token = "NUMBER_OF_BASEBOARDS" "=" "1"
-End
-TOKEN
-	Name  = "SYS_CHASSIS_MANUFACTURER_1"
-	Value  = "AAEON"
-	Help  = "Specifies the System Chassis Manufacturer."
-	TokenType = Expression
-	TargetEQU = Yes
-End
-TOKEN
-	Name  = "SYS_CHASSIS_VERSION_1"
-	Value  = "V1.0"
-	Help  = "Specifies the Chassis Version"
-	TokenType = Expression
-	TargetEQU = Yes
-End
+#TOKEN
+#	Name  = "SYSTEM_MANUFACTURER"
+#	Value  = "AAEON"
+#	Help  = "Specifies the System Manufacturer Name."
+#	TokenType = Expression
+#	TargetEQU = Yes
+#End
+#TOKEN
+#	Name  = "SYSTEM_PRODUCT_NAME"
+#	Value  = "$(DEFAULT_STRING)"
+#	Help  = "Specifies the System Product Name"
+#	TokenType = Expression
+#	TargetEQU = Yes
+#	TargetMAK = Yes ## Do not forget this parameter
+#End
+#TOKEN
+#	Name  = "SYSTEM_VERSION"
+#	Value  = "V1.0"
+#	Help  = "Specifies the System Product Version."
+#	TokenType = Expression
+#	TargetEQU = Yes
+#End
+#TOKEN
+#	Name  = "BASE_BOARD_MANUFACTURER"
+#	Value  = "AAEON"
+#	Help  = "Specifies the Board Manufacturer."
+#	TokenType = Expression
+#	TargetEQU = Yes
+#	Token = "BASE_BOARD_INFO" "=" "1"
+#	##Token = "NUMBER_OF_BASEBOARDS" "=" "1"
+#End
+#TOKEN
+#	Name  = "BASE_BOARD_VERSION"
+#	Value  = "V1.0"
+#	Help  = "Specifies the Product Version."
+#	TokenType = Expression
+#	TargetEQU = Yes
+#	Token = "BASE_BOARD_INFO" "=" "1"
+#	##Token = "NUMBER_OF_BASEBOARDS" "=" "1"
+#End
+#TOKEN
+#	Name  = "SYS_CHASSIS_MANUFACTURER_1"
+#	Value  = "AAEON"
+#	Help  = "Specifies the System Chassis Manufacturer."
+#	TokenType = Expression
+#	TargetEQU = Yes
+#End
+#TOKEN
+#	Name  = "SYS_CHASSIS_VERSION_1"
+#	Value  = "V1.0"
+#	Help  = "Specifies the Chassis Version"
+#	TokenType = Expression
+#	TargetEQU = Yes
+#End
 
 TOKEN
 	Name  = "SMBIOS_DMIEDIT_DATA_LOC"
