@@ -1233,3 +1233,13 @@ TOKEN
 	Name  = " "
 	TokenType = Integer
 End
+
+TOKEN
+	Name  = "DEFAULT_ENGINEERING_MODE"
+	Value  = "0"
+	Help  = "Main switch to enable Engineer setup mode"
+	TokenType = Boolean
+	TargetEQU = Yes
+	TargetMAK = Yes
+	TargetH = Yes
+End
