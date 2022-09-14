@@ -275,6 +275,24 @@
           option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
           option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = RESET_REQUIRED;\
       endoneof;
+
+#undef TCG_ONEOF_TPMSUPPORT
+#define TCG_ONEOF_TPMSUPPORT\
+      oneof varid = SETUP_DATA.TpmSupport,\
+          prompt = STRING_TOKEN(STR_TPM_SUPPORT_PROMPT ),\
+          help = STRING_TOKEN(STR_TPMSUPPORT_HELP),\
+          option text = STRING_TOKEN(STR_TPM_DISABLE), value = 0, flags = RESET_REQUIRED | MANUFACTURING | DEFAULT;\
+          option text = STRING_TOKEN(STR_TPM_ENABLE),  value = 1, flags = RESET_REQUIRED;\
+      endoneof;
+
+#undef TCG_ONEOF_TCMSUPPORT
+#define TCG_ONEOF_TCMSUPPORT\
+      oneof varid = SETUP_DATA.TpmSupport,\
+          prompt = STRING_TOKEN(STR_TCM_SUPPORT_PROMPT ),\
+          help = STRING_TOKEN(STR_TPMSUPPORT_HELP),\
+          option text = STRING_TOKEN(STR_TPM_DISABLE), value = 0, flags = RESET_REQUIRED | MANUFACTURING | DEFAULT;\
+          option text = STRING_TOKEN(STR_TPM_ENABLE),  value = 1, flags = RESET_REQUIRED;\
+      endoneof;
 #endif //ENDIF CONTROL_DEFINITION
 
 
