@@ -52,7 +52,7 @@ EFI_STATUS AaeonAcLossCallback(EFI_HII_HANDLE HiiHandle, UINT16 Class, UINT16 Su
 #if CRB_USE_VAR_STATEAFTERG3
 				SetupData.StateAfterG3 = MapToACPowerLoss[ACLOSS_ALWAYS_ON];
 #else
-				SetupData.LastState = MapToACPowerLoss[ACLOSS_ALWAYS_ON];
+				SetupData.LastState = MapToACPowerLoss[ACLOSS_ALWAYS_OFF];
 #endif 
 
 
@@ -201,7 +201,7 @@ EFI_STATUS AaeonAcLossCallback(EFI_HII_HANDLE HiiHandle, UINT16 Class, UINT16 Su
 #if CRB_USE_VAR_STATEAFTERG3
 						SetupData.StateAfterG3 = MapToACPowerLoss[ACLOSS_ALWAYS_ON];
 #else
-						SetupData.LastState = MapToACPowerLoss[ACLOSS_ALWAYS_ON];
+						SetupData.LastState = MapToACPowerLoss[ACLOSS_ALWAYS_OFF];
 #endif 
 					}
 					break;
