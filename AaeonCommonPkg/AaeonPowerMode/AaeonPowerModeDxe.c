@@ -52,7 +52,7 @@ EFI_STATUS EFIAPI AaeonPowerModeDxeInit(VOID)
 #if CRB_USE_VAR_STATEAFTERG3
 			SetupData.StateAfterG3 = MapToACPowerLoss[ACLOSS_ALWAYS_ON];
 #else
-			SetupData.LastState = MapToACPowerLoss[ACLOSS_ALWAYS_ON];
+			SetupData.LastState = MapToACPowerLoss[ACLOSS_ALWAYS_OFF];
 #endif 
 
 			#if defined(F81866_SUPPORT) && (F81866_SUPPORT == 1)
@@ -197,7 +197,7 @@ EFI_STATUS EFIAPI AaeonPowerModeDxeInit(VOID)
 #if CRB_USE_VAR_STATEAFTERG3
 					SetupData.StateAfterG3 = MapToACPowerLoss[ACLOSS_ALWAYS_ON];
 #else
-					SetupData.LastState = MapToACPowerLoss[ACLOSS_ALWAYS_ON];
+					SetupData.LastState = MapToACPowerLoss[ACLOSS_ALWAYS_OFF];
 #endif 
 	    	}
 
