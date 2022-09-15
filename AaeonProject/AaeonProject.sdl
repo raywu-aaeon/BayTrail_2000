@@ -1243,3 +1243,11 @@ TOKEN
 	TargetMAK = Yes
 	TargetH = Yes
 End
+
+TOKEN
+	Name = "ONEOF_AAEONRESTOREACPOWERLOSSSRC_DEFAULT"
+	Value = "1"
+	Help = "0: Chipset\1: EC/Super IO"
+	TokenType = Integer
+	TargetH = Yes
+End
