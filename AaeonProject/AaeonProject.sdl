@@ -1251,3 +1251,12 @@ TOKEN
 	TokenType = Integer
 	TargetH = Yes
 End
+
+TOKEN
+	Name  = "BEEP_ENABLE"
+	Value  = "0"
+	Help  = "This flag enables/disables all firmware beeps"
+	TokenType = Boolean
+	TargetH = Yes
+	TargetMAK = Yes
+End
