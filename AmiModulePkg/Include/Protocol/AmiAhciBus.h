@@ -1,7 +1,7 @@
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2016, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **
@@ -33,6 +33,8 @@ extern "C" {
 #include <Protocol/AmiHddSmart.h>
 #include <Protocol/AmiHddPowerMgmt.h>
 #include <Protocol/StorageSecurityCommand.h>
+#include <Protocol/BlockIo.h>
+#include <Protocol/PciIo.h>
 
 //---------------------------------------------------------------------------
 
@@ -83,6 +85,7 @@ typedef struct {
     UINT8                 Device;
     UINT8                 Command;
     UINT8                 Control;
+    UINT64                Timeout;
     AHCI_ATAPI_COMMAND    AtapiCmd;
 } COMMAND_STRUCTURE;
 
@@ -114,7 +117,7 @@ typedef struct {
 
 typedef 
 EFI_STATUS 
-(*AMI_SATA_DEV_RAED_WRITE_PIO) (
+(EFIAPI *AMI_SATA_DEV_RAED_WRITE_PIO) (
     IN SATA_DEVICE_INTERFACE    *SataDevInterface,
     IN OUT VOID                 *Buffer,
     IN UINTN                    ByteCount,
@@ -143,7 +146,7 @@ EFI_STATUS
 
 typedef 
 EFI_STATUS 
-(*AMI_SATA_DEV_PIO_DATA_IN) (
+(EFIAPI *AMI_SATA_DEV_PIO_DATA_IN) (
     IN SATA_DEVICE_INTERFACE    *SataDevInterface, 
     IN OUT COMMAND_STRUCTURE    *CommandStructure,
     IN BOOLEAN                  READWRITE 
@@ -154,16 +157,10 @@ EFI_STATUS
     and Reads/Writes data to the ATA device.
         
     @param    SataDevInterface 
-    @param    Buffer 
-    @param    ByteCount 
-    @param    Features 
-    @param    LBALow 
-    @param    LBALowExp 
-    @param    LBAMid 
-    @param    LBAMidExp 
-    @param    LBAHigh 
-    @param    LBAHighExp 
-    @param    ReadWriteCommand 
+
+    @param    CommandStructure
+
+
     @param    READWRITE
 
     @retval    EFI_STATUS
@@ -177,18 +174,9 @@ EFI_STATUS
 
 typedef 
 EFI_STATUS 
-(*AMI_SATA_DEV_PIO_DATA_OUT) (
+(EFIAPI *AMI_SATA_DEV_PIO_DATA_OUT) (
     IN SATA_DEVICE_INTERFACE    *SataDevInterface,
-    IN OUT VOID                 *Buffer,
-    IN UINTN                    ByteCount,
-    IN UINT8                    Features,
-    IN UINT8                    LBALow,
-    IN UINT8                    LBALowExp,
-    IN UINT8                    LBAMid,
-    IN UINT8                    LBAMidExp,
-    IN UINT8                    LBAHigh,
-    IN UINT8                    LBAHighExp,
-    IN UINT8                    Command,
+    IN OUT COMMAND_STRUCTURE    CommandStructure,
     IN BOOLEAN                  READWRITE
 );
 
@@ -211,7 +199,7 @@ EFI_STATUS
 
 typedef 
 EFI_STATUS 
-(*AMI_SATA_DEV_NON_DATA_CMD) (
+(EFIAPI *AMI_SATA_DEV_NON_DATA_CMD) (
     IN SATA_DEVICE_INTERFACE    *SataDevInterface, 
     IN COMMAND_STRUCTURE        CommandStructure
 );
@@ -233,7 +221,9 @@ EFI_STATUS
       5. Wait till command completes. Check for errors.
 
 **/ 
-typedef EFI_STATUS (*AMI_SATA_DEV_DMA_DATA_CMD) (
+typedef 
+EFI_STATUS 
+(EFIAPI *AMI_SATA_DEV_DMA_DATA_CMD) (
     IN SATA_DEVICE_INTERFACE                *SataDevInterface, 
     IN OUT COMMAND_STRUCTURE                *CommandStructure,
     IN BOOLEAN                              READWRITE
@@ -259,7 +249,7 @@ typedef EFI_STATUS (*AMI_SATA_DEV_DMA_DATA_CMD) (
 
 typedef 
 EFI_STATUS 
-(*AMI_SATA_DEV_WAIT_FOR_CMD_COMPLETE) (
+(EFIAPI *AMI_SATA_DEV_WAIT_FOR_CMD_COMPLETE) (
     IN SATA_DEVICE_INTERFACE    *SataDevInterface,
     IN COMMAND_TYPE             CommandType,
     IN UINTN                    TimeOut    
@@ -283,7 +273,7 @@ EFI_STATUS
 **/ 
 typedef 
 EFI_STATUS 
-(*AMI_SATA_GENERATE_PORT_RESET) (
+(EFIAPI *AMI_SATA_GENERATE_PORT_RESET) (
     AMI_AHCI_BUS_PROTOCOL    *AhciBusInterface, 
     SATA_DEVICE_INTERFACE    *SataDevInterface, 
     UINT8                    Port,
@@ -308,7 +298,7 @@ EFI_STATUS
 **/ 
 typedef 
 EFI_STATUS 
-(*AMI_SATA_GENERATE_PORT_SOFT_RESET) (
+(EFIAPI *AMI_SATA_GENERATE_PORT_SOFT_RESET) (
     SATA_DEVICE_INTERFACE               *SataDevInterface, 
     UINT8                               PMPort
 );
@@ -334,7 +324,7 @@ EFI_STATUS
 
 typedef 
 EFI_STATUS 
-(*AMI_EXECUTE_PACKET_COMMAND) (
+(EFIAPI *AMI_EXECUTE_PACKET_COMMAND) (
     IN SATA_DEVICE_INTERFACE    *SataDevInterface, 
     IN COMMAND_STRUCTURE        *CommandStructure,
     IN BOOLEAN                  READWRITE
@@ -416,6 +406,7 @@ struct _SATA_DEVICE_INTERFACE{
     UINT8                                 PMPortNumber; 
     UINT8                                 NumPMPorts;         // Number of Ports in PM, Valid for PMPORT only
     UINT8                                 DeviceState;
+    BOOLEAN                               IsDeviceFeatureDone;
     UINT32                                Signature;
     UINT32                                SControl;
     DEVICE_TYPE                           DeviceType;
@@ -444,6 +435,8 @@ struct _SATA_DEVICE_INTERFACE{
     AMI_HDD_SMART_PROTOCOL                *SmartInterface;
     AMI_HDD_POWER_MGMT_PROTOCOL           *PowerMgmtInterface;
     EFI_STORAGE_SECURITY_COMMAND_PROTOCOL *StorageSecurityInterface;
+    VOID                                  *OpalConfig;               // Pointer to OPAL_DEVICE
+
 
     DLINK                                 SataDeviceLink; 
     DLIST                                 PMSataDeviceList;         
@@ -463,7 +456,7 @@ extern EFI_GUID gAmiAhciPlatformPolicyProtocolGuid;
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2016, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **

@@ -1,7 +1,7 @@
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2016, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **
@@ -26,13 +26,19 @@
 #include <Protocol/LegacyBios.h>
 #include <Protocol/LegacyBiosExt.h>
 #include <Protocol/PciIo.h>
-#include <protocol/BlockIo.h>
+#include <Protocol/BlockIo.h>
 #include <Protocol/AmiAhciBus.h>
 #include "AInt13.h"
 #include "AhciInt13Smm.h"
 
 AHCI_I13_RTDATA             *gAhciI13Data = NULL;
 EFI_GUID                    gAint13SmmDataGuid = AHCI_INT13_SMM_DATA_GUID;
+
+
+// Global Buffers used for SMM Communicate
+UINT8                       *gAhciInt13DxeCommunicateBuffer = NULL;
+UINTN                        gAhciInt13DxeCommunicateBufferSize;
+
 
 //---------------------------------------------------------------------------
 
@@ -42,6 +48,7 @@ EFI_GUID                    gAint13SmmDataGuid = AHCI_INT13_SMM_DATA_GUID;
     @param BBS_TABLE   *BbsEntry
 
     @retval UINT8   TRUE  - It is a SATA device and in AHCI mode
+                            or it is a ATAPI device in AHCI or RAID mode
                     FALSE - It is not a SATA device or not in AHCI mode
 
 **/
@@ -49,8 +56,21 @@ UINT8   IsSataDeviceInAhciMode (
     IN  BBS_TABLE   *BbsEntry
 ){
 
-    if((BbsEntry->DeviceType == BBS_HARDDISK || BbsEntry->DeviceType == BBS_CDROM)) {
-        if(BbsEntry->Class == MASS_STORAGE || BbsEntry->SubClass == AHCI_CONTROLLER ){
+    // Return True if Devicetype is HDD and SATA controller is programmed in AHCI mode
+    if( BbsEntry->DeviceType == BBS_HARDDISK ) {
+        if( (BbsEntry->Class == MASS_STORAGE) && (BbsEntry->SubClass == AHCI_CONTROLLER_SCC) ) {
+            return TRUE;
+        }
+    }
+
+    // Return True if Devicetype is CDROM and SATA controller is programmed either in AHCI mode
+    // or RAID mode. SUPPORT_ATAPI_IN_RAID_MODE sdl token should be if SATA controlle is in RAID mode. 
+    if( BbsEntry->DeviceType == BBS_CDROM ) {
+        if( (BbsEntry->Class == MASS_STORAGE) && ( (BbsEntry->SubClass == AHCI_CONTROLLER_SCC)
+            #if SUPPORT_ATAPI_IN_RAID_MODE
+              || ( (BbsEntry->SubClass == RAID_CONTROLLER_SCC) ? TRUE: FALSE)
+            #endif
+        )) {
             return TRUE;
         }
     }
@@ -114,28 +134,17 @@ TransferAhciInt13SmmDataToSmm (
 {
     EFI_SMM_COMMUNICATION_PROTOCOL *gSmmCommunication = NULL;
     EFI_SMM_COMMUNICATE_HEADER     *SmmCommunicateHeader;
-    UINT8                          *CommunicateBuffer = NULL;
-    UINTN                          CommunicateBufferSize;
     EFI_STATUS                     Status;
 
     if ( pData == NULL || DataSize == 0 || pGuid == NULL ) {
         return EFI_INVALID_PARAMETER;
     }
-
+    
     // Calculate Size of Communication buffer
-    CommunicateBufferSize  = (OFFSET_OF (EFI_SMM_COMMUNICATE_HEADER, Data)) + DataSize; // Header size (without data) + data size
-
-    // Allocate memory for Communication Buffer.   
-    Status = pBS->AllocatePool( EfiBootServicesData,
-                                CommunicateBufferSize,
-                                (VOID**)&CommunicateBuffer );
-    if ( EFI_ERROR( Status )) {  
-        ASSERT_EFI_ERROR(Status);
-        return Status;
-    }    
+    gAhciInt13DxeCommunicateBufferSize  = (OFFSET_OF (EFI_SMM_COMMUNICATE_HEADER, Data)) + DataSize; // Header size (without data) + data size
 
     // Copy SMM Communicate Header Here
-    SmmCommunicateHeader = (EFI_SMM_COMMUNICATE_HEADER *)CommunicateBuffer;
+    SmmCommunicateHeader = (EFI_SMM_COMMUNICATE_HEADER *)gAhciInt13DxeCommunicateBuffer;
 
     // Copy data GUID
     pBS->CopyMem( &SmmCommunicateHeader->HeaderGuid, pGuid, sizeof( EFI_GUID ) );
@@ -152,16 +161,9 @@ TransferAhciInt13SmmDataToSmm (
         ASSERT_EFI_ERROR(Status);
         return Status;  
     }
-
+    
     // Send data to SMM using protocol API
-    Status = gSmmCommunication->Communicate (gSmmCommunication, CommunicateBuffer, &CommunicateBufferSize);
-    if (EFI_ERROR(Status)) {
-        ASSERT_EFI_ERROR(Status);
-        return Status;  
-    }
-
-    // Free memory allocated for Communication Buffer.
-    Status = pBS->FreePool(CommunicateBuffer);
+    Status = gSmmCommunication->Communicate (gSmmCommunication, gAhciInt13DxeCommunicateBuffer, &gAhciInt13DxeCommunicateBufferSize);
     if (EFI_ERROR(Status)) {
         ASSERT_EFI_ERROR(Status);
         return Status;  
@@ -189,7 +191,9 @@ TransferAhciInt13SmmDataToSmm (
     @retval VOID
 
 **/
-VOID AmiLegacyBootNotify(
+VOID
+EFIAPI 
+AmiLegacyBootNotify(
     IN EFI_EVENT Event,
     IN VOID *Context
 )
@@ -257,6 +261,12 @@ VOID AmiLegacyBootNotify(
             }
             SataDevInterface = ((SATA_DISK_INFO *)DiskInfo)->SataDevInterface;
 
+            // If the DiskInfo Interface guid is not belong to AHCI, go for the 
+            // next diskinfo protocol. guidcmp returns 0 incase both the guids matches
+            if(guidcmp(&DiskInfo->Interface, &gEfiDiskInfoAhciInterfaceGuid)) {
+            	continue;  
+            }
+            
             // Fill data in AhciInt13SmmData
             pDriveInfo = &(AhciInt13SmmData->DriveInfo[AhciInt13SmmData->DriveCount]);
             pDriveInfo->DriveNum = (UINT8)(BbsTable[i].InitPerReserved >> 8);
@@ -325,17 +335,30 @@ EFI_STATUS AhciInt13DxeEntry(
 )
 {
     EFI_STATUS  Status;
-    VOID        *Registration = NULL;
     EFI_EVENT   Event;
     
     InitAmiLib(ImageHandle, SystemTable);
 
-    Status = RegisterProtocolCallback(
-                 &gAmiLegacyBootProtocolGuid,
-                 AmiLegacyBootNotify,
-                 NULL,
-                 &Event,
-                 &Registration );
+    // Buffers Allocated for SMM Communication As new core doesn't allow Buffers which are allocated after EndofDXE.
+    // Maximum Size of Buffer allocated
+    
+    gAhciInt13DxeCommunicateBufferSize  = (OFFSET_OF (EFI_SMM_COMMUNICATE_HEADER, Data)) + sizeof(AHCI_INT13_SMM_DATA);
+    //
+    // Allocate Memory for Communication buffer.   
+    //
+    Status = pBS->AllocatePool( EfiRuntimeServicesData,
+                                gAhciInt13DxeCommunicateBufferSize,
+                                (VOID**)&gAhciInt13DxeCommunicateBuffer );
+    
+    if ( EFI_ERROR( Status )) {
+        return Status;
+    }
+
+    Status = CreateLegacyBootEvent (    
+                    TPL_NOTIFY,
+                    AmiLegacyBootNotify,
+                    NULL,
+                    &Event );
 
     return Status;
 }
@@ -343,7 +366,7 @@ EFI_STATUS AhciInt13DxeEntry(
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2016, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **

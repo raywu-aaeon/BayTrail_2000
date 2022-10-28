@@ -1,7 +1,7 @@
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2017, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **
@@ -42,6 +42,7 @@ UINT64      gFisBaseAddress;
 
 AMI_AHCI_BUS_SMM_PROTOCOL   AhciSmm;
 BOOLEAN     gPortReset = FALSE;             // Avoid Re-entry
+BOOLEAN     gSoftReset = FALSE;             // Avoid Re-entry
 UINT8       *SenseData=NULL;
 UINT64 PciExpressBaseAddress = 0;
 #if INDEX_DATA_PORT_ACCESS
@@ -371,6 +372,7 @@ WaitforCommandComplete  (
         // clear the status and return error
         SMM_HBA_PORT_REG32_OR (AhciBaseAddr, Port, HBA_PORTS_SERR, HBA_PORTS_ERR_CLEAR); 
         SMM_HBA_PORT_REG32_OR (AhciBaseAddr, Port, HBA_PORTS_IS, HBA_PORTS_IS_CLEAR);
+        DEBUG ((DEBUG_ERROR, "AHCI_SMM : PxSERR Port Serial ATA Error Data32_SERR:%x  Data32_IS :%x\n", Data32_SERR, Data32_IS));
         return EFI_DEVICE_ERROR;    
     } 
     // check if CI register is zero
@@ -800,7 +802,7 @@ BuildCommandList (
     UINT8    PMPort = SataDevInterface->PMPortNumber;
 
     ZeroMemorySmm (CommandList, sizeof(AHCI_COMMAND_LIST));
-    CommandList->Ahci_Cmd_A = SataDevInterface->DeviceType == ATAPI ? 1 : 0;      // set elsewhere 
+    // CommandList->Ahci_Cmd_A = SataDevInterface->DeviceType == ATAPI ? 1 : 0;      // set elsewhere 
     CommandList->Ahci_Cmd_P = 0;
     CommandList->Ahci_Cmd_R = 0;
     CommandList->Ahci_Cmd_B = 0;
@@ -907,17 +909,19 @@ BuildPRDT (
     UINT16                  Prdtlength = 0;
     AHCI_COMMAND_PRDT       *PrdtTable = &(Commandtable->PrdtTable);
 
-    for (;ByteCount; (UINT8 *)PrdtTable += sizeof(AHCI_COMMAND_PRDT)){
+    //for (;ByteCount; (UINT8 *)PrdtTable += sizeof(AHCI_COMMAND_PRDT)){
+    for (;ByteCount; PrdtTable ++){
         PrdtTable->Ahci_Prdt_DBA = (UINT32)CommandStructure.Buffer;
         PrdtTable->Ahci_Prdt_DBC = ByteCount >= PRD_MAX_DATA_COUNT ? (PRD_MAX_DATA_COUNT - 1) : (ByteCount - 1);
         ByteCount -= (PrdtTable->Ahci_Prdt_DBC + 1);
         PrdtTable->Ahci_Prdt_I = 0;
         Prdtlength+= sizeof(AHCI_COMMAND_PRDT);
-        (UINT8 *)CommandStructure.Buffer += PrdtTable->Ahci_Prdt_DBC + 1;
+        CommandStructure.Buffer = ((UINT8 *)CommandStructure.Buffer + PrdtTable->Ahci_Prdt_DBC + 1);
     }
 
     //  Set I flag only for the last entry.
-    (UINT8 *)PrdtTable -= sizeof(AHCI_COMMAND_PRDT);
+    //(UINT8 *)PrdtTable -= sizeof(AHCI_COMMAND_PRDT);
+    PrdtTable --;
     PrdtTable->Ahci_Prdt_I = 1;
     CommandList->Ahci_Cmd_PRDTL = Prdtlength / sizeof(AHCI_COMMAND_PRDT);
 
@@ -1067,6 +1071,121 @@ ReadWritePMPort (
 }
 
 /**
+@internal
+    Generate Soft Reset
+
+    @param    SataDevInterface  - Pointer to AMI_AHCI_BUS_SMM_PROTOCOL
+    @param    Port              - Device's Port Number
+    @param    PMPort            - Device's PMPort Number
+    @param    DeviceType        - Type of the device (0-ATA, 1-ATAPI)
+
+    @retval EFI_SUCCESS         - Soft reset successful
+    @retval EFI_DEVICE_ERROR    - Device error/Timeout occurred
+
+    @note  
+  1. Issue a Control register update, H2D register FIS with reset bit set.
+  2. Wait for 100usec
+  3. Issue a Control register update, H2D register FIS with reset bit reset.
+@endinternal
+**/ 
+
+EFI_STATUS
+GenerateSoftReset (
+    IN AMI_AHCI_BUS_SMM_PROTOCOL           *SataDevInterface,
+    IN UINT8                               Port,
+    IN UINT8                               PMPort,
+    DEVICE_TYPE                            DeviceType
+)
+{
+
+    EFI_STATUS           Status;
+    UINT32               AhciBaseAddr = (UINT32) SataDevInterface->AhciBaseAddress;
+    AHCI_COMMAND_LIST    *CommandList = (AHCI_COMMAND_LIST *)(UINTN) SataDevInterface->PortCommandListBaseAddr;
+    AHCI_COMMAND_TABLE   *Commandtable = (AHCI_COMMAND_TABLE *)(UINTN)SataDevInterface->PortCommandTableBaseAddr;
+    COMMAND_STRUCTURE    CommandStructure;
+    UINT32               Data32;
+    UINT32               HBACapability;
+
+    if (gSoftReset) {
+        return EFI_SUCCESS;
+    }
+    
+    SataDevInterface->PortNumber=Port;
+    SataDevInterface->PMPortNumber=PMPort;
+    SataDevInterface->DeviceType=DeviceType;
+    
+    PMPort = (PMPort == 0xFF) ? CONTROL_PORT : PMPort;
+    
+    gSoftReset = TRUE;
+
+    ZeroMemorySmm (&CommandStructure, sizeof(COMMAND_STRUCTURE));
+
+    Status = StopController(SataDevInterface, TRUE);
+    if (EFI_ERROR(Status)) {
+        goto GenerateSoftReset_Exit;
+    }
+    
+    // if Command list Override is supported, set CLO bit
+    Data32 = SMM_HBA_PORT_REG32 (AhciBaseAddr, Port, HBA_PORTS_TFD) & (HBA_PORTS_TFD_DRQ | HBA_PORTS_TFD_BSY);
+    HBACapability = SMM_HBA_REG32(AhciBaseAddr, HBA_CAP);
+    if ((HBACapability & HBA_CAP_SCLO) && Data32){
+        SMM_HBA_PORT_REG32_OR (AhciBaseAddr, Port, HBA_PORTS_CMD, HBA_PORTS_CMD_CLO);
+        Status = WaitForMemClear(AhciBaseAddr, Port, HBA_PORTS_CMD,
+                            HBA_PORTS_CMD_CLO,
+                            BUSY_CLEAR_TIMEOUT);
+    }
+    
+    CommandStructure.Control = 4;
+    BuildCommandList(SataDevInterface, CommandList, (UINT64)Commandtable);
+    BuildCommandFIS(SataDevInterface, CommandStructure, CommandList, Commandtable);
+
+    CommandList->Ahci_Cmd_W = 0; 
+    // Update of Control Register
+    Commandtable->CFis.Ahci_CFis_C = 0;
+    CommandList->Ahci_Cmd_R = 1;
+    CommandList->Ahci_Cmd_C= 1;
+
+    if (PMPort != 0xFF) {
+        Commandtable->CFis.AHci_CFis_PmPort = PMPort;
+    }
+
+    StartController(SataDevInterface, BIT00);
+    // Wait till command is processed
+    Status = WaitForMemClear(AhciBaseAddr, Port, HBA_PORTS_CI,
+                            BIT00,
+                            TIMEOUT_1SEC * 5);
+
+    // Is the command complete?
+    if (EFI_ERROR(Status)){
+        goto GenerateSoftReset_Exit;
+    }
+    SmmStall (100);               // 100 usec
+
+    ZeroMemorySmm (&CommandStructure, sizeof(COMMAND_STRUCTURE));
+    BuildCommandList(SataDevInterface, CommandList, (UINT64)Commandtable);
+    BuildCommandFIS(SataDevInterface, CommandStructure, CommandList, Commandtable);
+
+    CommandList->Ahci_Cmd_W = 0; 
+    // Update of Control Register
+    Commandtable->CFis.Ahci_CFis_C = 0;
+    if (PMPort != 0xFF) {
+        Commandtable->CFis.AHci_CFis_PmPort = PMPort;
+    }
+
+    StartController(SataDevInterface, BIT00);    
+    Status = WaitforCommandComplete(SataDevInterface, NON_DATA_CMD, NON_DATA_COMMAND_COMPLETE_TIMEOUT);
+
+    //  Stop Controller
+    StopController(SataDevInterface, FALSE);
+
+GenerateSoftReset_Exit:
+
+    gSoftReset = FALSE;
+    DEBUG ((DEBUG_INFO, "AHCI : GenerateSoftReset Status : %r\n", Status));
+    return Status;
+}
+
+/**
     Execute the DMA data command
 
     @param    SataDevInterface 
@@ -1080,6 +1199,7 @@ ReadWritePMPort (
 
 **/ 
 EFI_STATUS
+EFIAPI 
 AhciSmmExecuteDmaDataCommand (
         AMI_AHCI_BUS_SMM_PROTOCOL           *SataDevInterface, 
         COMMAND_STRUCTURE                   *CommandStructure,
@@ -1155,6 +1275,7 @@ AhciSmmExecuteDmaDataCommand (
 
 **/ 
 EFI_STATUS
+EFIAPI 
 AhciSmmExecutePioDataCommand (
     AMI_AHCI_BUS_SMM_PROTOCOL           *SataDevInterface, 
     COMMAND_STRUCTURE                   *CommandStructure,
@@ -1224,6 +1345,7 @@ AhciSmmExecutePioDataCommand (
 **/ 
 
 EFI_STATUS
+EFIAPI 
 AhciSmmExecuteNonDataCommand (
     AMI_AHCI_BUS_SMM_PROTOCOL           *SataDevInterface, 
     COMMAND_STRUCTURE                   CommandStructure,
@@ -1263,7 +1385,7 @@ AhciSmmExecuteNonDataCommand (
 
     StartController(SataDevInterface, BIT00);
 
-    Status = WaitforCommandComplete(SataDevInterface, NON_DATA_CMD, ATAPI_BUSY_CLEAR_TIMEOUT );
+    Status = WaitforCommandComplete(SataDevInterface, NON_DATA_CMD, NON_DATA_COMMAND_COMPLETE_TIMEOUT );
 
     // Stop Controller
     StopController(SataDevInterface,FALSE);
@@ -1378,6 +1500,7 @@ exit_HandleAtapiError_with_Reset:
 
 **/ 
 EFI_STATUS 
+EFIAPI 
 AhciSmmExecutePacketCommand (
     AMI_AHCI_BUS_SMM_PROTOCOL               *SataDevInterface, 
     IN COMMAND_STRUCTURE     *CommandStructure,
@@ -1465,6 +1588,7 @@ AhciSmmExecutePacketCommand (
 **/ 
 
 EFI_STATUS
+EFIAPI 
 AhciSmmInitPortOnS3Resume(
     AMI_AHCI_BUS_SMM_PROTOCOL           *SataDevInterface, 
     UINT8                               Port
@@ -1472,28 +1596,10 @@ AhciSmmInitPortOnS3Resume(
 {
     UINT32      AhciBaseAddr=(UINT32)SataDevInterface->AhciBaseAddress;
 
-    // If the AhciBaseAddress is 0, Initialize the base address
+    // AhciBaseAddress should be programmed before consuming this API
     if(!AhciBaseAddr) {
-#if INDEX_DATA_PORT_ACCESS
-        UINT32 lbar;
-
-        lbar = *(UINT32*)PCI_CFG_ADDR(ICH_SATA_BUS_NUMBER,
-                                            ICH_SATA_DEVICE_NUMBER,
-                                            ICH_SATA_FUNCTION_NUMBER,
-                                            PCI_LBAR);  // Get AHCI lbase address;
-
-        lbar &= PCI_LBAR_ADDRESS_MASK;  // Legacy Bus Master Base Address
-
-        IndexPort = (UINT16)lbar + INDEX_OFFSET_FROM_LBAR;
-        DataPort = (UINT16)lbar + DATA_OFFSET_FROM_LBAR;
-#endif
-        //Initialize the AHCI base address
-        AhciBaseAddr = *(UINT32*)PCI_CFG_ADDR(ICH_SATA_BUS_NUMBER,
-                                            ICH_SATA_DEVICE_NUMBER,
-                                            ICH_SATA_FUNCTION_NUMBER,
-                                            PCI_ABAR);  // Get AHCI base address;
-        //Initialize the Ahci Base address 
-        SataDevInterface->AhciBaseAddress=AhciBaseAddr;
+        ASSERT(AhciBaseAddr);
+        return EFI_DEVICE_ERROR;
     }
 
     //Set the Spin up device on the port
@@ -1535,6 +1641,75 @@ AhciSmmInitPortOnS3Resume(
     SMM_HBA_PORT_WRITE_REG64(AhciBaseAddr,Port,HBA_PORTS_FB,gFisBaseAddress);
 
     return EFI_SUCCESS;
+}
+
+/**
+    Issue a Port Reset
+
+    @param    SataDevInterface  - Pointer to AMI_AHCI_BUS_SMM_PROTOCOL
+    @param    Port              - Device's Port Number
+    @param    PMPort            - Device's PMPort Number
+    @param    DeviceType        - Type of the device (0-ATA, 1-ATAPI)
+
+    @retval EFI_SUCCESS         - Port reset successful
+    @retval EFI_DEVICE_ERROR    - Device error/Timeout occurred
+
+    @note    1. Issue port reset by setting DET bit in SControl register
+             2. Call HandlePortComReset to check the status of the reset.
+
+**/ 
+
+EFI_STATUS
+AhciSmmGeneratePortReset (
+    AMI_AHCI_BUS_SMM_PROTOCOL   *SataDevInterface, 
+    UINT8                       Port,
+    UINT8                       PMPort,
+    DEVICE_TYPE                 DeviceType
+)
+{
+    UINT32   Data32;
+    UINT32   AhciBaseAddr = (UINT32) SataDevInterface->AhciBaseAddress;
+    
+    // Get the Port Speed allowed and Interface Power Management Transitions Allowed
+    // Pass the values for PortReset. 
+    Data32 = SMM_HBA_PORT_REG32 (AhciBaseAddr, Port, HBA_PORTS_SCTL);
+    Data32 &= 0xFF0;
+    
+    SataDevInterface->PortNumber = Port;
+    SataDevInterface->PMPortNumber = PMPort;
+    SataDevInterface->DeviceType = DeviceType;
+    
+    return GeneratePortReset(SataDevInterface, Port, PMPort, (UINT8)((Data32 & 0xF0) >> 4), (UINT8)(Data32 >> 8));
+}
+
+/**
+    Generate Soft Reset
+
+    @param    SataDevInterface  - Pointer to AMI_AHCI_BUS_SMM_PROTOCOL
+    @param    Port              - Device's Port Number
+    @param    PMPort            - Device's PMPort Number
+    @param    DeviceType        - Type of the device (0-ATA, 1-ATAPI)
+
+    @retval EFI_SUCCESS         - Soft reset successful
+    @retval EFI_DEVICE_ERROR    - Device error/Timeout occurred
+
+    @note  
+  1. Issue a Control register update, H2D register FIS with reset bit set.
+  2. Wait for 100usec
+  3. Issue a Control register update, H2D register FIS with reset bit reset.
+
+**/ 
+
+EFI_STATUS
+AhciSmmGenerateSoftReset (
+    IN AMI_AHCI_BUS_SMM_PROTOCOL           *SataDevInterface,
+    IN UINT8                               Port,
+    IN UINT8                               PMPort,
+    IN DEVICE_TYPE                         DeviceType
+)
+{
+	
+    return GenerateSoftReset(SataDevInterface, Port, PMPort, DeviceType);
 }
 
 /**
@@ -1592,6 +1767,8 @@ InSmmFunction (
     AhciSmm.AhciSmmExecuteDmaDataCommand=AhciSmmExecuteDmaDataCommand;
     AhciSmm.AhciSmmExecuteNonDataCommand=AhciSmmExecuteNonDataCommand;
     AhciSmm.AhciSmmExecutePacketCommand=AhciSmmExecutePacketCommand;
+    AhciSmm.AhciSmmGenerateSoftReset=AhciSmmGenerateSoftReset;
+    AhciSmm.AhciSmmGeneratePortReset=AhciSmmGeneratePortReset;
 
     Status = pBS->LocateProtocol(&gEfiSmmBase2ProtocolGuid, NULL,  (VOID **)&pSmmBase);
     if (EFI_ERROR(Status)) {
@@ -1622,7 +1799,7 @@ InSmmFunction (
 **/
 
 EFI_STATUS 
-AhciSmmDriverEntryPoint (
+EFIAPI AhciSmmDriverEntryPoint (
     IN EFI_HANDLE       ImageHandle,
     IN EFI_SYSTEM_TABLE *SystemTable
 )
@@ -1636,7 +1813,7 @@ AhciSmmDriverEntryPoint (
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2017, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **

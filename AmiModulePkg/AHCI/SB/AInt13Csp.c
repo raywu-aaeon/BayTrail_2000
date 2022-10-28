@@ -1,7 +1,7 @@
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2017, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **
@@ -58,6 +58,17 @@ GetAccessInfo (
 
     *AccessIndexPort = (UINT16)lbar + INDEX_OFFSET_FROM_LBAR;
     *AccessDataPort = (UINT16)lbar + DATA_OFFSET_FROM_LBAR;
+    
+    // If index/Data port is invalid return unsupported, also by default 
+    // index/Data port is 0xffff in AhciAcc.csm16
+    if ( (*AccessIndexPort == 0) || (*AccessDataPort == 0 ) ) {
+        return EFI_UNSUPPORTED;
+    }
+
+    // --------------
+	// Return index/Data port as zero with EFI_SUCCESS, in case Index/data port access is done in any other method ( eg. PCI Index/Data port ).
+	// This needs porting to be done in AhciAcc.csm16 in place of normal Index/Data port access.
+    // --------------
 
     return EFI_SUCCESS;
 
@@ -66,7 +77,7 @@ GetAccessInfo (
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2017, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **

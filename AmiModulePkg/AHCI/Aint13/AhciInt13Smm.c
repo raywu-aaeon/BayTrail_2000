@@ -1,7 +1,7 @@
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2017, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **
@@ -31,6 +31,16 @@
 #include <Protocol/LegacyBios.h>
 #include <Library/AmiBufferValidationLib.h>
 #include "AhciInt13Smm.h"
+#include <Library/DebugLib.h>
+
+// Naming conventions made to support AMI_COMPATIBILITY_PKG_VERSION version > 21
+#if defined(AMI_COMPATIBILITY_PKG_VERSION) && (AMI_COMPATIBILITY_PKG_VERSION>=21)
+  #define InitAmiSmmLibPi InitAmiSmmLib
+  #define GetSmstConfigurationTablePi GetSmstConfigurationTable
+  #define pSmmBasePi pSmmBase
+  #define pSmstPi    pSmst
+#endif
+
 
 EFI_SMM_CPU_PROTOCOL        *gSmmCpuProtocol = NULL;
 AMI_AHCI_BUS_SMM_PROTOCOL   *gAhciBusSmmProtocol = NULL;
@@ -204,6 +214,7 @@ ProcessInt13Function(
     VOID        *Buffer = NULL;
     UINT8       *BufferBackup = NULL;
     UINT32      ByteCount = 0;
+    UINT32      TotalByteCount=0;
     UINT16      SectorCount = 0;
     UINT8       Command = 0;
     EFI_LBA     Lba = 0;
@@ -222,7 +233,8 @@ ProcessInt13Function(
 
     // Get drive information based on drive number
     Status = GetDriveInfoByDriveNum(ExRegs->H.DL,&pDriveInfo);
-
+    PrintAhciMassDevInfo(pDriveInfo);
+    
     if(!EFI_ERROR(Status)){
         if(pDriveInfo->DeviceType == ATA) {
             // Calculate AHCI parameter to be filled in COMMAND_STRUCTURE based on INT13 function
@@ -242,7 +254,7 @@ ProcessInt13Function(
                     Lba = (Cylinder*(pDriveInfo->bMAXHN) + Header) * (pDriveInfo->bMAXSN) + Sector - 1;
                     SectorCount = ExRegs->H.AL;
                     Buffer = (VOID*)(((ExRegs->X.ES) << 4 ) + ExRegs->X.BX);
-                    ByteCount = SectorCount*HDD_BLOCK_SIZE;
+                    TotalByteCount = SectorCount*HDD_BLOCK_SIZE;
                     break;
                 case EXT_READ:
                 case EXT_WRITE:
@@ -250,7 +262,7 @@ ProcessInt13Function(
                     Lba = Package->StartLba;
                     SectorCount = Package->XferSector;
                     Buffer = (VOID*)(((Package->Buffer >> 16 & 0xFFFF) << 4) + (UINT16)Package->Buffer);
-                    ByteCount = SectorCount*HDD_BLOCK_SIZE;
+                    TotalByteCount = SectorCount*HDD_BLOCK_SIZE;
                     break;
                 default:
                     IsSupported = FALSE;
@@ -264,7 +276,7 @@ ProcessInt13Function(
             SectorCount = ExRegs->X.CX; // CX
             SkipBytesAfter = ((ExRegs->E.ECX) >> 24) * 512; // CH+ (Higher byte of higher word of ECX)
             SkipBytesBefore = (((ExRegs->E.ECX) >> 16) & 0xFF) * 512; // CL+ (Lower byte of higher word of ECX)
-            ByteCount = SectorCount * pDriveInfo->BlockSize; // 2048
+            TotalByteCount = SectorCount * pDriveInfo->BlockSize; // 2048
             if(SkipBytesBefore || SkipBytesAfter) {
                 Status = pSmst->SmmAllocatePool(EfiRuntimeServicesData, sizeof(UINT8)*(SkipBytesBefore + SkipBytesAfter), &BufferBackup);
                 if (EFI_ERROR(Status)) {
@@ -273,7 +285,7 @@ ProcessInt13Function(
                 } else {
                     // Backup bytes to be preserved.
                     for(i = 0; i < (UINTN)(SkipBytesBefore + SkipBytesAfter); i++) {
-                        BufferBackup[i] = *(((UINT8*)Buffer)+i + (ByteCount - SkipBytesBefore - SkipBytesAfter));
+                        BufferBackup[i] = *(((UINT8*)Buffer)+i + (TotalByteCount - SkipBytesBefore - SkipBytesAfter));
                     }
                 }
             }
@@ -287,7 +299,7 @@ ProcessInt13Function(
 
     if(IsSupported){
         // Validate Buffer is valid address and not reside in SMRAM region
-        Status = AmiValidateMemoryBuffer(Buffer, (UINTN)ByteCount);
+        Status = AmiValidateMemoryBuffer(Buffer, (UINTN)TotalByteCount);
         if( EFI_ERROR(Status) ) {
             ExRegs->X.Flags.CF = 0x1;                // set on error
             ExRegs->H.AH = CheckErrorCode(EFI_INVALID_PARAMETER);   // return error code
@@ -301,6 +313,7 @@ ProcessInt13Function(
         gAhciBusSmmProtocol->AhciBaseAddress = *(UINT32*)PCI_CFG_ADDR(pDriveInfo->BusNo, pDriveInfo->DevNo, pDriveInfo->FuncNo, PCI_ABAR);
 
         BlksPerTransfer =  SectorCount;
+        ByteCount = TotalByteCount;
         AhciBuffer = Buffer;
 
         //If Buffer isn't aligned use internal buffer
@@ -308,12 +321,12 @@ ProcessInt13Function(
             BlksPerTransfer = 1;
             AhciBuffer = gBuffer;
             UnalignedTransfer = TRUE;
-        }
 
-        if(pDriveInfo->DeviceType == ATA) {
-            ByteCount = BlksPerTransfer * HDD_BLOCK_SIZE;
-        } else if(pDriveInfo->DeviceType == ATAPI){
-            ByteCount = BlksPerTransfer * pDriveInfo->BlockSize;
+            if(pDriveInfo->DeviceType == ATA) {
+                ByteCount = BlksPerTransfer * HDD_BLOCK_SIZE;
+            } else if(pDriveInfo->DeviceType == ATAPI){
+                ByteCount = BlksPerTransfer * pDriveInfo->BlockSize;
+            }
         }
 
         UserBuf = (UINT8*)Buffer;
@@ -396,7 +409,7 @@ ProcessInt13Function(
                 }
             }
 
-            (UINTN)Buffer = (UINTN)Buffer + ByteCount;
+            Buffer = (VOID *)((UINTN)Buffer + ByteCount);
             Lba += BlksPerTransfer;
 
         }
@@ -412,12 +425,12 @@ ProcessInt13Function(
                 UserBuf = (UINT8*)Buffer;
                 // Move requested data at start of the buffer
                 if(SkipBytesBefore != 0)
-                    for(i = 0; i < (UINTN)(ByteCount - SkipBytesBefore - SkipBytesAfter); i++) {
+                    for(i = 0; i < (UINTN)(TotalByteCount - SkipBytesBefore - SkipBytesAfter); i++) {
                         UserBuf[i] = UserBuf[i+SkipBytesBefore];
                     }
                 // Keep rest of the buffer intact. Restore the backup.
                 for(i = 0; i < (UINTN)(SkipBytesBefore + SkipBytesAfter); i++) {
-                    UserBuf[i + (ByteCount - SkipBytesBefore - SkipBytesAfter)] = BufferBackup[i];
+                    UserBuf[i + (TotalByteCount - SkipBytesBefore - SkipBytesAfter)] = BufferBackup[i];
                 }
                 pSmst->SmmFreePool(BufferBackup);
             }
@@ -516,6 +529,293 @@ AhciInt13SmiHandler (
     Int13ToSmiExRegs->StackES =  ExRegs.E.ES;
     Int13ToSmiExRegs->StackFS =  ExRegs.E.FS;
     Int13ToSmiExRegs->StackGS =  ExRegs.E.GS;
+    Int13ToSmiExRegs->StackFlags = ExRegs.X.Flags;
+
+    return Status;
+}
+
+/**
+    This function performs SoftReset. If it is not successfull, then
+    performs PortReset
+
+    @param ExRegs
+
+    @retval EFI_STATUS
+
+**/
+EFI_STATUS
+AhciGeneratePortReset(
+    IN  EFI_IA32_REGISTER_SET      *ExRegs
+)
+{
+    EFI_STATUS             Status;
+    SMM_AINT13_DRIVE_INFO  *pDriveInfo = NULL;
+    BOOLEAN                IsSupported = FALSE;
+    UINT32                 bAhciBaseAddress = 0;
+
+    // Get drive information based on drive number
+    Status = GetDriveInfoByDriveNum(ExRegs->H.DL,&pDriveInfo);
+    
+    if(!EFI_ERROR(Status)) {
+	    PrintAhciMassDevInfo(pDriveInfo);
+        IsSupported = TRUE;
+    }
+    
+    Status = EFI_UNSUPPORTED;
+    if(IsSupported) {
+        // Backup AHCI base address from gAhciBusSmmProtocol
+        bAhciBaseAddress = gAhciBusSmmProtocol->AhciBaseAddress;
+
+        // Save current AHCI base address from AHCI controller.
+        gAhciBusSmmProtocol->AhciBaseAddress = *(UINT32*)PCI_CFG_ADDR(pDriveInfo->BusNo, pDriveInfo->DevNo, pDriveInfo->FuncNo, PCI_ABAR);
+        
+		// Issue SoftReset if it fails then try PortReset
+		Status = gAhciBusSmmProtocol->AhciSmmGenerateSoftReset(gAhciBusSmmProtocol, pDriveInfo->PortNum, pDriveInfo->PMPortNum, pDriveInfo->DeviceType);
+        if(EFI_ERROR(Status)) {
+			Status = gAhciBusSmmProtocol->AhciSmmGeneratePortReset(gAhciBusSmmProtocol, pDriveInfo->PortNum, pDriveInfo->PMPortNum, pDriveInfo->DeviceType);
+        }
+        
+        // Restore base address to gAhciBusSmmProtocol
+        gAhciBusSmmProtocol->AhciBaseAddress = bAhciBaseAddress;
+    }
+    
+    // update return register data whatever success or error!!
+    if(!EFI_ERROR(Status)) {
+        // AHCI success
+        ExRegs->X.Flags.CF = 0x0;               // clear if successful
+        ExRegs->H.AH = CheckErrorCode(Status);  // successful completion
+    } else {
+        // AHCI error
+        ExRegs->X.Flags.CF = 0x1;                // set on error
+        ExRegs->H.AH = CheckErrorCode(Status);   // return error code
+    }
+    
+    return Status;
+}
+
+/**
+    This is the SWSMI handler to reset the port.
+    
+    Operation:
+    1. Take INT13 parameters stored on real mode stack from CPU save state.
+    2. Call a sub-function to process the request.
+    3. Update output parameters (IA registers) on real mode stack.
+
+    @param    CpuIndex  - Index of CPU which triggered SW SMI
+
+    @retval EFI_STATUS
+
+**/
+EFI_STATUS
+AhciPortResetSmiHandler (
+    IN UINTN       CpuIndex
+)
+{
+    EFI_STATUS  Status = EFI_SUCCESS;
+    UINT16      StackSegment = 0;
+    UINT16      StackOffset = 0;
+    EFI_IA32_REGISTER_SET  ExRegs;
+    INT13_TO_SMI_EXREGS    *Int13ToSmiExRegs = NULL;
+
+    // Read SS/ESP from CPU save state
+    gSmmCpuProtocol->ReadSaveState ( gSmmCpuProtocol,
+                             2,
+                             EFI_SMM_SAVE_STATE_REGISTER_RSP,
+                             CpuIndex,
+                             &StackOffset );
+
+    gSmmCpuProtocol->ReadSaveState ( gSmmCpuProtocol,
+                             2,
+                             EFI_SMM_SAVE_STATE_REGISTER_SS,
+                             CpuIndex,
+                             &StackSegment );
+
+    // Get base address of real mode stack
+    Int13ToSmiExRegs = (INT13_TO_SMI_EXREGS*)(((StackSegment << 4) + StackOffset) + 2);
+
+    MemSet (&ExRegs, sizeof(EFI_IA32_REGISTER_SET), 0);
+
+    // Initialize the SMM THUNK registers
+    ExRegs.E.EAX = Int13ToSmiExRegs->StackEAX;
+    ExRegs.E.EDX = Int13ToSmiExRegs->StackEDX;
+    ExRegs.X.Flags = Int13ToSmiExRegs->StackFlags;
+
+    if(gAhciBusSmmProtocol && gDriveInfoList.pHead) {
+        Status = AhciGeneratePortReset(&ExRegs);
+    }
+
+    // Update the registers before go back caller.
+    Int13ToSmiExRegs->StackEAX = ExRegs.E.EAX;
+    Int13ToSmiExRegs->StackEDX = ExRegs.E.EDX;
+    Int13ToSmiExRegs->StackFlags = ExRegs.X.Flags;
+
+    return Status;
+}
+
+/**
+    Function converts Big endian dword to Little Endian Dword and Vice versa.
+
+    @param EndianDword
+
+    @retval UINT32
+
+**/
+UINT32
+ToBigLittleEndianDword (
+    UINT32 EndianDword
+)
+{
+    return (((EndianDword & 0xFF) << 24) + ((EndianDword & 0xFF00) << 8) + \
+            ((EndianDword & 0xFF0000) >>8) + ((EndianDword & 0xFF000000) >>24));
+}
+
+/**
+    Sends ReadToc command to get boot record LBA value
+
+    @param ExRegs
+
+    @retval EFI_STATUS
+
+**/
+EFI_STATUS
+AhciGetBootRecordLba(
+    IN  EFI_IA32_REGISTER_SET      *ExRegs
+)
+{
+    EFI_STATUS             Status;
+    SMM_AINT13_DRIVE_INFO  *pDriveInfo = NULL;
+    BOOLEAN                IsSupported = FALSE;
+    UINT32                 bAhciBaseAddress = 0;
+    COMMAND_STRUCTURE      CommandStructure;
+    ATAPI_TOC_DATA         TocData;
+    UINT32                 StartLba;
+    
+    // Get drive information based on drive number
+    Status = GetDriveInfoByDriveNum(ExRegs->H.DL,&pDriveInfo);
+    
+    if(!EFI_ERROR(Status)) {
+	    PrintAhciMassDevInfo(pDriveInfo);
+        if(pDriveInfo->DeviceType == ATAPI) {
+            IsSupported = TRUE;
+        }
+    }
+    
+    Status = EFI_UNSUPPORTED;
+    if(IsSupported) {
+        // Backup AHCI base address from gAhciBusSmmProtocol
+        bAhciBaseAddress = gAhciBusSmmProtocol->AhciBaseAddress;
+        
+        // Save current AHCI base address from AHCI controller.
+        gAhciBusSmmProtocol->AhciBaseAddress = *(UINT32*)PCI_CFG_ADDR(pDriveInfo->BusNo, pDriveInfo->DevNo, pDriveInfo->FuncNo, PCI_ABAR);
+        
+        // clear Command structure
+        MemSet (&CommandStructure, sizeof(COMMAND_STRUCTURE), 0);
+        MemSet(&TocData, sizeof(ATAPI_TOC_DATA), 0);
+
+        CommandStructure.AtapiCmd.Ahci_Atapi_Command[0] = READ_TOC;   // Read TOC command
+        CommandStructure.AtapiCmd.Ahci_Atapi_Command[8] = 0x0c;       // Allocation Length
+        CommandStructure.AtapiCmd.Ahci_Atapi_Command[9] = 0x40;       // Bit7-6: Format = 10b
+        CommandStructure.Buffer = &TocData;
+        CommandStructure.ByteCount =  sizeof(ATAPI_TOC_DATA);
+        
+        while(TRUE) {
+            Status = gAhciBusSmmProtocol->AhciSmmExecutePacketCommand( gAhciBusSmmProtocol,
+                                                                       &CommandStructure,
+                                                                       0,                      // Read
+                                                                       pDriveInfo->PortNum,
+                                                                       pDriveInfo->PMPortNum,
+                                                                       pDriveInfo->DeviceType);
+            
+            if(!EFI_ERROR(Status)) {
+                break;
+            } else {
+                // If sense data atapi status is MEDIA_CHANGED or BECOMING_READY, then issue READ_TOC command again
+                // or else break the loop
+                if((gAhciBusSmmProtocol->AtapiDevice.Atapi_Status != MEDIA_CHANGED) && \
+                        (gAhciBusSmmProtocol->AtapiDevice.Atapi_Status != BECOMING_READY)) {
+                    break;
+                }
+            }
+        }
+        
+        // Restore base address to gAhciBusSmmProtocol
+        gAhciBusSmmProtocol->AhciBaseAddress = bAhciBaseAddress;
+    }
+    
+    // update return register data whatever success or error!!
+    if(!EFI_ERROR(Status)) {
+        StartLba = ToBigLittleEndianDword(TocData.dStartLBA);
+        
+        // Set LBA to point to the boot record volume
+        StartLba += 0x11; 
+        
+        // Success
+        ExRegs->E.EDX = StartLba;
+        ExRegs->X.Flags.CF = 0x0;               // clear if successful
+        ExRegs->H.AH = CheckErrorCode(Status);  // successful completion
+    } else {
+        // Error
+        ExRegs->X.Flags.CF = 0x1;               // set on error
+        ExRegs->H.AH = CheckErrorCode(Status);  // return error code
+    }
+    
+    return Status;
+}
+
+/**
+    This is the SWSMI handler to service the request.
+    
+    Operation:
+    1. Take INT13 parameters stored on real mode stack from CPU save state.
+    2. Call a sub-function to process the request.
+    3. Update output parameters (IA registers) on real mode stack.
+
+    @param    CpuIndex  - Index of CPU which triggered SW SMI
+
+    @retval EFI_STATUS
+
+**/
+EFI_STATUS
+AhciGetBootRecordLbaSmiHandler (
+    IN UINTN       CpuIndex
+)
+{
+    EFI_STATUS  Status = EFI_SUCCESS;
+    UINT16      StackSegment = 0;
+    UINT16      StackOffset = 0;
+    EFI_IA32_REGISTER_SET  ExRegs;
+    INT13_TO_SMI_EXREGS    *Int13ToSmiExRegs = NULL;
+
+    // Read SS/ESP from CPU save state
+    gSmmCpuProtocol->ReadSaveState ( gSmmCpuProtocol,
+                             2,
+                             EFI_SMM_SAVE_STATE_REGISTER_RSP,
+                             CpuIndex,
+                             &StackOffset );
+
+    gSmmCpuProtocol->ReadSaveState ( gSmmCpuProtocol,
+                             2,
+                             EFI_SMM_SAVE_STATE_REGISTER_SS,
+                             CpuIndex,
+                             &StackSegment );
+
+    // Get base address of real mode stack
+    Int13ToSmiExRegs = (INT13_TO_SMI_EXREGS*)(((StackSegment << 4) + StackOffset) + 2);
+
+    MemSet (&ExRegs, sizeof(EFI_IA32_REGISTER_SET), 0);
+
+    // Initialize the SMM THUNK registers
+    ExRegs.E.EAX = Int13ToSmiExRegs->StackEAX;
+    ExRegs.E.EDX = Int13ToSmiExRegs->StackEDX;
+    ExRegs.X.Flags = Int13ToSmiExRegs->StackFlags;
+
+    if(gAhciBusSmmProtocol && gDriveInfoList.pHead) {
+        Status = AhciGetBootRecordLba(&ExRegs);
+    }
+
+    // Update the registers before go back caller.
+    Int13ToSmiExRegs->StackEAX = ExRegs.E.EAX;
+    Int13ToSmiExRegs->StackEDX = ExRegs.E.EDX;
     Int13ToSmiExRegs->StackFlags = ExRegs.X.Flags;
 
     return Status;
@@ -694,6 +994,14 @@ AhciCommonSmmHandler (
         case 0x3:
             Status = AhciInt13SmiHandler(CpuIndex);
             break;
+            
+        case 0x4:
+            Status = AhciPortResetSmiHandler(CpuIndex);
+            break;
+            
+        case 0x5:
+            Status = AhciGetBootRecordLbaSmiHandler(CpuIndex);
+            break;
 
         default:
             // Invalid Function. Return Error.
@@ -869,10 +1177,32 @@ AhciInt13SmmEntry (
     return Status;
 }
 
+VOID
+PrintAhciMassDevInfo (
+  SMM_AINT13_DRIVE_INFO *pDriveInfo
+)
+{
+#if AHCI_VERBOSE_PRINT
+    DEBUG((DEBUG_BLKIO, "********** AhciDriveInfo **********\n"));
+    DEBUG((DEBUG_BLKIO, "DriveNum                                  : %08X\n", pDriveInfo->DriveNum));
+    DEBUG((DEBUG_BLKIO, "PortNum                                   : %08X\n", pDriveInfo->PortNum));
+    DEBUG((DEBUG_BLKIO, "PMPortNum                                 : %08X\n", pDriveInfo->PMPortNum));
+    DEBUG((DEBUG_BLKIO, "DeviceType                                : %08X\n", pDriveInfo->DeviceType));
+    DEBUG((DEBUG_BLKIO, "BlockSize                                 : %08X\n", pDriveInfo->BlockSize));
+    DEBUG((DEBUG_BLKIO, "Max no. of cylinders (L)                  : %08X\n", pDriveInfo->wMAXCYL));
+    DEBUG((DEBUG_BLKIO, "Max no. of heads (L)                      : %08X\n", pDriveInfo->bMAXHN));
+    DEBUG((DEBUG_BLKIO, "Max no. of sectors per track (L)          : %08X\n", pDriveInfo->bMAXSN));
+    DEBUG((DEBUG_BLKIO, "No. of cylinders (P)                      : %08X\n", pDriveInfo->wLBACYL));
+    DEBUG((DEBUG_BLKIO, "No. of heads (P)                          : %08X\n", pDriveInfo->bLBAHD));
+    DEBUG((DEBUG_BLKIO, "No. of sectors per track (P)              : %08X\n", pDriveInfo->bLBASPT));
+#endif
+    return ;
+}
+
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2017, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **

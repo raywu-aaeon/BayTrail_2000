@@ -1,7 +1,7 @@
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2017, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **
@@ -28,7 +28,8 @@
 #define PCI_CFG_ADDR(bus,dev,func,reg) \
     ((VOID*)(UINTN) (PciExpressBaseAddress + ((bus) << 20) + ((dev) << 15) + ((func) << 12) + reg))
 
-#define     AHCI_CONTROLLER         0x06
+#define     AHCI_CONTROLLER_SCC     0x06
+#define     RAID_CONTROLLER_SCC     0x04
 #define     MASS_STORAGE            0x01
 #define     PCI_ABAR                0x24
 #define     HDD_BLOCK_SIZE          512
@@ -45,6 +46,7 @@
 #define     READ_DMA_EXT            0x25
 #define     WRITE_DMA               0xCA
 #define     WRITE_DMA_EXT           0x35
+#define     READ_TOC                0x43
 
 // Int13 parameter definition
 // function(AH) definition
@@ -52,6 +54,7 @@
 #define     WRITE_SECTOR            0x03
 #define     EXT_READ                0x42
 #define     EXT_WRITE               0x43
+
 
 // Prevent compiler from padding the structures
 #pragma pack(1)
@@ -109,14 +112,31 @@ typedef struct {
     EFI_FLAGS_REG   StackFlags;
 } INT13_TO_SMI_EXREGS;
 
+typedef struct {
+    UINT16   wDataLength;
+    UINT8    bFirstTrackNo;
+    UINT8    bLastTrackNo;
+    UINT8    bReserved;
+    UINT8    bADRControl;
+    UINT8    bTrackNo;
+    UINT8    bReserved1;
+    UINT32   dStartLBA;
+}ATAPI_TOC_DATA;
+
 #pragma pack()
+
+VOID
+PrintAhciMassDevInfo (
+  SMM_AINT13_DRIVE_INFO *pDriveInfo
+);
+
 
 #endif 
 
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2017, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **

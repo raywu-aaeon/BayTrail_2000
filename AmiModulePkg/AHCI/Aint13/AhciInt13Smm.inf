@@ -1,7 +1,7 @@
 #*************************************************************************
 #*************************************************************************
 #**                                                                     **
-#**        (C)Copyright 1985-2014, American Megatrends, Inc.            **
+#**        (C)Copyright 1985-2016, American Megatrends, Inc.            **
 #**                                                                     **
 #**                       All Rights Reserved.                          **
 #**                                                                     **
@@ -37,6 +37,7 @@
   AmiDxeLib
   UefiDriverEntryPoint
   AmiBufferValidationLib
+  DebugLib
   
 [Pcd]
   gEfiMdePkgTokenSpaceGuid.PcdPciExpressBaseAddress
@@ -52,13 +53,10 @@
   gEfiSmmCpuProtocolGuid AND
   gEfiSmmSwDispatch2ProtocolGuid
   
-[BuildOptions.X64]
-  *_*_X64_CC_FLAGS = /D EFIx64 
-
 #*************************************************************************
 #*************************************************************************
 #**                                                                     **
-#**        (C)Copyright 1985-2014, American Megatrends, Inc.            **
+#**        (C)Copyright 1985-2016, American Megatrends, Inc.            **
 #**                                                                     **
 #**                       All Rights Reserved.                          **
 #**                                                                     **

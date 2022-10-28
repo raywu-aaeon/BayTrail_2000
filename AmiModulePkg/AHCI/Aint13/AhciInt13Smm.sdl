@@ -23,27 +23,6 @@ TOKEN
     Range  = "0 - 0xff"
 End
 
-TOKEN
-    Name  = "AINT13_AVOID_MULTIPLE_SMI"
-    Value  = "0"
-    Help  = "Execute INT13 Read/Write functions completely in SMM and avoid multiple SMI generation for single AHCI INT13 function/call."
-    TokenType = Boolean
-    TargetEQU = Yes
-    TargetH = Yes
-    Token = "SMM_COMMUNICATE_SUPPORT" "=" "1"
-    Token = "AhciSmm_SUPPORT" "=" "1"
-End
-
-TOKEN
-    Name  = "BIG_REAL_MODE_MMIO_ACCESS"
-    Value  = "0"
-    Help  = "1- Access the MMIO region by switching to big real mode, 0 - Access the MMIO using SMI handler"
-    TokenType = Boolean
-    TargetEQU = Yes
-    TargetMAK = Yes
-    TargetH = Yes
-End
-
 INFComponent
     Name  = "AhciInt13Dxe"
     File  = "AhciInt13Dxe.inf"

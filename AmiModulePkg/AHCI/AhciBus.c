@@ -1,7 +1,7 @@
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2017, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **
@@ -22,7 +22,7 @@
 #include "AhciBus.h"
 #include <AcpiRes.h>
 #include "Protocol/LegacyAhci.h"
-
+#include <Protocol/StorageSecurityCommand.h>
 //---------------------------------------------------------------------------
 
 #if SBIDE_SUPPORT
@@ -34,6 +34,12 @@
 AMI_BLOCKIO_WRITE_PROTECTION_PROTOCOL *AmiBlkWriteProtection = NULL;
 #endif
 
+#if defined(ACOUSTIC_MANAGEMENT_DRIVER_SUPPORT) && (ACOUSTIC_MANAGEMENT_DRIVER_SUPPORT != 0)
+#include <Protocol/AcousticProtocol.h>
+EFI_GUID gHddAcousticInitProtocolGuid = AMI_HDD_ACOUSTIC_INIT_PROTOCOL_GUID;
+AMI_HDD_ACOUSTIC_INIT_PROTOCOL *gHddAcousticInitProtocol = NULL;
+#endif
+
 #ifndef EFI_COMPONENT_NAME2_PROTOCOL_GUID
 EFI_GUID gComponentNameProtocolGuid = EFI_COMPONENT_NAME_PROTOCOL_GUID;
 #else
@@ -43,6 +49,21 @@ EFI_GUID gComponentNameProtocolGuid = EFI_COMPONENT_NAME2_PROTOCOL_GUID;
 extern  EFI_GUID    gAmiGlobalVariableGuid;
 static EFI_GUID gOnboardRaidControllerGuid    = AMI_ONBOARD_RAID_CONTROLLER_GUID;
 static EFI_GUID gHddPasswordVerifiedGuid      = AMI_HDD_PASSWORD_VERIFIED_GUID;
+
+// Below code will be removed when gAmiTcgStorageSecurityInitProtocolGuid definition is added in AmiModulePkg
+#ifndef AMI_TCG_STORAGE_SECURITY_INIT_PROTOCOL_GUID 
+#define AMI_TCG_STORAGE_SECURITY_INIT_PROTOCOL_GUID \
+	{ 0x734aa01d, 0x95ec, 0x45b7, { 0xa2, 0x3a, 0x2d, 0x86, 0xd8, 0xfd, 0xeb, 0xb6 } }
+#endif
+
+// Below code will be removed when gAmiTcgStorageSecurityProtocolGuid definition is added in AmiModulePkg
+#ifndef AMI_TCG_STORAGE_SECURITY_PROTOCOL_GUID 
+#define AMI_TCG_STORAGE_SECURITY_PROTOCOL_GUID \
+        { 0xb396da3a, 0x52b2, 0x4cd6, { 0xa8, 0x9a, 0x13, 0xe7, 0xc4, 0xae, 0x97, 0x90 } }
+#endif
+
+EFI_GUID gAmiTcgStorageSecurityInitProtocolGuid = AMI_TCG_STORAGE_SECURITY_INIT_PROTOCOL_GUID;
+EFI_GUID gAmiTcgStorageSecurityProtocolGuid = AMI_TCG_STORAGE_SECURITY_PROTOCOL_GUID;
 
 #if SBIDE_SUPPORT
 EFI_GUID gIdeSetupProtocolguid                  = IDE_SETUP_PROTOCOL_GUID;
@@ -56,6 +77,7 @@ extern      InitilizeIndexDataPortAddress();
 
 extern
 EFI_STATUS
+EFIAPI
 ExecutePacketCommand (
     IN SATA_DEVICE_INTERFACE    *SataDevInterface, 
     IN COMMAND_STRUCTURE        *CommandStructure,
@@ -77,12 +99,22 @@ EFI_DRIVER_BINDING_PROTOCOL gAhciBusDriverBinding = {
 };
 
 AMI_HDD_SECURITY_INIT_PROTOCOL      *HddSecurityInitProtocol = NULL;  
+AMI_HDD_SECURITY_INIT_PROTOCOL      *TcgStorageSecurityInitProtocol = NULL;
 VOID                                *TempHddSecurityProtocolPtr;
 AMI_HDD_SMART_INIT_PROTOCOL         *HddSmartInitProtocol = NULL;     
 AMI_HDD_OPAL_SEC_INIT_PROTOCOL      *OpalSecInitProtocol = NULL;
 AMI_ATA_PASS_THRU_INIT_PROTOCOL     *AtaPassThruInitProtocol = NULL;  
 AMI_SCSI_PASS_THRU_INIT_PROTOCOL    *gScsiPassThruInitProtocol = NULL; 
 AHCI_PLATFORM_POLICY_PROTOCOL       *AhciPlatformPolicy = NULL;
+
+EFI_EVENT                           AhciReadyToBootEvent=NULL;
+
+VOID 
+EFIAPI
+AhciFreezeLockDevice (
+    IN EFI_EVENT    Event,
+    IN VOID         *Context
+);
 
 // Instantiate AHCI_PLATFORM_POLICY_PROTOCOL with default values 
 AHCI_PLATFORM_POLICY_PROTOCOL        gDefaultAhciPlatformPolicy = {
@@ -193,7 +225,9 @@ AHCI_PLATFORM_POLICY_PROTOCOL        gDefaultAhciPlatformPolicy = {
           3. Return EFI_SUCCESS.
 **/
 
-EFI_STATUS AhciBusEntryPoint (
+EFI_STATUS 
+EFIAPI 
+AhciBusEntryPoint (
     IN EFI_HANDLE          ImageHandle,
     IN EFI_SYSTEM_TABLE    *SystemTable
 )
@@ -238,6 +272,7 @@ EFI_STATUS AhciBusEntryPoint (
 **/
 
 EFI_STATUS 
+EFIAPI 
 AhciBusSupported (
     IN EFI_DRIVER_BINDING_PROTOCOL    *This,
     IN EFI_HANDLE                     Controller,
@@ -416,7 +451,8 @@ AhciBusSupported (
 
 **/
 
-EFI_STATUS 
+EFI_STATUS
+EFIAPI 
 AhciBusStart (
     IN EFI_DRIVER_BINDING_PROTOCOL    *This,
     IN EFI_HANDLE                     Controller,
@@ -435,10 +471,11 @@ AhciBusStart (
     BOOLEAN                           Enabled = TRUE;
     UINT8                             MaxDevices = 0; 
     UINT8                             Data8;    
-    EFI_DEVICE_PATH_PROTOCOL          *DevicePath;
     VOID                              *TempProtocolPtr;
+#if HDD_PASSWORD_SUPPORT_UNDER_RAIDMODE
+    EFI_DEVICE_PATH_PROTOCOL          *DevicePath;
     BOOLEAN                           RaidDriverBlocked=FALSE;
-
+#endif
     PROGRESS_CODE(DXE_IDE_BEGIN);
 
 #if BOOT_SECTOR_WRITE_PROTECT
@@ -502,6 +539,10 @@ AhciBusStart (
                                      );
 
         if (EFI_ERROR(Status)) {
+            pBS->CloseProtocol (Controller,
+                                &gEfiIdeControllerInitProtocolGuid,
+                                This->DriverBindingHandle,
+                                Controller);
             return EFI_OUT_OF_RESOURCES; //No need to close IDE_CONTROLLER_PROTOCOL
         }
 
@@ -509,8 +550,12 @@ AhciBusStart (
                                          AhciBusInterface,
                                          IdeControllerInterface,
                                          PciIO);
-        if (EFI_ERROR(Status)) {
-            return EFI_DEVICE_ERROR;    //No need to close the protocol. Will be handled in STOP
+        if (EFI_ERROR(Status)) { 
+            pBS->CloseProtocol (Controller,
+                                &gEfiIdeControllerInitProtocolGuid,
+                                This->DriverBindingHandle,
+                                Controller);
+            return EFI_DEVICE_ERROR;    
         }
     }
 
@@ -533,7 +578,7 @@ AhciBusStart (
         PortEnumeration = AhciBusInterface->HBAPortImplemented;
     }
     
-    TRACE_AHCI((-1,"\nAHCI Driver Detection and Configuration starts\n"));
+    DEBUG ((DEBUG_INFO, "\nAHCI Driver Detection and Configuration starts\n"));
 
     //--------------------------------------------------------------------------
     //  Detection and Configuration starts
@@ -566,6 +611,7 @@ AhciBusStart (
                                           IdeControllerInterface,
                                           CurrentPort,
                                           CurrentPMPort);
+        DEBUG ((DEBUG_INFO, " AHCI: DetectAndConfigureDevice Status %x \n", Status));
 
         SataDevInterface = GetSataDevInterface(AhciBusInterface,
                                                CurrentPort,
@@ -601,28 +647,35 @@ NextDevice:
 
     }
 
+    DEBUG ((DEBUG_INFO, "AHCI Driver Detection and Configuration Ends\n"));
 
-    TRACE_AHCI((-1," AHCI Driver Detection and Configuration Ends\n"));
-
-    Status = pBS->LocateProtocol (&gAmiAtaPassThruInitProtocolGuid,
+    // Install the AtaPass Thru only under Ahci mode 
+    if (AhciBusInterface->AHCIRAIDMODE) {
+    
+    	Status = pBS->LocateProtocol (&gAmiAtaPassThruInitProtocolGuid,
                                   NULL,
                                   (VOID **)&AtaPassThruInitProtocol);
 
-    if(!EFI_ERROR(Status)) {
-        if(AtaPassThruInitProtocol != NULL) {
-            AtaPassThruInitProtocol->InstallAtaPassThru(Controller, TRUE);
-        }
+    	if(!EFI_ERROR(Status)) {
+    		if(AtaPassThruInitProtocol != NULL) {
+    			AtaPassThruInitProtocol->InstallAtaPassThru(Controller, TRUE);
+    		}
+    	}
     }
 
-    // SCSIPassThruAtapi install
-    Status = pBS->LocateProtocol (&gAmiScsiPassThruInitProtocolGuid,
+    // Install the Scsi PassThru on Ahci mode or Atapi Support under Raid mode 
+    if (AhciBusInterface->AHCIRAIDMODE || AhciPlatformPolicy->AhciBusAtapiSupport == TRUE) {
+    
+    	// SCSIPassThruAtapi install
+    	Status = pBS->LocateProtocol (&gAmiScsiPassThruInitProtocolGuid,
                                   NULL,
                                   (VOID **)&gScsiPassThruInitProtocol);
 
-    if(!EFI_ERROR(Status)) {
-        if(gScsiPassThruInitProtocol != NULL) {
-            gScsiPassThruInitProtocol->InstallScsiPassThruAtapi(Controller, TRUE);
-        }
+    	if(!EFI_ERROR(Status)) {
+    		if(gScsiPassThruInitProtocol != NULL) {
+    			gScsiPassThruInitProtocol->InstallScsiPassThruAtapi(Controller, TRUE);
+    		}
+    	}
     }
 
     InstallOtherOptionalFeatures(AhciBusInterface);
@@ -656,7 +709,7 @@ NextDevice:
                                 );
         
     ASSERT_EFI_ERROR(Status);
-        
+#if HDD_PASSWORD_SUPPORT_UNDER_RAIDMODE
     if(!EFI_ERROR(Status) && TempHddSecurityProtocolPtr != NULL) {
 
         // Handle the Onboard Raid controller Password Verification
@@ -673,7 +726,18 @@ NextDevice:
                                          (VOID**)&TempProtocolPtr);
 
             if(EFI_ERROR(Status)) {
-
+                if(!CheckForLockedDrives(AhciBusInterface)) {
+                    // If No Drive is locked under this controller
+                    // Install gAmiHddPasswordVerifiedGuid.This is to
+                    // Allow CsmBlockIo to launch RAID option ROM.
+                           
+                    Status = pBS->InstallProtocolInterface( &Controller,
+                                                            &gHddPasswordVerifiedGuid,
+                                                            EFI_NATIVE_INTERFACE,
+                                                            NULL);
+                    ASSERT_EFI_ERROR(Status);
+                    return Status;
+                }
                 // Don't launch the Raid Option rom until password verified
                 Status = pBS->OpenProtocol (Controller,
                                             &gEfiDevicePathProtocolGuid,
@@ -681,7 +745,7 @@ NextDevice:
                                             This->DriverBindingHandle,
                                             Controller,
                                             EFI_OPEN_PROTOCOL_BY_DRIVER);
-
+                ASSERT_EFI_ERROR(Status);
                 if(Status == EFI_SUCCESS) {
                     RaidDriverBlocked=TRUE;
                     Status = pRS->SetVariable(L"RaidDriverBlockingStatus",
@@ -689,10 +753,12 @@ NextDevice:
                                         EFI_VARIABLE_BOOTSERVICE_ACCESS,
                                         sizeof(RaidDriverBlocked),
                                         &RaidDriverBlocked );
+                    ASSERT_EFI_ERROR(Status);
                 }
             }
         }
     }
+#endif
     return EFI_SUCCESS;
 }
 
@@ -761,7 +827,7 @@ DetectAndConfigureDevice (
         //Update Port Multiplier Data
         Status = ConfigurePMPort(SataDevInterface);
         if (!EFI_ERROR(Status)) {
-            TRACE_AHCI((-1,"AHCI: SATA Device type %x detected at Port Number : %x, PM Port Number : %x\n",
+            DEBUG ((DEBUG_INFO, "AHCI: SATA Device type %x detected at Port Number : %x, PM Port Number : %x\n",
                 SataDevInterface->DeviceType, SataDevInterface->PortNumber, SataDevInterface->PMPortNumber));
         }
         return Status;
@@ -796,6 +862,7 @@ DetectAndConfigureDevice (
     // Initialize Block_IO Protocol
     Status = InitSataBlockIO (SataDevInterface);
     if (EFI_ERROR(Status)){
+        SataDevInterface->DeviceState = DEVICE_DETECTION_FAILED;
         return EFI_DEVICE_ERROR;
     }
 
@@ -875,7 +942,7 @@ DetectAndConfigureDevice (
 
      }                                                  // Install BLOCKIO
 
-    TRACE_AHCI((-1,"AHCI: SATA Device type %x detected at Port Number : %x, PM Port Number : %x\n",
+    DEBUG (( DEBUG_INFO, "AHCI: SATA Device type %x detected at Port Number : %x, PM Port Number : %x\n",
             SataDevInterface->DeviceType, SataDevInterface->PortNumber, SataDevInterface->PMPortNumber));
 
     return EFI_SUCCESS;
@@ -920,59 +987,79 @@ InstallOtherOptionalFeatures(
                              NULL,
                              (VOID **)&HddSmartInitProtocol);
     }
+
+#if defined(ACOUSTIC_MANAGEMENT_DRIVER_SUPPORT) && (ACOUSTIC_MANAGEMENT_DRIVER_SUPPORT != 0)
+    if ( gHddAcousticInitProtocol == NULL ) {
+	 pBS->LocateProtocol (&gHddAcousticInitProtocolGuid,
+                                   NULL,
+                                   (VOID **) &gHddAcousticInitProtocol);
+    }
+#endif
     
     for (dlink = AhciBusInterface->SataDeviceList.pHead; dlink; dlink = dlink->pNext) {
 
         SataDevInterface = OUTTER(dlink, SataDeviceLink, SATA_DEVICE_INTERFACE);
 
-        if(SataDevInterface->DeviceState != DEVICE_CONFIGURED_SUCCESSFULLY) {
+        if(SataDevInterface->DeviceState != DEVICE_CONFIGURED_SUCCESSFULLY || SataDevInterface->IsDeviceFeatureDone ) {
             continue;
         }
 
-         if(HddSecurityInitProtocol != NULL) {
-             HddSecurityInitProtocol->InstallSecurityInterface(SataDevInterface, TRUE);
-             if(TempHddSecurityProtocolPtr == NULL) {
+        SataDevInterface->IsDeviceFeatureDone = TRUE;
+        Status = EFI_UNSUPPORTED;
+        
+        if(OpalSecInitProtocol != NULL) {
+           OpalSecInitProtocol->InstallOpalSecurityInterface(SataDevInterface, AmiStorageInterfaceAhci);
+        }
+
+        if(HddSecurityInitProtocol != NULL) {
+            Status = HddSecurityInitProtocol->InstallSecurityInterface(SataDevInterface, AmiStorageInterfaceAhci);
+            if(TempHddSecurityProtocolPtr == NULL) {
                  // Verify that Security interface has been installed
                  // on at least one device
-                 pBS->HandleProtocol(SataDevInterface->IdeDeviceHandle, 
+                pBS->HandleProtocol(SataDevInterface->IdeDeviceHandle, 
                                      &gAmiHddSecurityProtocolGuid, 
                                      (VOID**)&TempHddSecurityProtocolPtr
                                      );
-             }
-         } else {
+            }
+        }
+         
+        if(EFI_ERROR(Status)) {
+            // Install TcgStorageSecurity protocol for the device that supports TCG security Protocol
+            if(TcgStorageSecurityInitProtocol == NULL) {
+                pBS->LocateProtocol( &gAmiTcgStorageSecurityInitProtocolGuid,
+                                                  NULL,
+                                                  (VOID **) &TcgStorageSecurityInitProtocol);
+            }
 
-            // If Security Feature support is not enabled, always freeze 
-            // lock the security feature
-            if (SataDevInterface->IdentifyData.Command_Set_Supported_82 & 0x2) {
-                COMMAND_STRUCTURE           CommandStructure;
-                ZeroMemory(&CommandStructure, sizeof(COMMAND_STRUCTURE)); 
-                CommandStructure.Command = SECURITY_FREEZE_LOCK;
-                Status = ExecuteNonDataCommand (SataDevInterface, CommandStructure);
-                // if Device Configuration Overlay feature set supported then issue the
-                // Dev configure Free lock command.
-                if (SataDevInterface->IdentifyData.Command_Set_Supported_83 & 0x800) {
-                    CommandStructure.Command = DEV_CONFIG_FREEZE_LOCK;
-                    CommandStructure.Features = DEV_CONFIG_FREEZE_LOCK_FEATURES;
-                    Status = ExecuteNonDataCommand (SataDevInterface, CommandStructure);
-                }
-                // Update the Identify device buffer
-                Status = GetIdentifyData(SataDevInterface);
-                if (EFI_ERROR(Status)) {
-                    continue;
-                }
+            if(TcgStorageSecurityInitProtocol != NULL) {
+                Status = TcgStorageSecurityInitProtocol->InstallSecurityInterface(SataDevInterface, AmiStorageInterfaceAhci );
+            }
+        }
+        
+        // If NO Security protocol installed then send freeze lock command 
+        if(EFI_ERROR(Status)) {
+            if(AhciReadyToBootEvent == NULL ) {
+                CreateReadyToBootEvent(
+                                       TPL_CALLBACK,
+                                       AhciFreezeLockDevice,
+                                       NULL,
+                                       &AhciReadyToBootEvent
+                                       );
             }
         }
 
-         if(OpalSecInitProtocol != NULL) {
-             OpalSecInitProtocol->InstallOpalSecurityInterface(SataDevInterface, TRUE);
+#if defined(ACOUSTIC_MANAGEMENT_DRIVER_SUPPORT) && (ACOUSTIC_MANAGEMENT_DRIVER_SUPPORT != 0)
+         if(gHddAcousticInitProtocol != NULL) {
+              gHddAcousticInitProtocol->InitHddAcoustic(SataDevInterface, AmiStorageInterfaceAhci);
          }
+#endif
 
         if(HddSmartInitProtocol != NULL) {
-            HddSmartInitProtocol->InitSmartSupport(SataDevInterface, TRUE);
+            HddSmartInitProtocol->InitSmartSupport(SataDevInterface, AmiStorageInterfaceAhci);
             // Update the Identify Data.
-            Status = GetIdentifyData(SataDevInterface);
+            GetIdentifyData(SataDevInterface);
             if(HddSmartInitProtocol->SmartDiagonasticFlag) {
-                HddSmartInitProtocol->InstallSmartInterface(SataDevInterface, TRUE);
+                HddSmartInitProtocol->InstallSmartInterface(SataDevInterface, AmiStorageInterfaceAhci);
             }
         }
 
@@ -981,6 +1068,46 @@ InstallOtherOptionalFeatures(
     return EFI_SUCCESS;
 
 }
+/** 
+ * Checks for the presence of the Locked Drives Under this Controller.
+ * If No drive is Locked, installs gHddPasswordVerifiedGuid
+ * 
+ * @param    ControllerHandle 
+   @param    *AhciBusInterface
+ * 
+ * @retval   BOOLEAN
+ *       
+ * @notes    TRUE  - If drives present under this controller are locked.
+ *                   else returns FALSE.
+ *           
+ */
+BOOLEAN
+CheckForLockedDrives(
+    IN  AMI_AHCI_BUS_PROTOCOL         *AhciBusInterface
+)
+{
+    DLINK                      *dlink;
+    SATA_DEVICE_INTERFACE      *SataDevInterface = NULL;
+    UINT16                     SecurityStatus;
+    BOOLEAN                    DevLocked = FALSE;
+    UINT16                     SecurityLockedMask = 0x04;
+    
+    for (dlink = AhciBusInterface->SataDeviceList.pHead; dlink; dlink = dlink->pNext) {
+        SataDevInterface = OUTTER(dlink, SataDeviceLink, SATA_DEVICE_INTERFACE);
+        //Check whether Security Feature is supported for this SATA Device
+        if(!(SataDevInterface->IdentifyData.Command_Set_Supported_82 & 0x2)) {
+            continue;
+        }
+        SecurityStatus = SataDevInterface->IdentifyData.Security_Status_128;
+		// Check whether the Drive is Password Enabled or not.
+        DevLocked = (BOOLEAN)((SecurityStatus & SecurityLockedMask) ? TRUE : FALSE );
+        if(DevLocked) {
+            return TRUE;
+        }
+    }
+    return FALSE;
+}
+
 
 /**
     Uninstall all devices installed in start procedure.
@@ -1010,6 +1137,7 @@ InstallOtherOptionalFeatures(
 **/
 
 EFI_STATUS 
+EFIAPI 
 AhciBusStop (
     IN EFI_DRIVER_BINDING_PROTOCOL    *This,
     IN EFI_HANDLE                     Controller,
@@ -1049,9 +1177,9 @@ AhciBusStop (
                                 &gEfiIdeControllerInitProtocolGuid,
                                 This->DriverBindingHandle,
                                 ChildHandleBuffer[Index]);
-        ASSERT_EFI_ERROR(Status);
+            ASSERT_EFI_ERROR(Status);
 
-        Status = pBS->OpenProtocol(ChildHandleBuffer[Index],
+            Status = pBS->OpenProtocol(ChildHandleBuffer[Index],
                                    &gEfiDevicePathProtocolGuid,
                                    (VOID **)&DevicePath,
                                    This->DriverBindingHandle,     
@@ -1133,6 +1261,7 @@ AhciBusStop (
                     pBS->FreePool(SataDeviceInterface->UDeviceName->UnicodeString);
                     pBS->FreePool(SataDeviceInterface->UDeviceName);
                 }
+                
                 // Before un-installing HDD security check whether it is installed or not
                 Status = pBS->OpenProtocol( ChildHandleBuffer[Index],
                             &gAmiHddSecurityProtocolGuid,
@@ -1143,9 +1272,24 @@ AhciBusStop (
 
                 if (Status == EFI_SUCCESS) {
                         if(HddSecurityInitProtocol != NULL) {
-                            HddSecurityInitProtocol->StopSecurityModeSupport(SataDeviceInterface, TRUE);
+                            HddSecurityInitProtocol->StopSecurityModeSupport(SataDeviceInterface, AmiStorageInterfaceAhci);
                         }
                 }
+                
+                // Before un-installing TCGStoragesecurity check whether it is installed or not
+                Status = pBS->OpenProtocol( ChildHandleBuffer[Index],
+                                            &gAmiTcgStorageSecurityProtocolGuid,
+                                            NULL,
+                                            This->DriverBindingHandle,
+                                            ChildHandleBuffer[Index],
+                                            EFI_OPEN_PROTOCOL_TEST_PROTOCOL);
+
+                if ( Status == EFI_SUCCESS ) {
+                     if(TcgStorageSecurityInitProtocol != NULL) {
+                    	 TcgStorageSecurityInitProtocol->StopSecurityModeSupport(SataDeviceInterface, AmiStorageInterfaceAhci);
+                     }
+                }
+                
                 // Before un-installing Hdd Smart check whether it is installed or not
                 Status = pBS->OpenProtocol( ChildHandleBuffer[Index],
                             &gAmiHddSmartProtocolGuid,
@@ -1157,7 +1301,7 @@ AhciBusStop (
                 if (Status == EFI_SUCCESS) {
                     if(HddSmartInitProtocol != NULL) {
                         if(HddSmartInitProtocol->SmartDiagonasticFlag) {
-                            HddSmartInitProtocol->UnInstallSmartInterface(SataDeviceInterface, TRUE);
+                            HddSmartInitProtocol->UnInstallSmartInterface(SataDeviceInterface, AmiStorageInterfaceAhci);
                         }
                     }
                 }
@@ -1171,7 +1315,7 @@ AhciBusStop (
 
                 if (Status == EFI_SUCCESS) {
                         if(OpalSecInitProtocol != NULL) {
-                            OpalSecInitProtocol->UnInstallOpalSecurityInterface(SataDeviceInterface, TRUE);
+                            OpalSecInitProtocol->UnInstallOpalSecurityInterface(SataDeviceInterface, AmiStorageInterfaceAhci);
                         }
                 }
 
@@ -1595,7 +1739,7 @@ AhciInitController (
 
     // Get # of Ports Implemented (bit map)
     AhciBusInterface->HBAPortImplemented = HBA_REG32(AhciBusInterface, HBA_PI);
-    if (!AhciBusInterface->HBAPortImplemented)  return EFI_DEVICE_ERROR;
+    if (!AhciBusInterface->HBAPortImplemented)  return EFI_SUCCESS;
 
     // Cross check whether # of Ports implemented is less or equal to
     // Max. # of ports supported by the silicon
@@ -1686,6 +1830,7 @@ AhciInitController (
             i++;        
         }
     }
+    PrintAhciCapability(AhciBusInterface);
     return EFI_SUCCESS;
 }
 
@@ -1975,7 +2120,7 @@ CheckDevicePresence (
         HBA_PORT_REG32_OR (AhciBusInterface, Port, HBA_PORTS_CMD, HBA_PORTS_CMD_POD);
     } 
 
-    Status = CheckValidDevice(AhciBusInterface, Port, PMPort);
+    Status = CheckValidDevice(SataDevInterface, Port, PMPort);
 
 #if PORT_MULTIPLIER_SUPPORT
     // If PORT Multiplier support is enabled, SoftReset generated later will get the signature. 
@@ -2148,8 +2293,8 @@ ConfigurePMPort (
 
     // Read the number of Ports preset in PM
     Status = ReadWritePMPort (SataDevInterface, CONTROL_PORT, GSCR_2, &Data, FALSE);
-    SataDevInterface->NumPMPorts = ((UINT8)Data) - 1;
-
+    SataDevInterface->NumPMPorts = (UINT8)Data;
+    
     // Set PM Attached bit in CMD register
     HBA_PORT_REG32_OR (SataDevInterface->AhciBusInterface,
                        SataDevInterface->PortNumber,
@@ -2358,6 +2503,14 @@ ConfigureDevice (
     }
     DeviceName[40] = 0;                 // Word
 
+    // Remove the spaces from the end of the device name
+    for (Index = 39; Index > 0; Index-- ) {
+        if (DeviceName[Index] != 0x20) { 
+        	break;
+        }
+        DeviceName[Index] = 0;
+    }
+    
     tempUnicodeTable = MallocZ(sizeof (EFI_UNICODE_STRING_TABLE) * 2);
     Status = pBS->AllocatePool (EfiBootServicesData,
                                 sizeof (Language),
@@ -2604,7 +2757,8 @@ InitializeDeviceSleep (
                 } 
             
                 // Allocate Memory for Identify Device Data
-                pBS->AllocatePool(EfiBootServicesData, ATA_SECTOR_BYTES, (VOID**)&Buffer);
+                Status = pBS->AllocatePool(EfiBootServicesData, ATA_SECTOR_BYTES, (VOID**)&Buffer);
+                ASSERT_EFI_ERROR (Status);
                 ZeroMemory(Buffer, ATA_SECTOR_BYTES); 
     
                 // Get Identify Device Data Log (log 30h Page 8)
@@ -2627,8 +2781,10 @@ InitializeDeviceSleep (
                             ///5:7 Reserved 
                             ///4:0 Minimum DEVSLP Assertion Time, in ms (MDAT) 
                             
-                    DevSleep_Exit_TimeOut = Buffer[DEVSLP_TIMING_VARIABLES_OFFSET + 1] ?  Buffer[DEVSLP_TIMING_VARIABLES_OFFSET + 1] : DEVSLEEP_EXIT_TIMEOUT;
-                    Minimum_DevSleep_Assertion_Time = (Buffer[DEVSLP_TIMING_VARIABLES_OFFSET] & 0x1F) ? (Buffer[DEVSLP_TIMING_VARIABLES_OFFSET] & 0x1F) : MINIMUM_DEVSLP_ASSERTION_TIME;
+                    DevSleep_Exit_TimeOut = Buffer[DEVSLP_TIMING_VARIABLES_OFFSET + 1] ? \
+                                                              Buffer[DEVSLP_TIMING_VARIABLES_OFFSET + 1] : DEVSLEEP_EXIT_TIMEOUT;
+                    Minimum_DevSleep_Assertion_Time = (Buffer[DEVSLP_TIMING_VARIABLES_OFFSET] & 0x1F) ? \
+                                                             (Buffer[DEVSLP_TIMING_VARIABLES_OFFSET] & 0x1F) : MINIMUM_DEVSLP_ASSERTION_TIME;
                 }
     
                 // Program the Timeouts and Multiplier value in PxDEVSLP Registers
@@ -2821,6 +2977,15 @@ InitSataBlockIO (
     UINT8                    OddLoadingType=0xFF;
     UINT32                   SectorSize = ATA_SECTOR_BYTES;
 
+    // We support ATA and ATAPI only. Refer SPC-4 Spec for Peripheral device type list for ATAPI
+    // Currently only CDROM/Direct access Devices are supported.   
+    if ((SataDevInterface->DeviceType != ATA) &&
+       ((SataDevInterface->IdentifyData.General_Config_0 & 0x1f00) != (CDROM_DEVICE << 8)) &&
+       ((SataDevInterface->IdentifyData.General_Config_0 & 0x1f00) != (DIRECT_ACCESS_DEVICE << 8)) &&
+       ((SataDevInterface->IdentifyData.General_Config_0 & 0x1f00) != (OPTICAL_MEMORY_DEVICE << 8))){
+        return EFI_UNSUPPORTED;
+    }
+
     Status = pBS->AllocatePool (EfiBootServicesData,
                 sizeof(SATA_BLOCK_IO),
                 (VOID**)&SataBlkIo);
@@ -2916,12 +3081,6 @@ InitSataBlockIO (
 
     } else {
 
-        // If it is an ATAPI device, check whether it is a CDROM or not. 
-        // Currently only CDROM/Direct access Devices are supported.
-        if ((SataDevInterface->IdentifyData.General_Config_0 & 0x1f00) == (CDROM_DEVICE << 8) ||
-            (SataDevInterface->IdentifyData.General_Config_0 & 0x1f00) == (DIRECT_ACCESS_DEVICE << 8) ||
-            (SataDevInterface->IdentifyData.General_Config_0 & 0x1f00) == (OPTICAL_MEMORY_DEVICE << 8)){
-
             AtapiDevice = MallocZ(sizeof (ATAPI_DEVICE));
 
             if (!AtapiDevice)   return EFI_OUT_OF_RESOURCES;
@@ -3000,7 +3159,6 @@ InitSataBlockIO (
                 BlkMedia->OptimalTransferLengthGranularity=BlkMedia->BlockSize;
             }
 #endif
-        }
     }
     return EFI_SUCCESS;
 }
@@ -3261,7 +3419,8 @@ ConfigurePowerUpInStandby (
 
                 ZeroMemory(&CommandStructure, sizeof(COMMAND_STRUCTURE)); 
                 CommandStructure.Command     = SET_FEATURE_COMMAND;
-                CommandStructure.Features    = (AhciPlatformPolicy->PowerUpInStandbyMode) == 0 ? DISABLE_POWERUP_IN_STANDBY : ENABLE_POWERUP_IN_STANDBY;
+                CommandStructure.Features    = (AhciPlatformPolicy->PowerUpInStandbyMode) == 0 ? \
+                                                      DISABLE_POWERUP_IN_STANDBY : ENABLE_POWERUP_IN_STANDBY;
                 Status = ExecuteNonDataCommand (SataDevInterface, CommandStructure);
             }
         }
@@ -3381,6 +3540,7 @@ DMACapable (
 **/
 
 EFI_STATUS
+EFIAPI 
 DiskInfoInquiry (
     IN EFI_DISK_INFO_PROTOCOL    *This,
     IN OUT VOID                  *InquiryData,
@@ -3423,6 +3583,7 @@ DiskInfoInquiry (
 
 **/
 EFI_STATUS
+EFIAPI 
 DiskInfoIdentify (
     EFI_DISK_INFO_PROTOCOL    *This,
     IN OUT VOID               *IdentifyData,
@@ -3464,6 +3625,7 @@ DiskInfoIdentify (
 **/
 
 EFI_STATUS
+EFIAPI 
 DiskInfoSenseData (
     IN EFI_DISK_INFO_PROTOCOL    *This,
     OUT VOID                     *SenseData,
@@ -3488,6 +3650,7 @@ DiskInfoSenseData (
 
 **/
 EFI_STATUS
+EFIAPI 
 DiskInfoWhichIDE (
     IN EFI_DISK_INFO_PROTOCOL    *This,
     OUT UINT32                   *IdeChannel,
@@ -3502,10 +3665,499 @@ DiskInfoWhichIDE (
     return EFI_SUCCESS;
 }
 
+
+/**
+   Function converts Big endian word to Little Endian and Vice versa.
+
+   @param [in]  EndianWord
+
+   @retval UINT16
+**/
+UINT16
+ToBigLittleEndianWord (
+    UINT16 EndianWord
+)
+{
+    return (((EndianWord >> 8) & 0xFF) + (EndianWord << 8));
+}
+
+/**
+   Function converts Big endian dword to Little Endian Dword and Vice versa.
+
+   @param [in]  EndianDword
+
+   @retval UINT16
+**/
+UINT32
+ToBigLittleEndianDword (
+    UINT32 EndianDword
+)
+{
+    return (((EndianDword & 0xFF) << 24) + ((EndianDword & 0xFF00) << 8) + \
+            ((EndianDword & 0xFF0000) >>8) + ((EndianDword & 0xFF000000) >>24));
+}
+
+/**
+   Extracts Locking Feature and BlockSid Feature data from Level 0 feature descriptor data
+
+   @param [in]  Level0Data                  A pointer to TCG_LEVEL0_DISCOVERY_HEADER structure
+   @param [in]  InFeatureCode               Feature Code to extract the data from Level 0 feature descriptor data
+   @param [out] Level0FeatureDescriptor     A pointer to buffer to get feature data
+
+   @return  EFI_SUCCESS                  Requested feature data extracted successfully.
+   @return  EFI_NOT_FOUND                Requested feature data not supported by the device.
+   @return  EFI_INVALID_PARAMETER        One or more input parameters are invalid.
+**/
+EFI_STATUS
+GetFeatureData (
+    IN  TCG_LEVEL0_DISCOVERY_HEADER           *Level0Data,
+    IN  UINTN                                 InFeatureCode,
+    OUT VOID                                  *Level0FeatureDescriptor
+)
+{
+    TCG_LEVEL0_FEATURE_DESCRIPTOR_HEADER       *FeatureDescriptor = NULL;
+    UINTN                                      TotalLength = 0;
+    UINT16                                     FeatureCode = 0;
+    
+    if((Level0Data == NULL) || (Level0FeatureDescriptor == NULL)) {
+        return EFI_INVALID_PARAMETER;
+    }
+    
+    TotalLength =  ToBigLittleEndianDword(Level0Data->LengthBE) + 4;
+    FeatureDescriptor = (TCG_LEVEL0_FEATURE_DESCRIPTOR_HEADER *)((UINT8 *)Level0Data + sizeof(TCG_LEVEL0_DISCOVERY_HEADER));
+    do {
+        FeatureCode = ((FeatureDescriptor->FeatureCode_BE >> 8) & 0xFF) + (FeatureDescriptor->FeatureCode_BE << 8);
+        // Check for the Block SID feature and Locking feature in the supported feature Code
+        if((FeatureCode == TCG_FEATURE_BLOCK_SID) && (InFeatureCode == TCG_FEATURE_BLOCK_SID)) {
+
+            // Copy BlockSid feature data to buffer
+            pBS->CopyMem(Level0FeatureDescriptor, FeatureDescriptor, sizeof(TCG_BLOCK_SID_FEATURE_DESCRIPTOR));
+            ((TCG_BLOCK_SID_FEATURE_DESCRIPTOR *)Level0FeatureDescriptor)->Header.FeatureCode_BE = FeatureCode;
+            return EFI_SUCCESS;
+        }
+        
+        if((FeatureCode == TCG_FEATURE_LOCKING) && (InFeatureCode == TCG_FEATURE_LOCKING)) {
+            pBS->CopyMem(Level0FeatureDescriptor, FeatureDescriptor, sizeof(TCG_LOCKING_FEATURE_DESCRIPTOR));
+            ((TCG_LOCKING_FEATURE_DESCRIPTOR *)Level0FeatureDescriptor)->Header.FeatureCode_BE = FeatureCode;
+            return EFI_SUCCESS;
+        }
+        
+        // Get the Next Feature Descriptor
+        FeatureDescriptor = (TCG_LEVEL0_FEATURE_DESCRIPTOR_HEADER *)((UINT8 *)FeatureDescriptor + FeatureDescriptor->Length + 4);
+                   
+    } while ((UINT8 *)FeatureDescriptor < (UINT8 *)((UINT8 *)Level0Data + TotalLength));
+    
+    return EFI_NOT_FOUND;
+}
+
+/**
+   Gets Level 0 Feature Descriptor data of ATA device.
+
+   @param [in]  StorageSecurityProtocol  A pointer to the EFI_STORAGE_SECURITY_COMMAND_PROTOCOL instance. 
+   @param [in]  QueryBufferSize          Size of the buffer
+   @param [out] QueryBuffer              A pointer to Buffer which gets Level 0 feature descriptor data.
+   
+   @return  EFI_SUCCESS                 Level 0 feature descriptor data retrieved successfully.
+   @return  EFI_INVALID_PARAMETER       One or more input parameters are invalid.
+   @return  EFI_DEVICE_ERROR            Device error occurred while attempting to send the command.
+   @return  EFI_TIMEOUT                 Timeout occurred while executing command.
+ */
+EFI_STATUS
+GetLevel0FeatureDescriptor (
+    IN EFI_STORAGE_SECURITY_COMMAND_PROTOCOL   *StorageSecurityProtocol,
+    IN  UINTN                                  QueryBufferSize,
+    OUT VOID                                   *QueryBuffer
+)
+{
+    EFI_STATUS      Status;
+    
+    if((StorageSecurityProtocol == NULL) || (QueryBuffer == NULL)) {
+        return EFI_INVALID_PARAMETER;
+    }
+    
+    Status = StorageSecurityProtocol->ReceiveData( StorageSecurityProtocol,
+                                                   0,
+                                                   0,
+                                                   TCG_OPAL_SECURITY_PROTOCOL_1,   // Security Protocol ID
+                                                   ToBigLittleEndianWord(TCG_SP_SPECIFIC_PROTOCOL_LEVEL0_DISCOVERY), // SP specific id
+                                                   0x200,                         // TranferLength
+                                                   QueryBuffer,
+                                                   &QueryBufferSize
+                                                  );
+    return Status;
+}
+
+/**
+   Gets supported security protocol list of ATA device.
+
+   @param [in]  StorageSecurityProtocol  A pointer to the EFI_STORAGE_SECURITY_COMMAND_PROTOCOL instance.
+   @param [out] QueryBuffer              A pointer to Buffer which gets Supported Protocol list.
+   @param [in]  QueryBufferSize          Size of the buffer
+
+   @return  EFI_SUCCESS                 Supported Security Protocol List retrieved successfully.
+   @return  EFI_INVALID_PARAMETER       One or more input parameters are invalid.
+   @return  EFI_DEVICE_ERROR            Device error occurred while attempting to send the command.
+   @return  EFI_TIMEOUT                 Timeout occurred while executing command.
+**/
+EFI_STATUS
+GetSupportedSecurityProtocolList (
+    IN  EFI_STORAGE_SECURITY_COMMAND_PROTOCOL   *StorageSecurityProtocol,
+    OUT VOID                                    *QueryBuffer,
+    IN  UINTN                                   *QueryBufferSize
+)
+{
+    EFI_STATUS      Status;
+    
+    if((StorageSecurityProtocol == NULL) || (QueryBuffer == NULL) || (QueryBufferSize == NULL)) {
+        return EFI_INVALID_PARAMETER;
+    }
+    
+    Status = StorageSecurityProtocol->ReceiveData( StorageSecurityProtocol,
+                                                   0,
+                                                   0,
+                                                   TCG_SP_SPECIFIC_PROTOCOL_LIST,   // Security Protocol ID
+                                                   0x00,   // SP specific id
+                                                   0x200,  // TranferLength
+                                                   QueryBuffer,
+                                                   QueryBufferSize
+                                                  );
+    return Status;
+}
+
+/**
+   Returns whether the ATA device supports TCG security protocol or not.
+
+   @param [in]  StorageSecurityProtocol  A pointer to the EFI_STORAGE_SECURITY_COMMAND_PROTOCOL instance. 
+
+   @retval TRUE      TCG Security protocol supported by the ATA device.
+   @retval FALSE     TCG Security protocol not supported by the ATA device.
+**/
+BOOLEAN
+IsTcgSecurityProtocolSupported (
+    IN EFI_STORAGE_SECURITY_COMMAND_PROTOCOL   *StorageSecurityProtocol
+)
+{
+    EFI_STATUS                              Status;
+    UINT16                                  ListLength = 0;
+    UINT16                                  SpByte = 0;
+    TCG_SUPPORTED_SECURITY_PROTOCOLS        SupportedProtocolList;
+    UINTN                                   QueryBufferSize = sizeof(TCG_SUPPORTED_SECURITY_PROTOCOLS);
+    
+    if(StorageSecurityProtocol == NULL) {
+        return FALSE;
+    }
+    
+    Status = GetSupportedSecurityProtocolList(StorageSecurityProtocol, &SupportedProtocolList, &QueryBufferSize);
+    if (EFI_ERROR(Status)) {
+        return FALSE;
+    }
+    
+    ListLength = ToBigLittleEndianWord (SupportedProtocolList.ListLength_BE);
+    
+    for (SpByte = 0; SpByte < ListLength; SpByte++) {
+        if (SupportedProtocolList.List[SpByte] == TCG_OPAL_SECURITY_PROTOCOL_2) {
+            return TRUE;
+        }
+    }
+    
+    return FALSE;
+}
+
+/**
+   Sends Block SID command to supported ATA device
+
+   @param [in]  StorageSecurityProtocol    A pointer to EFI_STORAGE_SECURITY_COMMAND_PROTOCOL instance.
+
+   @return  EFI_SUCCESS                    Block SID command sent successfully
+   @return  EFI_INVALID_PARAMETER          One or more input parameters are invalid.
+   @return  EFI_DEVICE_ERROR               Device error occurred while attempting to send the command.
+**/
+EFI_STATUS
+IssueBlockSid (
+    IN  EFI_STORAGE_SECURITY_COMMAND_PROTOCOL   *StorageSecurityProtocol
+) 
+{
+    EFI_STATUS                            Status = EFI_UNSUPPORTED;
+    VOID                                  *QueryBuffer = NULL;
+    UINTN                                 QueryBufferSize = 0x200;
+    VOID                                  *Buffer = NULL;
+    UINTN                                 BufferLength = 0x200;
+    TCG_BLOCK_SID_FEATURE_DESCRIPTOR      BlockSid;
+    TCG_LOCKING_FEATURE_DESCRIPTOR        Locking;
+    UINTN                                 Index=0;
+    
+    if(StorageSecurityProtocol == NULL) {
+        return EFI_INVALID_PARAMETER;
+    }
+    
+    if(IsTcgSecurityProtocolSupported(StorageSecurityProtocol)) {
+        
+        Status = pBS->AllocatePool(EfiBootServicesData, QueryBufferSize, (VOID**)&QueryBuffer);
+        if (EFI_ERROR(Status)) {
+            return Status;
+        }
+        
+        // Get Level 0 descriptor data to check Block SID feature supported or not
+        Status = GetLevel0FeatureDescriptor(StorageSecurityProtocol, QueryBufferSize, QueryBuffer);
+        if (!EFI_ERROR(Status)) {
+            
+            // Check whether Block SID feature available or not 
+            Status = GetFeatureData((TCG_LEVEL0_DISCOVERY_HEADER*)QueryBuffer, TCG_FEATURE_BLOCK_SID, (VOID *)&BlockSid);
+            if (!EFI_ERROR(Status)) {
+                
+                // Check whether Block SID feature supported or not
+                if(BlockSid.Header.FeatureCode_BE != TCG_FEATURE_BLOCK_SID) {
+                    return EFI_UNSUPPORTED;
+                }
+                
+                // Check whether SID already blocked or not
+                if(BlockSid.SIDBlockedState == 1) {
+                    return EFI_SUCCESS;
+                }
+                
+                // Check whether C_PIN_SID is equal to C_PIN_MISD or not
+                if(BlockSid.SIDValueState == 1) {
+                    return EFI_SUCCESS;
+                }
+                
+                // Check whether device in locked state or not
+                Status = GetFeatureData((TCG_LEVEL0_DISCOVERY_HEADER*)QueryBuffer, TCG_FEATURE_LOCKING, (VOID *)&Locking);
+                if (!EFI_ERROR(Status)) {
+                    if((Locking.Header.FeatureCode_BE == TCG_FEATURE_LOCKING) && Locking.Locked ) {
+                        return EFI_SUCCESS;
+                    }
+                }
+                
+                Status = pBS->AllocatePool(EfiBootServicesData, BufferLength, (VOID**)&Buffer);
+                if(EFI_ERROR(Status)) {
+                    return Status;
+                }
+                
+                pBS->SetMem(Buffer, BufferLength, 0);
+                ((UINT8 *)Buffer)[0] = 1;
+                
+                Status = StorageSecurityProtocol->SendData( StorageSecurityProtocol,
+                                                            0,
+                                                            0,
+                                                            TCG_OPAL_SECURITY_PROTOCOL_2,
+                                                            ToBigLittleEndianWord(TCG_BLOCKSID_COMID),
+                                                            BufferLength,
+                                                            Buffer
+                                                          );
+                pBS->FreePool (Buffer);
+            }
+        }
+        pBS->FreePool(QueryBuffer);
+    }
+    
+    return Status;
+}
+
+/**
+   Checks whether TCG driver handles issuing Block SID command or not
+
+   @param VOID
+
+   @retval  TRUE     TCG driver is not handling Block SID
+   @retval  FALSE    TCG driver is handling Block SID
+**/
+BOOLEAN
+IsTcgDriverHandlesBlockSid ()
+{
+    EFI_STATUS                                 Status;
+    VOID                                       *TreeProtocol = NULL;
+    EFI_PHYSICAL_ADDRESS                       NvsMemoryAddress;
+    EFI_GUID                                   FlagsStatusguid = AMI_TCG_CONFIRMATION_FLAGS_GUID;
+    AMI_ASL_PPI_NV_VAR                         *TpmAcpiNvsFlags;
+    UINTN                                      Size = sizeof (EFI_PHYSICAL_ADDRESS);  
+    EFI_SMM_CONTROL2_PROTOCOL                  *gSmmCtl = NULL;
+#ifdef PPI_OFFSET
+    UINT8                                      PpiOffsetValue = PPI_OFFSET;
+#else
+    UINT8                                      PpiOffsetValue = 0x35;        // Default smi value for PpiOffset 
+#endif
+    static BOOLEAN                             AlreadyChecked = FALSE;
+    static BOOLEAN                             IssueBlockSid  = TRUE;
+    
+    if(AlreadyChecked) {
+        return IssueBlockSid;
+    }
+    
+    Status = pBS->LocateProtocol(&gEfiTrEEProtocolGuid,
+                          NULL,
+                          &TreeProtocol);
+    if(!EFI_ERROR(Status)) {
+        // If the platform has TPM 2.0 device connected,
+        // TCG2 driver manages Block SID feature, so AHCI driver
+        // shouldn't send Block SID command.
+        Status = pRS->GetVariable(L"TpmServFlags",
+                                   &FlagsStatusguid,
+                                   NULL,
+                                   &Size,
+                                   &NvsMemoryAddress);
+        if(!EFI_ERROR(Status)) {
+            TpmAcpiNvsFlags =  ((AMI_ASL_PPI_NV_VAR *)(UINTN)NvsMemoryAddress);     
+            TpmAcpiNvsFlags->Flag = ACPI_FUNCTION_GET_USER_CONFIRMATION_STATUS_FOR_REQUEST;
+            TpmAcpiNvsFlags->RQST = TCPA_PPIOP_ENABLE_BLOCK_SID_FUNC;
+            TpmAcpiNvsFlags->RequestFuncResponse = 0; 
+            
+            // Trigger a software SMI with the PPI_OFFSET value, to get the response for the PPI Request
+            Status = pBS->LocateProtocol(&gEfiSmmControl2ProtocolGuid, NULL, &gSmmCtl);
+            ASSERT_EFI_ERROR(Status);
+            if (!EFI_ERROR(Status)){
+                gSmmCtl->Trigger(gSmmCtl, &PpiOffsetValue, NULL, FALSE, 0);
+            }
+
+            // If RequestFuncResponse is a non zero value, then TCG2 driver will manage the BlockSid command
+            if(TpmAcpiNvsFlags->RequestFuncResponse ) {
+                IssueBlockSid = FALSE;
+            }
+            AlreadyChecked = TRUE;
+        }
+    }
+    
+    return IssueBlockSid;
+}
+
+/**
+    Send the Freeze Lock and device config Freeze Lock command to 
+    all the Sata-ATA Devices connected 
+
+    @param Event signalled event
+    @param Context calling context
+
+    @retval VOID
+
+**/
+VOID
+EFIAPI
+AhciFreezeLockDevice (
+    IN EFI_EVENT    Event,
+    IN VOID         *Context
+        
+)
+{
+    UINTN                                 HandleCount;
+    EFI_HANDLE                            *HandleBuffer;
+    UINT8                                 i;
+    AMI_AHCI_BUS_PROTOCOL                 *AhciBusInterface;
+    SATA_DEVICE_INTERFACE                 *SataDevInterface;
+    DLINK                                 *dlink;
+    COMMAND_STRUCTURE                     CommandStructure = {0};
+    EFI_STATUS                            Status;
+    EFI_STORAGE_SECURITY_COMMAND_PROTOCOL *StorageSecurityProtocol = NULL;
+
+    Status = pBS->LocateHandleBuffer (
+                                      ByProtocol,
+                                      &gAmiAhciBusProtocolGuid,
+                                      NULL,
+                                      &HandleCount,
+                                      &HandleBuffer
+                                      );
+
+    if(EFI_ERROR(Status) || HandleCount == 0 ) {
+        return;
+    }
+
+    //
+    // Issue Freeze Lock command all the Sata-ATA Devices connected.
+    //
+    for (i = 0; i < HandleCount; i++) {
+        Status = pBS->HandleProtocol (HandleBuffer[i], &gAmiAhciBusProtocolGuid, (VOID**)&AhciBusInterface);
+        if (EFI_ERROR(Status)) {
+            continue;
+        }
+        
+        dlink = AhciBusInterface->SataDeviceList.pHead; 
+        if (dlink){ 
+            do {
+                SataDevInterface = OUTTER(dlink, SataDeviceLink, SATA_DEVICE_INTERFACE);
+
+                    
+                // Update the Identify device buffer
+                GetIdentifyData(SataDevInterface);
+                    
+                // If Security Feature support and HDD is not in frozen state or Locked state , send the 
+                // Device freeze Lock command to frozen the device 
+                    
+                if (SataDevInterface->DeviceType == ATA &&
+                        SataDevInterface->IdentifyData.Command_Set_Supported_82 & 0x2 &&
+                        !(SataDevInterface->IdentifyData.Security_Status_128 & 0xC) ) {
+                        
+                    ZeroMemory(&CommandStructure, sizeof(COMMAND_STRUCTURE)); 
+                        
+                    // Send the Freeze Lock command 
+                    CommandStructure.Command = SECURITY_FREEZE_LOCK;
+                    Status = ExecuteNonDataCommand (SataDevInterface, CommandStructure);
+                        
+                    // if Device Configuration Overlay feature set supported then issue the
+                    // Dev configure Free lock command.
+                    if (SataDevInterface->IdentifyData.Command_Set_Supported_83 & 0x800) {
+                        ZeroMemory(&CommandStructure, sizeof(COMMAND_STRUCTURE)); 
+                        CommandStructure.Command = DEV_CONFIG_FREEZE_LOCK;
+                        CommandStructure.Features = DEV_CONFIG_FREEZE_LOCK_FEATURES;
+                        Status = ExecuteNonDataCommand (SataDevInterface, CommandStructure);
+                    }
+                        
+                    // Update the Identify device buffer
+                    GetIdentifyData(SataDevInterface);
+                }
+
+                // If device supports TCG security protocol and Block SID, then send Block SID command
+                Status = pBS->HandleProtocol (SataDevInterface->IdeDeviceHandle, 
+                                              &gEfiStorageSecurityCommandProtocolGuid, 
+                                              (VOID**)&StorageSecurityProtocol);
+                if (!EFI_ERROR(Status)) {
+                    // Send Block SID command if TCG driver not handling
+                    if(IsTcgDriverHandlesBlockSid()) {
+                        Status = IssueBlockSid(StorageSecurityProtocol);
+                    }
+                }
+                
+                dlink = dlink-> pNext;
+            } while (dlink);    
+        }
+     }
+    
+    // Freeze Lock commands send to the device. Close the event as no more it's needed 
+    pBS->CloseEvent(Event);
+    
+    return;
+}
+/**
+    Prints Controller capabilities
+
+        
+    @param AhciBusInterface 
+
+    @retval VOID
+
+    @note  
+
+**/
+
+VOID
+PrintAhciCapability  (
+  IN AMI_AHCI_BUS_PROTOCOL     *AhciBusInterface
+)
+{
+#if AHCI_VERBOSE_PRINT
+    DEBUG ((DEBUG_BLKIO,  "\nAHCI Controller Information \n"));
+    DEBUG ((DEBUG_BLKIO,  " Controller Capabilities Value      : %08X\n",   AhciBusInterface->HBACapability));
+    DEBUG ((DEBUG_BLKIO,  " HBA Port Implemented               : %08X\n",  AhciBusInterface->HBAPortImplemented));
+    DEBUG ((DEBUG_BLKIO,  " Port FIS Base Address              : %08lX\n",  AhciBusInterface->PortFISBaseAddress));
+    DEBUG ((DEBUG_BLKIO,  " Port Command Base Address          : %08lX\n",  AhciBusInterface->PortCommandListBaseAddress));
+    DEBUG ((DEBUG_BLKIO,  " Port FIS Base Address End          : %08lX\n",   AhciBusInterface->PortFISBaseAddrEnd));
+    DEBUG ((DEBUG_BLKIO,  " Port CommandList Length            : %08X\n",   AhciBusInterface->PortCommandListLength));
+    DEBUG ((DEBUG_BLKIO,  " Port CommandTable Length           : %08X\n",   AhciBusInterface->PortCommandTableLength));
+#endif
+    return;
+}
+
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2017, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **

@@ -117,7 +117,9 @@ typedef struct _AHCI_COMMAND_TABLE_NO_PRDT{
 #pragma pack()
 
 #define     ATA_SIGNATURE_32                0x00000101
-#define     ATAPI_SIGNATURE_32              0xEB140101
+#ifndef     ATAPI_SIGNATURE_32 
+#define         ATAPI_SIGNATURE_32              0xEB140101
+#endif
 #define     PMPORT_SIGNATURE                0x96690101
 #define     PRD_MAX_DATA_COUNT              0x400000
 
@@ -351,6 +353,7 @@ typedef struct _AHCI_COMMAND_TABLE_NO_PRDT{
 
 #define     HBA_CR_CLEAR_TIMEOUT            500          // AHCI 1.2 spec 10.1.2
 #define     HBA_FR_CLEAR_TIMEOUT            500          // AHCI 1.2 spec 10.1.2
+#define     HBA_CI_CLEAR_TIMEOUT            200          // 200ms
 #define     HBA_PRESENCE_DETECT_TIMEOUT     10           // 10msec Serial ATA 1.0 Sec 5.2
 
 #define     HBA_PORT_REG_BASE(Port) \

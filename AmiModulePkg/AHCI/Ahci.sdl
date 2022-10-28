@@ -98,9 +98,43 @@ TOKEN
     TargetH = Yes
 End
 
+TOKEN
+    Name  = "AHCI_VERBOSE_PRINT"
+    Value  = "0"
+    Help  = "Make sure PcdDebugPrintErrorLevel is set to PcdsPatchableInModule. Search in all SDL files."
+    TokenType = Integer
+    TargetH = Yes
+    Token = "DEBUG_CODE" "=" "1"
+End
+
+PcdMapping
+    Name  = "PcdFixedDebugPrintErrorLevel"
+    GuidSpace  = "gEfiMdePkgTokenSpaceGuid"
+    PcdType  = "PcdsFixedAtBuild"
+    Value  = "0x80000044"
+    Override  = "AmiModulePkg.Ahci"
+    Offset  = 00h
+    Length  = 00h
+    Help  = "Display minimal debug messages when AHCI_VERBOSE_PRINT token value is disable"
+    TargetDSC = Yes
+    Token = "AHCI_VERBOSE_PRINT" "=" "0"
+End
+
+PcdMapping
+    Name  = "PcdFixedDebugPrintErrorLevel"
+    GuidSpace  = "gEfiMdePkgTokenSpaceGuid"
+    PcdType  = "PcdsFixedAtBuild"
+    Value  = "0x80001044"
+    Override  = "AmiModulePkg.Ahci"
+    Offset  = 00h
+    Length  = 00h
+    Help  = "Display all debug messages when AHCI_VERBOSE_PRINT token value is enable"
+    TargetDSC = Yes
+    Token = "AHCI_VERBOSE_PRINT" "=" "1"
+End
 PATH
     Name  = "AHCI_DIR"
-    Path  = "AmiModulePkg\AHCI"
+    Path  = "AmiModulePkg/AHCI"
 End
 
 INFComponent
