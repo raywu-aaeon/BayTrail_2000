@@ -46,7 +46,7 @@ variables:
   PROJECT_REBUILD: 1
   PROJECT_SHA: $CI_COMMIT_SHA
   PROJECT_VEB_FILE: BayTrail
-  PROJECT_VEB_TOOL: Aptio_5.x_TOOLS_26
+  PROJECT_VEB_TOOL: Aptio_5.x_TOOLS_35
   PROJECT_BUILD_BATCH: N/A  ## Set to build.bat if project uses build.bat instead of make
 
   ## Patching NameTooLong issue. Optional, unmask if needed to change for project -
