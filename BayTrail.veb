@@ -261,12 +261,7 @@
 "AmiModulePkg\FlashSMI\FlashSmi.cif"= "SS: AptioV;$/AptioV/Source/Modules/FlashSmi;FlashSmi_00"
 "AmiModulePkg\HardwareSignature\HardwareSignatureManagement.cif"= "SS: AptioV;$/AptioV/Source/Modules/HardwareSignature;5.004_HwSignature_02"
 "AmiModulePkg\Include\HardwareChangeProtocol.cif"= "SS: AptioV;$/AptioV/Source/Modules/HardwareSignature/HardwareChangeProtocols;5.004_HwSignature_02"
-"AmiModulePkg\HddSecurity\HddSecurity.cif"= "SS: AptioV;$/AptioV/Source/Modules/HddSecurity;HddSecurity_19"
-"AmiModulePkg\HddSecurity\SmmHddSecurity.cif"= "SS: AptioV;$/AptioV/Source/Modules/HddSecurity;HddSecurity_19"
-"AmiModulePkg\HddSecurity\AmiTseHddSecurity\AmiTseHddSecurity.cif"= "SS: AptioV;$/AptioV/Source/Modules/HddSecurity;HddSecurity_19"
-"AmiModulePkg\Include\HddSecurityInclude.cif"= "SS: AptioV;$/AptioV/Source/Modules/HddSecurity;HddSecurity_19"
-"AmiModulePkg\HddSecurity\HddSecDynamicSetup\HddSecDynamicSetup.cif"= "SS: AptioV;$/AptioV/Source/Modules/HddSecurity/HddSecDynamicSetup;HddSecurity_19"
-"AmiModulePkg\HddSecurity\HddSecStaticSetup.cif"= "SS: AptioV;$/AptioV/Source/Modules/HddSecurity;HddSecurity_19"
+
 "AmiChipsetModulePkg\Isct\IsctPlatform.cif"= "SS: AptioV;$/AptioV/Source/Hardware/Chipset/Intel/BayTrail-Client/ISCT;5.008_ISCT_110_06"
 "AmiChipsetModulePkg\Include\Protocol\IsctProtocol.cif"= "SS: AptioV;$/AptioV/Source/Hardware/Chipset/Intel/BayTrail-Client/ISCT/IsctProtocolInclude;5.008_ISCT_110_06"
 "AmiChipsetModulePkg\Include\Guid\IsctGuid.cif"= "SS: AptioV;$/AptioV/Source/Hardware/Chipset/Intel/BayTrail-Client/ISCT/IsctGuidInclude;5.008_ISCT_110_06"
