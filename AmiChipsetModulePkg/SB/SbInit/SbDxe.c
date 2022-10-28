@@ -59,7 +59,7 @@
 //EIPEIP180881 >>
 #include <IndustryStandard/AmiAtaAtapi.h>
 #include <Protocol/AmiIdeBus.h>
-#include <Protocol/AmiAhciBus.h>
+
 #include <Protocol/AmiHddSecurity.h>
 //EIPEIP180881 <<
 // Produced Protocols
@@ -731,7 +731,8 @@ VOID InitSbRegsBeforeBoot(
 	UINT16							  PasswordSecurity = 0;
 	UINT16					  		  SecurityStatus = 0;
     EFI_HANDLE                        *HandleBuffer = NULL;
-    AMI_HDD_SECURITY_PROTOCOL         *IDEPasswordSecurity = NULL;    //EIPEIP180881
+    AMI_HDD_SECURITY_PROTOCOL         *IDEPasswordSecurity = NULL;    //EIPEIP180881
+
     UINTN 							  Count = 0;
     //EIP156971 (-)>>
     //EIP146629 >> 
