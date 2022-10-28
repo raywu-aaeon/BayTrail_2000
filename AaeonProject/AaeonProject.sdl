@@ -1269,3 +1269,11 @@ TOKEN
 	TargetH = Yes
 	TargetMAK = Yes
 End
+
+TOKEN
+    Name  = "AHCI_VERBOSE_PRINT"
+    Value  = "1"
+    Help  = "Make sure PcdDebugPrintErrorLevel is set to PcdsPatchableInModule. Search in all SDL files."
+    TokenType = Integer
+    TargetH = Yes
+End
