@@ -337,7 +337,10 @@ ScPolicyInitDxe(
       mSataConfig.LegacyMode                       = PCH_DEVICE_ENABLE;
     } else {
       mSataConfig.PortSettings[PortIndex].Enable   = PCH_DEVICE_ENABLE;
-      mSataConfig.LegacyMode                       = PCH_DEVICE_DISABLE;
+      //debug>>
+      //mSataConfig.LegacyMode                       = PCH_DEVICE_DISABLE;
+      mSataConfig.LegacyMode                       = PCH_DEVICE_ENABLE;
+      //debug<<
     }
     if(PchPolicyData->PchSata == 1){
       mSataConfig.PortSettings[PortIndex].Enable   = PchPolicyData->SataPort[PortIndex];
