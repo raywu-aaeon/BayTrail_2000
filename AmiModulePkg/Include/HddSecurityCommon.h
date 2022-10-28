@@ -36,7 +36,7 @@ extern "C" {
 #include <Protocol/AmiIdeBus.h>
 #endif
 #if ( defined(AHCI_SUPPORT) && (AHCI_SUPPORT != 0) )
-#include <Protocol/AmiAhciBus.h>
+//#include <Protocol/AmiAhciBus.h>
 #else
 typedef struct _AHCI_ATAPI_COMMAND{
     UINT8           Ahci_Atapi_Command[0x10];
