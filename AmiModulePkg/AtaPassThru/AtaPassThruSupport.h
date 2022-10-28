@@ -42,7 +42,7 @@ extern "C" {
 #include <Protocol/AmiAtaPassThruInit.h>
 #include <IndustryStandard/AmiAtaAtapi.h>
 #include <Protocol/AmiIdeBus.h>
-#include <Protocol/AmiAhciBus.h>
+
 
 //---------------------------------------------------------------------------
 
