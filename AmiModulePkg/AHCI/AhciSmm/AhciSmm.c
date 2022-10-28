@@ -30,6 +30,7 @@
 #include <Protocol/SmmBase.h>
 #include "AhciController.h"
 
+#include <Library/DebugLib.h>
 //---------------------------------------------------------------------------
 
 
