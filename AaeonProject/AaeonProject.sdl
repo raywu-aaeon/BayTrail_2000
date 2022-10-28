@@ -1200,7 +1200,7 @@ End
 
 TOKEN
 	Name = "ONEOF_AAEONRESTOREACPOWERLOSS_DEFAULT"
-	Value = "2"
+	Value = "1"
 	Help = "0: Last State\1: Always On\2: Always Off"
 	TokenType = Integer
 	TargetH = Yes
@@ -1250,4 +1250,13 @@ TOKEN
 	Help = "0: Chipset\1: EC/Super IO"
 	TokenType = Integer
 	TargetH = Yes
+End
+
+TOKEN
+	Name  = "BEEP_ENABLE"
+	Value  = "0"
+	Help  = "This flag enables/disables all firmware beeps"
+	TokenType = Boolean
+	TargetH = Yes
+	TargetMAK = Yes
 End
