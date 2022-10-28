@@ -30,7 +30,6 @@ TOKEN
     TokenType = Boolean
     TargetEQU = Yes
     TargetH = Yes
-    Token = "SMM_COMMUNICATE_SUPPORT" "=" "1"
     Token = "AhciSmm_SUPPORT" "=" "1"
 End
 

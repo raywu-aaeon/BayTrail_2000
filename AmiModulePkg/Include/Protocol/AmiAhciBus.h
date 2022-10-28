@@ -416,6 +416,7 @@ struct _SATA_DEVICE_INTERFACE{
     UINT8                                 PMPortNumber; 
     UINT8                                 NumPMPorts;         // Number of Ports in PM, Valid for PMPORT only
     UINT8                                 DeviceState;
+    BOOLEAN                               IsDeviceFeatureDone;
     UINT32                                Signature;
     UINT32                                SControl;
     DEVICE_TYPE                           DeviceType;

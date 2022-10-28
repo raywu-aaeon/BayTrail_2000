@@ -34,6 +34,12 @@
 AMI_BLOCKIO_WRITE_PROTECTION_PROTOCOL *AmiBlkWriteProtection = NULL;
 #endif
 
+#if defined(ACOUSTIC_MANAGEMENT_DRIVER_SUPPORT) && (ACOUSTIC_MANAGEMENT_DRIVER_SUPPORT != 0)
+#include <Protocol/AcousticProtocol.h>
+EFI_GUID gHddAcousticInitProtocolGuid = AMI_HDD_ACOUSTIC_INIT_PROTOCOL_GUID;
+AMI_HDD_ACOUSTIC_INIT_PROTOCOL *gHddAcousticInitProtocol = NULL;
+#endif
+
 #ifndef EFI_COMPONENT_NAME2_PROTOCOL_GUID
 EFI_GUID gComponentNameProtocolGuid = EFI_COMPONENT_NAME_PROTOCOL_GUID;
 #else
@@ -502,6 +508,10 @@ AhciBusStart (
                                      );
 
         if (EFI_ERROR(Status)) {
+            pBS->CloseProtocol (Controller,
+                                &gEfiIdeControllerInitProtocolGuid,
+                                This->DriverBindingHandle,
+                                Controller);
             return EFI_OUT_OF_RESOURCES; //No need to close IDE_CONTROLLER_PROTOCOL
         }
 
@@ -509,8 +519,12 @@ AhciBusStart (
                                          AhciBusInterface,
                                          IdeControllerInterface,
                                          PciIO);
-        if (EFI_ERROR(Status)) {
-            return EFI_DEVICE_ERROR;    //No need to close the protocol. Will be handled in STOP
+        if (EFI_ERROR(Status)) { 
+            pBS->CloseProtocol (Controller,
+                                &gEfiIdeControllerInitProtocolGuid,
+                                This->DriverBindingHandle,
+                                Controller);
+            return EFI_DEVICE_ERROR;    
         }
     }
 
@@ -920,17 +934,27 @@ InstallOtherOptionalFeatures(
                              NULL,
                              (VOID **)&HddSmartInitProtocol);
     }
+
+#if defined(ACOUSTIC_MANAGEMENT_DRIVER_SUPPORT) && (ACOUSTIC_MANAGEMENT_DRIVER_SUPPORT != 0)
+    if ( gHddAcousticInitProtocol == NULL ) {
+	 pBS->LocateProtocol (&gHddAcousticInitProtocolGuid,
+                                   NULL,
+                                   (VOID **) &gHddAcousticInitProtocol);
+    }
+#endif
     
     for (dlink = AhciBusInterface->SataDeviceList.pHead; dlink; dlink = dlink->pNext) {
 
         SataDevInterface = OUTTER(dlink, SataDeviceLink, SATA_DEVICE_INTERFACE);
 
-        if(SataDevInterface->DeviceState != DEVICE_CONFIGURED_SUCCESSFULLY) {
+        if(SataDevInterface->DeviceState != DEVICE_CONFIGURED_SUCCESSFULLY || SataDevInterface->IsDeviceFeatureDone ) {
             continue;
         }
 
-         if(HddSecurityInitProtocol != NULL) {
-             HddSecurityInitProtocol->InstallSecurityInterface(SataDevInterface, TRUE);
+        SataDevInterface->IsDeviceFeatureDone = TRUE;
+
+        if(HddSecurityInitProtocol != NULL) {
+             HddSecurityInitProtocol->InstallSecurityInterface(SataDevInterface, AmiStorageInterfaceAhci);
              if(TempHddSecurityProtocolPtr == NULL) {
                  // Verify that Security interface has been installed
                  // on at least one device
@@ -964,15 +988,21 @@ InstallOtherOptionalFeatures(
         }
 
          if(OpalSecInitProtocol != NULL) {
-             OpalSecInitProtocol->InstallOpalSecurityInterface(SataDevInterface, TRUE);
+             OpalSecInitProtocol->InstallOpalSecurityInterface(SataDevInterface, AmiStorageInterfaceAhci);
          }
 
+#if defined(ACOUSTIC_MANAGEMENT_DRIVER_SUPPORT) && (ACOUSTIC_MANAGEMENT_DRIVER_SUPPORT != 0)
+         if(gHddAcousticInitProtocol != NULL) {
+              gHddAcousticInitProtocol->InitHddAcoustic(SataDevInterface, AmiStorageInterfaceAhci);
+         }
+#endif
+
         if(HddSmartInitProtocol != NULL) {
-            HddSmartInitProtocol->InitSmartSupport(SataDevInterface, TRUE);
+            HddSmartInitProtocol->InitSmartSupport(SataDevInterface, AmiStorageInterfaceAhci);
             // Update the Identify Data.
             Status = GetIdentifyData(SataDevInterface);
             if(HddSmartInitProtocol->SmartDiagonasticFlag) {
-                HddSmartInitProtocol->InstallSmartInterface(SataDevInterface, TRUE);
+                HddSmartInitProtocol->InstallSmartInterface(SataDevInterface, AmiStorageInterfaceAhci);
             }
         }
 
@@ -1143,7 +1173,7 @@ AhciBusStop (
 
                 if (Status == EFI_SUCCESS) {
                         if(HddSecurityInitProtocol != NULL) {
-                            HddSecurityInitProtocol->StopSecurityModeSupport(SataDeviceInterface, TRUE);
+                            HddSecurityInitProtocol->StopSecurityModeSupport(SataDeviceInterface, AmiStorageInterfaceAhci);
                         }
                 }
                 // Before un-installing Hdd Smart check whether it is installed or not
@@ -1157,7 +1187,7 @@ AhciBusStop (
                 if (Status == EFI_SUCCESS) {
                     if(HddSmartInitProtocol != NULL) {
                         if(HddSmartInitProtocol->SmartDiagonasticFlag) {
-                            HddSmartInitProtocol->UnInstallSmartInterface(SataDeviceInterface, TRUE);
+                            HddSmartInitProtocol->UnInstallSmartInterface(SataDeviceInterface, AmiStorageInterfaceAhci);
                         }
                     }
                 }
@@ -1171,7 +1201,7 @@ AhciBusStop (
 
                 if (Status == EFI_SUCCESS) {
                         if(OpalSecInitProtocol != NULL) {
-                            OpalSecInitProtocol->UnInstallOpalSecurityInterface(SataDeviceInterface, TRUE);
+                            OpalSecInitProtocol->UnInstallOpalSecurityInterface(SataDeviceInterface, AmiStorageInterfaceAhci);
                         }
                 }
 
@@ -1595,7 +1625,7 @@ AhciInitController (
 
     // Get # of Ports Implemented (bit map)
     AhciBusInterface->HBAPortImplemented = HBA_REG32(AhciBusInterface, HBA_PI);
-    if (!AhciBusInterface->HBAPortImplemented)  return EFI_DEVICE_ERROR;
+    if (!AhciBusInterface->HBAPortImplemented)  return EFI_SUCCESS;
 
     // Cross check whether # of Ports implemented is less or equal to
     // Max. # of ports supported by the silicon
@@ -2148,8 +2178,8 @@ ConfigurePMPort (
 
     // Read the number of Ports preset in PM
     Status = ReadWritePMPort (SataDevInterface, CONTROL_PORT, GSCR_2, &Data, FALSE);
-    SataDevInterface->NumPMPorts = ((UINT8)Data) - 1;
-
+    SataDevInterface->NumPMPorts = (UINT8)Data;
+    
     // Set PM Attached bit in CMD register
     HBA_PORT_REG32_OR (SataDevInterface->AhciBusInterface,
                        SataDevInterface->PortNumber,

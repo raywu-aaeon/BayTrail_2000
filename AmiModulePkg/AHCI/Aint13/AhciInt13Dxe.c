@@ -1,7 +1,7 @@
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2015, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **
@@ -50,7 +50,7 @@ UINT8   IsSataDeviceInAhciMode (
 ){
 
     if((BbsEntry->DeviceType == BBS_HARDDISK || BbsEntry->DeviceType == BBS_CDROM)) {
-        if(BbsEntry->Class == MASS_STORAGE || BbsEntry->SubClass == AHCI_CONTROLLER ){
+        if(BbsEntry->Class == MASS_STORAGE && BbsEntry->SubClass == AHCI_CONTROLLER ){
             return TRUE;
         }
     }
@@ -257,6 +257,12 @@ VOID AmiLegacyBootNotify(
             }
             SataDevInterface = ((SATA_DISK_INFO *)DiskInfo)->SataDevInterface;
 
+            // If the DiskInfo Interface guid is not belong to AHCI, go for the 
+            // next diskinfo protocol. guidcmp returns 0 incase both the guids matches
+            if(guidcmp(&DiskInfo->Interface, &gEfiDiskInfoAhciInterfaceGuid)) {
+            	continue;  
+            }
+            
             // Fill data in AhciInt13SmmData
             pDriveInfo = &(AhciInt13SmmData->DriveInfo[AhciInt13SmmData->DriveCount]);
             pDriveInfo->DriveNum = (UINT8)(BbsTable[i].InitPerReserved >> 8);
@@ -343,7 +349,7 @@ EFI_STATUS AhciInt13DxeEntry(
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2015, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **

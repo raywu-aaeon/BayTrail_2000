@@ -1,7 +1,7 @@
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2015, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **
@@ -547,8 +547,8 @@ InitAhciHddDev (
     DevNo = AhciRtMiscData->NumAhciDevice++;
     DevInfo->bInt13Num = DevNo | 0x80;
     DevPtr->bInt13Num = DevNo | 0x80;
-    DevPtr->bPMnum = Dev->PortNumber;
-    DevPtr->bPortNum = Dev->PMPortNumber;
+    DevPtr->bPMnum = Dev->PMPortNumber;
+    DevPtr->bPortNum = Dev->PortNumber;
 
     // Update SEG:OFS address for current DevParam and DevInfo
     SegOfs = ((UINT32)gLegacyMemoryAddress<<12)+(UINT32)((UINTN)DevParam-(UINTN)gImage);
@@ -602,8 +602,8 @@ InitAhciCd (
     DevNo = AhciRtMiscData->NumAhciDevice++;
     DevInfo->bInt13Num = (DevNo + AHCI_CD_CSM_ID_OFFSET) | BIT7 ;
     DevPtr->bInt13Num = (DevNo + AHCI_CD_CSM_ID_OFFSET) | BIT7;
-    DevPtr->bPMnum = Dev->PortNumber;
-    DevPtr->bPortNum = Dev->PMPortNumber;
+    DevPtr->bPMnum = Dev->PMPortNumber;
+    DevPtr->bPortNum = Dev->PortNumber;
 
     // Update SEG:OFS address for current DevParam and DevInfo
     SegOfs = ((UINT32)gLegacyMemoryAddress<<12)+(UINT32)((UINTN)DevParam-(UINTN)gImage);
@@ -752,21 +752,31 @@ CreateAhciDriveString (
 {
     UINT8    s[MAX_DESCRIPTION_STRLEN] = "xP :";
     UINT8    i, data8;
-
+    UINT8    DescStrLen;
     s[0] = DevicePortNum+0x30;
 
     // Get the drive name out of IdentifyDrive data word 27..46 (up to 40 chars)
-    pBS->CopyMem(&s[4], IdentifyData+27, MAX_DESCRIPTION_STRLEN-5);
+    pBS->CopyMem(&s[4], IdentifyData+27, MAX_DESCRIPTION_STRLEN-4);
     // Swap the bytes
     for (i=0; i<MAX_DESCRIPTION_STRLEN; i+=2) {
         data8=s[i];
         s[i]=s[i+1];
         s[i+1]=data8;
     }
-
+    
     s[MAX_DESCRIPTION_STRLEN-1] = 0;    // terminate with zero
+    
+    // Since the last one will be null character, start parsing from the before one
+    DescStrLen= MAX_DESCRIPTION_STRLEN -2 ; 
 
-    pBS->CopyMem(DescString, s, MAX_DESCRIPTION_STRLEN);
+    //Removing trial space characters
+    while(DescStrLen>0 && ( s[DescStrLen]==0x20 )) 
+        DescStrLen--;
+
+    s[DescStrLen+1]=0; 
+
+    pBS->CopyMem(DescString, s, DescStrLen+1);
+
 }
 
 /**
@@ -940,6 +950,13 @@ InitDrivesInformation (
     // driver to the data used by INT13
     for (Count=0, i=0; i<DeviceCount; i++, ((UINTN*)Devices)++) {
         Device = *((SATA_DEVICE_INTERFACE**)Devices);
+        
+        // If the ATA device Block size is more than 512 bytes 
+        // Don't add the device as INT13 device ( Legacy supported device).
+        if(Device->DeviceType == ATA && Device->SataBlkIo->BlkIo.Media->BlockSize != 512 ) {
+            continue;
+        }
+                
         InitAhciDev(Device,
                     &Ai13Data->DevParam[Count],
                     &Ai13Data->DevInfo[Count],
@@ -962,7 +979,12 @@ InitDrivesInformation (
             ASSERT_EFI_ERROR(Status);
 
             Status = gBiosExtensions->AddBbsEntry(&BbsEntry);
-            ASSERT_EFI_ERROR(Status);
+            ASSERT(Status == EFI_SUCCESS || Status == EFI_ACCESS_DENIED);
+            if(Status == EFI_ACCESS_DENIED) {
+                gBiosExtensions->LockShadow(LockUnlockAddr, LockUnlockSize); 
+                pBS->FreePool(gHddReadData);
+                return EFI_SUCCESS;
+            }
         }
 
         Count++;
@@ -1033,7 +1055,7 @@ InitCspData (
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2015, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **

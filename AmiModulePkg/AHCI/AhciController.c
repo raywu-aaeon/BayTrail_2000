@@ -309,8 +309,8 @@ SataAtapiBlkReadWrite(
         ZeroMemory (&CommandStructure, sizeof(CommandStructure));
 
         // Calculate # of blocks to be transferred
-        if (TotalNumberofBlocks > 0x1000) //EIP132392
-            TransferLength = 0x1000; //EIP132392
+        if (TotalNumberofBlocks > 0xffff) 
+            TransferLength = 0xffff;
         else
             TransferLength = TotalNumberofBlocks;
 
@@ -1933,15 +1933,6 @@ StartController (
     HBA_PORT_REG32_OR (AhciBusInterface, Port, HBA_PORTS_SERR, HBA_PORTS_ERR_CLEAR); 
     HBA_PORT_REG32_OR (AhciBusInterface, Port, HBA_PORTS_IS, HBA_PORTS_IS_CLEAR); 
 
-    // Enable FIS Receive
-    HBA_PORT_REG32_OR (AhciBusInterface, Port, HBA_PORTS_CMD, HBA_PORTS_CMD_FRE);     
-
-    // Wait till FIS is running
-    WaitForMemSet(AhciBusInterface, Port, HBA_PORTS_CMD,
-                                    HBA_PORTS_CMD_FR,
-                                    HBA_PORTS_CMD_FR,
-                                    HBA_FR_CLEAR_TIMEOUT);
-
     // Clear FIS Receive area
     ZeroMemory ((VOID *)(UINTN)SataDevInterface->PortFISBaseAddr, RECEIVED_FIS_SIZE);
 
@@ -1985,6 +1976,7 @@ WaitforCommandComplete (
     BOOLEAN                     PxSERR_ERROR = FALSE, PIO_SETUP_FIS = FALSE;
     volatile AHCI_RECEIVED_FIS  *FISReceiveAddress = (AHCI_RECEIVED_FIS *)(UINTN)SataDevInterface->PortFISBaseAddr;
     UINTN                       TimeOutCount = TimeOut;
+    EFI_STATUS               Status;
 
     i=0;
     do {
@@ -2043,8 +2035,13 @@ WaitforCommandComplete (
         return EFI_DEVICE_ERROR;    
     }
 
-    // check if CI register is zero
-    if (HBA_PORT_REG32 (AhciBusInterface, Port, HBA_PORTS_CI)){
+    // Wait and check for CI clear
+    Status = WaitForMemClear(AhciBusInterface, Port, 
+	                                           HBA_PORTS_CI,
+                                               0xFFFF,
+                                               HBA_CI_CLEAR_TIMEOUT);
+    
+    if (EFI_ERROR(Status)) {
         return EFI_DEVICE_ERROR;                
     }
 
@@ -2115,23 +2112,6 @@ StopController (
                                    (UINT8)((Data32 & 0xF0) >> 4),
                                    (UINT8)(Data32 >> 8));
     };
-
-    if (EFI_ERROR(Status)) {
-        goto StopController_ErrorExit;
-    }
-
-    //  Clear FIS receive enable.
-    HBA_PORT_REG32_AND (AhciBusInterface,
-                        Port, 
-                        HBA_PORTS_CMD,
-                        ~(HBA_PORTS_CMD_FRE));
-    //  Make sure FR is 0 with in 500msec
-    Status = WaitForMemClear(AhciBusInterface, Port, HBA_PORTS_CMD,
-                            HBA_PORTS_CMD_FR,
-                            HBA_FR_CLEAR_TIMEOUT);
-
-
-StopController_ErrorExit:
 
     // Clear Status register
     HBA_PORT_REG32_OR (AhciBusInterface, Port, HBA_PORTS_SERR, HBA_PORTS_ERR_CLEAR); 
@@ -2309,9 +2289,6 @@ GeneratePortReset (
     }
 
     Status = HandlePortComReset(AhciBusInterface, SataDevInterface, Port, PMPort);
-
-    //  Disable FIS Receive Enable
-    HBA_PORT_REG32_AND (AhciBusInterface, Port, HBA_PORTS_CMD, ~HBA_PORTS_CMD_FRE);
 
     SataDevInterface->SControl = (Speed << 4) + (PowerManagement << 8);
 
@@ -2688,13 +2665,6 @@ CheckValidDevice (
     WaitForMemClear(AhciBusInterface, Port, HBA_PORTS_CMD,
                             HBA_PORTS_CMD_CR,
                             HBA_CR_CLEAR_TIMEOUT);
-
-    //Clear FIS Receive enable bit
-    HBA_PORT_REG32_AND (AhciBusInterface, Port, HBA_PORTS_CMD, ~(HBA_PORTS_CMD_FRE));
-    WaitForMemClear(AhciBusInterface, Port, HBA_PORTS_CMD,
-                            HBA_PORTS_CMD_FR,
-                            HBA_FR_CLEAR_TIMEOUT);
-
 
     // Check if valid signature is present
     Data32 = HBA_PORT_REG32(AhciBusInterface, Port, HBA_PORTS_SIG);
