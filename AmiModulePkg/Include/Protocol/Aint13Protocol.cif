@@ -4,5 +4,5 @@
 	LocalRoot = "AmiModulePkg\Include\Protocol\"
 	RefName = "AHCI_INT13INIT_PROTOCOL"
 [files]
-"LegacyAhci.h"	
+"legacyAhci.h"
 <endComponent>

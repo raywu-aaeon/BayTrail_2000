@@ -121,13 +121,8 @@ typedef struct _AHCI_COMMAND_TABLE_NO_PRDT{
 #define     PMPORT_SIGNATURE                0x96690101
 #define     PRD_MAX_DATA_COUNT              0x400000
 
-#define     PCI_LBAR_INDEX                  4
-#define     PCI_ABAR_INDEX                  5
-#define     PCI_LBAR_ADDRESS_MASK           0xFFFFFFE0
-#define     INDEX_OFFSET_FROM_LBAR          0x10
-#define     DATA_OFFSET_FROM_LBAR           0x14
 
-#define     PCI_LBAR                        0x20
+
 #define     PCI_ABAR                        0x24
 #define     RECEIVED_FIS_SIZE               0x100
 
@@ -353,206 +348,235 @@ typedef struct _AHCI_COMMAND_TABLE_NO_PRDT{
 #define     HBA_FR_CLEAR_TIMEOUT            500          // AHCI 1.2 spec 10.1.2
 #define     HBA_PRESENCE_DETECT_TIMEOUT     10           // 10msec Serial ATA 1.0 Sec 5.2
 
+#if INDEX_DATA_PORT_ACCESS
+
+//Index , Data port access 
 #define     HBA_PORT_REG_BASE(Port) \
             (UINTN) (Port * HBA_PORTS_REG_WIDTH + HBA_PORTS_START)
 
-#define     HBA_REG32( pAhciBusInterface, Register ) \
-            (ReadDataDword ((pAhciBusInterface), (Register)))
+#define     HBA_REG32( BaseAddr, Register ) \
+            (ReadDataDword ((BaseAddr), (Register)))
 
-#define     HBA_WRITE_REG32( pAhciBusInterface, Register, Data ) \
-            (WriteDataDword( pAhciBusInterface, Register, Data ))
+#define     HBA_WRITE_REG32( BaseAddr, Register, Data ) \
+            (WriteDataDword( BaseAddr, Register, Data ))
 
-#define     HBA_REG16( pAhciBusInterface, Register ) \
-            (ReadDataWord( pAhciBusInterface, Register ))
+#define     HBA_REG16( BaseAddr, Register ) \
+            (ReadDataWord( BaseAddr, Register ))
 
-#define     HBA_WRITE_REG16( pAhciBusInterface, Register, Data ) \
-            (WriteDataWord( pAhciBusInterface, Register, Data ))
+#define     HBA_WRITE_REG16( BaseAddr, Register, Data ) \
+            (WriteDataWord( BaseAddr, Register, Data ))
 
-#define     HBA_REG8( pAhciBusInterface, Register ) \
-            (ReadDataByte ((pAhciBusInterface), (Register)))
+#define     HBA_REG8( BaseAddr, Register ) \
+            (ReadDataByte ((BaseAddr), (Register)))
 
-#define     HBA_WRITE_REG8( pAhciBusInterface, Register, Data ) \
-            (WriteDataByte( pAhciBusInterface, Register, Data ))
+#define     HBA_WRITE_REG8( BaseAddr, Register, Data ) \
+            (WriteDataByte( BaseAddr, Register, Data ))
 
-#define     HBA_REG8_OR( pAhciBusInterface, Register, OrData) \
-            HBA_WRITE_REG8(pAhciBusInterface, Register, ((HBA_REG8 ((pAhciBusInterface), (Register))) | ((UINT8) (OrData))))
+#define     HBA_REG8_OR( BaseAddr, Register, OrData) \
+            HBA_WRITE_REG8(BaseAddr, Register, ((HBA_REG8 ((BaseAddr), (Register))) | ((UINT8) (OrData))))
 
-#define     HBA_REG16_OR( pAhciBusInterface, Register, OrData) \
-            HBA_WRITE_REG16(pAhciBusInterface, Register, ((HBA_REG16 ((pAhciBusInterface), (Register))) | ((UINT16) (OrData))))
+#define     HBA_REG16_OR( BaseAddr, Register, OrData) \
+            HBA_WRITE_REG16(BaseAddr, Register, ((HBA_REG16 ((BaseAddr), (Register))) | ((UINT16) (OrData))))
 
-#define     HBA_REG32_OR( pAhciBusInterface, Register, OrData) \
-            HBA_WRITE_REG32(pAhciBusInterface, Register, ((HBA_REG32 ((pAhciBusInterface), (Register))) | ((UINT32) (OrData))))
+#define     HBA_REG32_OR( BaseAddr, Register, OrData) \
+            HBA_WRITE_REG32(BaseAddr, Register, ((HBA_REG32 ((BaseAddr), (Register))) | ((UINT32) (OrData))))
 
-#define     HBA_REG8_AND( pAhciBusInterface, Register, AndData) \
-            HBA_WRITE_REG8(pAhciBusInterface, Register, ((HBA_REG8 ((pAhciBusInterface), (Register))) & ((UINT8) (AndData))))
+#define     HBA_REG8_AND( BaseAddr, Register, AndData) \
+            HBA_WRITE_REG8(BaseAddr, Register, ((HBA_REG8 ((BaseAddr), (Register))) & ((UINT8) (AndData))))
 
-#define     HBA_REG16_AND( pAhciBusInterface, Register, AndData) \
-            HBA_WRITE_REG16(pAhciBusInterface, Register, ((HBA_REG16 ((pAhciBusInterface), (Register))) & ((UINT16) (AndData))))
+#define     HBA_REG16_AND( BaseAddr, Register, AndData) \
+            HBA_WRITE_REG16(BaseAddr, Register, ((HBA_REG16 ((BaseAddr), (Register))) & ((UINT16) (AndData))))
  
-#define     HBA_REG32_AND( pAhciBusInterface, Register, AndData) \
-            HBA_WRITE_REG32(pAhciBusInterface, Register, ((HBA_REG32 ((pAhciBusInterface), (Register))) & ((UINT32) (AndData))))
+#define     HBA_REG32_AND( BaseAddr, Register, AndData) \
+            HBA_WRITE_REG32(BaseAddr, Register, ((HBA_REG32 ((BaseAddr), (Register))) & ((UINT32) (AndData))))
 
-#define     HBA_REG8_AND_OR( pAhciBusInterface, Register, AndData, OrData) \
-            HBA_WRITE_REG8(pAhciBusInterface, Register, ((HBA_REG8 ((pAhciBusInterface), (Register))) & ((UINT8) (AndData)) | ((UINT8) (OrData))))
+#define     HBA_REG8_AND_OR( BaseAddr, Register, AndData, OrData) \
+            HBA_WRITE_REG8(BaseAddr, Register, ((HBA_REG8 ((BaseAddr), (Register))) & ((UINT8) (AndData)) | ((UINT8) (OrData))))
 
-#define     HBA_REG16_AND_OR( pAhciBusInterface, Register, AndData, OrData) \
-            HBA_WRITE_REG16(pAhciBusInterface, Register, ((HBA_REG16 ((pAhciBusInterface), (Register))) & ((UINT16) (AndData)) | ((UINT16) (OrData))))
+#define     HBA_REG16_AND_OR( BaseAddr, Register, AndData, OrData) \
+            HBA_WRITE_REG16(BaseAddr, Register, ((HBA_REG16 ((BaseAddr), (Register))) & ((UINT16) (AndData)) | ((UINT16) (OrData))))
 
-#define     HBA_REG32_AND_OR( pAhciBusInterface, Register,AndData,  OrData) \
-            HBA_WRITE_REG32(pAhciBusInterface, Register, ((HBA_REG32 ((pAhciBusInterface), (Register))) & ((UINT32) (AndData)) | ((UINT32) (OrData))))
+#define     HBA_REG32_AND_OR( BaseAddr, Register,AndData,  OrData) \
+            HBA_WRITE_REG32(BaseAddr, Register, ((HBA_REG32 ((BaseAddr), (Register))) & ((UINT32) (AndData)) | ((UINT32) (OrData))))
   
 //Ports
-#define     HBA_PORT_REG8(pAhciBusInterface, Port, Register) \
-            (HBA_REG8 ((pAhciBusInterface), ((Register) + HBA_PORT_REG_BASE (Port))))
+#define     HBA_PORT_REG8(BaseAddr, Port, Register) \
+            (HBA_REG8 ((BaseAddr), ((Register) + HBA_PORT_REG_BASE (Port))))
 
-#define     HBA_PORT_REG16(pAhciBusInterface, Port, Register) \
-            (HBA_REG16 ((pAhciBusInterface), ((Register) + HBA_PORT_REG_BASE (Port))))
+#define     HBA_PORT_REG16(BaseAddr, Port, Register) \
+            (HBA_REG16 ((BaseAddr), ((Register) + HBA_PORT_REG_BASE (Port))))
 
-#define     HBA_PORT_REG32(pAhciBusInterface, Port, Register) \
-            (HBA_REG32 ((pAhciBusInterface), ((Register) + HBA_PORT_REG_BASE (Port))))
+#define     HBA_PORT_REG32(BaseAddr, Port, Register) \
+            (HBA_REG32 ((BaseAddr), ((Register) + HBA_PORT_REG_BASE (Port))))
 
-#define     HBA_PORT_REG64(pAhciBusInterface, Port, Register) \
-              ( ( Shl64(((UINT64)(HBA_PORT_REG32(pAhciBusInterface, Port, (Register+4)))),32)) | \
-                 (HBA_PORT_REG32(pAhciBusInterface, Port, Register)) )
+#define     HBA_PORT_REG64(BaseAddr, Port, Register) \
+              ( ( Shl64(((UINT64)(HBA_PORT_REG32(BaseAddr, Port, (Register+4)))),32)) | \
+                 (HBA_PORT_REG32(BaseAddr, Port, Register)) )
              
-#define     HBA_PORT_WRITE_REG8(pAhciBusInterface, Port, Register, Data) \
-            (HBA_WRITE_REG8 ((pAhciBusInterface), ((Register) + HBA_PORT_REG_BASE (Port)), Data))
+#define     HBA_PORT_WRITE_REG8(BaseAddr, Port, Register, Data) \
+            (HBA_WRITE_REG8 ((BaseAddr), ((Register) + HBA_PORT_REG_BASE (Port)), Data))
 
-#define     HBA_PORT_WRITE_REG16(pAhciBusInterface, Port, Register, Data) \
-            (HBA_WRITE_REG16 ((pAhciBusInterface), ((Register) + HBA_PORT_REG_BASE (Port)),Data))
+#define     HBA_PORT_WRITE_REG16(BaseAddr, Port, Register, Data) \
+            (HBA_WRITE_REG16 ((BaseAddr), ((Register) + HBA_PORT_REG_BASE (Port)),Data))
 
-#define     HBA_PORT_WRITE_REG32(pAhciBusInterface, Port, Register,Data) \
-            (HBA_WRITE_REG32 ((pAhciBusInterface), ((Register) + HBA_PORT_REG_BASE (Port)),Data))
+#define     HBA_PORT_WRITE_REG32(BaseAddr, Port, Register,Data) \
+            (HBA_WRITE_REG32 ((BaseAddr), ((Register) + HBA_PORT_REG_BASE (Port)),Data))
 
-#define     HBA_PORT_WRITE_REG64(pAhciBusInterface, Port, Register,Data)\
-             HBA_PORT_WRITE_REG32(pAhciBusInterface, Port, (Register+4), ((UINT32)(Shr64(Data,32)))); \
-             HBA_PORT_WRITE_REG32(pAhciBusInterface, Port, Register, ((UINT32)Data))
+#define     HBA_PORT_WRITE_REG64(BaseAddr, Port, Register,Data)\
+             HBA_PORT_WRITE_REG32(BaseAddr, Port, (Register+4),(Shr64(Data,32))); \
+             HBA_PORT_WRITE_REG32(BaseAddr, Port, Register,Data)
 
-#define     HBA_PORT_REG8_OR(pAhciBusInterface, Port, Register, OrData) \
-            (HBA_REG8_OR ((pAhciBusInterface), ((Register) + HBA_PORT_REG_BASE (Port)), (OrData)))
+#define     HBA_PORT_REG8_OR(BaseAddr, Port, Register, OrData) \
+            (HBA_REG8_OR ((BaseAddr), ((Register) + HBA_PORT_REG_BASE (Port)), (OrData)))
 
-#define     HBA_PORT_REG16_OR(pAhciBusInterface, Port, Register, OrData) \
-            (HBA_REG16_OR ((pAhciBusInterface), ((Register) + HBA_PORT_REG_BASE (Port)), (OrData)))
+#define     HBA_PORT_REG16_OR(BaseAddr, Port, Register, OrData) \
+            (HBA_REG16_OR ((BaseAddr), ((Register) + HBA_PORT_REG_BASE (Port)), (OrData)))
 
-#define     HBA_PORT_REG32_OR(pAhciBusInterface, Port, Register, OrData) \
-            (HBA_REG32_OR ((pAhciBusInterface), ((Register) + HBA_PORT_REG_BASE (Port)), (OrData)))
+#define     HBA_PORT_REG32_OR(BaseAddr, Port, Register, OrData) \
+            (HBA_REG32_OR ((BaseAddr), ((Register) + HBA_PORT_REG_BASE (Port)), (OrData)))
 
-#define     HBA_PORT_REG8_AND(pAhciBusInterface, Port, Register, AndData) \
-            (HBA_REG8_AND ((pAhciBusInterface), ((Register) + HBA_PORT_REG_BASE (Port)), (AndData)))
+#define     HBA_PORT_REG8_AND(BaseAddr, Port, Register, AndData) \
+            (HBA_REG8_AND ((BaseAddr), ((Register) + HBA_PORT_REG_BASE (Port)), (AndData)))
 
-#define     HBA_PORT_REG16_AND(pAhciBusInterface, Port, Register, AndData) \
-            (HBA_REG16_AND ((pAhciBusInterface), ((Register) + HBA_PORT_REG_BASE (Port)), (AndData)))
+#define     HBA_PORT_REG16_AND(BaseAddr, Port, Register, AndData) \
+            (HBA_REG16_AND ((BaseAddr), ((Register) + HBA_PORT_REG_BASE (Port)), (AndData)))
 
-#define     HBA_PORT_REG32_AND(pAhciBusInterface, Port, Register, AndData) \
-            (HBA_REG32_AND ((pAhciBusInterface), ((Register) + HBA_PORT_REG_BASE (Port)), (AndData)))
+#define     HBA_PORT_REG32_AND(BaseAddr, Port, Register, AndData) \
+            (HBA_REG32_AND ((BaseAddr), ((Register) + HBA_PORT_REG_BASE (Port)), (AndData)))
 
-#define     HBA_PORT_REG8_AND_OR(pAhciBusInterface, Port, Register, AndData, OrData) \
-            (HBA_REG8_AND_OR ((pAhciBusInterface), ((Register) + HBA_PORT_REG_BASE (Port)), (AndData), (OrData)))
+#define     HBA_PORT_REG8_AND_OR(BaseAddr, Port, Register, AndData, OrData) \
+            (HBA_REG8_AND_OR ((BaseAddr), ((Register) + HBA_PORT_REG_BASE (Port)), (AndData), (OrData)))
 
-#define     HBA_PORT_REG16_AND_OR(pAhciBusInterface, Port, Register, AndData, OrData) \
-            (HBA_REG16_AND_OR ((pAhciBusInterface), ((Register) + HBA_PORT_REG_BASE (Port)), (AndData), (OrData)))
+#define     HBA_PORT_REG16_AND_OR(BaseAddr, Port, Register, AndData, OrData) \
+            (HBA_REG16_AND_OR ((BaseAddr), ((Register) + HBA_PORT_REG_BASE (Port)), (AndData), (OrData)))
 
-#define     HBA_PORT_REG32_AND_OR(pAhciBusInterface, Port, Register, AndData, OrData) \
-            (HBA_REG32_AND_OR ((pAhciBusInterface), ((Register) + HBA_PORT_REG_BASE (Port)), (AndData), (OrData)))
+#define     HBA_PORT_REG32_AND_OR(BaseAddr, Port, Register, AndData, OrData) \
+            (HBA_REG32_AND_OR ((BaseAddr), ((Register) + HBA_PORT_REG_BASE (Port)), (AndData), (OrData)))
 
-#define     SMM_HBA_REG32( BaseAddr, Register ) \
-            (SmmReadDataDword ((BaseAddr), (Register)))
+#else
+    //
+    //MMIO Access
+    //
+#define     MmAddress( BaseAddr, Register ) \
+            ((UINTN)(BaseAddr) + \
+            (UINTN)(Register) \
+             )
+#define     Mm32Ptr( BaseAddr, Register ) \
+            ((volatile UINT32 *)MmAddress (BaseAddr, Register ))
 
-#define     SMM_HBA_WRITE_REG32( BaseAddr, Register, Data ) \
-            (SmmWriteDataDword( BaseAddr, Register, Data ))
+#define     Mm16Ptr( BaseAddr, Register ) \
+            ((volatile UINT16 *)MmAddress (BaseAddr, Register ))
 
-#define     SMM_HBA_REG16( BaseAddr, Register ) \
-            (SmmReadDataWord( BaseAddr, Register ))
+#define     Mm8Ptr( BaseAddr, Register ) \
+            ((volatile UINT8 *)MmAddress (BaseAddr, Register ))
+  
+//HBA Generic
+#define     HBA_PORT_REG_BASE(Port) \
+             (UINTN) (Port * HBA_PORTS_REG_WIDTH + HBA_PORTS_START)
 
-#define     SMM_HBA_WRITE_REG16( BaseAddr, Register, Data ) \
-            (SmmWriteDataWord( BaseAddr, Register, Data ))
+#define     HBA_REG32( BaseAddr, Register ) \
+            (*Mm32Ptr ((BaseAddr), (Register)))
 
-#define     SMM_HBA_REG8( BaseAddr, Register ) \
-            (SmmReadDataByte ((BaseAddr), (Register)))
+#define     HBA_REG16( BaseAddr, Register ) \
+            (*Mm16Ptr ((BaseAddr), (Register)))
 
-#define     SMM_HBA_WRITE_REG8( BaseAddr, Register, Data ) \
-            (SmmWriteDataByte( BaseAddr, Register, Data ))
+#define     HBA_REG8( BaseAddr, Register ) \
+            (*Mm8Ptr ((BaseAddr), (Register)))
 
-#define     SMM_HBA_REG8_OR( BaseAddr, Register, OrData) \
-            SMM_HBA_WRITE_REG8(BaseAddr, Register, ((SMM_HBA_REG8 ((BaseAddr), (Register))) | ((UINT8) (OrData))))
+#define     HBA_WRITE_REG32( BaseAddr, Register, Data ) \
+            (HBA_REG32 ((BaseAddr), (Register))) = ((UINT32) (Data))
 
-#define     SMM_HBA_REG16_OR( BaseAddr, Register, OrData) \
-            SMM_HBA_WRITE_REG16(BaseAddr, Register, ((SMM_HBA_REG16 ((BaseAddr), (Register))) | ((UINT16) (OrData))))
+#define     HBA_WRITE_REG16( BaseAddr, Register, Data ) \
+            (HBA_REG16 ((BaseAddr), (Register))) = ((UINT16) (Data))
 
-#define     SMM_HBA_REG32_OR( BaseAddr, Register, OrData) \
-            SMM_HBA_WRITE_REG32(BaseAddr, Register, ((SMM_HBA_REG32 ((BaseAddr), (Register))) | ((UINT32) (OrData))))
+#define     HBA_WRITE_REG8( BaseAddr, Register, Data ) \
+            (HBA_REG8 ((BaseAddr), (Register))) = ((UINT8) (Data))
 
-#define     SMM_HBA_REG8_AND( BaseAddr, Register, AndData) \
-            SMM_HBA_WRITE_REG8(BaseAddr, Register, ((SMM_HBA_REG8 ((BaseAddr), (Register))) & ((UINT8) (AndData))))
+#define     HBA_REG8_OR( BaseAddr, Register, OrData) \
+            (HBA_REG8 ((BaseAddr), (Register))) |= ((UINT8) (OrData))
 
-#define     SMM_HBA_REG16_AND( BaseAddr, Register, AndData) \
-            SMM_HBA_WRITE_REG16(BaseAddr, Register, ((SMM_HBA_REG16 ((BaseAddr), (Register))) & ((UINT16) (AndData))))
+#define     HBA_REG16_OR( BaseAddr, Register, OrData) \
+            (HBA_REG16 ((BaseAddr), (Register))) |= ((UINT16) (OrData))
+
+#define     HBA_REG32_OR( BaseAddr, Register, OrData) \
+            (HBA_REG32 ((BaseAddr), (Register))) = (HBA_REG32 ((BaseAddr), (Register))) | ((UINT32) (OrData))
+
+#define     HBA_REG8_AND( BaseAddr, Register, AndData) \
+            (HBA_REG8 ((BaseAddr), (Register))) = (HBA_REG8 ((BaseAddr), (Register))) & ((UINT8) (AndData))
+
+#define     HBA_REG16_AND( BaseAddr, Register, AndData) \
+            (HBA_REG16 ((BaseAddr), (Register))) &= ((UINT16) (AndData))
  
-#define     SMM_HBA_REG32_AND( BaseAddr, Register, AndData) \
-            SMM_HBA_WRITE_REG32(BaseAddr, Register, ((SMM_HBA_REG32 ((BaseAddr), (Register))) & ((UINT32) (AndData))))
+#define     HBA_REG32_AND( BaseAddr, Register, AndData) \
+            (HBA_REG32 ((BaseAddr), (Register))) = (HBA_REG32 ((BaseAddr), (Register))) & ((UINT32) (AndData))
 
-#define     SMM_HBA_REG8_AND_OR( BaseAddr, Register, AndData, OrData) \
-            SMM_HBA_WRITE_REG8(BaseAddr, Register, ((SMM_HBA_REG8 ((BaseAddr), (Register))) & ((UINT8) (AndData)) | ((UINT8) (OrData))))
+#define     HBA_REG8_AND_OR( BaseAddr, Register, AndData, OrData) \
+            (HBA_REG8 ((BaseAddr), (Register)) = \
+                (((HBA_REG8 ((BaseAddr), (Register))) & ((UINT8) (AndData))) | ((UINT8) (OrData))))
 
-#define     SMM_HBA_REG16_AND_OR( BaseAddr, Register, AndData, OrData) \
-            SMM_HBA_WRITE_REG16(BaseAddr, Register, ((SMM_HBA_REG16 ((BaseAddr), (Register))) & ((UINT16) (AndData)) | ((UINT16) (OrData))))
+#define     HBA_REG16_AND_OR( BaseAddr, Register, AndData, OrData) \
+            (HBA_REG16 ((BaseAddr), (Register)) = \
+                (((HBA_REG16 ((BaseAddr), (Register))) & ((UINT16) AndData)) | ((UINT16) (OrData))))
 
-#define     SMM_HBA_REG32_AND_OR( BaseAddr, Register,AndData,  OrData) \
-            SMM_HBA_WRITE_REG32(BaseAddr, Register, ((SMM_HBA_REG32 ((BaseAddr), (Register))) & ((UINT32) (AndData)) | ((UINT32) (OrData))))
+#define     HBA_REG32_AND_OR( BaseAddr, Register,AndData,  OrData) \
+            (HBA_REG32 ((BaseAddr), (Register)) = \
+                (((HBA_REG32 ((BaseAddr), (Register))) & ((UINT32) (AndData))) | ((UINT32) (OrData))))
   
 //Ports
-#define     SMM_HBA_PORT_REG8(BaseAddr, Port, Register) \
-            (SMM_HBA_REG8 ((BaseAddr), ((Register) + HBA_PORT_REG_BASE (Port))))
+#define     HBA_PORT_REG8(BaseAddr, Port, Register) \
+            (HBA_REG8 ((BaseAddr), ((Register) + HBA_PORT_REG_BASE (Port))))
 
-#define     SMM_HBA_PORT_REG16(BaseAddr, Port, Register) \
-            (SMM_HBA_REG16 ((BaseAddr), ((Register) + HBA_PORT_REG_BASE (Port))))
+#define     HBA_PORT_REG16(BaseAddr, Port, Register) \
+            (HBA_REG16 ((BaseAddr), ((Register) + HBA_PORT_REG_BASE (Port))))
 
-#define     SMM_HBA_PORT_REG32(BaseAddr, Port, Register) \
-            (SMM_HBA_REG32 ((BaseAddr), ((Register) + HBA_PORT_REG_BASE (Port))))
+#define     HBA_PORT_REG32(BaseAddr, Port, Register) \
+            (HBA_REG32 ((BaseAddr), ((Register) + HBA_PORT_REG_BASE (Port))))
 
-#define     SMM_HBA_PORT_REG64(BaseAddr, Port, Register) \
-            ( (Shl64((UINT64)(SMM_HBA_PORT_REG32(BaseAddr, Port, (Register+4))),32)) | \
-                ((UINT64)(SMM_HBA_PORT_REG32(BaseAddr, Port, Register))) )
+#define     HBA_PORT_REG64(BaseAddr, Port, Register) \
+            ( (Shl64((UINT64)(HBA_PORT_REG32(BaseAddr, Port, (Register+4))),32)) | \
+                ((UINT64)(HBA_PORT_REG32(BaseAddr, Port, Register))) )
 
-#define     SMM_HBA_PORT_WRITE_REG8(BaseAddr, Port, Register, Data) \
-            (SMM_HBA_WRITE_REG8 ((BaseAddr), ((Register) + HBA_PORT_REG_BASE (Port)), Data))
+#define     HBA_PORT_WRITE_REG8(BaseAddr, Port, Register, Data) \
+            (HBA_WRITE_REG8 ((BaseAddr), ((Register) + HBA_PORT_REG_BASE (Port)), Data))
 
-#define     SMM_HBA_PORT_WRITE_REG16(BaseAddr, Port, Register, Data) \
-            (SMM_HBA_WRITE_REG16 ((BaseAddr), ((Register) + HBA_PORT_REG_BASE (Port)),Data))
+#define     HBA_PORT_WRITE_REG16(BaseAddr, Port, Register, Data) \
+            (HBA_WRITE_REG16 ((BaseAddr), ((Register) + HBA_PORT_REG_BASE (Port)),Data))
 
-#define     SMM_HBA_PORT_WRITE_REG32(BaseAddr, Port, Register,Data) \
-            (SMM_HBA_WRITE_REG32 ((BaseAddr), ((Register) + HBA_PORT_REG_BASE (Port)),Data))
+#define     HBA_PORT_WRITE_REG32(BaseAddr, Port, Register,Data) \
+            (HBA_WRITE_REG32 ((BaseAddr), ((Register) + HBA_PORT_REG_BASE (Port)),Data))
 
-#define     SMM_HBA_PORT_WRITE_REG64(BaseAddr, Port, Register,Data) \
-             (SMM_HBA_PORT_WRITE_REG32(BaseAddr, Port, (Register+4), ((UINT32)(Shr64(Data,32)) )) ); \
-             SMM_HBA_PORT_WRITE_REG32(BaseAddr, Port, Register, ((UINT32)Data))
+#define     HBA_PORT_WRITE_REG64(BaseAddr, Port, Register,Data) \
+             (HBA_PORT_WRITE_REG32(BaseAddr, Port, (Register+4),((UINT32)(Shr64(Data,32)) )) ); \
+             HBA_PORT_WRITE_REG32(BaseAddr, Port, Register,Data)
 
-#define     SMM_HBA_PORT_REG8_OR(BaseAddr, Port, Register, OrData) \
-            (SMM_HBA_REG8_OR ((BaseAddr), ((Register) + HBA_PORT_REG_BASE (Port)), (OrData)))
+#define     HBA_PORT_REG8_OR(BaseAddr, Port, Register, OrData) \
+            (HBA_REG8_OR ((BaseAddr), ((Register) + HBA_PORT_REG_BASE (Port)), (OrData)))
 
-#define     SMM_HBA_PORT_REG16_OR(BaseAddr, Port, Register, OrData) \
-            (SMM_HBA_REG16_OR ((BaseAddr), ((Register) + HBA_PORT_REG_BASE (Port)), (OrData)))
+#define     HBA_PORT_REG16_OR(BaseAddr, Port, Register, OrData) \
+            (HBA_REG16_OR ((BaseAddr), ((Register) + HBA_PORT_REG_BASE (Port)), (OrData)))
 
-#define     SMM_HBA_PORT_REG32_OR(BaseAddr, Port, Register, OrData) \
-            (SMM_HBA_REG32_OR ((BaseAddr), ((Register) + HBA_PORT_REG_BASE (Port)), (OrData)))
+#define     HBA_PORT_REG32_OR(BaseAddr, Port, Register, OrData) \
+            (HBA_REG32_OR ((BaseAddr), ((Register) + HBA_PORT_REG_BASE (Port)), (OrData)))
 
-#define     SMM_HBA_PORT_REG8_AND(BaseAddr, Port, Register, AndData) \
-            (SMM_HBA_REG8_AND ((BaseAddr), ((Register) + HBA_PORT_REG_BASE (Port)), (AndData)))
+#define     HBA_PORT_REG8_AND(BaseAddr, Port, Register, AndData) \
+            (HBA_REG8_AND ((BaseAddr), ((Register) + HBA_PORT_REG_BASE (Port)), (AndData)))
 
-#define     SMM_HBA_PORT_REG16_AND(BaseAddr, Port, Register, AndData) \
-            (SMM_HBA_REG16_AND ((BaseAddr), ((Register) + HBA_PORT_REG_BASE (Port)), (AndData)))
+#define     HBA_PORT_REG16_AND(BaseAddr, Port, Register, AndData) \
+            (HBA_REG16_AND ((BaseAddr), ((Register) + HBA_PORT_REG_BASE (Port)), (AndData)))
 
-#define     SMM_HBA_PORT_REG32_AND(BaseAddr, Port, Register, AndData) \
-            (SMM_HBA_REG32_AND ((BaseAddr), ((Register) + HBA_PORT_REG_BASE (Port)), (AndData)))
+#define     HBA_PORT_REG32_AND(BaseAddr, Port, Register, AndData) \
+            (HBA_REG32_AND ((BaseAddr), ((Register) + HBA_PORT_REG_BASE (Port)), (AndData)))
 
-#define     SMM_HBA_PORT_REG8_AND_OR(BaseAddr, Port, Register, AndData, OrData) \
-            (SMM_HBA_REG8_AND_OR ((BaseAddr), ((Register) + HBA_PORT_REG_BASE (Port)), (AndData), (OrData)))
+#define     HBA_PORT_REG8_AND_OR(BaseAddr, Port, Register, AndData, OrData) \
+            (HBA_REG8_AND_OR ((BaseAddr), ((Register) + HBA_PORT_REG_BASE (Port)), (AndData), (OrData)))
 
-#define     SMM_HBA_PORT_REG16_AND_OR(BaseAddr, Port, Register, AndData, OrData) \
-            (SMM_HBA_REG16_AND_OR ((BaseAddr), ((Register) + HBA_PORT_REG_BASE (Port)), (AndData), (OrData)))
+#define     HBA_PORT_REG16_AND_OR(BaseAddr, Port, Register, AndData, OrData) \
+            (HBA_REG16_AND_OR ((BaseAddr), ((Register) + HBA_PORT_REG_BASE (Port)), (AndData), (OrData)))
 
-#define     SMM_HBA_PORT_REG32_AND_OR(BaseAddr, Port, Register, AndData, OrData) \
-            (SMM_HBA_REG32_AND_OR ((BaseAddr), ((Register) + HBA_PORT_REG_BASE (Port)), (AndData), (OrData)))
+#define     HBA_PORT_REG32_AND_OR(BaseAddr, Port, Register, AndData, OrData) \
+            (HBA_REG32_AND_OR ((BaseAddr), ((Register) + HBA_PORT_REG_BASE (Port)), (AndData), (OrData)))
+
+#endif
 
 /****** DO NOT WRITE BELOW THIS LINE *******/
 #ifdef __cplusplus

@@ -57,16 +57,6 @@ AhciSmmExecutePioDataCommand (
 );
 
 EFI_STATUS
-AhciSmmExecuteDmaDataCommand (
-    AMI_AHCI_BUS_SMM_PROTOCOL    *SataDevInterface, 
-    COMMAND_STRUCTURE            *CommandStructure,
-    UINT8                        PortNumber,
-    UINT8                        PMPortNumber, 
-    DEVICE_TYPE                  DeviceType,
-    BOOLEAN                      READWRITE 
-);
-
-EFI_STATUS
 AhciSmmInitPortOnS3Resume(
     AMI_AHCI_BUS_SMM_PROTOCOL    *SataDevInterface, 
     UINT8                        Port
@@ -100,44 +90,46 @@ AhciSmmExecutePacketCommand (
 UINT64 Shr64( IN UINT64 Value, IN UINT8 Shift );
 UINT64 Shl64( IN UINT64 Value, IN UINT8 Shift );
 
+#if INDEX_DATA_PORT_ACCESS
 UINT32
-SmmReadDataDword(
+ReadDataDword (
     IN  UINTN   BaseAddr,
     IN  UINTN   Index
 );
 
 UINT16
-SmmReadDataWord(
+ReadDataWord (
     IN  UINTN   BaseAddr,
     IN  UINTN   Index
 );
 
 UINT8
-SmmReadDataByte(
+ReadDataByte (
     IN  UINTN   BaseAddr,
     IN  UINTN   Index
 );
 
 VOID
-SmmWriteDataDword(
+WriteDataDword (
     IN  UINTN   BaseAddr,
     IN  UINTN   Index, 
     IN  UINTN   Data
 );
 
 VOID
-SmmWriteDataWord(
+WriteDataWord (
     IN  UINTN   BaseAddr,
     IN  UINTN   Index, 
     IN  UINTN   Data
 );
 
 VOID
-SmmWriteDataByte(
+WriteDataByte (
     IN  UINTN   BaseAddr,
     IN  UINTN   Index,
     IN  UINTN   Data
 );
+#endif
 
 #endif
 

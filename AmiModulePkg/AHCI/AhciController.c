@@ -23,11 +23,6 @@
 
 //---------------------------------------------------------------------------
 
-#if BOOT_SECTOR_WRITE_PROTECT
-#include <Protocol/AmiBlockIoWriteProtection.h>
-extern AMI_BLOCKIO_WRITE_PROTECTION_PROTOCOL *AmiBlkWriteProtection;
-#endif
-
 BOOLEAN gPortReset = FALSE;             // Avoid Re-entry
 BOOLEAN gSoftReset = FALSE;             // Avoid Re-entry
 UINT64  gCommandListBaseAddress = 0;
@@ -80,24 +75,6 @@ SataBlkWrite (
     OUT VOID                    *Buffer
 )
 {
-#if BOOT_SECTOR_WRITE_PROTECT
-    EFI_STATUS  Status;
-    
-    if(AmiBlkWriteProtection != NULL) {
-        // Get user input
-        Status = AmiBlkWriteProtection->BlockIoWriteProtectionCheck ( 
-                                                    AmiBlkWriteProtection,
-                                                    This,
-                                                    LBA,
-                                                    BufferSize
-                                                    );
-        // Abort operation if denied
-        if(Status == EFI_ACCESS_DENIED) {
-            return Status;
-        }
-    }
-#endif
-
     return SataAtaBlkReadWrite(This, MediaId, LBA, BufferSize, Buffer, 1);
 }
 
@@ -309,8 +286,8 @@ SataAtapiBlkReadWrite(
         ZeroMemory (&CommandStructure, sizeof(CommandStructure));
 
         // Calculate # of blocks to be transferred
-        if (TotalNumberofBlocks > 0x1000) //EIP132392
-            TransferLength = 0x1000; //EIP132392
+        if (TotalNumberofBlocks > 0xffff) 
+            TransferLength = 0xffff;
         else
             TransferLength = TotalNumberofBlocks;
 
@@ -860,9 +837,6 @@ ExecutePioDataCommand (
                                               &MappedAddr,
                                               &Mapping ); 
             if (EFI_ERROR(Status) || Bytes != CommandStructure->ByteCount) {
-                if(Status == EFI_OUT_OF_RESOURCES) {
-                    return EFI_BAD_BUFFER_SIZE;
-                }
                 return EFI_NOT_FOUND;
             }
             InputBuffer = (void *)CommandStructure->Buffer;
@@ -989,9 +963,6 @@ ExecuteDmaDataCommand (
                                              &MappedAddr,
                                              &Mapping); 
             if (EFI_ERROR(Status) || Bytes != CommandStructure->ByteCount) {
-                if(Status == EFI_OUT_OF_RESOURCES) {
-                    return EFI_BAD_BUFFER_SIZE;
-                }
                 return EFI_NOT_FOUND;
             }
             InputBuffer = (void *)CommandStructure->Buffer;
@@ -1085,6 +1056,7 @@ ExecutePacketCommand (
     AMI_AHCI_BUS_PROTOCOL    *AhciBusInterface = SataDevInterface->AhciBusInterface;
     AHCI_COMMAND_LIST        *CommandList = (AHCI_COMMAND_LIST *)(UINTN) SataDevInterface->PortCommandListBaseAddr;
     AHCI_COMMAND_TABLE       *Commandtable = (AHCI_COMMAND_TABLE *)(UINTN)AhciBusInterface->PortCommandTableBaseAddr;
+    UINT32                   AhciBaseAddr = (UINT32)AhciBusInterface->AhciBaseAddress;
     ATAPI_DEVICE             *AtapiDevice = SataDevInterface->AtapiDevice;
     UINT8                    Port = SataDevInterface->PortNumber;
     UINT8                    Data8;
@@ -1105,10 +1077,6 @@ ExecutePacketCommand (
                                              &Mapping); 
 
             if (EFI_ERROR(Status) || Bytes != CommandStructure->ByteCount) {
-                // return Bad buffer size for SCT to pass in case of insufficient resources.
-                if(Status == EFI_OUT_OF_RESOURCES) {
-                    return EFI_BAD_BUFFER_SIZE;
-                }
                 return EFI_NOT_FOUND;
             }
             InputBuffer = (void *)CommandStructure->Buffer;
@@ -1150,12 +1118,9 @@ ExecutePacketCommand (
 
     // Handle ATAPI device error
     if (EFI_ERROR(Status) && SataDevInterface->DeviceType == ATAPI) {
-        Data8 = HBA_PORT_REG8 (AhciBusInterface, Port, HBA_PORTS_TFD);
+        Data8 = HBA_PORT_REG8 (AhciBaseAddr, Port, HBA_PORTS_TFD);
         if (Data8 & IDE_CHK ){
-            // Avoid requesting sense data for sense data command failure.
-            if (CommandStructure->AtapiCmd.Ahci_Atapi_Command[0] != ATAPI_REQUEST_SENSE) {
-                Status = HandleAtapiError(SataDevInterface);
-            }
+            return HandleAtapiError(SataDevInterface);
             goto PacketError;
         }
     }
@@ -1205,6 +1170,7 @@ HandleAtapiError (
     COMMAND_STRUCTURE        CommandStructure;
     ATAPI_DEVICE             *AtapiDevice = SataDevInterface->AtapiDevice;
     AMI_AHCI_BUS_PROTOCOL    *AhciBusInterface = SataDevInterface->AhciBusInterface;
+    UINT32                   AhciBaseAddr = (UINT32)AhciBusInterface->AhciBaseAddress;
     UINT8                    Port = SataDevInterface->PortNumber;
 
     AtapiDevice->Atapi_Status = DEVICE_ERROR;
@@ -1221,7 +1187,7 @@ HandleAtapiError (
     Status = ExecutePacketCommand(SataDevInterface, &CommandStructure, 0);
 
     if (EFI_ERROR(Status)) {
-        Data8 = HBA_PORT_REG8 (AhciBusInterface, Port, HBA_PORTS_TFD);
+        Data8 = HBA_PORT_REG8 (AhciBaseAddr, Port, HBA_PORTS_TFD);
     }
 
     SataDevInterface->AtapiSenseDataLength = 0;
@@ -1927,17 +1893,18 @@ StartController (
     IN UINT32                   CIBitMask
 )
 {
+    UINT32      AhciBaseAddr = (UINT32)(AhciBusInterface->AhciBaseAddress);
     UINT8       Port = SataDevInterface->PortNumber;
 
     // Clear Status
-    HBA_PORT_REG32_OR (AhciBusInterface, Port, HBA_PORTS_SERR, HBA_PORTS_ERR_CLEAR); 
-    HBA_PORT_REG32_OR (AhciBusInterface, Port, HBA_PORTS_IS, HBA_PORTS_IS_CLEAR); 
+    HBA_PORT_REG32_OR (AhciBaseAddr, Port, HBA_PORTS_SERR, HBA_PORTS_ERR_CLEAR); 
+    HBA_PORT_REG32_OR (AhciBaseAddr, Port, HBA_PORTS_IS, HBA_PORTS_IS_CLEAR); 
 
     // Enable FIS Receive
-    HBA_PORT_REG32_OR (AhciBusInterface, Port, HBA_PORTS_CMD, HBA_PORTS_CMD_FRE);     
+    HBA_PORT_REG32_OR (AhciBaseAddr, Port, HBA_PORTS_CMD, HBA_PORTS_CMD_FRE);     
 
     // Wait till FIS is running
-    WaitForMemSet(AhciBusInterface, Port, HBA_PORTS_CMD,
+    WaitForMemSet(AhciBaseAddr, Port, HBA_PORTS_CMD,
                                     HBA_PORTS_CMD_FR,
                                     HBA_PORTS_CMD_FR,
                                     HBA_FR_CLEAR_TIMEOUT);
@@ -1946,10 +1913,10 @@ StartController (
     ZeroMemory ((VOID *)(UINTN)SataDevInterface->PortFISBaseAddr, RECEIVED_FIS_SIZE);
 
     // Enable ST
-    HBA_PORT_REG32_OR (AhciBusInterface, Port, HBA_PORTS_CMD, HBA_PORTS_CMD_ST);
+    HBA_PORT_REG32_OR (AhciBaseAddr, Port, HBA_PORTS_CMD, HBA_PORTS_CMD_ST);
 
     // Enable Command Issued
-    HBA_PORT_REG32_OR (AhciBusInterface, Port, HBA_PORTS_CI, CIBitMask);
+    HBA_PORT_REG32_OR (AhciBaseAddr, Port, HBA_PORTS_CI, CIBitMask);
 
     return EFI_SUCCESS;
 }
@@ -1980,6 +1947,7 @@ WaitforCommandComplete (
 {
 
     AMI_AHCI_BUS_PROTOCOL  *AhciBusInterface = SataDevInterface->AhciBusInterface; 
+    UINT32                      AhciBaseAddr = (UINT32)AhciBusInterface->AhciBaseAddress;
     UINT8                       Port = SataDevInterface->PortNumber;
     UINT32                      Data32_SERR, Data32_IS, i;
     BOOLEAN                     PxSERR_ERROR = FALSE, PIO_SETUP_FIS = FALSE;
@@ -1991,14 +1959,14 @@ WaitforCommandComplete (
         pBS->Stall(500);
 
         //  Check for Error bits
-        Data32_SERR = HBA_PORT_REG32 (AhciBusInterface, Port, HBA_PORTS_SERR);
+        Data32_SERR = HBA_PORT_REG32 (AhciBaseAddr, Port, HBA_PORTS_SERR);
         if (Data32_SERR & HBA_PORTS_ERR_CHK) {
             PxSERR_ERROR = TRUE;
             break;
         }
 
         //  Check for Error bits
-        Data32_IS = HBA_PORT_REG32 (AhciBusInterface, Port, HBA_PORTS_IS);
+        Data32_IS = HBA_PORT_REG32 (AhciBaseAddr, Port, HBA_PORTS_IS);
         if (Data32_IS & HBA_PORTS_IS_ERR_CHK) {
             PxSERR_ERROR = TRUE;
             break;
@@ -2025,7 +1993,7 @@ WaitforCommandComplete (
 
         // For PIO Data in D2H register FIS is not received. So rely on BSY bit
         if ((CommandType == PIO_DATA_IN_CMD) &&  PIO_SETUP_FIS &&
-                    !((HBA_PORT_REG32 (AhciBusInterface, Port, HBA_PORTS_TFD) & 
+                    !((HBA_PORT_REG32 (AhciBaseAddr, Port, HBA_PORTS_TFD) & 
                     (HBA_PORTS_TFD_BSY | HBA_PORTS_TFD_DRQ)))){
             break;
         }
@@ -2038,18 +2006,18 @@ WaitforCommandComplete (
 
     if (PxSERR_ERROR) {
         // clear the status and return error
-        HBA_PORT_REG32_OR (AhciBusInterface, Port, HBA_PORTS_SERR, HBA_PORTS_ERR_CLEAR); 
-        HBA_PORT_REG32_OR (AhciBusInterface, Port, HBA_PORTS_IS, HBA_PORTS_IS_CLEAR);         
+        HBA_PORT_REG32_OR (AhciBaseAddr, Port, HBA_PORTS_SERR, HBA_PORTS_ERR_CLEAR); 
+        HBA_PORT_REG32_OR (AhciBaseAddr, Port, HBA_PORTS_IS, HBA_PORTS_IS_CLEAR);         
         return EFI_DEVICE_ERROR;    
     }
 
     // check if CI register is zero
-    if (HBA_PORT_REG32 (AhciBusInterface, Port, HBA_PORTS_CI)){
+    if (HBA_PORT_REG32 (AhciBaseAddr, Port, HBA_PORTS_CI)){
         return EFI_DEVICE_ERROR;                
     }
 
     // check for status bits
-    if (HBA_PORT_REG32 (AhciBusInterface, Port, HBA_PORTS_TFD) & (HBA_PORTS_TFD_ERR | HBA_PORTS_TFD_DRQ)){
+    if (HBA_PORT_REG32 (AhciBaseAddr, Port, HBA_PORTS_TFD) & (HBA_PORTS_TFD_ERR | HBA_PORTS_TFD_DRQ)){
         return EFI_DEVICE_ERROR;                
     }
 
@@ -2080,24 +2048,25 @@ StopController (
 {
     UINT8         Port = SataDevInterface->PortNumber;
     UINT8         PMPort = SataDevInterface->PMPortNumber;
+    UINT32        AhciBaseAddr = (UINT32)(AhciBusInterface->AhciBaseAddress);
     EFI_STATUS    Status;
     UINT64        PortFISBaseAddr = SataDevInterface->PortFISBaseAddr;
     UINT64        CommandListBaseAddress = SataDevInterface->PortCommandListBaseAddr;
     UINT32        Data32;
 
-    if(StartOrStop && (HBA_PORT_REG64(AhciBusInterface,Port,HBA_PORTS_CLB) != CommandListBaseAddress)) {
-        gCommandListBaseAddress=HBA_PORT_REG64(AhciBusInterface,Port,HBA_PORTS_CLB);
-        gFisBaseAddress=HBA_PORT_REG64(AhciBusInterface,Port,HBA_PORTS_FB);
+    if(StartOrStop && (HBA_PORT_REG64(AhciBaseAddr,Port,HBA_PORTS_CLB) != CommandListBaseAddress)) {
+        gCommandListBaseAddress=HBA_PORT_REG64(AhciBaseAddr,Port,HBA_PORTS_CLB);
+        gFisBaseAddress=HBA_PORT_REG64(AhciBaseAddr,Port,HBA_PORTS_FB);
 
         // Saving FIS and Command List Registers
-        HBA_PORT_WRITE_REG64(AhciBusInterface,Port,HBA_PORTS_CLB,CommandListBaseAddress);
-        HBA_PORT_WRITE_REG64(AhciBusInterface,Port,HBA_PORTS_FB,PortFISBaseAddr);
+        HBA_PORT_WRITE_REG64(AhciBaseAddr,Port,HBA_PORTS_CLB,CommandListBaseAddress);
+        HBA_PORT_WRITE_REG64(AhciBaseAddr,Port,HBA_PORTS_FB,PortFISBaseAddr);
     }
 
     // Clear Start
-    HBA_PORT_REG32_AND (AhciBusInterface, Port, HBA_PORTS_CMD, ~(HBA_PORTS_CMD_ST));
+    HBA_PORT_REG32_AND (AhciBaseAddr, Port, HBA_PORTS_CMD, ~(HBA_PORTS_CMD_ST));
     // Make sure CR is 0 with in 500msec
-    Status = WaitForMemClear(AhciBusInterface, Port, HBA_PORTS_CMD,
+    Status = WaitForMemClear(AhciBaseAddr, Port, HBA_PORTS_CMD,
                             HBA_PORTS_CMD_CR,
                             HBA_CR_CLEAR_TIMEOUT);
 
@@ -2105,7 +2074,7 @@ StopController (
 
         // Get the Port Speed allowed and Interface Power Management Transitions Allowed
         // Pass the values for PortReset. 
-        Data32 = HBA_PORT_REG32 (AhciBusInterface, Port, HBA_PORTS_SCTL);
+        Data32 = HBA_PORT_REG32 ((UINT32)(AhciBusInterface->AhciBaseAddress), Port, HBA_PORTS_SCTL);
         Data32 &= 0xFF0;          
 
         Status = GeneratePortReset(AhciBusInterface,
@@ -2121,12 +2090,12 @@ StopController (
     }
 
     //  Clear FIS receive enable.
-    HBA_PORT_REG32_AND (AhciBusInterface,
+    HBA_PORT_REG32_AND (AhciBaseAddr,
                         Port, 
                         HBA_PORTS_CMD,
                         ~(HBA_PORTS_CMD_FRE));
     //  Make sure FR is 0 with in 500msec
-    Status = WaitForMemClear(AhciBusInterface, Port, HBA_PORTS_CMD,
+    Status = WaitForMemClear(AhciBaseAddr, Port, HBA_PORTS_CMD,
                             HBA_PORTS_CMD_FR,
                             HBA_FR_CLEAR_TIMEOUT);
 
@@ -2134,14 +2103,14 @@ StopController (
 StopController_ErrorExit:
 
     // Clear Status register
-    HBA_PORT_REG32_OR (AhciBusInterface, Port, HBA_PORTS_SERR, HBA_PORTS_ERR_CLEAR); 
-    HBA_PORT_REG32_OR (AhciBusInterface, Port, HBA_PORTS_IS, HBA_PORTS_IS_CLEAR); 
+    HBA_PORT_REG32_OR (AhciBaseAddr, Port, HBA_PORTS_SERR, HBA_PORTS_ERR_CLEAR); 
+    HBA_PORT_REG32_OR (AhciBaseAddr, Port, HBA_PORTS_IS, HBA_PORTS_IS_CLEAR); 
 
     if(!StartOrStop  && gCommandListBaseAddress) {
 
         // Restoring FIS and Command List Registers
-        HBA_PORT_WRITE_REG64(AhciBusInterface,Port,HBA_PORTS_CLB,gCommandListBaseAddress);
-        HBA_PORT_WRITE_REG64(AhciBusInterface,Port,HBA_PORTS_FB,gFisBaseAddress);
+        HBA_PORT_WRITE_REG64(AhciBaseAddr,Port,HBA_PORTS_CLB,gCommandListBaseAddress);
+        HBA_PORT_WRITE_REG64(AhciBaseAddr,Port,HBA_PORTS_FB,gFisBaseAddress);
 
         gCommandListBaseAddress = 0;
     }
@@ -2169,6 +2138,7 @@ ReadytoAcceptCmd (
 {
     EFI_STATUS              Status = EFI_SUCCESS;
     AMI_AHCI_BUS_PROTOCOL   *AhciBusInterface = SataDevInterface->AhciBusInterface; 
+    UINT32                  AhciBaseAddr = (UINT32)(AhciBusInterface->AhciBaseAddress);
     UINT8                   Port = SataDevInterface->PortNumber;
     UINT8                   PMPort = SataDevInterface->PMPortNumber;
     SATA_DEVICE_INTERFACE   *SataPMDevInterface, *SataPMPortDevInterface;
@@ -2176,8 +2146,8 @@ ReadytoAcceptCmd (
     UINT8                   PowerManagement, Speed;
 
     // Is the Device ready to accept the command
-    if (HBA_PORT_REG8 (AhciBusInterface, Port, HBA_PORTS_TFD) & (HBA_PORTS_TFD_BSY | HBA_PORTS_TFD_DRQ)){
-        Data32 = HBA_PORT_REG32 (AhciBusInterface, Port, HBA_PORTS_SCTL);
+    if (HBA_PORT_REG8 (AhciBaseAddr, Port, HBA_PORTS_TFD) & (HBA_PORTS_TFD_BSY | HBA_PORTS_TFD_DRQ)){
+        Data32 = HBA_PORT_REG32 (AhciBaseAddr, Port, HBA_PORTS_SCTL);
         Data32 &= 0xFF0;          
         // make sure the status we read is for the right port
         Status = GeneratePortReset(AhciBusInterface, SataDevInterface, Port, 0xFF,
@@ -2257,7 +2227,8 @@ GeneratePortReset (
 )
 {
     EFI_STATUS  Status;
-    volatile    AHCI_RECEIVED_FIS  *FISAddress =  (AHCI_RECEIVED_FIS *)( (UINT64)(HBA_PORT_REG64(AhciBusInterface, Port, HBA_PORTS_FB)) );
+    UINT32      AhciBaseAddr = (UINT32) AhciBusInterface->AhciBaseAddress;
+    volatile    AHCI_RECEIVED_FIS  *FISAddress =  (AHCI_RECEIVED_FIS *)( (UINT64)(HBA_PORT_REG64(AhciBaseAddr, Port, HBA_PORTS_FB)) );
     UINT32      Data32;
 
     TRACE_AHCI_LEVEL2((-1,"AHCI: PortReset on Port : %x PMPort : %x", Port, PMPort));
@@ -2268,26 +2239,26 @@ GeneratePortReset (
     gPortReset = TRUE;
 
     // Disable Start bit
-    HBA_PORT_REG32_AND (AhciBusInterface, Port, HBA_PORTS_CMD, ~HBA_PORTS_CMD_ST);
+    HBA_PORT_REG32_AND (AhciBaseAddr, Port, HBA_PORTS_CMD, ~HBA_PORTS_CMD_ST);
 
     // Wait till CR is cleared    
-    Status = WaitForMemClear(AhciBusInterface, Port, HBA_PORTS_CMD,
+    Status = WaitForMemClear(AhciBaseAddr, Port, HBA_PORTS_CMD,
                             HBA_PORTS_CMD_CR,
                             HBA_CR_CLEAR_TIMEOUT);
 
     // Clear Status register
-    HBA_PORT_REG32_OR (AhciBusInterface, Port, HBA_PORTS_SERR, HBA_PORTS_ERR_CLEAR); 
+    HBA_PORT_REG32_OR (AhciBaseAddr, Port, HBA_PORTS_SERR, HBA_PORTS_ERR_CLEAR); 
     if (PMPort != 0xFF) {
         Data32 = HBA_PORTS_ERR_CLEAR;
         ReadWritePMPort (SataDevInterface, PMPort, PSCR_1_SERROR, &Data32, TRUE);
     }
-    HBA_PORT_REG32_OR (AhciBusInterface, Port, HBA_PORTS_IS, HBA_PORTS_IS_CLEAR); 
+    HBA_PORT_REG32_OR (AhciBaseAddr, Port, HBA_PORTS_IS, HBA_PORTS_IS_CLEAR); 
     
     //  Enable FIS Receive Enable
-    HBA_PORT_REG32_OR (AhciBusInterface, Port, HBA_PORTS_CMD, HBA_PORTS_CMD_FRE);     
+    HBA_PORT_REG32_OR (AhciBaseAddr, Port, HBA_PORTS_CMD, HBA_PORTS_CMD_FRE);     
 
     // Wait till FIS is running and then clear the data area
-    WaitForMemSet(AhciBusInterface, Port, HBA_PORTS_CMD,
+    WaitForMemSet(AhciBaseAddr, Port, HBA_PORTS_CMD,
                                     HBA_PORTS_CMD_FR,
                                     HBA_PORTS_CMD_FR,
                                     HBA_FR_CLEAR_TIMEOUT);
@@ -2296,10 +2267,10 @@ GeneratePortReset (
 
     if (PMPort == 0xFF) {
         // Issue Port COMRESET
-       HBA_PORT_REG32_AND_OR (AhciBusInterface, Port, HBA_PORTS_SCTL, 0xFFFFF000, 
+       HBA_PORT_REG32_AND_OR (AhciBaseAddr, Port, HBA_PORTS_SCTL, 0xFFFFF000, 
                     HBA_PORTS_SCTL_DET_INIT + (Speed << 4) + (PowerManagement << 8));     
         pBS->Stall (1000);                               // 1msec
-        HBA_PORT_REG32_AND (AhciBusInterface, Port, HBA_PORTS_SCTL, ~HBA_PORTS_SCTL_DET_MASK);
+        HBA_PORT_REG32_AND (AhciBaseAddr, Port, HBA_PORTS_SCTL, ~HBA_PORTS_SCTL_DET_MASK);
     } else {
         Data32 = HBA_PORTS_SCTL_DET_INIT + (Speed << 4) + (PowerManagement << 8);
         ReadWritePMPort (SataDevInterface, PMPort, PSCR_2_SCONTROL, &Data32, TRUE);
@@ -2311,7 +2282,7 @@ GeneratePortReset (
     Status = HandlePortComReset(AhciBusInterface, SataDevInterface, Port, PMPort);
 
     //  Disable FIS Receive Enable
-    HBA_PORT_REG32_AND (AhciBusInterface, Port, HBA_PORTS_CMD, ~HBA_PORTS_CMD_FRE);
+    HBA_PORT_REG32_AND (AhciBaseAddr, Port, HBA_PORTS_CMD, ~HBA_PORTS_CMD_FRE);
 
     SataDevInterface->SControl = (Speed << 4) + (PowerManagement << 8);
 
@@ -2351,6 +2322,7 @@ GenerateSoftReset (
 
     EFI_STATUS           Status;
     AMI_AHCI_BUS_PROTOCOL    *AhciBusInterface = SataDevInterface->AhciBusInterface; 
+    UINT32               AhciBaseAddr = (UINT32)(AhciBusInterface->AhciBaseAddress);
     AHCI_COMMAND_LIST    *CommandList = (AHCI_COMMAND_LIST *)(UINTN) SataDevInterface->PortCommandListBaseAddr;
     AHCI_COMMAND_TABLE   *Commandtable = (AHCI_COMMAND_TABLE *)(UINTN)AhciBusInterface->PortCommandTableBaseAddr;
     COMMAND_STRUCTURE     CommandStructure;
@@ -2373,10 +2345,10 @@ GenerateSoftReset (
     }
 
     // if Command list Override is supported, set CLO bit
-    Data32 = HBA_PORT_REG32 (AhciBusInterface, Port, HBA_PORTS_TFD) & (HBA_PORTS_TFD_DRQ | HBA_PORTS_TFD_BSY);
+    Data32 = HBA_PORT_REG32 (AhciBaseAddr, Port, HBA_PORTS_TFD) & (HBA_PORTS_TFD_DRQ | HBA_PORTS_TFD_BSY);
     if ((AhciBusInterface->HBACapability & HBA_CAP_SCLO) && Data32){
-        HBA_PORT_REG32_OR (AhciBusInterface, Port, HBA_PORTS_CMD, HBA_PORTS_CMD_CLO);
-        Status = WaitForMemClear(AhciBusInterface, Port, HBA_PORTS_CMD,
+        HBA_PORT_REG32_OR (AhciBaseAddr, Port, HBA_PORTS_CMD, HBA_PORTS_CMD_CLO);
+        Status = WaitForMemClear(AhciBaseAddr, Port, HBA_PORTS_CMD,
                             HBA_PORTS_CMD_CLO,
                             BUSY_CLEAR_TIMEOUT);
     }
@@ -2394,7 +2366,7 @@ GenerateSoftReset (
 
     StartController(AhciBusInterface, SataDevInterface, BIT00);
     // Wait till command is processed
-    Status = WaitForMemClear(AhciBusInterface, Port, HBA_PORTS_CI,
+    Status = WaitForMemClear(AhciBaseAddr, Port, HBA_PORTS_CI,
                             BIT00,
                             ONE_MILLISECOND * 5);
 
@@ -2456,6 +2428,7 @@ HandlePortComReset (
     EFI_STATUS Status = EFI_SUCCESS;
     BOOLEAN     DeviceDetected = FALSE;
     UINT32      Data32, i, SStatusData;
+    UINT32      AhciBaseAddr = (UINT32)(AhciBusInterface->AhciBaseAddress);
     volatile    AHCI_RECEIVED_FIS  *FISAddress;
     UINT32      SError = 0;
     //  Check if detection is complete
@@ -2472,7 +2445,7 @@ HandlePortComReset (
     if (DeviceDetected) {
         // Wait till PhyRdy Change bit is set
         if (PMPort == 0xFF) {
-            Status = WaitForMemSet(AhciBusInterface, Port, HBA_PORTS_SERR,
+            Status = WaitForMemSet(AhciBaseAddr, Port, HBA_PORTS_SERR,
                             HBA_PORTS_SERR_EX,
                             HBA_PORTS_SERR_EX,
                             ATAPI_BUSY_CLEAR_TIMEOUT);
@@ -2481,7 +2454,7 @@ HandlePortComReset (
                     HBA_PORTS_SERR_EX, HBA_PORTS_SERR_EX, ATAPI_BUSY_CLEAR_TIMEOUT);
         }
 
-        FISAddress = (AHCI_RECEIVED_FIS*)((UINT64)(HBA_PORT_REG64(AhciBusInterface, Port, HBA_PORTS_FB)));
+        FISAddress = (AHCI_RECEIVED_FIS*)((UINT64)(HBA_PORT_REG64(AhciBaseAddr, Port, HBA_PORTS_FB)));
 
         for (i = 0; i < ATAPI_BUSY_CLEAR_TIMEOUT; ) {
             SError = ReadSCRRegister (AhciBusInterface, SataDevInterface, Port, PMPort, 2); // SError
@@ -2500,19 +2473,19 @@ HandlePortComReset (
         // Wait till PxTFD gets updated from D2H FIS
         for (i = 0; i < 100; i++){   // Total delay 10msec        
             WriteSCRRegister (AhciBusInterface, SataDevInterface, Port, PMPort, 1, HBA_PORTS_ERR_CLEAR); //SError
-            if((FISAddress->Ahci_Rfis[2] & HBA_PORTS_TFD_MASK) == (HBA_PORT_REG32 (AhciBusInterface, Port, HBA_PORTS_TFD) & HBA_PORTS_TFD_MASK)) break;
+            if((FISAddress->Ahci_Rfis[2] & HBA_PORTS_TFD_MASK) == (HBA_PORT_REG32 (AhciBaseAddr, Port, HBA_PORTS_TFD) & HBA_PORTS_TFD_MASK)) break;
             pBS->Stall (100);                               // 100usec
         }
 
         // check for errors
         if (FISAddress->Ahci_Rfis[2] & (HBA_PORTS_TFD_BSY | HBA_PORTS_TFD_ERR)) Status = EFI_DEVICE_ERROR;
 
-        Data32 = HBA_PORT_REG32 (AhciBusInterface, Port, HBA_PORTS_IS); 
+        Data32 = HBA_PORT_REG32 (AhciBaseAddr, Port, HBA_PORTS_IS); 
         if (Data32 & (BIT30 + BIT29 + BIT28 + BIT27 + BIT26)) Status = EFI_DEVICE_ERROR;
 
         // Clear the status
         WriteSCRRegister (AhciBusInterface, SataDevInterface, Port, PMPort, 1, HBA_PORTS_ERR_CLEAR); //SError
-        HBA_PORT_REG32_OR (AhciBusInterface, Port, HBA_PORTS_IS, HBA_PORTS_IS_CLEAR); 
+        HBA_PORT_REG32_OR (AhciBaseAddr, Port, HBA_PORTS_IS, HBA_PORTS_IS_CLEAR); 
 
     } else {
         Status = EFI_DEVICE_ERROR;
@@ -2552,7 +2525,7 @@ ReadSCRRegister (
     } else {
         if (Register == 1) Reg = HBA_PORTS_SCTL;
         if (Register == 2) Reg = HBA_PORTS_SERR;
-        Data32 = HBA_PORT_REG32 (AhciBusInterface, Port, Reg);
+        Data32 = HBA_PORT_REG32 (AhciBusInterface->AhciBaseAddress, Port, Reg);
     }
 
     return Data32;
@@ -2593,7 +2566,7 @@ WriteSCRRegister (
     } else {
         if (Register == 2) Reg = HBA_PORTS_SCTL;
         if (Register == 1) Reg = HBA_PORTS_SERR;
-        HBA_PORT_REG32_OR (AhciBusInterface, Port, Reg, Data32); 
+        HBA_PORT_REG32_OR (AhciBusInterface->AhciBaseAddress, Port, Reg, Data32); 
     }
     return EFI_SUCCESS;
 }
@@ -2659,49 +2632,50 @@ CheckValidDevice (
 {
     UINT8   Data8;
     UINT32  Data32;
+    UINT32      AhciBaseAddr = (UINT32)(AhciBusInterface->AhciBaseAddress);
 
     // Check if Link is active
-    Data8 = (UINT8)(HBA_PORT_REG32 (AhciBusInterface, Port, HBA_PORTS_SSTS) & HBA_PORTS_SSTS_DET_MASK);
+    Data8 = (UINT8)(HBA_PORT_REG32 (AhciBaseAddr, Port, HBA_PORTS_SSTS) & HBA_PORTS_SSTS_DET_MASK);
     if (Data8 != HBA_PORTS_SSTS_DET_PCE)  return EFI_DEVICE_ERROR;
 
     // Enable FIS receive and CI so that TFD gets updated properly
     // Clear out the command slot
-    HBA_PORT_REG32_AND (AhciBusInterface, Port, HBA_PORTS_CI, 0);
+    HBA_PORT_REG32_AND (AhciBaseAddr, Port, HBA_PORTS_CI, 0);
 
     // Enable FIS Receive
-    HBA_PORT_REG32_OR (AhciBusInterface, Port, HBA_PORTS_CMD, HBA_PORTS_CMD_FRE | HBA_PORTS_CMD_ST);
+    HBA_PORT_REG32_OR (AhciBaseAddr, Port, HBA_PORTS_CMD, HBA_PORTS_CMD_FRE | HBA_PORTS_CMD_ST);
 
     // Wait till FIS is running
-    WaitForMemSet(AhciBusInterface, Port, HBA_PORTS_CMD,
+    WaitForMemSet(AhciBaseAddr, Port, HBA_PORTS_CMD,
                                     HBA_PORTS_CMD_FR,
                                     HBA_PORTS_CMD_FR,
                                     HBA_FR_CLEAR_TIMEOUT);
     
     // Wait till CR list is running
-    WaitForMemSet(AhciBusInterface, Port, HBA_PORTS_CMD,
+    WaitForMemSet(AhciBaseAddr, Port, HBA_PORTS_CMD,
                                     HBA_PORTS_CMD_CR,
                                     HBA_PORTS_CMD_CR,
                                     HBA_FR_CLEAR_TIMEOUT);
 
     // Clear Start Bit
-    HBA_PORT_REG32_AND (AhciBusInterface, Port, HBA_PORTS_CMD, ~(HBA_PORTS_CMD_ST));
-    WaitForMemClear(AhciBusInterface, Port, HBA_PORTS_CMD,
+    HBA_PORT_REG32_AND (AhciBaseAddr, Port, HBA_PORTS_CMD, ~(HBA_PORTS_CMD_ST));
+    WaitForMemClear(AhciBaseAddr, Port, HBA_PORTS_CMD,
                             HBA_PORTS_CMD_CR,
                             HBA_CR_CLEAR_TIMEOUT);
 
     //Clear FIS Receive enable bit
-    HBA_PORT_REG32_AND (AhciBusInterface, Port, HBA_PORTS_CMD, ~(HBA_PORTS_CMD_FRE));
-    WaitForMemClear(AhciBusInterface, Port, HBA_PORTS_CMD,
+    HBA_PORT_REG32_AND (AhciBaseAddr, Port, HBA_PORTS_CMD, ~(HBA_PORTS_CMD_FRE));
+    WaitForMemClear(AhciBaseAddr, Port, HBA_PORTS_CMD,
                             HBA_PORTS_CMD_FR,
                             HBA_FR_CLEAR_TIMEOUT);
 
 
     // Check if valid signature is present
-    Data32 = HBA_PORT_REG32(AhciBusInterface, Port, HBA_PORTS_SIG);
+    Data32 = HBA_PORT_REG32(AhciBaseAddr, Port, HBA_PORTS_SIG);
     if (Data32 != ATA_SIGNATURE_32 && Data32 != ATAPI_SIGNATURE_32 && Data32 != PMPORT_SIGNATURE)
         return EFI_DEVICE_ERROR;
 
-    Data8 = HBA_PORT_REG8 (AhciBusInterface, Port, HBA_PORTS_TFD);
+    Data8 = HBA_PORT_REG8 (AhciBaseAddr, Port, HBA_PORTS_TFD);
     if (Data8 & (HBA_PORTS_TFD_BSY | HBA_PORTS_TFD_DRQ)) return EFI_DEVICE_ERROR;
 
     return EFI_SUCCESS;

@@ -13,7 +13,7 @@
 //**********************************************************************
 
 /** @file AmiAhciBusProtocol.h
-    AMI defined Protocol header file for the SATA Controllers in AHCI mode
+AMI defined Protocol header file for the SATA Controllers in AHCI mode
  **/
 
 #ifndef _AMI_AHCIBUS_PROTOCOL_H
@@ -26,13 +26,13 @@ extern "C" {
 //---------------------------------------------------------------------------
 
 #include <Library/UefiLib.h>
-#include <Protocol/DiskInfo.h>
+#include <Protocol/PDiskInfo.h>
+#include <Protocol/PIDEController.h>
 #include <Protocol/IdeControllerInit.h>
 #include <IndustryStandard/AmiAtaAtapi.h>
 #include <Protocol/AmiHddSecurity.h>
 #include <Protocol/AmiHddSmart.h>
 #include <Protocol/AmiHddPowerMgmt.h>
-#include <Protocol/StorageSecurityCommand.h>
 
 //---------------------------------------------------------------------------
 
@@ -217,30 +217,6 @@ EFI_STATUS
 );
 
 /**
-    Execute the ATA/ATAPI commands in the DMA mode
-                   
-    @param  SataDevInterface 
-    @param  CommandStructure 
-    @param  READWRITE
-
-    @retval EFI_STATUS
-
-    @note  
-      1. Stop the Controller
-      2. Check if the device is ready to accept a Command. 
-      3. Build Command list
-      4. Start the Controller.
-      5. Wait till command completes. Check for errors.
-
-**/ 
-typedef EFI_STATUS (*AMI_SATA_DEV_DMA_DATA_CMD) (
-    IN SATA_DEVICE_INTERFACE                *SataDevInterface, 
-    IN OUT COMMAND_STRUCTURE                *CommandStructure,
-    IN BOOLEAN                              READWRITE
-
-);
-
-/**
     Wait till command completes 
 
     @param    SataDevInterface 
@@ -293,28 +269,6 @@ EFI_STATUS
 );
 
 /**
-    Generate Soft Reset
-
-    @param SataDevInterface 
-    @param In UINT8                                PMPort
-
-    @retval EFI_STATUS
-
-    @note  
-  1. Issue a Control register update, H2D register FIS with reset bit set.
-  2. Wait for 100usec
-  3. Issue a Control register update, H2D register FIS with reset bit reset.
-
-**/ 
-typedef 
-EFI_STATUS 
-(*AMI_SATA_GENERATE_PORT_SOFT_RESET) (
-    SATA_DEVICE_INTERFACE               *SataDevInterface, 
-    UINT8                               PMPort
-);
-
-
-/**
     Execute a Atapi Packet command
                    
     @param    SataDevInterface 
@@ -342,7 +296,7 @@ EFI_STATUS
 
 struct _AMI_AHCI_BUS_PROTOCOL{
     EFI_HANDLE                          ControllerHandle;
-    UINT64                              AhciBaseAddress;
+    UINT32                              AhciBaseAddress;
     UINT32                              AhciVersion;
     UINT32                              HBACapability;
     UINT32                              HBAPortImplemented;        // Bit Map
@@ -365,10 +319,8 @@ struct _AMI_AHCI_BUS_PROTOCOL{
     AMI_SATA_DEV_PIO_DATA_IN            ExecutePioDataCommand;
     AMI_SATA_DEV_PIO_DATA_OUT           SataPioDataOut;
     AMI_SATA_DEV_NON_DATA_CMD           ExecuteNonDataCommand;
-    AMI_SATA_DEV_DMA_DATA_CMD           ExecuteDmaDataCommand;
     AMI_SATA_DEV_WAIT_FOR_CMD_COMPLETE  WaitforCommandComplete;
     AMI_SATA_GENERATE_PORT_RESET        GeneratePortReset;
-    AMI_SATA_GENERATE_PORT_SOFT_RESET   GeneratePortSoftReset;
     AMI_EXECUTE_PACKET_COMMAND          ExecutePacketCommand;
 
     BOOLEAN                             Acoustic_Enable;            // Acoustic Support
@@ -386,13 +338,10 @@ struct _AMI_AHCI_BUS_PROTOCOL{
 typedef struct {
     BOOLEAN         RaidDriverMode;               // Set to TRUE For UEFI Raid driver and FALSE for Legacy Raid option ROM 
     BOOLEAN         AhciBusAtapiSupport;          // Set to FALSE For UEFI Raid driver and TRUE for Legacy Raid option ROM 
-    BOOLEAN         DriverLedOnAtapiEnable;       // Set to TRUE to Enable the Drive LED on ATAPI Enable (DLAE) bit
-    BOOLEAN         PowerUpInStandbySupport;      // Set to TRUE to Support PUIS.
-    BOOLEAN         PowerUpInStandbyMode;         // Set to TRUE to Enable PUIS.
-    BOOLEAN         DipmSupport;                  // Set to TRUE to Support the Device initiated power management.
-    BOOLEAN         DipmEnable;                   // Set to TRUE to Enable the Device initiated power management.
-    BOOLEAN         DeviceSleepSupport;           // Set to TRUE to Support the Device Sleep
-    BOOLEAN         DeviceSleepEnable;            // Set to TRUE to Enable the Device Sleep
+    BOOLEAN         DriverLedOnAtapiEnable;       // Set to TRUE to enable the Drive LED on ATAPI Enable (DLAE) bit
+    BOOLEAN         PowerUpInStandbySupport;
+    BOOLEAN         PowerUpInStandbyMode;
+    BOOLEAN         DipmSupport;                  // Set to TRUE to enable the Device initiated power management.
     BOOLEAN         PciMapAddressForDataTransfer; // Set to True to use PCIIO mapped address for DMA or PIO data transfer
 } AHCI_PLATFORM_POLICY_PROTOCOL;
 
@@ -411,43 +360,42 @@ typedef struct _SATA_BLOCK_IO {
 } SATA_BLOCK_IO;
 
 struct _SATA_DEVICE_INTERFACE{
-    EFI_HANDLE                            IdeDeviceHandle;
-    UINT8                                 PortNumber;
-    UINT8                                 PMPortNumber; 
-    UINT8                                 NumPMPorts;         // Number of Ports in PM, Valid for PMPORT only
-    UINT8                                 DeviceState;
-    UINT32                                Signature;
-    UINT32                                SControl;
-    DEVICE_TYPE                           DeviceType;
+    EFI_HANDLE                          IdeDeviceHandle;
+    UINT8                               PortNumber;
+    UINT8                               PMPortNumber; 
+    UINT8                               NumPMPorts;         // Number of Ports in PM, Valid for PMPORT only
+    UINT8                               DeviceState;
+    UINT32                              Signature;
+    UINT32                              SControl;
+    DEVICE_TYPE                         DeviceType;
 
-    UINT8                                 PIOMode;
-    UINT8                                 SWDma;
-    UINT8                                 MWDma;
-    UINT8                                 UDma;
-    UINT8                                 IORdy;
-    UINT8                                 ReadCommand;
-    UINT8                                 WriteCommand;
-    IDENTIFY_DATA                         IdentifyData;
-    EFI_UNICODE_STRING_TABLE              *UDeviceName;
-    ATAPI_DEVICE                          *AtapiDevice;
-    UINT8                                 AtapiSenseData[256];
-    UINT8                                 AtapiSenseDataLength;
+    UINT8                               PIOMode;
+    UINT8                               SWDma;
+    UINT8                               MWDma;
+    UINT8                               UDma;
+    UINT8                               IORdy;
+    UINT8                               ReadCommand;
+    UINT8                               WriteCommand;
+    IDENTIFY_DATA                       IdentifyData;
+    EFI_UNICODE_STRING_TABLE            *UDeviceName;
+    ATAPI_DEVICE                        *AtapiDevice;
+    UINT8                               AtapiSenseData[256];
+    UINT8                               AtapiSenseDataLength;
 
-    UINT64                                PortCommandListBaseAddr;
-    UINT64                                PortFISBaseAddr;
+    UINT64                              PortCommandListBaseAddr;
+    UINT64                              PortFISBaseAddr;
 
-    AMI_AHCI_BUS_PROTOCOL                 *AhciBusInterface;
-    EFI_DEVICE_PATH_PROTOCOL              *DevicePathProtocol; 
-    SATA_BLOCK_IO                         *SataBlkIo;
-    SATA_DISK_INFO                        *SataDiskInfo;
-    AMI_HDD_SECURITY_PROTOCOL             *IdeSecurityInterface;
-    AMI_HDD_SMART_PROTOCOL                *SmartInterface;
-    AMI_HDD_POWER_MGMT_PROTOCOL           *PowerMgmtInterface;
-    EFI_STORAGE_SECURITY_COMMAND_PROTOCOL *StorageSecurityInterface;
+    AMI_AHCI_BUS_PROTOCOL               *AhciBusInterface;
+    EFI_DEVICE_PATH_PROTOCOL            *DevicePathProtocol; 
+    SATA_BLOCK_IO                       *SataBlkIo;
+    SATA_DISK_INFO                      *SataDiskInfo;
+    AMI_HDD_SECURITY_PROTOCOL           *IdeSecurityInterface;
+    AMI_HDD_SMART_PROTOCOL              *SmartInterface;
+    AMI_HDD_POWER_MGMT_PROTOCOL         *PowerMgmtInterface;
 
-    DLINK                                 SataDeviceLink; 
-    DLIST                                 PMSataDeviceList;         
-    DLINK                                 PMSataDeviceLink; 
+    DLINK                               SataDeviceLink; 
+    DLIST                               PMSataDeviceList;         
+    DLINK                               PMSataDeviceLink; 
 };
 
 extern EFI_GUID gAmiAhciBusProtocolGuid;

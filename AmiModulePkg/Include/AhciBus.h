@@ -29,6 +29,8 @@ extern "C" {
 #include "Protocol/DriverBinding.h"
 #include "Protocol/BlockIo.h"
 #include "Protocol/DiskInfo.h"
+#include "Protocol/PDiskInfo.h"
+#include "Protocol/PIDEController.h"
 #include <Protocol/AmiAhciBus.h>
 #include <Protocol/AmiHddSecurityInit.h>
 #include <Protocol/AmiHddSmartInit.h>
@@ -53,40 +55,20 @@ VOID EfiDebugPrint (IN  UINTN ErrorLevel,IN  CHAR8 *Format,...);
 #define     COMMAND_LIST_SIZE_PORT      0x800
 
 #ifndef ATAPI_BUSY_CLEAR_TIMEOUT
-#define     ATAPI_BUSY_CLEAR_TIMEOUT    16000                   // 16sec
+#define     ATAPI_BUSY_CLEAR_TIMEOUT    16000       // 16sec
 #endif
 
 #ifndef S3_BUSY_CLEAR_TIMEOUT
 #define     S3_BUSY_CLEAR_TIMEOUT       10000                   // 10Sec
 #endif
 
-#ifndef BUSY_CLEAR_TIMEOUT
 #define     BUSY_CLEAR_TIMEOUT          1000                    // 1Sec
-#endif
-
-#ifndef DRDY_TIMEOUT
 #define     DRDY_TIMEOUT                1000                    // 1Sec
-#endif
-
-#ifndef DRQ_TIMEOUT
 #define     DRQ_TIMEOUT                 10                      // 10msec
-#endif
-
-#ifndef DRQ_CLEAR_TIMEOUT
 #define     DRQ_CLEAR_TIMEOUT           1000                    // 1sec
-#endif
-
-#ifndef DRQ_SET_TIMEOUT
 #define     DRQ_SET_TIMEOUT             10                      // 10msec
-#endif
-
-#ifndef HP_COMMAND_COMPLETE_TIMEOUT
 #define     HP_COMMAND_COMPLETE_TIMEOUT 2000                    // 2Sec
-#endif
-
-#ifndef COMMAND_COMPLETE_TIMEOUT
 #define     COMMAND_COMPLETE_TIMEOUT    5000                    // 5Sec
-#endif
 
 #ifndef DMA_ATA_COMMAND_COMPLETE_TIMEOUT
 #define     DMA_ATA_COMMAND_COMPLETE_TIMEOUT    5000            // 5Sec
@@ -97,14 +79,16 @@ VOID EfiDebugPrint (IN  UINTN ErrorLevel,IN  CHAR8 *Format,...);
 #endif
 
 #ifndef ATAPI_RESET_COMMAND_TIMEOUT
-#define     ATAPI_RESET_COMMAND_TIMEOUT 5000                    // 5Sec
+#define     ATAPI_RESET_COMMAND_TIMEOUT 5000
 #endif
 
 #ifndef POWERON_BUSY_CLEAR_TIMEOUT
-#define     POWERON_BUSY_CLEAR_TIMEOUT  10000                   // 10Sec
+#define     POWERON_BUSY_CLEAR_TIMEOUT  10000                   // 10 Sec
 #endif
 
 #define     TIMEOUT_1SEC                1000                    // 1sec Serial ATA 1.0 Sec 5.2
+
+
 
 #define     BLKIO_REVISION                      1
 
@@ -195,13 +179,8 @@ ConfigureController (
     EFI_ATA_COLLECTIVE_MODE       *SupportedModes
 );
 
-VOID 
-InitializeDipm(
-    SATA_DEVICE_INTERFACE         *SataDevInterface
-);
-
 VOID
-InitializeDeviceSleep (
+InitializeDevSleep (
     SATA_DEVICE_INTERFACE         *SataDevInterface
 );
 
@@ -342,11 +321,6 @@ DetectAndConfigureDevice (
 );
 
 EFI_STATUS
-InstallOtherOptionalFeatures(
-    IN AMI_AHCI_BUS_PROTOCOL          *AhciBusInterface
-);
-
-EFI_STATUS
 ConfigurePMPort (
     SATA_DEVICE_INTERFACE   *SataDevInterface
 );
@@ -420,7 +394,7 @@ BuildPRDT (
 
 EFI_STATUS 
 WaitForMemSet (
-    IN AMI_AHCI_BUS_PROTOCOL   *AhciBusInterface,
+    IN UINT32 BaseAddr,
     IN UINT8  Port,
     IN UINT8  Register,
     IN UINT32 AndMask,
@@ -440,7 +414,7 @@ WaitforPMMemSet (
 
 EFI_STATUS 
 WaitForMemClear (
-    IN AMI_AHCI_BUS_PROTOCOL   *AhciBusInterface,
+    IN UINT32 BaseAddr,
     IN UINT8  Port,
     IN UINT8  Register,
     IN UINT32 AndMask,
@@ -699,44 +673,46 @@ Shl64 (
     IN UINT8 Shift
 );
 
+#if INDEX_DATA_PORT_ACCESS
 UINT32
 ReadDataDword (
-    IN AMI_AHCI_BUS_PROTOCOL   *AhciBusInterface,
+    IN  UINTN   BaseAddr,
     IN  UINTN   Index
 );
 
 UINT16
 ReadDataWord (
-    IN AMI_AHCI_BUS_PROTOCOL   *AhciBusInterface,
+    IN  UINTN   BaseAddr,
     IN  UINTN   Index
 );
 
 UINT8
 ReadDataByte (
-    IN AMI_AHCI_BUS_PROTOCOL   *AhciBusInterface,
+    IN  UINTN   BaseAddr,
     IN  UINTN   Index
 );
 
 VOID
 WriteDataDword (
-    IN AMI_AHCI_BUS_PROTOCOL   *AhciBusInterface,
+    IN  UINTN   BaseAddr,
     IN  UINTN   Index, 
     IN  UINTN   Data
 );
 
 VOID
 WriteDataWord (
-    IN AMI_AHCI_BUS_PROTOCOL   *AhciBusInterface,
+    IN  UINTN   BaseAddr,
     IN  UINTN   Index, 
     IN  UINTN   Data
 );
 
 VOID
 WriteDataByte (
-    IN AMI_AHCI_BUS_PROTOCOL   *AhciBusInterface,
+    IN  UINTN   BaseAddr,
     IN  UINTN   Index,
     IN  UINTN   Data
 );
+#endif
 
 /****** DO NOT WRITE BELOW THIS LINE *******/
 #ifdef __cplusplus

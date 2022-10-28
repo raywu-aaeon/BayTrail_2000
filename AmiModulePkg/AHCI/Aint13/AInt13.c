@@ -19,6 +19,7 @@
 //---------------------------------------------------------------------------
 
 #include "Aint13.h"
+#include "AmiDxeLib.h"
 #include "Protocol/LegacyBiosExt.h"
 #include "Protocol/LegacyAhci.h"
 #include "Protocol/BlockIo.h"
@@ -26,10 +27,6 @@
 #include "AhciBus.h"
 
 //---------------------------------------------------------------------------
-
-#if INDEX_DATA_PORT_ACCESS
-extern      InitilizeIndexDataPortAddress();
-#endif
 
 EFI_STATUS  InitDrivesInformation (VOID*, UINT16);
 EFI_STATUS  InitAhciInt13Support();
@@ -141,10 +138,6 @@ SetEbdaAddressForPort (
     UINT64                   PortCommandListBaseAddr=0;
     UINT64                   PortFISBaseAddr=0;
 
-#if INDEX_DATA_PORT_ACCESS
-    InitilizeIndexDataPortAddress (AhciBusInterface->PciIO);
-#endif
-    
     PortsImplemented = AhciBusInterface->HBAPortImplemented;
     PortNumber = 0;
 
@@ -161,15 +154,15 @@ SetEbdaAddressForPort (
         if (PortsImplemented & 1) { 
 
             // Clear Start
-            HBA_PORT_REG32_AND (AhciBusInterface, PortNumber, HBA_PORTS_CMD, ~(HBA_PORTS_CMD_ST));
+            HBA_PORT_REG32_AND (AhciBusInterface->AhciBaseAddress, PortNumber, HBA_PORTS_CMD, ~(HBA_PORTS_CMD_ST));
 
             // Program PxCLB and PxFB
-            HBA_PORT_WRITE_REG64 (AhciBusInterface, 
+            HBA_PORT_WRITE_REG64 (AhciBusInterface->AhciBaseAddress, 
                                   PortNumber, 
                                   HBA_PORTS_CLB,
                                   PortCommandListBaseAddr);
 
-            HBA_PORT_WRITE_REG64 (AhciBusInterface, 
+            HBA_PORT_WRITE_REG64 (AhciBusInterface->AhciBaseAddress, 
                                   PortNumber, HBA_PORTS_FB, 
                                   PortFISBaseAddr);
             i++;
@@ -646,11 +639,6 @@ UpdateControllerInfoToLegacy (
             return;
         }
     }
-    
-    if(!(gController < AHCI_CONTROLLER_COUNT)){
-        DevInfo->bControllerNo= AHCI_CONTROLLER_COUNT;
-        return;
-    }
 
     // A new controller is found so BusDevFunc and ControllerNo is added
     // into the array of structure.
@@ -915,14 +903,6 @@ InitDrivesInformation (
                 &EbdaAddress,
                 &EbdaStartOffset );
     ASSERT_EFI_ERROR(Status);
-
-#if AINT13_AVOID_MULTIPLE_SMI
-    Ai13Data->AhciRtMiscData.RunAttribute |= A_INT13_SWSMI_USED;
-    Ai13Data->AhciRtMiscData.AhciSmmRt.MiscInfo = 1;
-    Ai13Data->AhciRtMiscData.AhciSmmRt.SmmAttr = 0;
-    Ai13Data->AhciRtMiscData.AhciSmmRt.SmmPort = SW_SMI_IO_ADDRESS;
-    Ai13Data->AhciRtMiscData.AhciSmmRt.SmmData = AHCI_INT13_SMM_SWSMI_VALUE;
-#endif
 
     Ai13Data->AhciRtMiscData.AhciEbdaStart = EbdaStartOffset;
     Ai13Data->AhciRtMiscData.RunAttribute |= A_EBDA_USED;

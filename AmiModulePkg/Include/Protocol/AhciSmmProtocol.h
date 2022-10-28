@@ -75,31 +75,6 @@ EFI_STATUS (*AMI_AHCI_SMM_SATA_DEV_PIO_DATA_IN) (
 );
 
 /**
-    Execute the DMA data command
-                   
-    @param SataDevInterface 
-    @param CommandStructure 
-    @param PortNumber,
-    @param PMPortNumber, 
-    @param DeviceType,
-    @param READWRITE 
-
-    @retval 
-        EFI_STATUS
-
-**/ 
-typedef 
-EFI_STATUS (*AMI_AHCI_SMM_SATA_DEV_DMA_DATA_IN) (
-    IN AMI_AHCI_BUS_SMM_PROTOCOL                *SataDevInterface, 
-    IN OUT COMMAND_STRUCTURE                    *CommandStructure,
-    UINT8                                       PortNumber,
-    UINT8                                       PMPortNumber, 
-    DEVICE_TYPE                                 DeviceType,
-    IN BOOLEAN                                  READWRITE
-);
-
-
-/**
     Execute the Non Data command 
 
     @param SataDevInterface 
@@ -165,7 +140,6 @@ struct _AMI_AHCI_BUS_SMM_PROTOCOL{
     ATAPI_DEVICE                                AtapiDevice;
     AMI_AHCI_SMM_INIT_ON_S3                     AhciSmmInitPortOnS3Resume;
     AMI_AHCI_SMM_SATA_DEV_PIO_DATA_IN           AhciSmmExecutePioDataCommand;
-    AMI_AHCI_SMM_SATA_DEV_DMA_DATA_IN           AhciSmmExecuteDmaDataCommand;
     AMI_AHCI_SMM_SATA_DEV_NON_DATA_CMD          AhciSmmExecuteNonDataCommand;
     AMI_AHCI_SMM_SATA_DEV_PACKET_CMD            AhciSmmExecutePacketCommand;
 };

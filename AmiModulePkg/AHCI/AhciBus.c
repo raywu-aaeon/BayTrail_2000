@@ -20,18 +20,12 @@
 //---------------------------------------------------------------------------
 
 #include "AhciBus.h"
-#include <AcpiRes.h>
 #include "Protocol/LegacyAhci.h"
 
 //---------------------------------------------------------------------------
 
 #if SBIDE_SUPPORT
 #include "SBIDE.h" 
-#endif
-
-#if BOOT_SECTOR_WRITE_PROTECT
-#include <Protocol/AmiBlockIoWriteProtection.h>
-AMI_BLOCKIO_WRITE_PROTECTION_PROTOCOL *AmiBlkWriteProtection = NULL;
 #endif
 
 #ifndef EFI_COMPONENT_NAME2_PROTOCOL_GUID
@@ -67,7 +61,7 @@ extern EFI_COMPONENT_NAME2_PROTOCOL gAhciBusControllerDriverName;
 
 AHCI_CONTOLLER_LINKED_LIST AhciControllerLinkedList;
 
-EFI_DRIVER_BINDING_PROTOCOL gAhciBusDriverBinding = {
+EFI_DRIVER_BINDING_PROTOCOL	gAhciBusDriverBinding = {
   AhciBusSupported, 
   AhciBusStart,     
   AhciBusStop,      
@@ -77,7 +71,6 @@ EFI_DRIVER_BINDING_PROTOCOL gAhciBusDriverBinding = {
 };
 
 AMI_HDD_SECURITY_INIT_PROTOCOL      *HddSecurityInitProtocol = NULL;  
-VOID                                *TempHddSecurityProtocolPtr;
 AMI_HDD_SMART_INIT_PROTOCOL         *HddSmartInitProtocol = NULL;     
 AMI_HDD_OPAL_SEC_INIT_PROTOCOL      *OpalSecInitProtocol = NULL;
 AMI_ATA_PASS_THRU_INIT_PROTOCOL     *AtaPassThruInitProtocol = NULL;  
@@ -104,21 +97,6 @@ AHCI_PLATFORM_POLICY_PROTOCOL        gDefaultAhciPlatformPolicy = {
 #else
     FALSE,
 #endif
-#ifdef ENABLE_DIPM
-    ENABLE_DIPM,
-#else
-    FALSE,
-#endif
-#ifdef DEVICE_SLEEP_SUPPORT
-    DEVICE_SLEEP_SUPPORT,
-#else
-    FALSE,
-#endif
-#ifdef ENABLE_DEVICE_SLEEP
-    ENABLE_DEVICE_SLEEP,
-#else
-    FALSE,
-#endif
 #ifdef USE_PCIIO_MAP_ADDRESS_FOR_DATA_TRANSFER
     USE_PCIIO_MAP_ADDRESS_FOR_DATA_TRANSFER
 #else
@@ -126,58 +104,6 @@ AHCI_PLATFORM_POLICY_PROTOCOL        gDefaultAhciPlatformPolicy = {
 #endif
 };
 
-#ifndef READ_LOG_EXT
-#define     READ_LOG_EXT                    0x2F
-#endif
-
-#ifndef IDENTIFY_DEVICE_DATA_LOG
-#define     IDENTIFY_DEVICE_DATA_LOG        0x30
-#endif
-
-#ifndef SERIAL_ATA_SETTINGS_PAGE
-#define     SERIAL_ATA_SETTINGS_PAGE        0x08
-#endif
-
-#ifndef DEVSLP_TIMING_VARIABLES_OFFSET
-#define     DEVSLP_TIMING_VARIABLES_OFFSET  0x30
-#endif
-
-#ifndef DEVSLEEP_EXIT_TIMEOUT
-#define     DEVSLEEP_EXIT_TIMEOUT           20
-#endif
-
-#ifndef MINIMUM_DEVSLP_ASSERTION_TIME
-#define     MINIMUM_DEVSLP_ASSERTION_TIME   10
-#endif
-
-#ifndef IDENTIFY_DIPM_ENABLED
-#define     IDENTIFY_DIPM_ENABLED                       0x08  // Identify Data Word 79 Bit 3 : Device initiating interface power management Enabled
-#endif
-
-///  Equates used for DevSleep Support
-#ifndef DEVSLEEP_SUB_COMMAND
-#define     DEVSLEEP_SUB_COMMAND                        0x09  // Count value in SetFeature identification : 09h  Device Sleep 
-#endif
-
-#ifndef DEVSLEEP_ENABLE
-#define     DEVSLEEP_ENABLE                             0x10
-#endif
-
-#ifndef DEVSLEEP_DISABLE
-#define     DEVSLEEP_DISABLE                            0x90
-#endif
-
-#ifndef IDENTIFY_DEVSLEEP_ENABLED
-#define     IDENTIFY_DEVSLEEP_ENABLED                   0x100 // Identify Data Word 79 Bit 8 : Device Sleep Enabled
-#endif
-
-#ifndef IDENTIFY_DEVSLEEP_SUPPORT
-#define     IDENTIFY_DEVSLEEP_SUPPORT                   0x100 // Identify Data Word 78 Bit 8 : Supports Device Sleep
-#endif
-
-#ifndef IDENTIFY_DEVSLP_TO_REDUCED_PWRSTATE_CAPABLE
-#define     IDENTIFY_DEVSLP_TO_REDUCED_PWRSTATE_CAPABLE 0x80  // Identify Data Word 77 Bit 7 : Device Sleep in reduced Power state capable
-#endif
 /**
     Installs gAhciBusDriverBinding protocol
 
@@ -309,7 +235,7 @@ AhciBusSupported (
     }
 
     // Check whether IDE_CONTROLLER_PROTOCOL  has been installed on 
-    // this controller  
+    // this controller	
     Status = pBS->OpenProtocol(Controller,
                                &gEfiIdeControllerInitProtocolGuid,
                                (VOID **)&IdeControllerInterface,
@@ -337,6 +263,14 @@ AhciBusSupported (
             Controller
         );
     }
+ 
+    //
+    // Close IDE_CONTROLLER_PROTOCOL
+    //
+    pBS->CloseProtocol (Controller,
+                        &gEfiIdeControllerInitProtocolGuid,
+                        This->DriverBindingHandle,
+                        Controller);
 
     // Check if Controller is in AHCI mode or not?
     Status = pBS->OpenProtocol(Controller,
@@ -354,7 +288,7 @@ AhciBusSupported (
                                0,
                                sizeof (PciConfig),
                                PciConfig);
-    ASSERT_EFI_ERROR(Status);
+	ASSERT_EFI_ERROR(Status);
 
     if (PciConfig [IDE_SUB_CLASS_CODE] == SCC_AHCI_CONTROLLER) {
 #ifdef AHCI_COMPATIBLE_MODE
@@ -428,7 +362,7 @@ AhciBusStart (
     EFI_PCI_IO_PROTOCOL               *PciIO;
     EFI_IDE_CONTROLLER_INIT_PROTOCOL  *IdeControllerInterface;
     SATA_DEVICE_INTERFACE             *SataDevInterface = NULL;
-    AMI_AHCI_BUS_PROTOCOL             *AhciBusInterface;        
+    AMI_AHCI_BUS_PROTOCOL             *AhciBusInterface;	    
     SATA_DEVICE_PATH                  *SataRemainingDevicePath = (SATA_DEVICE_PATH *)RemainingDevicePath;
     UINT8                             PortEnumeration = 0xFF, PMPortEnumeration = 0xFF; // Bit Map
     UINT8                             CurrentPort = 0, CurrentPMPort = 0xFF; 
@@ -437,20 +371,10 @@ AhciBusStart (
     UINT8                             Data8;    
     EFI_DEVICE_PATH_PROTOCOL          *DevicePath;
     VOID                              *TempProtocolPtr;
+    EFI_STATUS                        SecurityStatus=EFI_NOT_FOUND;
     BOOLEAN                           RaidDriverBlocked=FALSE;
 
     PROGRESS_CODE(DXE_IDE_BEGIN);
-
-#if BOOT_SECTOR_WRITE_PROTECT
-    if(AmiBlkWriteProtection == NULL) {
-        Status = pBS->LocateProtocol( &gAmiBlockIoWriteProtectionProtocolGuid, 
-                                      NULL, 
-                                      &AmiBlkWriteProtection ); 
-        if(EFI_ERROR(Status)) {
-            AmiBlkWriteProtection = NULL;
-        }
-    }
-#endif
 
     // Open IDE_CONTROLLER_PROTOCOL. If success or Already opened, It is OK to proceed.
     Status = pBS->OpenProtocol( Controller,
@@ -458,7 +382,7 @@ AhciBusStart (
                                 (VOID **)&IdeControllerInterface,
                                 This->DriverBindingHandle,     
                                 Controller,   
-                                EFI_OPEN_PROTOCOL_BY_DRIVER );
+                                EFI_OPEN_PROTOCOL_BY_DRIVER	);
 
     if  ( !(Status == EFI_SUCCESS || Status == EFI_ALREADY_STARTED)) {
         return EFI_DEVICE_ERROR;
@@ -571,6 +495,15 @@ AhciBusStart (
                                                CurrentPort,
                                                CurrentPMPort);
 
+        if(SataDevInterface != NULL && EFI_ERROR(SecurityStatus)) {
+            // Verify that Security interface has been installed
+            // on at least one device
+            SecurityStatus = pBS->HandleProtocol(SataDevInterface->IdeDeviceHandle, 
+                                &gAmiHddSecurityProtocolGuid, 
+                                (VOID**)&TempProtocolPtr
+                                );
+        }
+
         // Check whether the device detected is PM. Also check whether PM is supported by the Controller
         // and also MaxDevices should be more than 1 if PM is Supported.
         if (!EFI_ERROR(Status) && SataDevInterface && SataDevInterface->NumPMPorts &&
@@ -625,8 +558,6 @@ NextDevice:
         }
     }
 
-    InstallOtherOptionalFeatures(AhciBusInterface);
-
     // Handle the Onboard Raid controller Password Verification
     Status = pBS->HandleProtocol(Controller, 
                                     &gAmiHddSecurityEndProtocolGuid, 
@@ -635,29 +566,23 @@ NextDevice:
     if(Status == EFI_SUCCESS) {
         //
         // Protocol already installed on the Controller handle.
-        // UnInstall and Install back the protocol interface to Notify the Password verification 
+        // Re-Install the protocol interface to Notify the Password verification 
         //
-        Status = pBS->UninstallProtocolInterface(
-                                Controller, 
+        Status = pBS->ReinstallProtocolInterface(Controller, 
                                 &gAmiHddSecurityEndProtocolGuid, 
-                                NULL
-                                );
-        
-        ASSERT_EFI_ERROR(Status);
-        
-    }
-    
-    // This will notify AMITSE to invoke the HDD password Screen
-    Status = pBS->InstallProtocolInterface(
-                                &Controller, 
+                                NULL,
+                                NULL );
+    } else {
+        //
+        // This will notify AMITSE to invoke the HDD password Screen
+        //
+        Status = pBS->InstallProtocolInterface( &Controller, 
                                 &gAmiHddSecurityEndProtocolGuid, 
                                 EFI_NATIVE_INTERFACE,
-                                NULL
-                                );
-        
-    ASSERT_EFI_ERROR(Status);
-        
-    if(!EFI_ERROR(Status) && TempHddSecurityProtocolPtr != NULL) {
+                                NULL );
+    }
+
+    if(!EFI_ERROR(Status) && !EFI_ERROR(SecurityStatus)) {
 
         // Handle the Onboard Raid controller Password Verification
         Status = pBS->HandleProtocol(Controller, 
@@ -828,20 +753,79 @@ DetectAndConfigureDevice (
                 EFI_OPEN_PROTOCOL_BY_CHILD_CONTROLLER);
 
     ASSERT_EFI_ERROR(Status);
-    
+
+    Status = pBS->LocateProtocol (
+                                &gAmiHddSecurityInitProtocolGuid,
+                                NULL,
+                                (VOID **) &HddSecurityInitProtocol
+                        );
+
+     if(!EFI_ERROR(Status)) {
+         if(HddSecurityInitProtocol != NULL) {
+             HddSecurityInitProtocol->InstallSecurityInterface(SataDevInterface, TRUE);
+         }
+     } else {
+
+        // If Security Feature support is not enabled, always freeze 
+        // lock the security feature
+        if (SataDevInterface->IdentifyData.Command_Set_Supported_82 & 0x2) {
+            COMMAND_STRUCTURE           CommandStructure;
+            ZeroMemory(&CommandStructure, sizeof(COMMAND_STRUCTURE)); 
+            CommandStructure.Command = SECURITY_FREEZE_LOCK;
+            Status = ExecuteNonDataCommand (SataDevInterface, CommandStructure);
+            // if Device Configuration Overlay feature set supported then issue the
+            // Dev configure Free lock command.
+            if (SataDevInterface->IdentifyData.Command_Set_Supported_83 & 0x800) {
+                CommandStructure.Command = DEV_CONFIG_FREEZE_LOCK;
+                CommandStructure.Features = DEV_CONFIG_FREEZE_LOCK_FEATURES;
+                Status = ExecuteNonDataCommand (SataDevInterface, CommandStructure);
+            }
+            // Update the Identify device buffer
+            Status = GetIdentifyData(SataDevInterface);
+            if (EFI_ERROR(Status)) {
+                return EFI_DEVICE_ERROR; 
+            }
+        }
+    }
+
+    Status = pBS->LocateProtocol (&gAmiHddOpalSecInitProtocolGuid,
+                                  NULL,
+                                  (VOID **) &OpalSecInitProtocol);
+
+     if(!EFI_ERROR(Status)) {
+         if(OpalSecInitProtocol != NULL) {
+             OpalSecInitProtocol->InstallOpalSecurityInterface(SataDevInterface, TRUE);
+         }
+     }
+
+    Status = pBS->LocateProtocol (&gAmiHddSmartInitProtocolGuid,
+                                NULL,
+                                (VOID **)&HddSmartInitProtocol);
+
+    if(!EFI_ERROR(Status)) {
+        if(HddSmartInitProtocol != NULL) {
+            HddSmartInitProtocol->InitSmartSupport(SataDevInterface, TRUE);
+            // Update the Identify Data.
+            Status = GetIdentifyData(SataDevInterface);
+            if(HddSmartInitProtocol->SmartDiagonasticFlag) {
+                HddSmartInitProtocol->InstallSmartInterface(SataDevInterface, TRUE);
+            }
+        }
+    }
+
     // Check BlockIO has been installed or not.
     Status = pBS->OpenProtocol( SataDevInterface->IdeDeviceHandle,
                                 &gEfiBlockIoProtocolGuid,
                                 NULL,
-                                This->DriverBindingHandle,
-                                SataDevInterface->IdeDeviceHandle,
+                                This->DriverBindingHandle,     
+                                SataDevInterface->IdeDeviceHandle,   
                                 EFI_OPEN_PROTOCOL_TEST_PROTOCOL);
 
     if (EFI_ERROR(Status)) {
 
         // BLOCKIO not installed and device has been configured successfully
         Status = EFI_UNSUPPORTED;
-        SecurityStatus = 0; 
+        SecurityStatus = 0;	
     }
 
     if ((Status == EFI_UNSUPPORTED) || (!(SecurityStatus & 4))){
@@ -852,26 +836,26 @@ DetectAndConfigureDevice (
                     (EFI_DISK_INFO_PROTOCOL *)(SataDevInterface->SataDiskInfo),
                     NULL);
 
-    #if HDD_PASSWORD_SUPPORT_UNDER_RAIDMODE
-        if (!(!(AhciBusInterface->AHCIRAIDMODE) && (SataDevInterface->DeviceType == ATA))) {
-    #endif
+#if HDD_PASSWORD_SUPPORT_UNDER_RAIDMODE
+    if (!(!(AhciBusInterface->AHCIRAIDMODE) && (SataDevInterface->DeviceType == ATA))) {
+#endif
 
-        // If it's Raid mode and AHCIBUS handles the ATAPI devices, install the BlockIo
-        // for the ATAPI devices. BlockIo Will be installed for all the ATA and ATAPI device under AHCI mode
-        if (!(!(AhciBusInterface->AHCIRAIDMODE) && (AhciPlatformPolicy->AhciBusAtapiSupport == FALSE ))) {
+    // If it's Raid mode and AHCIBUS handles the ATAPI devices, install the BlockIo
+    // for the ATAPI devices. BlockIo Will be installed for all the ATA and ATAPI device under AHCI mode
+    if (!(!(AhciBusInterface->AHCIRAIDMODE) && (AhciPlatformPolicy->AhciBusAtapiSupport == FALSE ))) {
 
-            // Either the device doesn't support Security Mode OR Device is not locked
-            Status = pBS->InstallMultipleProtocolInterfaces (
-                        &(SataDevInterface->IdeDeviceHandle),
-                        &gEfiBlockIoProtocolGuid,
-                        (EFI_BLOCK_IO_PROTOCOL *)(SataDevInterface->SataBlkIo),
-                        NULL);
-            ASSERT_EFI_ERROR(Status);
-        }
+        // Either the device doesn't support Security Mode OR Device is not locked
+        Status = pBS->InstallMultipleProtocolInterfaces (
+                    &(SataDevInterface->IdeDeviceHandle),
+                    &gEfiBlockIoProtocolGuid,
+                    (EFI_BLOCK_IO_PROTOCOL *)(SataDevInterface->SataBlkIo),
+                    NULL);
+        ASSERT_EFI_ERROR(Status);
+    }
 
-    #if HDD_PASSWORD_SUPPORT_UNDER_RAIDMODE
-        }
-    #endif
+#if HDD_PASSWORD_SUPPORT_UNDER_RAIDMODE
+    }
+#endif
 
      }                                                  // Install BLOCKIO
 
@@ -881,106 +865,6 @@ DetectAndConfigureDevice (
     return EFI_SUCCESS;
 }
 
-/**
-    Install other features like HDD Security, Opal Security, HDD SMART 
-    etc. on Device.
-
-    @param    This 
-    @param    AMI_AHCI_BUS_PROTOCOL             *AhciBusInterface,
-
-    @retval   EFI_STATUS
-
-**/
-
-EFI_STATUS
-InstallOtherOptionalFeatures(
-    IN AMI_AHCI_BUS_PROTOCOL          *AhciBusInterface
-)
-{
-    EFI_STATUS                 Status;
-    DLINK                      *dlink;
-    SATA_DEVICE_INTERFACE      *SataDevInterface = NULL;
-
-    TempHddSecurityProtocolPtr = NULL;  // Reset global variable
-    
-    if ( HddSecurityInitProtocol == NULL) {
-        pBS->LocateProtocol (&gAmiHddSecurityInitProtocolGuid,
-                             NULL,
-                             (VOID **) &HddSecurityInitProtocol);
-    }
-    
-    if(OpalSecInitProtocol == NULL) {
-        pBS->LocateProtocol (&gAmiHddOpalSecInitProtocolGuid,
-                             NULL,
-                             (VOID **) &OpalSecInitProtocol);
-    }
-    
-    if ( HddSmartInitProtocol == NULL ) {
-        pBS->LocateProtocol (&gAmiHddSmartInitProtocolGuid,
-                             NULL,
-                             (VOID **)&HddSmartInitProtocol);
-    }
-    
-    for (dlink = AhciBusInterface->SataDeviceList.pHead; dlink; dlink = dlink->pNext) {
-
-        SataDevInterface = OUTTER(dlink, SataDeviceLink, SATA_DEVICE_INTERFACE);
-
-        if(SataDevInterface->DeviceState != DEVICE_CONFIGURED_SUCCESSFULLY) {
-            continue;
-        }
-
-         if(HddSecurityInitProtocol != NULL) {
-             HddSecurityInitProtocol->InstallSecurityInterface(SataDevInterface, TRUE);
-             if(TempHddSecurityProtocolPtr == NULL) {
-                 // Verify that Security interface has been installed
-                 // on at least one device
-                 pBS->HandleProtocol(SataDevInterface->IdeDeviceHandle, 
-                                     &gAmiHddSecurityProtocolGuid, 
-                                     (VOID**)&TempHddSecurityProtocolPtr
-                                     );
-             }
-         } else {
-
-            // If Security Feature support is not enabled, always freeze 
-            // lock the security feature
-            if (SataDevInterface->IdentifyData.Command_Set_Supported_82 & 0x2) {
-                COMMAND_STRUCTURE           CommandStructure;
-                ZeroMemory(&CommandStructure, sizeof(COMMAND_STRUCTURE)); 
-                CommandStructure.Command = SECURITY_FREEZE_LOCK;
-                Status = ExecuteNonDataCommand (SataDevInterface, CommandStructure);
-                // if Device Configuration Overlay feature set supported then issue the
-                // Dev configure Free lock command.
-                if (SataDevInterface->IdentifyData.Command_Set_Supported_83 & 0x800) {
-                    CommandStructure.Command = DEV_CONFIG_FREEZE_LOCK;
-                    CommandStructure.Features = DEV_CONFIG_FREEZE_LOCK_FEATURES;
-                    Status = ExecuteNonDataCommand (SataDevInterface, CommandStructure);
-                }
-                // Update the Identify device buffer
-                Status = GetIdentifyData(SataDevInterface);
-                if (EFI_ERROR(Status)) {
-                    continue;
-                }
-            }
-        }
-
-         if(OpalSecInitProtocol != NULL) {
-             OpalSecInitProtocol->InstallOpalSecurityInterface(SataDevInterface, TRUE);
-         }
-
-        if(HddSmartInitProtocol != NULL) {
-            HddSmartInitProtocol->InitSmartSupport(SataDevInterface, TRUE);
-            // Update the Identify Data.
-            Status = GetIdentifyData(SataDevInterface);
-            if(HddSmartInitProtocol->SmartDiagonasticFlag) {
-                HddSmartInitProtocol->InstallSmartInterface(SataDevInterface, TRUE);
-            }
-        }
-
-    } // end of for loop
-
-    return EFI_SUCCESS;
-
-}
 
 /**
     Uninstall all devices installed in start procedure.
@@ -1000,7 +884,7 @@ InstallOtherOptionalFeatures(
     have been stopped, then close "gAmiAhciBusProtocolGuid" and 
     "gEfiIdeControllerInitProtocolGuid",uninstall 
     "gEfiIdeControllerInitProtocolGuid" and then exit with success.
- 3. If "NumberOfChildren" is non-zero,  close 
+ 3. If "NumberOfChildren" is non-zero,	close 
     "gEfiIdeControllerInitProtocolGuid" opened by the child device 
     in start function.Uninstall all protocols installed on this 
     child device in start function,free up all resources allocated 
@@ -1283,7 +1167,7 @@ AhciBusStop (
                                             (VOID **)&IdeControllerInterface,
                                             This->DriverBindingHandle,     
                                             Controller,   
-                                            EFI_OPEN_PROTOCOL_BY_DRIVER );
+                                            EFI_OPEN_PROTOCOL_BY_DRIVER	);
                 ASSERT_EFI_ERROR(Status);
 
                 return EFI_DEVICE_ERROR;
@@ -1347,10 +1231,8 @@ InstallAhciBusProtocol (
     AhciBusInterface->SataPioDataOut            = SataPioDataOut;
     AhciBusInterface->ExecutePioDataCommand     = ExecutePioDataCommand;
     AhciBusInterface->ExecuteNonDataCommand     = ExecuteNonDataCommand;
-    AhciBusInterface->ExecuteDmaDataCommand     = ExecuteDmaDataCommand;
     AhciBusInterface->WaitforCommandComplete    = WaitforCommandComplete;
     AhciBusInterface->GeneratePortReset         = GeneratePortReset;
-    AhciBusInterface->GeneratePortSoftReset     = GenerateSoftReset;
     AhciBusInterface->ExecutePacketCommand      = ExecutePacketCommand;
     AhciBusInterface->AHCIRAIDMODE    = TRUE;       // Set TRUE when in AHCI mode
 
@@ -1384,7 +1266,7 @@ InstallAhciBusProtocol (
         } else {
             AhciBusInterface->Acoustic_Enable = ACOUSTIC_SUPPORT_DISABLE;
             AhciBusInterface->Acoustic_Management_Level   = ACOUSTIC_LEVEL_BYPASS;
-        }       
+        }    	
     #endif //End of ACOUSTIC_MANAGEMENT_SUPPORT
 #endif // end of if SBIDE_SUPPORT
 
@@ -1423,10 +1305,10 @@ AllocateMemoryForCommandListAndFis(
     EFI_STATUS      Status;
     UINTN           ReceiveFisSize;
     UINTN           CommandListSize;
-    UINT64          FisReceiveBaseAddr = 0;
-    UINT64          CommandListBaseAddr = 0;
-    UINT64          FisReceiveMappedBaseAddr = 0;
-    UINT64          CommandListMappedBaseAddr = 0;
+    UINT64          FisReceiveBaseAddr;
+    UINT64          CommandListBaseAddr;
+    UINT64          FisReceiveMappedBaseAddr;
+    UINT64          CommandListMappedBaseAddr;
     void            *FisMapedAddress = NULL;
     void            *CommandListMapedAddress = NULL;
 
@@ -1566,35 +1448,38 @@ AhciInitController (
 )
 {
     EFI_STATUS    Status;
+    UINT8         PciConfig[40];
     UINT32        PortsImplemented;
     UINT8         i, PortNumber;
+    UINT32        AhciBaseAddr;
     UINT32        Data32;
-    UINT64          Supports=0;
-    ASLR_QWORD_ASD  *Resources=NULL;
 
     // Make sure AHCI Base address is programmed Properly
-    Status = AhciBusInterface->PciIO->GetBarAttributes (AhciBusInterface->PciIO,
-                                        PCI_ABAR_INDEX,
-                                        &Supports,
-                                        &Resources
-                                        );
+    Status = AhciBusInterface->PciIO->Pci.Read (
+                                      AhciBusInterface->PciIO,
+                                      EfiPciIoWidthUint8,
+                                      0,
+                                      sizeof (PciConfig),
+                                      PciConfig
+                                      );
 
     if (EFI_ERROR(Status)) { return Status;}
 
-    AhciBusInterface->AhciBaseAddress = Resources->_MIN;
-
+    AhciBusInterface->AhciBaseAddress = *(UINT32 *)(PciConfig + PCI_ABAR); 
     if (!AhciBusInterface->AhciBaseAddress) return EFI_DEVICE_ERROR;   
+
+    AhciBaseAddr = (UINT32) (AhciBusInterface->AhciBaseAddress);
 
 #if INDEX_DATA_PORT_ACCESS
     Status = InitilizeIndexDataPortAddress (AhciBusInterface->PciIO);
 #endif
 
     // Get AHCI Capability
-    AhciBusInterface->HBACapability = HBA_REG32(AhciBusInterface, HBA_CAP);
+    AhciBusInterface->HBACapability = HBA_REG32(AhciBaseAddr, HBA_CAP);
     if (AhciBusInterface->HBACapability == 0xFFFFFFFF) return EFI_DEVICE_ERROR; // Not decoded properly
 
     // Get # of Ports Implemented (bit map)
-    AhciBusInterface->HBAPortImplemented = HBA_REG32(AhciBusInterface, HBA_PI);
+    AhciBusInterface->HBAPortImplemented = HBA_REG32(AhciBaseAddr, HBA_PI);
     if (!AhciBusInterface->HBAPortImplemented)  return EFI_DEVICE_ERROR;
 
     // Cross check whether # of Ports implemented is less or equal to
@@ -1608,10 +1493,10 @@ AhciInitController (
             { return EFI_DEVICE_ERROR; }
 
     //  Get the HBA version #
-    AhciBusInterface->AhciVersion = HBA_REG32(AhciBusInterface, HBA_VS);    
+    AhciBusInterface->AhciVersion = HBA_REG32(AhciBaseAddr, HBA_VS);    
 
     //  Set AE bit
-    HBA_REG32_OR(AhciBusInterface, HBA_GHC, HBA_GHC_AE);
+    HBA_REG32_OR(AhciBaseAddr, HBA_GHC, HBA_GHC_AE);
 
     // Allocate Memory for received FIS, Command List Base address and Command table
     Status = AllocateMemoryForCommandListAndFis(AhciBusInterface);
@@ -1625,24 +1510,24 @@ AhciInitController (
     for (i=0; PortsImplemented; PortsImplemented>>=1, PortNumber++){
         if (PortsImplemented & 1) { 
             // Program PxCLB and PxFB
-            HBA_PORT_WRITE_REG64 (AhciBusInterface,
+            HBA_PORT_WRITE_REG64 (AhciBaseAddr,
                                   PortNumber,
                                   HBA_PORTS_CLB,
                                   AhciBusInterface->PortCommandListBaseAddr);
 
-            HBA_PORT_WRITE_REG64 (AhciBusInterface,
+            HBA_PORT_WRITE_REG64 (AhciBaseAddr,
                                   PortNumber,
                                   HBA_PORTS_FB,
                                   AhciBusInterface->PortFISBaseAddr +(i * RECEIVED_FIS_SIZE));
 
             // Clear Start
-            HBA_PORT_REG32_AND(AhciBusInterface,
+            HBA_PORT_REG32_AND(AhciBaseAddr,
                                PortNumber,
                                HBA_PORTS_CMD,
                                ~(HBA_PORTS_CMD_ST));
 
             // Make sure CR is 0 with in 500msec
-            Status = WaitForMemClear(AhciBusInterface,
+            Status = WaitForMemClear(AhciBaseAddr,
                                      PortNumber,
                                      HBA_PORTS_CMD,
                                      HBA_PORTS_CMD_CR,
@@ -1651,7 +1536,7 @@ AhciInitController (
             if (EFI_ERROR(Status)) { 
                 // Get the Port Speed allowed and Interface Power Management Transitions Allowed
                 // Pass the values for PortReset. 
-                Data32 = HBA_PORT_REG32 (AhciBusInterface,
+                Data32 = HBA_PORT_REG32 ((UINT32)(AhciBusInterface->AhciBaseAddress),
                                          PortNumber,
                                          HBA_PORTS_SCTL);
                 Data32 &= 0xFF0;          
@@ -1669,10 +1554,10 @@ AhciInitController (
             }
 
             // Clear FIS receive enable.
-            HBA_PORT_REG32_AND (AhciBusInterface, PortNumber, 
+            HBA_PORT_REG32_AND (AhciBaseAddr, PortNumber, 
                                 HBA_PORTS_CMD, ~(HBA_PORTS_CMD_FRE));
             // Make sure FR is 0 with in 500msec
-            Status = WaitForMemClear(AhciBusInterface, PortNumber, HBA_PORTS_CMD,
+            Status = WaitForMemClear(AhciBaseAddr, PortNumber, HBA_PORTS_CMD,
                                     HBA_PORTS_CMD_FR,
                                     HBA_FR_CLEAR_TIMEOUT);
 
@@ -1680,7 +1565,7 @@ AhciInitController (
                 continue;
             }
 
-            HBA_PORT_REG32_OR (AhciBusInterface, PortNumber,
+            HBA_PORT_REG32_OR (AhciBaseAddr, PortNumber,
                                   HBA_PORTS_SERR, HBA_PORTS_ERR_CLEAR); // Clear Status register
 
             i++;        
@@ -1741,6 +1626,7 @@ AhciDetectDevice (
 )
 {
     EFI_STATUS              Status;
+    UINT32                  AhciBaseAddr = (UINT32)(AhciBusInterface->AhciBaseAddress);
     SATA_DEVICE_INTERFACE   *SataDevInterface = NULL;
 
     PROGRESS_CODE(DXE_IDE_DETECT);
@@ -1765,8 +1651,8 @@ AhciDetectDevice (
         SataDevInterface->DeviceState = DEVICE_IN_RESET_STATE;
 
         // Update Base addresses
-        SataDevInterface->PortCommandListBaseAddr = HBA_PORT_REG64 (AhciBusInterface, Port, HBA_PORTS_CLB);
-        SataDevInterface->PortFISBaseAddr = HBA_PORT_REG64 (AhciBusInterface, Port, HBA_PORTS_FB);
+        SataDevInterface->PortCommandListBaseAddr = HBA_PORT_REG64 (AhciBaseAddr, Port, HBA_PORTS_CLB);
+        SataDevInterface->PortFISBaseAddr = HBA_PORT_REG64 (AhciBaseAddr, Port, HBA_PORTS_FB);
 
         // Add to the AhciBusInterface
         DListAdd(&(AhciBusInterface->SataDeviceList), &(SataDevInterface->SataDeviceLink));   
@@ -1819,7 +1705,7 @@ AhciDetectDevice (
     }
 
     // Save the Signature
-    SataDevInterface->Signature = HBA_PORT_REG32(AhciBusInterface, Port, HBA_PORTS_SIG);
+    SataDevInterface->Signature = HBA_PORT_REG32(AhciBaseAddr, Port, HBA_PORTS_SIG);
     switch (SataDevInterface->Signature) {
         case ATA_SIGNATURE_32:
             SataDevInterface->DeviceType = ATA;
@@ -1885,22 +1771,24 @@ CheckDevicePresence (
 {
     EFI_STATUS                  Status;
     AMI_AHCI_BUS_PROTOCOL       *AhciBusInterface = SataDevInterface->AhciBusInterface; 
+    UINT32                      AhciBaseAddr = (UINT32)(AhciBusInterface->AhciBaseAddress);
     UINT8                       CapIss;  
     UINT8                       PortSpeed=0;
     UINT8                       CurrentPortSpeed=0;
+    UINT32                      Data32;
 
     // PM disabled
-    HBA_PORT_REG32_OR (AhciBusInterface, Port, HBA_PORTS_SCTL, HBA_PORTS_SCTL_IPM_PSD_SSD);       
+    HBA_PORT_REG32_OR (AhciBaseAddr, Port, HBA_PORTS_SCTL, HBA_PORTS_SCTL_IPM_PSD_SSD);       
 
     // Clear Status register
-    HBA_PORT_REG32_OR (AhciBusInterface, Port, HBA_PORTS_SERR, HBA_PORTS_ERR_CLEAR); 
-    HBA_PORT_REG32_OR (AhciBusInterface, Port, HBA_PORTS_IS, HBA_PORTS_IS_CLEAR); 
+    HBA_PORT_REG32_OR (AhciBaseAddr, Port, HBA_PORTS_SERR, HBA_PORTS_ERR_CLEAR); 
+    HBA_PORT_REG32_OR (AhciBaseAddr, Port, HBA_PORTS_IS, HBA_PORTS_IS_CLEAR); 
 
     // Get the Interface Speed Support( Maximum Speed supported)
-    CapIss = (UINT8)((HBA_REG32(AhciBusInterface, HBA_CAP) & HBA_CAP_ISS_MASK)>>20);    
+    CapIss = (UINT8)((HBA_REG32(AhciBaseAddr, HBA_CAP) & HBA_CAP_ISS_MASK)>>20);    
 
     // Get the Speed Allowed (SPD) for the Port. Maximum speed allowed for the Port
-    PortSpeed = (UINT8)((HBA_PORT_REG32(AhciBusInterface, Port, HBA_PORTS_SCTL) 
+    PortSpeed = (UINT8)((HBA_PORT_REG32(AhciBaseAddr, Port, HBA_PORTS_SCTL) 
                             & HBA_PORTS_SCTL_SPD_MASK)>>4); 
 
     // If the Maximum speed allowed is programmed for the port, use the Port Speed allowed value 
@@ -1915,12 +1803,12 @@ CheckDevicePresence (
     }   
 
     // Check if Link is already established
-    if ((HBA_PORT_REG32 (AhciBusInterface, Port, HBA_PORTS_SSTS) 
+    if ((HBA_PORT_REG32 (AhciBusInterface->AhciBaseAddress, Port, HBA_PORTS_SSTS) 
             & HBA_PORTS_SSTS_DET_MASK) == HBA_PORTS_SSTS_DET_PCE) {
 
         // As the Link is already established, get the negotiated interface
         // communication speed
-        CurrentPortSpeed = (UINT8)((HBA_PORT_REG32(AhciBusInterface, Port, HBA_PORTS_SSTS) 
+        CurrentPortSpeed = (UINT8)((HBA_PORT_REG32(AhciBaseAddr, Port, HBA_PORTS_SSTS) 
                                 & HBA_PORTS_SSTS_SPD_MASK)>>4); 
 
         // Check the Current Interface Speed with Speed Allowed. If current interface speed is more than 
@@ -1936,43 +1824,43 @@ CheckDevicePresence (
         }
     } else {
         // Link Not Established. Set SPD by PortSpeed 
-        HBA_PORT_REG32_AND_OR (AhciBusInterface, Port, HBA_PORTS_SCTL, ~HBA_PORTS_SCTL_SPD_MASK,PortSpeed<<4 );
+        HBA_PORT_REG32_AND_OR (AhciBaseAddr, Port, HBA_PORTS_SCTL, ~HBA_PORTS_SCTL_SPD_MASK,PortSpeed<<4 );
     }
 
     //  Check if Staggered Spin-up is supported
-    if (HBA_REG32 (AhciBusInterface,  HBA_CAP) & HBA_CAP_SSS) {
+    if (HBA_REG32 (AhciBaseAddr,  HBA_CAP) & HBA_CAP_SSS) {
 
         // Check if Link is already established, if yes dodn't expect a COMRESET
-        if ((HBA_PORT_REG32 (AhciBusInterface, Port, HBA_PORTS_SSTS) 
+        if ((HBA_PORT_REG32 (AhciBusInterface->AhciBaseAddress, Port, HBA_PORTS_SSTS) 
             & HBA_PORTS_SSTS_DET_MASK) != HBA_PORTS_SSTS_DET_PCE) {
             // Enable FIS Receive Enable
-            HBA_PORT_REG32_OR (AhciBusInterface, Port, HBA_PORTS_CMD, HBA_PORTS_CMD_FRE); 
+            HBA_PORT_REG32_OR (AhciBaseAddr, Port, HBA_PORTS_CMD, HBA_PORTS_CMD_FRE); 
 
             // Wait till FIS is running
-            WaitForMemSet(AhciBusInterface, Port, HBA_PORTS_CMD,
+            WaitForMemSet(AhciBaseAddr, Port, HBA_PORTS_CMD,
                                     HBA_PORTS_CMD_FR,
                                     HBA_PORTS_CMD_FR,
                                     HBA_FR_CLEAR_TIMEOUT);
 
-            HBA_PORT_REG32_OR (AhciBusInterface, Port, HBA_PORTS_CMD, HBA_PORTS_CMD_SUD); // Spin up the device
+            HBA_PORT_REG32_OR (AhciBaseAddr, Port, HBA_PORTS_CMD, HBA_PORTS_CMD_SUD); // Spin up the device
 
-            // Is delay necessary here after power up?
+            // To do delay necessary here after power up?
             Status = HandlePortComReset(AhciBusInterface, NULL, Port, 0xFF);
 
             //  Disable FIS Receive Enable
-            HBA_PORT_REG32_AND (AhciBusInterface, Port, HBA_PORTS_CMD, ~HBA_PORTS_CMD_FRE);
+            HBA_PORT_REG32_AND (AhciBaseAddr, Port, HBA_PORTS_CMD, ~HBA_PORTS_CMD_FRE);
 
             IdeControllerInterface->NotifyPhase (IdeControllerInterface, EfiIdeBusAfterDevicePresenceDetection, Port);
         } else {
-            HBA_PORT_REG32_OR (AhciBusInterface, Port, HBA_PORTS_CMD, HBA_PORTS_CMD_SUD); // Spin up the device
+            HBA_PORT_REG32_OR (AhciBaseAddr, Port, HBA_PORTS_CMD, HBA_PORTS_CMD_SUD); // Spin up the device
         }
     }
 
     // Check if Device detected. And check if Cold Presence logic 
     // is enabled. If yes enable POD
-    if (((HBA_PORT_REG32 (AhciBusInterface, Port, HBA_PORTS_SSTS) & HBA_PORTS_SSTS_DET_MASK) == HBA_PORTS_SSTS_DET_PCE) && 
-            (HBA_PORT_REG32(AhciBusInterface, Port, HBA_PORTS_CMD) & HBA_PORTS_CMD_CPD)) {
-        HBA_PORT_REG32_OR (AhciBusInterface, Port, HBA_PORTS_CMD, HBA_PORTS_CMD_POD);
+    if (((HBA_PORT_REG32 (AhciBaseAddr, Port, HBA_PORTS_SSTS) & HBA_PORTS_SSTS_DET_MASK) == HBA_PORTS_SSTS_DET_PCE) && 
+            (HBA_PORT_REG32(AhciBaseAddr, Port, HBA_PORTS_CMD) & HBA_PORTS_CMD_CPD)) {
+        HBA_PORT_REG32_OR (AhciBaseAddr, Port, HBA_PORTS_CMD, HBA_PORTS_CMD_POD);
     } 
 
     Status = CheckValidDevice(AhciBusInterface, Port, PMPort);
@@ -1980,19 +1868,18 @@ CheckDevicePresence (
 #if PORT_MULTIPLIER_SUPPORT
     // If PORT Multiplier support is enabled, SoftReset generated later will get the signature. 
     // No need for this additional Port Reset here
-    if ((HBA_PORT_REG32 (AhciBusInterface, Port, HBA_PORTS_SSTS) & HBA_PORTS_SSTS_DET_MASK) == HBA_PORTS_SSTS_DET_PCE) {
+    if ((HBA_PORT_REG32 (AhciBaseAddr, Port, HBA_PORTS_SSTS) & HBA_PORTS_SSTS_DET_MASK) == HBA_PORTS_SSTS_DET_PCE) {
         return EFI_SUCCESS;
     }
 #else
     if (EFI_ERROR(Status)) {
-        UINT32    Data32;
         IdeControllerInterface->NotifyPhase (IdeControllerInterface,
                                              EfiIdeBeforeChannelReset,
                                              (UINT8)Port);
 
         // Get the Port Speed allowed and Interface Power Management Transitions Allowed
         // Pass the values for PortReset. 
-        Data32 = HBA_PORT_REG32 (AhciBusInterface, Port, HBA_PORTS_SCTL);
+        Data32 = HBA_PORT_REG32 ((UINT32)(AhciBusInterface->AhciBaseAddress), Port, HBA_PORTS_SCTL);
         Data32 &= 0xFF0;          
 
         Status = GeneratePortReset(AhciBusInterface,
@@ -2036,6 +1923,7 @@ CheckPMDevicePresence (
 {
     EFI_STATUS               Status = EFI_DEVICE_ERROR;
     AMI_AHCI_BUS_PROTOCOL    *AhciBusInterface = SataDevInterface->AhciBusInterface; 
+    UINT32                   AhciBaseAddr = (UINT32)(AhciBusInterface->AhciBaseAddress);
     UINT32                   Data32 = 0, Init_SStatus = 0;
 
     ReadWritePMPort (SataDevInterface, PMPort, PSCR_0_SSTATUS, &Init_SStatus, FALSE);
@@ -2053,7 +1941,7 @@ CheckPMDevicePresence (
 
         // Get the Port Speed allowed and Interface Power Management Transitions Allowed
         // Pass the values for PortReset. 
-        Data32 = HBA_PORT_REG32 (AhciBusInterface, Port, HBA_PORTS_SCTL);
+        Data32 = HBA_PORT_REG32 ((UINT32)(AhciBusInterface->AhciBaseAddress), Port, HBA_PORTS_SCTL);
         Data32 &= 0xFF0;          
 
         Status = GeneratePortReset(AhciBusInterface,
@@ -2074,8 +1962,8 @@ CheckPMDevicePresence (
     }
 
     // Clear Status register
-    HBA_PORT_REG32_OR (AhciBusInterface, Port, HBA_PORTS_SERR, HBA_PORTS_ERR_CLEAR); 
-    HBA_PORT_REG32_OR (AhciBusInterface, Port, HBA_PORTS_IS, HBA_PORTS_IS_CLEAR); 
+    HBA_PORT_REG32_OR (AhciBaseAddr, Port, HBA_PORTS_SERR, HBA_PORTS_ERR_CLEAR); 
+    HBA_PORT_REG32_OR (AhciBaseAddr, Port, HBA_PORTS_IS, HBA_PORTS_IS_CLEAR); 
 
     Data32 = HBA_PORTS_ERR_CLEAR;
     ReadWritePMPort (SataDevInterface, PMPort, PSCR_1_SERROR, &Data32, TRUE);
@@ -2106,7 +1994,7 @@ ConfigureSataPort (
     if (SataDevInterface->DeviceType == ATAPI) {
 
         // Set Device is ATAPI Bit in CMD register
-        HBA_PORT_REG32_OR (SataDevInterface->AhciBusInterface,
+        HBA_PORT_REG32_OR (SataDevInterface->AhciBusInterface->AhciBaseAddress,
                            SataDevInterface->PortNumber,
                            HBA_PORTS_CMD,
                            HBA_PORTS_CMD_ATAPI);
@@ -2117,7 +2005,7 @@ ConfigureSataPort (
     if(AhciPlatformPolicy->DriverLedOnAtapiEnable) {
 
         // Set Drive LED on ATAPI Enable (DLAE) Bit in CMD register
-        HBA_PORT_REG32_OR (SataDevInterface->AhciBusInterface,
+        HBA_PORT_REG32_OR (SataDevInterface->AhciBusInterface->AhciBaseAddress,
                            SataDevInterface->PortNumber,
                            HBA_PORTS_CMD,
                            HBA_PORTS_CMD_DLAE);
@@ -2151,7 +2039,7 @@ ConfigurePMPort (
     SataDevInterface->NumPMPorts = ((UINT8)Data) - 1;
 
     // Set PM Attached bit in CMD register
-    HBA_PORT_REG32_OR (SataDevInterface->AhciBusInterface,
+    HBA_PORT_REG32_OR (SataDevInterface->AhciBusInterface->AhciBaseAddress,
                        SataDevInterface->PortNumber,
                        HBA_PORTS_CMD,
                        HBA_PORTS_CMD_PMA);
@@ -2216,7 +2104,7 @@ ConfigureDevice (
 
         // Get the Port Speed allowed and Interface Power Management Transitions Allowed
         // Pass the values for PortReset. 
-        Data32 = HBA_PORT_REG32 (AhciBusInterface, Port, HBA_PORTS_SCTL);
+        Data32 = HBA_PORT_REG32 ((UINT32)(AhciBusInterface->AhciBaseAddress), Port, HBA_PORTS_SCTL);
         Data32 &= 0xFF0;          
 
         GeneratePortReset(AhciBusInterface,
@@ -2239,7 +2127,7 @@ ConfigureDevice (
            (SataDevInterface->IdentifyData.Special_Config_2 == SPIN_UP_REQUIRED1 ||
             SataDevInterface->IdentifyData.Special_Config_2 == SPIN_UP_REQUIRED2 )){
 
-        ZeroMemory(&CommandStructure, sizeof(COMMAND_STRUCTURE)); 
+       	ZeroMemory(&CommandStructure, sizeof(COMMAND_STRUCTURE)); 
         CommandStructure.Features = SET_DEVICE_SPINUP;
         CommandStructure.Command = SET_FEATURE_COMMAND;
         Status = ExecuteNonDataCommand (SataDevInterface, CommandStructure);
@@ -2362,11 +2250,11 @@ ConfigureDevice (
     Status = pBS->AllocatePool (EfiBootServicesData,
                                 sizeof (Language),
                                 (VOID**)&tempUnicodeTable[0].Language);
-    ASSERT_EFI_ERROR(Status);
+	ASSERT_EFI_ERROR(Status);
     Status = pBS->AllocatePool (EfiBootServicesData,
                                 sizeof (DeviceName),
                                 (VOID**)&tempUnicodeTable[0].UnicodeString);
-    ASSERT_EFI_ERROR(Status);
+	ASSERT_EFI_ERROR(Status);
     pBS->CopyMem(tempUnicodeTable[0].Language, &Language, sizeof(Language)); 
     pBS->CopyMem(tempUnicodeTable[0].UnicodeString, DeviceName, sizeof (DeviceName)); 
     tempUnicodeTable[1].Language = NULL;
@@ -2375,16 +2263,12 @@ ConfigureDevice (
 
     #if SBIDE_SUPPORT
         InitMiscConfig(SataDevInterface);
-    #endif  
+    #endif	
     
-    if( AhciPlatformPolicy->DipmSupport) {        
-        // Initialize and Enable Device initiated Power management
-        InitializeDipm(SataDevInterface);
-    }
-       
-    if( AhciPlatformPolicy->DeviceSleepSupport) {
-        // Initialize and Enable Device Sleep Support
-        InitializeDeviceSleep(SataDevInterface);
+    if( AhciPlatformPolicy->DipmSupport) {
+        
+        //Initialize and Enable and Device initiated Power management
+        InitializeDevSleep(SataDevInterface);
     }
 
     ConfigurePowerUpInStandby(SataDevInterface);
@@ -2451,7 +2335,7 @@ ConfigureController (
             if (SataDevInterface->IdentifyData.Command_Set_Supported_83 & 0x400) {
 
                     // 48Bit LBA supported
-                    SataDevInterface->ReadCommand = READ_MULTIPLE_EXT;  
+                    SataDevInterface->ReadCommand = READ_MULTIPLE_EXT;	
                     SataDevInterface->WriteCommand = WRITE_MULTIPLE_EXT;
                 } else {
                     SataDevInterface->ReadCommand = READ_MULTIPLE;
@@ -2509,52 +2393,6 @@ ConfigureController (
 }
 
 /**
-    Initialize Dipm in the device
-
-    @param SataDevInterface 
-
-    @retval VOID
-
-**/ 
-
-VOID
-InitializeDipm (
-    IN SATA_DEVICE_INTERFACE    *SataDevInterface
-)
-{
-    COMMAND_STRUCTURE       CommandStructure;
- 
-    ZeroMemory(&CommandStructure, sizeof(COMMAND_STRUCTURE)); 
-    CommandStructure.Command        = SET_FEATURE_COMMAND;
-    CommandStructure.SectorCount    = DIPM_SUB_COMMAND; // 0x03 : DiPM
-
-    // Check Host Supports Aggressive Link Power Management 
-    // and Check DiPM supported by device
-    if((SataDevInterface->AhciBusInterface->HBACapability & HBA_CAP_SALP) && 
-       (SataDevInterface->IdentifyData.Reserved_76_79[2] & IDENTIFY_DIPM_SUPPORT)){ 
-        
-        // Check DiPM needs to be enabled from Platform Policy
-        if(AhciPlatformPolicy->DipmEnable) {
-            // Check DiPM is already enabled via Identify Data Word.
-            if (!(SataDevInterface->IdentifyData.Reserved_76_79[3] & IDENTIFY_DIPM_ENABLED)) {
-                // Enable DiPM and Issue Set Feature command.
-                CommandStructure.Features = DIPM_ENABLE; 
-                ExecuteNonDataCommand (SataDevInterface, CommandStructure);
-            } 
-        } else {
-            if (SataDevInterface->IdentifyData.Reserved_76_79[3] & IDENTIFY_DIPM_ENABLED) {
-                
-                // Disable DiPM and Issue Set Feature command only if it is enabled already.
-                CommandStructure.Features = DIPM_DISABLE; 
-                ExecuteNonDataCommand (SataDevInterface, CommandStructure);
-            }
-        }     
-    }
-
-    return;
-}
-
-/**
     Initialize DevSleep in the device and controller
 
     @param SataDevInterface 
@@ -2564,95 +2402,89 @@ InitializeDipm (
 **/ 
 
 VOID
-InitializeDeviceSleep (
+InitializeDevSleep (
     IN SATA_DEVICE_INTERFACE    *SataDevInterface
 )
 {
 
     AMI_AHCI_BUS_PROTOCOL   *AhciBusInterface = SataDevInterface->AhciBusInterface; 
+    UINT32                  AhciBaseAddr = (UINT32)(AhciBusInterface->AhciBaseAddress);
     UINT8                   PortNumber = SataDevInterface->PortNumber;
     COMMAND_STRUCTURE       CommandStructure;
     EFI_STATUS              Status;
-    UINT8                   DevSleep_Exit_TimeOut = DEVSLEEP_EXIT_TIMEOUT;        
-    UINT8                   Minimum_DevSleep_Assertion_Time = MINIMUM_DEVSLP_ASSERTION_TIME;        
+    UINT8                   DevSleep_Exit_TimeOut = 20;        
+    UINT8                   Minimum_DevSleep_Assertion_Time = 10;        
     UINT8                   DITO_Multiplier = 0xF;     
     UINT8                   *Buffer = NULL;
     UINT32                  PxDevSlp;
-    UINT8                   SectorCount = 1;
 
+    ZeroMemory(&CommandStructure, sizeof(COMMAND_STRUCTURE)); 
+    CommandStructure.Command        = SET_FEATURE_COMMAND;
+    CommandStructure.SectorCount    = DIPM_SUB_COMMAND; // 0x03 : DiPM
+
+    // Check Host Supports Aggressive Link Power Management 
+    // and Check DiPM supported by device
+    
+    if((SataDevInterface->AhciBusInterface->HBACapability & HBA_CAP_SALP) && 
+        (SataDevInterface->IdentifyData.Reserved_76_79[2] & IDENTIFY_DIPM_SUPPORT)){    
+        CommandStructure.Features = DIPM_ENABLE; 
+    } else {
+        CommandStructure.Features = DIPM_DISABLE; 
+    }
+    ExecuteNonDataCommand (SataDevInterface, CommandStructure);
     // If Aggressive DelSlp is supported then DevSlp also supported. Also check if the port supports DevSlp or not           
-    if ((HBA_REG32(AhciBusInterface, HBA_CAP2) & HBA_CAP2_SADM)  &&   
-            (HBA_PORT_REG32(AhciBusInterface, PortNumber, HBA_PORTS_PxDEVSLP) & HBA_PORTS_PxDEVSLP_DSP)) { 
+    if ((HBA_REG32(AhciBaseAddr, HBA_CAP2) & HBA_CAP2_SADM)  &&   
+            (HBA_PORT_REG32(AhciBaseAddr, PortNumber, HBA_PORTS_PxDEVSLP) & HBA_PORTS_PxDEVSLP_DSP)) { 
 
         //Clear ADSE
-        HBA_PORT_REG32_AND (AhciBusInterface, PortNumber, HBA_PORTS_PxDEVSLP, ~(HBA_PORTS_PxDEVSLP_ADSE)); 
+        HBA_PORT_REG32_AND (AhciBaseAddr, PortNumber, HBA_PORTS_PxDEVSLP, ~(HBA_PORTS_PxDEVSLP_ADSE)); 
 
         // Check Word 78 Bit8 and Word 77 Bit7 of Identify Data.
-        if ((SataDevInterface->IdentifyData.Reserved_76_79[2] & IDENTIFY_DEVSLEEP_SUPPORT) && 
-                (SataDevInterface->IdentifyData.Reserved_76_79[1] & IDENTIFY_DEVSLP_TO_REDUCED_PWRSTATE_CAPABLE)) {
-            
-            if(AhciPlatformPolicy->DeviceSleepEnable) {
+        if ((SataDevInterface->IdentifyData.Reserved_76_79[3] & 0x100) && 
+                (SataDevInterface->IdentifyData.Reserved_76_79[2] & 0x80)) {
 
-                // DevSlp not enabled in device. Issue Set Feature command. 
-                if (!(SataDevInterface->IdentifyData.Reserved_76_79[3] & IDENTIFY_DEVSLEEP_ENABLED)) {
-                
-                    ZeroMemory(&CommandStructure, sizeof(COMMAND_STRUCTURE)); 
-                    CommandStructure.Command        = SET_FEATURE_COMMAND;
-                    CommandStructure.SectorCount    = DEVSLEEP_SUB_COMMAND; 
-                    CommandStructure.Features       = DEVSLEEP_ENABLE; 
-                    ExecuteNonDataCommand (SataDevInterface, CommandStructure);
-                } 
+            // DevSlp not enabled in device. Issue Set Feature command. 
+            if (!(SataDevInterface->IdentifyData.Reserved_76_79[4] & 0x100)) {
             
-                // Allocate Memory for Identify Device Data
-                pBS->AllocatePool(EfiBootServicesData, ATA_SECTOR_BYTES, (VOID**)&Buffer);
-                ZeroMemory(Buffer, ATA_SECTOR_BYTES); 
-    
-                // Get Identify Device Data Log (log 30h Page 8)
                 ZeroMemory(&CommandStructure, sizeof(COMMAND_STRUCTURE)); 
-                CommandStructure.Command        = READ_LOG_EXT;
-                CommandStructure.SectorCount    = SectorCount;
-                CommandStructure.LBAMid         = SERIAL_ATA_SETTINGS_PAGE;
-                CommandStructure.LBALow         = IDENTIFY_DEVICE_DATA_LOG;
-                CommandStructure.ByteCount      = SectorCount * ATA_SECTOR_BYTES;;
-                CommandStructure.Buffer         = Buffer;
-    
-                Status = ExecutePioDataCommand (SataDevInterface, &CommandStructure, FALSE);
-                if (!EFI_ERROR(Status)){
-                    
-                    // Update the Time out values
-                    ///BYTE 30h..37h DEVSLP Timing Variables (Qword) of Identify Device Data log (log 30h page 08h) 
-                            ///63 Valid 
-                            ///62:16 Reserved 
-                            ///15:8 DevSleep Exit Timeout, in ms (DETO) 
-                            ///5:7 Reserved 
-                            ///4:0 Minimum DEVSLP Assertion Time, in ms (MDAT) 
-                            
-                    DevSleep_Exit_TimeOut = Buffer[DEVSLP_TIMING_VARIABLES_OFFSET + 1] ?  Buffer[DEVSLP_TIMING_VARIABLES_OFFSET + 1] : DEVSLEEP_EXIT_TIMEOUT;
-                    Minimum_DevSleep_Assertion_Time = (Buffer[DEVSLP_TIMING_VARIABLES_OFFSET] & 0x1F) ? (Buffer[DEVSLP_TIMING_VARIABLES_OFFSET] & 0x1F) : MINIMUM_DEVSLP_ASSERTION_TIME;
-                }
-    
-                // Program the Timeouts and Multiplier value in PxDEVSLP Registers
-                PxDevSlp = HBA_PORT_REG32 (AhciBusInterface, PortNumber, HBA_PORTS_PxDEVSLP);
-                PxDevSlp &= ~(HBA_PORTS_PxDEVSLP_DETO_MASK | HBA_PORTS_PxDEVSLP_DMDAT_MASK | HBA_PORTS_PxDEVSLP_DM_MASK);
-                PxDevSlp |= ((DevSleep_Exit_TimeOut << 2) +  (Minimum_DevSleep_Assertion_Time << 10) + (DITO_Multiplier << 25));
-                HBA_PORT_REG32_OR (AhciBusInterface, PortNumber, HBA_PORTS_PxDEVSLP, PxDevSlp);
-    
-                // Enable PxDEVSLP.ADSE
-                HBA_PORT_REG32_OR (AhciBusInterface, PortNumber, HBA_PORTS_PxDEVSLP, HBA_PORTS_PxDEVSLP_ADSE);
-                pBS->FreePool(Buffer);
-            } else {
-                if (SataDevInterface->IdentifyData.Reserved_76_79[3] & IDENTIFY_DEVSLEEP_ENABLED) {
-                    // Disable Device Sleep and Issue Set Feature command only if it is enabled already.
-                    ZeroMemory(&CommandStructure, sizeof(COMMAND_STRUCTURE)); 
-                    CommandStructure.Command        = SET_FEATURE_COMMAND;
-                    CommandStructure.SectorCount    = DEVSLEEP_SUB_COMMAND; 
-                    CommandStructure.Features       = DEVSLEEP_DISABLE; 
-                    ExecuteNonDataCommand (SataDevInterface, CommandStructure);
-                }
+                CommandStructure.Command        = SET_FEATURE_COMMAND;
+                CommandStructure.SectorCount    = DIPM_SUB_COMMAND; 
+                CommandStructure.Features = DIPM_ENABLE; 
+                ExecuteNonDataCommand (SataDevInterface, CommandStructure);
+            } 
+        
+            // Allocate Memory for Identify Device Data
+            pBS->AllocatePool(EfiBootServicesData, 512, (VOID**)&Buffer);
+            ZeroMemory(&Buffer, 512); 
+
+            // Get Identify Device Data Log (log 30h Page 8)
+            ZeroMemory(&CommandStructure, sizeof(COMMAND_STRUCTURE)); 
+            CommandStructure.Command        = 0x2f;
+            CommandStructure.SectorCount    = 1;
+            CommandStructure.LBAMid         = 0x08;
+            CommandStructure.LBALow         = 0x30;
+            CommandStructure.Features       = 0;
+            CommandStructure.ByteCount      = 0x512;
+            CommandStructure.Buffer         = Buffer;
+            Status = ExecutePioDataCommand (SataDevInterface, &CommandStructure, FALSE);
+
+            // Update the Time out values
+            if (!EFI_ERROR(Status)){
+                DevSleep_Exit_TimeOut = Buffer[49] ?  Buffer[49] : 20;
+                Minimum_DevSleep_Assertion_Time = (Buffer[48] & 0xF) ? (Buffer[48] & 0xF) : 10;
             }
+
+            // program the timeouts and Multiplier value
+            PxDevSlp = HBA_PORT_REG32 (AhciBaseAddr, PortNumber, HBA_PORTS_PxDEVSLP);
+            PxDevSlp &= ~(HBA_PORTS_PxDEVSLP_DETO_MASK | HBA_PORTS_PxDEVSLP_DMDAT_MASK | HBA_PORTS_PxDEVSLP_DM_MASK);
+            PxDevSlp |= ((DevSleep_Exit_TimeOut << 2) +  (Minimum_DevSleep_Assertion_Time << 10) + (DITO_Multiplier << 25));
+            HBA_PORT_REG32_OR (AhciBaseAddr, PortNumber, HBA_PORTS_PxDEVSLP, PxDevSlp);
+
+            // Enable PxDEVSLP.ADSE
+            HBA_PORT_REG32_OR (AhciBaseAddr, PortNumber, HBA_PORTS_PxDEVSLP, HBA_PORTS_PxDEVSLP_ADSE);
+            pBS->FreePool(Buffer);
         }
     }
-    
     return;
 }
 
@@ -2707,7 +2539,7 @@ GetSataDevInterface(
 
 EFI_STATUS 
 WaitForMemSet (
-    IN AMI_AHCI_BUS_PROTOCOL   *AhciBusInterface,
+    IN UINT32   BaseAddr,
     IN UINT8    Port,
     IN UINT8    Register,
     IN UINT32   AndMask,
@@ -2719,7 +2551,7 @@ WaitForMemSet (
     while(WaitTimeInMs!=0){ 
         for ( Delay = 10; Delay > 0; Delay--) {
 
-            if(((HBA_PORT_REG32(AhciBusInterface, Port, Register)) & AndMask) == TestValue){
+            if(((HBA_PORT_REG32(BaseAddr, Port, Register)) & AndMask) == TestValue){
                 return EFI_SUCCESS;
             }
 
@@ -2743,7 +2575,7 @@ WaitForMemSet (
 **/ 
 EFI_STATUS 
 WaitForMemClear (
-    IN AMI_AHCI_BUS_PROTOCOL   *AhciBusInterface,
+    IN UINT32   BaseAddr,
     IN UINT8    Port,
     IN UINT8    Register,
     IN UINT32   AndMask,
@@ -2753,7 +2585,7 @@ WaitForMemClear (
     UINT8  Delay;
     while(WaitTimeInMs!=0){ 
         for ( Delay = 10; Delay > 0; Delay--) {
-            if(!((HBA_PORT_REG32(AhciBusInterface, Port, Register)) & AndMask)){
+            if(!((HBA_PORT_REG32(BaseAddr, Port, Register)) & AndMask)){
                 return EFI_SUCCESS;
             }
             pBS->Stall (100);  // 100 usec * 10 = 1Msec
@@ -2959,7 +2791,7 @@ InitSataBlockIO (
             Status = pBS->AllocatePool (EfiBootServicesData,
                                         INQUIRY_DATA_LENGTH,
                                         (VOID**)&InquiryData);
-            if (EFI_ERROR(Status))  return Status;
+            if (EFI_ERROR(Status)) 	return Status;
             InquiryDataSize = INQUIRY_DATA_LENGTH;
             SataAtapiInquiryData(SataDevInterface, InquiryData, &InquiryDataSize);
             AtapiDevice->InquiryData = InquiryData;
@@ -3353,7 +3185,7 @@ DMACapable (
 {
 
     if (SataDevInterface->DeviceType == ATAPI){
-        //For Atapi Devices check Bit 8 in Word 49 =  DMA   Supported or not
+        //For Atapi Devices check Bit 8 in Word 49 =  DMA	Supported or not
         if((SataDevInterface->IdentifyData.Capabilities_49 & 0x100) == 0) return FALSE;
     }
 
@@ -3388,7 +3220,7 @@ DiskInfoInquiry (
 )
 {
 
-    SATA_DEVICE_INTERFACE       *SataDevInterface = ((SATA_DISK_INFO *)This)->SataDevInterface;
+    SATA_DEVICE_INTERFACE       *SataDevInterface = ((SATA_BLOCK_IO *)This)->SataDevInterface;
     ATAPI_DEVICE                *AtapiDevice = SataDevInterface->AtapiDevice;
 
     // Check for ATAPI device. If not return EFI_NOT_FOUND
@@ -3402,7 +3234,7 @@ DiskInfoInquiry (
         if (AtapiDevice->InquiryData != NULL) {
             pBS->CopyMem (InquiryData, AtapiDevice->InquiryData, AtapiDevice->InquiryDataSize);  
             *InquiryDataSize = AtapiDevice->InquiryDataSize;
-            return  EFI_SUCCESS;
+            return	EFI_SUCCESS;
         }
         else    return EFI_NOT_FOUND;
     }
@@ -3430,7 +3262,7 @@ DiskInfoIdentify (
 )
 {
 
-    SATA_DEVICE_INTERFACE    *SataDevInterface = ((SATA_DISK_INFO *)This)->SataDevInterface;
+    SATA_DEVICE_INTERFACE    *SataDevInterface = ((SATA_BLOCK_IO *)This)->SataDevInterface;
 
     if (*IdentifyDataSize < sizeof (IDENTIFY_DATA)) {
         *IdentifyDataSize = sizeof (IDENTIFY_DATA);
@@ -3495,7 +3327,7 @@ DiskInfoWhichIDE (
 )
 {
 
-    SATA_DEVICE_INTERFACE       *SataDevInterface = ((SATA_DISK_INFO *)This)->SataDevInterface;
+    SATA_DEVICE_INTERFACE       *SataDevInterface = ((SATA_BLOCK_IO *)This)->SataDevInterface;
 
     *IdeChannel = SataDevInterface->PortNumber; 
     *IdeDevice = SataDevInterface->PMPortNumber == 0xFF ? 0 : SataDevInterface->PMPortNumber;

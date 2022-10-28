@@ -165,7 +165,7 @@ ReadRegisterDword       PROC    NEAR    PUBLIC
                                         ; structure size is 8
         mov     bx, ax                  ; Move the offset into bx
         pop     ax                      ; Restore ax
-IF (MKF_AHCI_INT13_SMM_SUPPORT)
+IF (MKF_AHCIMMIOSMM_SUPPORT)
         push    ebx
         push    ecx 
         mov     ebx, dword ptr cs:[AhciDataStart +4+bx] ;ebx=Data
@@ -174,15 +174,8 @@ IF (MKF_BIG_REAL_MODE_MMIO_ACCESS)
         call    ReadDWORD
 ELSE
         mov     cx,1                    ;Read Function
-        call    AhciGenerateSwSMI
-        cmp     ecx, 0                  ; if ECX == 0, MMIO read is Success
-        jz      Read_Success
-        stc
-        jmp     Read_Return
-Read_Success:
-        clc
-Read_Return:
-ENDIF
+        call    AhciGenerateSwSMI 
+ENDIF	
         pop     ecx
         pop     ebx
         jmp     Read_done
@@ -195,9 +188,11 @@ ENDIF
 
         mov     dx, cs:[AhciDataStart + 2 + bx]              ; DX = Data Port
         in      eax, dx                 ; EAX = adat
-        clc                             ; NC, Successful
+
+
 Read_done:
         pop     bx
+        clc                             ; NC, Successful
         pop     dx
 
         pop     esi
@@ -241,7 +236,7 @@ WriteRegisterDword      PROC    NEAR    PUBLIC
         mov     bx, ax                  ; Move the offset into bx
         pop     ax                      ; Restore ax
 
-IF (MKF_AHCI_INT13_SMM_SUPPORT)
+IF (MKF_AHCIMMIOSMM_SUPPORT)
         push    ebx
         push    ecx
         mov     ebx, dword ptr cs:[AhciDataStart + 4 + bx]
@@ -251,14 +246,7 @@ IF (MKF_BIG_REAL_MODE_MMIO_ACCESS)
 ELSE
         mov     ebx,eax                 ;Write Value
         mov     cx,2                    ;Write Function
-        call    AhciGenerateSwSMI
-        cmp     ecx, 0                  ; if ECX == 0, MMIO write is Success
-        jz      Write_Success
-        stc
-        jmp     Write_Return
-Write_Success:
-        clc
-Write_Return:
+        call    AhciGenerateSwSMI 
 ENDIF
         pop     ecx
         pop     ebx
@@ -272,9 +260,10 @@ ENDIF
 
         mov     dx, cs:[AhciDataStart + 2 + bx]              ; DX = Data Port
         out     dx, eax                 ; Write dword data
-        clc                             ; NC, Successful
+
 Write_done:
         pop     bx
+        clc                             ; NC, Successful
         pop     dx
 
         pop     esi
@@ -348,7 +337,7 @@ WaitForFisRecRun    ENDP
 ;
 ;----------------------------------------------------------------------------
 ;<AMI_PHDR_END>
-IF (MKF_AHCI_INT13_SMM_SUPPORT)
+IF (MKF_AHCIMMIOSMM_SUPPORT)
 AhciGenerateSwSMI    PROC NEAR PUBLIC
         call    Check_Big_Real_mode
         jc      NotBigReadMode
@@ -368,7 +357,7 @@ ReadMmio:
 NotBigReadMode:
 
         mov     dx,MKF_SW_SMI_IO_ADDRESS     
-        mov     al,MKF_AHCI_INT13_SMM_SWSMI_VALUE
+        mov     al,MKF_AHCI_MMIO_SWSMI
         out     dx,al                   ;Generate Sw SMI to Read/Write MMIO
         jmp     $+2
         ret
@@ -1041,7 +1030,6 @@ ENDIF
 
 AhciDataStart   label word
 AhciAccess AHCI_ACCESS (MKF_AHCI_CONTROLLER_COUNT) dup (<>)
-           AHCI_ACCESS (1) dup (<0ffffh,0ffffh,0ffffffffh>)
 
 OEM16_CSEG ENDS
 

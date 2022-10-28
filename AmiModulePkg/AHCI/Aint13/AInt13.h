@@ -22,6 +22,7 @@
 #define __AI13_HEADER__
 //---------------------------------------------------------------------------
 
+#include "efi.h"
 #include "Protocol/PciIo.h"
 //---------------------------------------------------------------------------
 
@@ -179,19 +180,11 @@ typedef struct _DEV_PARAM_STRUC {
 #define SATA_PORT_COUNT 32
 #define MAX_DESCRIPTION_STRLEN 32
 
-typedef struct _AHCI_SMM_RTS {
-    UINT8   MiscInfo;
-    UINT16  SmmAttr;
-    UINT32  SmmPort;
-    UINT32  SmmData;
-} AHCI_SMM_RTS;
-
 typedef struct _AHCI_RT_MISC_DATA {
-    UINT8        NumAhciDevice;      // #of AHCI device installed by BIOS
-    UINT8        RunAttribute;       // Bit-mapped information about runtime environment
-    UINT8        AhciEbdaSizeK;      // Size of EBDA in unit of 1k that is created by AHCI init
-    UINT32       AhciEbdaStart;      // Start offset of AHCI communication area in EBDA
-    AHCI_SMM_RTS AhciSmmRt;          // Port and Data information to generate software SMI
+    UINT8   NumAhciDevice;      // #of AHCI device installed by BIOS
+    UINT8   RunAttribute;       // Bit-mapped information about runtime environment
+    UINT8   AhciEbdaSizeK;      // Size of EBDA in unit of 1k that is created by AHCI init
+    UINT32  AhciEbdaStart;      // Start offset of AHCI communication area in EBDA
 } AHCI_RT_MISC_DATA;
 
 typedef struct _DEV_BBS_OUTFIT {
@@ -226,7 +219,6 @@ typedef struct _AHCI_I13_DATA {
 
 #define SIZE_CLCTFIS_AREA_K         4
 #define A_EBDA_USED                 1
-#define A_INT13_SWSMI_USED          BIT2
 
 #define BAID_TYPE_HDD       1
 #define BAID_TYPE_RMD_HDD   2
