@@ -1,7 +1,7 @@
 #*************************************************************************
 #*************************************************************************
 #**                                                                     **
-#**        (C)Copyright 1985-2014, American Megatrends, Inc.            **
+#**        (C)Copyright 1985-2012, American Megatrends, Inc.            **
 #**                                                                     **
 #**                       All Rights Reserved.                          **
 #**                                                                     **
@@ -12,7 +12,7 @@
 #*************************************************************************
 #*************************************************************************
 ## @file
-#   Legacy Ahci Int13 Implementation
+#   
 ##
 [Defines]
   INF_VERSION                    = 0x00010005
@@ -45,11 +45,18 @@
 
 [Depex]
   TRUE
+##  gEfiFVProtocolGuid AND
+##  gEfiLegacyBiosProtocolGuid AND
+##  gEfiLegacyBiosExtProtocolGuid AND
+#  gAmiAhciBusProtocolGuid
+
+#[BuildOptions.X64]
+#*_*_X64_CC_FLAGS = /D EFIx64 
 
 #*************************************************************************
 #*************************************************************************
 #**                                                                     **
-#**        (C)Copyright 1985-2014, American Megatrends, Inc.            **
+#**        (C)Copyright 1985-2012, American Megatrends, Inc.            **
 #**                                                                     **
 #**                       All Rights Reserved.                          **
 #**                                                                     **

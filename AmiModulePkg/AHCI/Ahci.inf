@@ -1,7 +1,7 @@
 #*************************************************************************
 #*************************************************************************
 #**                                                                     **
-#**        (C)Copyright 1985-2014, American Megatrends, Inc.            **
+#**        (C)Copyright 1985-2013, American Megatrends, Inc.            **
 #**                                                                     **
 #**                       All Rights Reserved.                          **
 #**                                                                     **
@@ -11,10 +11,9 @@
 #**                                                                     **
 #*************************************************************************
 #*************************************************************************
-## @file Ahci.inf
-#  Module that produces AHCI Bus Protocol and Booting to OS in AHCI mode 
+## @file
+#   
 ##
-
 [Defines]
   INF_VERSION                    = 0x00010005
   BASE_NAME                      = Ahci
@@ -52,21 +51,12 @@
   gEfiBlockIoProtocolGuid
   gEfiDiskInfoProtocolGuid                  
   gAmiAhciBusProtocolGuid
+  gHddSecurityInitProtocolGuid
+  gHddSmartInitProtocolGuid
+  gHddSecurityEndProtocolGuid
   gAint13ProtocolGuid
-  gAmiAhciPlatformPolicyProtocolGuid
-  gAmiIdeBusInitProtocolGuid
-  gEfiStorageSecurityCommandProtocolGuid
-  gEfiComponentNameProtocolGuid
-  gEfiComponentName2ProtocolGuid
-  gAmiHddSecurityProtocolGuid
-  gAmiHddSecurityInitProtocolGuid
-  gAmiHddSecurityEndProtocolGuid
-  gAmiHddSmartProtocolGuid
-  gAmiHddSmartInitProtocolGuid
-  gAmiHddOpalSecInitProtocolGuid
-  gAmiAtaPassThruInitProtocolGuid
-  gAmiScsiPassThruInitProtocolGuid
-  gAmiBlockIoWriteProtectionProtocolGuid
+  gAhciPlatformPolicyProtocolGuid
+  gEfiIdeBusInitProtocolGuid
 
 [Depex]
   TRUE
@@ -74,7 +64,7 @@
 #**********************************************************************
 #**********************************************************************
 #**                                                                  **
-#**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+#**        (C)Copyright 1985-2013, American Megatrends, Inc.         **
 #**                                                                  **
 #**                       All Rights Reserved.                       **
 #**                                                                  **

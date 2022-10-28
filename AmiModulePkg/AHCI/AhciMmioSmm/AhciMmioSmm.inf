@@ -1,7 +1,7 @@
 #*************************************************************************
 #*************************************************************************
 #**                                                                     **
-#**        (C)Copyright 1985-2013, American Megatrends, Inc.            **
+#**        (C)Copyright 1985-2012, American Megatrends, Inc.            **
 #**                                                                     **
 #**                       All Rights Reserved.                          **
 #**                                                                     **
@@ -12,20 +12,19 @@
 #*************************************************************************
 #*************************************************************************
 ## @file
-#
+#   
 ##
 [Defines]
   INF_VERSION                    = 0x00010005
-  BASE_NAME                      = AhciSmm
-  FILE_GUID                      = BC3245BD-B982-4f55-9F79-056AD7E987C5
+  BASE_NAME                      = AhciMmioSmm
+  FILE_GUID                      = 96F1AC24-2B21-45fa-A0B5-67010C95E9D8
   MODULE_TYPE                    = DXE_SMM_DRIVER
   VERSION_STRING                 = 1.0
   PI_SPECIFICATION_VERSION       = 0x0001000A
-  ENTRY_POINT                    = AhciSmmDriverEntryPoint
-
-[Sources]
-  AhciSmm.c
-  AhciSmm.h
+  ENTRY_POINT                    = AhciMmioSmmEntryPoint
+  
+[Sources]  
+  AhciMmioSmm.c
 
 [Packages]
   MdePkg/MdePkg.dec
@@ -36,23 +35,21 @@
 [LibraryClasses]
   AmiDxeLib
   UefiDriverEntryPoint
-  AhciCspLib
-  
+
 [Protocols]
-#  gEfiSmmBaseProtocolGuid
   gEfiSmmBase2ProtocolGuid
-
+  gEfiSmmSwDispatch2ProtocolGuid
+  
 [Depex]
-#  gEfiSmmBaseProtocolGuid
-#  TRUE
-  gEfiSmmBase2ProtocolGuid
-
+ gEfiSmmBase2ProtocolGuid       AND
+ gEfiSmmSwDispatch2ProtocolGuid 
+ 
 [BuildOptions.X64]
   *_*_X64_CC_FLAGS = /D EFIx64 
 
 #*************************************************************************
 #**                                                                     **
-#**        (C)Copyright 1985-2013, American Megatrends, Inc.            **
+#**        (C)Copyright 1985-2012, American Megatrends, Inc.            **
 #**                                                                     **
 #**                       All Rights Reserved.                          **
 #**                                                                     **

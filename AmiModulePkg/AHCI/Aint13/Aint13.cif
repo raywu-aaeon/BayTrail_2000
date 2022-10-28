@@ -10,5 +10,5 @@
 [parts]
 "AHCI_INT13INIT_PROTOCOL"
 "AHCI_BINARY"
-"AhciInt13Smm"
+"AhciMmioSmm"
 <endComponent>

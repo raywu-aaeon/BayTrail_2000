@@ -1,20 +1,32 @@
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2012, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **
-//**         5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093     **
+//**         5555 Oakbrook Pkwy, Suite 200, Norcross, GA 30093        **
 //**                                                                  **
 //**                       Phone: (770)-246-8600                      **
 //**                                                                  **
 //**********************************************************************
 //**********************************************************************
 
-/** @file AhciBus.h
-    Header file for the Ahci Bus Driver
-**/
+//**********************************************************************
+// $Header: /Alaska/SOURCE/Modules/AHCI/AhciBus.h 11    7/20/12 6:10a Anandakrishnanl $
+//
+// $Revision: 11 $
+//
+// $Date: 7/20/12 6:10a $
+//**********************************************************************
+//<AMI_FHDR_START>
+//
+// Name:    AhciBus.h
+//
+// Description:
+//
+//<AMI_FHDR_END>
+//**********************************************************************
 
 #ifndef _AhciBus_
 #define _AhciBus_
@@ -29,14 +41,11 @@ extern "C" {
 #include "Protocol/DriverBinding.h"
 #include "Protocol/BlockIo.h"
 #include "Protocol/DiskInfo.h"
-#include <Protocol/AmiAhciBus.h>
-#include <Protocol/AmiHddSecurityInit.h>
-#include <Protocol/AmiHddSmartInit.h>
-#include <Protocol/AmiHddOpalSecInit.h>
-#include <Protocol/AmiAtaPassThruInit.h>
-#include <Protocol/AmiScsiPassThruInit.h>
+#include "Protocol/PDiskInfo.h"
+#include "Protocol/PIDEController.h"
+#include "Protocol/PIDEBus.h"
+#include <Protocol/PAhciBus.h>
 #include <Protocol/AtaPassThru.h>
-#include <Protocol/StorageSecurityCommand.h>
 #include "AhciController.h"
 
 
@@ -53,40 +62,20 @@ VOID EfiDebugPrint (IN  UINTN ErrorLevel,IN  CHAR8 *Format,...);
 #define     COMMAND_LIST_SIZE_PORT      0x800
 
 #ifndef ATAPI_BUSY_CLEAR_TIMEOUT
-#define     ATAPI_BUSY_CLEAR_TIMEOUT    16000                   // 16sec
+#define     ATAPI_BUSY_CLEAR_TIMEOUT    16000       // 16sec
 #endif
 
 #ifndef S3_BUSY_CLEAR_TIMEOUT
 #define     S3_BUSY_CLEAR_TIMEOUT       10000                   // 10Sec
 #endif
 
-#ifndef BUSY_CLEAR_TIMEOUT
 #define     BUSY_CLEAR_TIMEOUT          1000                    // 1Sec
-#endif
-
-#ifndef DRDY_TIMEOUT
 #define     DRDY_TIMEOUT                1000                    // 1Sec
-#endif
-
-#ifndef DRQ_TIMEOUT
 #define     DRQ_TIMEOUT                 10                      // 10msec
-#endif
-
-#ifndef DRQ_CLEAR_TIMEOUT
 #define     DRQ_CLEAR_TIMEOUT           1000                    // 1sec
-#endif
-
-#ifndef DRQ_SET_TIMEOUT
 #define     DRQ_SET_TIMEOUT             10                      // 10msec
-#endif
-
-#ifndef HP_COMMAND_COMPLETE_TIMEOUT
 #define     HP_COMMAND_COMPLETE_TIMEOUT 2000                    // 2Sec
-#endif
-
-#ifndef COMMAND_COMPLETE_TIMEOUT
 #define     COMMAND_COMPLETE_TIMEOUT    5000                    // 5Sec
-#endif
 
 #ifndef DMA_ATA_COMMAND_COMPLETE_TIMEOUT
 #define     DMA_ATA_COMMAND_COMPLETE_TIMEOUT    5000            // 5Sec
@@ -97,14 +86,16 @@ VOID EfiDebugPrint (IN  UINTN ErrorLevel,IN  CHAR8 *Format,...);
 #endif
 
 #ifndef ATAPI_RESET_COMMAND_TIMEOUT
-#define     ATAPI_RESET_COMMAND_TIMEOUT 5000                    // 5Sec
+#define     ATAPI_RESET_COMMAND_TIMEOUT 5000
 #endif
 
 #ifndef POWERON_BUSY_CLEAR_TIMEOUT
-#define     POWERON_BUSY_CLEAR_TIMEOUT  10000                   // 10Sec
+#define     POWERON_BUSY_CLEAR_TIMEOUT  10000                   // 10 Sec
 #endif
 
 #define     TIMEOUT_1SEC                1000                    // 1sec Serial ATA 1.0 Sec 5.2
+
+
 
 #define     BLKIO_REVISION                      1
 
@@ -140,28 +131,50 @@ VOID EfiDebugPrint (IN  UINTN ErrorLevel,IN  CHAR8 *Format,...);
 
 #define     EFI_SUCCESS_ACTIVE_SET              0x80000000
 
+
+EFI_STATUS
+CreateIdeDevicePath (
+    IN EFI_DRIVER_BINDING_PROTOCOL    *This,
+    IN EFI_HANDLE                   Controller,
+    IDE_BUS_INIT_PROTOCOL           *IdeBusInitInterface,
+    IDE_BUS_PROTOCOL                *IdeBusInterface,
+    IN EFI_DEVICE_PATH_PROTOCOL     *RemainingDevicePath,
+    UINT8                           Current_Channel,  
+    UINT8                           Current_Device
+);
+
+EFI_STATUS
+InitIdeBlockIO (
+    IDE_BUS_PROTOCOL                *IdeBusInterface
+);
+
+EFI_STATUS
+InitIdeDiskInfo (
+    IDE_BUS_PROTOCOL                *IdeBusInterface
+);
+
 EFI_STATUS
 InstallAhciBusProtocol (
     IN EFI_HANDLE                    Controller,
-    AMI_AHCI_BUS_PROTOCOL            *IdeBusInitInterface,
+    AHCI_BUS_PROTOCOL               *IdeBusInitInterface,
     EFI_IDE_CONTROLLER_INIT_PROTOCOL *IdeControllerInterface,
     EFI_PCI_IO_PROTOCOL              *PciIO
 );
 
 EFI_STATUS
 AhciInitController (
-    AMI_AHCI_BUS_PROTOCOL               *AhciBusInterface
+    AHCI_BUS_PROTOCOL               *AhciBusInterface
 );
 
 EFI_STATUS
 CheckPortImplemented (
-    AMI_AHCI_BUS_PROTOCOL               *AhciBusInterface, 
+    AHCI_BUS_PROTOCOL                   *AhciBusInterface, 
     UINT8                               Port
 );
 
 EFI_STATUS
 AhciDetectDevice (
-    AMI_AHCI_BUS_PROTOCOL               *AhciBusInterface, 
+    AHCI_BUS_PROTOCOL              *AhciBusInterface, 
     EFI_IDE_CONTROLLER_INIT_PROTOCOL    *IdeControllerInterface, 
     UINT8                               Port, 
     UINT8                               PMPortNumber
@@ -195,25 +208,20 @@ ConfigureController (
     EFI_ATA_COLLECTIVE_MODE       *SupportedModes
 );
 
-VOID 
-InitializeDipm(
-    SATA_DEVICE_INTERFACE         *SataDevInterface
-);
-
 VOID
-InitializeDeviceSleep (
+InitializeDevSleep (
     SATA_DEVICE_INTERFACE         *SataDevInterface
 );
 
 EFI_STATUS
 HostReset (
-    AMI_AHCI_BUS_PROTOCOL           *AhciBusInterface 
+    AHCI_BUS_PROTOCOL                   *AhciBusInterface 
 );
 
 EFI_STATUS
 GeneratePortReset (
-    AMI_AHCI_BUS_PROTOCOL          *AhciBusInterface, 
-    SATA_DEVICE_INTERFACE          *SataDevInterface,  
+    AHCI_BUS_PROTOCOL             *AhciBusInterface, 
+    SATA_DEVICE_INTERFACE         *SataDevInterface,  
     UINT8                          Port,
     UINT8                          PMPort,
     UINT8                          Speed,
@@ -232,23 +240,23 @@ GetIdentifyData (
 );
 
 EFI_STATUS
-HandlePortComReset (
-    AMI_AHCI_BUS_PROTOCOL               *AhciBusInterface, 
+HandlePortComReset(
+    AHCI_BUS_PROTOCOL                   *AhciBusInterface, 
     SATA_DEVICE_INTERFACE               *SataDevInterface,
     UINT8                               Port,
-    UINT8                               PMPort
+	UINT8                               PMPort
 );
 
 EFI_STATUS 
 CheckValidDevice (
-    AMI_AHCI_BUS_PROTOCOL               *AhciBusInterface, 
+    AHCI_BUS_PROTOCOL                   *AhciBusInterface, 
     UINT8                               Port,
     UINT8                               PMPort
 );
 
 SATA_DEVICE_INTERFACE*
-GetSataDevInterface (
-    AMI_AHCI_BUS_PROTOCOL          *AhciBusInterface, 
+GetSataDevInterface(
+    AHCI_BUS_PROTOCOL              *AhciBusInterface, 
     UINT8                          Port,
     UINT8                          PMPort
 );
@@ -274,13 +282,13 @@ ExecuteDmaDataCommand (
 );
 
 EFI_STATUS
-SataReadWritePio (
-    IN SATA_DEVICE_INTERFACE        *SataDevInterface,
-    IN OUT VOID                     *Buffer,
-    IN UINTN                        ByteCount,
-    IN UINT64                       LBA,
-    IN UINT8                        ReadWriteCommand,
-    IN BOOLEAN                      READWRITE
+SataReadWritePio(
+	IN SATA_DEVICE_INTERFACE        *SataDevInterface,
+	IN OUT VOID						*Buffer,
+	IN UINTN						ByteCount,
+	IN UINT64						LBA,
+	IN UINT8						ReadWriteCommand,
+	IN BOOLEAN						READWRITE
 ) ;
 
 EFI_STATUS
@@ -300,22 +308,22 @@ SataPioDataOut (
 ) ;
 
 EFI_STATUS
-WaitforCommandComplete (
+WaitforCommandComplete  (
     SATA_DEVICE_INTERFACE               *SataDevInterface,
     COMMAND_TYPE                        CommandType,
     UINTN                               TimeOut    
 );
 
 UINT8
-ReturnMSBset (
- UINT32     Data
+ReturnMSBset(
+ UINT32				Data
 );
 
 EFI_STATUS
 StartController (
-    AMI_AHCI_BUS_PROTOCOL               *AhciBusInterface, 
+    AHCI_BUS_PROTOCOL                    *AhciBusInterface, 
     SATA_DEVICE_INTERFACE               *SataDevInterface,
-    UINT32                              CIBitMask
+	UINT32							  	CIBitMask
 );
 
 EFI_STATUS
@@ -324,105 +332,101 @@ ReadytoAcceptCmd (
 );
 
 EFI_STATUS
-StopController (
-    AMI_AHCI_BUS_PROTOCOL               *AhciBusInterface, 
+StopController(
+    AHCI_BUS_PROTOCOL                   *AhciBusInterface, 
     SATA_DEVICE_INTERFACE               *SataDevInterface,
     BOOLEAN                             StartOrStop
-);
+) ;
 
 EFI_STATUS
 DetectAndConfigureDevice (
-    IN EFI_DRIVER_BINDING_PROTOCOL    *This,
-    IN EFI_HANDLE                     Controller,
-    IN EFI_DEVICE_PATH_PROTOCOL       *RemainingDevicePath,
-	AMI_AHCI_BUS_PROTOCOL             *AhciBusInterface,
+	IN EFI_DRIVER_BINDING_PROTOCOL    *This,
+	IN EFI_HANDLE                     Controller,
+	IN EFI_DEVICE_PATH_PROTOCOL       *RemainingDevicePath,
+	AHCI_BUS_PROTOCOL		    	  *AhciBusInterface,
     EFI_IDE_CONTROLLER_INIT_PROTOCOL  *IdeControllerInterface,
-    UINT8                             Port,
-    UINT8                             PMPort
-);
-
-EFI_STATUS
-InstallOtherOptionalFeatures(
-    IN AMI_AHCI_BUS_PROTOCOL          *AhciBusInterface
-);
+	UINT8							  Port,
+	UINT8							  PMPort
+);		
 
 EFI_STATUS
 ConfigurePMPort (
-    SATA_DEVICE_INTERFACE   *SataDevInterface
+	SATA_DEVICE_INTERFACE   *SataDevInterface
 );
 
 EFI_STATUS
 ReadWritePMPort (
-    SATA_DEVICE_INTERFACE   *SataDevInterface,
-    UINT8                   Port,
-    UINT8                   RegNum,
-    UINT32                  *Data,
-    BOOLEAN                 READWRITE	
+	SATA_DEVICE_INTERFACE   *SataDevInterface,
+	UINT8					Port,
+	UINT8					RegNum,
+	UINT32					*Data,
+	BOOLEAN					READWRITE	
 );
 
 UINT32
 ReadSCRRegister (
-	AMI_AHCI_BUS_PROTOCOL   *AhciBusInterface, 
-    SATA_DEVICE_INTERFACE   *SataDevInterface, 
-    UINT8                   Port, 
-    UINT8                   PMPort, 
-    UINT8                   Register
+	AHCI_BUS_PROTOCOL       *AhciBusInterface, 
+	SATA_DEVICE_INTERFACE   *SataDevInterface, 
+	UINT8					Port, 
+	UINT8					PMPort, 
+	UINT8		    		Register
 );
 
 EFI_STATUS
 WriteSCRRegister (
-    AMI_AHCI_BUS_PROTOCOL   *AhciBusInterface, 
-    SATA_DEVICE_INTERFACE   *SataDevInterface,
-    UINT8                   Port, 
-    UINT8                   PMPort, 
-    UINT8                   Register,
-    UINT32                  Data32
+    AHCI_BUS_PROTOCOL       *AhciBusInterface, 
+	SATA_DEVICE_INTERFACE   *SataDevInterface,
+	UINT8					Port, 
+	UINT8					PMPort, 
+	UINT8		    		Register,
+	UINT32					Data32
 );
 
 EFI_STATUS
 WritePMPort (
-    SATA_DEVICE_INTERFACE   *SataDevInterface,
-    UINT8                   Port,
-    UINT8                   RegNum,
-    UINT32                  Data	
+	SATA_DEVICE_INTERFACE   *SataDevInterface,
+	UINT8					Port,
+	UINT8					RegNum,
+	UINT32					Data	
 );
 
 EFI_STATUS
 BuildCommandList (
     SATA_DEVICE_INTERFACE               *SataDevInterface, 
-    AHCI_COMMAND_LIST                   *CommandList,
-    UINT64                              CommandTableBaseAddr
+	AHCI_COMMAND_LIST           		*CommandList,
+	UINT32								CommandTableBaseAddr
 );
 
 EFI_STATUS
 BuildCommandFIS (
     SATA_DEVICE_INTERFACE               *SataDevInterface, 
     COMMAND_STRUCTURE                   CommandStructure,
-    AHCI_COMMAND_LIST                   *CommandList,
-    AHCI_COMMAND_TABLE                  *Commandtable
+    AHCI_COMMAND_LIST    				*CommandList,
+    AHCI_COMMAND_TABLE   				*Commandtable
 );
 
 EFI_STATUS
-BuildAtapiCMD (
+BuildAtapiCMD(
     SATA_DEVICE_INTERFACE               *SataDevInterface, 
     COMMAND_STRUCTURE                   CommandStructure,
-    AHCI_COMMAND_LIST                   *CommandList,
-    AHCI_COMMAND_TABLE                  *Commandtable
+    AHCI_COMMAND_LIST    				*CommandList,
+    AHCI_COMMAND_TABLE   				*Commandtable
 );
 
 EFI_STATUS
-BuildPRDT (
+BuildPRDT
+(
     SATA_DEVICE_INTERFACE               *SataDevInterface, 
     COMMAND_STRUCTURE                   CommandStructure,
-    AHCI_COMMAND_LIST                   *CommandList,
-    AHCI_COMMAND_TABLE                  *Commandtable
+    AHCI_COMMAND_LIST    				*CommandList,
+    AHCI_COMMAND_TABLE   				*Commandtable
 );
 
 EFI_STATUS 
 WaitForMemSet (
-    IN AMI_AHCI_BUS_PROTOCOL   *AhciBusInterface,
-    IN UINT8  Port,
-    IN UINT8  Register,
+	IN UINT32 BaseAddr,
+	IN UINT8  Port,
+	IN UINT8  Register,
     IN UINT32 AndMask,
     IN UINT32 TestValue,
     IN UINT32 WaitTimeInMs
@@ -430,54 +434,54 @@ WaitForMemSet (
 
 EFI_STATUS 
 WaitforPMMemSet (
-    IN SATA_DEVICE_INTERFACE   *SataDevInterface,
-    IN UINT8                   PMPort,
-    IN UINT8                   Register,
-    IN UINT32                  AndMask,
-    IN UINT32                  TestValue,
-    IN UINT32                  WaitTimeInMs
+	IN SATA_DEVICE_INTERFACE   *SataDevInterface,
+    IN UINT8 				   PMPort,
+	IN UINT8				   Register,
+    IN UINT32 				   AndMask,
+    IN UINT32 				   TestValue,
+    IN UINT32 				   WaitTimeInMs
 );
 
 EFI_STATUS 
 WaitForMemClear (
-    IN AMI_AHCI_BUS_PROTOCOL   *AhciBusInterface,
-    IN UINT8  Port,
-    IN UINT8  Register,
+	IN UINT32 BaseAddr,
+	IN UINT8  Port,
+	IN UINT8  Register,
     IN UINT32 AndMask,
     IN UINT32 WaitTimeInMs
 );
 
 EFI_STATUS
 CreateSataDevicePath (
-    IN EFI_DRIVER_BINDING_PROTOCOL      *This,
-    IN EFI_HANDLE                       Controller,
-    IN SATA_DEVICE_INTERFACE            *SataDevInterface,	
-    IN OUT EFI_DEVICE_PATH_PROTOCOL     *RemainingDevicePath
+	IN EFI_DRIVER_BINDING_PROTOCOL    	*This,
+	IN EFI_HANDLE                   	Controller,
+	IN SATA_DEVICE_INTERFACE            *SataDevInterface,	
+	IN OUT EFI_DEVICE_PATH_PROTOCOL     *RemainingDevicePath
 );
 
 EFI_STATUS
 InitSataBlockIO (
-    IN SATA_DEVICE_INTERFACE            *SataDevInterface
+	IN SATA_DEVICE_INTERFACE            *SataDevInterface
 );
 
 EFI_STATUS
 InitSataDiskInfo (
-    IN SATA_DEVICE_INTERFACE            *SataDevInterface
+	IN SATA_DEVICE_INTERFACE            *SataDevInterface
 );
 
 EFI_STATUS
 InitAcousticSupport (
-    IN SATA_DEVICE_INTERFACE            *SataDevInterface
+	IN SATA_DEVICE_INTERFACE            *SataDevInterface
 );	
 
 EFI_STATUS
 InitSMARTSupport (
-    IN SATA_DEVICE_INTERFACE            *SataDevInterface
+	IN SATA_DEVICE_INTERFACE            *SataDevInterface
 );	
 
 EFI_STATUS
-SMARTReturnStatusWrapper (
-    IN SATA_DEVICE_INTERFACE            *SataDevInterface
+SMARTReturnStatusWrapper(
+	IN SATA_DEVICE_INTERFACE            *SataDevInterface
 );
 
 EFI_STATUS
@@ -486,23 +490,23 @@ ConfigurePowerUpInStandby (
 );
 
 EFI_STATUS 
-AhciBusSupported (
-    IN EFI_DRIVER_BINDING_PROTOCOL    *This,
-    IN EFI_HANDLE                     Controller,
-    IN EFI_DEVICE_PATH_PROTOCOL       *RemainingDevicePath
+AhciBusSupported(
+	IN EFI_DRIVER_BINDING_PROTOCOL    *This,
+	IN EFI_HANDLE                     Controller,
+	IN EFI_DEVICE_PATH_PROTOCOL       *RemainingDevicePath
 );
 
 EFI_STATUS 
 AhciBusStart (
-    IN EFI_DRIVER_BINDING_PROTOCOL    *This,
-    IN EFI_HANDLE                     Controller,
-    IN EFI_DEVICE_PATH_PROTOCOL       *RemainingDevicePath 
+	IN EFI_DRIVER_BINDING_PROTOCOL    *This,
+	IN EFI_HANDLE                     Controller,
+	IN EFI_DEVICE_PATH_PROTOCOL       *RemainingDevicePath 
 );
 
 EFI_STATUS 
 AhciBusStop (
-    IN EFI_DRIVER_BINDING_PROTOCOL    *This,
-    IN EFI_HANDLE                     Controller,
+	IN EFI_DRIVER_BINDING_PROTOCOL    *This,
+	IN EFI_HANDLE                     Controller,
     IN UINTN                          NumberOfChildren,
     IN EFI_HANDLE                     *ChildHandleBuffer
 );
@@ -510,233 +514,226 @@ AhciBusStop (
 
 EFI_STATUS
 DiskInfoInquiry (
-    IN EFI_DISK_INFO_PROTOCOL   *This,
-    IN OUT VOID                 *InquiryData,
-    IN OUT UINT32               *InquiryDataSize
+	IN EFI_DISK_INFO_PROTOCOL	*This,
+	IN OUT VOID					*InquiryData,
+	IN OUT UINT32				*InquiryDataSize
 );
 
 EFI_STATUS
 DiskInfoIdentify (
-    EFI_DISK_INFO_PROTOCOL      *This,
-    IN OUT VOID                 *IdentifyData,
-    IN OUT UINT32               *IdentifyDataSize
+	EFI_DISK_INFO_PROTOCOL			*This,
+	IN OUT VOID						*IdentifyData,
+	IN OUT UINT32					*IdentifyDataSize
 );
 
 EFI_STATUS
-DiskInfoSenseData (
-    EFI_DISK_INFO_PROTOCOL      *This,
-    VOID                        *SenseData,
-    UINT32                      *SenseDataSize,
-    UINT8                       *SenseDataNumber
+DiskInfoSenseData(
+	EFI_DISK_INFO_PROTOCOL   	*This,
+	VOID						*SenseData,
+	UINT32						*SenseDataSize,
+	UINT8						*SenseDataNumber
 );
 
 EFI_STATUS
-DiskInfoWhichIDE (
-    IN EFI_DISK_INFO_PROTOCOL   *This,
-    OUT UINT32                  *IdeChannel,
-    OUT UINT32                  *IdeDevice
+DiskInfoWhichIDE
+(
+	IN EFI_DISK_INFO_PROTOCOL	*This,
+	OUT UINT32					*IdeChannel,
+	OUT UINT32					*IdeDevice
 );
 
 #define ZeroMemory(Buffer,Size) pBS->SetMem(Buffer,Size,0)
 
+
 BOOLEAN
-DMACapable (
+DMACapable(
     SATA_DEVICE_INTERFACE       *SataDevInterface
 ); 
 
 EFI_STATUS
-SataBlkRead (
-    IN EFI_BLOCK_IO_PROTOCOL    *This,
-    IN UINT32                   MediaId,
-    IN EFI_LBA                  LBA,
-    IN UINTN                    BufferSize,
-    OUT VOID                    *Buffer
+SataBlkRead(
+	IN EFI_BLOCK_IO_PROTOCOL 		*This,
+	IN UINT32 					    MediaId,
+	IN EFI_LBA 					    LBA,
+	IN UINTN 					    BufferSize,
+	OUT VOID 					    *Buffer
 );
 
 EFI_STATUS
-SataBlkWrite (
-    IN EFI_BLOCK_IO_PROTOCOL    *This,
-    IN UINT32                   MediaId,
-    IN EFI_LBA                  LBA,
-    IN UINTN                    BufferSize,
-    OUT VOID                    *Buffer
+SataBlkWrite(
+	IN EFI_BLOCK_IO_PROTOCOL 		*This,
+	IN UINT32 					    MediaId,
+	IN EFI_LBA 					    LBA,
+	IN UINTN 					    BufferSize,
+	OUT VOID 					    *Buffer
 );
 
 EFI_STATUS
 SataAtaBlkReadWrite (
-    IN EFI_BLOCK_IO_PROTOCOL    *This,
-    IN UINT32                   MediaId,
-    IN EFI_LBA                  LBA,
-    IN UINTN                    BufferSize,
-    OUT VOID                    *Buffer,
-    BOOLEAN                     READWRITE
-);
-
-EFI_STATUS
-SataAtapiBlkRead (
-    IN EFI_BLOCK_IO_PROTOCOL    *This,
-    IN UINT32                   MediaId,
-    IN EFI_LBA                  LBA,
-    IN UINTN                    BufferSize,
-    OUT VOID                    *Buffer
-);
-
-EFI_STATUS
-SataAtapiBlkWrite (
-    IN EFI_BLOCK_IO_PROTOCOL    *This,
-    IN UINT32                   MediaId,
-    IN EFI_LBA                  LBA,
-    IN UINTN                    BufferSize,
-    OUT VOID                    *Buffer
-);
-
-EFI_STATUS
-SataReset (
-    IN EFI_BLOCK_IO_PROTOCOL    *This,
-    IN BOOLEAN                  ExtendedVerification
-);
-
-EFI_STATUS
-SataBlkFlush (
-    IN EFI_BLOCK_IO_PROTOCOL    *This
-);
-
-EFI_STATUS
-SataReadWriteBusMaster (
-    SATA_DEVICE_INTERFACE       *SataDevInterface,
-    IN OUT VOID                 *Buffer,
-    IN UINTN                    ByteCount,
-    IN UINT64                   LBA,
-    IN UINT8                    ReadWriteCommand,
-    IN BOOLEAN                  READWRITE
-);
-
-EFI_STATUS
-SataAtapiInquiryData (
-    SATA_DEVICE_INTERFACE       *SataDevInterface,
-    UINT8                       *InquiryData,
-    UINT16                      *InquiryDataSize
-);
-
-EFI_STATUS
-DetectAtapiMedia (
-    SATA_DEVICE_INTERFACE           *SataDevInterface
-);
-
-EFI_STATUS
-TestUnitReady (
-    SATA_DEVICE_INTERFACE           *SataDevInterface
-);
-
-EFI_STATUS 
-ExecutePacketCommand (
-    SATA_DEVICE_INTERFACE           *SataDevInterface, 
-    COMMAND_STRUCTURE               *CommandStructure,
+	IN EFI_BLOCK_IO_PROTOCOL 		*This,
+	IN UINT32 					    MediaId,
+	IN EFI_LBA 					    LBA,
+	IN UINTN 					    BufferSize,
+	OUT VOID 					    *Buffer,
     BOOLEAN                         READWRITE
 );
 
 EFI_STATUS
-SataAtapiBlkReadWrite (
-    IN EFI_BLOCK_IO_PROTOCOL        *This,
-    IN UINT32                       MediaId,
-    IN EFI_LBA                      LBA,
-    IN UINTN                        BufferSize,
-    OUT VOID                        *Buffer,
+SataAtapiBlkRead(
+	IN EFI_BLOCK_IO_PROTOCOL 		*This,
+	IN UINT32 					    MediaId,
+	IN EFI_LBA 					    LBA,
+	IN UINTN 					    BufferSize,
+	OUT VOID 					    *Buffer
+);
+
+EFI_STATUS
+SataAtapiBlkWrite(
+	IN EFI_BLOCK_IO_PROTOCOL 		*This,
+	IN UINT32 					    MediaId,
+	IN EFI_LBA 					    LBA,
+	IN UINTN 					    BufferSize,
+	OUT VOID 					    *Buffer
+);
+
+EFI_STATUS
+SataReset (
+	IN EFI_BLOCK_IO_PROTOCOL		*This,
+	IN BOOLEAN					    ExtendedVerification
+);
+
+EFI_STATUS
+SataBlkFlush(
+	IN EFI_BLOCK_IO_PROTOCOL		*This
+);
+
+EFI_STATUS
+SataReadWriteBusMaster(
+	SATA_DEVICE_INTERFACE           *SataDevInterface,
+	IN OUT VOID						*Buffer,
+	IN UINTN						ByteCount,
+	IN UINT64						LBA,
+	IN UINT8						ReadWriteCommand,
+	IN BOOLEAN						READWRITE
+);
+
+EFI_STATUS
+SataAtapiInquiryData (
+	SATA_DEVICE_INTERFACE           *SataDevInterface,
+	UINT8						    *InquiryData,
+	UINT16						    *InquiryDataSize
+);
+
+EFI_STATUS
+DetectAtapiMedia(
+	SATA_DEVICE_INTERFACE           *SataDevInterface
+);
+
+EFI_STATUS
+TestUnitReady(
+	SATA_DEVICE_INTERFACE           *SataDevInterface
+);
+
+EFI_STATUS 
+ExecutePacketCommand (
+    SATA_DEVICE_INTERFACE               *SataDevInterface, 
+    COMMAND_STRUCTURE                   *CommandStructure,
+    BOOLEAN                             READWRITE
+);
+
+EFI_STATUS
+SataAtapiBlkReadWrite(
+	IN EFI_BLOCK_IO_PROTOCOL 		*This,
+	IN UINT32 					    MediaId,
+	IN EFI_LBA 					    LBA,
+	IN UINTN 					    BufferSize,
+	OUT VOID 					    *Buffer,
     BOOLEAN                         READWRITE
 );
 
 EFI_STATUS
 HandleAtapiError (
-    SATA_DEVICE_INTERFACE           *SataDevInterface
+    SATA_DEVICE_INTERFACE               *SataDevInterface
 );
 
 BOOLEAN
 Check48BitCommand (
-    IN UINT8                        Command
+	IN UINT8			            Command
 );
 
 EFI_STATUS
 InitSMARTSupport (
-    IN SATA_DEVICE_INTERFACE        *SataDevInterface 
+	IN SATA_DEVICE_INTERFACE   *SataDevInterface 
 );
 
 EFI_STATUS
-SMARTReturnStatusWrapper (
-    IN SATA_DEVICE_INTERFACE        *SataDevInterface 
+SMARTReturnStatusWrapper(
+	IN SATA_DEVICE_INTERFACE   *SataDevInterface 
 );
 
 EFI_STATUS
 SataGetOddType (
-    IN SATA_DEVICE_INTERFACE        *SataDevInterface,
-    IN OUT UINT16                   *OddType
+	IN SATA_DEVICE_INTERFACE           *SataDevInterface,
+	IN OUT UINT16					   *OddType
 );
 
 EFI_STATUS
 SataGetOddLoadingType (
-    IN SATA_DEVICE_INTERFACE        *SataDevInterface,
-    IN OUT UINT8                    *OddLoadingType
+    IN SATA_DEVICE_INTERFACE           *SataDevInterface,
+    IN OUT UINT8                       *OddLoadingType
 );
 
 ODD_TYPE 
-GetEnumOddType (
+GetEnumOddType(
     IN  UINT16                      OddType
 );
 
 EFI_STATUS
 ConfigureSataPort (
-    IN SATA_DEVICE_INTERFACE        *SataDevInterface
+    IN SATA_DEVICE_INTERFACE   *SataDevInterface
 );
 
-UINT64 
-Shr64 (
-    IN UINT64 Value,
-    IN UINT8 Shift 
-);
 
-UINT64
-Shl64 (
-    IN UINT64 Value,
-    IN UINT8 Shift
-);
-
+#if INDEX_DATA_PORT_ACCESS
 UINT32
-ReadDataDword (
-    IN AMI_AHCI_BUS_PROTOCOL   *AhciBusInterface,
-    IN  UINTN   Index
+ReadDataDword(
+	IN	UINTN	BaseAddr,
+	IN  UINTN	Index
 );
 
 UINT16
-ReadDataWord (
-    IN AMI_AHCI_BUS_PROTOCOL   *AhciBusInterface,
-    IN  UINTN   Index
+ReadDataWord(
+	IN	UINTN	BaseAddr,
+	IN  UINTN	Index
 );
 
 UINT8
-ReadDataByte (
-    IN AMI_AHCI_BUS_PROTOCOL   *AhciBusInterface,
-    IN  UINTN   Index
+ReadDataByte(
+	IN	UINTN	BaseAddr,
+	IN  UINTN	Index
 );
 
 VOID
-WriteDataDword (
-    IN AMI_AHCI_BUS_PROTOCOL   *AhciBusInterface,
-    IN  UINTN   Index, 
-    IN  UINTN   Data
+WriteDataDword(
+	IN	UINTN	BaseAddr,
+	IN  UINTN	Index, 
+	IN	UINTN	Data
 );
 
 VOID
-WriteDataWord (
-    IN AMI_AHCI_BUS_PROTOCOL   *AhciBusInterface,
-    IN  UINTN   Index, 
-    IN  UINTN   Data
+WriteDataWord(
+	IN	UINTN	BaseAddr,
+	IN  UINTN	Index, 
+	IN	UINTN	Data
 );
 
 VOID
-WriteDataByte (
-    IN AMI_AHCI_BUS_PROTOCOL   *AhciBusInterface,
-    IN  UINTN   Index,
-    IN  UINTN   Data
+WriteDataByte(
+	IN	UINTN	BaseAddr,
+	IN  UINTN	Index,
+	IN	UINTN	Data
 );
+#endif
 
 /****** DO NOT WRITE BELOW THIS LINE *******/
 #ifdef __cplusplus
@@ -748,11 +745,11 @@ WriteDataByte (
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2012, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **
-//**         5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093     **
+//**         5555 Oakbrook Pkwy, Suite 200, Norcross, GA 30093        **
 //**                                                                  **
 //**                       Phone: (770)-246-8600                      **
 //**                                                                  **

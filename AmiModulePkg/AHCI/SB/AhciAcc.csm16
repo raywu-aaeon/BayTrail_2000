@@ -4,7 +4,7 @@
 ;****************************************************************************
 ;****************************************************************************
 ;**                                                                        **
-;**             (C)Copyright 1985-2014, American Megatrends, Inc.          **
+;**             (C)Copyright 1985-2012, American Megatrends, Inc.          **
 ;**                                                                        **
 ;**                          All Rights Reserved.                          **
 ;**                                                                        **
@@ -15,6 +15,14 @@
 ;****************************************************************************
 ;****************************************************************************
 
+;****************************************************************************
+; $Header: /Alaska/SOURCE/Modules/AHCI/INT13/CSP/AHCIACC.ASM 9     8/02/12 8:14a Deepthins $
+;
+; $Revision: 9 $
+;
+; $Date: 8/02/12 8:14a $
+;****************************************************************************
+
 ;----------------------------------------------------------------------------
 ;       INCLUDE FILES
 ;----------------------------------------------------------------------------
@@ -23,8 +31,6 @@
         include aint13.equ
         include token.equ
 
-	FLAT_MODE_INDEX equ 08h
-	REAL_MODE_INDEX equ 10h
 ;----------------------------------------------------------------------------
 ;       EXTERNS USED
 ;----------------------------------------------------------------------------
@@ -67,7 +73,20 @@ AhciApiModuleStart LABEL BYTE
 ;----------------------------------------------------------------------------
 ;
 AhciCsm16Api  PROC FAR PUBLIC
+; Adjust current IP so that the data offsets are valid
+        call    $+3     ; Push curent IP
+        pop     bx		; Get current IP in BX
+        shr     bx, 4
+        mov     ax, cs      ; Always x000h
+        add     ax, bx      ; New CS
+        push    ax
+        mov     ax, OFFSET newOffset
+        sub     ax, OFFSET AhciApiModuleStart
+        push    ax
+;        push    newOffset - AhciApiModuleStart
+        retf            ; Execute from new CS:IP
 
+newOffset:
         push    bp
         mov     bp, sp
         mov     eax, ss:[bp+48h]    ; Data to be written (ignored for Read function)
@@ -118,8 +137,8 @@ aca_Exit:
         mov     cx, WORD PTR ss:[bp+1ah]
         mov     WORD PTR ss:[bp+06h], cx
 ; Restore CX
-        mov     cx, WORD PTR ss:[bp+18h] 
-        mov     dx, WORD PTR ss:[bp+16h] ;Restore Dx
+        mov    cx, WORD PTR ss:[bp+18h] 
+        mov    dx, WORD PTR ss:[bp+16h] ;Restore Dx
 
         pop     bp
         add     sp, 4
@@ -165,39 +184,30 @@ ReadRegisterDword       PROC    NEAR    PUBLIC
                                         ; structure size is 8
         mov     bx, ax                  ; Move the offset into bx
         pop     ax                      ; Restore ax
-IF (MKF_AHCI_INT13_SMM_SUPPORT)
+IF (MKF_AHCIMMIOSMM_SUPPORT)
         push    ebx
-        push    ecx 
-        mov     ebx, dword ptr cs:[AhciDataStart +4+bx] ;ebx=Data
+        push    ecx        
+        mov     ebx, dword ptr cs:[AhciDataStart - AhciApiModuleStart +4+bx] ;ebx=Data
         add     esi,ebx
-IF (MKF_BIG_REAL_MODE_MMIO_ACCESS)
-        call    ReadDWORD
-ELSE
         mov     cx,1                    ;Read Function
-        call    AhciGenerateSwSMI
-        cmp     ecx, 0                  ; if ECX == 0, MMIO read is Success
-        jz      Read_Success
-        stc
-        jmp     Read_Return
-Read_Success:
-        clc
-Read_Return:
-ENDIF
+        call    AhciGenerateSwSMI 
         pop     ecx
         pop     ebx
         jmp     Read_done
 ENDIF
-        mov     dx, cs:[AhciDataStart + bx]              ; DX = Index Port
+        mov     dx, cs:[AhciDataStart - AhciApiModuleStart +bx]              ; DX = Index Port
         push    eax
         mov     eax, esi                ; EAX = register address
         out     dx, eax                 ; Write Address
         pop     eax
 
-        mov     dx, cs:[AhciDataStart + 2 + bx]              ; DX = Data Port
+        mov     dx, cs:[AhciDataStart - AhciApiModuleStart +2+bx]              ; DX = Data Port
         in      eax, dx                 ; EAX = adat
-        clc                             ; NC, Successful
+
+
 Read_done:
         pop     bx
+        clc                             ; NC, Successful
         pop     dx
 
         pop     esi
@@ -241,40 +251,30 @@ WriteRegisterDword      PROC    NEAR    PUBLIC
         mov     bx, ax                  ; Move the offset into bx
         pop     ax                      ; Restore ax
 
-IF (MKF_AHCI_INT13_SMM_SUPPORT)
+IF (MKF_AHCIMMIOSMM_SUPPORT)
         push    ebx
         push    ecx
-        mov     ebx, dword ptr cs:[AhciDataStart + 4 + bx]
+        mov     ebx, dword ptr cs:[AhciDataStart - AhciApiModuleStart +4+bx]
         add     esi,ebx
-IF (MKF_BIG_REAL_MODE_MMIO_ACCESS)	
-    	call	WriteDWORD
-ELSE
         mov     ebx,eax                 ;Write Value
         mov     cx,2                    ;Write Function
-        call    AhciGenerateSwSMI
-        cmp     ecx, 0                  ; if ECX == 0, MMIO write is Success
-        jz      Write_Success
-        stc
-        jmp     Write_Return
-Write_Success:
-        clc
-Write_Return:
-ENDIF
+        call    AhciGenerateSwSMI 
         pop     ecx
         pop     ebx
         jmp     Write_done
 ENDIF
-        mov     dx, cs:[AhciDataStart + bx]              ; DX = Index Port
+        mov     dx, cs:[AhciDataStart - AhciApiModuleStart +bx]              ; DX = Index Port
         push    eax
         mov     eax, esi                ; EAX = register address
         out     dx, eax                 ; Write Address
         pop     eax
 
-        mov     dx, cs:[AhciDataStart + 2 + bx]              ; DX = Data Port
+        mov     dx, cs:[AhciDataStart - AhciApiModuleStart +2+bx]              ; DX = Data Port
         out     dx, eax                 ; Write dword data
-        clc                             ; NC, Successful
+
 Write_done:
         pop     bx
+        clc                             ; NC, Successful
         pop     dx
 
         pop     esi
@@ -348,7 +348,7 @@ WaitForFisRecRun    ENDP
 ;
 ;----------------------------------------------------------------------------
 ;<AMI_PHDR_END>
-IF (MKF_AHCI_INT13_SMM_SUPPORT)
+IF (MKF_AHCIMMIOSMM_SUPPORT)
 AhciGenerateSwSMI    PROC NEAR PUBLIC
         call    Check_Big_Real_mode
         jc      NotBigReadMode
@@ -368,543 +368,12 @@ ReadMmio:
 NotBigReadMode:
 
         mov     dx,MKF_SW_SMI_IO_ADDRESS     
-        mov     al,MKF_AHCI_INT13_SMM_SWSMI_VALUE
+        mov     al,MKF_AHCI_MMIO_SWSMI
         out     dx,al                   ;Generate Sw SMI to Read/Write MMIO
         jmp     $+2
         ret
 AhciGenerateSwSMI    ENDP
 
-;-------------------------------------------------------------------------
-;           ReadDWORD
-;-------------------------------------------------------------------------
-; This routine reads DWORD from MMIO.
-; Input:    ESI HBA Base Address
-;
-; Output:   NC    Successful
-;           EAX Data read
-;           CY  Error
-; Register Usage: Do not destroy any register except EAX
-;
-;-------------------------------------------------------------------------
-ReadDWORD   PROC    NEAR    PUBLIC
-
-        push   ds
-        push    0
-        pop     ds
-        push    esi
-
-; Save original values of registers in stack	
-        push    ebx
-        push    es
-        push    di
-
-; Save a dword from 5000h
-        mov     bx, 5000h
-        mov     es, bx
-        mov     di, 00h
-        mov     ebx, dword ptr es:[di]
-
-        push    ebx
-
-        mov     byte ptr es:[di], 00h
-; Switching to Big Real Mode
-        call    Switch_Big_Real_Mode
-
-; Reading DWORD from Hba_base_address and store in EAX
-        mov    eax, dword ptr ds:[esi]
-
-        push    eax
-        movzx   eax, byte ptr es:[di]
-        and     eax, 01h
-        jz      rdw_done
-; Switch back from Big Real mode
-        call    Switch_Original_Mode
-
-rdw_done:
-        pop     eax
-
-        push    eax
-        movzx   eax, byte ptr es:[di]
-        and     eax, 10b
-        jz      org_g20
-        call    DisblGateA20
-org_g20:
-        pop     eax
-
-        pop     ebx
-; Restore the original values stored in stack
-        mov     dword ptr es:[di], ebx
-
-        pop     di
-        pop     es
-        pop     ebx
-
-        pop     esi
-
-        pop     ds
-        clc
-
-        ret
-ReadDWORD   ENDP
-
-;-------------------------------------------------------------------------
-;           WriteDWORD
-;-------------------------------------------------------------------------
-; This routine writes DWORD in MMIO space.
-; Input:    EAX Data to be written
-;
-; Output:   ESI HBA Base Address
-;           NC  Successful
-;           CY  Error
-;
-; Register Usage: Do not destroy any register except EAX
-;
-;-------------------------------------------------------------------------
-WriteDWORD  PROC    NEAR    PUBLIC
-        push    ds
-
-        push    0
-        pop     ds
-
-        push    esi
-
-; Save original values of registers in stack
-        push    ebx
-        push    es
-        push    di
-
-; Save a dword from 5000h
-        mov     bx, 5000h
-        mov     es, bx
-        mov     di, 00h
-        mov     ebx, dword ptr es:[di]
-
-        push    ebx
-
-        mov     byte ptr es:[di], 00h
-; Switching to Big Real Mode
-        call    Switch_Big_Real_Mode
-
-; Writing DWORD stored in EAX into Hba_base_address
-        mov     dword ptr ds:[esi],eax
-
-        push    eax
-        movzx   eax, byte ptr es:[di]
-        and     eax, 01h
-        jz      wdw_done
-
-; Switch back from Big Real mode
-        call    Switch_Original_Mode
-
-wdw_done:
-        pop     eax
-
-        push    eax
-        movzx   eax, byte ptr es:[di]
-        and     eax, 10b
-        jz      org_g201
-        call    DisblGateA20
-org_g201:
-        pop     eax
-        pop     ebx
-
-; Restore the original values stored in stack
-        mov     dword ptr es:[di], ebx
-
-        pop     di
-        pop     es
-        pop     ebx
-
-        pop     esi
-
-        pop     ds
-        clc
-
-        ret
-WriteDWORD  ENDP
-
-;----------------------------------------------------------------------------
-;<AMI_PHDR_START>
-;----------------------------------------------------------------------------
-;
-; Procedure:    Switch_Big_Real_Mode
-;
-; Description:  Switch to Big real Mode. 
-;
-; Input:        None
-;
-; Output:
-;
-; Modified:     DS, ES
-;
-;----------------------------------------------------------------------------
-;<AMI_PHDR_END>
-;----------------------------------------------------------------------------
-Switch_Big_Real_Mode PROC NEAR PUBLIC
-
-        push    di
-        call    Check_Big_Real_mode
-        jnc     InBigRealMode
-        mov     byte ptr es:[di], 01h
-
-InBigRealMode:
-
-        mov     di, FLAT_MODE_INDEX                          ;Index for flat mode
-        call    GotoProtectedMode
-
-        pop     di
-        ret
-
-Switch_Big_Real_Mode ENDP
-
-;----------------------------------------------------------------------------
-;<AMI_PHDR_START>
-;----------------------------------------------------------------------------
-;
-; Procedure:    Switch_Original_Mode
-;
-; Description:  Switch to Original Mode. 
-;
-; Input:        None 
-;                    
-; Output:
-;
-; Modified:     DS, ES
-;
-;----------------------------------------------------------------------------
-;<AMI_PHDR_END>
-;----------------------------------------------------------------------------
-Switch_Original_Mode PROC NEAR PUBLIC
-
-        push    di
-        mov     di, REAL_MODE_INDEX     ;Real mode index
-        call    GotoProtectedMode
-        pop     di
-
-        ret
-
-Switch_Original_Mode ENDP
-
-;<AMI_PHDR_START>
-;----------------------------------------------------------------------------
-;
-; Procedure:    GotoProtectedMode
-;
-; Description:  This function jumps to protected mode for 4GB limit access
-;
-; Input:    None
-;
-; Output:   None
-;
-; Modified: None
-;
-;----------------------------------------------------------------------------
-;<AMI_PHDR_END>
-
-GotoProtectedMode PROC NEAR PUBLIC
-        push    es
-        pusha
-        cli                             ; Disable interrupts.
-;  Check the GA20 status..
-;  Compare 256bytes at 0:0 with FFFF:10
-;  If match, GA20 is disabled else GA20 is enabled.
-        push    di
-        push    es
-        push    ds
-        push    0000h
-        pop     ds                      ; DS = 0000.
-        push    0FFFFh
-        pop     es                      ; ES = FFFF.
-        mov     cx, 100h / 4            ; Number of Dwords in 256bytes.
-        xor     si, si
-        mov     di, 0010h
-        repz    cmpsd
-        pop     ds
-        pop     es
-        pop     di                      ;Descriptor table index in di 
-
-        pushf                           ; Save GA20 status
-                                        ; ZR/NZ = disabled/enabled.
-        jnz	short gtbrm_00              ; GA20 is already enabled.
-
-        push    di
-        mov     di, 00h
-        or      byte ptr es:[di], 10b
-        pop     di
-        call    EnblGateA20             ; Enable GateA20.
-
-gtbrm_00:
-        call    go_big_mode             ; Go to protected mode and comeback
-                                        ; to real mode.
-        popf                            ; ZR/NZ = GA20 status.
-        stc	                            ; Routine went to big real mode.
-
-gtbrm_01:
-        popa
-        pop     es
-        ret                             ; Return to caller.
-GotoProtectedMode ENDP
-
-;<AMI_PHDR_START>
-;----------------------------------------------------------------------------
-;
-; Procedure:    EnblGateA20
-;
-; Description:  This function enables GateA20
-;
-; Input:    None
-;
-; Output:   None
-;
-; Modified: None
-;
-;----------------------------------------------------------------------------
-;<AMI_PHDR_END>
-
-EnblGateA20 PROC NEAR PUBLIC
-
-        push    ax
-        mov     al,02h
-        out     92h, al
-
-; Check the GA20 status..
-; Compare 256bytes at 0:0 with FFFF:10
-; If match, GA20 is disabled else GA20 is enabled.
-        push    di
-        push    es
-        push    ds
-        push    0000h
-        pop     ds                      ; DS = 0000.
-        push    0FFFFh
-        pop     es; ES = FFFF.
-        mov     cx, 100h / 4            ; Number of Dwords in 256bytes.
-        xor     si, si
-        mov     di, 0010h
-        repz    cmpsd
-        pop     ds
-        pop     es
-        pop     di                      ;Descriptor table index in di 
-
-        jnz     eg20_end
-
-        mov     al, 0DFh                ; Data for output port to enable A20.
-        out     60h, al
-        mov     al, 0D1h
-        out     64h, al
-
-eg20_end:
-        pop	ax
-
-        ret
-EnblGateA20 ENDP
-
-;<AMI_PHDR_START>
-;----------------------------------------------------------------------------
-;
-; Procedure:    go_big_mode
-;
-; Description:  This routine goes to protected mode, sets the DS, ES to the
-;       given selector, comes back to real mode and sets DS, ES to 0000.
-;
-; Input:    DX  - Selector.
-;
-; Output:   Selector 00 can be used to access 4GB.
-;
-; Modified: EAX.
-;
-; Referrals:    big_gdt.
-;
-;----------------------------------------------------------------------------
-;<AMI_PHDR_END>
-
-go_big_mode PROC NEAR PRIVATE
-
-        jmp     Executable_code
-
-;<AMI_SHDR_START>
-;----------------------------------------------------------------------------
-; Name:     big_gdt
-;
-; Type:     BYTE Array
-;
-; Description:  Global Descriptor Table to switch the system to/from FLAT Mode.
-;               Since these routines will be called from non-shadowed system
-;               ROM, the GDT must be on a QWORD boundary or else the bytes
-;               will get CORRUPTED!
-;
-;----------------------------------------------------------------------------
-;<AMI_SHDR_END>
-
-ALIGN   8
-big_gdt     LABEL   WORD
-    db  8 dup (0)                               ;00 - Null descriptor	
-    db  0FFh,0FFh,000h,000h,000h,093h,08Fh,000h ; 08h - DS descriptor for flat mode
-big_gdt_end LABEL   WORD
-
-big_gdt_real    LABEL	WORD
-    db  8 dup (0)                               ;00 - Null descriptor	
-    db  0FFh,0FFh,000h,000h,000h,093h,000h,000h ; 08h - DS descriptor for real mode
-big_gdt_real_end    LABEL   WORD
-
-GDT_DESC    LABEL   BYTE
-dw  010h                                ; Length of GDT
-    db  00,00h                          ; ptr to GDT
-    db  05h,00h
-GDT_DESC_END	LABEL	BYTE
-
-Executable_code:
-        push    ds
-        push    es
-        push    eax
-        push    ebx
-        push    ecx
-        push    edx
-        push    si
-        push    di
-
-; Changed for CSM - need to save SS, reload SS Limit to 64K selector and restore it
-        push    bp
-        mov     bp, ss
-
-        mov     al, 8Dh                 ; Disable NMI
-        out     70h, al
-	
-;;; Copy contents from 5000:00(16 bytes) into registers
-        mov     ax, 5000h
-        mov     es, ax
-        mov     si, 00h
-        mov     eax, dword ptr es:[si]
-        add     si, 4
-        mov     ebx, dword ptr es:[si]
-        add     si, 4
-        mov     ecx, dword ptr es:[si]
-        add     si, 4
-        mov     edx, dword ptr es:[si]
-        push    eax
-        push    ebx
-        push    ecx
-        push    edx
-
-;;; Copy GDT to 5000h:00h 		
-        mov     ax, cs
-        mov     ds, ax
-        cmp     di, 08h
-        jne     gbm_real
-        mov     si, offset cs:big_gdt
-        jmp     gbm_flat
-gbm_real:
-        mov     si, offset cs:big_gdt_real
-gbm_flat:
-        mov     ax, 5000h
-        mov     es, ax
-        mov     di, 00h
-        xor     cx, cx
-        mov     cx, 08h 
-        rep     movsw
-
-        lgdt    fword ptr cs:GDT_DESC
-        mov     eax, cr0
-        or      al, 01h
-        mov     cr0, eax                ; In protected mode.
-        jmp     gbm_00                  ; Flush instruction queue - JMP (NEAR)
-                                        ; to next instruction.
-gbm_00:
-        mov     ax, 08h                 ; Selector
-        mov     ds, ax                  ; DS = selector.
-        mov     es, ax                  ; ES = selector.
-
-        mov     eax, cr0                ; Come back into real mode with DS,ES
-        and     al, 0FEh
-        mov     cr0, eax
-        jmp     gbm_01                  ; Flush instruction queue - JMP (NEAR)
-                                        ; to next instruction.
-gbm_01:
-
-        xor     ax, ax
-        mov     ds, ax
-        mov     es, ax
-
-        pop     edx
-        pop     ecx
-        pop     ebx
-;;; Restore contents of 5000:00h(16 bytes) from registers	
-        mov     ax, 5000h
-        mov     es, ax
-        mov     si, 00h
-        pop     eax
-        mov     dword ptr es:[si], eax
-        add     si, 4
-        mov     dword ptr es:[si], ebx
-        add     si, 4
-        mov     dword ptr es:[si], ecx
-        add     si, 4
-        mov     dword ptr es:[si], edx
-
-        pop     bp
-        pop     di
-        pop     si
-        pop     edx
-        pop     ecx
-        pop     ebx
-        pop     eax
-        pop     es
-        pop     ds
-        ret
-go_big_mode ENDP
-
-;<AMI_PHDR_START>
-;----------------------------------------------------------------------------
-;
-; Procedure:    DisblGateA20
-;
-; Description:  This function disables GateA20
-;
-; Input:    None
-;
-; Output:   None
-;
-; Modified: None
-;
-;----------------------------------------------------------------------------
-;<AMI_PHDR_END>
-
-DisblGateA20 PROC NEAR PUBLIC
-
-        push    ax
-        mov     al,00h
-        out     92h, al
-
-; Check the GA20 status..
-; Compare 256bytes at 0:0 with FFFF:10
-; If match, GA20 is disabled else GA20 is enabled.
-        push    di
-        push    es
-        push    ds
-        push    0000h
-        pop     ds                      ; DS = 0000.
-        push    0FFFFh
-        pop     es                      ; ES = FFFF.
-        mov     cx, 100h / 4            ; Number of Dwords in 256bytes.
-        xor     si, si
-        mov     di, 0010h
-        repz    cmpsd
-        pop     ds
-        pop     es
-        pop     di                      ;Descriptor table index in di 
-
-        jz      dg20_end
-
-        mov     al, 0DDh                ; Data for output port to disables A20.
-        out     60h, al
-        mov     al, 0D1h
-        out     64h, al
-
-dg20_end:
-        pop	ax
-
-        ret
-
-DisblGateA20 ENDP
 
 ;<AMI_PHDR_START>
 ;----------------------------------------------------------------------------
@@ -1041,7 +510,6 @@ ENDIF
 
 AhciDataStart   label word
 AhciAccess AHCI_ACCESS (MKF_AHCI_CONTROLLER_COUNT) dup (<>)
-           AHCI_ACCESS (1) dup (<0ffffh,0ffffh,0ffffffffh>)
 
 OEM16_CSEG ENDS
 
@@ -1049,7 +517,7 @@ END
 ;****************************************************************************
 ;****************************************************************************
 ;**                                                                        **
-;**             (C)Copyright 1985-2014, American Megatrends, Inc.          **
+;**             (C)Copyright 1985-2012, American Megatrends, Inc.          **
 ;**                                                                        **
 ;**                          All Rights Reserved.                          **
 ;**                                                                        **
