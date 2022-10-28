@@ -233,7 +233,7 @@
 "MdePkg\IaMde.cif"= "SS: AptioV;$/AptioV/Source/Interfaces/MdePkg;MdePkg_07"
 "MdePkg\Library\IaLibraryInstances.cif"= "SS: AptioV;$/AptioV/Source/Interfaces/MdePkg/Library;MdePkg_07"
 "MdeModulePkg\Universal\PcatSingleSegmentPciCfg2Pei\SingleSegmentPciCfg2.cif"= "SS: AptioV;$/AptioV/Source/Modules/SingleSegmentPciCfg2;SingleSegmentPciCfg2_01"
-"AmiModulePkg\AtaPassThru\AtaPassThru.cif"= "SS: AptioV;$/AptioV/Source/Modules/AtaPassThru;5.004_AtaPassThru_03"
+
 "AmiModulePkg\BlockS3Var\BlockS3Var.cif"= "SS: AptioV;$/AptioV/Source/Modules/BlockS3Var;BlockS3Var_00"
 "AmiModulePkg\CSM\Csm.cif"= "SS: AptioV;$/AptioV/Source/Modules/Csm;Csm_7.76_05"
 "AmiModulePkg\CSM\CsmPolicy\CsmSetup.cif"= "SS: AptioV;$/AptioV/Source/Modules/Csm/CsmPolicy;Csm_7.76_05"
