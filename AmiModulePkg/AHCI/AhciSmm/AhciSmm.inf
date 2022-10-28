@@ -1,16 +1,10 @@
-#*************************************************************************
-#*************************************************************************
-#**                                                                     **
-#**        (C)Copyright 1985-2014, American Megatrends, Inc.            **
-#**                                                                     **
-#**                       All Rights Reserved.                          **
-#**                                                                     **
-#**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093           **
-#**                                                                     **
-#**                       Phone: (770)-246-8600                         **
-#**                                                                     **
-#*************************************************************************
-#*************************************************************************
+#***********************************************************************
+#*                                                                     *
+#*   Copyright (c) 1985-2020, American Megatrends International LLC.   *
+#*                                                                     *
+#*      All rights reserved. Subject to AMI licensing agreement.       *
+#*                                                                     *
+#***********************************************************************
 ## @file
 # Produces the Ahci Smm Protocol
 ##
@@ -29,7 +23,6 @@
 
 [Packages]
   MdePkg/MdePkg.dec
-  IntelFrameworkPkg/IntelFrameworkPkg.dec
   AmiCompatibilityPkg/AmiCompatibilityPkg.dec
   AmiModulePkg/AmiModulePkg.dec
 
@@ -48,20 +41,3 @@
   
 [Depex]
   gEfiSmmBase2ProtocolGuid
-
-[BuildOptions.X64]
-  *_*_X64_CC_FLAGS = /D EFIx64 
-
-#*************************************************************************
-#*************************************************************************
-#**                                                                     **
-#**        (C)Copyright 1985-2014, American Megatrends, Inc.            **
-#**                                                                     **
-#**                       All Rights Reserved.                          **
-#**                                                                     **
-#**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093           **
-#**                                                                     **
-#**                       Phone: (770)-246-8600                         **
-#**                                                                     **
-#*************************************************************************
-#*************************************************************************

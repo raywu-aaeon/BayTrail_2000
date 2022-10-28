@@ -117,7 +117,9 @@ typedef struct _AHCI_COMMAND_TABLE_NO_PRDT{
 #pragma pack()
 
 #define     ATA_SIGNATURE_32                0x00000101
-#define     ATAPI_SIGNATURE_32              0xEB140101
+#ifndef     ATAPI_SIGNATURE_32 
+#define         ATAPI_SIGNATURE_32              0xEB140101
+#endif
 #define     PMPORT_SIGNATURE                0x96690101
 #define     PRD_MAX_DATA_COUNT              0x400000
 
@@ -394,13 +396,13 @@ typedef struct _AHCI_COMMAND_TABLE_NO_PRDT{
             HBA_WRITE_REG32(pAhciBusInterface, Register, ((HBA_REG32 ((pAhciBusInterface), (Register))) & ((UINT32) (AndData))))
 
 #define     HBA_REG8_AND_OR( pAhciBusInterface, Register, AndData, OrData) \
-            HBA_WRITE_REG8(pAhciBusInterface, Register, ((HBA_REG8 ((pAhciBusInterface), (Register))) & ((UINT8) (AndData)) | ((UINT8) (OrData))))
+            HBA_WRITE_REG8(pAhciBusInterface, Register, ((HBA_REG8 (pAhciBusInterface,  Register) & (UINT8) AndData )| (UINT8) OrData))
 
 #define     HBA_REG16_AND_OR( pAhciBusInterface, Register, AndData, OrData) \
-            HBA_WRITE_REG16(pAhciBusInterface, Register, ((HBA_REG16 ((pAhciBusInterface), (Register))) & ((UINT16) (AndData)) | ((UINT16) (OrData))))
+            HBA_WRITE_REG16(pAhciBusInterface, Register, ((HBA_REG16 (pAhciBusInterface, Register) & (UINT16) AndData) | (UINT16) OrData))
 
 #define     HBA_REG32_AND_OR( pAhciBusInterface, Register,AndData,  OrData) \
-            HBA_WRITE_REG32(pAhciBusInterface, Register, ((HBA_REG32 ((pAhciBusInterface), (Register))) & ((UINT32) (AndData)) | ((UINT32) (OrData))))
+            HBA_WRITE_REG32(pAhciBusInterface, Register, ((HBA_REG32 (pAhciBusInterface, Register) & (UINT32) AndData) | (UINT32) OrData))
   
 //Ports
 #define     HBA_PORT_REG8(pAhciBusInterface, Port, Register) \
@@ -493,13 +495,12 @@ typedef struct _AHCI_COMMAND_TABLE_NO_PRDT{
             SMM_HBA_WRITE_REG32(BaseAddr, Register, ((SMM_HBA_REG32 ((BaseAddr), (Register))) & ((UINT32) (AndData))))
 
 #define     SMM_HBA_REG8_AND_OR( BaseAddr, Register, AndData, OrData) \
-            SMM_HBA_WRITE_REG8(BaseAddr, Register, ((SMM_HBA_REG8 ((BaseAddr), (Register))) & ((UINT8) (AndData)) | ((UINT8) (OrData))))
-
+            SMM_HBA_WRITE_REG8(BaseAddr, Register, ((SMM_HBA_REG8 (BaseAddr,  Register) & (UINT8) AndData) | (UINT8) OrData))
 #define     SMM_HBA_REG16_AND_OR( BaseAddr, Register, AndData, OrData) \
-            SMM_HBA_WRITE_REG16(BaseAddr, Register, ((SMM_HBA_REG16 ((BaseAddr), (Register))) & ((UINT16) (AndData)) | ((UINT16) (OrData))))
+            SMM_HBA_WRITE_REG16(BaseAddr, Register, ((SMM_HBA_REG16 (BaseAddr,  Register) & (UINT16) AndData )| (UINT16) OrData))
 
 #define     SMM_HBA_REG32_AND_OR( BaseAddr, Register,AndData,  OrData) \
-            SMM_HBA_WRITE_REG32(BaseAddr, Register, ((SMM_HBA_REG32 ((BaseAddr), (Register))) & ((UINT32) (AndData)) | ((UINT32) (OrData))))
+            SMM_HBA_WRITE_REG32(BaseAddr, Register, ((SMM_HBA_REG32 (BaseAddr,  Register) & (UINT32) AndData) | (UINT32) OrData))
   
 //Ports
 #define     SMM_HBA_PORT_REG8(BaseAddr, Port, Register) \

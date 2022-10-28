@@ -1,16 +1,10 @@
-//**********************************************************************
-//**********************************************************************
-//**                                                                  **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
-//**                                                                  **
-//**                       All Rights Reserved.                       **
-//**                                                                  **
-//**         5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093     **
-//**                                                                  **
-//**                       Phone: (770)-246-8600                      **
-//**                                                                  **
-//**********************************************************************
-//**********************************************************************
+//***********************************************************************
+//*                                                                     *
+//*   Copyright (c) 1985-2019, American Megatrends International LLC.   *
+//*                                                                     *
+//*      All rights reserved. Subject to AMI licensing agreement.       *
+//*                                                                     *
+//***********************************************************************
 
 /** @file AhciController.c
     Provides Access to AHCI Controller
@@ -35,18 +29,25 @@ UINT64  gFisBaseAddress;
 extern  AHCI_PLATFORM_POLICY_PROTOCOL   *AhciPlatformPolicy;;
 
 /**
-    Read from the Sata ATA Device
+    Read from the Sata ATA device 
 
-    @param This 
-    @param MediaId 
-    @param IN EFI_LBA                      LBA,
-    @param BufferSize 
-    @param Buffer 
+    @param  This       Protocol instance pointer.
+    @param  MediaId    Id of the media, changes every time the media is replaced.
+    @param  Lba        The starting Physical Block Address to read from
+    @param  BufferSize Size of Buffer, must be a multiple of device block size.
+    @param  Buffer     Buffer containing read data
 
-    @retval EFI_STATUS
+    @retval EFI_SUCCESS           The data was read correctly from the device.
+    @retval EFI_DEVICE_ERROR      The device reported an error while performing the read.
+    @retval EFI_NO_MEDIA          There is no media in the device.
+    @retval EFI_MEDIA_CHANGED     The MediaId does not matched the current device.
+    @retval EFI_BAD_BUFFER_SIZE   The Buffer was not a multiple of the block size of the device.
+    @retval EFI_INVALID_PARAMETER The read request contains device addresses that are not
+                                  valid for the device.
 
 **/
 EFI_STATUS
+EFIAPI 
 SataBlkRead (
     IN EFI_BLOCK_IO_PROTOCOL    *This,
     IN UINT32                   MediaId,
@@ -55,23 +56,35 @@ SataBlkRead (
     OUT VOID                    *Buffer
 )
 {
-    return SataAtaBlkReadWrite(This, MediaId, LBA, BufferSize, Buffer, 0);
+    EFI_STATUS               Status ;
+    Status = SataAtaBlkReadWrite(This, MediaId, LBA, BufferSize, Buffer, 0);
+
+    DEBUG (( DEBUG_BLKIO, " AHCI: SataBlkRead Status %x\n",Status ));
+
+    return Status;
 }
 
 /**
-    Write to Sata ATA Device
+    Write to the Sata ATA device 
 
-    @param This 
-    @param MediaId 
-    @param IN EFI_LBA                      LBA,
-    @param BufferSize 
-    @param Buffer 
+    @param[in]  This       Protocol instance pointer.
+    @param[in]  MediaId    Id of the media, changes every time the media is replaced.
+    @param[in]  Lba        The starting Physcial Block Address to read from
+    @param[in]  BufferSize Size of Buffer, must be a multiple of device block size.
+    @param[in]  Buffer     Buffer containing data to be written to device.
 
-    @retval EFI_STATUS
+    @retval EFI_SUCCESS           The data was written correctly to the device.
+    @retval EFI_WRITE_PROTECTED   The device can not be written to.
+    @retval EFI_DEVICE_ERROR      The device reported an error while performing the write.
+    @retval EFI_NO_MEDIA          There is no media in the device.
+    @retval EFI_MEDIA_CHNAGED     The MediaId does not matched the current device.
+    @retval EFI_BAD_BUFFER_SIZE   The Buffer was not a multiple of the block size of the device.
+    @retval EFI_INVALID_PARAMETER The write request contains a LBA that is not
+                                  valid for the device.
 
 **/
-
 EFI_STATUS
+EFIAPI 
 SataBlkWrite (
     IN EFI_BLOCK_IO_PROTOCOL    *This,
     IN UINT32                   MediaId,
@@ -80,8 +93,8 @@ SataBlkWrite (
     OUT VOID                    *Buffer
 )
 {
+    EFI_STATUS               Status ;
 #if BOOT_SECTOR_WRITE_PROTECT
-    EFI_STATUS  Status;
     
     if(AmiBlkWriteProtection != NULL) {
         // Get user input
@@ -98,25 +111,22 @@ SataBlkWrite (
     }
 #endif
 
-    return SataAtaBlkReadWrite(This, MediaId, LBA, BufferSize, Buffer, 1);
+    Status = SataAtaBlkReadWrite(This, MediaId, LBA, BufferSize, Buffer, 1);
+
+    DEBUG ((DEBUG_BLKIO, " AHCI: SataBlkWrite Status %x\n",Status ));
+
+    return Status;
 }
 
-/**
+/** @internal
     Read/Write to/from Sata ATA Device
-
-    @param This 
-    @param MediaId 
-    @param IN EFI_LBA                      LBA,
-    @param BufferSize 
-    @param Buffer 
-    @param BOOLEAN                         READWRITE
-
-    @retval EFI_STATUS
+    @return EFI_STATUS based on the BlockIo Read/Write Status
 
     @note  
       1. Check for validity of the input
       2. Issue DMA or PIO Read/Write call.
 
+    @endinternal
 **/
 
 EFI_STATUS
@@ -134,6 +144,10 @@ SataAtaBlkReadWrite (
     EFI_BLOCK_IO_MEDIA       *BlkMedia = This->Media;
     UINTN                    DataN;
     UINTN                    BufferAddress;
+
+
+    DEBUG (( DEBUG_BLKIO, " AHCI: Sata Block Ata Read/Write : MediaId :%x BufferSize :%x Buffer :%x READWRITE :%x \n",
+                              MediaId, BufferSize, Buffer, READWRITE ));
 
     // Check if Media ID matches
     if (BlkMedia->MediaId != MediaId) return EFI_MEDIA_CHANGED;
@@ -160,14 +174,13 @@ SataAtaBlkReadWrite (
     DataN = BufferSize / BlkMedia->BlockSize;
     if (LBA + DataN > BlkMedia->LastBlock + 1) return EFI_INVALID_PARAMETER;
 
-    #if IDEBUSMASTER_SUPPORT
-    if (DMACapable(SataDevInterface)) {     
-    Status = SataReadWriteBusMaster (SataDevInterface, Buffer, BufferSize, LBA, 
+	//If DMA commands are supported, then it will be always enabled for the device.
+    if (DMACapable(SataDevInterface)) {  
+        Status = SataReadWriteBusMaster (SataDevInterface, Buffer, BufferSize, LBA, 
                         READWRITE ? SataDevInterface->WriteCommand : SataDevInterface->ReadCommand, 
                         READWRITE);
         return Status;
     }
-    #endif
 
     Status = SataReadWritePio (SataDevInterface, Buffer, BufferSize, LBA, 
                         READWRITE ? SataDevInterface->WriteCommand : SataDevInterface->ReadCommand, 
@@ -177,19 +190,25 @@ SataAtaBlkReadWrite (
 }
 
 /**
-    Read from the Sata ATAPI Device
+  Read from the Sata ATAPI device 
 
-    @param This 
-    @param MediaId 
-    @param IN EFI_LBA                      LBA,
-    @param BufferSize 
-    @param Buffer 
+    @param  This       Protocol instance pointer.
+    @param  MediaId    Id of the media, changes every time the media is replaced.
+    @param  Lba        The starting Physical Block Address to read from
+    @param  BufferSize Size of Buffer, must be a multiple of device block size.
+    @param  Buffer     Buffer containing read data
 
-    @retval EFI_STATUS
+    @retval EFI_SUCCESS           The data was read correctly from the device.
+    @retval EFI_DEVICE_ERROR      The device reported an error while performing the read.
+    @retval EFI_NO_MEDIA          There is no media in the device.
+    @retval EFI_MEDIA_CHANGED     The MediaId does not matched the current device.
+    @retval EFI_BAD_BUFFER_SIZE   The Buffer was not a multiple of the block size of the device.
+    @retval EFI_INVALID_PARAMETER The read request contains device addresses that are not
+                                  valid for the device.
 
 **/
-
 EFI_STATUS
+EFIAPI 
 SataAtapiBlkRead(
     IN EFI_BLOCK_IO_PROTOCOL    *This,
     IN UINT32                   MediaId,
@@ -198,23 +217,35 @@ SataAtapiBlkRead(
     OUT VOID                    *Buffer
  )
 {
-    return SataAtapiBlkReadWrite(This, MediaId, LBA, BufferSize, Buffer, 0);
+    EFI_STATUS               Status ;
+    Status = SataAtapiBlkReadWrite(This, MediaId, LBA, BufferSize, Buffer, 0);
+
+    DEBUG (( DEBUG_BLKIO, " AHCI: SataAtapiBlkRead Status %x\n",Status ));
+
+    return Status;
 }
 
 /**
-    Write to Sata ATAPI Device
+    Write to the Sata ATAPI device 
 
-    @param This 
-    @param MediaId 
-    @param IN EFI_LBA                      LBA,
-    @param BufferSize 
-    @param Buffer 
+    @param[in]  This       Protocol instance pointer.
+    @param[in]  MediaId    Id of the media, changes every time the media is replaced.
+    @param[in]  Lba        The starting Physcial Block Address to read from
+    @param[in]  BufferSize Size of Buffer, must be a multiple of device block size.
+    @param[in]  Buffer     Buffer containing data to be written to device.
 
-    @retval EFI_STATUS
+    @retval EFI_SUCCESS           The data was written correctly to the device.
+    @retval EFI_WRITE_PROTECTED   The device can not be written to.
+    @retval EFI_DEVICE_ERROR      The device reported an error while performing the write.
+    @retval EFI_NO_MEDIA          There is no media in the device.
+    @retval EFI_MEDIA_CHNAGED     The MediaId does not matched the current device.
+    @retval EFI_BAD_BUFFER_SIZE   The Buffer was not a multiple of the block size of the device.
+    @retval EFI_INVALID_PARAMETER The write request contains a LBA that is not
+                                  valid for the device.
 
 **/
-
 EFI_STATUS
+EFIAPI 
 SataAtapiBlkWrite (
     IN EFI_BLOCK_IO_PROTOCOL    *This,
     IN UINT32                   MediaId,
@@ -223,26 +254,24 @@ SataAtapiBlkWrite (
     OUT VOID                    *Buffer
 )
 {
-    return SataAtapiBlkReadWrite(This, MediaId, LBA, BufferSize, Buffer, 1);
+    EFI_STATUS               Status ;
+    Status = SataAtapiBlkReadWrite(This, MediaId, LBA, BufferSize, Buffer, 1);
+
+    DEBUG (( DEBUG_BLKIO, " AHCI: SataAtapiBlkWrite Status %x\n",Status ));
+
+    return Status;
 }
 
-/**
+/** @internal
     Read/Write to/from Sata ATAPI Device
-
-        
-    @param This 
-    @param MediaId 
-    @param IN EFI_LBA                      LBA,
-    @param BufferSize 
-    @param Buffer 
-
-    @retval EFI_STATUS
+    @return EFI_STATUS based on the BlockIo Read/Write Status
 
     @note  
       1. Check for validity of Inputs
       2. Check whether Media is present or not
       3. Issue ATAPi Packet command
 
+    @endinternal
 **/
 EFI_STATUS
 SataAtapiBlkReadWrite(
@@ -265,7 +294,10 @@ SataAtapiBlkReadWrite(
     UINTN                    BytesRemainingTobeRead;
     VOID                     *TempBuffer = Buffer;
     UINTN                    BufferAddress;
+    
 
+    DEBUG (( DEBUG_BLKIO, " AHCI: Sata Block Atapi Read/Write : MediaId :%x BufferSize :%x Buffer :%x READWRITE :%x \n",
+                               MediaId, BufferSize, Buffer, READWRITE ));
 
     //  Check if Media Present
     if (BlkMedia->MediaPresent == FALSE) {
@@ -277,9 +309,26 @@ SataAtapiBlkReadWrite(
 
     //  Check if Media ID matches
     if (BlkMedia->MediaId != MediaId) return EFI_MEDIA_CHANGED;
-
-    if (BufferSize == 0) return EFI_SUCCESS;
-
+    
+    //  Check for Valid BufferSize,Buffer,start LBA #
+    if (BufferSize == 0 || Buffer == NULL || LBA > BlkMedia->LastBlock){
+        
+        // Check if Media present
+        Status = TestUnitReady(SataDevInterface);
+          
+        // check for Valid start LBA #
+        if ((Status == EFI_SUCCESS && LBA > BlkMedia->LastBlock )) {
+            return EFI_INVALID_PARAMETER;
+        }
+        
+        if (SataDevInterface->AtapiDevice->Atapi_Status == MEDIUM_NOT_PRESENT){
+            SataDevInterface->SataBlkIo->BlkIo.Media->MediaPresent = FALSE;
+            return EFI_NO_MEDIA;
+        }
+        
+        return EFI_MEDIA_CHANGED;  
+    }
+    
     // If IoAlign values is 0 or 1, means that the buffer can be placed
     // anywhere in memory or else IoAlign value should be power of 2. To be
     // properly aligned the buffer address should be divisible by IoAlign
@@ -292,10 +341,8 @@ SataAtapiBlkReadWrite(
     //  Check whether the block size is multiple of BlkMedia->BlockSize
     DataN = BufferSize % BlkMedia->BlockSize;
     if (DataN) return EFI_BAD_BUFFER_SIZE;
+    
 
-    //  Check for Valid start LBA #
-
-    if (LBA > BlkMedia->LastBlock) return EFI_INVALID_PARAMETER;
 
     //  Check for Valid End LBA #8
     DataN = BufferSize / BlkMedia->BlockSize;
@@ -360,16 +407,19 @@ SataAtapiBlkReadWrite(
 }
 
 /**
-    Reset ATA device
+    Reset the Block Device.
 
-    @param This 
-    @param ExtendedVerification 
+    @param  This                 Protocol instance pointer.
+    @param  ExtendedVerification Driver may perform diagnostics on reset.
 
-    @retval EFI_STATUS
+    @retval EFI_SUCCESS          The device was reset.
+    @retval EFI_DEVICE_ERROR     The device is not functioning properly and could
+                               not be reset.
 
 **/
 
 EFI_STATUS
+EFIAPI 
 SataReset (
     IN EFI_BLOCK_IO_PROTOCOL    *This,
     IN BOOLEAN                  ExtendedVerification
@@ -379,45 +429,73 @@ SataReset (
 }
 
 /**
-    Flush the cache
-        
-    @param This 
+    Flush the Block Device.
 
-    @retval EFI_STATUS
+    @param  This              Protocol instance pointer.
+
+    @retval EFI_SUCCESS       All outstanding data was written to the device
+    @retval EFI_DEVICE_ERROR  The device reported an error while writting back the data
+    @retval EFI_NO_MEDIA      There is no media in the device.
 
 **/
 
 EFI_STATUS
+EFIAPI 
 SataBlkFlush (
     IN EFI_BLOCK_IO_PROTOCOL    *This
 )
 {
-    return EFI_SUCCESS;
+    EFI_STATUS             Status = EFI_SUCCESS;
+    COMMAND_STRUCTURE      CommandStructure;
+    SATA_DEVICE_INTERFACE  *SataDevInterface = NULL;
+    
+    SataDevInterface = ((SATA_BLOCK_IO *)This)->SataDevInterface;
+    
+    ZeroMemory(&CommandStructure, sizeof(COMMAND_STRUCTURE)); 
+    
+    if(SataDevInterface->DeviceType == ATA) {
+        if (SataDevInterface->IdentifyData.Command_Set_Supported_83 & 0x400) {
+            // 48Bit LBA Supported
+            CommandStructure.Command = FLUSH_CACHE_EXT;
+        } else {
+            CommandStructure.Command = FLUSH_CACHE;
+        }
+        Status = ExecuteNonDataCommand (SataDevInterface, CommandStructure);
+    } else if(SataDevInterface->DeviceType == ATAPI) {
+        if (SataDevInterface->IdentifyData.Command_Set_Supported_83 & 0x1000) {
+            // Flush Cache command supported
+            CommandStructure.Command = FLUSH_CACHE;
+            Status = ExecuteNonDataCommand (SataDevInterface, CommandStructure);
+        }
+    }
+    
+    return Status;
 }
-
 
 /**
     Issues Read/Write Command and Read/Write the data from/to the ATA device
 
-        
-    @param IdeBusInterface 
-    @param Buffer 
-    @param UINTN                           ByteCount,
-    @param UINT64                          LBA
-    @param ReadWriteCommand 
-    @param ReadWrite Read/Write = 0/1
+    @param[in]  SataDevInterface       Protocol instance pointer.
+    @param[in]  Buffer     Buffer containing command data to be written to device.
+    @param[in]  ByteCount  Size of the command data buffer
+    @param[in]  Lba        The starting Physcial Block Address to read from
+    @param[in]  ReadWriteCommand    The command to be send to the device 
+    @param[in]  ReadWrite  Is the command Read or write command for the device 
+    
 
-    @retval *Buffer, EFI_STATUS
+    @retval EFI_SUCCESS           The command has been send successfully 
+    @retval EFI_DEVICE_ERROR      The device reported an error while performing the command.
 
     @note  
-  1. Get the Max. number of sectors that can be Read/written in one Read/Write PIO command
-  2. Update the Command Structure
-  3. Issue ExecutePioDataCommand.
-  4. If all the bytes are read exit else goto step 2 
+    1. Get the Max. number of sectors that can be Read/written in one Read/Write PIO command
+    2. Update the Command Structure
+    3. Issue ExecutePioDataCommand.
+    4. If all the bytes are read exit else goto step 2 
 
 **/
 
 EFI_STATUS
+EFIAPI 
 SataReadWritePio (
     IN SATA_DEVICE_INTERFACE    *SataDevInterface,
     IN OUT VOID                 *Buffer,
@@ -434,6 +512,11 @@ SataReadWritePio (
     COMMAND_STRUCTURE    CommandStructure;
     UINT32               SectorSize = ATA_SECTOR_BYTES;
     UINT8                *TempBuffer = Buffer;
+    
+
+    DEBUG (( DEBUG_BLKIO, " AHCI: Sata Pio Read/Write : Buffer :%x ByteCount :%x LBA :%lx ReadWriteCommand :%x READWRITE %x \n ",
+                            Buffer, ByteCount, LBA, ReadWriteCommand, READWRITE ));
+
     if (Check48BitCommand(ReadWriteCommand)) 
         MaxSectorCount = MAX_SECTOR_COUNT_PIO_48BIT;
     else 
@@ -482,7 +565,7 @@ SataReadWritePio (
         Status = ExecutePioDataCommand (SataDevInterface, &CommandStructure, READWRITE); // Returns # of bytes read
 
         if (EFI_ERROR(Status)) { 
-            return EFI_DEVICE_ERROR; 
+            return Status; 
         }
 
         TempBuffer += CommandStructure.ByteCount;
@@ -496,41 +579,27 @@ SataReadWritePio (
     Issues Read/Write Command with SubCommand feature
     and Reads/Writes data to the ATA device.
 
-        
-    @param SataDevInterface 
-    @param Buffer 
-    @param ByteCount 
-    @param Features 
-    @param LBALow 
-    @param LBALowExp 
-    @param LBAMid 
-    @param LBAMidExp 
-    @param LBAHigh 
-    @param LBAHighExp 
-    @param ReadWriteCommand 
-    @param IN BOOLEAN                      READWRITE
 
-    @retval EFI_STATUS
+    @param[in]  SataDevInterface    Protocol instance pointer.
+    @param[in]  CommandStructure    CommandStructure has the all details about the command 
+                                    that has to be passed to device 
+    @param[in]  ReadWrite           Is the command Read or write command for the device 
+    
+
+    @retval EFI_SUCCESS           The command has been send successfully 
+    @retval EFI_DEVICE_ERROR      The device reported an error while performing the command.
+
 
     @note  
-  1. Get the Max. number of sectors that can be transferred in one Read/Write PIO command
-  2. Update the Command Structure
-  3. Issue ExecutePioDataCommand.
-
+    1. Get the Max. number of sectors that can be transferred in one Read/Write PIO command
+    2. Update the Command Structure
+    3. Issue ExecutePioDataCommand.
 **/
-
-EFI_STATUS SataPioDataOut (
+EFI_STATUS 
+EFIAPI 
+SataPioDataOut (
     IN SATA_DEVICE_INTERFACE    *SataDevInterface,
-    IN OUT VOID                 *Buffer,
-    IN UINTN                    ByteCount,
-    IN UINT8                    Features,
-    IN UINT8                    LBALow,
-    IN UINT8                    LBALowExp,
-    IN UINT8                    LBAMid,
-    IN UINT8                    LBAMidExp,
-    IN UINT8                    LBAHigh,
-    IN UINT8                    LBAHighExp,
-    IN UINT8                    ReadWriteCommand,
+    IN COMMAND_STRUCTURE        CommandStructure,
     IN BOOLEAN                  READWRITE
 )
 {
@@ -538,90 +607,77 @@ EFI_STATUS SataPioDataOut (
     UINT32               SectorCount;
     INT64                MaxSectorCount;
     INT64                Total_Number_Of_Sectors;
-    COMMAND_STRUCTURE    CommandStructure;
     UINT32               SectorSize = ATA_SECTOR_BYTES;
     UINT64               LBAHighDword = 0;
-
-    if (Check48BitCommand(ReadWriteCommand)) { 
+    
+    if (Check48BitCommand(CommandStructure.Command)) { 
         MaxSectorCount = MAX_SECTOR_COUNT_PIO_48BIT;
         //	if 48 Bit LBA form Upper Dword
-        LBAHighDword |= LBAHighExp;
-        LBAHighDword = ( Shl64(( Shl64( LBAHighDword, 8)| LBAMidExp), 8)| LBALowExp);
+        LBAHighDword |= CommandStructure.LBAHighExp;
+        LBAHighDword = ( Shl64(( Shl64( LBAHighDword, 8)| CommandStructure.LBAMidExp), 8)| CommandStructure.LBALowExp);
     } else { 
         MaxSectorCount = MAX_SECTOR_COUNT_PIO;
     }
-
+    
     // Calculate Sector Size
     if((SataDevInterface->IdentifyData.Reserved_104_126[2] & BIT14) && // WORD 106 valid? - BIT 14 - 1
        (!(SataDevInterface->IdentifyData.Reserved_104_126[2] & BIT15)) && // WORD 106 valid? - BIT 15 - 0
        (SataDevInterface->IdentifyData.Reserved_104_126[2] & BIT12)) { // WORD 106 bit 12 - Sectorsize > 256 words
+
         // The sector size is in words 117-118.
         SectorSize = (UINT32)(SataDevInterface->IdentifyData.Reserved_104_126[13] + \
                               (SataDevInterface->IdentifyData.Reserved_104_126[14] << 16)) * 2;
     }
 
-    if (SectorSize > ByteCount) SectorSize = (UINT32)ByteCount;
+    if (SectorSize > CommandStructure.ByteCount) {
+         SectorSize = (UINT32)CommandStructure.ByteCount;
+    }
 
     // Calculate the total number of Sectors to be transferred
-    Total_Number_Of_Sectors = ByteCount / SectorSize ;
+    Total_Number_Of_Sectors = CommandStructure.ByteCount / SectorSize ;
 
     for ( ;Total_Number_Of_Sectors > 0; Total_Number_Of_Sectors -= MaxSectorCount) {
 
-        if ( Total_Number_Of_Sectors > MaxSectorCount ) SectorCount = 0;
-        else SectorCount = (UINT32) Total_Number_Of_Sectors;
-
-        ZeroMemory (&CommandStructure, sizeof(COMMAND_STRUCTURE));
-
-        if (Check48BitCommand (ReadWriteCommand)) {
-            // If 48Bit LBA then form Upper DWord  
-            CommandStructure.LBALowExp  = LBALowExp;
-            CommandStructure.LBAMidExp  = LBAMidExp;
-            CommandStructure.LBAHighExp = LBAHighExp;
-            CommandStructure.Device     = 0x40;
-        } else {                                                              // 28 Bit LBA
-            CommandStructure.Device = ((UINT8) LBAHigh & 0x0f) | 0x40;   
+        if ( Total_Number_Of_Sectors > MaxSectorCount ) {
+            SectorCount = 0;
+        } else {
+            SectorCount = (UINT32) Total_Number_Of_Sectors;
         }
 
-        CommandStructure.Features    = Features;                            // SubCommand
+        if (Check48BitCommand (CommandStructure.Command)) {
+            // If 48Bit LBA then form Upper DWord  
+            CommandStructure.Device     = 0x40;
+        } else {      
+            // 28 Bit LBA
+            CommandStructure.Device = ((UINT8) CommandStructure.LBAHigh & 0x0f) | 0x40;   
+        }
+
         CommandStructure.SectorCount = (UINT16) SectorCount;
-        CommandStructure.LBALow      = LBALow;
-        CommandStructure.LBAMid      = LBAMid;
-        CommandStructure.LBAHigh     = LBAHigh;
-        CommandStructure.Command     = ReadWriteCommand;
-
-        CommandStructure.Buffer    = Buffer;
         CommandStructure.ByteCount = (UINT32)(SectorCount == 0 ? MaxSectorCount : Total_Number_Of_Sectors) * SectorSize ;
-
+  
         Status = ExecutePioDataCommand (SataDevInterface, &CommandStructure, READWRITE); // Returns # of bytes read
-        if (EFI_ERROR(Status)) return EFI_DEVICE_ERROR;
-
-        SectorCount = CommandStructure.ByteCount / SectorSize ;
+        if (EFI_ERROR(Status)) {
+            return Status;
+        }
     }
     return EFI_SUCCESS;
 }
 
-/**
+
+/** @internal
     Issues Read/Write Command and Read/Write the data from/to the ATA device
     using BusMaster
-
         
-    @param SATA_DEVICE_INTERFACE           *SataDevInterface,
-    @param Buffer 
-    @param ByteCount 
-    @param IN UINT64                       LBA,
-    @param ReadWriteCommand 
-    @param IN BOOLEAN                      READWRITE
-
-    @retval EFI_STATUS
+    @return     Based on the command processed by controller the return 
+                status returned in EFI_STATUS
 
     @note  
-  1. Get the Max. number of sectors that can be Read/written in one Read/Write Bus master command
-  2. Update the Command Structure
-  3. Issue ExecutePioDataCommand.
-  4. If all the bytes are read exit else goto step 2 
-
+    1. Get the Max. number of sectors that can be Read/written in one Read/Write Bus master command
+    2. Update the Command Structure
+    3. Issue ExecutePioDataCommand.
+    4. If all the bytes are read exit else goto step 2 
+    @endinternal
 **/
-
 EFI_STATUS
 SataReadWriteBusMaster (
     SATA_DEVICE_INTERFACE    *SataDevInterface,
@@ -638,6 +694,10 @@ SataReadWriteBusMaster (
     UINT8                *TempBuffer = Buffer;
     COMMAND_STRUCTURE    CommandStructure;
     UINT32               SectorSize = ATA_SECTOR_BYTES;
+
+
+    DEBUG (( DEBUG_BLKIO, " AHCI: Sata Master Read/Write : Buffer :%x ByteCount :%x LBA :%lx ReadWriteCommand :%x READWRITE %x\n",
+                               Buffer, ByteCount, LBA, ReadWriteCommand, READWRITE ));
 
     if (Check48BitCommand(ReadWriteCommand)) 
         MaxSectorCount = MAX_SECTOR_COUNT_PIO_48BIT;
@@ -684,7 +744,9 @@ SataReadWriteBusMaster (
         CommandStructure.LBAHigh = (UINT8) (((UINT32)LBA >>16) & 0xff);
 
         Status = ExecuteDmaDataCommand (SataDevInterface, &CommandStructure, READWRITE); // Returns # of bytes read
-        if (EFI_ERROR(Status)) return EFI_DEVICE_ERROR;
+        if (EFI_ERROR(Status)) {
+            return Status;
+        }
 
         CurrentByteCount = CommandStructure.ByteCount;
         CurrentSectorCount = CurrentByteCount / SectorSize;
@@ -699,13 +761,11 @@ SataReadWriteBusMaster (
 
 }
 
-/**
-    Checks if the command is for 48-bit LBA
-
-    @param Command 
-
-    @retval TRUE/FLASE
-
+/** @internal
+    Check if the command is 48-bit LBA command 
+        
+    @return Based on the command code it's return TRUE or FLASE 
+    @endinternal
 **/
 
 BOOLEAN
@@ -742,6 +802,7 @@ Check48BitCommand (
 **/ 
 
 EFI_STATUS
+EFIAPI 
 ExecuteNonDataCommand (
     IN SATA_DEVICE_INTERFACE    *SataDevInterface, 
     IN COMMAND_STRUCTURE        CommandStructure
@@ -751,6 +812,7 @@ ExecuteNonDataCommand (
     AMI_AHCI_BUS_PROTOCOL    *AhciBusInterface = SataDevInterface->AhciBusInterface; 
     AHCI_COMMAND_LIST    *CommandList = (AHCI_COMMAND_LIST *)(UINTN) SataDevInterface->PortCommandListBaseAddr;
     AHCI_COMMAND_TABLE   *Commandtable = (AHCI_COMMAND_TABLE *)(UINTN)AhciBusInterface->PortCommandTableBaseAddr;
+    UINT64               Timeout = 0;
 
     Status = StopController(AhciBusInterface, SataDevInterface,TRUE);
     if (EFI_ERROR(Status)) return Status;
@@ -772,7 +834,13 @@ ExecuteNonDataCommand (
 
     StartController(AhciBusInterface, SataDevInterface, BIT00);
 
-    Status = WaitforCommandComplete(SataDevInterface, NON_DATA_CMD, ATAPI_BUSY_CLEAR_TIMEOUT );
+    if(CommandStructure.Timeout == 0) {
+        Timeout = NON_DATA_COMMAND_COMPLETE_TIMEOUT;
+    } else {
+    	Timeout = CommandStructure.Timeout;
+    }
+    
+    Status = WaitforCommandComplete(SataDevInterface, NON_DATA_CMD, (UINTN)Timeout);
     
     //  Stop Controller
     StopController(AhciBusInterface, SataDevInterface,FALSE);
@@ -834,6 +902,7 @@ MapBusMasterDMAAddress (
 
 **/ 
 EFI_STATUS
+EFIAPI 
 ExecutePioDataCommand (
     IN SATA_DEVICE_INTERFACE    *SataDevInterface, 
     IN OUT COMMAND_STRUCTURE    *CommandStructure,
@@ -847,7 +916,14 @@ ExecutePioDataCommand (
     VOID                     *Mapping=NULL;
     UINTN                    Bytes = CommandStructure->ByteCount;
     EFI_PHYSICAL_ADDRESS     MappedAddr;
-    void                     *InputBuffer;
+    void                     *InputBuffer = NULL;
+    UINT64                   Timeout = 0;
+    
+    if(CommandStructure->Command == SECURITY_ERASE_UNIT) {
+        if(CommandStructure->Buffer == NULL) {
+            return EFI_INVALID_PARAMETER;
+        }
+    }
 
     if(AhciPlatformPolicy->PciMapAddressForDataTransfer) {
         // Find DMA BusMaster Buffer for the Input Buffer using PCIIO Protocol Mapping
@@ -860,10 +936,7 @@ ExecutePioDataCommand (
                                               &MappedAddr,
                                               &Mapping ); 
             if (EFI_ERROR(Status) || Bytes != CommandStructure->ByteCount) {
-                if(Status == EFI_OUT_OF_RESOURCES) {
-                    return EFI_BAD_BUFFER_SIZE;
-                }
-                return EFI_NOT_FOUND;
+                return EFI_BAD_BUFFER_SIZE;
             }
             InputBuffer = (void *)CommandStructure->Buffer;
             CommandStructure->Buffer = (VOID *)MappedAddr;
@@ -895,30 +968,77 @@ ExecutePioDataCommand (
     Commandtable->CFis.Ahci_CFis_C = 1;
 
     StartController(AhciBusInterface, SataDevInterface, BIT00);
-
     // For Security Erase command the time out value comes from Identify Data.    
-    if(CommandStructure->Command == SECURITY_ERASE_UNIT ) {
+    if ((CommandStructure->Buffer != NULL)
+            && (CommandStructure->Command == SECURITY_ERASE_UNIT)) {
         UINT32  EraseCommandTimeout;
+        UINT32  EraseCommandTimeoutMax;
+        UINT16  IdentifyDataEraseModeTimeoutValue;
         UINT8   *Buffer=(UINT8*)CommandStructure->Buffer;
-
-        // BIT:1 of the Buffer[0] refers Enhanced Security Erase Mode.
-        // If this Bit is set, Identify Data Word 90 is used for Erase command timeout
-        // else Word 89 will be used for the timeout.
-        if(Buffer[0] & 2 ) {
-            EraseCommandTimeout= (UINT32)(SataDevInterface->IdentifyData.Time_Esecurity_Earse_90);
-        } else {
-            EraseCommandTimeout= (UINT32)(SataDevInterface->IdentifyData.Time_security_Earse_89);
+        
+        if(SataDevInterface->IdentifyData.Major_Revision_80 & BIT10){ // If supports ACS-3
+            
+            // BIT:1 of the Buffer[0] refers Enhanced Security Erase Mode.
+            // If this Bit is set, Identify Data Word 90 is used for Erase command timeout
+            // else Word 89 will be used for the timeout.
+			
+			if(Buffer[0] & 2 ) {
+                IdentifyDataEraseModeTimeoutValue = SataDevInterface->IdentifyData.Time_Esecurity_Earse_90;
+            } else {
+                IdentifyDataEraseModeTimeoutValue = SataDevInterface->IdentifyData.Time_security_Earse_89;
+            }
+            
+            // The definition of Identify Data Word 90 and Word 89 in ACS-3
+            // Bit 15 is 1=Extended Time is reported in bits 14:0
+            //        is 0=Time is reported in bits 7:0
+            
+            // ACS-3 Table A.40 & Table A.41
+            // Table A.40 - Short format ENHANCED SECURITY ERASE TIME field
+            // Value    Time
+            // 0        Value not specified
+            // 1..254   (Value*2) minutes
+            // 255      >508 minutes
+            //
+            // Table A.41 - Extended format ENHANCED SECURITY ERASE TIME field
+            // Value    Time
+            // 0        Value not specified
+            // 1..32766 (Value*2) minutes
+            // 32767    >65532 minutes
+                      
+            if(IdentifyDataEraseModeTimeoutValue & BIT15){
+                EraseCommandTimeout = (UINT32)(IdentifyDataEraseModeTimeoutValue & 0x7FFF);
+                EraseCommandTimeoutMax = 32766;
+            } else {
+                EraseCommandTimeout = (UINT32)(IdentifyDataEraseModeTimeoutValue & 0xFF);
+                EraseCommandTimeoutMax = 254;
+            }  
+        } else { // Older ATA/ATAPI Spec
+            // BIT:1 of the Buffer[0] refers Enhanced Security Erase Mode.
+            // If this Bit is set, Identify Data Word 90 is used for Erase command timeout
+            // else Word 89 will be used for the timeout.
+            if(Buffer[0] & 2 ) {
+                EraseCommandTimeout = (UINT32)(SataDevInterface->IdentifyData.Time_Esecurity_Earse_90);
+            } else {
+                EraseCommandTimeout = (UINT32)(SataDevInterface->IdentifyData.Time_security_Earse_89);
+            }
+            EraseCommandTimeoutMax = 254;            
         }
-        if(EraseCommandTimeout <= 254) {
-            EraseCommandTimeout=EraseCommandTimeout * 2 * 1000 * 60; //Value * 2Minitues
+        
+        if(EraseCommandTimeout <= EraseCommandTimeoutMax) {
+            EraseCommandTimeout = EraseCommandTimeout * 2 * 1000 * 60; //(Value * 2)Minutes
         } else {
-            EraseCommandTimeout= 0;                                 // No timeout
-        }  
+            EraseCommandTimeout = 0; // Infinite Timeout
+        } 
+        
         Status = WaitforCommandComplete(SataDevInterface, PIO_DATA_IN_CMD, EraseCommandTimeout);
     } else {
-        Status = WaitforCommandComplete(SataDevInterface, PIO_DATA_IN_CMD, 
-                    SataDevInterface->DeviceType == ATA? DMA_ATA_COMMAND_COMPLETE_TIMEOUT \
-                    : DMA_ATAPI_COMMAND_COMPLETE_TIMEOUT );
+        if(CommandStructure->Timeout == 0) {
+            Timeout = SataDevInterface->DeviceType == ATA ? DMA_ATA_COMMAND_COMPLETE_TIMEOUT 
+                                                        : DMA_ATAPI_COMMAND_COMPLETE_TIMEOUT;
+        } else {
+			Timeout = CommandStructure->Timeout;
+		}
+        Status = WaitforCommandComplete(SataDevInterface, PIO_DATA_IN_CMD, (UINTN)Timeout);
     }
 
     CommandStructure->ByteCount = CommandList->Ahci_Cmd_PRDBC;
@@ -963,6 +1083,7 @@ PioError:
 **/ 
 
 EFI_STATUS
+EFIAPI 
 ExecuteDmaDataCommand (
     IN SATA_DEVICE_INTERFACE    *SataDevInterface, 
     IN COMMAND_STRUCTURE        *CommandStructure,
@@ -976,8 +1097,10 @@ ExecuteDmaDataCommand (
     VOID                     *Mapping=NULL;
     UINTN                    Bytes = CommandStructure->ByteCount;
     EFI_PHYSICAL_ADDRESS     MappedAddr;
-    void                     *InputBuffer;
-
+    void                     *InputBuffer = NULL;
+    UINT64                   Timeout = 0;
+   
+    
     if(AhciPlatformPolicy->PciMapAddressForDataTransfer) {
         // Find DMA BusMaster Buffer for the Input Buffer using PCIIO Protocol Mapping
         // if the Input Buffer is not NULL and Bytecount is not Zero
@@ -989,10 +1112,7 @@ ExecuteDmaDataCommand (
                                              &MappedAddr,
                                              &Mapping); 
             if (EFI_ERROR(Status) || Bytes != CommandStructure->ByteCount) {
-                if(Status == EFI_OUT_OF_RESOURCES) {
-                    return EFI_BAD_BUFFER_SIZE;
-                }
-                return EFI_NOT_FOUND;
+                return EFI_BAD_BUFFER_SIZE;
             }
             InputBuffer = (void *)CommandStructure->Buffer;
             CommandStructure->Buffer = (VOID *)MappedAddr;
@@ -1024,14 +1144,21 @@ ExecuteDmaDataCommand (
     Commandtable->CFis.Ahci_CFis_C = 1;
 
     StartController(AhciBusInterface, SataDevInterface, BIT00);
+    
+    if(CommandStructure->Timeout == 0) {
+           Timeout = SataDevInterface->DeviceType == ATA? DMA_ATA_COMMAND_COMPLETE_TIMEOUT \
+                                                    : DMA_ATAPI_COMMAND_COMPLETE_TIMEOUT;
+    } else {
+ 		Timeout = CommandStructure->Timeout;
+	}
 
-    Status = WaitforCommandComplete(SataDevInterface, DMA_DATA_IN_CMD, 
-                    SataDevInterface->DeviceType == ATA? DMA_ATA_COMMAND_COMPLETE_TIMEOUT \
-                    : DMA_ATAPI_COMMAND_COMPLETE_TIMEOUT );
+    Status = WaitforCommandComplete(SataDevInterface, DMA_DATA_IN_CMD, (UINTN)Timeout);
     
     if (!EFI_ERROR(Status)){
+
         //Check if the required BYTES have been received
         if (CommandList->Ahci_Cmd_PRDBC != CommandStructure->ByteCount){
+
             Status = EFI_DEVICE_ERROR;
         }
     }
@@ -1075,6 +1202,7 @@ DmaDataError:
 **/ 
 
 EFI_STATUS 
+EFIAPI 
 ExecutePacketCommand (
     IN SATA_DEVICE_INTERFACE    *SataDevInterface, 
     IN COMMAND_STRUCTURE        *CommandStructure,
@@ -1091,7 +1219,8 @@ ExecutePacketCommand (
     VOID                     *Mapping=NULL;
     UINTN                    Bytes = CommandStructure->ByteCount;
     EFI_PHYSICAL_ADDRESS     MappedAddr;
-    void                     *InputBuffer;
+    void                     *InputBuffer = NULL;
+    UINT64                   Timeout = 0;
 
     if(AhciPlatformPolicy->PciMapAddressForDataTransfer) {
         // Find DMA BusMaster Buffer for the Input Buffer using PCIIO Protocol Mapping
@@ -1106,10 +1235,7 @@ ExecutePacketCommand (
 
             if (EFI_ERROR(Status) || Bytes != CommandStructure->ByteCount) {
                 // return Bad buffer size for SCT to pass in case of insufficient resources.
-                if(Status == EFI_OUT_OF_RESOURCES) {
-                    return EFI_BAD_BUFFER_SIZE;
-                }
-                return EFI_NOT_FOUND;
+                return EFI_BAD_BUFFER_SIZE;
             }
             InputBuffer = (void *)CommandStructure->Buffer;
             CommandStructure->Buffer = (VOID *)MappedAddr;
@@ -1144,9 +1270,13 @@ ExecutePacketCommand (
 
     StartController(AhciBusInterface, SataDevInterface, BIT00);
 
-    Status = WaitforCommandComplete(SataDevInterface, PIO_DATA_IN_CMD, 
-                    SataDevInterface->DeviceType == ATA? DMA_ATA_COMMAND_COMPLETE_TIMEOUT \
-                    : DMA_ATAPI_COMMAND_COMPLETE_TIMEOUT );
+    if(CommandStructure->Timeout == 0) {
+        Timeout = SataDevInterface->DeviceType == ATA? DMA_ATA_COMMAND_COMPLETE_TIMEOUT \
+                                                    : DMA_ATAPI_COMMAND_COMPLETE_TIMEOUT;
+    } else {
+		Timeout = CommandStructure->Timeout;
+	}
+    Status = WaitforCommandComplete(SataDevInterface, PIO_DATA_IN_CMD, (UINTN)Timeout);
 
     // Handle ATAPI device error
     if (EFI_ERROR(Status) && SataDevInterface->DeviceType == ATAPI) {
@@ -1534,27 +1664,24 @@ DetectAtapiMedia (
 
     if (Status == EFI_SUCCESS) {
         if(ReadCapacity == TRUE) {
-            BlkMedia->LastBlock = InputData[0] << 24 | InputData[1] << 16 | InputData[2] << 8 | InputData[3];
-            BlkMedia->LastBlock--; 
+            BlkMedia->LastBlock = ((EFI_LBA)InputData[0] << 24) | ((EFI_LBA)InputData[1] << 16) | ((EFI_LBA)InputData[2] << 8) | InputData[3];
             BlkMedia->MediaPresent = TRUE;
             BlkMedia->MediaId ++;
-            BlkMedia->BlockSize = InputData[4] << 24 | InputData[5] << 16 | InputData[6] << 8 | InputData[7];
-            AtapiDevice->BlockSize = BlkMedia->BlockSize;
+            BlkMedia->BlockSize = ((UINT32)InputData[4] << 24) | ((UINT32)InputData[5] << 16) | ((UINT32)InputData[6] << 8) | InputData[7];
+            AtapiDevice->BlockSize = (UINT16)BlkMedia->BlockSize;
             BlkMedia->ReadOnly = FALSE;
         } else if (AtapiDevice->DeviceType == CDROM_DEVICE) {
-            BlkMedia->LastBlock = InputData[0] << 24 | InputData[1] << 16 | InputData[2] << 8 | InputData[3];
-            BlkMedia->LastBlock--;
+            BlkMedia->LastBlock = ((EFI_LBA)InputData[0] << 24) | ((EFI_LBA)InputData[1] << 16) | ((EFI_LBA)InputData[2] << 8) | InputData[3];
             BlkMedia->BlockSize = CDROM_BLOCK_SIZE;
             AtapiDevice->BlockSize = (UINT16)(BlkMedia->BlockSize);
             BlkMedia->MediaPresent = TRUE;
             BlkMedia->MediaId ++;
             BlkMedia->ReadOnly = TRUE;
         } else if (InputData[8] != 3) {         // No media present
-            BlkMedia->LastBlock = InputData[4] << 24 | InputData[5] << 16 | InputData[6] << 8 | InputData[7];
-            BlkMedia->LastBlock--; 
+            BlkMedia->LastBlock = ((EFI_LBA)InputData[4] << 24) | ((EFI_LBA)InputData[5] << 16) | ((EFI_LBA)InputData[6] << 8) | InputData[7];
             BlkMedia->MediaPresent = TRUE;
             BlkMedia->MediaId ++;
-            BlkMedia->BlockSize = InputData[9] << 16 | InputData[10] << 8 | InputData[11];
+            BlkMedia->BlockSize = ((UINT32)InputData[9] << 16) | ((UINT32)InputData[10] << 8) | InputData[11];
             BlkMedia->ReadOnly = FALSE;
             AtapiDevice->BlockSize = (UINT16)(BlkMedia->BlockSize);
         }
@@ -1818,7 +1945,7 @@ BuildCommandFIS (
     Commandtable->CFis.Ahci_CFis_Control = CommandStructure.Control;    
 
     CommandList->Ahci_Cmd_CFL = FIS_REGISTER_H2D_LENGTH / 4;
-
+    PrintCommandFIS ( CommandStructure ); 
     return EFI_SUCCESS;
 }
 
@@ -1963,6 +2090,7 @@ StartController (
 **/
 
 EFI_STATUS
+EFIAPI 
 WaitforCommandComplete (
     IN SATA_DEVICE_INTERFACE    *SataDevInterface,
     IN COMMAND_TYPE             CommandType,
@@ -1970,15 +2098,20 @@ WaitforCommandComplete (
 )
 {
 
-    AMI_AHCI_BUS_PROTOCOL  *AhciBusInterface = SataDevInterface->AhciBusInterface; 
+    AMI_AHCI_BUS_PROTOCOL       *AhciBusInterface = SataDevInterface->AhciBusInterface; 
     UINT8                       Port = SataDevInterface->PortNumber;
-    UINT32                      Data32_SERR, Data32_IS, i;
+    UINT32                      Data32_SERR, Data32_IS = 0, Data32_CI;
+    UINT32                      i=1;
     BOOLEAN                     PxSERR_ERROR = FALSE, PIO_SETUP_FIS = FALSE;
     volatile AHCI_RECEIVED_FIS  *FISReceiveAddress = (AHCI_RECEIVED_FIS *)(UINTN)SataDevInterface->PortFISBaseAddr;
     UINTN                       TimeOutCount = TimeOut;
-    EFI_STATUS               Status;
+    EFI_STATUS                  Status;
 
-    i=0;
+    // If Timeout is 0, then set the iteration variable to 0 to handle infinite Timeout
+    if(TimeOut == 0) {
+        i = 0;
+    }
+    
     do {
         pBS->Stall(500);
 
@@ -1991,7 +2124,7 @@ WaitforCommandComplete (
 
         //  Check for Error bits
         Data32_IS = HBA_PORT_REG32 (AhciBusInterface, Port, HBA_PORTS_IS);
-        if (Data32_IS & HBA_PORTS_IS_ERR_CHK) {
+        if (Data32_IS & (HBA_PORTS_IS_ERR_CHK)) {
             PxSERR_ERROR = TRUE;
             break;
         }
@@ -2026,12 +2159,13 @@ WaitforCommandComplete (
             continue;
         }
         i++;
-    } while(i < TimeOutCount * 2);
+    } while(i <= TimeOutCount * 2);
 
     if (PxSERR_ERROR) {
         // clear the status and return error
         HBA_PORT_REG32_OR (AhciBusInterface, Port, HBA_PORTS_SERR, HBA_PORTS_ERR_CLEAR); 
-        HBA_PORT_REG32_OR (AhciBusInterface, Port, HBA_PORTS_IS, HBA_PORTS_IS_CLEAR);         
+        HBA_PORT_REG32_OR (AhciBusInterface, Port, HBA_PORTS_IS, HBA_PORTS_IS_CLEAR);
+        DEBUG ((DEBUG_ERROR, "AHCI : PxSERR Port Serial ATA Error Data32_SERR:%x  Data32_IS :%x\n", Data32_SERR, Data32_IS));
         return EFI_DEVICE_ERROR;    
     }
 
@@ -2042,15 +2176,18 @@ WaitforCommandComplete (
                                                HBA_CI_CLEAR_TIMEOUT);
     
     if (EFI_ERROR(Status)) {
-        return EFI_DEVICE_ERROR;                
+        Data32_CI = HBA_PORT_REG32 (AhciBusInterface, Port, HBA_PORTS_CI);
+        DEBUG ((DEBUG_ERROR, "AHCI : Command Issue (CI) not clear Data32_CI:%x\n",Data32_CI ));
+        Status = EFI_TIMEOUT;
     }
 
     // check for status bits
     if (HBA_PORT_REG32 (AhciBusInterface, Port, HBA_PORTS_TFD) & (HBA_PORTS_TFD_ERR | HBA_PORTS_TFD_DRQ)){
+        DEBUG ((DEBUG_ERROR, "AHCI : ERR and DRQ not cleared in Task File Data Reg : %x\n",HBA_PORT_REG32 (AhciBusInterface, Port, HBA_PORTS_TFD)));
         return EFI_DEVICE_ERROR;                
     }
 
-    return EFI_SUCCESS;
+    return Status;
 }
 
 /**
@@ -2227,6 +2364,7 @@ HostReset (
 **/ 
 
 EFI_STATUS
+EFIAPI 
 GeneratePortReset (
     AMI_AHCI_BUS_PROTOCOL   *AhciBusInterface, 
     SATA_DEVICE_INTERFACE   *SataDevInterface, 
@@ -2240,7 +2378,7 @@ GeneratePortReset (
     volatile    AHCI_RECEIVED_FIS  *FISAddress =  (AHCI_RECEIVED_FIS *)( (UINT64)(HBA_PORT_REG64(AhciBusInterface, Port, HBA_PORTS_FB)) );
     UINT32      Data32;
 
-    TRACE_AHCI_LEVEL2((-1,"AHCI: PortReset on Port : %x PMPort : %x", Port, PMPort));
+    DEBUG ((DEBUG_INFO, "AHCI: PortReset on Port : %x PMPort : %x", Port, PMPort));
 
     if (!FISAddress) return EFI_DEVICE_ERROR;   // FIS receive address is not programmed.
 
@@ -2251,9 +2389,9 @@ GeneratePortReset (
     HBA_PORT_REG32_AND (AhciBusInterface, Port, HBA_PORTS_CMD, ~HBA_PORTS_CMD_ST);
 
     // Wait till CR is cleared    
-    Status = WaitForMemClear(AhciBusInterface, Port, HBA_PORTS_CMD,
-                            HBA_PORTS_CMD_CR,
-                            HBA_CR_CLEAR_TIMEOUT);
+    WaitForMemClear(AhciBusInterface, Port, HBA_PORTS_CMD,
+                    HBA_PORTS_CMD_CR,
+                    HBA_CR_CLEAR_TIMEOUT);
 
     // Clear Status register
     HBA_PORT_REG32_OR (AhciBusInterface, Port, HBA_PORTS_SERR, HBA_PORTS_ERR_CLEAR); 
@@ -2287,7 +2425,9 @@ GeneratePortReset (
         Data32 = (Speed << 4) + (PowerManagement << 8);
         ReadWritePMPort (SataDevInterface, PMPort, PSCR_2_SCONTROL, &Data32, TRUE);
     }
-
+    // Some platform host controllers may need an additional delay to 
+    // process COMRESET.So added additional 5msec delay.
+    pBS->Stall (5000);                                   // 5msec
     Status = HandlePortComReset(AhciBusInterface, SataDevInterface, Port, PMPort);
 
     SataDevInterface->SControl = (Speed << 4) + (PowerManagement << 8);
@@ -2295,11 +2435,16 @@ GeneratePortReset (
     gPortReset = FALSE;     
 
     if (EFI_ERROR(Status)) {
-        TRACE_AHCI_LEVEL2((-1," Status : %r\n", Status));
+        DEBUG ((DEBUG_ERROR, " AHCI: GeneratePortReset Status at Port : %x, PMPort : %x  :%r", Port, PMPort, Status));
         return EFI_DEVICE_ERROR;
     }
 
-    TRACE_AHCI_LEVEL2((-1," Status : %r\n", Status));
+    DEBUG ((DEBUG_INFO, "AHCI : GeneratePortReset Status at Port : %x, PMPort : %x  :%r", Port, PMPort, Status));
+	
+    // Get latest IdentifyData to know whether SetMultipleMode command 
+    // needs to be issued or not
+    IssueSetMultipleModeCommand(SataDevInterface, TRUE);
+    
     return EFI_SUCCESS;    
 
 }
@@ -2320,6 +2465,7 @@ GeneratePortReset (
 **/ 
 
 EFI_STATUS
+EFIAPI 
 GenerateSoftReset (
     IN SATA_DEVICE_INTERFACE                *SataDevInterface,
     IN UINT8                                PMPort
@@ -2334,7 +2480,7 @@ GenerateSoftReset (
     UINT32                Data32;
     UINT8                 Port = SataDevInterface->PortNumber;
 
-    TRACE_AHCI_LEVEL2((-1,"AHCI: SoftReset on Port : %x PMPort : %x", Port, PMPort));
+    DEBUG ((DEBUG_INFO, "AHCI : SoftReset on Port : %x PMPort : %x", Port, PMPort));
 
     PROGRESS_CODE(DXE_IDE_RESET);
 
@@ -2356,6 +2502,9 @@ GenerateSoftReset (
         Status = WaitForMemClear(AhciBusInterface, Port, HBA_PORTS_CMD,
                             HBA_PORTS_CMD_CLO,
                             BUSY_CLEAR_TIMEOUT);
+        if (EFI_ERROR(Status)) {
+            goto GenerateSoftReset_Exit;
+        }
     }
     CommandStructure.Control = 4;
     BuildCommandList(SataDevInterface, CommandList, (UINT64)Commandtable);
@@ -2391,7 +2540,7 @@ GenerateSoftReset (
     if (PMPort != 0xFF) Commandtable->CFis.AHci_CFis_PmPort = PMPort;
 
     StartController(AhciBusInterface, SataDevInterface, BIT00);    
-    Status = WaitforCommandComplete(SataDevInterface, NON_DATA_CMD, ATAPI_BUSY_CLEAR_TIMEOUT);
+    Status = WaitforCommandComplete(SataDevInterface, NON_DATA_CMD, NON_DATA_COMMAND_COMPLETE_TIMEOUT);
 
     //  Stop Controller
     StopController(AhciBusInterface, SataDevInterface,FALSE);
@@ -2399,7 +2548,7 @@ GenerateSoftReset (
 GenerateSoftReset_Exit:
 
     gSoftReset = FALSE;
-    TRACE_AHCI_LEVEL2((-1," Status : %r\n", Status));
+    DEBUG ((DEBUG_INFO, "AHCI : GenerateSoftReset Status : %r\n", Status));
     return Status;
 }
 
@@ -2447,21 +2596,35 @@ HandlePortComReset (
     }
 
     if (DeviceDetected) {
-        // Wait till PhyRdy Change bit is set
-        if (PMPort == 0xFF) {
-            Status = WaitForMemSet(AhciBusInterface, Port, HBA_PORTS_SERR,
-                            HBA_PORTS_SERR_EX,
-                            HBA_PORTS_SERR_EX,
-                            ATAPI_BUSY_CLEAR_TIMEOUT);
-        } else {
-            Status = WaitforPMMemSet (SataDevInterface, PMPort, PSCR_1_SERROR, 
-                    HBA_PORTS_SERR_EX, HBA_PORTS_SERR_EX, ATAPI_BUSY_CLEAR_TIMEOUT);
-        }
+    	
+    	for (i = 0; i < ATAPI_BUSY_CLEAR_TIMEOUT; ) {
+    		// Return error if the Status reports No device found
+    		SStatusData = ReadSCRRegister (AhciBusInterface, SataDevInterface, Port, PMPort, 0); // SStatus
+            if((SStatusData & HBA_PORTS_SSTS_DET_MASK) == 0) {
+                DEBUG((DEBUG_ERROR," AHCI: Device detection failed in PortComReset Status %r",SStatusData));
+            	return EFI_DEVICE_ERROR;
+            }
+            // Wait till PhyRdy Change bit is set
+            	
+            SError = ReadSCRRegister (AhciBusInterface, SataDevInterface, Port, PMPort, 1); // SError
+            if (SError & HBA_PORTS_SERR_EX) {
+            	break;
+            }
 
+            pBS->Stall (1000);              // 1msec delay. Delay is needed for read to succeed. 
+
+            if (PMPort != 0xFF) {
+            	i+= 100;  // For device behind PM Port, there is a delay in writing to the register. So count can be decreased.
+             } else {
+                i++;
+             }
+                
+    	}
+    	
         FISAddress = (AHCI_RECEIVED_FIS*)((UINT64)(HBA_PORT_REG64(AhciBusInterface, Port, HBA_PORTS_FB)));
 
         for (i = 0; i < ATAPI_BUSY_CLEAR_TIMEOUT; ) {
-            SError = ReadSCRRegister (AhciBusInterface, SataDevInterface, Port, PMPort, 2); // SError
+            SError = ReadSCRRegister (AhciBusInterface, SataDevInterface, Port, PMPort, 1); // SError
             if (SError & HBA_PORTS_ERR_CHK) {
               WriteSCRRegister (AhciBusInterface, SataDevInterface, Port, PMPort, 1, HBA_PORTS_ERR_CLEAR ); //SError
             }
@@ -2477,21 +2640,29 @@ HandlePortComReset (
         // Wait till PxTFD gets updated from D2H FIS
         for (i = 0; i < 100; i++){   // Total delay 10msec        
             WriteSCRRegister (AhciBusInterface, SataDevInterface, Port, PMPort, 1, HBA_PORTS_ERR_CLEAR); //SError
-            if((FISAddress->Ahci_Rfis[2] & HBA_PORTS_TFD_MASK) == (HBA_PORT_REG32 (AhciBusInterface, Port, HBA_PORTS_TFD) & HBA_PORTS_TFD_MASK)) break;
+            if((FISAddress->Ahci_Rfis[2] & HBA_PORTS_TFD_MASK) == \
+                       (UINT8)(HBA_PORT_REG32 (AhciBusInterface, Port, HBA_PORTS_TFD) & HBA_PORTS_TFD_MASK)) break;
             pBS->Stall (100);                               // 100usec
         }
 
         // check for errors
-        if (FISAddress->Ahci_Rfis[2] & (HBA_PORTS_TFD_BSY | HBA_PORTS_TFD_ERR)) Status = EFI_DEVICE_ERROR;
+        if (FISAddress->Ahci_Rfis[2] & (HBA_PORTS_TFD_BSY | HBA_PORTS_TFD_ERR)) { 
+            Status = EFI_DEVICE_ERROR;
+            DEBUG ((DEBUG_ERROR, "AHCI: BSY or ERR Bit not clear :%x \n", FISAddress->Ahci_Rfis[2]));
+        }
 
         Data32 = HBA_PORT_REG32 (AhciBusInterface, Port, HBA_PORTS_IS); 
-        if (Data32 & (BIT30 + BIT29 + BIT28 + BIT27 + BIT26)) Status = EFI_DEVICE_ERROR;
+        if (Data32 & (BIT30 + BIT29 + BIT28 + BIT27 + BIT26)){
+            Status = EFI_DEVICE_ERROR;
+            DEBUG ((DEBUG_ERROR, " Port %x Interrupt Status :%x \n", Port,Data32));
+        }
 
         // Clear the status
         WriteSCRRegister (AhciBusInterface, SataDevInterface, Port, PMPort, 1, HBA_PORTS_ERR_CLEAR); //SError
         HBA_PORT_REG32_OR (AhciBusInterface, Port, HBA_PORTS_IS, HBA_PORTS_IS_CLEAR); 
 
     } else {
+        DEBUG((DEBUG_ERROR," AHCI: Device Not Detected at Port : %x , PMPort : %x in PortComReset", Port, PMPort));
         Status = EFI_DEVICE_ERROR;
     }
 
@@ -2527,8 +2698,8 @@ ReadSCRRegister (
     if (PMPort != 0xFF) {
         ReadWritePMPort (SataDevInterface, PMPort, Register, &Data32, FALSE);
     } else {
-        if (Register == 1) Reg = HBA_PORTS_SCTL;
-        if (Register == 2) Reg = HBA_PORTS_SERR;
+        if (Register == 2) Reg = HBA_PORTS_SCTL;
+        if (Register == 1) Reg = HBA_PORTS_SERR;
         Data32 = HBA_PORT_REG32 (AhciBusInterface, Port, Reg);
     }
 
@@ -2610,36 +2781,39 @@ WaitforPMMemSet (
    return EFI_DEVICE_ERROR;
 }
 
-/**
+/** @internal
     Check for valid ATA/ATAPI/PMPORT signature 
 
                    
-    @param AhciBusInterface 
-    @param Port 
-    @param PMPort 
-
-    @retval EFI_STATUS
+    @return based on the device presence returns the status in EFI_STATUS
 
     @note  
       1. Check if Link is active
       2. Enable FIS and Command list run bits
       3. Check for valid signature    
 
+    @endinternal
 **/ 
-
 EFI_STATUS 
 CheckValidDevice (
-    IN AMI_AHCI_BUS_PROTOCOL    *AhciBusInterface, 
+    IN SATA_DEVICE_INTERFACE    *SataDevInterface, 
     IN UINT8                    Port,
     IN UINT8                    PMPort
 )
 {
     UINT8   Data8;
     UINT32  Data32;
+    UINT32  TimeoutCount;
+    AMI_AHCI_BUS_PROTOCOL  *AhciBusInterface = SataDevInterface->AhciBusInterface; 
+    volatile AHCI_RECEIVED_FIS   *FISReceiveAddress = \
+                    (AHCI_RECEIVED_FIS *)(UINTN)SataDevInterface->PortFISBaseAddr;
 
     // Check if Link is active
     Data8 = (UINT8)(HBA_PORT_REG32 (AhciBusInterface, Port, HBA_PORTS_SSTS) & HBA_PORTS_SSTS_DET_MASK);
-    if (Data8 != HBA_PORTS_SSTS_DET_PCE)  return EFI_DEVICE_ERROR;
+    if (Data8 != HBA_PORTS_SSTS_DET_PCE) {
+        DEBUG ((DEBUG_ERROR, " AHCI: Device detection or Phy communication not established :%x\n",Data8));
+        return EFI_DEVICE_ERROR;
+    }
 
     // Enable FIS receive and CI so that TFD gets updated properly
     // Clear out the command slot
@@ -2660,6 +2834,28 @@ CheckValidDevice (
                                     HBA_PORTS_CMD_CR,
                                     HBA_FR_CLEAR_TIMEOUT);
 
+    // Check if D2H register FIS is received and valid signature updated in the signature register
+    // Total Time delay of 16Sec. Checking for the arrival of D2H FIS and Port signature on every 1Millisecond.
+    
+    for (TimeoutCount = 0; TimeoutCount < ATAPI_BUSY_CLEAR_TIMEOUT;TimeoutCount++ ) {
+    	
+        // Check if valid signature is present
+        Data32 = HBA_PORT_REG32(AhciBusInterface, Port, HBA_PORTS_SIG);
+        
+        // Check for the valid device signature in the signature register. If present break the loop
+        if ((Data32 & 0xFFFF) ==  0x101) {
+        	break;
+        }
+        
+        // Check if the first D2H received from the device ( Signature)
+        if(FISReceiveAddress->Ahci_Rfis[0] == FIS_REGISTER_D2H) { 
+            break;
+        }
+        
+        //Delay for 1ms
+        pBS->Stall (1000);              
+    } 
+    
     // Clear Start Bit
     HBA_PORT_REG32_AND (AhciBusInterface, Port, HBA_PORTS_CMD, ~(HBA_PORTS_CMD_ST));
     WaitForMemClear(AhciBusInterface, Port, HBA_PORTS_CMD,
@@ -2668,26 +2864,110 @@ CheckValidDevice (
 
     // Check if valid signature is present
     Data32 = HBA_PORT_REG32(AhciBusInterface, Port, HBA_PORTS_SIG);
-    if (Data32 != ATA_SIGNATURE_32 && Data32 != ATAPI_SIGNATURE_32 && Data32 != PMPORT_SIGNATURE)
+    if (Data32 != ATA_SIGNATURE_32 && Data32 != ATAPI_SIGNATURE_32 && Data32 != PMPORT_SIGNATURE) {
+        DEBUG ((DEBUG_ERROR, " AHCI : D2H FIS time out :%x\n", Data32));
         return EFI_DEVICE_ERROR;
+    }
 
     Data8 = HBA_PORT_REG8 (AhciBusInterface, Port, HBA_PORTS_TFD);
-    if (Data8 & (HBA_PORTS_TFD_BSY | HBA_PORTS_TFD_DRQ)) return EFI_DEVICE_ERROR;
+    if (Data8 & (HBA_PORTS_TFD_BSY | HBA_PORTS_TFD_DRQ)) {
+        DEBUG ((DEBUG_ERROR, " AHCI : BSY or DRQ Bit Set :%x\n", Data8));
+        return EFI_DEVICE_ERROR;
+    }
 
     return EFI_SUCCESS;
 
 }
 
-//**********************************************************************
-//**********************************************************************
-//**                                                                  **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
-//**                                                                  **
-//**                       All Rights Reserved.                       **
-//**                                                                  **
-//**         5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093     **
-//**                                                                  **
-//**                       Phone: (770)-246-8600                      **
-//**                                                                  **
-//**********************************************************************
-//**********************************************************************
+/**
+    Issues SET_MULTIPLE_MODE command to ATA devices 
+                   
+    @param SataDevInterface 
+    @param GetLatestIdentifyData - Tells whether latest IdentifyData needed or not
+
+    @retval EFI_STATUS
+
+**/
+EFI_STATUS
+IssueSetMultipleModeCommand (
+    SATA_DEVICE_INTERFACE    *SataDevInterface,
+    BOOLEAN                  GetLatestIdentifyData
+)
+{
+    EFI_STATUS             Status = EFI_SUCCESS;
+    COMMAND_STRUCTURE      CommandStructure;
+    UINT8                  Data8;
+    
+    // Issue Set Multiple Mode Command only for ATA device
+    if (SataDevInterface->DeviceType == ATA) {
+        
+        if (GetLatestIdentifyData) {
+            Status = GetIdentifyData(SataDevInterface);
+            if (EFI_ERROR(Status)) {
+                return Status;
+            }
+        }
+        
+        // If IdentifyData Word 59 bit 8 is set and bits 7:0 are valid,
+        // then don't send SET_MULTIPLE_MODE command
+        if(SataDevInterface->IdentifyData.Valid_Bits_59 & BIT8) {
+            if(SataDevInterface->IdentifyData.Valid_Bits_59 & 0xFF) {
+                return Status;
+            }
+        }
+        
+        Data8 = SataDevInterface->IdentifyData.Maximum_Sector_Multiple_Command_47 & 0xff;
+        if (Data8 & 0x2)  Data8 = 2;
+        if (Data8 & 0x4)  Data8 = 0x4;
+        if (Data8 & 0x8)  Data8 = 0x8;
+        if (Data8 & 0x10) Data8 = 0x10;
+        if (Data8 & 0x20) Data8 = 0x20;
+        if (Data8 & 0x40) Data8 = 0x40;
+        if (Data8 & 0x80) Data8 = 0x80;
+        
+        if (Data8 > 1) {
+            ZeroMemory(&CommandStructure, sizeof(COMMAND_STRUCTURE)); 
+            CommandStructure.Command = SET_MULTIPLE_MODE;
+            CommandStructure.SectorCount = Data8;
+            Status = ExecuteNonDataCommand (SataDevInterface, CommandStructure);
+            DEBUG ((DEBUG_INFO, "AHCI : SetMultipleMode Command Status : %r\n", Status));
+        }
+    }
+    
+    return Status;
+}
+
+/**
+    Prints AHCI FIS Command parameters 
+
+    @param CommandStructure 
+
+    @retval VOID
+
+    @note  
+
+**/
+
+VOID
+PrintCommandFIS (
+  IN COMMAND_STRUCTURE    CommandStructure
+) 
+{
+#if AHCI_VERBOSE_PRINT
+    DEBUG((DEBUG_BLKIO, "\nAHCI FIS Command parameters \n"));
+    DEBUG((DEBUG_BLKIO, "  Command                                   : %08X\n", CommandStructure.Command ));
+    DEBUG((DEBUG_BLKIO, "  Features                                  : %08X\n", CommandStructure.Features));
+    DEBUG((DEBUG_BLKIO, "  FeaturesExp                               : %08X\n", CommandStructure.FeaturesExp));
+    DEBUG((DEBUG_BLKIO, "  LBA low                                   : %08X\n", CommandStructure.LBALow));
+    DEBUG((DEBUG_BLKIO, "  LBA LowExp                                : %08X\n", CommandStructure.LBALowExp));
+    DEBUG((DEBUG_BLKIO, "  LBA Mid                                   : %08X\n", CommandStructure.LBAMid));
+    DEBUG((DEBUG_BLKIO, "  LBA MidExp                                : %08X\n", CommandStructure.LBAMidExp));
+    DEBUG((DEBUG_BLKIO, "  LBA High                                  : %08X\n", CommandStructure.LBAHigh));
+    DEBUG((DEBUG_BLKIO, "  LBA HighExp                               : %08X\n", CommandStructure.LBAHighExp));
+    DEBUG((DEBUG_BLKIO, "  SectorCount                               : %08X\n", CommandStructure.SectorCount));
+    DEBUG((DEBUG_BLKIO, "  Fis SecCountExp                           : %08X\n", CommandStructure.Device));
+    DEBUG((DEBUG_BLKIO, "  Fis DevHead                               : %08X\n", CommandStructure.Control)); 
+    DEBUG((DEBUG_BLKIO, "  Fis Control                               : %08X\n", CommandStructure.Timeout)); 
+#endif
+    return ;
+}

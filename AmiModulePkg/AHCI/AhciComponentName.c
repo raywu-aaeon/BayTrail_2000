@@ -1,7 +1,7 @@
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2018, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **
@@ -31,13 +31,16 @@ extern  EFI_DRIVER_BINDING_PROTOCOL gAhciBusDriverBinding;
 #define EFI_COMPONENT_NAME2_PROTOCOL EFI_COMPONENT_NAME_PROTOCOL
 #endif
 
-EFI_STATUS AhciBusCtlDriverName (
+EFI_STATUS 
+EFIAPI
+AhciBusCtlDriverName (
     IN EFI_COMPONENT_NAME2_PROTOCOL  *This,
     IN CHAR8                        *Language,
     OUT CHAR16                      **DriverName
 );
 
 EFI_STATUS
+EFIAPI
 AhciBusCtlGetControllerName (
     IN EFI_COMPONENT_NAME2_PROTOCOL  *This,
     IN EFI_HANDLE                   ControllerHandle,
@@ -83,6 +86,7 @@ EFI_COMPONENT_NAME2_PROTOCOL gAhciBusControllerDriverName = {
 **/
 
 EFI_STATUS
+EFIAPI
 AhciBusCtlDriverName (
     IN EFI_COMPONENT_NAME2_PROTOCOL    *This,
     IN CHAR8                           *Language,
@@ -140,6 +144,7 @@ AhciBusCtlDriverName (
 **/
 
 EFI_STATUS
+EFIAPI
 AhciBusCtlGetControllerName (
     IN EFI_COMPONENT_NAME2_PROTOCOL    *This,
     IN EFI_HANDLE                      Controller,
@@ -226,7 +231,7 @@ AhciBusCtlGetControllerName (
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2018, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **

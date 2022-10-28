@@ -1,7 +1,7 @@
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2017, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **
@@ -20,24 +20,36 @@
 #define _AMI_AHCI_SMM_H_
 
 #ifndef ATAPI_BUSY_CLEAR_TIMEOUT
-#define     ATAPI_BUSY_CLEAR_TIMEOUT            16000           // 16sec
+#define     ATAPI_BUSY_CLEAR_TIMEOUT            30000           // 30sec
 #endif
 
+// As per ATA Spec.the device may take up to 30 seconds to respond to commands
+// in StandBy / Idle mode.
+
 #ifndef DMA_ATA_COMMAND_COMPLETE_TIMEOUT
-#define     DMA_ATA_COMMAND_COMPLETE_TIMEOUT    5000            // 5Sec
+#define     DMA_ATA_COMMAND_COMPLETE_TIMEOUT    30000            // 30Sec
 #endif
 
 #ifndef DMA_ATAPI_COMMAND_COMPLETE_TIMEOUT
-#define     DMA_ATAPI_COMMAND_COMPLETE_TIMEOUT  16000           // 16Sec
+#define     DMA_ATAPI_COMMAND_COMPLETE_TIMEOUT  30000           // 30Sec
+#endif
+
+#ifndef NON_DATA_COMMAND_COMPLETE_TIMEOUT
+#define     NON_DATA_COMMAND_COMPLETE_TIMEOUT   30000            // 30sec
 #endif
 
 #define     COMMAND_LIST_SIZE_PORT              0x800
 #define     TIMEOUT_1SEC                        1000            // 1sec Serial ATA 1.0 Sec 5.2
 
+#ifndef     BUSY_CLEAR_TIMEOUT
+#define     BUSY_CLEAR_TIMEOUT                  1000
+#endif
+
 #define PCI_CFG_ADDR(bus,dev,func,reg) \
     ((VOID*)(UINTN) (PciExpressBaseAddress + ((bus) << 20) + ((dev) << 15) + ((func) << 12) + reg))
 
 EFI_STATUS
+EFIAPI 
 AhciSmmExecuteNonDataCommand (
     AMI_AHCI_BUS_SMM_PROTOCOL    *SataDevInterface, 
     COMMAND_STRUCTURE            CommandStructure,
@@ -47,6 +59,7 @@ AhciSmmExecuteNonDataCommand (
 );
 
 EFI_STATUS
+EFIAPI 
 AhciSmmExecutePioDataCommand (
     AMI_AHCI_BUS_SMM_PROTOCOL    *SataDevInterface, 
     COMMAND_STRUCTURE            *CommandStructure,
@@ -57,6 +70,7 @@ AhciSmmExecutePioDataCommand (
 );
 
 EFI_STATUS
+EFIAPI 
 AhciSmmExecuteDmaDataCommand (
     AMI_AHCI_BUS_SMM_PROTOCOL    *SataDevInterface, 
     COMMAND_STRUCTURE            *CommandStructure,
@@ -67,6 +81,7 @@ AhciSmmExecuteDmaDataCommand (
 );
 
 EFI_STATUS
+EFIAPI 
 AhciSmmInitPortOnS3Resume(
     AMI_AHCI_BUS_SMM_PROTOCOL    *SataDevInterface, 
     UINT8                        Port
@@ -88,6 +103,7 @@ ReadWritePMPort (
 );
 
 EFI_STATUS 
+EFIAPI 
 AhciSmmExecutePacketCommand (
     IN AMI_AHCI_BUS_SMM_PROTOCOL    *SataDevInterface, 
     IN COMMAND_STRUCTURE            *CommandStructure,
@@ -144,7 +160,7 @@ SmmWriteDataByte(
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2017, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **

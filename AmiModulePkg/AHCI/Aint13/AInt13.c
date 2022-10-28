@@ -1,16 +1,11 @@
-//**********************************************************************
-//**********************************************************************
-//**                                                                  **
-//**        (C)Copyright 1985-2015, American Megatrends, Inc.         **
-//**                                                                  **
-//**                       All Rights Reserved.                       **
-//**                                                                  **
-//**         5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093     **
-//**                                                                  **
-//**                       Phone: (770)-246-8600                      **
-//**                                                                  **
-//**********************************************************************
-//**********************************************************************
+//***********************************************************************
+//*                                                                     *
+//*   Copyright (c) 1985-2019, American Megatrends International LLC.   *
+//*                                                                     *
+//*      All rights reserved. Subject to AMI licensing agreement.       *
+//*                                                                     *
+//***********************************************************************
+
 
 /** @file AInt13.c
     AHCI Int13 structures initialization routines
@@ -18,7 +13,7 @@
 **/
 //---------------------------------------------------------------------------
 
-#include "Aint13.h"
+#include "AInt13.h"
 #include "Protocol/LegacyBiosExt.h"
 #include "Protocol/LegacyAhci.h"
 #include "Protocol/BlockIo.h"
@@ -32,7 +27,7 @@ extern      InitilizeIndexDataPortAddress();
 #endif
 
 EFI_STATUS  InitDrivesInformation (VOID*, UINT16);
-EFI_STATUS  InitAhciInt13Support();
+EFI_STATUS EFIAPI  InitAhciInt13Support();
 
 UINT32      EbdaStartOffset;
 VOID        *gLegacyMemoryAddress;
@@ -57,7 +52,7 @@ EFI_LEGACY_BIOS_EXT_PROTOCOL        *gBiosExtensions = NULL;
 
 **/
 
-EFI_STATUS Ai13EntryPoint(
+EFI_STATUS EFIAPI Ai13EntryPoint(
     IN EFI_HANDLE          ImageHandle,
     IN EFI_SYSTEM_TABLE    *SystemTable
 )
@@ -107,7 +102,8 @@ CountDrives(
             if (SataDevInterface->DeviceState == DEVICE_CONFIGURED_SUCCESSFULLY && 
                     (SataDevInterface->DeviceType == ATA || SataDevInterface->DeviceType == ATAPI)) {
                 if (Devices != NULL) {
-                    *((UINTN*)Devices)++ = (UINTN)SataDevInterface;
+                    *((UINTN*)Devices) = (UINTN)SataDevInterface;
+                  Devices = (UINTN*)Devices + 1;
                 }
                 Drives++;
             }
@@ -128,7 +124,8 @@ CountDrives(
 
 **/
 
-VOID 
+VOID
+EFIAPI 
 SetEbdaAddressForPort (
     IN EFI_EVENT    Event, 
     IN VOID         *Context
@@ -187,6 +184,7 @@ SetEbdaAddressForPort (
 **/
 
 EFI_STATUS
+EFIAPI 
 InitAhciInt13Support()
 {
     EFI_HANDLE              *HandleBuffer = 0;
@@ -227,6 +225,7 @@ InitAhciInt13Support()
 
     Status = InitDrivesInformation(Devices, DevCount);
     ASSERT_EFI_ERROR(Status);
+    if (EFI_ERROR(Status)) return Status;
 
     // Program the EBDA Address on Legacy boot Event.
     Device = *((SATA_DEVICE_INTERFACE**)Devices);
@@ -294,7 +293,7 @@ CalcTranslatedCyl (
     UINT8 sec = *Sectors;
     UINT16 cyl;
 
-    for (cyl=TotalBlocks/(UINT16)heads*(UINT16)sec; cyl>1024;) {
+    for (cyl=(UINT16)(TotalBlocks/(UINT16)heads*(UINT16)sec); cyl> 1024;) {
         // Current xlat scheme does not make #of cylinders <= 1024, try next scheme
         cyl = 1024;
         if (heads == 0xFF) {
@@ -468,7 +467,7 @@ ConfigureHddParameter (
                     // Find the total #of sectors in the hard disk C * H * S
                     TotalBlocks = DevParam->bMAXHN * DevParam->bMAXSN * DevParam->wMAXCYL;
                     // Calculate #of cylinders using the same translation scheme
-                    cyl = TotalBlocks / SecTimesHeads;
+                    cyl = (UINT16)(TotalBlocks / SecTimesHeads);
                     if (cyl>1024) cyl = 1024;
                 }
             }
@@ -551,10 +550,10 @@ InitAhciHddDev (
     DevPtr->bPortNum = Dev->PortNumber;
 
     // Update SEG:OFS address for current DevParam and DevInfo
-    SegOfs = ((UINT32)gLegacyMemoryAddress<<12)+(UINT32)((UINTN)DevParam-(UINTN)gImage);
+    SegOfs = ((UINT32)(UINTN)gLegacyMemoryAddress<<12)+(UINT32)((UINTN)DevParam-(UINTN)gImage);
     DevPtr->dParamTablePtr = SegOfs;
 
-    SegOfs = ((UINT32)gLegacyMemoryAddress<<12)+(UINT32)((UINTN)DevInfo-(UINTN)gImage);
+    SegOfs = ((UINT32)(UINTN)gLegacyMemoryAddress<<12)+(UINT32)((UINTN)DevInfo-(UINTN)gImage);
     DevPtr->dInfoTablePtr = SegOfs;
 
     // Indicate device is LBA capable
@@ -606,10 +605,10 @@ InitAhciCd (
     DevPtr->bPortNum = Dev->PortNumber;
 
     // Update SEG:OFS address for current DevParam and DevInfo
-    SegOfs = ((UINT32)gLegacyMemoryAddress<<12)+(UINT32)((UINTN)DevParam-(UINTN)gImage);
+    SegOfs = ((UINT32)(UINTN)gLegacyMemoryAddress<<12)+(UINT32)((UINTN)DevParam-(UINTN)gImage);
     DevPtr->dParamTablePtr = SegOfs;
 
-    SegOfs = ((UINT32)gLegacyMemoryAddress<<12)+(UINT32)((UINTN)DevInfo-(UINTN)gImage);
+    SegOfs = ((UINT32)(UINTN)gLegacyMemoryAddress<<12)+(UINT32)((UINTN)DevInfo-(UINTN)gImage);
     DevPtr->dInfoTablePtr = SegOfs;
 }
 
@@ -667,7 +666,7 @@ UpdateControllerInfoToLegacy (
 
     //At 'Addr16+2' there is a pointer that point to the structure 
     //that maintains index, data and base address for a controller
-    TempAddress=(UINT16*)(Addr16+2);
+    TempAddress=(UINT16*)(UINTN)(Addr16+2);
     Addr16=Addr16 + (*TempAddress);
 
     // No Addr16 points to ReadWriteRegisterDword routine implemented in 
@@ -889,7 +888,15 @@ InitDrivesInformation (
     UINT8                           *addr;
     SATA_DEVICE_INTERFACE           *Device;
     UINT8                           PciConfig[16];
-
+    EFI_TPL                         OldTpl;
+#if AVOID_MULTIPLE_BIG_REAL_MODE_SWITCH    
+    UINT32                          Address32;
+    UINT16                          *TempAddress;
+    UINT16                          AhciApiStartOffs;
+    UINT32                          AhciAccBufStartOffs;
+    UINT32                          AhciAccEbdaAddress;
+#endif    
+    
     if (DeviceCount == 0) return EFI_SUCCESS;   // No devices connected
 
     Status = pBS->LocateProtocol(
@@ -925,13 +932,50 @@ InitDrivesInformation (
                 &EbdaAddress,
                 &EbdaStartOffset );
     ASSERT_EFI_ERROR(Status);
-
-#if AINT13_AVOID_MULTIPLE_SMI
-    Ai13Data->AhciRtMiscData.RunAttribute |= A_INT13_SWSMI_USED;
+    
+#if AHCI_INT13_SMM_SUPPORT
     Ai13Data->AhciRtMiscData.AhciSmmRt.MiscInfo = 1;
     Ai13Data->AhciRtMiscData.AhciSmmRt.SmmAttr = 0;
     Ai13Data->AhciRtMiscData.AhciSmmRt.SmmPort = SW_SMI_IO_ADDRESS;
     Ai13Data->AhciRtMiscData.AhciSmmRt.SmmData = AHCI_INT13_SMM_SWSMI_VALUE;
+    Ai13Data->AhciRtMiscData.RunAttribute |= SMM_MODE_CHECK;
+#if ACCESS_MMIO_THROUGH_SWSMI
+    Ai13Data->AhciRtMiscData.RunAttribute |=  MMIO_THRU_SWSMI;
+#endif
+#endif
+    // Avoid Multiple big real mode change.
+#if AVOID_MULTIPLE_BIG_REAL_MODE_SWITCH
+    Ai13Data->AhciRtMiscData.RunAttribute |= MMIO_THRU_SINGLE_BIGREAL_MODE;
+    Status = gBiosExtensions->AllocateEbda(
+                    gBiosExtensions,
+                    1,  // 1K extra for data buffer(Byte 0 - Real Mode changing scratch)
+                    &AhciAccEbdaAddress,
+                    &AhciAccBufStartOffs );
+    ASSERT_EFI_ERROR(Status);
+        
+    Status = gBiosExtensions->Get16BitFuncAddress(
+                    CSM16_CSP_AHCI_ACCESSHBA,
+                    &Address32
+                    );
+    if (EFI_ERROR(Status)) 
+    return Status;
+    TempAddress=(UINT16*)(UINTN)(Address32+2);
+    Ai13Data->AhciRtMiscData.PortBaseAddress = (Address32 + *TempAddress);// Storing the address AHCI_ACCESS structure
+    
+    AhciApiStartOffs=*(UINT16*)(UINTN)(Address32+4);    // "dw AhciApiModuleStart"
+    
+    TempAddress=(UINT16*)(UINTN)(Address32+6);          // point of "Switch_Big_Real_Mode_FAR - AhciApiModuleStart" in AhciAcc.csm16
+    Ai13Data->AhciRtMiscData.PreInt13Hook.FunctionOffs = AhciApiStartOffs + *TempAddress; 
+    Ai13Data->AhciRtMiscData.PreInt13Hook.FunctionSeg = (UINT16)((Address32 - AhciApiStartOffs) >> 4);
+    
+    TempAddress=(UINT16*)(UINTN)(Address32+8);         // point of "Switch_Original_Mode_FAR - AhciApiModuleStart" in AhciAcc.csm16
+    Ai13Data->AhciRtMiscData.PostInt13Hook.FunctionOffs = AhciApiStartOffs + *TempAddress; 
+    Ai13Data->AhciRtMiscData.PostInt13Hook.FunctionSeg = (UINT16)((Address32 - AhciApiStartOffs) >> 4);
+    
+    gBiosExtensions->UnlockShadow((UINT8*)((UINTN)(Address32 >> 4) & 0xF000), 0, &LockUnlockAddr, &LockUnlockSize);
+    *(UINT16*)(UINTN)(Address32+10) = (UINT16)AhciAccBufStartOffs;
+    gBiosExtensions->LockShadow(LockUnlockAddr, LockUnlockSize); 
+    
 #endif
 
     Ai13Data->AhciRtMiscData.AhciEbdaStart = EbdaStartOffset;
@@ -943,12 +987,13 @@ InitDrivesInformation (
 
     gLegacy16Data = (LEGACY16_TO_EFI_DATA_TABLE_STRUC*)(UINTN)(0xF0000 + *(UINT16*)0xFFF4C);
 
-    Status = pBS->AllocatePool(EfiBootServicesData, 0x1000, &gHddReadData);
+    Status = pBS->AllocatePool(EfiBootServicesData, 0x1000, (VOID**)&gHddReadData);
     ASSERT_EFI_ERROR(Status);
+    
 
     // Here is a tricky part: we will have to convert the data passed by Ahci Bus
     // driver to the data used by INT13
-    for (Count=0, i=0; i<DeviceCount; i++, ((UINTN*)Devices)++) {
+     for (Count=0, i=0; i<DeviceCount; i++, Devices = ((UINTN*)Devices + 1)) {
         Device = *((SATA_DEVICE_INTERFACE**)Devices);
         
         // If the ATA device Block size is more than 512 bytes 
@@ -978,7 +1023,10 @@ InitDrivesInformation (
                                     ((AHCI_I13_DATA*)Ai13Data)->AhciBcvOffset);
             ASSERT_EFI_ERROR(Status);
 
+            // Raise TPL to avoid BBS entry corruption
+            OldTpl = pBS->RaiseTPL(TPL_HIGH_LEVEL);
             Status = gBiosExtensions->AddBbsEntry(&BbsEntry);
+            pBS->RestoreTPL(OldTpl);
             ASSERT(Status == EFI_SUCCESS || Status == EFI_ACCESS_DENIED);
             if(Status == EFI_ACCESS_DENIED) {
                 gBiosExtensions->LockShadow(LockUnlockAddr, LockUnlockSize); 
@@ -1004,7 +1052,6 @@ InitDrivesInformation (
     pBS->CopyMem(gLegacyMemoryAddress, gImage, ImageSize);
 
     gBiosExtensions->LockShadow(LockUnlockAddr, LockUnlockSize);
-
     pBS->FreePool(gHddReadData);
 
     return EFI_SUCCESS;
@@ -1029,39 +1076,29 @@ InitCspData (
 )
 {
     UINT16      indx, data;
+    UINT16      IdpAccessType = 0xFFFF;
     UINT16      *addr;
-    EFI_STATUS  Status;
-
+    EFI_STATUS  Status;    
+    
     ASSERT(gPciIo);
 
     // Calculate the address according to the segment ,offset and controller
     // number.
-    addr = (UINT16*)(UINTN)(((UINTN)Seg16<<4)+(UINTN)Ofs16)+ 4*(ControllerNumber);
+    addr = (UINT16*)(UINTN)(((UINTN)Seg16<<4)+(UINTN)Ofs16)+ 5*(ControllerNumber);
 
     // Update the Ahci Base Address
-    *(UINT32*)(addr+2)=BaseAddress;
+    *(UINT32*)(addr+3)=BaseAddress;
 
-    Status = GetAccessInfo (gPciIo, &indx, &data);
+    Status = GetAccessInfo (gPciIo, &IdpAccessType, &indx, &data );
     if (EFI_ERROR(Status)) { 
         return Status;
     }
-
-    // Update the Index and Data Port
+     
+    *addr++ = IdpAccessType;
     *addr++ = indx;
     *addr = data;
+    
     return EFI_SUCCESS;
 }
 
-//**********************************************************************
-//**********************************************************************
-//**                                                                  **
-//**        (C)Copyright 1985-2015, American Megatrends, Inc.         **
-//**                                                                  **
-//**                       All Rights Reserved.                       **
-//**                                                                  **
-//**         5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093     **
-//**                                                                  **
-//**                       Phone: (770)-246-8600                      **
-//**                                                                  **
-//**********************************************************************
-//**********************************************************************
+

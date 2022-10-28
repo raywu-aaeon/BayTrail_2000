@@ -1,16 +1,10 @@
-//**********************************************************************
-//**********************************************************************
-//**                                                                  **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
-//**                                                                  **
-//**                       All Rights Reserved.                       **
-//**                                                                  **
-//**         5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093     **
-//**                                                                  **
-//**                       Phone: (770)-246-8600                      **
-//**                                                                  **
-//**********************************************************************
-//**********************************************************************
+//***********************************************************************
+//*                                                                     *
+//*   Copyright (c) 1985-2019, American Megatrends International LLC.   *
+//*                                                                     *
+//*      All rights reserved. Subject to AMI licensing agreement.       *
+//*                                                                     *
+//***********************************************************************
 
 /** @file AhciBus.h
     Header file for the Ahci Bus Driver
@@ -37,8 +31,13 @@ extern "C" {
 #include <Protocol/AmiScsiPassThruInit.h>
 #include <Protocol/AtaPassThru.h>
 #include <Protocol/StorageSecurityCommand.h>
+#include <Protocol/SmmControl2.h>
+#include <Protocol/TrEEProtocol.h>
 #include "AhciController.h"
-
+#include <Library/DebugLib.h>
+#if MDE_PKG_VERSION > 12
+#include <IndustryStandard/TcgStorageOpal.h>
+#endif
 
 #define     TRACE_AHCI_LEVEL2 TRACE
 #define      TRACE_AHCI             TRACE
@@ -52,56 +51,41 @@ VOID EfiDebugPrint (IN  UINTN ErrorLevel,IN  CHAR8 *Format,...);
 
 #define     COMMAND_LIST_SIZE_PORT      0x800
 
-#ifndef ATAPI_BUSY_CLEAR_TIMEOUT
-#define     ATAPI_BUSY_CLEAR_TIMEOUT    16000                   // 16sec
+#ifndef FLUSH_CACHE
+#define     FLUSH_CACHE                     0xE7
 #endif
 
-#ifndef S3_BUSY_CLEAR_TIMEOUT
-#define     S3_BUSY_CLEAR_TIMEOUT       10000                   // 10Sec
+#ifndef FLUSH_CACHE_EXT
+#define     FLUSH_CACHE_EXT                 0xEA
 #endif
+
+#ifndef ATAPI_BUSY_CLEAR_TIMEOUT
+#define     ATAPI_BUSY_CLEAR_TIMEOUT       30000                // 30sec
+#endif
+
 
 #ifndef BUSY_CLEAR_TIMEOUT
 #define     BUSY_CLEAR_TIMEOUT          1000                    // 1Sec
 #endif
 
-#ifndef DRDY_TIMEOUT
-#define     DRDY_TIMEOUT                1000                    // 1Sec
+// As per ATA ATAPI -8 Spec. some Non Data commands(like Flush Cache) may take Upto 30 seconds
+// to complete the command.
+
+
+#ifndef NON_DATA_COMMAND_COMPLETE_TIMEOUT
+#define     NON_DATA_COMMAND_COMPLETE_TIMEOUT   30000            // 30sec
 #endif
 
-#ifndef DRQ_TIMEOUT
-#define     DRQ_TIMEOUT                 10                      // 10msec
-#endif
 
-#ifndef DRQ_CLEAR_TIMEOUT
-#define     DRQ_CLEAR_TIMEOUT           1000                    // 1sec
-#endif
-
-#ifndef DRQ_SET_TIMEOUT
-#define     DRQ_SET_TIMEOUT             10                      // 10msec
-#endif
-
-#ifndef HP_COMMAND_COMPLETE_TIMEOUT
-#define     HP_COMMAND_COMPLETE_TIMEOUT 2000                    // 2Sec
-#endif
-
-#ifndef COMMAND_COMPLETE_TIMEOUT
-#define     COMMAND_COMPLETE_TIMEOUT    5000                    // 5Sec
-#endif
-
+// As per ATA Spec.the device may take Upto 30 seconds to respond to commands
+// in StandBy / Idle mode.
 #ifndef DMA_ATA_COMMAND_COMPLETE_TIMEOUT
-#define     DMA_ATA_COMMAND_COMPLETE_TIMEOUT    5000            // 5Sec
+#define     DMA_ATA_COMMAND_COMPLETE_TIMEOUT    30000            // 30 Sec.
 #endif
 
 #ifndef DMA_ATAPI_COMMAND_COMPLETE_TIMEOUT
-#define     DMA_ATAPI_COMMAND_COMPLETE_TIMEOUT  16000           // 16Sec
-#endif
+#define     DMA_ATAPI_COMMAND_COMPLETE_TIMEOUT  30000           // 30 Sec.
 
-#ifndef ATAPI_RESET_COMMAND_TIMEOUT
-#define     ATAPI_RESET_COMMAND_TIMEOUT 5000                    // 5Sec
-#endif
-
-#ifndef POWERON_BUSY_CLEAR_TIMEOUT
-#define     POWERON_BUSY_CLEAR_TIMEOUT  10000                   // 10Sec
 #endif
 
 #define     TIMEOUT_1SEC                1000                    // 1sec Serial ATA 1.0 Sec 5.2
@@ -139,6 +123,92 @@ VOID EfiDebugPrint (IN  UINTN ErrorLevel,IN  CHAR8 *Format,...);
 #define     LEGACY_BUS_MASTER_OFFSET            0x20
 
 #define     EFI_SUCCESS_ACTIVE_SET              0x80000000
+
+#ifndef TCPA_PPIOP_ENABLE_BLOCK_SID_FUNC
+#define TCPA_PPIOP_ENABLE_BLOCK_SID_FUNC                                96
+#endif
+
+#ifndef ACPI_FUNCTION_GET_USER_CONFIRMATION_STATUS_FOR_REQUEST
+#define ACPI_FUNCTION_GET_USER_CONFIRMATION_STATUS_FOR_REQUEST          8
+#endif
+
+#ifndef AMI_TCG_CONFIRMATION_FLAGS_GUID
+#define AMI_TCG_CONFIRMATION_FLAGS_GUID \
+    {0x7d3dceee, 0xcbce, 0x4ea7, 0x87, 0x09, 0x6e, 0x55, 0x2f, 0x1e, 0xdb, 0xde}
+#endif
+
+typedef struct {
+    UINT32 RQST;                 //Store PPI request
+    UINT32 RCNT;                 //Store most recent PPI request
+    UINT32 ERROR;                //Store BIOS ERROR information after a PPI request
+    UINT32 Flag;                 //Flag used by PPI SMM interface to determine ACPI PPI function request
+    UINT32 AmiMisc;              //Misc storage not used
+    UINT32 OptionalRqstData;     //Store optional data that OS might provide during a PPI request
+    UINT32 RequestFuncResponse;  //Store Response of ACPI function request. Returned to caller
+} AMI_ASL_PPI_NV_VAR;
+
+// TCG related structures available from MdePkg_13.
+// Defining structures locally if MdePkg is less than label 13
+#if MDE_PKG_VERSION < 13
+#define TCG_OPAL_SECURITY_PROTOCOL_1                 0x01
+#define TCG_OPAL_SECURITY_PROTOCOL_2                 0x02
+
+#define TCG_SP_SPECIFIC_PROTOCOL_LIST               0x0000
+#define TCG_SP_SPECIFIC_PROTOCOL_LEVEL0_DISCOVERY   0x0001
+
+// Defined in TCG Storage Feature Set:Block SID Authentication spec,
+// ComId used for BlockSid command is hardcode 0x0005.
+#define TCG_BLOCKSID_COMID 0x0005
+
+#define TCG_FEATURE_LOCKING             (UINT16)0x0002
+#define TCG_FEATURE_BLOCK_SID           (UINT16)0x0402
+
+#pragma pack(1)
+typedef struct {
+    UINT8   Reserved[6];
+    UINT16  ListLength_BE;  // 6 - 7
+    UINT8   List[504];      // 8...
+} TCG_SUPPORTED_SECURITY_PROTOCOLS;
+
+// Level 0 Discovery
+typedef struct {
+    UINT32 LengthBE;    // number of valid bytes in discovery response, not including length field
+    UINT16 VerMajorBE;
+    UINT16 VerMinorBE;
+    UINT8  Reserved[8];
+    UINT8  VendorUnique[32];
+} TCG_LEVEL0_DISCOVERY_HEADER;
+
+typedef struct _TCG_LEVEL0_FEATURE_DESCRIPTOR_HEADER {
+    UINT16 FeatureCode_BE;
+    UINT8  Reserved : 4;
+    UINT8  Version : 4;
+    UINT8  Length;     // length of feature dependent data in bytes
+} TCG_LEVEL0_FEATURE_DESCRIPTOR_HEADER;
+
+typedef struct {
+    TCG_LEVEL0_FEATURE_DESCRIPTOR_HEADER Header;
+    UINT8                                LockingSupported : 1;
+    UINT8                                LockingEnabled : 1;   // means the locking security provider (SP) is enabled
+    UINT8                                Locked : 1;   // means at least 1 locking range is enabled
+    UINT8                                MediaEncryption : 1;
+    UINT8                                MbrEnabled : 1;
+    UINT8                                MbrDone : 1;
+    UINT8                                Reserved : 2;
+    UINT8                                Reserved515[11];
+} TCG_LOCKING_FEATURE_DESCRIPTOR;
+
+typedef struct {
+    TCG_LEVEL0_FEATURE_DESCRIPTOR_HEADER Header;
+    UINT8                                SIDValueState : 1;
+    UINT8                                SIDBlockedState : 1;
+    UINT8                                Reserved4 : 6;
+    UINT8                                HardwareReset : 1;
+    UINT8                                Reserved5 : 7;
+    UINT8                                Reserved615[10];
+} TCG_BLOCK_SID_FEATURE_DESCRIPTOR;
+#pragma pack()
+#endif // #if MDE_PKG_VERSION < 13
 
 EFI_STATUS
 InstallAhciBusProtocol (
@@ -211,6 +281,7 @@ HostReset (
 );
 
 EFI_STATUS
+EFIAPI 
 GeneratePortReset (
     AMI_AHCI_BUS_PROTOCOL          *AhciBusInterface, 
     SATA_DEVICE_INTERFACE          *SataDevInterface,  
@@ -221,6 +292,7 @@ GeneratePortReset (
 );
 
 EFI_STATUS
+EFIAPI 
 GenerateSoftReset (
     SATA_DEVICE_INTERFACE               *SataDevInterface,
     UINT8                               PMPort
@@ -241,7 +313,7 @@ HandlePortComReset (
 
 EFI_STATUS 
 CheckValidDevice (
-    AMI_AHCI_BUS_PROTOCOL               *AhciBusInterface, 
+    SATA_DEVICE_INTERFACE               *SataDevInterface,
     UINT8                               Port,
     UINT8                               PMPort
 );
@@ -254,12 +326,14 @@ GetSataDevInterface (
 );
 
 EFI_STATUS
+EFIAPI 
 ExecuteNonDataCommand (
     SATA_DEVICE_INTERFACE               *SataDevInterface, 
     COMMAND_STRUCTURE                   CommandStructure
 );
 
 EFI_STATUS
+EFIAPI 
 ExecutePioDataCommand (
     SATA_DEVICE_INTERFACE               *SataDevInterface, 
     COMMAND_STRUCTURE                   *CommandStructure,
@@ -267,6 +341,7 @@ ExecutePioDataCommand (
 );
 
 EFI_STATUS
+EFIAPI 
 ExecuteDmaDataCommand (
     SATA_DEVICE_INTERFACE               *SataDevInterface, 
     COMMAND_STRUCTURE                   *CommandStructure,
@@ -274,6 +349,7 @@ ExecuteDmaDataCommand (
 );
 
 EFI_STATUS
+EFIAPI 
 SataReadWritePio (
     IN SATA_DEVICE_INTERFACE        *SataDevInterface,
     IN OUT VOID                     *Buffer,
@@ -284,22 +360,15 @@ SataReadWritePio (
 ) ;
 
 EFI_STATUS
+EFIAPI 
 SataPioDataOut (
     IN SATA_DEVICE_INTERFACE        *SataDevInterface,
-    IN OUT VOID                     *Buffer,
-    IN UINTN                        ByteCount,
-    IN UINT8                        Features,
-    IN UINT8                        LBALow,
-    IN UINT8                        LBALowExp,
-    IN UINT8                        LBAMid,
-    IN UINT8                        LBAMidExp,
-    IN UINT8                        LBAHigh,
-    IN UINT8                        LBAHighExp,
-    IN UINT8                        Command,
+    COMMAND_STRUCTURE               CommandStructure,
     IN BOOLEAN                      READWRITE
 ) ;
 
 EFI_STATUS
+EFIAPI 
 WaitforCommandComplete (
     SATA_DEVICE_INTERFACE               *SataDevInterface,
     COMMAND_TYPE                        CommandType,
@@ -344,6 +413,11 @@ DetectAndConfigureDevice (
 EFI_STATUS
 InstallOtherOptionalFeatures(
     IN AMI_AHCI_BUS_PROTOCOL          *AhciBusInterface
+);
+
+BOOLEAN
+CheckForLockedDrives(
+    IN  AMI_AHCI_BUS_PROTOCOL         *AhciBusInterface
 );
 
 EFI_STATUS
@@ -486,6 +560,7 @@ ConfigurePowerUpInStandby (
 );
 
 EFI_STATUS 
+EFIAPI 
 AhciBusSupported (
     IN EFI_DRIVER_BINDING_PROTOCOL    *This,
     IN EFI_HANDLE                     Controller,
@@ -493,6 +568,7 @@ AhciBusSupported (
 );
 
 EFI_STATUS 
+EFIAPI 
 AhciBusStart (
     IN EFI_DRIVER_BINDING_PROTOCOL    *This,
     IN EFI_HANDLE                     Controller,
@@ -500,6 +576,7 @@ AhciBusStart (
 );
 
 EFI_STATUS 
+EFIAPI 
 AhciBusStop (
     IN EFI_DRIVER_BINDING_PROTOCOL    *This,
     IN EFI_HANDLE                     Controller,
@@ -509,6 +586,7 @@ AhciBusStop (
 
 
 EFI_STATUS
+EFIAPI 
 DiskInfoInquiry (
     IN EFI_DISK_INFO_PROTOCOL   *This,
     IN OUT VOID                 *InquiryData,
@@ -516,6 +594,7 @@ DiskInfoInquiry (
 );
 
 EFI_STATUS
+EFIAPI 
 DiskInfoIdentify (
     EFI_DISK_INFO_PROTOCOL      *This,
     IN OUT VOID                 *IdentifyData,
@@ -523,6 +602,7 @@ DiskInfoIdentify (
 );
 
 EFI_STATUS
+EFIAPI 
 DiskInfoSenseData (
     EFI_DISK_INFO_PROTOCOL      *This,
     VOID                        *SenseData,
@@ -531,6 +611,7 @@ DiskInfoSenseData (
 );
 
 EFI_STATUS
+EFIAPI 
 DiskInfoWhichIDE (
     IN EFI_DISK_INFO_PROTOCOL   *This,
     OUT UINT32                  *IdeChannel,
@@ -545,6 +626,7 @@ DMACapable (
 ); 
 
 EFI_STATUS
+EFIAPI 
 SataBlkRead (
     IN EFI_BLOCK_IO_PROTOCOL    *This,
     IN UINT32                   MediaId,
@@ -554,6 +636,7 @@ SataBlkRead (
 );
 
 EFI_STATUS
+EFIAPI 
 SataBlkWrite (
     IN EFI_BLOCK_IO_PROTOCOL    *This,
     IN UINT32                   MediaId,
@@ -573,6 +656,7 @@ SataAtaBlkReadWrite (
 );
 
 EFI_STATUS
+EFIAPI 
 SataAtapiBlkRead (
     IN EFI_BLOCK_IO_PROTOCOL    *This,
     IN UINT32                   MediaId,
@@ -582,6 +666,7 @@ SataAtapiBlkRead (
 );
 
 EFI_STATUS
+EFIAPI 
 SataAtapiBlkWrite (
     IN EFI_BLOCK_IO_PROTOCOL    *This,
     IN UINT32                   MediaId,
@@ -591,12 +676,14 @@ SataAtapiBlkWrite (
 );
 
 EFI_STATUS
+EFIAPI 
 SataReset (
     IN EFI_BLOCK_IO_PROTOCOL    *This,
     IN BOOLEAN                  ExtendedVerification
 );
 
 EFI_STATUS
+EFIAPI 
 SataBlkFlush (
     IN EFI_BLOCK_IO_PROTOCOL    *This
 );
@@ -629,6 +716,7 @@ TestUnitReady (
 );
 
 EFI_STATUS 
+EFIAPI 
 ExecutePacketCommand (
     SATA_DEVICE_INTERFACE           *SataDevInterface, 
     COMMAND_STRUCTURE               *CommandStructure,
@@ -653,6 +741,12 @@ HandleAtapiError (
 BOOLEAN
 Check48BitCommand (
     IN UINT8                        Command
+);
+
+EFI_STATUS
+IssueSetMultipleModeCommand (
+    SATA_DEVICE_INTERFACE    *SataDevInterface,
+    BOOLEAN                  GetLatestIdentifyData
 );
 
 EFI_STATUS
@@ -738,23 +832,19 @@ WriteDataByte (
     IN  UINTN   Data
 );
 
+VOID
+PrintCommandFIS (
+  IN COMMAND_STRUCTURE        CommandStructure
+);
+
+VOID
+PrintAhciCapability  (
+  IN AMI_AHCI_BUS_PROTOCOL     *AhciBusInterface
+);
+
 /****** DO NOT WRITE BELOW THIS LINE *******/
 #ifdef __cplusplus
 }
 #endif
 
 #endif
-
-//**********************************************************************
-//**********************************************************************
-//**                                                                  **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
-//**                                                                  **
-//**                       All Rights Reserved.                       **
-//**                                                                  **
-//**         5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093     **
-//**                                                                  **
-//**                       Phone: (770)-246-8600                      **
-//**                                                                  **
-//**********************************************************************
-//**********************************************************************

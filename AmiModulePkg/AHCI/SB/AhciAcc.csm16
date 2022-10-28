@@ -4,7 +4,7 @@
 ;****************************************************************************
 ;****************************************************************************
 ;**                                                                        **
-;**             (C)Copyright 1985-2014, American Megatrends, Inc.          **
+;**             (C)Copyright 1985-2017, American Megatrends, Inc.          **
 ;**                                                                        **
 ;**                          All Rights Reserved.                          **
 ;**                                                                        **
@@ -17,14 +17,20 @@
 
 ;----------------------------------------------------------------------------
 ;       INCLUDE FILES
-;----------------------------------------------------------------------------
-        include ahci.equ
-        include haccess.equ
-        include aint13.equ
-        include token.equ
+;----------------------------------------------------------------------------      
+        include HACCESS.EQU
+        include Token.equ
+        
+        FLAT_MODE_INDEX           equ 08h
+        REAL_MODE_INDEX           equ 10h
+        PORT_REGISTER_START       equ 100h    ; Port registers start at offset 100h from AHCI base
+        PORT_REGISTER_SET_SIZE_N  equ 07h     ; #of bits to be shifted left
+        AHCI_IDP_SUPPORT_BIT      equ 00h     ; if this BIT field 0, AHCI IDP is supported 
+        PCI_IDP_SUPPORT_BIT       equ 01h     ; if this BIT field 0, PCI IDP is supported
+        CHIPSET_SPECIFIC_IDP_MASK equ 0ffffh
+        PCI_CONFIG_IO_PORT_ADDR   equ 0CF8h
+        PCI_CONFIG_DATA_PORT_ADDR equ 0CFCh
 
-	FLAT_MODE_INDEX equ 08h
-	REAL_MODE_INDEX equ 10h
 ;----------------------------------------------------------------------------
 ;       EXTERNS USED
 ;----------------------------------------------------------------------------
@@ -32,15 +38,37 @@
 OEM16_CSEG SEGMENT PARA PUBLIC 'CODE' USE16
         ASSUME cs:OEM16_CSEG, ds:OEM16_CSEG
 ;-------------------------------------------------------------------------
+
         PUBLIC AhciApiModuleStart
 AhciApiModuleStart LABEL BYTE
         jmp     SHORT AhciCsm16Api
         dw      AhciDataStart - AhciApiModuleStart 
+IF (MKF_AVOID_MULTIPLE_BIG_REAL_MODE_SWITCH)
+        dw      AhciApiModuleStart
+        dw      Switch_Big_Real_Mode_FAR - AhciApiModuleStart
+        dw      Switch_Original_Mode_FAR - AhciApiModuleStart
+        dw      0h     ; buffer offset of Ebda
+ENDIF
 
+;
+; Index/Data parameter identified based on IDPType
+; i.e. BIT0 is "0" - AHCI IDP is supported
+;      BIT1 is "0" - PCI IDP is supported
+;      BIT2 to BIT15 - Reserved (Other Chipset Specific IDP method)
+;
+        AHCI_ACCESS    STRUCT
+        IDPType     dw  ?
+        Index       dw  ?
+        Data        dw  ?
+        BaseAddress dd  ?
+        AHCI_ACCESS    ENDS
+
+; Bit definitions
+BIT05          equ 00000020h
 
 ;----------------------------------------------------------------------------
 ; IMPORTANT: Do not put any OEM/CHIPSET code above this, the above code and
-;            and data are at fixed locations.
+;                     data are at fixed locations.
 ;----------------------------------------------------------------------------
 
 ;-------------------------------------------------------------------------
@@ -128,6 +156,212 @@ aca_Exit:
 
 AhciCsm16Api  ENDP
 
+;----------------------------------------------------------------------------
+;                       ReadWriteDwordThruAhciIdp
+;----------------------------------------------------------------------------
+; This routine reads/writes HBA register through AHCI IDP 
+; Input:        BX      Offset of Specific AHCI controller's AhciAccess structure
+;               ESI     HBA Base Address
+;               dl      0 for IDP read
+;                       1 for IDP write
+; Output:       NC      Read or Write is Success
+;                       EAX is stored with the read Data if it is IDP read
+;               CY      IDP is not supported
+; Register Usage: EAX alone modified for IDP read
+;
+;----------------------------------------------------------------------------
+ReadWriteDwordThruAhciIdp PROC FAR  PUBLIC
+        push    cx
+        push    dx
+        mov     cl, dl                           ; mov IDP Read/write value in CL
+        mov     dx, cs:[AhciDataStart + bx + 2]  ; DX = Index port
+        cmp     dx, 0ffffh
+        jne     DoIdpReadWrite
+        stc
+        jmp     IdpReadWriteDone
+DoIdpReadWrite:
+
+        push    eax
+        mov     eax, esi                ; EAX = register address
+        out     dx, eax                 ; Write Address
+        pop     eax
+        mov     dx, cs:[AhciDataStart + bx + 4]  ; DX = Data Port
+        
+        and     cl,cl
+        jnz     DoIdpWrite
+        in      eax, dx                 ; Read dword data
+        clc
+        jmp     IdpReadWriteDone
+DoIdpWrite:
+        out     dx,eax                  ; Write dword data
+        clc
+IdpReadWriteDone:
+        pop     dx
+        pop     cx
+        ret
+ReadWriteDwordThruAhciIdp   ENDP
+
+;-------------------------------------------------------------------------
+;                       ReadWriteDwordThruPciIdp
+;----------------------------------------------------------------------------
+; This routine reads/writes HBA register through PCI IDP 
+; Input:        BX      Offset of Specific AHCI controller's AhciAccess structure
+;               ESI     HBA Base Address
+;               dl      0 for IDP read
+;                       1 for IDP write
+; Output:       NC      Read or Write is Success
+;                       EAX is stored with the read Data if it is IDP read
+;               CY      IDP is not supported
+; Register Usage: EAX alone modified only for IDP read
+; 
+; Note: BIT1 of IDPType should be programmed to "0" to process HBA register thru PCI IDP
+;       method
+; 
+; In order to access through "PCI IDP port for AHCI controller", Project Owner need to modify Aint13Csp.c 
+; file such that PCI IDP port value can be retreived from Index, Data parameter of AhciAccess Structure.
+;
+;     i.e.,     "Index" will be BIT0 to BIT1 (Reserved)
+;                                BIT2 to BIT7 (Register offset)
+;                                BIT8 to BIT10 (Function)
+;                                BIT11 to BIT15 (Device)
+;               "Data" will be BIT0 to BIT7 (Bus)
+;                               BIT8 to BIT15(Reserved)
+;     PCI IDP Index port can be derived like ( 80000000(BIT31) + Data << 16 + Index )
+;     PCI IDP Data port can be derived like ( 80000000(BIT31) + Data << 16 + Index ) + 4
+;
+;----------------------------------------------------------------------------
+ReadWriteDwordThruPciIdp PROC FAR  PUBLIC
+        push    ecx
+        push    edx
+        push    eax
+
+        mov     cl, dl                             ; mov IDP Read/write value in CL
+        movzx   edx, cs:[AhciDataStart + bx + 2 ]
+        cmp     dx, 0ffffh
+        jne     DoIdpReadWrite
+        stc
+        pop     eax
+        jmp     PciIdpReadWriteDone
+DoIdpReadWrite:
+
+        mov     eax, 80000000h
+        or      eax, edx
+        movzx   edx, cs:[AhciDataStart + bx + 4]
+        shl     edx, 16
+        or      eax, edx                           ; EAX contains PCI Index port
+        mov     dx, PCI_CONFIG_IO_PORT_ADDR
+        out     dx, eax
+
+        mov     dx, PCI_CONFIG_DATA_PORT_ADDR
+	
+        push    eax
+        mov     eax, esi
+        out     dx, eax
+
+        pop     eax
+        add     eax, 04h                           ; EAX contains PCI Data port
+        
+        and     cl,cl
+        jnz     DoIdpWrite
+        mov     dx, PCI_CONFIG_IO_PORT_ADDR
+        out     dx, eax
+        
+        mov     dx, PCI_CONFIG_DATA_PORT_ADDR
+        pop     eax                                ; POP EAX from Stack
+        in      eax, dx                            ; Read dword data
+        clc
+        jmp     PciIdpReadWriteDone
+DoIdpWrite:
+        mov     dx, PCI_CONFIG_IO_PORT_ADDR
+        out     dx, eax
+        
+        mov     dx, PCI_CONFIG_DATA_PORT_ADDR
+        pop     eax                                ; POP EAX from Stack to Write
+        out     dx, eax                            ; Write dword data
+        clc
+PciIdpReadWriteDone:
+        pop     edx
+        pop     ecx
+        ret
+ReadWriteDwordThruPciIdp   ENDP
+
+;-------------------------------------------------------------------------
+;                       ReadWriteDwordThruChipsetSpecificIdp
+;----------------------------------------------------------------------------
+; This routine reads/writes HBA register through Chipset specific IDP method
+; Input:        BX      Offset of Specific AHCI controller's AhciAccess structure
+;               ESI     HBA Base Address
+;               dl      0 for IDP read
+;                       1 for IDP write
+; Output:       NC      Read or Write is Success
+;                       EAX is stored with the read Data if it is IDP read
+;               CY      IDP is not supported
+; Register Usage: EAX alone modified only for IDP read
+; 
+; NOTE: PROJECT OWNER NEED TO MODIFY THIS FUNCTION BASED ON THE CHIPSET SPECIFIC
+;       IDP METHOD SUPPORTED IN THEIR PLATFORM
+;-------------------------------------------------------------------------
+ReadWriteDwordThruChipsetSpecificIdp PROC FAR  PUBLIC
+    stc
+    ret
+ReadWriteDwordThruChipsetSpecificIdp ENDP
+
+
+;-------------------------------------------------------------------------
+;                       PerformReadWriteThruIdp
+;----------------------------------------------------------------------------
+; Main routine reads/writes HBA register through any one of the IDP 
+; supported in the platform.
+; Input:        BX      Offset of Specific AHCI controller's AhciAccess structure
+;               ESI     HBA Base Address
+;               dl      0 for IDP read
+;                       1 for IDP write
+; Output:       NC      Read or Write is Success
+;                       EAX is stored with the read Data if it is IDP read
+;               CY      IDP is not supported
+;
+; Note: Function calls any one of the IDP access method procedure supported in the 
+;       platform. Those are identified based on the BIT definition of "IDPType" AhciAccess 
+;       Parameter.
+;       i.e. BIT0 is "0" - Perform Read/write through AHCI IDP
+;            BIT1 is "0" - Perform Read/write through PCI IDP
+;            BIT2 to BIT15 - Reserved (Other Chipset Specific IDP method)
+;
+;----------------------------------------------------------------------------
+PerformReadWriteThruIdp PROC FAR  PUBLIC
+        push    dx
+        mov     dx, cs:[AhciDataStart + bx]  ; DX = IDPType
+        cmp     dx, 0ffffh
+        jne     CheckIdpReadWriteSupport
+        stc
+        pop     dx
+        jmp     Return
+CheckIdpReadWriteSupport:
+
+        bts     dx, AHCI_IDP_SUPPORT_BIT
+        jc      CheckPciIdp
+        pop     dx
+        call    ReadWriteDwordThruAhciIdp
+        jmp     Return
+CheckPciIdp:
+        bts     dx, PCI_IDP_SUPPORT_BIT
+        jc      CheckChipsetSpecficIdp
+        pop     dx
+        call    ReadWriteDwordThruPciIdp
+        jmp     Return
+CheckChipsetSpecficIdp:
+        xor      dx, CHIPSET_SPECIFIC_IDP_MASK
+        and      dx, dx
+        pop      dx
+        jz       ReturnWithCarry
+        call     ReadWriteDwordThruChipsetSpecificIdp
+        jmp      Return
+ReturnWithCarry:
+        stc
+Return:
+        ret
+PerformReadWriteThruIdp   ENDP
+
 ;
 ;-------------------------------------------------------------------------
 ;                       ReadRegisterDword
@@ -160,42 +394,38 @@ ReadRegisterDword       PROC    NEAR    PUBLIC
         push    ax                      ; Save ax value in stack
         mov     ax, 0
         mov     al, dl                  ; Move the controller no into al
-        mov     bl, 8
-        mul     bl                      ; Multiply it with 8 as AHCI_ACCESS\
-                                        ; structure size is 8
+        mov     bl, 10
+        mul     bl                      ; Multiply it with 10 as AHCI_ACCESS\
+                                        ; structure size is 10
         mov     bx, ax                  ; Move the offset into bx
         pop     ax                      ; Restore ax
-IF (MKF_AHCI_INT13_SMM_SUPPORT)
+;Check whether index, data port is supported
+IF MKF_ACCESS_MMIO_THROUGH_SWSMI EQ 0      
+        xor     dl, dl                  ; DL = 0 for IDP read
+        call    PerformReadWriteThruIdp
+        jnc     Read_done
+ENDIF        
         push    ebx
         push    ecx 
-        mov     ebx, dword ptr cs:[AhciDataStart +4+bx] ;ebx=Data
+        mov     ebx, dword ptr cs:[AhciDataStart + 6 + bx] ;ebx=Data
         add     esi,ebx
-IF (MKF_BIG_REAL_MODE_MMIO_ACCESS)
-        call    ReadDWORD
-ELSE
+; If system is not in BigReal mode Access MMIO using SwSmi
+IF (MKF_ACCESS_MMIO_THROUGH_SWSMI OR MKF_AVOID_MULTIPLE_BIG_REAL_MODE_SWITCH)
         mov     cx,1                    ;Read Function
-        call    AhciGenerateSwSMI
+        call    OptForSwSmiOrMmio
         cmp     ecx, 0                  ; if ECX == 0, MMIO read is Success
         jz      Read_Success
         stc
         jmp     Read_Return
 Read_Success:
         clc
-Read_Return:
+ELSE
+        call    ReadDWORD
 ENDIF
+
+Read_Return:
         pop     ecx
         pop     ebx
-        jmp     Read_done
-ENDIF
-        mov     dx, cs:[AhciDataStart + bx]              ; DX = Index Port
-        push    eax
-        mov     eax, esi                ; EAX = register address
-        out     dx, eax                 ; Write Address
-        pop     eax
-
-        mov     dx, cs:[AhciDataStart + 2 + bx]              ; DX = Data Port
-        in      eax, dx                 ; EAX = adat
-        clc                             ; NC, Successful
 Read_done:
         pop     bx
         pop     dx
@@ -228,51 +458,44 @@ WriteRegisterDword_FAR  ENDP
 WriteRegisterDword      PROC    NEAR    PUBLIC
         push    esi
         call    CalculateRegisterOffset ; ESI = register offset from base
-
         push    dx                      ; Dx has the controller number
         cli
         push    bx                      ; Save bx value in stack
         push    ax                      ; Save ax value in stack
         mov     ax, 0
         mov     al, dl                  ; Move the controller no into al
-        mov     bl, 8
-        mul     bl                      ; Multiply it with 8 as AHCI_ACCESS\
-                                        ; structure size is 8
+        mov     bl, 10
+        mul     bl                      ; Multiply it with 10 as AHCI_ACCESS\
+                                        ; structure size is 10
         mov     bx, ax                  ; Move the offset into bx
         pop     ax                      ; Restore ax
-
-IF (MKF_AHCI_INT13_SMM_SUPPORT)
+IF MKF_ACCESS_MMIO_THROUGH_SWSMI EQ 0
+;Check whether index, data port is supported
+        mov     dl, 1                  ; DL = 1 for IDP Write
+        call    PerformReadWriteThruIdp
+        jnc     Write_done
+ENDIF
         push    ebx
         push    ecx
-        mov     ebx, dword ptr cs:[AhciDataStart + 4 + bx]
+        mov     ebx, dword ptr cs:[AhciDataStart + 6 + bx]
         add     esi,ebx
-IF (MKF_BIG_REAL_MODE_MMIO_ACCESS)	
-    	call	WriteDWORD
-ELSE
+IF (MKF_ACCESS_MMIO_THROUGH_SWSMI OR MKF_AVOID_MULTIPLE_BIG_REAL_MODE_SWITCH)
+; If system is not in BigReal mode Access MMIO using SwSmi to wirte
         mov     ebx,eax                 ;Write Value
         mov     cx,2                    ;Write Function
-        call    AhciGenerateSwSMI
+        call    OptForSwSmiOrMmio
         cmp     ecx, 0                  ; if ECX == 0, MMIO write is Success
         jz      Write_Success
         stc
         jmp     Write_Return
 Write_Success:
         clc
-Write_Return:
+ELSE
+        call    WriteDWORD
 ENDIF
+Write_Return:
         pop     ecx
         pop     ebx
-        jmp     Write_done
-ENDIF
-        mov     dx, cs:[AhciDataStart + bx]              ; DX = Index Port
-        push    eax
-        mov     eax, esi                ; EAX = register address
-        out     dx, eax                 ; Write Address
-        pop     eax
-
-        mov     dx, cs:[AhciDataStart + 2 + bx]              ; DX = Data Port
-        out     dx, eax                 ; Write dword data
-        clc                             ; NC, Successful
 Write_done:
         pop     bx
         pop     dx
@@ -329,6 +552,43 @@ WaitForFisRecRun    PROC NEAR PUBLIC
         ret
 WaitForFisRecRun    ENDP
 
+IF (MKF_ACCESS_MMIO_THROUGH_SWSMI OR MKF_AVOID_MULTIPLE_BIG_REAL_MODE_SWITCH)
+;<AMI_PHDR_START>
+;----------------------------------------------------------------------------
+;
+; Procedure:    OptForSwSmiOrMmio 
+;
+; Description:  Checks whether the Software SMI should be generated for read/write
+;               MMIO. Generate Sw SMI if the system is not in Big Real mode.
+;               If in big real mode, read/write MMIO without SMI.
+; 
+; Code Flow:    The following is the function flow
+;               
+;            1. When AVOID_MULTIPLE_BIG_REAL_MODE_SWITCH is enabled, System 
+;               is always in Big real mode, so MMIO read/write is done directly. 
+;            2. When ACCESS_MMIO_THROUGH_SWSMI is enabled, Check_Big_Real_mode 
+;               function decides the mode of the system and if system is in 
+;               Big real mode MMIO read/write is done directly else Software SMI
+;               is generated to access MMIO. 
+;----------------------------------------------------------------------------
+;<AMI_PHDR_END>
+
+OptForSwSmiOrMmio    PROC NEAR PUBLIC
+IF MKF_ACCESS_MMIO_THROUGH_SWSMI
+        call    Check_Big_Real_mode
+        jc      NotBigReadMode
+ENDIF
+        call    MmioReadWrite           ; Read/write MMIO without Sw SMI
+        ret
+NotBigReadMode:
+IF (MKF_AHCI_INT13_SMM_SUPPORT)
+        call    AhciGenerateSwSMI       ; Generate Sw SMI to Read/Write MMIO
+ENDIF
+        ret
+OptForSwSmiOrMmio    ENDP
+ENDIF
+
+IF (MKF_AHCI_INT13_SMM_SUPPORT)
 ;<AMI_PHDR_START>
 ;----------------------------------------------------------------------------
 ;
@@ -348,31 +608,52 @@ WaitForFisRecRun    ENDP
 ;
 ;----------------------------------------------------------------------------
 ;<AMI_PHDR_END>
-IF (MKF_AHCI_INT13_SMM_SUPPORT)
 AhciGenerateSwSMI    PROC NEAR PUBLIC
-        call    Check_Big_Real_mode
-        jc      NotBigReadMode
-        push    es
-        push    0
-        pop     es
-
-        cmp     cx,1
-        je      ReadMmio
-        mov     dword ptr es:[esi],eax  ;Write MMIO  
-        pop     es
-        ret
-ReadMmio:
-        mov     eax,dword ptr es:[esi]  ;Read MMIO
-        pop     es
-        ret
-NotBigReadMode:
-
         mov     dx,MKF_SW_SMI_IO_ADDRESS     
         mov     al,MKF_AHCI_INT13_SMM_SWSMI_VALUE
         out     dx,al                   ;Generate Sw SMI to Read/Write MMIO
         jmp     $+2
         ret
 AhciGenerateSwSMI    ENDP
+ENDIF
+
+IF (MKF_ACCESS_MMIO_THROUGH_SWSMI OR MKF_AVOID_MULTIPLE_BIG_REAL_MODE_SWITCH)
+;<AMI_PHDR_START>
+;----------------------------------------------------------------------------
+;
+; Procedure:    MmioReadWrite 
+;
+; Description:  If the system is in big real mode, read/write the MMIO space 
+;               without SwSMI 
+;
+; Input:        Cx = 1 - Read MMIO
+;               Cx=  2 - Write MMIO 
+;               Eax= Value to write in MMIO for write MMIO 
+;                    
+; Output:       Eax- for Read MMIO 
+;
+;
+;----------------------------------------------------------------------------
+;<AMI_PHDR_END>
+
+MmioReadWrite PROC NEAR PUBLIC
+        push    es
+        push    0
+        pop     es
+
+        cmp     cx,1
+        je      ReadMmio
+        mov     dword ptr es:[esi],eax  ;Write MMIO
+        mov     ecx, 00h
+        pop     es
+        ret
+ReadMmio:
+        mov     eax,dword ptr es:[esi]  ;Read MMIO
+        mov     ecx, 00h
+        pop     es
+        ret
+MmioReadWrite ENDP
+ENDIF
 
 ;-------------------------------------------------------------------------
 ;           ReadDWORD
@@ -403,10 +684,10 @@ ReadDWORD   PROC    NEAR    PUBLIC
         mov     es, bx
         mov     di, 00h
         mov     ebx, dword ptr es:[di]
-
         push    ebx
 
         mov     byte ptr es:[di], 00h
+
 ; Switching to Big Real Mode
         call    Switch_Big_Real_Mode
 
@@ -523,6 +804,107 @@ org_g201:
         ret
 WriteDWORD  ENDP
 
+;<AMI_PHDR_START>
+;----------------------------------------------------------------------------
+;
+; Procedure:    Switch_Big_Real_Mode_FAR 
+;
+; Description:  Check whether the system is in real mode or big real mode.
+;               if the system is in real mode, change it to big real mode and  
+;               a flag is set, so it can be changed back once read / write 
+;               is done.
+;
+; Input:        None. 
+;                    
+; Output:       None. 
+;
+;----------------------------------------------------------------------------
+;<AMI_PHDR_END>
+
+Switch_Big_Real_Mode_FAR PROC FAR PUBLIC
+        pushf
+        push    es
+        push    di
+        push    ebx
+        push    eax
+        push    ds
+        call    Get_EBDA
+        push    ds
+        pop     ax
+        mov     bx, WORD ptr cs:[AhciApiModuleStart + 2 + 8] ; buffer offset of Ebda
+        shr     bx, 4
+        add     bx, ax
+        push    bx
+        pop     es
+        mov     di, 00h
+; Check the System is in Big real mode or real mode
+        push    di
+        call    Check_Big_Real_mode
+        jnc     SystemInBigRealMode      ;System is in big real mode, so exit from the function
+        mov     byte ptr es:[di], 01h    ;System is in Real mode, so set the flag
+SystemInBigRealMode:        
+        mov     di, FLAT_MODE_INDEX      ;Index for flat mode
+        call    GotoProtectedMode        ;Switched to Big real mode
+        pop     di
+        pop     ds
+        pop     eax
+        pop     ebx
+        pop     di
+        pop     es
+        popf
+        retf
+Switch_Big_Real_Mode_FAR ENDP
+
+;<AMI_PHDR_START>
+;----------------------------------------------------------------------------
+;
+; Procedure:    Switch_Original_Mode_FAR 
+;
+; Description:  Checks whether the system mode was changed before read/ write
+;               based on the flag set.If the system mode was changed,then change
+;               it back to original mode, else ignore.
+;
+; Input:        None. 
+;                    
+; Output:       None. 
+;
+;----------------------------------------------------------------------------
+;<AMI_PHDR_END>
+
+Switch_Original_Mode_FAR PROC FAR PUBLIC
+        pushf
+        push    es
+        push    di
+        push    ebx
+        push    eax
+        push    ds
+        call    Get_EBDA
+        push    ds
+        pop     ax
+        mov     bx, WORD ptr cs:[AhciApiModuleStart + 2 + 8] ; buffer offset of Ebda
+        shr     bx, 4
+        add     bx, ax
+        push    bx
+        pop     es
+        mov     di, 00h
+        mov     al, byte ptr es:[di]    
+        test    al, 01h                  ; Check whether the sytem mode was changed
+        jz      SkipOriginalModeSwitch                ; No 
+        
+        call    Switch_Original_Mode
+        test    al, 10b                  ; Check whether A20 is Enabled
+        jz      SkipOriginalModeSwitch   ; A20 gate is already disabled
+        call    DisblGateA20
+SkipOriginalModeSwitch:   
+        mov     byte ptr es:[di], 00h    ; Clearing the flag
+        pop     ds
+        pop     eax
+        pop     ebx
+        pop     di
+        pop     es
+        popf
+        retf
+Switch_Original_Mode_FAR ENDP
 ;----------------------------------------------------------------------------
 ;<AMI_PHDR_START>
 ;----------------------------------------------------------------------------
@@ -580,7 +962,6 @@ Switch_Original_Mode PROC NEAR PUBLIC
         mov     di, REAL_MODE_INDEX     ;Real mode index
         call    GotoProtectedMode
         pop     di
-
         ret
 
 Switch_Original_Mode ENDP
@@ -982,6 +1363,16 @@ Check_Big_Real_mode  PROC NEAR PUBLIC
         pushf
         cli
 
+; Skip Int0D trigger test if memory manager like EMM386 provides 
+; virtual DMA services in OS.
+; Note: BDA 40:7b Bit5 indicates virtual DMA services.
+
+        push    word ptr 40h
+        pop     ds
+        mov     al, byte ptr ds:[7bh]
+        and     al, BIT05
+        jnz     Skip_Test      
+        
         call    Get_EBDA
 
         mov     byte ptr ds:[102h],0    ;EBDA:102
@@ -989,18 +1380,24 @@ Check_Big_Real_mode  PROC NEAR PUBLIC
         push    0
         pop     es
 
-        mov     eax, dword ptr es:[0Dh*4]
+; The exception generated in the following test could be either exception D
+; (general protection) or exception 6 (invalid opcode), so vector both to
+; the local exception handler.
+
+        mov     eax, dword ptr es:[0Dh*4] ; Save exception D vector
+        push    eax
+        mov     eax, dword ptr es:[06h*4] ; Save exception 6 vector
         push    eax
                
         push    cs                      ; Runtime segment
         push    offset cs:Int0DHandler
         pop     eax
         mov     dword ptr es:[0Dh*4], eax
-
+        mov     dword ptr es:[06h*4], eax
 
         mov     edi,0100000h
         mov     eax,dword ptr es:[edi]
-        cmp     byte ptr ds:[102h],1    ;Check the exception
+        cmp     byte ptr ds:[102h],1    ; Check for exception
         je      Real_mode
 
         mov     edi,0
@@ -1018,14 +1415,19 @@ Check_Big_Real_mode  PROC NEAR PUBLIC
         cmp     eax,055AA55AAh
         jne     Real_mode
         pop     eax
-        mov     dword ptr es:[0Dh*4], eax
+        mov     dword ptr es:[06h*4], eax ; Restore exception 6 vector
+        pop     eax
+        mov     dword ptr es:[0Dh*4], eax ; Restore exception D vector
         popf    
         clc                             ;System is in Big Real Mode
         jmp     Exit_Ret
 
 Real_mode:
         pop     eax
-        mov     dword ptr es:[0Dh*4], eax
+        mov     dword ptr es:[06h*4], eax ; Restore exception 6 vector
+        pop     eax
+        mov     dword ptr es:[0Dh*4], eax ; Restore exception D vector
+Skip_Test:
         popf
         stc                             ;System is in Real Mode
 Exit_Ret:
@@ -1037,19 +1439,19 @@ Exit_Ret:
         ret        
 Check_Big_Real_mode  ENDP
 
-ENDIF
 
 AhciDataStart   label word
-AhciAccess AHCI_ACCESS (MKF_AHCI_CONTROLLER_COUNT) dup (<>)
-           AHCI_ACCESS (1) dup (<0ffffh,0ffffh,0ffffffffh>)
+AhciAccess AHCI_ACCESS (MKF_AHCI_CONTROLLER_COUNT) dup (<0ffffh,0ffffh,0ffffh,0ffffffffh>)
+           AHCI_ACCESS (1) dup (<0ffffh,0ffffh,0ffffh,0ffffffffh>)
 
 OEM16_CSEG ENDS
 
 END
+
 ;****************************************************************************
 ;****************************************************************************
 ;**                                                                        **
-;**             (C)Copyright 1985-2014, American Megatrends, Inc.          **
+;**             (C)Copyright 1985-2017, American Megatrends, Inc.          **
 ;**                                                                        **
 ;**                          All Rights Reserved.                          **
 ;**                                                                        **

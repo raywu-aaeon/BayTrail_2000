@@ -1,16 +1,10 @@
-//**********************************************************************
-//**********************************************************************
-//**                                                                  **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
-//**                                                                  **
-//**                       All Rights Reserved.                       **
-//**                                                                  **
-//**         5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093     **
-//**                                                                  **
-//**                       Phone: (770)-246-8600                      **
-//**                                                                  **
-//**********************************************************************
-//**********************************************************************
+//***********************************************************************
+//*                                                                     *
+//*   Copyright (c) 1985-2019, American Megatrends International LLC.   *
+//*                                                                     *
+//*      All rights reserved. Subject to AMI licensing agreement.       *
+//*                                                                     *
+//***********************************************************************
 
 /** @file AhciInt13Smm.h
     This file contains the definitions of function prototype, constant and 
@@ -21,6 +15,8 @@
 #ifndef __AINT13_SMM_HEADER__
 #define __AINT13_SMM_HEADER__
 
+#include "AInt13.h"
+
 #define AHCI_INT13_SMM_DATA_GUID \
     { 0xF4F63525, 0x281E, 0x4040, 0xA3, 0x13, 0xC1, 0xD6, 0x76, 0x63, 0x84, 0xBE }
 
@@ -28,7 +24,8 @@
 #define PCI_CFG_ADDR(bus,dev,func,reg) \
     ((VOID*)(UINTN) (PciExpressBaseAddress + ((bus) << 20) + ((dev) << 15) + ((func) << 12) + reg))
 
-#define     AHCI_CONTROLLER         0x06
+#define     AHCI_CONTROLLER_SCC     0x06
+#define     RAID_CONTROLLER_SCC     0x04
 #define     MASS_STORAGE            0x01
 #define     PCI_ABAR                0x24
 #define     HDD_BLOCK_SIZE          512
@@ -45,6 +42,7 @@
 #define     READ_DMA_EXT            0x25
 #define     WRITE_DMA               0xCA
 #define     WRITE_DMA_EXT           0x35
+#define     READ_TOC                0x43
 
 // Int13 parameter definition
 // function(AH) definition
@@ -52,6 +50,7 @@
 #define     WRITE_SECTOR            0x03
 #define     EXT_READ                0x42
 #define     EXT_WRITE               0x43
+
 
 // Prevent compiler from padding the structures
 #pragma pack(1)
@@ -79,7 +78,7 @@ typedef struct {
 
 typedef struct {
     UINT8                  DriveCount;
-    SMM_AINT13_DRIVE_INFO  DriveInfo[32];       // Sync array length with SATA_PORT_COUNT of Aint13.h
+    SMM_AINT13_DRIVE_INFO  DriveInfo[SATA_PORT_COUNT];       // Sync array length with SATA_PORT_COUNT of Aint13.h
 } AHCI_INT13_SMM_DATA;
 
 typedef struct {
@@ -109,20 +108,24 @@ typedef struct {
     EFI_FLAGS_REG   StackFlags;
 } INT13_TO_SMI_EXREGS;
 
+typedef struct {
+    UINT16   wDataLength;
+    UINT8    bFirstTrackNo;
+    UINT8    bLastTrackNo;
+    UINT8    bReserved;
+    UINT8    bADRControl;
+    UINT8    bTrackNo;
+    UINT8    bReserved1;
+    UINT32   dStartLBA;
+}ATAPI_TOC_DATA;
+
 #pragma pack()
+
+VOID
+PrintAhciMassDevInfo (
+  SMM_AINT13_DRIVE_INFO *pDriveInfo
+);
+
 
 #endif 
 
-//**********************************************************************
-//**********************************************************************
-//**                                                                  **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
-//**                                                                  **
-//**                       All Rights Reserved.                       **
-//**                                                                  **
-//**         5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093     **
-//**                                                                  **
-//**                       Phone: (770)-246-8600                      **
-//**                                                                  **
-//**********************************************************************
-//**********************************************************************

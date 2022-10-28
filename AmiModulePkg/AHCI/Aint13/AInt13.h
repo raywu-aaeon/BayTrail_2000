@@ -1,7 +1,7 @@
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2017, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **
@@ -186,12 +186,20 @@ typedef struct _AHCI_SMM_RTS {
     UINT32  SmmData;
 } AHCI_SMM_RTS;
 
+typedef struct _AHCI_INT13_HOOK {
+    UINT16  FunctionOffs;
+    UINT16  FunctionSeg;
+} AHCI_INT13_HOOK;
+
 typedef struct _AHCI_RT_MISC_DATA {
-    UINT8        NumAhciDevice;      // #of AHCI device installed by BIOS
-    UINT8        RunAttribute;       // Bit-mapped information about runtime environment
-    UINT8        AhciEbdaSizeK;      // Size of EBDA in unit of 1k that is created by AHCI init
-    UINT32       AhciEbdaStart;      // Start offset of AHCI communication area in EBDA
-    AHCI_SMM_RTS AhciSmmRt;          // Port and Data information to generate software SMI
+    UINT8           NumAhciDevice;      // #of AHCI device installed by BIOS
+    UINT8           RunAttribute;       // Bit-mapped information about runtime environment
+    UINT8           AhciEbdaSizeK;      // Size of EBDA in unit of 1k that is created by AHCI init
+    UINT32          AhciEbdaStart;      // Start offset of AHCI communication area in EBDA
+    AHCI_SMM_RTS    AhciSmmRt;          // Port and Data information to generate software SMI
+    AHCI_INT13_HOOK PreInt13Hook;       // Pre-process of AhciInt13 hook
+    AHCI_INT13_HOOK PostInt13Hook;      // Post-process of AhciInt13 hook
+    UINT32          PortBaseAddress;    // AHCI_ACCESS Structre Address
 } AHCI_RT_MISC_DATA;
 
 typedef struct _DEV_BBS_OUTFIT {
@@ -224,9 +232,11 @@ typedef struct _AHCI_I13_DATA {
 #define PORT_REGISTER_SET_SIZE      0x80
 #define PORT_REGISTER_SET_SIZE_N    7
 
-#define SIZE_CLCTFIS_AREA_K         4
-#define A_EBDA_USED                 1
-#define A_INT13_SWSMI_USED          BIT2
+#define SIZE_CLCTFIS_AREA_K           4
+#define A_EBDA_USED                   1
+#define MMIO_THRU_SWSMI               BIT2
+#define MMIO_THRU_SINGLE_BIGREAL_MODE BIT3
+#define SMM_MODE_CHECK                BIT4
 
 #define BAID_TYPE_HDD       1
 #define BAID_TYPE_RMD_HDD   2
@@ -238,7 +248,7 @@ typedef struct _AHCI_I13_DATA {
 #define SYSTYPE_ATA             0
 #define DEVTYPE_SYS             1
 
-EFI_STATUS  GetAccessInfo (EFI_PCI_IO_PROTOCOL*, UINT16*, UINT16*);
+EFI_STATUS  GetAccessInfo (EFI_PCI_IO_PROTOCOL*, UINT16*, UINT16*,UINT16*);
 EFI_STATUS  InitCspData (UINT16, UINT16,UINT32,UINT8);
 UINT16 CountDrives(IN EFI_HANDLE *HandleBuffer,
                    IN UINTN        HandleCount,
@@ -251,7 +261,7 @@ UINT16 CountDrives(IN EFI_HANDLE *HandleBuffer,
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2017, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **

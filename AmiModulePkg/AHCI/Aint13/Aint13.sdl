@@ -20,10 +20,9 @@ End
 
 TOKEN
     Name  = "AI13_BINARY_VERSION"
-    Value  = "5714"
+    Value  = "5719"
     Help  = "Version of AI13.bin. Higher 2 digits represent CSM version and lower 2 digits represent AI13.bin build number"
     TokenType = Integer
-    TargetEQU = Yes
     TargetMAK = Yes
     TargetH = Yes
 End
@@ -41,7 +40,7 @@ ELINK
 End
 
 ELINK
-    Name = "OPROM(1,0,1,$(AINT13_DIR)\AI13.BIN)"
+    Name = "OPROM(1,0,1,$(AINT13_DIR)/AI13.bin)"
     Parent = "CSM_OPROM_LIST"
     InvokeOrder = AfterParent
 End
