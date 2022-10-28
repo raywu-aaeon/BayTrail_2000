@@ -259,7 +259,7 @@ End
 ###########################################################################
 TOKEN
 	Name  = "BEEP_ENABLE"
-	Value  = "1"
+	Value  = "0"
 	Help  = "This flag enables/disables all firmware beeps"
 	TokenType = Boolean
 	TargetH = Yes
