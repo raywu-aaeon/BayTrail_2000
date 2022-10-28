@@ -38,7 +38,8 @@
   UefiDriverEntryPoint
   AhciCspLib
   PcdLib
-  
+  DebugLib
+
 [Protocols]
   gEfiSmmBase2ProtocolGuid
   gAmiAhciSmmProtocolGuid
