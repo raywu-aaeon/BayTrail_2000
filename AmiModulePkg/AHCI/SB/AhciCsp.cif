@@ -1,5 +1,5 @@
 <component>
-	name = "Ahci CSP-Template"
+	name = "AHCI CSP-Template"
 	category = ModulePart
 	LocalRoot = "AmiModulePkg\AHCI\SB"
 	RefName = "ACSP"

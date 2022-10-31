@@ -1,151 +1,100 @@
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2012, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **
-//**         5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093     **
+//**         5555 Oakbrook Pkwy, Suite 200, Norcross, GA 30093        **
 //**                                                                  **
 //**                       Phone: (770)-246-8600                      **
 //**                                                                  **
 //**********************************************************************
 //**********************************************************************
+//**********************************************************************
+// $Header: /Alaska/SOURCE/Modules/AHCI/AhciSmm/AhciSmmProtocol.h 6     5/05/11 7:39a Rameshr $
+//
+// $Revision: 6 $
+//
+// $Date: 5/05/11 7:39a $
+//**********************************************************************
 
-/** @file AhciSmmProtocol.h
-    Protocol definition for Ahci SMM 
+//<AMI_FHDR_START>
+//--------------------------------------------------------------------------
+//
+// Name: AHCISmmProtocol.h
+//
+// Description: Protocol definition
+//
+//--------------------------------------------------------------------------
+//<AMI_FHDR_END>
 
-**/
-
-#ifndef _AMI_AHCI_SMM_PROTOCOLS_H_
-#define _AMI_AHCI_SMM_PROTOCOLS_H_
+#ifndef _EFI_AHCI_SMM_PROTOCOLS_H_
+#define _EFI_AHCI_SMM_PROTOCOLS_H_
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#include <Protocol/AmiAhciBus.h>
+#define AHCI_SMM_PROTOCOL_GUID \
+        {0xB2FA5764, 0x3B6E, 0x43D3, 0x91, 0xDF, 0x87, 0xD1, 0x5A, 0x3E, 0x56, 0x68}
 
-#define AMI_AHCI_SMM_PROTOCOL_GUID \
-        {0xB2FA5764, 0x3B6E, 0x43D3, { 0x91, 0xDF, 0x87, 0xD1, 0x5A, 0x3E, 0x56, 0x68 } }
+GUID_VARIABLE_DECLARATION(gAhciSmmProtocolGuid,AHCI_SMM_PROTOCOL_GUID);
 
-typedef struct _AMI_AHCI_BUS_SMM_PROTOCOL AMI_AHCI_BUS_SMM_PROTOCOL;
+#ifndef GUID_VARIABLE_DEFINITION
 
+#include <Protocol\PAhciBus.h>
 
-/**
-    Initilize the Sata port on S3 resume
+typedef struct _AHCI_BUS_SMM_PROTOCOL AHCI_BUS_SMM_PROTOCOL;
 
-    @param SataDevInterface 
-    @param Port,
-
-    @retval 
-        EFI_STATUS
-
-**/ 
-typedef 
-EFI_STATUS 
-(*AMI_AHCI_SMM_INIT_ON_S3) (
-    IN AMI_AHCI_BUS_SMM_PROTOCOL                *SataDevInterface, 
-    IN UINT8                                    Port
-);
-
-
-/**
-    Execute the PIO data command
-                   
-    @param SataDevInterface 
-    @param CommandStructure 
-    @param PortNumber,
-    @param PMPortNumber, 
-    @param DeviceType,
-    @param READWRITE 
-
-    @retval 
-        EFI_STATUS
-
-**/ 
-typedef 
-EFI_STATUS (*AMI_AHCI_SMM_SATA_DEV_PIO_DATA_IN) (
-    IN AMI_AHCI_BUS_SMM_PROTOCOL                *SataDevInterface, 
+typedef EFI_STATUS (*EFI_AHCI_SMM_SATA_DEV_PIO_DATA_IN) (
+    IN AHCI_BUS_SMM_PROTOCOL                    *SataDevInterface, 
     IN OUT COMMAND_STRUCTURE                    *CommandStructure,
     UINT8                                       PortNumber,
     UINT8                                       PMPortNumber, 
     DEVICE_TYPE                                 DeviceType,
     IN BOOLEAN                                  READWRITE
+
 );
 
-/**
-    Execute the Non Data command 
-
-    @param SataDevInterface 
-    @param CommandStructure 
-    @param PortNumber,
-    @param PMPortNumber, 
-    @param DeviceType,
-
-    @retval 
-        EFI_STATUS
-
-**/ 
-typedef 
-EFI_STATUS 
-(*AMI_AHCI_SMM_SATA_DEV_NON_DATA_CMD) (
-    IN AMI_AHCI_BUS_SMM_PROTOCOL                *SataDevInterface, 
+typedef EFI_STATUS (*EFI_AHCI_SMM_SATA_DEV_NON_DATA_CMD) (
+    IN AHCI_BUS_SMM_PROTOCOL                    *SataDevInterface, 
     IN COMMAND_STRUCTURE                        CommandStructure,
     UINT8                                       PortNumber,
     UINT8                                       PMPortNumber, 
-    DEVICE_TYPE                                 DeviceType
+   	DEVICE_TYPE                                 DeviceType
 );
 
-/**
-    Execute a Atapi Packet command
-                   
-    @param SataDevInterface 
-    @param CommandStructure 
-    @param READWRITE
-    @param PortNumber,
-    @param PMPortNumber, 
-    @param DeviceType
-
-    @retval 
-        EFI_STATUS
-
-    @note  
-  1. Stop the Controller
-  2. Check if the device is ready to accept a Command. 
-  3. Build Command list
-  4. Start the Controller.
-  5. Wait till command completes. Check for errors.
-
-**/ 
-typedef 
-EFI_STATUS 
-(*AMI_AHCI_SMM_SATA_DEV_PACKET_CMD) (
-    IN AMI_AHCI_BUS_SMM_PROTOCOL                *SataDevInterface, 
+typedef EFI_STATUS (*EFI_AHCI_SMM_SATA_DEV_PACKET_CMD) (
+    IN AHCI_BUS_SMM_PROTOCOL                    *SataDevInterface, 
     IN COMMAND_STRUCTURE                        *CommandStructure,
     IN BOOLEAN                                  READWRITE,
     UINT8                                       PortNumber,
     UINT8                                       PMPortNumber, 
-    DEVICE_TYPE                                 DeviceType
+   	DEVICE_TYPE                                 DeviceType
 );
 
-struct _AMI_AHCI_BUS_SMM_PROTOCOL{
-    UINT32                                      AhciBaseAddress;
-    UINT64                                      PortCommandTableBaseAddr;
-    UINT64                                      PortCommandListBaseAddr;
-    UINT64                                      PortFISBaseAddr;
+typedef EFI_STATUS (*EFI_AHCI_SMM_INIT_ON_S3) (
+    IN AHCI_BUS_SMM_PROTOCOL                    *SataDevInterface, 
+    IN UINT8                                    Port
+);
+
+typedef struct _AHCI_BUS_SMM_PROTOCOL{
+    UINT64                                      AhciBaseAddress;
+    UINT32                                      PortCommandTableBaseAddr;
+    UINT32                                      PortCommandListBaseAddr;
+    UINT32                                      PortFISBaseAddr;
     UINT8                                       PortNumber;
     UINT8                                       PMPortNumber; 
-    DEVICE_TYPE                                 DeviceType;
-    ATAPI_DEVICE                                AtapiDevice;
-    AMI_AHCI_SMM_INIT_ON_S3                     AhciSmmInitPortOnS3Resume;
-    AMI_AHCI_SMM_SATA_DEV_PIO_DATA_IN           AhciSmmExecutePioDataCommand;
-    AMI_AHCI_SMM_SATA_DEV_NON_DATA_CMD          AhciSmmExecuteNonDataCommand;
-    AMI_AHCI_SMM_SATA_DEV_PACKET_CMD            AhciSmmExecutePacketCommand;
-};
+   	DEVICE_TYPE                                 DeviceType;
+	ATAPI_DEVICE			                    AtapiDevice;
+    EFI_AHCI_SMM_INIT_ON_S3                     AhciSmmInitPortOnS3Resume;
+    EFI_AHCI_SMM_SATA_DEV_PIO_DATA_IN           AhciSmmExecutePioDataCommand;
+    EFI_AHCI_SMM_SATA_DEV_NON_DATA_CMD          AhciSmmExecuteNonDataCommand;
+    EFI_AHCI_SMM_SATA_DEV_PACKET_CMD            AhciSmmExecutePacketCommand;
+}AHCI_BUS_SMM_PROTOCOL;
 
-extern  EFI_GUID    gAmiAhciSmmProtocolGuid;
-
+#endif // #ifndef GUID_VARIABLE_DEFINITION
 #ifdef __cplusplus
 }
 #endif
@@ -154,11 +103,11 @@ extern  EFI_GUID    gAmiAhciSmmProtocolGuid;
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2012, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **
-//**         5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093     **
+//**         5555 Oakbrook Pkwy, Suite 200, Norcross, GA 30093        **
 //**                                                                  **
 //**                       Phone: (770)-246-8600                      **
 //**                                                                  **

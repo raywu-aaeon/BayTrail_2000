@@ -1,21 +1,31 @@
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2012, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **
-//**         5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093     **
+//**         5555 Oakbrook Pkwy, Suite 200, Norcross, GA 30093        **
 //**                                                                  **
 //**                       Phone: (770)-246-8600                      **
 //**                                                                  **
 //**********************************************************************
 //**********************************************************************
 
-/** @file AhciAccess.c
-    Provides Index Data Port Access to AHCI Controller
-
-**/
+//**********************************************************************
+// $Header: /Alaska/SOURCE/Modules/AHCI/AhciAccess.c 3     2/11/11 4:09a Rameshr $
+//
+// $Revision: 3 $
+//
+// $Date: 2/11/11 4:09a $
+//**********************************************************************
+//<AMI_FHDR_START>
+//
+// Name: AhciAccess.c
+//
+// Description: Provides Index Data Port Access to AHCI Controller
+//
+//<AMI_FHDR_END>
 //**********************************************************************
 //#include <AmiDxeLib.h>
 
@@ -29,16 +39,20 @@
 
 UINT16 IndexPort, DataPort;
 
-/**
-    This is chip set porting routine that returns index/data ports
-    to access memory-mapped registers.
-
-    @param PciIo
-
-    @retval EFI_SUCCESS Access information is collected
-    @retval EFI_ACCESS_DENIED No Access information available
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Name:        InitilizeIndexDataPortAddress
+//
+// Description: This is chipset porting routine that returns index/data ports
+//              to access memory-mapped registers.
+//
+// Input:       PciIo
+//
+// Output:      EFI_SUCCESS         - Access information is collected
+//              EFI_ACCESS_DENIED   - No Access information avaliable
+//
+//-------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 EFI_STATUS
 InitilizeIndexDataPortAddress (
@@ -59,17 +73,22 @@ InitilizeIndexDataPortAddress (
     return EFI_SUCCESS;
 }
 
-/**
-    Read the Dword Data using Index/Data access method
-
-    @param    BaseAddress - BaseAddress of AHCI Controller
-    @param    Index       - Index address to read           
-
-    @retval Value Read
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Name:        ReadDataDword
+//
+// Description: Read the Dword Data using Index/Data access method
+//
+// Input:       BaseAddress - BaseAddress of AHCI Controller
+//              Index       - Index address to read           
+//
+// Output:      Value Read
+//              
+//
+//-------------------------------------------------------------------------
+//<AMI_PHDR_END>
 UINT32
-ReadDataDword (
+ReadDataDword(
     IN  UINTN   BaseAddr,
     IN  UINTN   Index
 )
@@ -77,18 +96,23 @@ ReadDataDword (
     IoWrite32(IndexPort, (UINT32)Index);
     return IoRead32(DataPort);
 }
-/**
-    WriteRead the Dword Data using Index/Data access method
-
-    @param    BaseAddress - BaseAddress of AHCI Controller
-    @param    Index       - Index address to Write
-    @param    Data        - Data to be written        
-
-    @retval    Nothing
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Name:        WriteDataDword
+//
+// Description: WriteRead the Dword Data using Index/Data access method
+//
+// Input:       BaseAddress - BaseAddress of AHCI Controller
+//              Index       - Index address to Write
+//              Data        - Data to be written        
+//
+// Output:      Nothing
+//              
+//
+//-------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID
-WriteDataDword (
+WriteDataDword(
     IN  UINTN   BaseAddr,
     IN  UINTN   Index, 
     IN  UINTN   Data
@@ -98,17 +122,22 @@ WriteDataDword (
     IoWrite32(DataPort, (UINT32)Data);
 }
 
-/**
-    Read the Word Data using Index/Data access method
-
-    @param    BaseAddress - BaseAddress of AHCI Controller
-    @param    Index       - Index address to read           
-
-    @retval Value Read
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Name:        ReadDataWord
+//
+// Description: Read the Word Data using Index/Data access method
+//
+// Input:       BaseAddress - BaseAddress of AHCI Controller
+//              Index       - Index address to read           
+//
+// Output:      Value Read
+//              
+//
+//-------------------------------------------------------------------------
+//<AMI_PHDR_END>
 UINT16
-ReadDataWord (
+ReadDataWord(
     IN  UINTN   BaseAddr,
     IN  UINTN   Index
 )
@@ -116,18 +145,23 @@ ReadDataWord (
     IoWrite32(IndexPort, (UINT32)Index);
     return (UINT16)IoRead32(DataPort);
 }
-/**
-    WriteRead the word Data using Index/Data access method
-
-    @param    BaseAddress - BaseAddress of AHCI Controller
-    @param    Index       - Index address to Write
-    @param    Data        - Data to be written        
-
-    @retval    Nothing
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Name:        WriteDataDword
+//
+// Description: WriteRead the word Data using Index/Data access method
+//
+// Input:       BaseAddress - BaseAddress of AHCI Controller
+//              Index       - Index address to Write
+//              Data        - Data to be written        
+//
+// Output:      Nothing
+//              
+//
+//-------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID
-WriteDataWord (
+WriteDataWord(
     IN  UINTN   BaseAddr,
     IN  UINTN   Index, 
     IN  UINTN   Data
@@ -136,17 +170,22 @@ WriteDataWord (
     IoWrite32(IndexPort, (UINT32)Index);
     IoWrite32(DataPort, (UINT16)Data);
 }
-/**
-    Read the Byte Data using Index/Data access method
-
-    @param    BaseAddress - BaseAddress of AHCI Controller
-    @param    Index       - Index address to read           
-
-    @retval    Value Read
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Name:        ReadDataByte
+//
+// Description: Read the Byte Data using Index/Data access method
+//
+// Input:       BaseAddress - BaseAddress of AHCI Controller
+//              Index       - Index address to read           
+//
+// Output:      Value Read
+//              
+//
+//-------------------------------------------------------------------------
+//<AMI_PHDR_END>
 UINT8
-ReadDataByte (
+ReadDataByte(
     IN  UINTN   BaseAddr,
     IN  UINTN   Index
 )
@@ -154,18 +193,23 @@ ReadDataByte (
     IoWrite32(IndexPort, (UINT32)Index);
     return (UINT8)IoRead32(DataPort);
 }
-/**
-    WriteRead the Dword Data using Index/Data access method
-
-    @param    BaseAddress - BaseAddress of AHCI Controller
-    @param    Index       - Index address to Write
-    @param    Data        - Data to be written        
-
-    @retval Nothing
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Name:        WriteDataByte
+//
+// Description: WriteRead the Dword Data using Index/Data access method
+//
+// Input:       BaseAddress - BaseAddress of AHCI Controller
+//              Index       - Index address to Write
+//              Data        - Data to be written        
+//
+// Output:      Nothing
+//              
+//
+//-------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID
-WriteDataByte (
+WriteDataByte(
     IN  UINTN   BaseAddr,
     IN  UINTN   Index,
     IN  UINTN   Data
@@ -178,11 +222,11 @@ WriteDataByte (
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2012, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **
-//**         5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093     **
+//**         5555 Oakbrook Pkwy, Suite 200, Norcross, GA 30093        **
 //**                                                                  **
 //**                       Phone: (770)-246-8600                      **
 //**                                                                  **

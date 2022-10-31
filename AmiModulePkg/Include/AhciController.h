@@ -1,32 +1,34 @@
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2012, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **
-//**         5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093     **
+//**         5555 Oakbrook Pkwy, Suite 200, Norcross, GA 30093        **
 //**                                                                  **
 //**                       Phone: (770)-246-8600                      **
 //**                                                                  **
 //**********************************************************************
 //**********************************************************************
 
-/** @file AhciController.h
-    Header file for the Ahci Controller related definition
+//**********************************************************************
+// $Header: /Alaska/SOURCE/Modules/AHCI/AhciController.h 5     2/10/11 10:35a Rameshr $
+//
+// $Revision: 5 $
+//
+// $Date: 2/10/11 10:35a $
+//**********************************************************************
+//<AMI_FHDR_START>
+//
+// Name:    AhciController.h
+//
+// Description:
+//
+//<AMI_FHDR_END>
+//**********************************************************************
 
-**/
-
-
-#ifndef _AHCI_CONTROLLER_H
-#define _AHCI_CONTROLLER_H
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-
-// Forward reference for pure ANSI compatibility
+// Forward reference for pure ANSI compatability
 typedef struct _AHCI_COMMAND_FIS AHCI_COMMAND_FIS;
 typedef struct _AHCI_ATAPI_COMMAND AHCI_ATAPI_COMMAND;
 typedef struct _AHCI_COMMAND_PRDT AHCI_COMMAND_PRDT;
@@ -54,21 +56,21 @@ typedef struct {
 typedef struct {
     UINT8           Ahci_Dsfis[0x1C];               // DMA Setup Fis
     UINT8           Ahci_Dsfis_Rsvd[0x04];             
-    UINT8           Ahci_Psfis[0x14];               // PIO Setup Fis
+    UINT8           Ahci_Psfis[0x14];               // PIO Setip Fis
     UINT8           Ahci_Psfis_Rsvd[0x0C];             
     UINT8           Ahci_Rfis[0x14];                // D2H Register Fis
     UINT8           Ahci_Rfis_Rsvd[0x04];            
     UINT64          Ahci_Sdbfis;                     // Set Device Bits Fis
-    UINT8           Ahci_Ufis[0x40];                 // Unknown FIS
+    UINT8           Ahci_Ufis[0x40];                 // Unkonw FIS
     UINT8           Ahci_Ufis_Rsvd[0x60];            
 } AHCI_RECEIVED_FIS; 
 
 // Register - Host to Device FIS Layout
-struct _AHCI_COMMAND_FIS{
+typedef struct _AHCI_COMMAND_FIS{
     UINT8           Ahci_CFis_Type;
     UINT8           AHci_CFis_PmPort:4;
-    UINT8           Ahci_CFis_Rsvd1:1;
-    UINT8           Ahci_CFis_Rsvd2:1;
+        UINT8           Ahci_CFis_Rsvd1:1;
+        UINT8           Ahci_CFis_Rsvd2:1;
     UINT8           Ahci_CFis_Rsvd3:1;
     UINT8           Ahci_CFis_C:1;
     UINT8           Ahci_CFis_Cmd;
@@ -87,17 +89,17 @@ struct _AHCI_COMMAND_FIS{
     UINT8           Ahci_CFis_Control;
     UINT8           Ahci_CFis_Rsvd5[4];
     UINT8           Ahci_CFis_Rsvd6[44];
-} ;
+} AHCI_COMMAND_FIS;
 
 // Physical Region Descriptor Table
-struct _AHCI_COMMAND_PRDT{
+typedef struct _AHCI_COMMAND_PRDT{
     UINT32          Ahci_Prdt_DBA;
     UINT32          Ahci_Prdt_DBAU;
     UINT32          Ahci_Prdt_Rsvd;
     UINT32          Ahci_Prdt_DBC:22;  
     UINT32          Ahci_Prdt_Rsvd1:9;
     UINT32          Ahci_Prdt_I:1;  
-};
+} AHCI_COMMAND_PRDT;
 
 // Command table
 
@@ -123,211 +125,198 @@ typedef struct _AHCI_COMMAND_TABLE_NO_PRDT{
 
 
 
-#define     PCI_ABAR                        0x24
-#define     RECEIVED_FIS_SIZE               0x100
+#define     PCI_ABAR                    0x24
+#define     RECEIVED_FIS_SIZE           0x100
 
-#define     CONTROL_PORT                    0x0F
+#define     CONTROL_PORT                0x0F
 
 //Generic Host Control Registers
-#define     HBA_CAP                         0x0000
-#define     HBA_CAP_NP_MASK                 0x1F
-#define     HBA_CAP_EMS                     BIT06
-#define     HBA_CAP_PSC                     BIT13
-#define     HBA_CAP_SSC                     BIT14
-#define     HBA_CAP_PMD                     BIT15
-#define     HBA_CAP_FBSS                    BIT16
-#define     HBA_CAP_SPM                     BIT17
-#define     HBA_CAP_SAM                     BIT18
-#define     HBA_CAP_SNZO                    BIT19
-#define     HBA_CAP_ISS_MASK                (BIT20 | BIT21 | BIT22 | BIT23)
-#define     HBA_CAP_SCLO                    BIT24
-#define     HBA_CAP_SAL                     BIT25
-#define     HBA_CAP_SALP                    BIT26
-#define     HBA_CAP_SSS                     BIT27
-#define     HBA_CAP_SMPS                    BIT28
-#define     HBA_CAP_SSNTF                   BIT29
-#define     HBA_CAP_SCQA                    BIT30
-#define     HBA_CAP_S64A                    BIT31
+#define     HBA_CAP                      0x0000
+#define         HBA_CAP_NP_MASK          0x1F
+#define         HBA_CAP_EMS              BIT06
+#define         HBA_CAP_PSC              BIT13
+#define         HBA_CAP_SSC              BIT14
+#define         HBA_CAP_PMD              BIT15
+#define         HBA_CAP_FBSS             BIT16
+#define         HBA_CAP_SPM              BIT17
+#define         HBA_CAP_SAM              BIT18
+#define         HBA_CAP_SNZO             BIT19
+#define         HBA_CAP_ISS_MASK         (BIT20 | BIT21 | BIT22 | BIT23)
+#define         HBA_CAP_SCLO             BIT24
+#define         HBA_CAP_SAL              BIT25
+#define         HBA_CAP_SALP             BIT26
+#define         HBA_CAP_SSS              BIT27
+#define         HBA_CAP_SMPS             bit28
+#define         HBA_CAP_SSNTF            BIT29
+#define         HBA_CAP_SCQA             BIT30
+#define         HBA_CAP_S64A             BIT31
 
-#define     HBA_GHC                         0x0004
-#define     HBA_GHC_RESET                   0x0001
-#define     HBA_GHC_IE                      0x0002
-#define     HBA_GHC_AE                      0x80000000
-#define     HBA_GHC_AE_RESET                0x80000001
-#define     HBA_IS                          0x0008
-#define     HBA_PI                          0x000C
-#define     HBA_VS                          0x0010
-#define     HBA_CCC_CTL                     0x0014
-#define     HBA_CCC_PORTS                   0x0018
-#define     HBA_EM_LOC                      0x001C
-#define     HBA_EM_CTL                      0x0020
-#define     HBA_CAP2                        0x0024
-#define     HBA_CAP2_APST                   0x0004
-#define     HBA_CAP2_SDS                    0x0008
-#define     HBA_CAP2_SADM                   0x0010
-#define     HBA_CAP2_DESO                   0x0020
+#define     HBA_GHC                      0x0004
+#define         HBA_GHC_RESET            0x0001
+#define         HBA_GHC_IE               0x0002
+#define         HBA_GHC_AE               0x80000000
+#define         HBA_GHC_AE_RESET         0x80000001
+#define     HBA_IS                       0x0008
+#define     HBA_PI                       0x000C
+#define     HBA_VS                       0x0010
+#define     HBA_CCC_CTL                  0x0014
+#define     HBA_CCC_PORTS                0x0018
+#define     HBA_EM_LOC                   0x001C
+#define     HBA_EM_CTL                   0x0020
+#define     HBA_CAP2                     0x0024
+#define         HBA_CAP2_APST            0x0004
+#define         HBA_CAP2_SDS             0x0008
+#define         HBA_CAP2_SADM            0x0010
+#define         HBA_CAP2_DESO            0x0020
 
 //Port Registers
-#define     HBA_PORTS_START                 0x0100
-#define     HBA_PORTS_REG_WIDTH             0x0080
-#define     HBA_PORTS_CLB                   0x0000
-#define     HBA_PORTS_CLBU                  0x0004
-#define     HBA_PORTS_FB                    0x0008
-#define     HBA_PORTS_FBU                   0x000C
-#define     HBA_PORTS_IS                    0x0010
-#define     HBA_PORTS_IS_DHRS               BIT00
-#define     HBA_PORTS_IS_PSS                BIT01
-#define     HBA_PORTS_IS_SSS                BIT02
-#define     HBA_PORTS_IS_SDBS               BIT03
-#define     HBA_PORTS_IS_UFS                BIT04
-#define     HBA_PORTS_IS_DPS                BIT05
-#define     HBA_PORTS_IS_PCS                BIT06
-#define     HBA_PORTS_IS_DIS                BIT07
-#define     HBA_PORTS_IS_PRCS               BIT22
-#define     HBA_PORTS_IS_IPMS               BIT23
-#define     HBA_PORTS_IS_OFS                BIT24
-#define     HBA_PORTS_IS_INFS               BIT26
-#define     HBA_PORTS_IS_IFS                BIT27
-#define     HBA_PORTS_IS_HBDS               BIT28
-#define     HBA_PORTS_IS_HBFS               BIT29
-#define     HBA_PORTS_IS_TFES               BIT30
-#define     HBA_PORTS_IS_CPDS               BIT31
-#define     HBA_PORTS_IS_CLEAR              0xFFC000FF
-#define     HBA_PORTS_IS_FIS_CLEAR          0x0000001F
-#define     HBA_PORTS_IS_ERR_CHK            BIT04 + BIT06 + BIT23 + BIT24 + BIT27 + \
-                                            BIT28 + BIT29 + BIT30 + BIT31
+#define     HBA_PORTS_START              0x0100
+#define     HBA_PORTS_REG_WIDTH          0x0080
+#define     HBA_PORTS_CLB                0x0000
+#define     HBA_PORTS_CLBU               0x0004
+#define     HBA_PORTS_FB                 0x0008
+#define     HBA_PORTS_FBU                0x000C
+#define     HBA_PORTS_IS                 0x0010
+#define         HBA_PORTS_IS_DHRS        BIT00
+#define         HBA_PORTS_IS_PSS         BIT01
+#define         HBA_PORTS_IS_SSS         BIT02
+#define         HBA_PORTS_IS_SDBS        BIT03
+#define         HBA_PORTS_IS_UFS         BIT04
+#define         HBA_PORTS_IS_DPS         BIT05
+#define         HBA_PORTS_IS_PCS         BIT06
+#define         HBA_PORTS_IS_DIS         BIT07
+#define         HBA_PORTS_IS_PRCS        BIT22
+#define         HBA_PORTS_IS_IPMS        BIT23
+#define         HBA_PORTS_IS_OFS         BIT24
+#define         HBA_PORTS_IS_INFS        BIT26
+#define         HBA_PORTS_IS_IFS         BIT27
+#define         HBA_PORTS_IS_HBDS        BIT28
+#define         HBA_PORTS_IS_HBFS        BIT29
+#define         HBA_PORTS_IS_TFES        BIT30
+#define         HBA_PORTS_IS_CPDS        BIT31
+#define         HBA_PORTS_IS_CLEAR       0xFFC000FF
+#define         HBA_PORTS_IS_FIS_CLEAR   0x0000001F
+#define         HBA_PORTS_IS_ERR_CHK     BIT04 + BIT06 + BIT23 + BIT24 + BIT27 + \
+                                         BIT28 + BIT29 + BIT30 + BIT31
 
-#define     HBA_PORTS_IE                    0x0014
-#define     HBA_PORTS_CMD                   0x0018
-#define     HBA_PORTS_CMD_ST_MASK           0xFFFFFFFE
-#define     HBA_PORTS_CMD_ST                BIT00
-#define     HBA_PORTS_CMD_SUD               BIT01
-#define     HBA_PORTS_CMD_POD               BIT02
-#define     HBA_PORTS_CMD_CLO               BIT03
-#define     HBA_PORTS_CMD_CR                BIT15
-#define     HBA_PORTS_CMD_FRE               BIT04
-#define     HBA_PORTS_CMD_FR                BIT14
-#define     HBA_PORTS_CMD_MASK              ~(HBA_PORTS_CMD_ST | HBA_PORTS_CMD_FRE | HBA_PORTS_CMD_CLO)
-#define     HBA_PORTS_CMD_PMA               BIT17
-#define     HBA_PORTS_CMD_HPCP              BIT18
-#define     HBA_PORTS_CMD_MPSP              BIT19
-#define     HBA_PORTS_CMD_CPD               BIT20
-#define     HBA_PORTS_CMD_ESP               BIT21
-#define     HBA_PORTS_CMD_ATAPI             BIT24
-#define     HBA_PORTS_CMD_DLAE              BIT25
-#define     HBA_PORTS_CMD_ALPE              BIT26
-#define     HBA_PORTS_CMD_ASP               BIT27
-#define     HBA_PORTS_CMD_ICC_MASK          (BIT28 | BIT29 | BIT30 | BIT31)
-#define     HBA_PORTS_CMD_ACTIVE            (1 << 28 )
-#define     HBA_PORTS_TFD                   0x0020
-#define     HBA_PORTS_TFD_MASK              (BIT07 | BIT03 | BIT00)
-#define     HBA_PORTS_TFD_BSY               BIT07
-#define     HBA_PORTS_TFD_DRQ               BIT03
-#define     HBA_PORTS_TFD_ERR               BIT00
-#define     HBA_PORTS_TFD_ERR_MASK          0x00FF00    // BIT8 - BIT15
-#define     HBA_PORTS_SIG                   0x0024
-#define     HBA_PORTS_SSTS                  0x0028
-#define     HBA_PORTS_SSTS_DET_MASK         0x000F
-#define     HBA_PORTS_SSTS_DET              0x0001
-#define     HBA_PORTS_SSTS_DET_PCE          0x0003
-#define     HBA_PORTS_SSTS_SPD_MASK         0x00F0
-#define     HBA_PORTS_SCTL                  0x002C
-#define     HBA_PORTS_SCTL_DET_MASK         0x000F
-#define     HBA_PORTS_SCTL_MASK             (~HBA_PORTS_SCTL_DET_MASK)
-#define     HBA_PORTS_SCTL_DET_INIT         0x0001
-#define     HBA_PORTS_SCTL_DET_PHYCOMM      0x0003
-#define     HBA_PORTS_SCTL_SPD_MASK         0x00F0
-#define     HBA_PORTS_SCTL_SPD_NSNR         0x0
-#define     HBA_PORTS_SCTL_SPD_GEN1         0x1
-#define     HBA_PORTS_SCTL_SPD_GEN2         0x2
-#define     HBA_PORTS_SCTL_SPD_GEN3         0x3
-#define     HBA_PORTS_SCTL_IPM_MASK         0x0F00
-#define     HBA_PORTS_SCTL_IPM_DIS          0x00
-#define     HBA_PORTS_SCTL_IPM_PSD          0x01
-#define     HBA_PORTS_SCTL_IPM_SSD          0x02
-#define     HBA_PORTS_SCTL_IPM_PSSD         0x03
-#define     HBA_PORTS_SCTL_IPM_PSD_SSD      0x0300
-#define     HBA_PORTS_SERR                  0x0030
-#define     HBA_PORTS_SERR_RDIE             BIT00
-#define     HBA_PORTS_SERR_RCE              BIT01
-#define     HBA_PORTS_SERR_TDIE             BIT08
-#define     HBA_PORTS_SERR_PCDIE            BIT09
-#define     HBA_PORTS_SERR_PE               BIT10
-#define     HBA_PORTS_SERR_IE               BIT11
-#define     HBA_PORTS_SERR_PRC              BIT16
-#define     HBA_PORTS_SERR_PIE              BIT17
-#define     HBA_PORTS_SERR_CW               BIT18
-#define     HBA_PORTS_SERR_BDE              BIT19
-#define     HBA_PORTS_SERR_DE               BIT20                // Not used
-#define     HBA_PORTS_SERR_CRCE             BIT21
-#define     HBA_PORTS_SERR_HE               BIT22
-#define     HBA_PORTS_SERR_LSE              BIT23
-#define     HBA_PORTS_SERR_TSTE             BIT24
-#define     HBA_PORTS_SERR_UFT              BIT25
-#define     HBA_PORTS_SERR_EX               BIT26
-#define     HBA_PORTS_PxSACT                0x0034
-#define     HBA_PORTS_PxCI                  0x0038
-#define     HBA_PORTS_PxDEVSLP              0x0044
-#define     HBA_PORTS_PxDEVSLP_ADSE         BIT00
-#define     HBA_PORTS_PxDEVSLP_DSP          BIT01
-#define     HBA_PORTS_PxDEVSLP_DETO_MASK    (0x000003FC)
-#define     HBA_PORTS_PxDEVSLP_DMDAT_MASK   (0x00007C00)
-#define     HBA_PORTS_PxDEVSLP_DITO_MASK    (0x01FF8000)
-#define     HBA_PORTS_PxDEVSLP_DM_MASK      (0x1E000000)
+#define     HBA_PORTS_IE                 0x0014
+#define     HBA_PORTS_CMD                0x0018
+#define         HBA_PORTS_CMD_ST_MASK    0xFFFFFFFE
+#define         HBA_PORTS_CMD_ST         BIT00
+#define         HBA_PORTS_CMD_SUD        BIT01
+#define         HBA_PORTS_CMD_POD        BIT02
+#define        HBA_PORTS_CMD_CLO        BIT03
+#define         HBA_PORTS_CMD_CR         BIT15
+#define         HBA_PORTS_CMD_FRE        BIT04
+#define         HBA_PORTS_CMD_FR         BIT14
+#define         HBA_PORTS_CMD_MASK       ~(HBA_PORTS_CMD_ST | HBA_PORTS_CMD_FRE | HBA_PORTS_CMD_CLO)
+#define         HBA_PORTS_CMD_PMA        BIT17
+#define         HBA_PORTS_CMD_HPCP       BIT18
+#define         HBA_PORTS_CMD_MPSP       BIT19
+#define         HBA_PORTS_CMD_CPD        BIT20
+#define         HBA_PORTS_CMD_ESP        BIT21
+#define         HBA_PORTS_CMD_ATAPI      BIT24
+#define         HBA_PORTS_CMD_DLAE       BIT25
+#define         HBA_PORTS_CMD_ALPE       BIT26
+#define         HBA_PORTS_CMD_ASP        BIT27
+#define         HBA_PORTS_CMD_ICC_MASK   (BIT28 | BIT29 | BIT30 | BIT31)
+#define         HBA_PORTS_CMD_ACTIVE     (1 << 28 )
+#define     HBA_PORTS_TFD                0x0020
+#define         HBA_PORTS_TFD_MASK       (BIT07 | BIT03 | BIT00)
+#define         HBA_PORTS_TFD_BSY        BIT07
+#define         HBA_PORTS_TFD_DRQ        BIT03
+#define         HBA_PORTS_TFD_ERR        BIT00
+#define         HBA_PORTS_TFD_ERR_MASK   0x00FF00    // BIT8 - BIT15
+#define     HBA_PORTS_SIG                0x0024
+#define     HBA_PORTS_SSTS               0x0028
+#define         HBA_PORTS_SSTS_DET_MASK  0x000F
+#define         HBA_PORTS_SSTS_DET       0x0001
+#define         HBA_PORTS_SSTS_DET_PCE   0x0003
+#define         HBA_PORTS_SSTS_SPD_MASK  0x00F0
+#define     HBA_PORTS_SCTL               0x002C
+#define         HBA_PORTS_SCTL_DET_MASK  0x000F
+#define         HBA_PORTS_SCTL_MASK      (~HBA_PORTS_SCTL_DET_MASK)
+#define         HBA_PORTS_SCTL_DET_INIT  0x0001
+#define         HBA_PORTS_SCTL_DET_PHYCOMM   0x0003
+#define         HBA_PORTS_SCTL_SPD_MASK   0x00F0
+#define         HBA_PORTS_SCTL_SPD_NSNR   0x0  
+#define         HBA_PORTS_SCTL_SPD_GEN1   0x1  
+#define         HBA_PORTS_SCTL_SPD_GEN2   0x2  
+#define         HBA_PORTS_SCTL_SPD_GEN3   0x3  
+#define         HBA_PORTS_SCTL_IPM_MASK   0x0F00
+#define         HBA_PORTS_SCTL_IPM_DIS    0x00
+#define             HBA_PORTS_SCTL_IPM_PSD    0x01
+#define         HBA_PORTS_SCTL_IPM_SSD    0x02
+#define         HBA_PORTS_SCTL_IPM_PSSD   0x03
+#define         HBA_PORTS_SCTL_IPM_PSD_SSD 0x0300
+#define     HBA_PORTS_SERR              0x0030
+#define         HBA_PORTS_SERR_RDIE      BIT00
+#define         HBA_PORTS_SERR_RCE       BIT01
+#define         HBA_PORTS_SERR_TDIE      BIT08
+#define         HBA_PORTS_SERR_PCDIE     BIT09
+#define         HBA_PORTS_SERR_PE        BIT10
+#define         HBA_PORTS_SERR_IE        BIT11
+#define         HBA_PORTS_SERR_PRC       BIT16
+#define         HBA_PORTS_SERR_PIE       BIT17
+#define         HBA_PORTS_SERR_CW        BIT18
+#define         HBA_PORTS_SERR_BDE       BIT19
+#define         HBA_PORTS_SERR_DE        BIT20                // Not used
+#define         HBA_PORTS_SERR_CRCE      BIT21
+#define         HBA_PORTS_SERR_HE        BIT22
+#define         HBA_PORTS_SERR_LSE       BIT23
+#define         HBA_PORTS_SERR_TSTE      BIT24
+#define         HBA_PORTS_SERR_UFT       BIT25
+#define         HBA_PORTS_SERR_EX        BIT26
+#define         HBA_PORTS_PxSACT         0x0034
+#define         HBA_PORTS_PxCI           0x0038
+#define         HBA_PORTS_PxDEVSLP       0x0044
+#define         HBA_PORTS_PxDEVSLP_ADSE  BIT00
+#define         HBA_PORTS_PxDEVSLP_DSP   BIT01
+#define         HBA_PORTS_PxDEVSLP_DETO_MASK (0x000003FC)
+#define         HBA_PORTS_PxDEVSLP_DMDAT_MASK (0x00007C00)
+#define         HBA_PORTS_PxDEVSLP_DITO_MASK (0x01FF8000)
+#define         HBA_PORTS_PxDEVSLP_DM_MASK   (0x1E000000)
 
-#define     HBA_PORTS_ERR_CHK           (HBA_PORTS_SERR_TDIE + HBA_PORTS_SERR_PCDIE +\
-                                        HBA_PORTS_SERR_PE + HBA_PORTS_SERR_IE + \
-                                        HBA_PORTS_SERR_PIE + \
-                                        HBA_PORTS_SERR_BDE + \
-                                        HBA_PORTS_SERR_DE + HBA_PORTS_SERR_CRCE + \
-                                        HBA_PORTS_SERR_HE +  HBA_PORTS_SERR_LSE + \
-                                        HBA_PORTS_SERR_TSTE + HBA_PORTS_SERR_UFT  + \
-                                        HBA_PORTS_SERR_EX)
+#define         HBA_PORTS_ERR_CHK        (HBA_PORTS_SERR_TDIE + HBA_PORTS_SERR_PCDIE +\
+                                          HBA_PORTS_SERR_PE + HBA_PORTS_SERR_IE) 
 
-#define     HBA_PORTS_ERR_CLEAR         (HBA_PORTS_SERR_RDIE + HBA_PORTS_SERR_RCE +\
-                                        HBA_PORTS_SERR_TDIE + HBA_PORTS_SERR_PCDIE +\
-                                        HBA_PORTS_SERR_PE + HBA_PORTS_SERR_IE + \
-                                        HBA_PORTS_SERR_PRC + HBA_PORTS_SERR_PIE + \
-                                        HBA_PORTS_SERR_CW + HBA_PORTS_SERR_BDE + \
-                                        HBA_PORTS_SERR_DE + HBA_PORTS_SERR_CRCE + \
-                                        HBA_PORTS_SERR_HE +  HBA_PORTS_SERR_LSE + \
-                                        HBA_PORTS_SERR_TSTE + HBA_PORTS_SERR_UFT  + \
-                                        HBA_PORTS_SERR_EX)
-
-#define     HBA_PORTS_SACT                  0x0034
-#define     HBA_PORTS_CI                    0x0038
-#define     HBA_PORTS_SNTF                  0x003C
+#define   	    HBA_PORTS_ERR_CLEAR      (HBA_PORTS_SERR_RDIE + HBA_PORTS_SERR_RCE +\
+                                          HBA_PORTS_SERR_TDIE + HBA_PORTS_SERR_PCDIE +\
+                                          HBA_PORTS_SERR_PE + HBA_PORTS_SERR_IE + \
+                                          HBA_PORTS_SERR_PRC + HBA_PORTS_SERR_PIE + \
+                                          HBA_PORTS_SERR_CW + HBA_PORTS_SERR_BDE + \
+                                          HBA_PORTS_SERR_DE + HBA_PORTS_SERR_CRCE + \
+                                          HBA_PORTS_SERR_HE +  HBA_PORTS_SERR_LSE + \
+                                          HBA_PORTS_SERR_TSTE + HBA_PORTS_SERR_UFT  + \
+                                          HBA_PORTS_SERR_EX)
+#define     HBA_PORTS_SACT               0x0034
+#define     HBA_PORTS_CI                 0x0038
+#define     HBA_PORTS_SNTF               0x003C
 
 //FIS Types
-#define     D2H_FIS_OFFSET                  0x40
-#define     DMA_FIS_OFFSET                  0x00
-#define     PIO_FIS_OFFSET                  0x20
-#define     SDB_FIS_OFFSET                  0x58
-#define     FIS_TYPE_MASK                   0xFF
-#define     U_FIS_OFFSET                    0x60
+#define     D2H_FIS_OFFSET                 0x40
+#define     DMA_FIS_OFFSET                 0x00
+#define     PIO_FIS_OFFSET                 0x20
+#define     SDB_FIS_OFFSET                 0x58
+#define     FIS_TYPE_MASK                  0xFF
+#define     U_FIS_OFFSET                   0x60
 
-#define     FIS_REGISTER_H2D                0x27            // Host To Device
-#define     FIS_REGISTER_H2D_LENGTH         20
+#define     FIS_REGISTER_H2D               0x27           // Host To Device
+#define         FIS_REGISTER_H2D_LENGTH    20
+#define     FIS_REGISTER_D2H               0x34           // Device To Host
+#define         FIS_REGISTER_D2H_LENGTH    20             // Device To Host
+#define     FIS_DMA_ACTIVATE               0x39           // Device To Host
+#define         FIS_DMA_ACTIVATE_LENGTH    4
+#define     FIS_DMA_SETUP                  0x41           // Bi-directional
+#define         FIS_DMA_SETUP_LENGTH       28 
+#define     FIS_DATA                       0x46           // Bi-directional
+#define     FIS_BIST                       0x58           // Bi-directional
+#define         FIS_BIST_LENGTH            12
+#define     FIS_PIO_SETUP                  0x5F           // Device To Host
+#define         FIS_PIO_SETUP_LENGTH       20
+#define     FIS_SET_DEVICE                 0xA1           // Device To Host
+#define         FIS_SET_DEVICE_LENGTH      8              
 
-#define     FIS_REGISTER_D2H                0x34            // Device To Host
-#define     FIS_REGISTER_D2H_LENGTH         20
-
-#define     FIS_DMA_ACTIVATE                0x39            // Device To Host
-#define     FIS_DMA_ACTIVATE_LENGTH         4
-
-#define     FIS_DMA_SETUP                   0x41            // Bi-directional
-#define     FIS_DMA_SETUP_LENGTH            28
-
-#define     FIS_DATA                        0x46            // Bi-directional
-
-#define     FIS_BIST                        0x58            // Bi-directional
-#define     FIS_BIST_LENGTH                 12
-
-#define     FIS_PIO_SETUP                   0x5F            // Device To Host
-#define     FIS_PIO_SETUP_LENGTH            20
-
-#define     FIS_SET_DEVICE                  0xA1            // Device To Host
-#define     FIS_SET_DEVICE_LENGTH           8
 
 #define     READ_PORT_MULTIPLIER            0xE4
 #define     WRITE_PORT_MULTIPLIER           0xE8
@@ -344,13 +333,16 @@ typedef struct _AHCI_COMMAND_TABLE_NO_PRDT{
 #define     PSCR_2_SCONTROL                 0x02
 
 
-#define     HBA_CR_CLEAR_TIMEOUT            500          // AHCI 1.2 spec 10.1.2
-#define     HBA_FR_CLEAR_TIMEOUT            500          // AHCI 1.2 spec 10.1.2
-#define     HBA_PRESENCE_DETECT_TIMEOUT     10           // 10msec Serial ATA 1.0 Sec 5.2
+#define     HBA_CR_CLEAR_TIMEOUT           500          // AHCI 1.2 spec 10.1.2
+#define     HBA_FR_CLEAR_TIMEOUT           500          // AHCI 1.2 spec 10.1.2
+#define     HBA_PRESENCE_DETECT_TIMEOUT    10           // 10msec Serial ATA 1.0 Sec 5.2
 
 #if INDEX_DATA_PORT_ACCESS
 
-//Index , Data port access 
+    //
+    //Index , Data port access 
+    //
+
 #define     HBA_PORT_REG_BASE(Port) \
             (UINTN) (Port * HBA_PORTS_REG_WIDTH + HBA_PORTS_START)
 
@@ -409,10 +401,6 @@ typedef struct _AHCI_COMMAND_TABLE_NO_PRDT{
 #define     HBA_PORT_REG32(BaseAddr, Port, Register) \
             (HBA_REG32 ((BaseAddr), ((Register) + HBA_PORT_REG_BASE (Port))))
 
-#define     HBA_PORT_REG64(BaseAddr, Port, Register) \
-              ( ( Shl64(((UINT64)(HBA_PORT_REG32(BaseAddr, Port, (Register+4)))),32)) | \
-                 (HBA_PORT_REG32(BaseAddr, Port, Register)) )
-             
 #define     HBA_PORT_WRITE_REG8(BaseAddr, Port, Register, Data) \
             (HBA_WRITE_REG8 ((BaseAddr), ((Register) + HBA_PORT_REG_BASE (Port)), Data))
 
@@ -421,10 +409,6 @@ typedef struct _AHCI_COMMAND_TABLE_NO_PRDT{
 
 #define     HBA_PORT_WRITE_REG32(BaseAddr, Port, Register,Data) \
             (HBA_WRITE_REG32 ((BaseAddr), ((Register) + HBA_PORT_REG_BASE (Port)),Data))
-
-#define     HBA_PORT_WRITE_REG64(BaseAddr, Port, Register,Data)\
-             HBA_PORT_WRITE_REG32(BaseAddr, Port, (Register+4),(Shr64(Data,32))); \
-             HBA_PORT_WRITE_REG32(BaseAddr, Port, Register,Data)
 
 #define     HBA_PORT_REG8_OR(BaseAddr, Port, Register, OrData) \
             (HBA_REG8_OR ((BaseAddr), ((Register) + HBA_PORT_REG_BASE (Port)), (OrData)))
@@ -532,10 +516,6 @@ typedef struct _AHCI_COMMAND_TABLE_NO_PRDT{
 #define     HBA_PORT_REG32(BaseAddr, Port, Register) \
             (HBA_REG32 ((BaseAddr), ((Register) + HBA_PORT_REG_BASE (Port))))
 
-#define     HBA_PORT_REG64(BaseAddr, Port, Register) \
-            ( (Shl64((UINT64)(HBA_PORT_REG32(BaseAddr, Port, (Register+4))),32)) | \
-                ((UINT64)(HBA_PORT_REG32(BaseAddr, Port, Register))) )
-
 #define     HBA_PORT_WRITE_REG8(BaseAddr, Port, Register, Data) \
             (HBA_WRITE_REG8 ((BaseAddr), ((Register) + HBA_PORT_REG_BASE (Port)), Data))
 
@@ -544,10 +524,6 @@ typedef struct _AHCI_COMMAND_TABLE_NO_PRDT{
 
 #define     HBA_PORT_WRITE_REG32(BaseAddr, Port, Register,Data) \
             (HBA_WRITE_REG32 ((BaseAddr), ((Register) + HBA_PORT_REG_BASE (Port)),Data))
-
-#define     HBA_PORT_WRITE_REG64(BaseAddr, Port, Register,Data) \
-             (HBA_PORT_WRITE_REG32(BaseAddr, Port, (Register+4),((UINT32)(Shr64(Data,32)) )) ); \
-             HBA_PORT_WRITE_REG32(BaseAddr, Port, Register,Data)
 
 #define     HBA_PORT_REG8_OR(BaseAddr, Port, Register, OrData) \
             (HBA_REG8_OR ((BaseAddr), ((Register) + HBA_PORT_REG_BASE (Port)), (OrData)))
@@ -578,21 +554,14 @@ typedef struct _AHCI_COMMAND_TABLE_NO_PRDT{
 
 #endif
 
-/****** DO NOT WRITE BELOW THIS LINE *******/
-#ifdef __cplusplus
-}
-#endif
-
-#endif
-
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2012, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **
-//**         5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093     **
+//**         5555 Oakbrook Pkwy, Suite 200, Norcross, GA 30093        **
 //**                                                                  **
 //**                       Phone: (770)-246-8600                      **
 //**                                                                  **

@@ -1,36 +1,25 @@
 TOKEN
-    Name  = "AHCIMMIOSMM_SUPPORT"
-    Value  = "0"
-    Help  = "Main switch to enable AhciMmioSmm support in Project"
-    TokenType = Boolean
-    TargetEQU = Yes
-    TargetH = Yes
-    Master = Yes
+	Name  = "AHCIMMIOSMM_SUPPORT"
+	Value  = "0"
+	Help  = "Main switch to enable AhciMmioSmm support in Project"
+	TokenType = Boolean
+	TargetEQU = Yes
+	TargetH = Yes
+	Master = Yes
 End
 
 PATH
-    Name  = "AhciMmioSmm_DIR"
+	Name  = "AhciMmioSmm_DIR"
 End
 
 TOKEN
-    Name  = "AHCI_MMIO_SWSMI"
-    Value  = "0x43"
-    Help  = "SW SMI value to be used in AhciMmioSmm"
-    TokenType = Integer
-    TargetH = Yes
-    TargetEQU = Yes
-    Range  = "0...0FFh"
-End
-
-TOKEN
-    Name  = "BIG_REAL_MODE_MMIO_ACCESS"
-    Value  = "0"
-    Help  = "1- Access the MMIO region by switching to big real mode, 0 - Access the MMIO using SMI handler"
-    TokenType = Boolean
-    TargetEQU = Yes
-    TargetMAK = Yes
-    TargetH = Yes
-    Token = "AHCIMMIOSMM_SUPPORT" "=" "1"
+	Name  = "AHCI_MMIO_SWSMI"
+	Value  = "0x43"
+	Help  = "SW SMI value to be used in AhciMmioSmm"
+	TokenType = Integer
+	TargetH = Yes
+	TargetEQU = Yes
+	Range  = "0...0FFh"
 End
 
 INFComponent
