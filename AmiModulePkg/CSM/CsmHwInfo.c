@@ -878,7 +878,7 @@ VOID InstallLegacyMassStorageDevices()
         }
     }
 	{
-		EFI_INIT_AHCI_INT13_SUPPORT    *Aint13;
+		EFI_AHCI_INT13_INIT_PROTOCOL    *Aint13;
 		Status = pBS->LocateProtocol(&gAint13ProtocolGuid, NULL, (VOID **)&Aint13);
 		if (!EFI_ERROR(Status)) {
 			Aint13->InitAhciInt13Support();
