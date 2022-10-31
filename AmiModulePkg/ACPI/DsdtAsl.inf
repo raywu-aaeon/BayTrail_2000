@@ -24,6 +24,6 @@
   Vlv2DeviceRefCodePkg/Vlv2DeviceRefCodePkg.dec
 
 [BuildOptions.common]
-  *_*_*_ASLPP_FLAGS = /D AMI_ACPI_SUPPORT /D WIN8_SUPPORT #//EIP128882 #EIP148558
+  *_*_*_ASLPP_FLAGS = /D AMI_ACPI_SUPPORT /FITokenAsl.h /D WIN8_SUPPORT #//EIP128882 #EIP148558
   *_*_*_ASLCC_FLAGS = /D WIN8_SUPPORT #EIP148558
   *_*_*_ASL_PATH == $(EDK_TOOLS_PATH)\iasl5.exe

@@ -6,9 +6,9 @@
 [INF]
 "FsRecovery.inf"
 "NTFSRecovery.inf"
+"RecoveryNullLib.inf"
 "EXTRecovery.inf"
-"ExFatRecovery.inf"
 [files]
 "FsRecovery.sdl"	
-"FsRecovery.txt"
+"FsRecovery.mak"	
 <endComponent>

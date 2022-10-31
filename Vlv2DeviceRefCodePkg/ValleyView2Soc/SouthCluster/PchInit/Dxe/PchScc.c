@@ -897,13 +897,6 @@ Returns:
     ConfigureDLLSettingForEMMC41_BBAY(PchPlatformPolicy);
   } else if (PchPlatformPolicy->SccConfig->eMMC45Enabled == PCH_DEVICE_ENABLE) {
     ConfigureDLLSettingForEMMC45_BBAY(PchPlatformPolicy);
-  } 
-// AMI_OVERRIDE - Config DLL for AMI SdioDriver <<
-  else if ((PchPlatformPolicy->SccConfig->eMMCEnabled == PCH_DEVICE_DISABLE) &&
-      ((PchPlatformPolicy->SccConfig->SdioEnabled == PCH_DEVICE_ENABLE) ||
-      (PchPlatformPolicy->SccConfig->SdcardEnabled == PCH_DEVICE_ENABLE))) {
-// AMI_OVERRIDE - Config DLL for AMI SdioDriver <<
-    ConfigureDLLSettingForEMMC41_BBAY(PchPlatformPolicy);
   }
 
   ///

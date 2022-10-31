@@ -19,20 +19,14 @@ INFComponent
 End
 
 INFComponent
-	Name  = "DxeCpuExceptionHandlerLib"
-	File  = "Library/CpuExceptionHandlerLib/DxeCpuExceptionHandlerLib.inf"
+	Name  = "DxeSmmCpuExceptionHandlerLib"
+	File  = "Library/CpuExceptionHandlerLib/DxeSmmCpuExceptionHandlerLib.inf"
 	Package  = "UefiCpuPkg"
 End
 
 INFComponent
 	Name  = "SecPeiCpuExceptionHandlerLib"
 	File  = "Library/CpuExceptionHandlerLib/SecPeiCpuExceptionHandlerLib.inf"
-	Package  = "UefiCpuPkg"
-End
-
-INFComponent
-	Name  = "SmmCpuExceptionHandlerLib"
-	File  = "Library/CpuExceptionHandlerLib/SmmCpuExceptionHandlerLib.inf"
 	Package  = "UefiCpuPkg"
 End
 
@@ -54,9 +48,9 @@ End
 
 LibraryMapping
 	Class  = "CpuExceptionHandlerLib"
-	Instance  = "UefiCpuPkg.DxeCpuExceptionHandlerLib"
+	Instance  = "UefiCpuPkg.DxeSmmCpuExceptionHandlerLib"
 	Arch  = "IA32 X64"
-	ModuleTypes  = "DXE_CORE DXE_DRIVER UEFI_APPLICATION UEFI_DRIVER"
+	ModuleTypes  = "DXE_CORE DXE_DRIVER DXE_SMM_DRIVER SMM_CORE UEFI_APPLICATION UEFI_DRIVER"
 End
 
 LibraryMapping
@@ -64,13 +58,6 @@ LibraryMapping
 	Instance  = "UefiCpuPkg.SecPeiCpuExceptionHandlerLib"
 	Arch  = "IA32 X64"
 	ModuleTypes  = "PEI_CORE PEIM SEC"
-End
-
-LibraryMapping
-	Class  = "CpuExceptionHandlerLib"
-	Instance  = "UefiCpuPkg.SmmCpuExceptionHandlerLib"
-	Arch  = "IA32 X64"
-	ModuleTypes  = "DXE_SMM_DRIVER SMM_CORE"
 End
 
 LibraryMapping

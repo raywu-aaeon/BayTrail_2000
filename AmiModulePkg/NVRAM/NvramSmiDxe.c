@@ -214,7 +214,7 @@ EFI_STATUS GetVariableToSmi (
     if (!VariableName || !VendorGuid || !DataSize || !Data && *DataSize)
         return EFI_INVALID_PARAMETER;
     Length = (Wcslen(VariableName) + 1)*sizeof(CHAR16);
-    if ((NVRAM_SIZE - sizeof(SMI_VARIABLE)) <=  Length)
+    if ((NVRAM_SIZE) <=  (Length + sizeof(SMI_VARIABLE)))
     	return EFI_OUT_OF_RESOURCES;
 
     Status = EFI_NO_RESPONSE;
@@ -459,10 +459,7 @@ EFI_STATUS SetVariableToSmi (
     if (!VariableName || VariableName[0]==0 || !VendorGuid || (DataSize && !Data))
         return EFI_INVALID_PARAMETER;
     Length = (Wcslen(VariableName) + 1)*sizeof(CHAR16);
-    if (((UINTN)(~0) - DataSize) < Length)
-      return EFI_OUT_OF_RESOURCES; // Prevent whole variable size overflow (if DataSize + Length > UINTN)
-
-    if ((DataSize + Length) > (NVRAM_SIZE - sizeof(SMI_VARIABLE) - 1)) 
+    if ((DataSize + Length + sizeof(SMI_VARIABLE)) > NVRAM_SIZE)
     	return EFI_OUT_OF_RESOURCES;
 //EIP151328 >>
     if (!(Attributes & EFI_VARIABLE_NON_VOLATILE) && (DataSize != 0)) {
@@ -470,9 +467,7 @@ EFI_STATUS SetVariableToSmi (
                                 VendorGuid, Attributes, DataSize, Data);
 //-        SMDbgPrint("[SmiSetVariable-RT] Name : %S, Attr %x :: %r ]\n",
 //-                        VariableName, Attributes, Status);
-//EIP190823
-        if (!EFI_ERROR(Status))   return Status;                
-//EIP190823
+        return Status;                
     }
 //EIP151328 <<
 
@@ -490,11 +485,7 @@ EFI_STATUS SetVariableToSmi (
         Buffer->VarSize = DataSize;
         Buffer->Status = Status;
         Buffer->VarGuid = *VendorGuid;
-        // VariableName address must be allined on 16 bit boundary
-        if (((UINTN)&Buffer->VarData + DataSize) & 1)
-        	MemCpy(((UINT8*)&Buffer->VarData + DataSize + 1), (UINT8*)VariableName, Length);
-        else 
-        	MemCpy(((UINT8*)&Buffer->VarData + DataSize), (UINT8*)VariableName, Length);
+        MemCpy(((UINT8*)&Buffer->VarData + DataSize), (UINT8*)VariableName, Length);
         MemCpy(&Buffer->VarData, (UINT8*)Data, DataSize);
         if (!ExitBS)
             pSmmBase->InSmm(pSmmBase, &InSmm);

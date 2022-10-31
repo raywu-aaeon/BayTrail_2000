@@ -49,15 +49,6 @@ INFComponent
 	Path  = "DebugStatusCodeLib_DIR"
 End
 
-INFComponent
-	Name  = "SmmDebugStatusCodeLib"
-	File  = "SmmDebugStatusCodeLib.inf"
-	Package  = "AMIDebugRx"
-	Arch  = "common Ia32 X64"
-	Path  = "DebugStatusCodeLib_DIR"
-	Token = "SMM_DEBUG_SUPPORT" "=" "1"
-End
-
 LibraryMapping
 	Class  = "CommonDebugStatusCodeLib"
 	Instance  = "AMIDebugRx.CommonDebugStatusCodeLib"
@@ -72,14 +63,7 @@ End
 LibraryMapping
 	Class  = "DxeDebugStatusCodeLib"
 	Instance  = "AMIDebugRx.DxeDebugStatusCodeLib"
-	ModuleTypes  = "DXE_CORE DXE_DRIVER DXE_RUNTIME_DRIVER UEFI_APPLICATION UEFI_DRIVER"
-End
-
-LibraryMapping
-	Class  = "SmmDebugStatusCodeLib"
-	Instance  = "AMIDebugRx.SmmDebugStatusCodeLib"
-	ModuleTypes  = "SMM_CORE DXE_SMM_DRIVER"
-	Token = "SMM_DEBUG_SUPPORT" "=" "1"	
+	ModuleTypes  = "DXE_CORE DXE_DRIVER SMM_CORE DXE_SMM_DRIVER DXE_RUNTIME_DRIVER UEFI_APPLICATION UEFI_DRIVER"
 End
 
 ELINK
@@ -100,16 +84,8 @@ ELINK
 	Name  = "PeiDbgrSendDebugText,"
 	Parent  = "SmmReportStringStatus"
 	Token = "SEND_DEBUG_MESSAGE_SUPPORT" "=" "1"
-	Token = "SMM_DEBUG_SUPPORT" "=" "1"
 	InvokeOrder = AfterParent
 End
-
-#ELINK
-#	Name  = "PeiDbgrSendDebugText,"
-#	Parent  = "RtReportStringStatus"
-#	Token = "SEND_DEBUG_MESSAGE_SUPPORT" "=" "1"
-#	InvokeOrder = AfterParent
-#End
 
 ELINK
 	Name  = "PeiDbgrSendProgressCode,"
@@ -129,32 +105,6 @@ ELINK
 	Name  = "PeiDbgrSendProgressCode,"
 	Parent  = "SmmReportCheckpoint"
 	Token = "SEND_CHECKPOINT_SUPPORT" "=" "1"
-	Token = "SMM_DEBUG_SUPPORT" "=" "1"
 	InvokeOrder = AfterParent
 End
 
-#ELINK
-#	Name  = "PeiDbgrSendProgressCode,"
-#	Parent  = "RtReportCheckpoint"
-#	Token = "SEND_CHECKPOINT_SUPPORT" "=" "1"
-#	InvokeOrder = AfterParent
-#End
-
-LibraryMapping
-	Class  = "NULL"
-	Instance  = "AMIDebugRx.PeiDebugStatusCodeLib"
-	Override  = "AmiModulePkg.StatusCodePei"
-End
-
-LibraryMapping
-	Class  = "NULL"
-	Instance  = "AMIDebugRx.DxeDebugStatusCodeLib"
-	Override  = "AmiModulePkg.StatusCodeDxe"
-End
-
-LibraryMapping
-	Class  = "NULL"
-	Instance  = "AMIDebugRx.SmmDebugStatusCodeLib"
-	Override  = "AmiModulePkg.StatusCodeSmm"
-	Token = "SMM_DEBUG_SUPPORT" "=" "1"
-End

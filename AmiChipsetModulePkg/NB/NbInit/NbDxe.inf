@@ -29,7 +29,6 @@
   AmiChipsetPkg/AmiChipsetPkg.dec
   AmiChipsetModulePkg/AmiChipsetModulePkg.dec  
   Vlv2DeviceRefCodePkg/Vlv2DeviceRefCodePkg.dec
-  AmiModulePkg/AmiModulePkg.dec		#EIP201856+
   
 [LibraryClasses]
   UefiBootServicesTableLib
@@ -51,7 +50,6 @@
   gEfiS3SaveStateProtocolGuid
   gMemInfoProtocolGuid
   gEfiSmbusHcProtocolGuid #EIP154389 
-  gOpromStartEndProtocolGuid		#EIP201856+
 
 [Depex]
   gEfiPciRootBridgeIoProtocolGuid AND

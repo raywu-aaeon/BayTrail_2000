@@ -1,10 +1,10 @@
 [Defines]
-INF_VERSION     = 0x00010015
-BASE_NAME       = SecureBootSMMlib
-FILE_GUID       = 52D52C59-C745-45F4-8B96-862E677D4DD9
-MODULE_TYPE     = DXE_SMM_DRIVER
+INF_VERSION 	= 0x00010015
+BASE_NAME 		= SecureBootSMMlib
+FILE_GUID 		= 52D52C59-C745-45F4-8B96-862E677D4DD9
+MODULE_TYPE     = UEFI_DRIVER
 VERSION_STRING  = 1.0
-LIBRARY_CLASS   = NULL|DXE_SMM_DRIVER
+LIBRARY_CLASS   = NULL
 
 [Sources]
 SecureBoot.c
@@ -13,7 +13,9 @@ SecureBoot.h
 [Packages]
  MdePkg/MdePkg.dec
  AmiCompatibilityPkg/AmiCompatibilityPkg.dec
+ AmiModulePkg/AmiModulePkg.dec
  AmiCryptoPkg/AmiCryptoPkg.dec
+ IntelFrameworkPkg/IntelFrameworkPkg.dec
 
 [LibraryClasses]
  AmiDxeLib

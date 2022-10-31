@@ -35,10 +35,7 @@ Intel Corporation.
 #include <Library/S3BootScriptLib.h>
 #include "Token.h"
 //EIP167096 <<
-//EIP180260 >>   
-#include <Library/SmmServicesTableLib.h>
-#include <Protocol/SmmReadyToLock.h>
-//EIP180260 <<
+
 ///
 /// Global variables
 ///
@@ -150,45 +147,6 @@ PchBiosLockSwSmiCallback(
 //EIP167096 <<
 }
 
-//EIP180260 >>   
-/**
-  Smm Ready To Lock event notification handler.
-
-  The TCO_LOCK set for security.
-  
-  @param[in] Protocol   Points to the protocol's unique identifier.
-  @param[in] Interface  Points to the interface instance.
-  @param[in] Handle     The handle on which the interface was installed.
-
-  @retval EFI_SUCCESS   Notification handler runs successfully.
- **/
-EFI_STATUS
-EFIAPI
-PchBiosWriteProtectRegisterCallBack (
-  IN CONST EFI_GUID  *Protocol,
-  IN VOID            *Interface,
-  IN EFI_HANDLE      EfiHandle
-  )
-{
-  UINT16                           Data16And, Data16Or;
-  ///
-  /// Lock Down TCO
-  ///
-  Data16And = 0xFFFF;
-  Data16Or = B_PCH_TCO_CNT_LOCK;
-  IoOr16(PM_BASE_ADDRESS+ R_PCH_TCO_CNT, Data16Or);
-
-  S3BootScriptSaveIoReadWrite (
-    S3BootScriptWidthUint16,
-    (UINTN) (PM_BASE_ADDRESS + R_PCH_TCO_CNT ),
-    &Data16Or,  // Data to be ORed
-    &Data16And  // Data to be ANDed
-    );  
-
-  return EFI_SUCCESS;
-}
-//EIP180260 <<   
-
 EFI_STATUS
 EFIAPI
 InstallScBiosWriteProtect(
@@ -212,9 +170,7 @@ InstallScBiosWriteProtect(
     EFI_HANDLE                        SwHandle;
     EFI_SMM_SW_DISPATCH_CONTEXT       SwContext;
     UINTN                             mPciD31F0RegBase;
-//EIP180260 >>       
-    VOID        *NotifyReg;
-//EIP180260 <<   
+
     ///
     /// Locate PCH Platform Policy protocol
     ///
@@ -257,13 +213,6 @@ InstallScBiosWriteProtect(
                  );
         ASSERT_EFI_ERROR(Status);
     }
-//EIP180260 >>    
-    Status = gSmst->SmmRegisterProtocolNotify (
-                     &gEfiSmmReadyToLockProtocolGuid,
-                     PchBiosWriteProtectRegisterCallBack,
-                     &NotifyReg
-             );
-    ASSERT_EFI_ERROR (Status);
-//EIP180260 <<    
+    
     return EFI_SUCCESS;
 }

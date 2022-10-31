@@ -1,7 +1,7 @@
 #**********************************************************************
 #**********************************************************************
 #**                                                                  **
-#**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+#**        (C)Copyright 1985-2012, American Megatrends, Inc.         **
 #**                                                                  **
 #**                       All Rights Reserved.                       **
 #**                                                                  **
@@ -45,23 +45,18 @@
   gAmiModulePkgTokenSpaceGuid.PcdDefaultCursorState
 
 [Protocols]
-  gEfiSimplePointerProtocolGuid                 ## CONSUMES AND PRODUCES
-  gEfiSimpleTextInProtocolGuid                  ## CONSUMES AND PRODUCES
-  gEfiSimpleTextInputExProtocolGuid             ## CONSUMES AND PRODUCES
-  gEfiSimpleTextOutProtocolGuid                 ## CONSUMES AND PRODUCES
-  gAmiEfiKeycodeProtocolGuid                    ## CONSUMES AND PRODUCES
-  gAmiMultiLangSupportProtocolGuid              ## CONSUMES
-  gEfiHiiDatabaseProtocolGuid                   ## CONSUMES
-  gEfiLoadedImageProtocolGuid                   ## CONSUMES
-  gEfiGraphicsOutputProtocolGuid                ## CONSUMES
-  
-[Guids]
-  gEfiHiiKeyBoardLayoutGuid                     ## CONSUMES
+  gEfiSimplePointerProtocolGuid                 ## BY_START
+  gEfiSimpleTextInProtocolGuid                  ## BY_START
+  gEfiSimpleTextInputExProtocolGuid             ## BY_START
+  gEfiSimpleTextOutProtocolGuid                 ## BY_START
+  gAmiEfiKeycodeProtocolGuid
+  gAmiMultiLangSupportProtocolGuid
+  gEfiHiiDatabaseProtocolGuid
 
 #**********************************************************************
 #**********************************************************************
 #**                                                                  **
-#**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+#**        (C)Copyright 1985-2012, American Megatrends, Inc.         **
 #**                                                                  **
 #**                       All Rights Reserved.                       **
 #**                                                                  **

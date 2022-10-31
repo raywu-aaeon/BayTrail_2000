@@ -68,7 +68,6 @@
   
 
 [Depex]
-  gVlvPolicyPpiGuid     AND
-  gPchPeiInitPpiGuid
+  gVlvPolicyPpiGuid
 
 

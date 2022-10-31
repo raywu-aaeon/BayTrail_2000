@@ -43,101 +43,8 @@
 #include <protocol/BlockIo.h>
 #include <Protocol/PDiskInfo.h>
 #include <Protocol/PIDEController.h>
-#include <IndustryStandard/AmiAtaAtapi.h> //EIP180881
-#include <Protocol/AmiIdeBus.h>           //EIP180881
+#include <Protocol/PIDEBus.h>
 #include <Protocol/PciRootBridgeIo.h>
-// EIP 177820 (show eMMC storage infomation)   >>
-#include <IndustryStandard/Mmc.h>
-#include <IndustryStandard/CeAta.h>
-#include <IndustryStandard/SdCard.h>
-#include <Protocol/SdHostIo.h>
-#include <SbEmmcMid.h>
-
-typedef struct _CARD_DATA CARD_DATA;
-typedef enum {
-  UnknownCard = 0,
-  MMCCard,                // MMC card
-  CEATACard,              // CE-ATA device
-  SDMemoryCard,           // SD 1.1 card
-  SDMemoryCard2,          // SD 2.0 or above standard card
-  SDMemoryCard2High       // SD 2.0 or above high capacity card
-} CARD_TYPE;
-
-typedef struct {
-  //
-  //BlockIO
-  //
-  UINT32                    Signature;
-
-  EFI_HANDLE                Handle;
-
-  BOOLEAN                   Present;
-
-  EFI_DEVICE_PATH_PROTOCOL  *DevPath;
-
-  EFI_BLOCK_IO_PROTOCOL     BlockIo;
-
-  EFI_BLOCK_IO_MEDIA        BlockIoMedia;
-
-  CARD_DATA                 *CardData;
-
-} MMC_PARTITION_DATA;
-
-typedef struct {
-  UINT8      ManufacturerId;
-  CHAR16     *ManufacturerName;
-} AMI_EMMC_MID_AND_THE_NAME;
-
-struct _CARD_DATA {
-  //
-  //BlockIO
-  //
-  UINT32                    Signature;
-
-  EFI_HANDLE                Handle;
-
-  MMC_PARTITION_DATA        Partitions[8];
-
-  EFI_SD_HOST_IO_PROTOCOL   *SdHostIo;
-  EFI_UNICODE_STRING_TABLE  *ControllerNameTable;
-  CARD_TYPE                 CardType;
-
-  UINT8                     CurrentBusWidth;
-  BOOLEAN                   DualVoltage;
-  BOOLEAN                   NeedFlush;
-  UINT8                     Reserved[3];
-
-  UINT16                    Address;
-  UINT32                    BlockLen;
-  UINT32                    MaxFrequency;
-  UINT64                    BlockNumber;
-  //
-  //Common used
-  //
-  CARD_STATUS               CardStatus;
-  OCR                       OCRRegister;
-  CID                       CIDRegister;
-  CSD                       CSDRegister;
-  EXT_CSD                   ExtCSDRegister;
-  UINT8                     *RawBufferPointer;
-  UINT8                     *AlignedBuffer;
-  //
-  //CE-ATA specific
-  //
-  TASK_FILE                 TaskFile;
-  IDENTIFY_DEVICE_DATA      IndentifyDeviceData;
-  //
-  //SD specific
-  //
-  SCR                       SCRRegister;
-  SD_STATUS_REG             SDSattus;
-  SWITCH_STATUS             SwitchStatus;
-#if defined (BYTI_PF_ENABLE) && (BYTI_PF_ENABLE == 1)
-  EFI_PCI_IO_PROTOCOL       *PciIo;
-#endif
-};
-#include <Protocol/EmmcCardInfoProtocol.h>
-// EIP 177820 (show eMMC storage infomation)   <<
 
 //
 // Print primitives
@@ -211,115 +118,6 @@ VOID AsciiToUnicode(
         Index++;
     }
 }
-
-// EIP 177820 (show eMMC storage infomation)   >>
-EFI_STATUS GetEmmcInstance (EFI_EMMC_CARD_INFO_PROTOCOL **eMMCCardInfoProtocol)
-{
-  EFI_STATUS                     Status;
-  UINTN                          NumberOfHandles;
-  EFI_HANDLE                     *HandleBuffer = NULL;
-  UINTN                          HandleIndex;
-  EFI_EMMC_CARD_INFO_PROTOCOL    *eMMCCardInfo;
-  EFI_GUID                       gEfiEmmcCardInfoProtocolGuid = EFI_EMMC_CARD_INFO_PROTOCOL_GUID;
-
-  Status = pBS->LocateHandleBuffer (
-                 ByProtocol,
-                 &gEfiEmmcCardInfoProtocolGuid,
-                 NULL,
-                 &NumberOfHandles,
-                 &HandleBuffer
-                 );
-  if (EFI_ERROR(Status)) {
-    return EFI_NOT_FOUND;
-  }
-
-  for (HandleIndex = 0; HandleIndex < NumberOfHandles; HandleIndex++) {
-    Status = pBS->HandleProtocol(
-                   HandleBuffer[HandleIndex],
-                   &gEfiEmmcCardInfoProtocolGuid,
-                   eMMCCardInfoProtocol
-                   );
-    eMMCCardInfo = *eMMCCardInfoProtocol;
-    if (eMMCCardInfo->CardData->CardType == MMCCard) {
-      ///
-      /// once eMMC found, system skips other instances
-      ///
-      return EFI_SUCCESS;
-    } else {
-      ///
-      /// other type, it may be a SD card
-      ///
-      continue;
-    }
-  }
-
-  return EFI_NOT_FOUND;
-}
-
-
-CHAR16* GeteMMCName()
-{
-    EFI_STATUS    Status;
-    static CHAR16 StrBuf[100];
-    EFI_EMMC_CARD_INFO_PROTOCOL *eMMCCardInfoProtocol = NULL;
-    UINTN WordAmount;
-    AMI_EMMC_MID_AND_THE_NAME EmmcBrand[] = {GlobalEmmcMid};
-    UINTN                     TableIndex;
-
-    Status = GetEmmcInstance (&eMMCCardInfoProtocol);
-    if (EFI_ERROR(Status)) {
-      return NULL;
-    }
-
-    TRACE((-1,"\n[eMMC] CIDRegister.MID %x\n",eMMCCardInfoProtocol->CardData->CIDRegister.MID));
-    TRACE((-1,"[eMMC] CIDRegister.MDT %x\n",eMMCCardInfoProtocol->CardData->CIDRegister.MDT));
-    TRACE((-1,"[eMMC] CIDRegister.PSN %x\n",eMMCCardInfoProtocol->CardData->CIDRegister.PSN));
-    TRACE((-1,"[eMMC] CIDRegister.PRV %x\n",eMMCCardInfoProtocol->CardData->CIDRegister.PRV));
-    TRACE((-1,"[eMMC] CIDRegister.OID %x\n",eMMCCardInfoProtocol->CardData->CIDRegister.OID));
-    TRACE((-1,"[eMMC] CIDRegister.PNM %02x%02x%02x%02x%02x%02x\n",
-                                            eMMCCardInfoProtocol->CardData->CIDRegister.PNM[5],
-                                            eMMCCardInfoProtocol->CardData->CIDRegister.PNM[4],
-                                            eMMCCardInfoProtocol->CardData->CIDRegister.PNM[3],
-                                            eMMCCardInfoProtocol->CardData->CIDRegister.PNM[2],
-                                            eMMCCardInfoProtocol->CardData->CIDRegister.PNM[1],
-                                            eMMCCardInfoProtocol->CardData->CIDRegister.PNM[0]));
-
-    ///
-    /// Search the matching ManufacturerName from "AMI_EMMC_MID_AND_THE_NAME" table
-    ///
-    for (TableIndex = 0; TableIndex < sizeof (EmmcBrand) / sizeof (AMI_EMMC_MID_AND_THE_NAME); TableIndex++) {
-      if (eMMCCardInfoProtocol->CardData->CIDRegister.MID == EmmcBrand[TableIndex].ManufacturerId) {
-        StrCpy (StrBuf, EmmcBrand[TableIndex].ManufacturerName);
-        WordAmount = StrLen (EmmcBrand[TableIndex].ManufacturerName);
-        break;
-      }
-
-      ///
-      /// No matching record
-      ///
-      if (TableIndex == (sizeof (EmmcBrand) / sizeof (AMI_EMMC_MID_AND_THE_NAME) - 1)) {
-        StrCpy (StrBuf, L"Unknown");
-        WordAmount = 7;
-      }
-    }
-
-    StrBuf[WordAmount]     = ' ';
-    StrBuf[WordAmount + 1] = eMMCCardInfoProtocol->CardData->CIDRegister.PNM[5];
-    StrBuf[WordAmount + 2] = eMMCCardInfoProtocol->CardData->CIDRegister.PNM[4];
-    StrBuf[WordAmount + 3] = eMMCCardInfoProtocol->CardData->CIDRegister.PNM[3];
-    StrBuf[WordAmount + 4] = eMMCCardInfoProtocol->CardData->CIDRegister.PNM[2];
-    StrBuf[WordAmount + 5] = eMMCCardInfoProtocol->CardData->CIDRegister.PNM[1];
-    StrBuf[WordAmount + 6] = eMMCCardInfoProtocol->CardData->CIDRegister.PNM[0];
-
-    Swprintf(&(StrBuf[WordAmount + 7]), L" %04X", eMMCCardInfoProtocol->CardData->CIDRegister.PSN);
-
-    TRACE((-1,"[eMMC] StrBuf  (%S)\n",StrBuf));
-    TRACE((-1,"[eMMC] StrBuf  (%s)\n",StrBuf));
-    
-    return StrBuf;
-}
-// EIP 177820 (show eMMC storage infomation)   <<
-
 
 //<AMI_PHDR_START>
 //----------------------------------------------------------------------------
@@ -482,19 +280,6 @@ VOID InitSbStrings(
     UINT32                          SectorSize = 512; // Default Sector Size
 
     if(Class==ADVANCED_FORM_SET_CLASS) {
-        // EIP 177820 (show eMMC storage infomation)   >>
-        CHAR16 *EmmcInfo = NULL;        
-        EmmcInfo = GeteMMCName();
-        
-        if(EmmcInfo != NULL){
-            InitString(
-                HiiHandle,
-                STRING_TOKEN(STR_SCC_CONFIG_TITLE),
-                L"eMMC Infomation                      %s",
-                EmmcInfo);
-        }
-        // EIP 177820 (show eMMC storage infomation)   <<
-
         //
         // Assume no line strings is longer than 256 bytes.
         //
@@ -543,8 +328,7 @@ VOID InitSbStrings(
             //
             // Check for onboard IDE
             //
-            if((PciDevicePath->Function == SATA_FUNC) &&  //EIP129785 
-            	    (PciDevicePath->Device == SATA_DEV)) { //EIP203109
+            if(PciDevicePath->Function == SATA_FUNC) { //EIP129785 
                 Status = pBS->HandleProtocol(
                              HandleBuffer[Index],
                              &gEfiDiskInfoProtocolGuid,

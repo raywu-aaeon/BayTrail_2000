@@ -1,9 +1,15 @@
 /*
  * SHA-256 hash implementation and interface functions
- * Copyright (c) 2003-2012, Jouni Malinen <j@w1.fi>
+ * Copyright (c) 2003-2007, Jouni Malinen <j@w1.fi>
  *
- * This software may be distributed under the terms of the BSD license.
- * See README for more details.
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
+ * published by the Free Software Foundation.
+ *
+ * Alternatively, this software may be distributed under the terms of BSD
+ * license.
+ *
+ * See README and COPYING for more details.
  */
 
 #include "includes.h"
@@ -182,8 +188,6 @@ void sha256_vector(size_t num_elem, const u8 *addr[], const size_t *len,
 	for (i = 0; i < num_elem; i++)
 		sha256_process(&ctx, addr[i], len[i]);
 	sha256_done(&ctx, mac);
-	
-	os_memset( &ctx, 0, sizeof( struct sha256_state ) );
 }
 
 
@@ -191,9 +195,6 @@ void sha256_vector(size_t num_elem, const u8 *addr[], const size_t *len,
 
 /* This is based on SHA256 implementation in LibTomCrypt that was released into
  * public domain by Tom St Denis. */
-
-/* Hash small code define generates ~2.1 k smaller code at a cost of slower hash */
-#ifdef HASH_SMALL_CODE
 
 /* the K array */
 static const unsigned long K[64] = {
@@ -211,7 +212,7 @@ static const unsigned long K[64] = {
 	0x682e6ff3UL, 0x748f82eeUL, 0x78a5636fUL, 0x84c87814UL, 0x8cc70208UL,
 	0x90befffaUL, 0xa4506cebUL, 0xbef9a3f7UL, 0xc67178f2UL
 };
-#endif
+
 
 /* Various logical functions */
 #define RORc(x, y) \
@@ -232,12 +233,11 @@ static const unsigned long K[64] = {
 /* compress 512-bits */
 static int sha256_compress(struct sha256_state *md, unsigned char *buf)
 {
-#ifdef HASH_SMALL_CODE
 	u32 S[8], W[64], t0, t1;
 	u32 t;
 	int i;
 
-    /* copy state into S */
+	/* copy state into S */
 	for (i = 0; i < 8; i++) {
 		S[i] = md->state[i];
 	}
@@ -250,8 +250,8 @@ static int sha256_compress(struct sha256_state *md, unsigned char *buf)
 	for (i = 16; i < 64; i++) {
 		W[i] = Gamma1(W[i - 2]) + W[i - 7] + Gamma0(W[i - 15]) +
 			W[i - 16];
-	}
-	
+	}        
+
 	/* Compress */
 #define RND(a,b,c,d,e,f,g,h,i)                          \
 	t0 = h + Sigma1(e) + Ch(e, f, g) + K[i] + W[i];	\
@@ -269,147 +269,7 @@ static int sha256_compress(struct sha256_state *md, unsigned char *buf)
 	for (i = 0; i < 8; i++) {
 		md->state[i] = md->state[i] + S[i];
 	}
-	
-#else // fast code 
-    u32 temp1, temp2, W[64];
-    u32 A, B, C, D, E, F, G, H;
-
-#define GET_UINT32_BE(n,b,i)                       \
-{                                                  \
-    (n) = ( (u32) (b)[(i)    ] << 24 )             \
-        | ( (u32) (b)[(i) + 1] << 16 )             \
-        | ( (u32) (b)[(i) + 2] <<  8 )             \
-        | ( (u32) (b)[(i) + 3]       );            \
-}    
-
-    GET_UINT32_BE( W[ 0], buf,  0 );
-    GET_UINT32_BE( W[ 1], buf,  4 );
-    GET_UINT32_BE( W[ 2], buf,  8 );
-    GET_UINT32_BE( W[ 3], buf, 12 );
-    GET_UINT32_BE( W[ 4], buf, 16 );
-    GET_UINT32_BE( W[ 5], buf, 20 );
-    GET_UINT32_BE( W[ 6], buf, 24 );
-    GET_UINT32_BE( W[ 7], buf, 28 );
-    GET_UINT32_BE( W[ 8], buf, 32 );
-    GET_UINT32_BE( W[ 9], buf, 36 );
-    GET_UINT32_BE( W[10], buf, 40 );
-    GET_UINT32_BE( W[11], buf, 44 );
-    GET_UINT32_BE( W[12], buf, 48 );
-    GET_UINT32_BE( W[13], buf, 52 );
-    GET_UINT32_BE( W[14], buf, 56 );
-    GET_UINT32_BE( W[15], buf, 60 );
-
-#define  SHR(x,n) ((x & 0xFFFFFFFF) >> n)
-#define ROTR(x,n) (SHR(x,n) | (x << (32 - n)))
-
-#define S0(x) (ROTR(x, 7) ^ ROTR(x,18) ^  SHR(x, 3))
-#define S1(x) (ROTR(x,17) ^ ROTR(x,19) ^  SHR(x,10))
-
-#define S2(x) (ROTR(x, 2) ^ ROTR(x,13) ^ ROTR(x,22))
-#define S3(x) (ROTR(x, 6) ^ ROTR(x,11) ^ ROTR(x,25))
-
-#define F0(x,y,z) ((x & y) | (z & (x | y)))
-#define F1(x,y,z) (z ^ (x & (y ^ z)))
-
-#define R2(t)                                   \
-(                                               \
-    W[t] = S1(W[t -  2]) + W[t -  7] +          \
-	   S0(W[t - 15]) + W[t - 16]            \
-)
-
-#define P(a,b,c,d,e,f,g,h,x,K)                  \
-{                                               \
-    temp1 = h + S3(e) + F1(e,f,g) + K + x;      \
-    temp2 = S2(a) + F0(a,b,c);                  \
-    d += temp1; h = temp1 + temp2;              \
-}
-
-    A = md->state[0];
-    B = md->state[1];
-    C = md->state[2];
-    D = md->state[3];
-    E = md->state[4];
-    F = md->state[5];
-    G = md->state[6];
-    H = md->state[7];
-
-    P( A, B, C, D, E, F, G, H, W[ 0], 0x428A2F98 );
-    P( H, A, B, C, D, E, F, G, W[ 1], 0x71374491 );
-    P( G, H, A, B, C, D, E, F, W[ 2], 0xB5C0FBCF );
-    P( F, G, H, A, B, C, D, E, W[ 3], 0xE9B5DBA5 );
-    P( E, F, G, H, A, B, C, D, W[ 4], 0x3956C25B );
-    P( D, E, F, G, H, A, B, C, W[ 5], 0x59F111F1 );
-    P( C, D, E, F, G, H, A, B, W[ 6], 0x923F82A4 );
-    P( B, C, D, E, F, G, H, A, W[ 7], 0xAB1C5ED5 );
-    P( A, B, C, D, E, F, G, H, W[ 8], 0xD807AA98 );
-    P( H, A, B, C, D, E, F, G, W[ 9], 0x12835B01 );
-    P( G, H, A, B, C, D, E, F, W[10], 0x243185BE );
-    P( F, G, H, A, B, C, D, E, W[11], 0x550C7DC3 );
-    P( E, F, G, H, A, B, C, D, W[12], 0x72BE5D74 );
-    P( D, E, F, G, H, A, B, C, W[13], 0x80DEB1FE );
-    P( C, D, E, F, G, H, A, B, W[14], 0x9BDC06A7 );
-    P( B, C, D, E, F, G, H, A, W[15], 0xC19BF174 );
-    P( A, B, C, D, E, F, G, H, R2(16), 0xE49B69C1 );
-    P( H, A, B, C, D, E, F, G, R2(17), 0xEFBE4786 );
-    P( G, H, A, B, C, D, E, F, R2(18), 0x0FC19DC6 );
-    P( F, G, H, A, B, C, D, E, R2(19), 0x240CA1CC );
-    P( E, F, G, H, A, B, C, D, R2(20), 0x2DE92C6F );
-    P( D, E, F, G, H, A, B, C, R2(21), 0x4A7484AA );
-    P( C, D, E, F, G, H, A, B, R2(22), 0x5CB0A9DC );
-    P( B, C, D, E, F, G, H, A, R2(23), 0x76F988DA );
-    P( A, B, C, D, E, F, G, H, R2(24), 0x983E5152 );
-    P( H, A, B, C, D, E, F, G, R2(25), 0xA831C66D );
-    P( G, H, A, B, C, D, E, F, R2(26), 0xB00327C8 );
-    P( F, G, H, A, B, C, D, E, R2(27), 0xBF597FC7 );
-    P( E, F, G, H, A, B, C, D, R2(28), 0xC6E00BF3 );
-    P( D, E, F, G, H, A, B, C, R2(29), 0xD5A79147 );
-    P( C, D, E, F, G, H, A, B, R2(30), 0x06CA6351 );
-    P( B, C, D, E, F, G, H, A, R2(31), 0x14292967 );
-    P( A, B, C, D, E, F, G, H, R2(32), 0x27B70A85 );
-    P( H, A, B, C, D, E, F, G, R2(33), 0x2E1B2138 );
-    P( G, H, A, B, C, D, E, F, R2(34), 0x4D2C6DFC );
-    P( F, G, H, A, B, C, D, E, R2(35), 0x53380D13 );
-    P( E, F, G, H, A, B, C, D, R2(36), 0x650A7354 );
-    P( D, E, F, G, H, A, B, C, R2(37), 0x766A0ABB );
-    P( C, D, E, F, G, H, A, B, R2(38), 0x81C2C92E );
-    P( B, C, D, E, F, G, H, A, R2(39), 0x92722C85 );
-    P( A, B, C, D, E, F, G, H, R2(40), 0xA2BFE8A1 );
-    P( H, A, B, C, D, E, F, G, R2(41), 0xA81A664B );
-    P( G, H, A, B, C, D, E, F, R2(42), 0xC24B8B70 );
-    P( F, G, H, A, B, C, D, E, R2(43), 0xC76C51A3 );
-    P( E, F, G, H, A, B, C, D, R2(44), 0xD192E819 );
-    P( D, E, F, G, H, A, B, C, R2(45), 0xD6990624 );
-    P( C, D, E, F, G, H, A, B, R2(46), 0xF40E3585 );
-    P( B, C, D, E, F, G, H, A, R2(47), 0x106AA070 );
-    P( A, B, C, D, E, F, G, H, R2(48), 0x19A4C116 );
-    P( H, A, B, C, D, E, F, G, R2(49), 0x1E376C08 );
-    P( G, H, A, B, C, D, E, F, R2(50), 0x2748774C );
-    P( F, G, H, A, B, C, D, E, R2(51), 0x34B0BCB5 );
-    P( E, F, G, H, A, B, C, D, R2(52), 0x391C0CB3 );
-    P( D, E, F, G, H, A, B, C, R2(53), 0x4ED8AA4A );
-    P( C, D, E, F, G, H, A, B, R2(54), 0x5B9CCA4F );
-    P( B, C, D, E, F, G, H, A, R2(55), 0x682E6FF3 );
-    P( A, B, C, D, E, F, G, H, R2(56), 0x748F82EE );
-    P( H, A, B, C, D, E, F, G, R2(57), 0x78A5636F );
-    P( G, H, A, B, C, D, E, F, R2(58), 0x84C87814 );
-    P( F, G, H, A, B, C, D, E, R2(59), 0x8CC70208 );
-    P( E, F, G, H, A, B, C, D, R2(60), 0x90BEFFFA );
-    P( D, E, F, G, H, A, B, C, R2(61), 0xA4506CEB );
-    P( C, D, E, F, G, H, A, B, R2(62), 0xBEF9A3F7 );
-    P( B, C, D, E, F, G, H, A, R2(63), 0xC67178F2 );
-
-    md->state[0] += A;
-    md->state[1] += B;
-    md->state[2] += C;
-    md->state[3] += D;
-    md->state[4] += E;
-    md->state[5] += F;
-    md->state[6] += G;
-    md->state[7] += H;
-
-#endif
-
-    return 0;
+	return 0;
 }
 
 
@@ -478,9 +338,8 @@ static int sha256_compress(struct sha256_state *md, unsigned char *buf)
 */
 /*static */int sha256_done(struct sha256_state *md, unsigned char *out)
 {
-#ifdef HASH_SMALL_CODE
 	int i;
-#endif
+
 	if (md->curlen >= sizeof(md->buf))
 		return -1;
 
@@ -510,21 +369,11 @@ static int sha256_compress(struct sha256_state *md, unsigned char *buf)
 	/* store length */
 	WPA_PUT_BE64(md->buf + 56, md->length);
 	sha256_compress(md, md->buf);
-	
-#ifdef HASH_SMALL_CODE
+
 	/* copy output */
 	for (i = 0; i < 8; i++)
 		WPA_PUT_BE32(out + (4 * i), md->state[i]);
-#else
-	WPA_PUT_BE32(out + (0), md->state[0]);
-	WPA_PUT_BE32(out + (4), md->state[1]);
-	WPA_PUT_BE32(out + (8), md->state[2]);
-	WPA_PUT_BE32(out + (12), md->state[3]);
-	WPA_PUT_BE32(out + (16), md->state[4]);
-	WPA_PUT_BE32(out + (20), md->state[5]);
-	WPA_PUT_BE32(out + (24), md->state[6]);
-	WPA_PUT_BE32(out + (28), md->state[7]);
-#endif
+
 	return 0;
 }
 

@@ -1,7 +1,7 @@
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2015, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2012, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **
@@ -11,17 +11,29 @@
 //**                                                                  **
 //**********************************************************************
 //**********************************************************************
+//**********************************************************************
+// $Header: /Alaska/BIN/Modules/SMBIOS/SmbiosDMIEdit/SmbiosDMIEditBoard.c 8     4/06/10 3:26p Davidd $
+//
+// $Revision: 8 $
+//
+// $Date: 4/06/10 3:26p $
+//*****************************************************************************
 
-/** @file SmbiosDmiEditBoard.c
-    This file contains code for OEM related code for DMIEdit
-
-**/
+//<AMI_FHDR_START>
+//----------------------------------------------------------------------------
+//
+// Name:    SmbiosDMIEditBoard.C
+//
+// Description: This file contains code for OEM related code for DMIEdit
+//
+//----------------------------------------------------------------------------
+//<AMI_FHDR_END>
 
 //----------------------------------------------------------------------------
 // Includes
 
 #include <Token.h>
-#include <Efi.h>
+#include <EFI.h>
 #include <AmiDxeLib.h>
 #include <AmiCspLib.h>
 
@@ -36,19 +48,25 @@ UINT8   Reg96Byte;      // 0E8000-0EC00 PAM Reg
 #endif
 */
 
-/**
-    ***** PORTING REQUIRED *****
-    (if SMBIOS module is part of the project)
-
-    This function enables write to F000 shadow,
-    and E000 shadow if ITK_SUPPORT token
-    or SMBIOS_TABLE_LOCATION token is set.
-
-    @param None
-
-    @retval None
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//                     ***** PORTING REQUIRED *****
+//               (if SMBIOS module is part of the project)
+//----------------------------------------------------------------------------
+// Procedure: EnableShadowWrite
+//
+// Description: This function enables write to F000 shadow,
+//              and E000 shadow if ITK_SUPPORT token
+//              or SMBIOS_TABLE_LOCATION token is set.
+//
+// Input: None
+//
+// Output: None
+//
+// Note:
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID
 EnableShadowWrite (VOID)
 {
@@ -81,25 +99,28 @@ EnableShadowWrite (VOID)
 #endif
 */
 
-#if INTEL_ARCH_SUPPORT
-// Next line should be commented out for ARM platform
 	NbRuntimeShadowRamWrite(TRUE);
-#endif
 }
 
-/**
-                     ***** PORTING REQUIRED *****
-               (if SMBIOS module is part of the project)
-
-    This function makes F000 shadow read only,
-    and E000 shadow read only if ITK_SUPPORT token
-    or SMBIOS_TABLE_LOCATION token is set.
-
-    @param None
-
-    @retval None
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//                     ***** PORTING REQUIRED *****
+//               (if SMBIOS module is part of the project)
+//----------------------------------------------------------------------------
+// Procedure: DisableShadowWrite
+//
+// Description: This function makes F000 shadow read only,
+//              and E000 shadow read only if ITK_SUPPORT token
+//              or SMBIOS_TABLE_LOCATION token is set.
+//
+// Input: None
+//
+// Output: None
+//
+// Note:
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID
 DisableShadowWrite (VOID)
 {
@@ -123,16 +144,13 @@ DisableShadowWrite (VOID)
 #endif
 */
 
-#if INTEL_ARCH_SUPPORT
-// Next line should be commented out for ARM platform
 	NbRuntimeShadowRamWrite(FALSE);
-#endif
 }
 
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2015, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2012, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **

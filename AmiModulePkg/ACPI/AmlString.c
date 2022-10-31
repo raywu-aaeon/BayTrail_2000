@@ -12,12 +12,25 @@
 //**********************************************************************
 //**********************************************************************
 
+//**********************************************************************
+// $Header: /Alaska/BIN/Modules/ACPI/Template/Core/AmlString.c 2     5/14/11 2:13p Yakovlevs $
+//
+// $Revision: 2 $
+//
+// $Date: 5/14/11 2:13p $
+//**********************************************************************
 
-/** @file AmlString.c
-    ACPI AML Name space parsing/manipulation functions for ACPI SDT.
 
-**/
-
+//**********************************************************************
+//<AMI_FHDR_START>
+//
+// Name: AmlString.c
+//
+// Description:	
+//  ACPI AML Name space parsing/manipulation functions for ACPI SDT.
+//
+//<AMI_FHDR_END>
+//**********************************************************************
 
 #include "AcpiCore.h"
 
@@ -124,9 +137,9 @@ AmlGetNameStringSize (
   UINTN                 SegCount;
   UINTN                 Length;
   UINTN                 Index;
-  //UINT8                 *Name;
+  UINT8                 *Name;
 
-  //Name = Buffer;
+  Name = Buffer;
   Length = 0;
 
   //
@@ -500,9 +513,9 @@ AmlPrintNameString (
 {
   UINT8                 SegCount;
   UINT8                 Index;
-  //UINT8                 *Name;
+  UINT8                 *Name;
  
-  //Name = Buffer;
+  Name = Buffer;
   if (*Buffer == AML_ROOT_CHAR) {
     //
     // RootChar

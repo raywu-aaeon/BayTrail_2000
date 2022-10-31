@@ -1,26 +1,38 @@
-//**********************************************************************
-//**********************************************************************
-//**                                                                  **
-//**        (C)Copyright 1985-2016, American Megatrends, Inc.         **
-//**                                                                  **
-//**                       All Rights Reserved.                       **
-//**                                                                  **
-//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093        **
-//**                                                                  **
-//**                       Phone: (770)-246-8600                      **
-//**                                                                  **
-//**********************************************************************
-//**********************************************************************
+//****************************************************************************
+//****************************************************************************
+//**                                                                        **
+//**             (C)Copyright 1985-2009, American Megatrends, Inc.          **
+//**                                                                        **
+//**                          All Rights Reserved.                          **
+//**                                                                        **
+//**                 5555 Oakbrook Pkwy, Norcross, GA 30093                 **
+//**                                                                        **
+//**                          Phone (770)-246-8600                          **
+//**                                                                        **
+//****************************************************************************
+//****************************************************************************
 
-/** @file UsbInt13.c
-    USB Int13 driver
+//****************************************************************************
+// $Header: /Alaska/SOURCE/Modules/USB/ALASKA/Int13/UsbInt13.c 23    3/14/12 11:34a Ryanchou $
+//
+// $Revision: 23 $
+//
+// $Date: 3/14/12 11:34a $
+//
+//****************************************************************************
 
-**/
+//<AMI_FHDR_START>
+//****************************************************************************
+//
+//  Name:           UsbInt13.c
+//  Description:    USB Int13 driver
+//
+//****************************************************************************
+//<AMI_FHDR_END>
 
 #include <Token.h>
-#include <Library/DebugLib.h>
-#include <Library/UefiLib.h>
-#include <Library/UefiBootServicesTableLib.h>
+#include <AmiDxeLib.h>
+
 #include "Protocol/AmiUsbController.h"
 #include <Protocol/ComponentName.h>
 #include <Protocol/LegacyBiosExt.h>
@@ -29,7 +41,6 @@
 #include <Pci.h>
 #include "../Rt/UsbDef.h"
 #include <Protocol/UsbPolicy.h>
-#include <AmiDxeLib.h>
 
 EFI_STATUS InitInt13RuntimeImage();
 
@@ -53,19 +64,22 @@ USB_MASS_DEV gHotplugCDROM;
 
 USB_PCI_LOCATION* gUsbPciLocationTable = NULL;
             
-/**
-    USB INT13 driver entry point. Installs callback notification
-    on gEfiUSBProtocolGuid installation.
-
-    @param ImageHandle 
-    @param SystemTable 
-
-    @retval EFI_STATUS
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+// Procedure:	UsbInt13EntryPoint
+//
+// Description:	USB INT13 driver entry point. Installs callback notification
+//              on gEfiUSBProtocolGuid installation.
+//
+// Input:		IN EFI_HANDLE        ImageHandle,
+//				IN EFI_SYSTEM_TABLE  *SystemTable
+//
+// Output:		EFI_STATUS
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 EFI_STATUS
-EFIAPI
 UsbInt13EntryPoint(
     IN EFI_HANDLE        ImageHandle,
     IN EFI_SYSTEM_TABLE  *SystemTable
@@ -75,36 +89,38 @@ UsbInt13EntryPoint(
     EFI_STATUS  Status;
 
     InitAmiLib(ImageHandle, SystemTable);
-    Status = gBS->LocateProtocol(&gEfiUsbProtocolGuid, NULL, &gAmiUsb);
+
+    Status = pBS->LocateProtocol(&gEfiUsbProtocolGuid, NULL, &gAmiUsb);
     ASSERT_EFI_ERROR(Status);
-    if (EFI_ERROR(Status)) {
-        return Status;
-    }
+    if (EFI_ERROR(Status)) return Status;
 
     gUsbData = gAmiUsb->USBDataPtr;
 
     Status = InitInt13RuntimeImage();
     ASSERT_EFI_ERROR(Status);
-    if (EFI_ERROR(Status)) {
-        return Status;
-    }
+    if (EFI_ERROR(Status)) return Status;
 
     gAmiUsb->InstallUsbLegacyBootDevices = InstallUsbLegacyBootDevices;
     gAmiUsb->UsbInstallLegacyDevice = UsbInstallLegacyDevice;
     gAmiUsb->UsbUninstallLegacyDevice = UsbUninstallLegacyDevice;
 
-    Status = EfiCreateEventReadyToBootEx(TPL_CALLBACK, ReadyToBootNotify, NULL, &Event);
+    Status = CreateReadyToBootEvent(TPL_CALLBACK, ReadyToBootNotify, NULL, &Event);
     ASSERT_EFI_ERROR(Status);
 
     return Status;
 }
 
 
-/**
-    Initialization of data structures and placement of runtime
-    code of USB INT13
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+//  Name:           InitInt13RuntimeImage
+//
+//  Description:    Initialization of data structures and placement of runtime
+//                  code of USB INT13
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 EFI_STATUS
 InitInt13RuntimeImage()
@@ -128,17 +144,13 @@ InitInt13RuntimeImage()
     //
     // Get the USB INT13 runtime image
     //
-    Status = gBS->LocateProtocol(
+    Status = pBS->LocateProtocol(
         &gEfiLegacyBiosExtProtocolGuid, NULL, &gBiosExtensions);
-    if (EFI_ERROR(Status)) {
-        return Status;
-    }
+    if (EFI_ERROR(Status)) return Status;
 
     Status = gBiosExtensions->GetEmbeddedRom(
         CSM16_MODULEID, CSM16_VENDORID, CSM16_USB_RT_DID, &Image, &ImageSize);
-    if (EFI_ERROR(Status)) {
-        return Status;
-    }
+    if (EFI_ERROR(Status)) return Status;
 
     //
     // Do the necessary RT data initialization here using Image before it is shadowed
@@ -161,7 +173,7 @@ InitInt13RuntimeImage()
     }
 
     // Copy image to shadow E000/F000 area
-    gI13BinData = (UINT13_DATA *)gBiosExtensions->CopyLegacyTable(Image, (UINT16)ImageSize, 0x10, 2);
+    (UINTN)gI13BinData = gBiosExtensions->CopyLegacyTable(Image, (UINT16)ImageSize, 0x10, 2);
     if (gI13BinData == NULL) {
         return EFI_OUT_OF_RESOURCES;
     }
@@ -239,24 +251,25 @@ InitializeHotplugDevices()
 }
 
 
-/**
-    READY_TO_BOOT event notification callback. It locates BBS
-    table and changes the priority of device located at index
-    gBootOverrideDeviceIndx to 0 (highest). It also verifies
-    the hotplug devices are properly installed.
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        ReadyToBootNotify
+//
+// Description: READY_TO_BOOT event notification callback. It locates BBS
+//              table and changes the priority of device located at index
+//              gBootOverrideDeviceIndx to 0 (highest). It also verifies
+//              the hotplug devices are properly installed.
+//
+// Input:       Event - event signaled by the DXE Core upon installation
+//              Context - event context
+//
+// Output:    Nothing
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
-    @param Event - event signaled by the DXE Core upon installation
-        Context - event context
-
-    @retval VOID
-
-**/
-
-VOID
-EFIAPI
-ReadyToBootNotify(
-    EFI_EVENT Event, 
-    VOID *Context)
+VOID ReadyToBootNotify(EFI_EVENT Event, VOID *Context)
 {
     UINT16      Priority;
     UINT16      Index, Index1;
@@ -270,12 +283,10 @@ ReadyToBootNotify(
     //
     // Find BBS table pointer
     //
-    Status = gBS->LocateProtocol(
+    Status = pBS->LocateProtocol(
         &gEfiLegacyBiosProtocolGuid, NULL, &Bios);
     ASSERT_EFI_ERROR(Status);
-    if (EFI_ERROR(Status)) {
-        return;
-    }
+    if (EFI_ERROR(Status)) return;
 
     Status = Bios->GetBbsInfo(Bios, &HddCount, &HddInfo, &BbsCount, &BbsTable);
     ASSERT_EFI_ERROR(Status);
@@ -283,7 +294,7 @@ ReadyToBootNotify(
     //
     // Kill the Event.
     //
-    gBS->CloseEvent( Event );
+    pBS->CloseEvent( Event );
     
     //
     // Report BBS_USB type devices as other normal Boot devices
@@ -344,11 +355,16 @@ ReadyToBootNotify(
 }
 
 
-/**
-    This function retrieves USB device name, copies it into
-    lower memory and returns a pointer to the string.
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        CreateDeviceName
+//
+// Description: This function retrieves USB device name, copies it into
+//              lower memory and returns a pointer to the string.
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 EFI_STATUS
 CreateDeviceName(
@@ -366,7 +382,7 @@ CreateDeviceName(
     //
     // Copy the string, compact it on the way (no more that one ' ' in a row)
     //
-    for (i=0; i < 63 && *DevNameStringSrc != 0; i++, DevNameStringSrc++)
+    for (i=0; i<63, *DevNameStringSrc != 0; i++, DevNameStringSrc++)
     {
         if ((*DevNameStringSrc == 0x20) && (*(DevNameStringSrc-1) == 0x20)) continue;
         *DevName++ = *DevNameStringSrc;  // DevNameStringSrc incremented unconditionally
@@ -385,11 +401,16 @@ CreateDeviceName(
 }
 
 
-/**
-    This function takes the device index within USBMASS_INT13_DEV
-    list and prepares BBS entry for this device.
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        CreateBbsEntry
+//
+// Description: This function takes the device index within USBMASS_INT13_DEV
+//              list and prepares BBS entry for this device.
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 EFI_STATUS
 CreateBbsEntry(
@@ -411,7 +432,7 @@ CreateBbsEntry(
 
     if (gBiosExtensions == NULL) return EFI_NOT_FOUND;
 
-    gBS->SetMem(BbsEntry, sizeof(BBS_TABLE), 0);
+    pBS->SetMem(BbsEntry, sizeof(BBS_TABLE), 0);
 
     //
     // Get the HC PCI location
@@ -506,14 +527,18 @@ CreateBbsEntry(
     return EFI_SUCCESS;
 }
 
-/**
-    This function installs USB INT13 devices
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:  InstallUsbLegacyBootDevices
+//
+// Description: This function installs USB INT13 devices
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 EFI_STATUS
-EFIAPI
-InstallUsbLegacyBootDevices(
+InstallUsbLegacyBootDevices (
     VOID
 )
 {
@@ -533,14 +558,14 @@ InstallUsbLegacyBootDevices(
 
 	InitializeHotplugDevices();
 
-	Status = gBS->LocateHandleBuffer(ByProtocol, &gEfiBlockIoProtocolGuid, 
+	Status = pBS->LocateHandleBuffer(ByProtocol, &gEfiBlockIoProtocolGuid, 
                 NULL, &NumberOfHandles, &HandleBuffer);
     if (EFI_ERROR(Status)) {
         return Status;
     }
 
     for (Index = 0; Index < NumberOfHandles; Index++) {
-        Status = gBS->HandleProtocol(HandleBuffer[Index], &gEfiUsbIoProtocolGuid, &UsbIo);
+        Status = pBS->HandleProtocol(HandleBuffer[Index], &gEfiUsbIoProtocolGuid, &UsbIo);
         if (EFI_ERROR(Status)) {
             continue;
         }
@@ -553,7 +578,7 @@ InstallUsbLegacyBootDevices(
             continue;
         }
 
-        Status = gBS->HandleProtocol(HandleBuffer[Index], 
+        Status = pBS->HandleProtocol(HandleBuffer[Index], 
                                 &gEfiBlockIoProtocolGuid, &BlkIo);
         if (EFI_ERROR(Status)) {
             continue;
@@ -567,22 +592,22 @@ InstallUsbLegacyBootDevices(
             UsbInstallLegacyDevice(MassDev);
         }
     }
-       
-    if (HandleBuffer != NULL) {
-        gBS->FreePool(HandleBuffer);
-    }
 
 	return EFI_SUCCESS;
 }
 
-/**
-    This function installs USB INT13 device
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:  UsbInstallLegacyDevice
+//
+// Description: This function installs USB INT13 device
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 EFI_STATUS
-EFIAPI
-UsbInstallLegacyDevice(
+UsbInstallLegacyDevice (
     USB_MASS_DEV    *UsbMassDevice
 )
 {
@@ -593,6 +618,8 @@ UsbInstallLegacyDevice(
     DEV_INFO    *Device;
     UINT8       HcIndx;
     UINT8       PortIndx;
+
+    //TRACE((-1, "Installing USB INT13 device %x\n", UsbMassDevice));
 
     //
     // See if device is already in the list, if yes - return error.
@@ -607,9 +634,7 @@ UsbInstallLegacyDevice(
     // Look for an empty slot in BcvLookupTable
     //
     for (Index=0; Index<USBDEVS_MAX_ENTRIES; Index++) {
-        if ((gI13BinData->UsbMassI13Dev)[Index].Handle == 0) {
-            break;
-        }
+        if  ((gI13BinData->UsbMassI13Dev)[Index].Handle == 0) break;
     }
     ASSERT(Index<USBDEVS_MAX_ENTRIES);
     if (Index==USBDEVS_MAX_ENTRIES) return EFI_OUT_OF_RESOURCES;
@@ -623,12 +648,7 @@ UsbInstallLegacyDevice(
     Status = gBiosExtensions->InsertBbsEntryAt(gBiosExtensions,
             &BbsEntry,
             &EntryNumber);  // This function returns EntryNumber
-    //ASSERT_EFI_ERROR(Status);
-
-    if (EFI_ERROR(Status)) {
-        gBiosExtensions->LockShadow(0, 0);
-        return Status;
-    }
+    ASSERT_EFI_ERROR(Status);
     
     //
     // Entry has been successfully added, update the lookup table
@@ -641,15 +661,15 @@ UsbInstallLegacyDevice(
     // Update device geometry related information
     //
     Device = (DEV_INFO*)UsbMassDevice->DevInfo;
-    (gI13BinData->UsbMassI13Dev)[Index].NumHeads = Device->NonLBAHeads;
-    (gI13BinData->UsbMassI13Dev)[Index].LBANumHeads = Device->Heads;
+    (gI13BinData->UsbMassI13Dev)[Index].NumHeads = Device->bNonLBAHeads;
+    (gI13BinData->UsbMassI13Dev)[Index].LBANumHeads = Device->bHeads;
     (gI13BinData->UsbMassI13Dev)[Index].NumCylinders = Device->wNonLBACylinders;
     (gI13BinData->UsbMassI13Dev)[Index].LBANumCyls = Device->wCylinders;
     (gI13BinData->UsbMassI13Dev)[Index].NumSectors = Device->bNonLBASectors;
     (gI13BinData->UsbMassI13Dev)[Index].LBANumSectors = Device->bSectors;
     (gI13BinData->UsbMassI13Dev)[Index].BytesPerSector = Device->wBlockSize;
     (gI13BinData->UsbMassI13Dev)[Index].MediaType = Device->bMediaType;
-    (gI13BinData->UsbMassI13Dev)[Index].LastLBA = Device->MaxLba;
+    (gI13BinData->UsbMassI13Dev)[Index].LastLBA = Device->dMaxLba;
     (gI13BinData->UsbMassI13Dev)[Index].BpbMediaDesc = Device->BpbMediaDesc;
 
     // Update PCI location of the controller this device is connected to
@@ -660,7 +680,7 @@ UsbInstallLegacyDevice(
     ASSERT_EFI_ERROR(Status);
 
 	// Set the device as registered
-	Device->Flag |= DEV_INFO_MASS_DEV_REGD;
+	Device->bFlag |= DEV_INFO_MASS_DEV_REGD;
 
     //
     // See if OEM asks for USB boot override for this device. If yes, store
@@ -673,14 +693,17 @@ UsbInstallLegacyDevice(
     // Note2: This feature will only be available for the devices connected
     // directly to the root port; devices behind the hub(s) will be ignored.
     //
-    if (Device->bHubDeviceNumber & 0x80) {
+    if (Device->bHubDeviceNumber & 0x80)
+    {
         Status = gAmiUsb->UsbGetAssignBootPort(&HcIndx, &PortIndx);
-        if ((!EFI_ERROR(Status)) && (gBootOverrideDeviceIndx == 0)) {
-            DEBUG((DEBUG_INFO,"OemUsbGetAssignBootPort: HC %d, Port %d; current HC %d, Port %d\n",
+        if ((!EFI_ERROR(Status)) && (gBootOverrideDeviceIndx == 0))
+        {
+            TRACE((-1,"OemUsbGetAssignBootPort: HC %d, Port %d; current HC %d, Port %d\n",
                 HcIndx, PortIndx, Device->bHCNumber, Device->bHubPortNumber));
 
-            if ((Device->bHCNumber == HcIndx) && (Device->bHubPortNumber == PortIndx)) {
-                DEBUG((DEBUG_INFO,"---OemUsbGetAssignBootPort: BBS Entry# %d\n", EntryNumber));
+            if ((Device->bHCNumber == HcIndx) && (Device->bHubPortNumber == PortIndx))
+            {
+                TRACE((-1,"---OemUsbGetAssignBootPort: BBS Entry# %d\n", EntryNumber));
 
                 gBootOverrideDeviceIndx = EntryNumber;
             }
@@ -693,25 +716,28 @@ UsbInstallLegacyDevice(
     //
 
     // Process hotplug floppy
-    if ((UsbMassDevice != &gHotplugFloppy) &&
+    if ( (UsbMassDevice != &gHotplugFloppy) &&
          (UsbMassDevice->StorageType == USB_MASS_DEV_ARMD) &&
-         (gUsbData->fdd_hotplug_support == SETUP_DATA_HOTPLUG_AUTO)) {
-        DEBUG((DEBUG_INFO, "Uninstalling Hotplug Floppy (Setup 'Auto' option)\n"));
+         (gUsbData->fdd_hotplug_support == SETUP_DATA_HOTPLUG_AUTO) )
+    {
+        TRACE((-1, "Uninstalling Hotplug Floppy (Setup 'Auto' option)\n"));
         UsbUninstallLegacyDevice(&gHotplugFloppy);    // Okay not to be successful
     }
 
     // Process hotplug HDD
-    if ((UsbMassDevice != &gHotplugHardDrive) &&
+    if ( (UsbMassDevice != &gHotplugHardDrive) &&
          (UsbMassDevice->StorageType == USB_MASS_DEV_HDD) &&
-         (gUsbData->hdd_hotplug_support == SETUP_DATA_HOTPLUG_AUTO)) {
-        DEBUG((DEBUG_INFO, "Uninstalling Hotplug HDD (Setup 'Auto' option)\n"));
+         (gUsbData->hdd_hotplug_support == SETUP_DATA_HOTPLUG_AUTO) )
+    {
+        TRACE((-1, "Uninstalling Hotplug HDD (Setup 'Auto' option)\n"));
         UsbUninstallLegacyDevice(&gHotplugHardDrive);    // Okay not to be successful
     }
     // Process hotplug CDROM
-    if ((UsbMassDevice != &gHotplugCDROM) &&
+    if ( (UsbMassDevice != &gHotplugCDROM) &&
          (UsbMassDevice->StorageType == USB_MASS_DEV_CDROM) &&
-         (gUsbData->cdrom_hotplug_support == SETUP_DATA_HOTPLUG_AUTO)) {
-        DEBUG((DEBUG_INFO, "Uninstalling Hotplug CDROM (Setup 'Auto' option)\n"));
+         (gUsbData->cdrom_hotplug_support == SETUP_DATA_HOTPLUG_AUTO) )
+    {
+        TRACE((-1, "Uninstalling Hotplug CDROM (Setup 'Auto' option)\n"));
         UsbUninstallLegacyDevice(&gHotplugCDROM);    // Okay not to be successful
     }
 
@@ -719,21 +745,25 @@ UsbInstallLegacyDevice(
 }
 
 
-/**
-    This function uninstalls USB INT13 device
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:  UsbUninstallLegacyDevice
+//
+// Description: This function uninstalls USB INT13 device
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 EFI_STATUS
-EFIAPI
-UsbUninstallLegacyDevice(
+UsbUninstallLegacyDevice (
     USB_MASS_DEV*   UsbMassDevice
 )
 {
     EFI_STATUS  Status;
     UINT8       Index;
 
-    DEBUG((DEBUG_INFO, "Uninstalling INT13 device %x\n", UsbMassDevice));
+    TRACE((-1, "Uninstalling INT13 device %x\n", UsbMassDevice));
 
     Status = gBiosExtensions->UnlockShadow(0, 0, 0, 0);
     ASSERT_EFI_ERROR(Status);
@@ -745,10 +775,7 @@ UsbUninstallLegacyDevice(
                         gBiosExtensions,
                         (gI13BinData->UsbMassI13Dev)[Index].BbsEntryNo
             );
-            //ASSERT_EFI_ERROR(Status);
-            if (EFI_ERROR(Status)) {
-                break;
-            }
+            ASSERT_EFI_ERROR(Status);
 
             if ((gBootOverrideDeviceIndx != 0)
                 && (gBootOverrideDeviceIndx == (gI13BinData->UsbMassI13Dev)[Index].BbsEntryNo))
@@ -760,15 +787,11 @@ UsbUninstallLegacyDevice(
             break;
         }
     }
-    //ASSERT_EFI_ERROR(Status);
+    ASSERT_EFI_ERROR(Status);
 
     gBiosExtensions->LockShadow(0, 0);
 
-    if (EFI_ERROR(Status)) {
-        return Status;
-    }
-
-	((DEV_INFO*)UsbMassDevice->DevInfo)->Flag &= ~(DEV_INFO_VALID_STRUC | DEV_INFO_MASS_DEV_REGD);
+	((DEV_INFO*)UsbMassDevice->DevInfo)->bFlag &= ~(DEV_INFO_VALID_STRUC | DEV_INFO_MASS_DEV_REGD);
 
     //
     // Process the "Auto" settings of Hotplug devices: if the device being uninstalled
@@ -777,42 +800,46 @@ UsbUninstallLegacyDevice(
     //
 
     // Process hotplug floppy
-    if ((UsbMassDevice != &gHotplugFloppy) &&
+    if ( (UsbMassDevice != &gHotplugFloppy) &&
          (UsbMassDevice->StorageType == USB_MASS_DEV_ARMD) &&
          (gUsbData->fdd_hotplug_support == SETUP_DATA_HOTPLUG_AUTO) &&
-         (gUsbData->NumberOfFDDs == 0)) {
-        DEBUG((DEBUG_INFO, "Installing Hotplug Floppy (Setup 'Auto' option)\n"));
+         (gUsbData->NumberOfFDDs == 0))
+    {
+        TRACE((-1, "Installing Hotplug Floppy (Setup 'Auto' option)\n"));
         UsbInstallLegacyDevice(&gHotplugFloppy);
     }
 
-    if ((UsbMassDevice != &gHotplugHardDrive) &&
+    if ( (UsbMassDevice != &gHotplugHardDrive) &&
          (UsbMassDevice->StorageType == USB_MASS_DEV_HDD) &&
          (gUsbData->hdd_hotplug_support == SETUP_DATA_HOTPLUG_AUTO) &&
-         (gUsbData->NumberOfHDDs == 0)) {
-        DEBUG((DEBUG_INFO, "Installing Hotplug HDD (Setup 'Auto' option)\n"));
+         (gUsbData->NumberOfHDDs == 0))
+    {
+        TRACE((-1, "Installing Hotplug HDD (Setup 'Auto' option)\n"));
         UsbInstallLegacyDevice(&gHotplugHardDrive);
     }
-    if ((UsbMassDevice != &gHotplugCDROM) &&
+    if ( (UsbMassDevice != &gHotplugCDROM) &&
          (UsbMassDevice->StorageType == USB_MASS_DEV_CDROM) &&
          (gUsbData->cdrom_hotplug_support == SETUP_DATA_HOTPLUG_AUTO) &&
-         (gUsbData->NumberOfCDROMs == 0)) {
-        DEBUG((DEBUG_INFO, "Installing Hotplug CDROM (Setup 'Auto' option)\n"));
+         (gUsbData->NumberOfCDROMs == 0))
+    {
+        TRACE((-1, "Installing Hotplug CDROM (Setup 'Auto' option)\n"));
         UsbInstallLegacyDevice(&gHotplugCDROM);
     }
 
     return Status;
 }
 
-//**********************************************************************
-//**********************************************************************
-//**                                                                  **
-//**        (C)Copyright 1985-2016, American Megatrends, Inc.         **
-//**                                                                  **
-//**                       All Rights Reserved.                       **
-//**                                                                  **
-//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093        **
-//**                                                                  **
-//**                       Phone: (770)-246-8600                      **
-//**                                                                  **
-//**********************************************************************
-//**********************************************************************
+
+//****************************************************************************
+//****************************************************************************
+//**                                                                        **
+//**             (C)Copyright 1985-2009, American Megatrends, Inc.          **
+//**                                                                        **
+//**                          All Rights Reserved.                          **
+//**                                                                        **
+//**                 5555 Oakbrook Pkwy, Norcross, GA 30093                 **
+//**                                                                        **
+//**                          Phone (770)-246-8600                          **
+//**                                                                        **
+//****************************************************************************
+//****************************************************************************

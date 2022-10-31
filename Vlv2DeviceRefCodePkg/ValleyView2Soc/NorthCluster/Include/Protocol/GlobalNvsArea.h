@@ -476,9 +476,8 @@ typedef struct {
   UINT8       TouchPadEnable;                // (818) Touch Pad enable/disable
   UINT32	  RootPortBaseAddress;			 // (819 - 822) PCH Root Port Base Address
   UINT32	  EndPointBaseAddress;			 // (823 - 826) PCH End Point Base Address 
-  UINT8       VirtualButtonSupport;          // (827) Virtual Button Support
-  UINT8       HIDFilterSupport;              // (828) Intel HID Event Filter Support for Win10
-
+  UINT8       VirtualButtonSupport;          // (827) Virtual Button Support    
+  UINT16      AMI_Reserved00[3];            // (828-833) AMI_OVERRIDE - Reserved for DPTF used
 } EFI_GLOBAL_NVS_AREA;
 #pragma pack ()
 

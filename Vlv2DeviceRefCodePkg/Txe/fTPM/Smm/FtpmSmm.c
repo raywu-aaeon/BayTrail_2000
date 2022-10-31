@@ -315,7 +315,7 @@ PublishAcpiTable (
   ASSERT_EFI_ERROR (Status);
 
   ASSERT (Table->OemTableId == SIGNATURE_64 ('T', 'p', 'm', '2', 'T', 'a', 'b', 'l'));
-  mTcgNvs = AssignOpRegion (Table, SIGNATURE_32 ('T', 'N', 'V', 'F'), (UINT16) sizeof (TCG_NVS)); //AMI_OVERIDE - EIP173375 fix some TPM issue
+  mTcgNvs = AssignOpRegion (Table, SIGNATURE_32 ('T', 'N', 'V', 'S'), (UINT16) sizeof (TCG_NVS));
   ASSERT (mTcgNvs != NULL);
   Addr = getfTPMBaseAddr();
 

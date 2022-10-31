@@ -99,7 +99,7 @@ UINT32 mAzaliaVerbTableDataALC262[] = {
 };
 //P20130627_3 <<
 
-SB_HDA_VERB_TABLE mAzaliaVerbTable[] = {	//EIP176554
+PCH_AZALIA_VERB_TABLE mAzaliaVerbTable[] = {
   OEM_HDA_VERB_TABLE
   {
     // End of the Verb table

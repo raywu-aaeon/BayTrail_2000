@@ -15,18 +15,20 @@
 //*****************************************************************//
 //*****************************************************************//
 //*****************************************************************//
-/** @file setupdbg.h
-    Header file for string functionalities.
-
-**/
+//<AMI_FHDR_START>
+//----------------------------------------------------------------------------
+//
+// Name:		setupdbg.h
+//
+// Description:	Header file for string functionalities.
+//
+//----------------------------------------------------------------------------
+//<AMI_FHDR_END>
 
 #ifndef _SETUPDBG_H_
 #define	_SETUPDBG_H_
 
 VOID SetupShowDebugScreen(VOID *app, VOID *hotkey, VOID *cookie );
-
-#define	TSE_DEBUG_MESSAGES_GUID	\
-	{0x408acdd4, 0xe088, 0x4bac, 0xa2, 0x53, 0x6c, 0x27, 0xcf, 0xd3, 0xd6, 0x1f }
 
 #endif /* _SETUPDBG_H_ */
 

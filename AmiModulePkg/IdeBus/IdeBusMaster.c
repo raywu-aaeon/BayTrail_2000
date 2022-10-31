@@ -1,164 +1,90 @@
-//***********************************************************************
-//***********************************************************************
-//**                                                                   **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.          **
-//**                                                                   **
-//**                       All Rights Reserved.                        **
-//**                                                                   **
-//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093         **
-//**                                                                   **
-//**                       Phone: (770)-246-8600                       **
-//**                                                                   **
-//***********************************************************************
-//***********************************************************************
-
-/** @file IdeBusMaster.c
-    Ide BusMaster Services
-
-**/
-
+//**********************************************************************
+//**********************************************************************
+//**                                                                  **
+//**        (C)Copyright 1985-2012, American Megatrends, Inc.         **
+//**                                                                  **
+//**                       All Rights Reserved.                       **
+//**                                                                  **
+//**         5555 Oakbrook Pkwy, Suite 200, Norcross, GA 30093        **
+//**                                                                  **
+//**                       Phone: (770)-246-8600                      **
+//**                                                                  **
+//**********************************************************************
+//**********************************************************************
+// $Header: /Alaska/SOURCE/Core/Modules/IdeBus/IdeBusMaster.c 11    9/27/11 3:16a Rajeshms $
+//
+// $Revision: 11 $
+//
+// $Date: 9/27/11 3:16a $
+//**********************************************************************
+//<AMI_FHDR_START>
 //---------------------------------------------------------------------------
+//
+// Name: IDEBusMaster.c
+//
+// Description:	BusMaster Services
+//
+//---------------------------------------------------------------------------
+//<AMI_FHDR_END>
 
 #include "IdeBus.h"
-
-//---------------------------------------------------------------------------
+#include <Protocol\IdeBusBoard.h>
 
 extern PLATFORM_IDE_PROTOCOL    *gPlatformIdeProtocol;
 extern VOID *gDescriptorBuffer;
 
-/**
-    Issues ATA/ATAPI Command using Bus master
-
-    @param IdeBusInterface 
-    @param VOID     *Buffer,
-    @param UINT32   ByteCount,
-    @param UINT8    Features,
-    @param UINT32   SectorCountIn,
-    @param UINT8    LbaLow,
-    @param UINT8    LbaLowExp,
-    @param UINT8    LbaMid,
-    @param UINT8    LbaMidExp,
-    @param UINT8    LbaHigh,
-    @param UINT8    LbaHighExp,
-    @param UINT8    Device,
-    @param UINT8    Command,
-    @param BOOLEAN  ReadWrite
-
-    @retval *Buffer
-
-**/
-EFI_STATUS 
-AtaAtapiDmaDataCommand(
-    IN AMI_IDE_BUS_PROTOCOL *IdeBusInterface,
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:	AtaReadWriteBusMaster
+//
+// Description:	Issues Read/Write Command and Read/Write the data from/to the ATA device
+//				using BusMaster
+//
+// Input:
+//	IN IDE_BUS_PROTOCOL				*IdeBusInterface,
+//	VOID                                                    *Buffer,
+//	UINT32							ByteCount,
+//	UINT64							LBA
+//
+// Output:
+//	*Buffer
+//
+// Modified:
+//
+// Referrals: AtaBlkWrite, AtaBlkRead
+//
+// Notes:
+//		1. Create Descriptor Table
+//		2. Issue ATA Read/Write command. Enable BusMastering
+//		3. Wait for Data Transfer
+//		4. Check for errors
+//		5. If success, check if any more data need to transferred, if yes, goto step 1
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
+EFI_STATUS AtaReadWriteBusMaster(
+    IN IDE_BUS_PROTOCOL *IdeBusInterface,
     IN OUT VOID         *Buffer,
     IN UINTN            ByteCount,
-    IN UINT8            Features,
-    IN UINT32           SectorCountIn,
-    IN UINT8            LbaLow,
-    IN UINT8            LbaLowExp,
-    IN UINT8            LbaMid,
-    IN UINT8            LbaMidExp,
-    IN UINT8            LbaHigh,
-    IN UINT8            LbaHighExp,
-    IN UINT8            Device,
-    IN UINT8            Command,
-    IN BOOLEAN          ReadWrite
-)
+    IN UINT64           LBA,
+    IN UINT8            ReadWriteCommand,
+    IN BOOLEAN          READWRITE )
 {
-    IDE_DEVICE_INTERFACE *IdeDevice  = &(IdeBusInterface->IdeDevice);
-    UINT64               Lba = 0;
-    UINT64               LbaHighDword = 0;
-    EFI_STATUS           Status;
-
-    if ( !gPlatformIdeProtocol->IdeBusMasterSupport ) {
-        return EFI_UNSUPPORTED;
-    }
-
-    if ( ! (DMACapable( IdeBusInterface ))) {
-        return EFI_UNSUPPORTED;
-    }
-
-    if ( Check48BitCommand( Command )) {
-        //
-        //	if 48 Bit LBA form Upper Dword
-        //
-        LbaHighDword |= LbaHighExp;
-        LbaHighDword = ( Shl64(( Shl64( LbaHighDword, 8)| LbaMidExp), 8)| LbaLowExp);
-    }
-
-    //
-    //	Complete LBA	 
-    //
-    Lba |= LbaHigh;
-    Lba = (( Shl64(( Shl64( Lba, 8) | LbaMid ), 8)| LbaLow)| Shl64( LbaHighDword, 24 ));
-
-    if(IdeDevice->DeviceType == ATA ) {
-
-        Status = AtaReadWriteBusMaster( IdeBusInterface,
-                                        Buffer,
-                                        ByteCount,
-                                        Lba,
-                                        Command,
-                                        ReadWrite 
-                                        );
-    } else {
-
-        Status = AtapiReadWriteBusMaster(
-                                        IdeBusInterface,
-                                        Buffer,
-                                        ByteCount,
-                                        Lba,
-                                        Command,
-                                        ReadWrite 
-                                        );
-    }
-
-    return Status;
-}
-
-/**
-    Issues Read/Write Command and Read/Write the data from/to the ATA device
-    using BusMaster
-
-    @param IdeBusInterface 
-    @param VOID *Buffer,
-    @param UINT32   ByteCount,
-    @param UINT64   LBA
-
-    @retval *Buffer
-
-    @note  
-        1. Create Descriptor Table
-        2. Issue ATA Read/Write command. Enable BusMastering
-        3. Wait for Data Transfer
-        4. Check for errors
-        5. If success, check if any more data need to transferred, if yes, goto step 1
-
-**/
-EFI_STATUS
-AtaReadWriteBusMaster (
-    IN  AMI_IDE_BUS_PROTOCOL    *IdeBusInterface,
-    IN  OUT VOID                *Buffer,
-    IN  UINTN                   ByteCount,
-    IN  UINT64                  LBA,
-    IN  UINT8                   ReadWriteCommand,
-    IN  BOOLEAN                 READWRITE
-)
-{
-    EFI_STATUS  Status;
-    EFI_STATUS  DMAStatus;
-    UINTN       RemaingByteCount;
-    UINTN       Total_Number_Of_Sectors;
-    UINTN       MaxSectorCount;
-    UINTN       CurrentSectorCount;
-    UINTN       CurrentByteCount;
-    UINT8       *TempBuffer;
-    IO_REGS     Regs    =   IdeBusInterface->IdeDevice.Regs;
-    UINTN       DMATimeout;
-    UINTN       DescriptorBuffer;
-    UINT8       Data8;
-    UINT32      SectorSize  =   ATA_SECTOR_BYTES;
-    BOOLEAN     SectorGTBytes   =   FALSE;
+    EFI_STATUS Status;
+    EFI_STATUS DMAStatus;
+    UINTN      RemaingByteCount;
+    UINTN      Total_Number_Of_Sectors;
+    UINTN      MaxSectorCount;
+    UINTN      CurrentSectorCount;
+    UINTN      CurrentByteCount;
+    UINT8      *TempBuffer;
+    IO_REGS    Regs        = IdeBusInterface->IdeDevice.Regs;
+    UINTN      DMATimeout;
+    UINTN      DescriptorBuffer;
+    UINT8      Data8;
+    UINT32     SectorSize = ATA_SECTOR_BYTES;
+    BOOLEAN    SectorGTBytes = FALSE;
     //
     //Select the drive
     //
@@ -284,48 +210,57 @@ AtaReadWriteBusMaster (
     return EFI_SUCCESS;
 }
 
-/**
-    Read/Write data from/to the ATAPI device
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:	AtapiReadWriteBusMaster
+//
+// Description:	Read/Write data from/to the ATAPI device
+//
+// Input:
+//	IN IDE_BUS_PROTOCOL				*IdeBusInterface,
+//	VOID                                                    *Buffer,
+//	UINTN							ByteCount,
+//	UINT64							LBA,
+//	UINT8							ReadWriteCommand,
+//	BOOLEAN							READWRITE
+//
+// Output:
+//		EFI_STATUS
+//
+// Modified:
+//
+// Referrals: AtapiBlkRead, AtapiBlkWrite
+//
+// Notes:
+//	1. Prepare ATAPI Command Packet
+//	2. Check for errors. If Media_Change, detect the new atapi media if present and return status accordingly.
+//	3. Read/write data if the command packet is issues successfully.
+//	4. Repeat from step 1 untill all data has been read/written.
+//
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
-        
-    @param IdeBusInterface 
-    @param VOID *Buffer,
-    @param UINTN    ByteCount,
-    @param UINT64   LBA,
-    @param UINT8    ReadWriteCommand,
-    @param BOOLEAN  READWRITE
-
-    @retval EFI_STATUS
-
-    @note  
-    1. Prepare ATAPI Command Packet
-    2. Check for errors. If Media_Change, detect the new atapi media if present and return status accordingly.
-    3. Read/write data if the command packet is issues successfully.
-    4. Repeat from step 1 until all data has been read/written.
-
-**/
-
-EFI_STATUS
-AtapiReadWriteBusMaster (
-    IN  AMI_IDE_BUS_PROTOCOL    *IdeBusInterface,
-    IN  OUT VOID                *Buffer,
-    IN  UINTN                   ByteCount,
-    IN  UINT64                  LBA,
-    IN  UINT8                   ReadWriteCommand,
-    IN  BOOLEAN                 READWRITE
-)
+EFI_STATUS AtapiReadWriteBusMaster(
+    IN IDE_BUS_PROTOCOL *IdeBusInterface,
+    IN OUT VOID         *Buffer,
+    IN UINTN            ByteCount,
+    IN UINT64           LBA,
+    IN UINT8            ReadWriteCommand,
+    IN BOOLEAN          READWRITE )
 {
-    EFI_STATUS      Status;
-    EFI_STATUS      DMAStatus;
-    INTN            TotalNumberofBlocks;
-    INTN            TransferLength;
-    UINTN           BytesRemainingTobeRead;
-    UINTN           RemaingByteCount;
-    ATAPI_DEVICE    *AtapiDevice    =   IdeBusInterface->IdeDevice.AtapiDevice;
-    VOID            *TempBuffer     =   Buffer;
-    IO_REGS         Regs            =   IdeBusInterface->IdeDevice.Regs;
-    UINT8           Data8;
-    UINTN           DescriptorBuffer    =   (UINTN)gDescriptorBuffer;
+    EFI_STATUS   Status;
+    EFI_STATUS   DMAStatus;
+    INTN         TotalNumberofBlocks;
+    INTN         TransferLength;
+    UINTN        BytesRemainingTobeRead;
+    UINTN        RemaingByteCount;
+    ATAPI_DEVICE *AtapiDevice = IdeBusInterface->IdeDevice.AtapiDevice;
+    VOID         *TempBuffer  = Buffer;
+    IO_REGS      Regs         = IdeBusInterface->IdeDevice.Regs;
+    UINT8        Data8;
+    UINTN        DescriptorBuffer = (UINTN)gDescriptorBuffer;
 
     //
     //Check for CHK bit in status register before proceeding, if set give ATAPI reset
@@ -375,27 +310,24 @@ AtapiReadWriteBusMaster (
         }
 
         Status=InitBusMasterRegisters( IdeBusInterface, DescriptorBuffer, READWRITE );
-        ASSERT_EFI_ERROR(Status);
+		ASSERT_EFI_ERROR(Status);
 
         MaskandSaveInterrupt( IdeBusInterface );
 
         //Enable Interrupt
         IdeWriteByte( IdeBusInterface->PciIO, Regs.ControlBlock.DeviceControlReg, 0 );
 
-        Status = IssueAtapiPacketCommand( IdeBusInterface, 
-                                        (UINT16*) AtapiDevice->PacketBuffer, 
-                                        BUSMASTER_DMA, 
-                                        0xffff );
+        StartStopBusMastering( IdeBusInterface, TRUE );
+
+        Status = IssueAtapiPacketCommand( IdeBusInterface, (UINT16*) AtapiDevice->PacketBuffer, DMA, 0xffff );
 
         if ( EFI_ERROR( Status )) {
             return Status;
         }
 
-        StartStopBusMastering( IdeBusInterface, TRUE );
-
         DMAStatus=WaitforDMAtoCompletion( IdeBusInterface, gPlatformIdeProtocol->DmaAtaPiCompleteCommandTimeout );
-
-        ASSERT_EFI_ERROR(DMAStatus);
+		
+		ASSERT_EFI_ERROR(DMAStatus);
 
 
 
@@ -421,7 +353,7 @@ AtapiReadWriteBusMaster (
         RestoreInterrupt( IdeBusInterface );
 
         if ( Status != EFI_SUCCESS ) {
-            //Some error has occurred
+            //Some error has occured
             //Check if Device is getting ready. If yes, wait till it gets ready
             if ( AtapiDevice->Atapi_Status == BECOMING_READY ) {
                 Status = TestUnitReady( IdeBusInterface );
@@ -431,7 +363,7 @@ AtapiReadWriteBusMaster (
                 Status = DetectAtapiMedia( IdeBusInterface );
 
                 // This may happen during initial power-up also. If ReinstallProtocol  needs to be done,
-                // then differentiate between power-up and other cases.
+                // then differentiate between power-up nad other cases.
                 if ( Status == EFI_SUCCESS ) {
                     return EFI_MEDIA_CHANGED;    // Return Media Change
                 }
@@ -449,40 +381,48 @@ AtapiReadWriteBusMaster (
         }
 
         //Update pointer
-       TempBuffer = (UINT8*)(TempBuffer) + BytesRemainingTobeRead;   
-        LBA += TransferLength;
+        (UINT8*) TempBuffer += BytesRemainingTobeRead;
+        LBA                 += TransferLength;
     }
 
     return EFI_SUCCESS;
 }
 
-/**
-    Creates a IDE BUS master Descriptor Table
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:	CreateDescriptorTable
+//
+// Description:	Creates a IDE BUS master Descriptor Table
+//
+// Input:
+//	IN OUT VOID						**DescriptorBuffer  // 128KB buffer
+//	IN UINT32						StartAddress
+//	IN UINT32						ByteCount
+//	OUT	UINTN						*FinalByteCount
+//
+// Output:
+//	DescriptorBuffer, EFI_STATUS
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//		1. Create a Physical Region Descriptor for IDE  Bus Master.
+//		2. FinalByteCount will be the total # of Bytes that can be transferred
+//			using this Descriptor. Most of the time FinalByteCount will be equal to ByteCount.
+///			If the Descriptor Buffer exceeds 64K, then partial transfer will take place.
+//
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
-        
-    @param DescriptorBuffer // 128KB buffer
-    @param StartAddress 
-    @param ByteCount 
-    @param FinalByteCount 
-
-    @retval DescriptorBuffer, EFI_STATUS
-
-    @note  
-        1. Create a Physical Region Descriptor for IDE  Bus Master.
-        2. FinalByteCount will be the total # of Bytes that can be transferred
-        using this Descriptor. Most of the time FinalByteCount will be equal to ByteCount.
-        If the Descriptor Buffer exceeds 64K, then partial transfer will take place.
-
-
-**/
-
-EFI_STATUS
-CreateDescriptorTable (
-    IN  OUT UINTN   *DescriptorBuffer,
-    IN  UINT8       *StartAddress,
-    IN  UINTN       ByteCount,
-    OUT UINTN       *RemainingByteCount
-)
+EFI_STATUS CreateDescriptorTable(
+    IN OUT UINTN *DescriptorBuffer,
+    IN UINT8     *StartAddress,
+    IN UINTN     ByteCount,
+    OUT UINTN    *RemainingByteCount )
 {
     UINT16                      Index;
     UINTN                       Address = (UINTN) &(*StartAddress);
@@ -507,7 +447,7 @@ CreateDescriptorTable (
         DescriptorTable[Index].BaseAddress = (UINT32) Address;
         DescriptorTable[Index].Flag        = 0;
         //
-        // if Start address is not 64KB aligned, then byte count cannot be 64KB (Data transfer cannot cross 64KB boundary
+        // if Start address is not 64KB aligned, then bytecount cannot be 64KB (Data tranfer cannot cross 64KB boundry
         //
         if ( Address & 0xffff ) {
             DescriptorTable[Index].ByteCount = 0x10000 - (UINT16)( Address & 0xffff );
@@ -550,30 +490,39 @@ CreateDescriptorTable (
     return EFI_SUCCESS;
 }
 
-/**
-    Initialize Bus Master registers
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:	InitBusMasterRegisters
+//
+// Description:	Initialize Bus Master registers
+//
+// Input:
+//	IN IDE_BUS_PROTOCOL				*IdeBusInterface,
+//	IN OUT VOID						*DescriptorBuffer
+//	IN BOOLEAN						ReadWrite
+//
+// Output:
+//	DescriptorBuffer, EFI_STATUS
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//		1. Create a Physical Region Descriptor for IDE  Bus Master.
+//		2. FinalByteCount will be the total # of Bytes that can be transferred
+//			using this Descriptor. Most of the time FinalByteCount will be equal to ByteCount.
+///			If the Descriptor Buffer exceeds 64K, then partial transfer will take place.
+//
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
-        
-    @param IdeBusInterface 
-    @param DescriptorBuffer 
-    @param ReadWrite 
-
-    @retval DescriptorBuffer, EFI_STATUS
-
-    @note  
-        1. Create a Physical Region Descriptor for IDE  Bus Master.
-        2. FinalByteCount will be the total # of Bytes that can be transferred
-        using this Descriptor. Most of the time FinalByteCount will be equal to ByteCount.
-        If the Descriptor Buffer exceeds 64K, then partial transfer will take place.
-
-**/
-
-EFI_STATUS
-InitBusMasterRegisters (
-    IN  AMI_IDE_BUS_PROTOCOL    *IdeBusInterface,
-    IN  OUT UINTN               DescriptorBuffer,
-    IN  BOOLEAN                 ReadWrite
-)
+EFI_STATUS InitBusMasterRegisters(
+    IN IDE_BUS_PROTOCOL *IdeBusInterface,
+    IN OUT UINTN        DescriptorBuffer,
+    IN BOOLEAN          ReadWrite )
 
 {
     IO_REGS Regs = IdeBusInterface->IdeDevice.Regs;
@@ -599,24 +548,34 @@ InitBusMasterRegisters (
     return EFI_SUCCESS;
 }
 
-/**
-    Start/Stop Bus mAstering
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:	StartStopBusMastering
+//
+// Description:	Start/Stop Bus mAstering
+//
+// Input:
+//	IN IDE_BUS_PROTOCOL				*IdeBusInterface,
+//	IN BOOLEAN						StartStop       //	Start = TRUE
+//
+// Output:
+//	EFI_STATUS
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//		Don't destroy Read/Write Control bit
+//
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
-        
-    @param IdeBusInterface 
-    @param StartStop //	Start = TRUE
-
-    @retval EFI_STATUS
-
-    @note Don't destroy Read/Write Control bit
-
-**/
-
-EFI_STATUS
-StartStopBusMastering (
-    IN  AMI_IDE_BUS_PROTOCOL    *IdeBusInterface,
-    IN  BOOLEAN                 StartStop
-)
+EFI_STATUS StartStopBusMastering(
+    IN IDE_BUS_PROTOCOL *IdeBusInterface,
+    IN BOOLEAN          StartStop )
 {
     IO_REGS Regs = IdeBusInterface->IdeDevice.Regs;
     UINT8   Data8;
@@ -631,27 +590,36 @@ StartStopBusMastering (
     return EFI_SUCCESS;
 }
 
-/**
-    Start/Stop Bus mAstering
-
-        
-    @param IdeBusInterface 
-    @param TimeDelay (msec)
-
-    @retval EFI_STATUS   Success : If DMA completes with or with out Error.
-    @retval EFI_DEVICE_ERROR	 : If timed out.
-
-    @note  
-        1. Check for Interrupt bit set. If yes, command completed.
-        2. Check for Active bit to go Zero. If yes, command completed.
-        3. Waits for a max. of TimeDelay/10,000 second for the command to get completed.
-
-**/
-EFI_STATUS
-WaitforDMAtoCompletion (
-    IN  AMI_IDE_BUS_PROTOCOL    *IdeBusInterface,
-    IN  UINTN                   TimeDelay
-)
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:	WaitforDMAtoCompletion
+//
+// Description:	Start/Stop Bus mAstering
+//
+// Input:
+//	IN IDE_BUS_PROTOCOL				*IdeBusInterface,
+//	IN UINT32						TimeDelay (msec)
+//
+// Output:
+//		EFI_STATUS   Success : If DMA completes with or with out Error.
+//		EFI_DEVICE_ERROR	 : If timed out.
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//		1. Check for Interrupt bit set. If yes, command completed.
+//		2. Check for Active bit to go Zero. If yes, command completed.
+//		3. Waits for a max. of TimeDelay/10,000 sec for the command to get completed.
+//
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
+EFI_STATUS WaitforDMAtoCompletion(
+    IN IDE_BUS_PROTOCOL *IdeBusInterface,
+    IN UINTN            TimeDelay )
 {
     UINT8   Data8;
     UINT8   Index2;
@@ -682,68 +650,103 @@ WaitforDMAtoCompletion (
     return EFI_DEVICE_ERROR;
 }
 
-/**
-    Check for any errors
-
-    @param IdeBusInterface 
-
-    @retval EFI_STATUS
-
-**/
-EFI_STATUS
-HandleATABMErrors (
-    IN  AMI_IDE_BUS_PROTOCOL    *IdeBusInterface
-)
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:	HandleATABMErrors
+//
+// Description:		Check for any errors
+//
+// Input:
+//	IN IDE_BUS_PROTOCOL				*IdeBusInterface,
+//
+// Output:
+//		EFI_STATUS
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
+EFI_STATUS HandleATABMErrors(
+    IN IDE_BUS_PROTOCOL *IdeBusInterface )
 {
-    EFI_STATUS  Status;
+    EFI_STATUS Status;
 
     Status = WaitForCmdCompletion( IdeBusInterface );
     return Status;
 }
 
-/**
-    Mask IDE interrupt
-
-    @param IdeBusInterface 
-
-    @retval 
-
-**/
-EFI_STATUS
-MaskandSaveInterrupt (
-    AMI_IDE_BUS_PROTOCOL    *IdeBusInterface
-)
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:	MaskandSaveInterrupt
+//
+// Description:	Mask IDE interrupt
+//
+// Input:
+//	IN IDE_BUS_PROTOCOL				*IdeBusInterface,
+//
+// Output:
+//
+// Modified:
+//
+// Referrals: AtaReadWriteBusMaster
+//
+// Notes:
+//
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
+EFI_STATUS MaskandSaveInterrupt(
+    IDE_BUS_PROTOCOL *IdeBusInterface )
 {
     return EFI_SUCCESS;
 }
 
-/**
-    Restore the Interrupt mask
-
-    @param IdeBusInterface 
-
-    @retval 
-
-**/
-EFI_STATUS
-RestoreInterrupt (
-    AMI_IDE_BUS_PROTOCOL    *IdeBusInterface
-)
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:	RestoreInterrupt
+//
+// Description:	Restore the Interrupt mask
+//
+// Input:
+//	IN IDE_BUS_PROTOCOL				*IdeBusInterface,
+//
+// Output:
+//
+// Modified:
+//
+// Referrals: AtaReadWriteBusMaster
+//
+// Notes:
+//
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
+EFI_STATUS RestoreInterrupt(
+    IDE_BUS_PROTOCOL *IdeBusInterface )
 {
     return EFI_SUCCESS;
 }
 
-//***********************************************************************
-//***********************************************************************
-//**                                                                   **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.          **
-//**                                                                   **
-//**                       All Rights Reserved.                        **
-//**                                                                   **
-//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093         **
-//**                                                                   **
-//**                       Phone: (770)-246-8600                       **
-//**                                                                   **
-//***********************************************************************
-//***********************************************************************
 
+
+//**********************************************************************
+//**********************************************************************
+//**                                                                  **
+//**        (C)Copyright 1985-2012, American Megatrends, Inc.         **
+//**                                                                  **
+//**                       All Rights Reserved.                       **
+//**                                                                  **
+//**         5555 Oakbrook Pkwy, Suite 200, Norcross, GA 30093        **
+//**                                                                  **
+//**                       Phone: (770)-246-8600                      **
+//**                                                                  **
+//**********************************************************************
+//**********************************************************************

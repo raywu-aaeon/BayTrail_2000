@@ -12,11 +12,20 @@
 //**********************************************************************
 //**********************************************************************
 
-
-/** @file AcpiCore.h
-    ACPI Core Header File. Main ACPI Driver Specific Definitions.
-
-**/
+//**********************************************************************
+// $Header: /Alaska/BIN/Modules/ACPI/Template/Core/ACPICORE.H 23    5/27/11 5:34p Felixp $
+//
+// $Revision: 23 $
+//
+// $Date: 5/27/11 5:34p $
+//**********************************************************************
+//<AMI_FHDR_START>
+//
+// Name:	AcpiCore.h
+//
+// Description:	ACPI Core Header File. Main ACPI Driver Specific Definitions.
+//
+//<AMI_FHDR_END>
 //**********************************************************************
 #ifndef __AcpiCore__H__
 #define __AcpiCore__H__
@@ -24,23 +33,24 @@
 extern "C" {
 #endif
 
-#include <Protocol/FirmwareVolume.h>
+#include <Protocol/FirmwareVolume.h >
 #include <Protocol/AmiSio.h>
 #include <Protocol/DevicePath.h>
 #include <Protocol/AcpiSupport.h>
 #include <Protocol/AcpiTable.h>
 #include <AmiDxeLib.h>
-#include <AmiHobs.h>
-#include <Token.h>
+#include <AMIHobs.h>
+#include <token.h>
 #include <Dxe.h>
 #include <AcpiRes.h>
 #include <Protocol/AcpiSystemDescriptionTable.h>
 #include "AcpiSdtPrivate.h"
 #include <Setup.h>
-#include <Acpi11.h>
-#include <Acpi20.h>
+#include <acpi11.h>
+#include <acpi20.h>
 #include <Efi.h>
 #include <Acpi.h>
+#include <AmiGenericSio.h>
 #pragma	pack(push, 1)
 
 //**********************************************************************
@@ -133,10 +143,6 @@ extern "C" {
 
 #define RSDP_SIG 0x2052545020445352 //"RSD PTR "
 
-#define FIDT_SIG 0x54444946  //"FIDT" $FID Table
-
-#define THREE_CHAR_ARRAY(x) {(x)/10+'0',(x)%10+'0',0}
-
 //======================================================
 //  ACPI Description Headers Signatures
 //======================================================
@@ -202,15 +208,60 @@ extern "C" {
 #define		IOA_ID_IND		    0x00
 #define		IOA_VER_IND		    0x01
 
-/**
-    Structure to store System resource Information
- 
-**/
+//<AMI_THDR_START>
+//----------------------------------------------------------------------------
+// Name: ACPI_AML_RES
+//
+// Description: Structure to store System resource Information
+//
+// Fields: Name             Type                    Description
+//----------------------------------------------------------------------------
+// Base                 UINT64
+// Length               UINT64
+// 
+//----------------------------------------------------------------------------
+//<AMI_THDR_END>
 
 typedef struct _ACPI_AML_RES {
-	UINT64			Base; ///< Base address
-	UINT64			Length;	///< Length of the structure
+	UINT64			Base;
+	UINT64			Length;	
 } ACPI_AML_RES;
+
+//<AMI_THDR_START>
+//----------------------------------------------------------------------------
+// Name: ACPI_AML_UPD_INFO
+//
+// Description: Structure to store Aml update information
+//
+// Fields: Name             Type                    Description
+//----------------------------------------------------------------------------
+// Dsdt1Addr            UINT64
+// Dsdt2Addr            UINT64
+// PciGap               ACPI_AML_RES[3]
+// SS1                  BOOLEAN
+// SS2                  BOOLEAN
+// SS3                  BOOLEAN
+// SS4                  BOOLEAN
+// RomStart             UINT32
+// TopOfMemory          UINT32
+// SioDevStatusVar      SIO_DEV_STATUS
+// 
+//----------------------------------------------------------------------------
+//<AMI_THDR_END>
+typedef struct _ACPI_AML_UPD_INFO {
+	UINT64			Dsdt1Addr;
+	UINT64			Dsdt2Addr;
+	ACPI_AML_RES	PciGap[3];
+	BOOLEAN 		SS1;
+	BOOLEAN 		SS2;
+	BOOLEAN 		SS3;
+	BOOLEAN 		SS4;
+	UINT32			RomStart;
+	UINT32			TopOfMemory;
+	SIO_DEV_STATUS	SioDevStatusVar;
+} ACPI_AML_UPD_INFO;
+
+EFI_STATUS LocateACPITableProtocol (IN EFI_GUID *Protocol, OUT VOID  **Instance, IN UINT8 Version);
 
 typedef enum {
 	pgBelow1M,
@@ -224,67 +275,69 @@ typedef enum {
 //======================================================
 #define		FL_ENABLE		0x0001
 
-/**
-    Common Header for MADT table entries.
-             
-**/
+//<AMI_THDR_START>
+//----------------------------------------------------------------------------
+// Name: MADT_ENTRY_HEADER
+//
+// Description: Header of the entrie for MADT table.
+//             
+//
+// Fields: Type             Name                    Description
+//----------------------------------------------------------------------------
+//	    UINT8	        Type
+//	    UINT8	        Length
+// 
+//----------------------------------------------------------------------------
+//<AMI_THDR_END>
 typedef struct _MADT_ENTRY_HEADER{
-	UINT8	Type; ///< Header type (APIC, LAPIC ...)
-	UINT8	Length; ///< Header Length
+	UINT8	Type;
+	UINT8	Length; 
 }MADT_ENTRY_HEADER;
 
-/**
-     Processor Local APIC Structure for each CPU 
-             
-**/
-
+//======================================================
+//  LAPIC Structure per each CPU  IA32
+//======================================================
 typedef	struct _LAPIC_H32 {
     MADT_ENTRY_HEADER   Header;
-	UINT8		        CpuId;///< The ProcessorId for which this processor is listed in the ACPI Processor declaration operator
-	UINT8		        LapicId;///< The processor’s local APIC ID.
-	UINT32	            Flags;///< Local APIC flags (See ACPI Spec)
+	UINT8		        CpuId;
+	UINT8		        LapicId;
+	UINT32	            Flags;
 } LAPIC_H32,*PLAPIC_H32, LAPIC_H_20,*PLAPIC_H_20;
 
-
-/**
-  Processor Local x2APIC Structure per each CPU 
-  
-**/
-
+//======================================================
+//  LX2APIC Structure per each CPU  IA32
+//======================================================
 typedef	struct _LX2APIC {
     MADT_ENTRY_HEADER   Header;
     UINT16              Reserved;
-	UINT32              ApicId;///< The processor’s local x2APIC ID.
-	UINT32	            Flags;///< Same as Local APIC flags (See ACPI Spec)
-    UINT32              Uid;///< OSPM associates the X2APIC Structure with a processor object declared in the namespace using the Device statement, when the _UID child object of the processor device evaluates to a numeric value, by matching the numeric value with this field
+	UINT32              ApicId;
+	UINT32	            Flags;
+    UINT32              Uid;
 } LX2APIC,*PLX2APIC;
 
-/**
-  I/O APIC Structure per each CPU 
-  
-**/
-
+//======================================================
+//  IOAPIC Structure per each CPU  IA32
+//======================================================
 typedef	struct _IOAPIC_H32 {
     MADT_ENTRY_HEADER   Header;
-	UINT8		        IoapicId;///< The I/O APIC’s ID.
-	UINT8		        Reserved;
-	UINT32	            IoapicAddress;///< The 32-bit physical address to access this I/O APIC. Each I/O APIC resides at a unique address.
-	UINT32	            SysVectBase;///< The global system interrupt number where this I/O APIC’s interrupt inputs start. The number of interrupt inputs is determined by the I/O APIC’s Max Redir Entryregister.
+	UINT8		        IoapicId;			//2
+	UINT8		        Reserved;			//3
+	UINT32	            IoapicAddress;		//4
+	UINT32	            SysVectBase;		//8
 } IOAPIC_H32,*PIOAPIC_H32, IOAPIC_H20,*PIOAPIC_H20;
 
-/**
-  Interrupt Source Override Structure 
-  Should be present per each ISA Interrupt which
-  is not identity-mapped into SAPIC Interrupt space
-  
-**/
-
+//======================================================
+//  ISO Interrupt Source Override Structure IA32
+//======================================================
+//  Should be present per each ISA Interrupt which
+//  is not identity-mapped into SAPIC Interrupt space
+//======================================================
 typedef	struct _ISO_H32 {
     MADT_ENTRY_HEADER   Header;
-	UINT8		        Bus;///< 0 Constant, meaning ISA
-	UINT8		        Source;///<	Bus-relative interrupt source (IRQ)
-	UINT32	            GlobalSysVect;///< The Global System Interrupt that this bus-relative interrupt source will signal.
-	UINT16	            Flags;///< MPS INTI flags (See ACPI Spec)
+	UINT8		        Bus;				//2
+	UINT8		        Source;				//3
+	UINT32	            GlobalSysVect;		//4
+	UINT16	            Flags;				//8
 
 } ISO_H20,*PISO_H20;
 
@@ -299,35 +352,26 @@ typedef	struct _LSAPIC_H20 {
 	UINT32			Flags;				//8 Same as MPS 1.4 
 } LSAPIC_H20,*PLSAPIC_H20;
 
-/**
-  Processor Local SAPIC Structure 
-  
-**/  
-
 typedef	struct _LSAPIC_H30 {	
     MADT_ENTRY_HEADER   Header;
-	UINT8			CpuId;///< OSPM associates the Local SAPIC Structure with a processor object declared in the namespace using the Processor statement by matching the processor object’s ProcessorID value with this field.
-	UINT8			LsapicId;///< The processor’s local SAPIC ID
-	UINT8			LsapicEid;///< The processor’s local SAPIC EID
-    UINT8           Reserved1;          
-    UINT8           Reserved2;          
-    UINT8           Reserved3;         
-	UINT32			Flags;///< Local SAPIC flags (See ACPI Spec).
-    UINT32          AcpiProcUidVal;///< OSPM associates the Local SAPIC Structure with a processor object declared in the namespace using the Devicestatement, when the _UID child object of the processor device evaluates to a numeric value, by matching the numeric value with this field.
-    UINT8           AcpiProcUidString;///< OSPM associates the Local SAPIC Structure with a processor object declared in the namespace using the Devicestatement, when the _UID child object of the processor device evaluates to a string, by matching the string with this field. This value is stored as a null-terminated ASCII string.
-    ///It can be be more than one AcpiProcUidString entries
+	UINT8			CpuId;				//2
+	UINT8			LsapicId;			//3
+	UINT8			LsapicEid;			//4
+    UINT8           Reserved1;          //5
+    UINT8           Reserved2;          //6
+    UINT8           Reserved3;          //7
+	UINT32			Flags;				//8 Same as MPS 1.4 
+    UINT32          AcpiProcUidVal;      //12
+    UINT8           AcpiProcUidString;   //16 This value could be bigger than 1 byte
+    //------ To Do - Deal with variable length of AcpiProcUidString
 } LSAPIC_H30,*PLSAPIC_H30;
 
-/**
-  I/O SAPIC Structure 
-  
-**/  
 typedef	struct _IOSAPIC_H20 {	
     MADT_ENTRY_HEADER   Header;
-	UINT8			IoapicId;///< I/O SAPIC ID
-	UINT8			Reserved;			
-	UINT32			SysVectBase;///< The global system interrupt number where this I/O SAPIC’s interrupt inputs start. The number of interrupt inputs is determined by the I/O SAPIC’s Max Redir Entryregister.
-	UINT64			IosapicAddress;///<	The 64-bit physical address to access this I/O SAPIC. Each I/O SAPIC resides at a unique address. 
+	UINT8			IoapicId;			//2
+	UINT8			Reserved;			//3
+	UINT32			SysVectBase;		//8
+	UINT64			IosapicAddress;		//4
 } IOSAPIC_H20,*PIOSAPIC_H20;
 
 typedef struct _ISO_PARAMETER_TABLE{
@@ -336,47 +380,44 @@ typedef struct _ISO_PARAMETER_TABLE{
 	UINT16	ApicInt;
 }ISO_PARAMETER_TABLE;
 
-/**
-	Non-Maskable Interrupt Source Structure
-
-**/  
 
 typedef	struct _NMI_H20 {
     MADT_ENTRY_HEADER   Header;
-	UINT16			Flags;///< Same as MPS INTI flags.
-	UINT32			GlobalSysVect;///< The Global System Interrupt that this NMI will signal.
+	UINT16			Flags;				//2 same as MPS INTI flags 1.4
+	UINT32			GlobalSysVect;		//4
 } NMI_H20,*PNMI_H20;
-
-/**
-	 Local APIC NMI Structure 
-
-**/  
 
 typedef	struct _LNMI_H20 {
     MADT_ENTRY_HEADER   Header;
-	UINT8			CPU_ID;///< Processor ID corresponding to the ID listed in the processor object. A value of 0xFF signifies that this applies to all processors in the machine.
-	UINT16			Flags;///< MPS INTI flags.
-	UINT8			LapicIntin;///< Local APIC interrupt input LINTn to which NMI is connected.
+	UINT8			CPU_ID;				//2
+	UINT16			Flags;				//3 same as MPS INTI flags 1.4
+	UINT8			LapicIntin;			//5
 } LNMI_H20,*PLNMI_H20;
-
-/**
-	Local x2APIC NMI Structure
-**/ 
 
 typedef	struct _LX2APIC_NMI {
     MADT_ENTRY_HEADER   Header;
-	UINT16			Flags;///< Same as MPS INTI flags.
-    UINT32          Uid;///< UID corresponding to the ID listed in the processor Device object. A value of 0xFFFFFFFF signifies that this applies to all processors in the machine.
-	UINT8			LapicIntin;///< Local x2APIC interrupt input LINTn to which NMI is connected.
-    UINT8           Reserved[3]; 
+	UINT16			Flags;				//same as MPS INTI flags 1.4
+    UINT32          Uid;
+	UINT8			LapicIntin;
+    UINT8           Reserved[3];
 } LX2APIC_NMI,*PLX2APIC_NMI;
 
 
-/**
-    Structure for storing collected entries for MADT table before 
-    actually building it.  It is in the form of T_ITEM_LIST.
- 
-**/
+//<AMI_THDR_START>
+//----------------------------------------------------------------------------
+// Name: MADT_ENTRIES
+//
+// Description: Structure for storing collected entries for MADT table before 
+//              actualy building it. It is in the form of T_ITEM_LIST.
+//
+// Fields: Type             Name                    Description
+//----------------------------------------------------------------------------
+//    UINTN               MadtEntInitCount
+//    UINTN               MadtEntCount
+//    MADT_ENTRY_HEADER   **MadtEntries
+// 
+//----------------------------------------------------------------------------
+//<AMI_THDR_END>
 typedef	struct _MADT_ENTRIES {
     UINTN               MadtEntInitCount;
     UINTN               MadtEntCount;
@@ -390,27 +431,50 @@ typedef	struct _MADT_ENTRIES {
 #define     GL_PENDING          0x01
 #define     GL_OWNED			0x20
 
-/**
-    Structure for storing pointers for ACPI tables and it's Version
-    Member of ACPI_DB
- 
-**/
+//<AMI_THDR_START>
+//----------------------------------------------------------------------------
+// Name: ACPI_TBL_ITEM
+//
+// Description: Structure for storing pointers for ACPI tables and it's Version
+//              Member of ACPI_DB
+//
+// Fields: Type             Name                    Description
+//----------------------------------------------------------------------------
+//    ACPI_HDR                *BtHeaderPtr
+//    EFI_ACPI_TABLE_VERSION  AcpiTblVer
+// 
+//----------------------------------------------------------------------------
+//<AMI_THDR_END>
 typedef	struct _ACPI_TBL_ITEM {
     ACPI_HDR                *BtHeaderPtr;
     EFI_ACPI_TABLE_VERSION  AcpiTblVer;
 
 } ACPI_TBL_ITEM;
 
-/**
-    Structure for storing ACPI tables and protocols during Boottime.
-    ACPI tables are stored in the form of T_ITEM_LIST.
-
-**/
+//<AMI_THDR_START>
+//----------------------------------------------------------------------------
+// Name: ACPI_DB
+//
+// Description: Structure for storing ACPI tables and protocols during Boottime.
+//              ACPI tables are stored in the form of T_ITEM_LIST.
+//
+// Fields: Type             Name                   Description
+//----------------------------------------------------------------------------
+//    UINTN                         AcpiInitCount
+//    UINTN                         AcpiEntCount
+//    ACPI_TBL_ITEM                 **AcpiEntries
+//    UINT32                        AcpiLength
+//    EFI_ACPI_TABLE_PROTOCOL       AcpiTableProtocol
+//    EFI_ACPI_SUPPORT_PROTOCOL	    AcpiSupportProtocol
+//	  EFI_HANDLE					AcpiSupportHandle
+// 
+//----------------------------------------------------------------------------
+//<AMI_THDR_END>
 typedef	struct _ACPI_DB {
-    UINTN                       AcpiInitCount; ///< Initial number of entries (used for allocate memory).
-    UINTN                       AcpiEntCount; ///< Real number of entries .
-    ACPI_TBL_ITEM               **AcpiEntries; ///< Pointer to Table item.
-    UINT32                      AcpiLength; ///< Total length of all ACPI entries.
+    UINTN                       AcpiInitCount;
+    UINTN                       AcpiEntCount;
+    ACPI_TBL_ITEM               **AcpiEntries;
+    UINT32                      AcpiLength;
     EFI_ACPI_TABLE_PROTOCOL     AcpiTableProtocol;
     EFI_ACPI_SUPPORT_PROTOCOL	AcpiSupportProtocol;
 	EFI_HANDLE					AcpiSupportHandle;

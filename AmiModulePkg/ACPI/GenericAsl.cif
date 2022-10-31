@@ -6,5 +6,6 @@
 [files]
 "ASLLIB.ASL"	
 "AMLUPD.ASL"	
-"TimeAndAlarm.asl"	
+"CP_PTS.asl"	
+"CP_WAK.asl"	
 <endComponent>

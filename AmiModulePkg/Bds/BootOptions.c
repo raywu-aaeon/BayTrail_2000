@@ -1,7 +1,7 @@
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2013, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **
@@ -12,13 +12,24 @@
 //**********************************************************************
 //**********************************************************************
 
-/**
- *  @file BootOptions.c
- *  Contains the code for dealing with boot options and their maintenance
- *
- */
+//**********************************************************************
+// $Header: /Alaska/SOURCE/Core/EDK/DxeMain/BootOptions.c 21    12/05/11 3:58p Felixp $
+//
+// $Revision: 21 $
+//
+// $Date: 12/05/11 3:58p $
+//**********************************************************************
+
+//<AMI_FHDR_START>
+//---------------------------------------------------------------------------
+// Name:        BootOptions.c
+//
+// Description: Contains the code for dealing with boot options and their maintance
+//
+////---------------------------------------------------------------------------
+//<AMI_FHDR_END>
 #include "BootOptions.h"
-#include <Protocol/DiskInfo.h>
+#include <Protocol/PDiskInfo.h>
 #include <Protocol/UsbIo.h>
 
 EFI_HII_HANDLE HiiHandle=0;
@@ -34,22 +45,20 @@ DLIST BootDeviceListStructure;
 DLIST *BootOptionList = &BootOptionListStructure;
 DLIST *BootDeviceList = &BootDeviceListStructure;
 
-// Helper functions 
-// Defined in Bds.c
-EFI_STATUS SetVariableWithNewAttributes(
-    IN CHAR16 *Name, IN EFI_GUID *Guid, IN UINT32 Attributes,
-    IN UINTN DataSize, IN VOID *Data    
-);
-// Defined in BdsBoard.c
-UINT32 GetSetupVariablesAttributes();
 
-/**
- *  Sort the list of DLIST items using the passed COMPARE_FUNCTION to
- *  determine the correct ordering of items
- *
- *  @param List Pointer to list of items to sort
- *  @param Compare Function to use to to sort the list
- */
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   SortList
+//
+// Description: Sort the list of DLIST items using the passed COMPARE_FUNCTION to 
+//              determine the correct ordering of items
+//
+// Input:       DLIST *List - list of items to sort
+//              COMPARE_FUNCTION Compare - function to use to to sort the list
+//
+// Output:      DLIST *List
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID SortList(DLIST *List,  COMPARE_FUNCTION Compare){
     DLIST MergeList;
     DLINK *p, *q, *e;
@@ -122,41 +131,53 @@ VOID SortList(DLIST *List,  COMPARE_FUNCTION Compare){
     *List = MergeList;
 }
 
-/**
- *  Compare the two boot options passed and determine the priority of
- *  the first parameter in relation to the second parameter
- *  Try to compare based on the following parameters in order,
- *  Tag, then Group Header, then Priority
- *
- *  @param Link1 Pointer to boot option 1
- *  @param Link2 Pointer to boot option 2
- *
- *  @retval INT32 the comparison result Less than zero - Boot option 1 is lower priority than boot option 2
- *  @retval zero boot option 1 is same priority as boot option 2 greater than zero - boot option 1 is a higher priority than boot option 2
- */
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   CompareTagThenPriority
+//
+// Description: Compare the two boot options passed and determine the priority of
+//              the first parameter in relation to the second parameter
+//              Try to compare based on the following parameters in order, 
+//              Tag, then Group Header, then Priority
+//
+// Input:       DLINK *Link1 - boot option 1
+//              DLINK *Link2 - boot option 2
+//
+// Output:      INT32 - the comparison result
+//              Less than zero - Boot option 1 is lower priority than boot option 2
+//              zero - boot option 1 is same priority as boot option 2
+//              greater than zero - boot option 1 is a higher priority than boot option 2
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 INT32 CompareTagThenPriority(DLINK *Link1, DLINK *Link2){
 	BOOT_OPTION *Option1 = (BOOT_OPTION*)Link1;
 	BOOT_OPTION *Option2 = (BOOT_OPTION*)Link2;
 	if (Option1->Tag < Option2->Tag) return -1;
 	else if (Option1->Tag > Option2->Tag) return 1;
-    if (Option1->GroupHeader != Option2->GroupHeader)
+    if (Option1->GroupHeader != Option2->GroupHeader) 
         return (Option1->GroupHeader) ? -1 : 1;
 	if (Option1->Priority < Option2->Priority) return -1;
 	else if (Option1->Priority > Option2->Priority) return 1;
     return 0;
 }
 
-/**
- *  Compare the two passed boot options first by their priority
- *  if their priorities are equal, compare them based on their
- *  boot option number
- *
- *  @param Link1 Pointer to boot option 1
- *  @param Link2 Pointer to boot option 2
- *
- *  @retval INT32 the comparison result Less than zero - Boot option 1 is lower priority than boot option 2
- *  @retval zero boot option 1 is same priority as boot option 2 greater than zero - boot option 1 is a higher priority than boot option 2
- */
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   ComparePriorityThenBootOptionNumber
+//
+// Description: Compare the two passed boot options first by their priority
+//              if their priorities are equal, compare them based on their
+//              boot option number
+//
+// Input:       DLINK *Link1 - boot option 1
+//              DLINK *Link2 - boot option 2
+//
+// Output:      INT32 - the comparison result
+//              Less than zero - Boot option 1 is lower priority than boot option 2
+//              zero - boot option 1 is same priority as boot option 2
+//              greater than zero - boot option 1 is a higher priority than boot option 2
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 INT32 ComparePriorityThenBootOptionNumber(DLINK *Link1, DLINK *Link2){
 	BOOT_OPTION *Option1 = (BOOT_OPTION*)Link1;
 	BOOT_OPTION *Option2 = (BOOT_OPTION*)Link2;
@@ -164,18 +185,23 @@ INT32 ComparePriorityThenBootOptionNumber(DLINK *Link1, DLINK *Link2){
 	else if (Option1->Priority > Option2->Priority) return 1;
 	if (Option1->BootOptionNumber < Option2->BootOptionNumber) return -1;
 	else if (Option1->BootOptionNumber > Option2->BootOptionNumber) return 1;
-    if (Option1->GroupHeader != Option2->GroupHeader)
+    if (Option1->GroupHeader != Option2->GroupHeader) 
         return (Option1->GroupHeader) ? -1 : 1;
     return 0;
 }
 
-/**
- *  Create a BOOT_OPTION for the first entry in the passed BootOptionList
- *
- *  @param BootOptionList The list entry that needs a BOOT_OPTION structure created
- *
- *  @retval BOOT_OPTION Pointer to the created BOOT_OPTION
- */
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   CreateBootOption
+//
+// Description: Create a BOOT_OPTION for the first entry in the passed BootOptionList
+//
+// Input:       DLIST *BootOptionList - the list entry that needs a BOOT_OPTION 
+//                  structure created
+//
+// Output:      BOOT_OPTION * - pointer to the created BOOT_OPTION
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 BOOT_OPTION* CreateBootOption(DLIST *BootOptionList){
     static BOOT_OPTION BootOptionTemplate = {
     	{NULL,NULL}, LOAD_OPTION_ACTIVE, NULL, NULL, 0, NULL, 0,
@@ -191,12 +217,19 @@ BOOT_OPTION* CreateBootOption(DLIST *BootOptionList){
     return Option;
 }
 
-/**
- *  Delete the passed BOOT_OPTION from the BootOptionList
- *
- *  @param BootOptionList the master boot option list
- *  @param Option the option that should be deleted from the master boot option list
- */
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   DeleteBootOption
+//
+// Description: Delete the passed BOOT_OPTION from the BootOptionList
+//
+// Input:       DLIST *BootOptionList - the master boot option list
+//              BOOT_OPTION *Option - the option that should be deleted from the
+//                  master boot option list
+//
+// Output:      none
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID DeleteBootOption(DLIST *BootOptionList, BOOT_OPTION *Option){
 	DListDelete(BootOptionList,&Option->Link);
 	if (Option->Description!=NULL) pBS->FreePool(Option->Description);
@@ -205,19 +238,24 @@ VOID DeleteBootOption(DLIST *BootOptionList, BOOT_OPTION *Option){
 	pBS->FreePool(Option);
 }
 
-/**
- *  Create a boot device entry and add it to the BootDeviceList
- *  fill the entry with the information from the passed parameters
- *
- *  @param BootDeviceList The master boot device list to add the new boot device entry
- *  @param DeviceHandle The handle of the new device
- *  @param BbsIndex The index in the BBS table of the device
- *  @param BbsEntry The entire BBS table entry for the device
- *
- *  @retval BOOT_DEVICE Pointer to the new boot device
- */
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   CreateBootDevice
+//
+// Description: Create a boot device entry and add it to the BootDeviceList
+//              fill the entry with the information from the passed parameters
+//
+// Input:       DLIST *BootDeviceList - The master boot device list to add the
+//                  new boot device entry
+//              EFI_HANDLE DeviceHandle - the handle of the device
+//              UINT16 BbsIndex - the index in the bbs table of the device
+//              BBS_TABLE *BbsEntry - the entire bbs table
+//
+// Output:      BOOT_DEVICE * - the new boot device
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 BOOT_DEVICE* CreateBootDevice(
-    DLIST *BootDeviceList, EFI_HANDLE DeviceHandle,
+    DLIST *BootDeviceList, EFI_HANDLE DeviceHandle, 
 	UINT16 BbsIndex, BBS_TABLE *BbsEntry
 ){
 	BOOT_DEVICE *Device = Malloc(sizeof(BOOT_DEVICE));
@@ -229,23 +267,38 @@ BOOT_DEVICE* CreateBootDevice(
     return Device;
 }
 
-/**
- * Delete the Device out of the passed BootDeviceList
- *
- * @param BootDeviceList The list to remove the Device from
- * @param Device The entry to remove from the BootDeviceList
-*/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   DeleteBootDevice
+//
+// Description: Delete the boot device out of the master boot device list
+//
+// Input:       DLIST *BootDeviceList - the master boot device list
+//              BOOT_DEVICE *Device - the boot device to delete from the master
+//                  boot device list
+//
+// Output:      none
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID DeleteBootDevice(DLIST *BootDeviceList, BOOT_DEVICE* Device){
     DListDelete(BootDeviceList, &Device->Link);
     pBS->FreePool(Device);
 }
 
-/**
- * Update the boot option with the information from the passed boot device information
- *
- * @param Option The boot option that needs updated
- * @param Device The boot device that contains the information that the boot option needs updated with
-*/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   UpdateBootOptionWithBootDeviceInfo
+//
+// Description: Update the boot option with the information from the passed
+//              boot device information
+//
+// Input:       BOOT_OPTION *Option - the boot option that needs updated
+//              BOOT_DEVICE *Device - the boot device that contains the information
+//                  that the boot option needs updated with
+//
+// Output:      none
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID UpdateBootOptionWithBootDeviceInfo(
     BOOT_OPTION *Option, BOOT_DEVICE* Device
 ){
@@ -254,17 +307,21 @@ VOID UpdateBootOptionWithBootDeviceInfo(
 	Option->DeviceHandle = Device->DeviceHandle;
 }
 
-/**
- * Create a boot option using the NVRAM information
- *
- * @param BootOptionList The master boot option list
- * @param BootOptionNumber The XXXX of the BootXXXX boot option
- * @param NvramOption The associated EFI_LOAD_OPTION
- * @param NvramOptionSize The size of the NVRAM option
- * @param Priority The priority of the boot option
- *
- * @retval BOOT_OPTION The created boot option
-*/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   CreateBootOptionsFromNvramOption
+//
+// Description: Create a boot option using the nvram information
+//
+// Input:       DLIST *BootOptionList - the master boot option list
+//              UINT16 BootOptionNumber - the XXXX of the BootXXXX boot option
+//              EFI_LOAD_OPTION NvramOption - the associated EFI_LOAD_OPTION
+//              UINTN NvramOptionSize - the sizeof the nvram option
+//              UINT32 Priority - the priority of the boot option
+//
+// Output:      BOOT_OPTION * - the created boot option
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 BOOT_OPTION* CreateBootOptionsFromNvramOption(
 	DLIST *BootOptionList, UINT16 BootOptionNumber,
 	EFI_LOAD_OPTION *NvramOption, UINTN NvramOptionSize,
@@ -290,8 +347,8 @@ BOOT_OPTION* CreateBootOptionsFromNvramOption(
 	);
 
 	OptionalData =  (UINT32*)(FilePathList + NvramOption->FilePathListLength);
-    OptionalDataSize =  (UINT8*)NvramOption
-							  + NvramOptionSize
+    OptionalDataSize =  (UINT8*)NvramOption 
+							  + NvramOptionSize 
 							  - (UINT8*)OptionalData;
 	Option->BootOptionNumber = BootOptionNumber;
 	Option->Priority = *Priority;
@@ -335,21 +392,24 @@ BOOT_OPTION* CreateBootOptionsFromNvramOption(
 	return Option;
 }
 
-/**
- * The function checks if boot option is well-formed
- *
- * @param NvramOption Pointer to the EFI_LOAD_OPTION structure
- * @param NvramOptionSize The size of the EFI_LOAD_OPTION, including the optional data section
- *
- * @retval TRUE boot option is valid, FALSE otherwise
-*/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   IsBootOptionValid
+//
+// Description: The function checks if boot option is well-formed
+//
+// Input:       EFI_LOAD_OPTION NvramOption, UINTN NvramOptionSize
+//
+// Output:      TRUE - boot option is valid, FALSE otherwise
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 BOOLEAN IsBootOptionValid(EFI_LOAD_OPTION *NvramOption, UINTN NvramOptionSize){
     CHAR16 *Char;
     CHAR16 *EndOfDescription;
     EFI_DEVICE_PATH_PROTOCOL *Dp;
     UINTN DevicePathSize;
 
-    // The boot option must have at least the header,
+    // The boot option must have at least the header, 
     // an empty (just the NULL-terminator) description,
     // and an empty device path (End-of-Device-Path node).
     if (NvramOption->FilePathListLength<sizeof(EFI_DEVICE_PATH_PROTOCOL)) return FALSE;
@@ -371,8 +431,8 @@ BOOLEAN IsBootOptionValid(EFI_LOAD_OPTION *NvramOption, UINTN NvramOptionSize){
     // Validate the device path;
     Dp = (EFI_DEVICE_PATH_PROTOCOL*)(Char+1); // skip the terminating zero.
     if (EFI_ERROR(IsValidDevicePath(Dp))) return FALSE;
-    // NvramOption->FilePathListLength can't be zero.
-    // We checked that at the start of the function.
+    // NvramOption->FilePathListLength can't be zero. 
+    // We checked that at the start of the funciton.
     DevicePathSize = NvramOption->FilePathListLength;
     while (TRUE) {
         UINTN Length = NODE_LENGTH(Dp);
@@ -383,8 +443,8 @@ BOOLEAN IsBootOptionValid(EFI_LOAD_OPTION *NvramOption, UINTN NvramOptionSize){
         if (DevicePathSize < sizeof(EFI_DEVICE_PATH_PROTOCOL)){
             if (DevicePathSize != 0 ) return FALSE;
             //The last node must be an End-of-Device-Path node.
-            return
-                   isEndNode(Dp)
+            return 
+                   isEndNode(Dp) 
                 && Dp->SubType == END_ENTIRE_SUBTYPE
                 && Length == sizeof(EFI_DEVICE_PATH_PROTOCOL)
             ;
@@ -395,12 +455,22 @@ BOOLEAN IsBootOptionValid(EFI_LOAD_OPTION *NvramOption, UINTN NvramOptionSize){
     return FALSE;
 }
 
-/**
- * Read the boot options from NVRAM and create associated boot options in the master boot option list for each boot option
-*/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   ReadBootOption
+//
+// Description: Read the boot options from NVRAM and create associated 
+//              boot options in the master boot option list for each valid
+//              option
+//
+// Input:       DLIST *BootOptionList - the list to update with the nvram options
+//
+// Output:      none 
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID ReadBootOptions(){
 	UINT16 *BootOrder = NULL;
-	UINTN BootOrderSize = 0;
+	UINTN BootOrderSize = 0; 
 	EFI_STATUS Status;
 	UINTN i;
 	EFI_LOAD_OPTION *NvramOption = NULL;
@@ -412,7 +482,7 @@ VOID ReadBootOptions(){
 		L"BootOrder", &EfiVariableGuid, NULL, &BootOrderSize,(VOID**)&BootOrder
 	);
 	if (EFI_ERROR(Status)) return;
-	for(i=0; i<BootOrderSize/sizeof(UINT16); i++){
+	for(i=0; i<BootOrderSize/sizeof(UINT16); i++){	
 		CHAR16 BootStr[9];
 
 		// Get Boot Option
@@ -422,7 +492,7 @@ VOID ReadBootOptions(){
 		);
 		if (EFI_ERROR(Status)){
 			if (Status==EFI_NOT_FOUND){
-				// Workaround for non-UEFI specification complaint OS.
+				// Workaround for non-UEFI specification compliant OS.
 				// Some OS create BootXXXX variables using lower case letters A-F.
 				// Search for lower case boot option variable is no upper case variable found.
 				Swprintf(BootStr,L"Boot%04X",BootOrder[i]);
@@ -450,12 +520,6 @@ VOID ReadBootOptions(){
 	pBS->FreePool(BootOrder);
 }
 
-
-/**
- * Prepend the masking pattern to the device path of the passed BOOT_OPTION
- *
- * @param Option The boot option which needs to have the device path updated
- */
 VOID MaskFilePathList(BOOT_OPTION *Option){
     static struct {
 		VENDOR_DEVICE_PATH vendor;
@@ -483,12 +547,25 @@ VOID MaskFilePathList(BOOT_OPTION *Option){
 }
 
 
-/**
- * This function unmasks orphan devices. The orphan legacy devices are masked by the MaskOrphanDevices function.
- * TSE does not like legacy boot options for devices that are not currently attached to the system. To trick TSE
- * we we are camouflaging such boot options by adding a vendor GUIDed device path. The device path is added by
- * the MaskOrphanDevices function before saving, and is removed by UnmaskOrphanDevices immediately after reading
- */
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   UnmaskOrphanDevices
+//
+// Description: This function unmasks orphan devices.
+//              The orphan legacy devices are masked by the MaskOrphanDevices function.
+//              TSE does not like legacy boot options for devices that are not in the system.
+//              To trick TSE we we are camouflaging such boot options by adding GUIDed device path.
+//              The device path is added by MaskOrphanDevices function rigth before saving
+//              and removed by UnmaskOrphanDevices right after reading
+//
+//
+// Input:       DLIST *BootOptionList - the master boot option list
+//
+// Output:      none
+//
+// Note: function only available, and used, if CSM_SUPPORT token is defined and enabled
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID UnmaskOrphanDevices(){
 	DLINK *Link;
     BOOT_OPTION *Option;
@@ -514,16 +591,21 @@ VOID UnmaskOrphanDevices(){
 }
 
 #ifdef CSM_SUPPORT
-/**
- * Using the passed position, return the BBS index from the legacy dev order group
- *
- * @param Group The legacy device order
- * @param Position the index into the legacy dev order to return
- *
- * @retval UINT32 the BBS index from the the legacy dev order
- *
- * @note  This function is only available, and used, if CSM_SUPPORT token is defined and enabled
- */
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   GetBbsIndexByPositionInTheGroup
+//
+// Description: Using the passed position, return the BBS index from the legacy dev
+//              order group
+//
+// Input:       LEGACY_DEVICE_ORDER *Group - The legacy device order
+//              UINT16 Position - the index into the legacy dev order to return
+//
+// Output:      UINT32 - the bbs index from the the legacy dev order
+//
+// Note: function only available, and used, if CSM_SUPPORT token is defined and enabled
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 UINT32 GetBbsIndexByPositionInTheGroup(
 	LEGACY_DEVICE_ORDER *Group, UINT16 Position
 ){
@@ -542,19 +624,24 @@ UINT32 GetBbsIndexByPositionInTheGroup(
 	return 0;
 }
 
-/**
- * Get the corresponding device index in the LEGACY_DEV_ORDER based on the bbs index number.  Legacy
- * dev order organizes the boot priorities of a class of devices (Cdrom, hdd, bev, etc) and the
- * individual indexes of the device are the relative priorities in which they should be used to
- * attempt a legacy boot.
- *
- * @param Group pointer to the legacy dev order group
- * @param BbsIndex index of the device trying to be matched
- *
- * @retval UINT32 the index of the device inside of the LEGACY_DEV_ORDER
- *
- * @note  function only available, and used, if CSM_SUPPORT token is defined and enabled
- */
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   FindPositionInTheGroupByBbsIndex
+//
+// Description: Get the corresponding device index in the LEGACY_DEV_ORDER based on
+//              the bbs index number.  Legacy dev order organizes the boot priorities
+//              of a class of devices (Cdrom, hdd, bev, etc) and the individual indexes
+//              of the device are the relative priorities in which they should be used
+//              to attempt a legacy boot.
+//
+// Input:       LEGACY_DEVICE_ORDER *Group - pointer to the legacy dev order group
+//              UINT16 BbsIndex - index of the device trying to be matched
+//
+// Output:      UINT32 - the index of the device inside of the LEGACY_DEV_ORDER
+//
+// Note: function only available, and used, if CSM_SUPPORT token is defined and enabled
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 UINT32 FindPositionInTheGroupByBbsIndex(
 	LEGACY_DEVICE_ORDER *Group, UINT16 BbsIndex
 ){
@@ -573,23 +660,29 @@ UINT32 FindPositionInTheGroupByBbsIndex(
 	return 0;
 }
 
-/**
- * Go through the legacy device order structure and find the legacy dev order index that matches the BBS index.
- *
- * @param DevOrder pointer to the legacy device order
- * @param DevOrderSize size of the legacy dev order structure
- * @param BbsIndex index of the BBS device to match
- * @retval LEGACY_DEVICE_ORDER *
- *
- * @note  function only available, and used, if CSM_SUPPORT token is defined and enabled
- */
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   FindLegacyDeviceGroupByBbsIndex
+//
+// Description: Go through the legacy device order structure and find the legacy dev order
+//              index that matches the bss index.
+//
+// Input:       LEGACY_DEVICE_ORDER *DevOrder - pointer to the legacy device order
+//              UINTN DevOrderSize - size of the legacy dev order structure
+//              UINT16 BbsIndex - index of the bbs device to match
+//
+// Output:      LEGACY_DEVICE_ORDER *
+//
+// Note: function only available, and used, if CSM_SUPPORT token is defined and enabled
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 LEGACY_DEVICE_ORDER* FindLegacyDeviceGroupByBbsIndex(
 	LEGACY_DEVICE_ORDER *DevOrder, UINTN DevOrderSize, UINT16 BbsIndex
 ){
 	UINT16 *EndOfDevOrder = (UINT16*)((UINT8*)DevOrder+DevOrderSize);
 	LEGACY_DEVICE_ORDER* EndOfGroup = DevOrder;
 	LEGACY_DEVICE_ORDER* GroupStart = DevOrder;
-	UINT16 *IndexPtr = (UINT16*)EndOfGroup;
+	UINT16 *IndexPtr = (UINT16*)EndOfGroup;				  
 
 	while(IndexPtr<EndOfDevOrder){
 		if (IndexPtr==(UINT16*)EndOfGroup){
@@ -605,13 +698,20 @@ LEGACY_DEVICE_ORDER* FindLegacyDeviceGroupByBbsIndex(
 	return NULL;
 }
 
-/**
- * Go through the legacy dev order structure and adjust it to match the current boot priorities
- *
- * @param BootOptionList the master boot option list
- *
- * @note Function only available, and used, if CSM_SUPPORT token is defined and enabled
- */
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   AdjustLegacyBootOptionPriorities
+//
+// Description: Go through the legacy dev order structure and adjust it ot match the
+//              current boot priorities
+//
+// Input:       DLIST *BootOptionList - the master boot option list
+//
+// Output:      none
+//
+// Note: function only available, and used, if CSM_SUPPORT token is defined and enabled
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID AdjustLegacyBootOptionPriorities(){
 	EFI_STATUS Status;
 	UINTN DevOrderSize, OldDevOrderSize;
@@ -626,15 +726,15 @@ VOID AdjustLegacyBootOptionPriorities(){
     LEGACY_DEVICE_ORDER *CurrentGroup;
 
 	Status = GetEfiVariable(
-		L"LegacyDevOrder", &LegacyDevOrderGuid, NULL,
+		L"LegacyDevOrder", &LegacyDevOrderGuid, NULL, 
 		&DevOrderSize, &DevOrder
 	);
 	if(EFI_ERROR(Status) || DevOrderSize < sizeof(LEGACY_DEVICE_ORDER)) return ;
 	Status = GetEfiVariable(
-		L"OldLegacyDevOrder", &LegacyDevOrderGuid, NULL,
+		L"OldLegacyDevOrder", &LegacyDevOrderGuid, NULL, 
 		&OldDevOrderSize, &OldDevOrder
 	);
-	if(    EFI_ERROR(Status)
+	if(    EFI_ERROR(Status) 
 		|| OldDevOrderSize!=DevOrderSize
 		|| MemCmp(DevOrder,OldDevOrder, DevOrderSize)==0
 	){
@@ -654,9 +754,9 @@ VOID AdjustLegacyBootOptionPriorities(){
 
         if ( !IsLegacyBootOption(Option) || Option->GroupHeader) continue;
 		// this should never happen during the normal course of operation
-		if (IndexPtr>=EndOfDeviceList) break;
+		if (IndexPtr>=EndOfDeviceList) break; 
 		// during the normal course of operation both conditions should
-		// happen simultaneously
+		// happen simultaneously 
 		if (BootOptionNumber != Option->BootOptionNumber || GroupSize==0){
 			BootOptionNumber = Option->BootOptionNumber;
 			IndexPtr += GroupSize;
@@ -669,7 +769,7 @@ VOID AdjustLegacyBootOptionPriorities(){
         BbsIndex = GetBbsIndexByPositionInTheGroup(OldGroup,IndexInTheGroup);
         NewIndexInTheGroup = FindPositionInTheGroupByBbsIndex(CurrentGroup,BbsIndex);
 
-        Option->Priority +=
+        Option->Priority += 
             (NewIndexInTheGroup-IndexInTheGroup)*DEFAULT_PRIORITY_INCREMENT;
 		if ((CurrentGroup->Device[NewIndexInTheGroup] & 0xff00)!=0)
             Option->Attributes &= ~LOAD_OPTION_ACTIVE;
@@ -683,13 +783,20 @@ VOID AdjustLegacyBootOptionPriorities(){
 	pBS->FreePool(OldDevOrder);
 }
 
-/**
- * Go through the master boot option list and create memory representation of the legacy dev order variable
- *
- * @param BootOptionList the master boot option list
- *
- * @note  function only available, and used, if CSM_SUPPORT token is defined and enabled
- */
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   BuildLegacyDevOrderBuffer
+//
+// Description: Go through the master boot option list and create
+//              memory representation of the legacy dev order variable
+//
+// Input:       DLIST *BootOptionList - the master boot option list
+//
+// Output:      none
+//
+// Note: function only available, and used, if CSM_SUPPORT token is defined and enabled
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID BuildLegacyDevOrderBuffer(
     LEGACY_DEVICE_ORDER **DevOrderBuffer, UINTN *BufferSize
 ){
@@ -730,17 +837,24 @@ VOID BuildLegacyDevOrderBuffer(
     *BufferSize = DevOrderSize;
 }
 
-/**
- * This function masks orphan devices before saving them. TSE does not like legacy boot
- * options for devices that are not in the system. To trick TSE we we are camouflaging
- * such boot options by adding GUIDed device path. The device path is added by
- * MaskOrphanDevices function right before saving and removed by UnmaskOrphanDevices
- * right after reading
- *
- * @param BootOptionList the master boot option list
- *
- * @note  function only available, and used, if CSM_SUPPORT token is defined and enabled
- */
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   MaskOrphanDevices
+//
+// Description: This function masks orphan devices before saving them.
+//              TSE does not like legacy boot options for devices that are not in the system.
+//              To trick TSE we we are camouflaging such boot options by adding GUIDed device path.
+//              The device path is added by MaskOrphanDevices function rigth before saving
+//              and removed by UnmaskOrphanDevices right after reading
+//
+//
+// Input:       DLIST *BootOptionList - the master boot option list
+//
+// Output:      none
+//
+// Note: function only available, and used, if CSM_SUPPORT token is defined and enabled
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID MaskOrphanDevices(){
 	DLINK *Link;
     BOOT_OPTION *Option;
@@ -765,38 +879,51 @@ VOID MaskOrphanDevices(){
     if (GroupHeader!=NULL) MaskFilePathList(GroupHeader);
 }
 
-/**
- * Go through the master boot option list and use it to update the legacy dev order variable
- *
- * @param BootOptionList the master boot option list
- *
- * @note  function only available, and used, if CSM_SUPPORT token is defined and enabled
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   SaveLegacyDevOrder
+//
+// Description: Go through the master boot option list and use it to update the
+//              legacy dev order variable
+//
+// Input:       DLIST *BootOptionList - the master boot option list
+//
+// Output:      none
+//
+// Note: function only available, and used, if CSM_SUPPORT token is defined and enabled
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID SaveLegacyDevOrder(){
 	UINTN DevOrderSize;
 	LEGACY_DEVICE_ORDER *DevOrder;
 
     SortList(BootOptionList, ComparePriorityThenBootOptionNumber);
     BuildLegacyDevOrderBuffer(&DevOrder, &DevOrderSize);
-    SetVariableWithNewAttributes(
-        L"LegacyDevOrder", &LegacyDevOrderGuid,
-        GetSetupVariablesAttributes(),DevOrderSize,DevOrder
+	pRS->SetVariable(
+		L"LegacyDevOrder", &LegacyDevOrderGuid,
+		BOOT_VARIABLE_ATTRIBUTES,DevOrderSize,DevOrder
 	);
-    SetVariableWithNewAttributes(
-        L"OldLegacyDevOrder", &LegacyDevOrderGuid,
-        EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS,DevOrderSize,DevOrder
+	pRS->SetVariable(
+		L"OldLegacyDevOrder", &LegacyDevOrderGuid,
+		BOOT_VARIABLE_ATTRIBUTES,DevOrderSize,DevOrder
 	);
 	pBS->FreePool(DevOrder);
 }
 
-/**
- * Go through the BBS table and create a entry in the master boot order list for each
- * BBS table entry
- *
- * @param BootDeviceList the master boot list
- *
- * @note  function only available, and used, if CSM_SUPPORT token is defined and enabled
- */
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   CollectBbsDevice
+//
+// Description: Go through the bbs table and create a entry in the master boot order
+//              list for each bbs table entry
+//
+// Input:       DLIST *BootDeviceList - the master boot list
+//
+// Output:       none
+//
+// Note: function only available, and used, if CSM_SUPPORT token is defined and enabled
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID CollectBbsDevices(DLIST *BootDeviceList){
     EFI_STATUS Status;
     EFI_LEGACY_BIOS_PROTOCOL *LegacyBios;
@@ -822,12 +949,21 @@ VOID CollectBbsDevices(DLIST *BootDeviceList){
 
 #endif //#ifdef CSM_SUPPORT
 
-/**
- * Collect a list of all handles with a particular protocol installed on them and create a boot device for each handle.
- *
- * @param BootDeviceList the master boot list that needs boot devices added to it.
- * @param ProtocolGuid the protocol to use when getting a list of device handles
- */
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   CollectProtocolDevices
+//
+// Description: Collect a list of all handles with a particular protocol installed
+//              on them and create a boot device for each handle.
+//
+// Input:       DLIST *BootDeviceList - the master boot list that needs boot devices
+//              added to it.
+//              EFI_GUID *ProtocolGuid - the protocol to use when getting a list of
+//              device handles
+//
+// Output:      none
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID CollectProtocolDevices(DLIST *BootDeviceList, EFI_GUID *ProtocolGuid){
     EFI_HANDLE *Devices;
     UINTN NumberOfDevices;
@@ -835,7 +971,7 @@ VOID CollectProtocolDevices(DLIST *BootDeviceList, EFI_GUID *ProtocolGuid){
 	UINTN i;
 
     Status = pBS->LocateHandleBuffer(
-        ByProtocol,ProtocolGuid, NULL,
+        ByProtocol,ProtocolGuid, NULL, 
         &NumberOfDevices, &Devices
     );
     if (EFI_ERROR(Status)) return;
@@ -845,11 +981,19 @@ VOID CollectProtocolDevices(DLIST *BootDeviceList, EFI_GUID *ProtocolGuid){
 	pBS->FreePool(Devices);
 }
 
-/**
- * Helper function to generate a master boot list based on the load file protocol,
- * the simple file system protocol and, if CSM support is enabled, the legacy bbs
- * table
- */
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   CollectBootDevices
+//
+// Description: Helper function to generate a master boot list based on the
+//              load file protocol, the simple file system protocol and, if
+//              CSM support is enabled, the legacy bbs table
+//
+// Input:       DLIST *BootDeviceList
+//
+// Output:      
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID CollectBootDevices(){
 	CollectProtocolDevices(BootDeviceList,&gEfiLoadFileProtocolGuid);
 	CollectProtocolDevices(BootDeviceList,&gEfiSimpleFileSystemProtocolGuid);
@@ -858,14 +1002,20 @@ VOID CollectBootDevices(){
 #endif
 }
 
-/**
- * Determine if this boot device is a UEFI HDD
- *
- * @param Device the device in question
- *
- * @retval BOOLEAN TRUE - Device is a UEFI HDD Boot Device and it should be removed from the boot order list
- * @retval FALSE Device is not a UEFI HDD and it should be left in the boot order
- */
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   IsUefiHddBootDevice
+//
+// Description: Determine if this boot device is a UEFI HDD 
+//
+// Input:       BOOT_DEVICE *Device - the device in question
+//
+// Output:      BOOLEAN - TRUE - Device is a UEFI HDD Boot Device and it should
+//                              be removed from the boot order list
+//                        FALSE - Device is not a UEFI hdd and it should be left
+//                              in the boot order
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 BOOLEAN IsUefiHddBootDevice(BOOT_DEVICE *Device){
     EFI_BLOCK_IO_PROTOCOL *BlkIo;
     EFI_STATUS Status;
@@ -882,13 +1032,22 @@ BOOLEAN IsUefiHddBootDevice(BOOT_DEVICE *Device){
     return !BlkIo->Media->RemovableMedia;
 }
 
-/**
- * Master filter handler.  Function will call all ELINK functions linked into the
- * BootOptionBootDeviceFilteringFunctions list. If any ELINK function returns FALSE, the device will
- * be removed from the function list
- */
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   FilterBootDeviceList
+//
+// Description: Master filter handler.  Function will call all ELINK functions
+//              linked into the BootOptionBootDeviceFilteringFunctions list.
+//              If any ELINK function returns FALSE, the device will be removed
+//              from the function list
+//
+// Input:       DLIST *BootDeviceList - the full boot order list
+//
+// Output:      none
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID FilterBootDeviceList(){
-// Filter Devices
+// Filter Devices 
     BOOT_DEVICE *Device;
     DLINK *Link;
 
@@ -902,16 +1061,18 @@ VOID FilterBootDeviceList(){
     }
 }
 
-/**
- * Attempt to match the Boot Option Device path to this device by locating the handle associated
- * with the passed device path and comparing it against the BOOT_DEVICE handle.
- *
- * @param OptionDevicePath The device path to match
- * @param Device The device to match against
- *
- * @retval TRUE The device Path matches the device
- * @retval FALSE The device is different than the device
- */
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   LocateDevicePathTest
+//
+// Description: 
+//
+// Input:       EFI_DEVICE_PATH_PROTOCOL *OptionalDevicePath -
+//              BOOT_DEVICE *Device - the device
+//
+// Output:      
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 BOOLEAN LocateDevicePathTest(EFI_DEVICE_PATH_PROTOCOL *OptionDevicePath, BOOT_DEVICE *Device){
 	EFI_STATUS Status;
 	EFI_HANDLE Handle;
@@ -928,16 +1089,18 @@ BOOLEAN LocateDevicePathTest(EFI_DEVICE_PATH_PROTOCOL *OptionDevicePath, BOOT_DE
            || OptionDevicePath->SubType==MEDIA_FV_FILEPATH_DP;
 }
 
-/**
- * Attempt to match the passed device path to the passed boot device. Because
- * of partial device paths that some OSes use, this requires extra logic perform.
- *
- * @param OptionDevicePath The device path to check
- * @param Device The boot device
- *
- * @retval TRUE The device path matches the device
- * @retval FALSE The device path does not match the device
- */
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   PartitionDevicePathtest
+//
+// Description: 
+//
+// Input:       EFI_DEVICE_PATH_PROTOCOL *OptionDevicePath - 
+//              BOOT_DEVICE *Device - 
+//
+// Output:      
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 BOOLEAN PartitionDevicePathTest(
 	EFI_DEVICE_PATH_PROTOCOL *OptionDevicePath, BOOT_DEVICE *Device
 ){
@@ -948,7 +1111,7 @@ BOOLEAN PartitionDevicePathTest(
 	HARDDRIVE_DEVICE_PATH* PartitionNode;
 
 	if (Device->DeviceHandle==INVALID_HANDLE) return FALSE;
-	if (    OptionDevicePath->Type!=MEDIA_DEVICE_PATH
+	if (    OptionDevicePath->Type!=MEDIA_DEVICE_PATH 
          || OptionDevicePath->SubType!=MEDIA_HARDDRIVE_DP
     ) return FALSE;
 	BootParitionDevicePath  = (HARDDRIVE_DEVICE_PATH*)OptionDevicePath;
@@ -965,28 +1128,18 @@ BOOLEAN PartitionDevicePathTest(
 	// Get last node of the device path. It should be partition node
 	PartitionNode = (HARDDRIVE_DEVICE_PATH*)DPGetLastNode(PartitionDevicePath);
 	//Check if our partition matches Boot partition
-	if (   PartitionNode->Header.Type!=MEDIA_DEVICE_PATH
+	if (   PartitionNode->Header.Type!=MEDIA_DEVICE_PATH 
 		|| PartitionNode->Header.SubType!=MEDIA_HARDDRIVE_DP
 	) return FALSE;
-	if (   PartitionNode->PartitionNumber==BootParitionDevicePath->PartitionNumber
-		&& PartitionNode->SignatureType==BootParitionDevicePath->SignatureType
-		&& !MemCmp(PartitionNode->Signature,BootParitionDevicePath->Signature,16)
+	if (   PartitionNode->PartitionNumber==BootParitionDevicePath->PartitionNumber 
+		&& PartitionNode->SignatureType==BootParitionDevicePath->SignatureType 
+		&& !MemCmp(PartitionNode->Signature,BootParitionDevicePath->Signature,16) 
 	){
 		return TRUE;
 	}
 	return FALSE;
 }
 
-/**
- * Attempt to locate a device path node in the device path that matches the passed type, and
- * return the sub-type of that node
- *
- * @param Dp The device path to search
- * @param Type The type to search for
- *
- * @retval Zero No node was found with the Type
- * @retval Non-Zero A node was found the sub-type was returned
- */
 UINT8 GetDevicePathSubtype(EFI_DEVICE_PATH_PROTOCOL *Dp, UINT8 Type){
     UINT8 SubType;
 
@@ -997,52 +1150,25 @@ UINT8 GetDevicePathSubtype(EFI_DEVICE_PATH_PROTOCOL *Dp, UINT8 Type){
         if (Dp->Type == Type) SubType = Dp->SubType;
     return SubType;
 }
-/**
- * Attempt to locate a device path node in the passed device path of type Type.
- *
- * @param Dp The device path to search
- * @param Type The type of node to search for
- *
- * @retval NULL No node was found
- * @retval Non-null A node was found, and the pointer was returned
- */
-EFI_DEVICE_PATH_PROTOCOL* GetDevicePathNodeOfType(EFI_DEVICE_PATH_PROTOCOL *Dp, UINT8 Type){
-	EFI_DEVICE_PATH_PROTOCOL *Node = NULL;
 
-    if (Dp == NULL) return NULL;
-
-    for( ; !(isEndNode(Dp)); Dp=NEXT_NODE(Dp))
-        if (Dp->Type == Type) Node = Dp;
-    return Node;
-}
-
-/**
- * Attempt to match the passed device path to the passed BOOT_DEVICE. Handle the partial device
- * path cases.
- *
- * @param OptionDevicePath The device path to match
- * @param Device The device to attempt to match to the device path
- *
- * @retval TRUE The device path matches the device
- * @retval FALSE The device path does not match the device
-*/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   DeviceTypeDevicePathTest
+//
+// Description: 
+//
+// Input:       EFI_DEVICE_PATH_PROTOCOL *OptionalDevicePath -
+//              BOOT_DEVICE *Device - the device
+//
+// Output:      
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 BOOLEAN DeviceTypeDevicePathTest(EFI_DEVICE_PATH_PROTOCOL *OptionDevicePath, BOOT_DEVICE *Device){
 	EFI_STATUS Status;
     EFI_DEVICE_PATH_PROTOCOL *Dp;
-    UINT8 DeviceInterface, OptionInterface;
-    EFI_DEVICE_PATH *DeviceMedia, *OptionMedia;
+    UINT8 DeviceMedia, OptionMedia, DeviceInterface, OptionInterface;
 
-	if (Device->DeviceHandle==INVALID_HANDLE){
-	    AMI_BBS_DEVICE_PATH *AmiBbsDp;
-
-	    if (Device->BbsEntry==NULL) return FALSE;
-	    AmiBbsDp = (AMI_BBS_DEVICE_PATH*)OptionDevicePath;
-	    return AmiBbsDp->Header.Header.Type == HARDWARE_DEVICE_PATH
-	        && AmiBbsDp->Header.Header.SubType == HW_VENDOR_DP
-	        && guidcmp(&AmiBbsDevicePathGuid, &AmiBbsDp->Header.Guid) == 0
-	        && AmiBbsDp->Class == Device->BbsEntry->Class
-	        && AmiBbsDp->SubClass == Device->BbsEntry->SubClass;
-	}
+	if (Device->DeviceHandle==INVALID_HANDLE) return FALSE;
 
     Status=pBS->HandleProtocol(
         Device->DeviceHandle, &gEfiDevicePathProtocolGuid, (VOID**)&Dp
@@ -1064,16 +1190,17 @@ BOOLEAN DeviceTypeDevicePathTest(EFI_DEVICE_PATH_PROTOCOL *OptionDevicePath, BOO
         OptionInterface = MSG_ATAPI_DP;
     if (DeviceInterface != OptionInterface) return FALSE;
 
-    DeviceMedia = GetDevicePathNodeOfType(Dp,MEDIA_DEVICE_PATH);
-    OptionMedia = GetDevicePathNodeOfType(OptionDevicePath,MEDIA_DEVICE_PATH);
-    if (   DeviceMedia != NULL && OptionMedia != NULL
-    	&& NODE_LENGTH(DeviceMedia) == NODE_LENGTH(OptionMedia)
-    	&& MemCmp(DeviceMedia,OptionMedia,NODE_LENGTH(DeviceMedia)) == 0
-    ){
+    DeviceMedia = GetDevicePathSubtype(
+        Dp, MEDIA_DEVICE_PATH
+    );
+    OptionMedia = GetDevicePathSubtype(
+        OptionDevicePath, MEDIA_DEVICE_PATH
+    );
+    
+    if (DeviceMedia == OptionMedia){
         NormalizeBootOptionDevicePath = TRUE;
         return TRUE;
     }
-
     return FALSE;
 }
 
@@ -1081,15 +1208,6 @@ BOOLEAN DeviceTypeDevicePathTest(EFI_DEVICE_PATH_PROTOCOL *OptionDevicePath, BOO
 #define MSG_USB_CLASS_DP_PRESENT      0x2
 #define MSG_USB_WWID_CLASS_DP_PRESENT 0x4
 
-/**
- * Check if the passed device path corresponds to a USB device
- *
- * @param Dp The device path to check for belonging to a USB device
- * @param AvailableNodes OPTIONAL A bitmask of the USB device nodes encountered while parsing the device path
- *
- * @retval TRUE The device path is a USB device
- * @retval FALSE The device path is not a USB device
- */
 BOOLEAN IsUsbDp(
     IN EFI_DEVICE_PATH_PROTOCOL *Dp,
     OUT UINT32 *AvailableNodes OPTIONAL
@@ -1118,17 +1236,8 @@ BOOLEAN IsUsbDp(
     return (Flags != 0) ? TRUE : FALSE;
 }
 
-/**
- * Attempt to match the Device path to the passed Device of type USB
- *
- * @param OptionDevicePath The device path to attempt to match
- * @param Device The device to attempt to match
- *
- * @retval TRUE The device path matches the device
- * @retval FALSE The device path does not match the device
- */
 BOOLEAN UsbClassDevicePathTest(
-    IN EFI_DEVICE_PATH_PROTOCOL *OptionDevicePath,
+    IN EFI_DEVICE_PATH_PROTOCOL *OptionDevicePath, 
     IN BOOT_DEVICE *Device
 )
 {
@@ -1155,25 +1264,25 @@ BOOLEAN UsbClassDevicePathTest(
                 UsbDp->DeviceSubClass == 0xff &&
                 UsbDp->DeviceProtocol == 0xff) ? TRUE : FALSE;
 
-	// We don't support matching of a USB Class device path node to a specific USB device.
-	// We only support blanket matching to any USB device as per
-    // the UEFI 2.4 specification, Section 3.1.2:
-    //"If any of the ID, Product ID, Device Class, Device Subclass, or Device Protocol contain all F's 
-    // (0xFFFF or 0xFF), this element is skipped for the purpose of matching."
+//TODO
+//add USB class specific comparison, once USB driver produces required device path node
 }
 
 #ifdef CSM_SUPPORT
-/**
- * Attempt to match the passed boot option device path to a boot device (of BBS type)
- *
- * @param OptionDevicePath The device path to attempt to match
- * @param Device The device to attempt to match it to
- *
- * @retval TRUE The device path matches the device
- * @retval FALSE The device path does not match the device
- *
- * @note  function only available, and used, if CSM_SUPPORT token is defined and enabled
- */
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   BbsDevicePathTest
+//
+// Description: 
+//
+// Input:       EFI_DEVICE_PATH_PROTOCOL *OptionDevicePath -
+//              BOOT_DEVICE *Device - 
+//
+// Output:      
+//
+// Note: function only available, and used, if CSM_SUPPORT token is defined and enabled
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 BOOLEAN BbsDevicePathTest(
 	EFI_DEVICE_PATH_PROTOCOL *OptionDevicePath, BOOT_DEVICE *Device
 ){
@@ -1185,15 +1294,6 @@ BOOLEAN BbsDevicePathTest(
 
 }
 
-/**
- * Go through the current BbsTable, passed in via the BbsEntry parameter, and attempt to find an entry
- * that matches the current entry
- *
- * @param BbdsIndex The current index of the BBS device
- * @param BbdsEntry Pointer to the BBS table
- *
- * @retval UINT8 The index that was matched
- */
 UINT8 GetBbsDeviceInstance(	UINT16 BbsIndex, BBS_TABLE *BbsEntry){
 	UINT8 Bus;
 	UINT8 Device;
@@ -1224,15 +1324,6 @@ UINT8 GetBbsDeviceInstance(	UINT16 BbsIndex, BBS_TABLE *BbsEntry){
     return BbsIndex - 1 - Index;
 }
 
-/**
- * Attempt to match the passed device path to a device for devices of type AMI_BBS_DEVICE_PATH
- *
- * @param OptionDevicePath The device path to attempt to match
- * @param Device The device to attempt to match
- *
- * @retval TRUE The device matches the device path
- * @retval FALSE The device patch does not match the device
- */
 BOOLEAN AmiBbsDevicePathTest(
 	EFI_DEVICE_PATH_PROTOCOL *OptionDevicePath, BOOT_DEVICE *Device
 ){
@@ -1253,16 +1344,18 @@ BOOLEAN AmiBbsDevicePathTest(
 }
 #endif
 
-/**
- * Attempt to match the passed device path to the device by calling all functions elinked into
- * the list of device path matching functions
- *
- * @param OptionDp The device path to attempt to match
- * @param Device The device to attempt to match
- *
- * @retval TRUE The device matches the device path
- * @retval FALSE The device patch does not match the device
- */
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   MatchDevicePathToDevice
+//
+// Description: 
+//
+// Input:       EFI_DEVICE_PATH_PROTOCOL *OptionDp -
+//              BOOT_DEVICE *Device - 
+//
+// Output:      
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 BOOLEAN MatchDevicePathToDevice(EFI_DEVICE_PATH_PROTOCOL *OptionDp, BOOT_DEVICE *Device){
 	UINT32 i;
 	for(i=0; DpMatchingFunction[i]!=NULL; i++)
@@ -1270,37 +1363,28 @@ BOOLEAN MatchDevicePathToDevice(EFI_DEVICE_PATH_PROTOCOL *OptionDp, BOOT_DEVICE 
 	return FALSE;
 }
 
-/**
- * Function to ensure that a UEFI boot option is not matched to a legacy boot device. This case occurs
- * especially with Floppy devices because of the lack of partition device paths for floppy devices
- *
- * @param Option The boot option
- * @param Device The boot device
- *
- * @return TRUE The boot option and boot device are a legacy device
- * @return FALSE The boot option and boot device are not a leagcy device
- */
 BOOLEAN MatchUefiFloppyDrive(BOOT_OPTION *Option, BOOT_DEVICE *Device){
     // This function makes sure that UEFI boot option is not matched
     // with the legacy boot device.
     // A legacy boot device is a device with a valid BbsIndex.
-    // A UEFI boot option is a boot option with FilePathList does not start
+    // A UEFI boot option is a boot option with FilePathList does not start 
     // with the BBS device path.
-    // When this function returns FALSE, the matching process fails.
+    // When this funciton returns FALSE, the matching process fails.
     // The function is executed via the BootOptionMatchingFunctions eLink.
     return Device->BbsIndex==INVALID_BBS_INDEX || IsLegacyBootOption(Option);
 }
 
-/**
- * Attemp to match the boot option to the boot device by calling all the matching functions
- * elinked inot the list of MatchingFunctions
- *
- * @param Option The boot option
- * @param Device The boot device
- *
- * @return TRUE The boot option and boot device are a legacy device
- * @return FALSE The boot option and boot device are not a leagcy device
- */
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   
+//
+// Description: 
+//
+// Input:       
+//
+// Output:      
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 BOOLEAN MatchBootOpionToDevice(BOOT_OPTION *Option, BOOT_DEVICE *Device){
 	UINT32 i;
     //all the functions have to return TRUE
@@ -1309,10 +1393,18 @@ BOOLEAN MatchBootOpionToDevice(BOOT_OPTION *Option, BOOT_DEVICE *Device){
 	return TRUE;
 }
 
-/**
- * After collecting all the boot devices, and reading all the existing boot options, go through both
- * lists and attempt to match each boot device to a boot option.
- */
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   MatchBootOptionsToDevices
+//
+// Description: 
+//
+// Input:       DLIST *BootOptionList - 
+//              DLIST *BootDeviceList - 
+//
+// Output:      
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID MatchBootOptionsToDevices(){
 	DLINK *OptionLink, *DeviceLink;
     BOOT_OPTION *Option;
@@ -1332,7 +1424,7 @@ VOID MatchBootOptionsToDevices(){
 				) pBS->FreePool(DpInstance);
 
 				OptionDp = (EFI_DEVICE_PATH_PROTOCOL*)((UINT8*)OptionDp+DPLength(OptionDp));
-			} while(   Option->FwBootOption && DpInstance==NULL
+			} while(   Option->FwBootOption && DpInstance==NULL 
 				    && (UINT8*)OptionDp<(UINT8*)Option->FilePathList+Option->FilePathListLength
 			);
 			if (DpInstance == NULL && MatchBootOpionToDevice(Option,Device)){
@@ -1348,10 +1440,6 @@ VOID MatchBootOptionsToDevices(){
 	}
 }
 
-/**
- * Go through the list of boot devices and delete entries for UEFI HDDs entries. These are considered
- * fixed media devices, according to the UEFI specification, and should not be dynamically recreated.
- */
 VOID DeleteUnmatchedUefiHddBootDevices(){
     BOOT_DEVICE *Device;
     DLINK *Link;
@@ -1363,16 +1451,17 @@ VOID DeleteUnmatchedUefiHddBootDevices(){
     }
 }
 
-/**
- * Get the parent Handle for the Block IO Handle passed. This is necessary because each
- * partition can have its own Block I/O instance that will just allow communicating with that
- * partition. This function will get the Block I/O Instance from the parent device that the partition
- * is encompassed by.
- *
- * @param BlockIoHandle The Block I/O Handle that may be from a partition
- *
- * @retval EFI_HANDLE The handle of the parent Block I/O Device
- */
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   GetPhysicalBlockIoHandle
+//
+// Description: 
+//
+// Input:       EFI_HANDLE *BlockIoHandle - 
+//
+// Output:      
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_HANDLE GetPhysicalBlockIoHandle(EFI_HANDLE BlockIoHandle){
     EFI_BLOCK_IO_PROTOCOL *BlkIo;
     EFI_DEVICE_PATH_PROTOCOL *DevicePath, *Dp;
@@ -1404,20 +1493,12 @@ EFI_HANDLE GetPhysicalBlockIoHandle(EFI_HANDLE BlockIoHandle){
             Handle, &gEfiBlockIoProtocolGuid, (VOID**)&BlkIo
         );
         if(EFI_ERROR(Status)) break;
-    }
+    } 
     if (Dp!=NULL && Dp!=DevicePath) pBS->FreePool(Dp);
     //if physical Block I/O handle is not found, return original handle
     return (BlkIo->Media->LogicalPartition) ? BlockIoHandle : Handle;
 }
 
-/**
- * Return the handle of the device for this child handle
- *
- * @param Handle The child handle
- * @param IpType The IP type (IP4/IP6) that this handle corresponds to.
- *
- * @return EFI_HANDLE the handle of the network controller itself.
- */
 EFI_HANDLE GetPhysicalNetworkCardHandle(EFI_HANDLE Handle, UINT8 *IpType){
     EFI_LOAD_FILE_PROTOCOL *LoadFile;
     EFI_DEVICE_PATH_PROTOCOL *DevicePath, *Dp;
@@ -1451,42 +1532,48 @@ EFI_HANDLE GetPhysicalNetworkCardHandle(EFI_HANDLE Handle, UINT8 *IpType){
             break;
         }
     }
-    return Handle;
+    return Handle;    
 }
 
-/**
- * Remove any trailing spaces from the passed parameter
- *
- * @param Name The string to remove the trailing spaces
- * @param NumberOfCharacters The number of characters in the string
- *
- * @retval the new length of the string
- */
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   RemoveTrailingSpaces
+//
+// Description: 
+//
+// Input:       CHAR16 *Name - 
+//              UINTN NumberOfCharacters -
+//
+// Output:      
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 UINTN RemoveTrailingSpaces(CHAR16 *Name, UINTN NumberOfCharacters){
     //remove trailing spaces
-    while(NumberOfCharacters>0 && Name[NumberOfCharacters-1]==L' ')
+    while(NumberOfCharacters>0 && Name[NumberOfCharacters-1]==L' ') 
         NumberOfCharacters--;
     Name[NumberOfCharacters]=0;
     return NumberOfCharacters;
 }
 
-/**
- * Create a string description for the boot option pointed to by BOOT_OPTION.
- *
- * @param Option The Boot option to create the string description
- * @param Name The buffer to fill with the description string
- * @param NameSize The size of the buffer for the description string
- *
- * @retval Number of Unicode characters printed into the Name buffer excluding the terminating zero.
- */
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   ConstructBootOptionNameByHandle
+//
+// Description: 
+//
+// Input:       BOOT_OPTION *Option - 
+//              CHAR16 *Name -
+//              UINTN NameSize - 
+//
+// Output:      
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 UINTN ConstructBootOptionNameByHandle(
     BOOT_OPTION *Option, CHAR16 *Name, UINTN NameSize
 ){
     EFI_HANDLE Handle;
     CHAR16 *ControllerName;
-    CHAR16 PrefixBuffer[20] = {L'\0'};
-    UINTN  PrefixSize = sizeof(PrefixBuffer)/sizeof(CHAR16);
-    CHAR16 *Prefix = PrefixBuffer;
+    CHAR16 *Prefix = L"";
     UINTN  NumberOfCharacters;
     UINT8  IpType;
 
@@ -1498,32 +1585,32 @@ UINTN ConstructBootOptionNameByHandle(
         EFI_HANDLE OldHandle = Handle;
         Handle = GetPhysicalNetworkCardHandle(Option->DeviceHandle,&IpType);
         if (Handle != OldHandle) {
-            if (   IpType == MSG_IPv4_DP
-                && EFI_ERROR(HiiLibGetString(HiiHandle, STRING_TOKEN(STR_IPV4_PREFIX), &PrefixSize, Prefix))
-            ) Prefix=L"IP4 ";
-            else if (    IpType == MSG_IPv6_DP 
-                      && EFI_ERROR(HiiLibGetString(HiiHandle, STRING_TOKEN(STR_IPV6_PREFIX), &PrefixSize, Prefix))
-            ) Prefix=L"IP6 ";
+            //TODO: use string token
+            if (IpType == MSG_IPv4_DP) Prefix=L"IP4 ";
+            else if (IpType == MSG_IPv6_DP) Prefix=L"IP6 ";
         }
     }
     if (!GetControllerName(Handle, &ControllerName)) return 0;
-
-    NumberOfCharacters = Swprintf_s(Name, NameSize, L"%s%s",Prefix, ControllerName);
+    NumberOfCharacters = Swprintf_s(Name, NameSize, L"%s%s",Prefix,ControllerName);
     return RemoveTrailingSpaces(Name, NumberOfCharacters);
 }
 
 #ifdef CSM_SUPPORT
-/**
- * Create a boot option description string from the BBS information for the passed boot option.
- *
- * @param Option The Boot option to create the string description
- * @param Name The buffer to fill with the description string
- * @param NameSize The size of the buffer for the description string
- *
- * @retval UINTN The length of the description string returned
- *
- * @note  function only available, and used, if CSM_SUPPORT token is defined and enabled
- */
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   ConstructBootOptionNameByBbsDescription
+//
+// Description: 
+//
+// Input:       BOOT_OPTION *Option -
+//              CHAR16 *Name - 
+//              UINTN NameSize - 
+//
+// Output:      
+//
+// Note: function only available, and used, if CSM_SUPPORT token is defined and enabled
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 UINTN ConstructBootOptionNameByBbsDescription(
     BOOT_OPTION *Option, CHAR16 *Name, UINTN NameSize
 ){
@@ -1550,16 +1637,20 @@ UINTN ConstructBootOptionNameByBbsDescription(
 }
 #endif
 
-/**
- * Create a device description string in the passed Name buffer by parsing the device
- * path and creating a string based upon the nodes encountered
- *
- * @param DevicePath The device path to use to create the description string
- * @param Name The buffer to fill with the description string
- * @param NameSize The size of the buffer for the description string
- *
- * @retval UINTN The length of the description string returned
- */
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   DevicePathToNameString
+//
+// Description: 
+//
+// Input:       EFI_DEVICE_PATH_PROTOCOL *DevicePath - 
+//              CHAR16 *Name - 
+//              UINTN NameSize - 
+//
+// Output:      
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 UINTN DevicePathToNameString(
     EFI_DEVICE_PATH_PROTOCOL *DevicePath, CHAR16 *Name, UINTN NameSize
 ){
@@ -1568,7 +1659,7 @@ UINTN DevicePathToNameString(
     UINTN BufferSize;
     UINTN NumberOfCharacters = 0;
 
-    for(  Dp = DevicePath; !(isEndNode(Dp)); Dp=NEXT_NODE(Dp)){
+    for(  Dp = DevicePath; !(isEndNode(Dp)); Dp=NEXT_NODE(Dp)){ 
         StrToken = DevicePathNodeToStrRef(Dp);
         BufferSize = (NameSize-NumberOfCharacters)*sizeof(CHAR16);
         if (   StrToken!= INVALID_STR_TOKEN
@@ -1583,19 +1674,24 @@ UINTN DevicePathToNameString(
             }
         }
     }//for ;
-    if (NumberOfCharacters !=0 ) Name[--NumberOfCharacters]=0; //override last space with the terminating zero
+    if (NumberOfCharacters !=0 ) Name[NumberOfCharacters]=0;
     return NumberOfCharacters;
 }
 
-/**
- * Create a device description string by parsing the device handle.
- *
- * @param Option The Boot option to create the string description
- * @param Name The buffer to fill with the description string
- * @param NameSize The size of the buffer for the description string
- *
- * @retval UINTN The length of the description string returned
-*/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   ConstructBootOptionNameByHandleDevicePath
+//
+// Description: 
+//
+// Input:       BOOT_OPTION *Option -
+//              CHAR16 *Name -
+//              UINTN NameSize -
+//
+// Output:      
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 UINTN ConstructBootOptionNameByHandleDevicePath(
     BOOT_OPTION *Option, CHAR16 *Name, UINTN NameSize
 ){
@@ -1610,31 +1706,41 @@ UINTN ConstructBootOptionNameByHandleDevicePath(
     return 0;
 }
 
-/**
- * Create a device description string by parsing the boot options device path.
- *
- * @param Option The Boot option to create the string description
- * @param Name The buffer to fill with the description string
- * @param NameSize The size of the buffer for the description string
- *
- * @retval UINTN The length of the description string returned
- */UINTN ConstructBootOptionNameByFilePathList(
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   ConstructBootOptionNameByFilePathList
+//
+// Description: 
+//
+// Input:       BOOT_OPTION *Option -
+//              CHAR16 *Name -
+//              UINTN NameSize -
+//
+// Output:      
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
+UINTN ConstructBootOptionNameByFilePathList(
     BOOT_OPTION *Option, CHAR16 *Name, UINTN NameSize
 ){
     if (Option->FilePathList == NULL) return 0;
     return DevicePathToNameString(Option->FilePathList, Name, NameSize);
 }
 
-/**
- * Create a device description string by calling all the functions linked into the BuildNameFunction
- * eLink list
- *
- * @param Option The Boot option to create the string description
- * @param Name The buffer to fill with the description string
- * @param NameSize The size of the buffer for the description string
- *
- * @retval Number of Unicode characters printed into the Name buffer excluding the terminating zero.
-*/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   ConstructBootOptionBaseName
+//
+// Description: 
+//
+// Input:       BOOT_OPTION *Option - 
+//              CHAR16 *Name -
+//              UINTN NameSize -
+//
+// Output:      
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 UINTN ConstructBootOptionBaseName(BOOT_OPTION *Option, CHAR16 *Name, UINTN NameSize){
     UINTN NumberOfCharacters;
 	UINT32 i;
@@ -1647,15 +1753,18 @@ UINTN ConstructBootOptionBaseName(BOOT_OPTION *Option, CHAR16 *Name, UINTN NameS
     return 0;
 }
 
-/**
- * Create a boot option name by calling the ConstructBootOptionNamePrefix, ConstructBootOptionNameSuffix,
- * and ConstructBootOptionBaseName. Combine all those into the device's Description string
- *
- * @param Option The boot option
- *
- * @retval UINTN The length of the string created
- */
-
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   ConstructBootOptionName
+//
+// Description: 
+//
+// Input:       BOOT_OPTION *Option -
+//
+// Output:      
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 UINTN ConstructBootOptionName(BOOT_OPTION *Option){
     CHAR16 Name[1024];
     UINTN Length = sizeof(Name)/sizeof(CHAR16);
@@ -1672,7 +1781,7 @@ UINTN ConstructBootOptionName(BOOT_OPTION *Option){
         UINTN BufferSize = Length*sizeof(CHAR16);
         if (EFI_ERROR(
                 HiiLibGetString(
-                    HiiHandle, STRING_TOKEN(STR_UNKNOWN), &BufferSize, &Name[NumberOfCharacters]
+                    HiiHandle, UnknownDeviceToken, &BufferSize, &Name[NumberOfCharacters]
                 )
         )){
             NumberOfCharacters += Swprintf_s(
@@ -1687,21 +1796,25 @@ UINTN ConstructBootOptionName(BOOT_OPTION *Option){
         Option, &Name[NumberOfCharacters], Length
     );
     //convert number of characters into string buffer size
-    Length = (NumberOfCharacters+1)*sizeof(CHAR16);
+    Length = (NumberOfCharacters+1)*sizeof(CHAR16);    
     Option->Description = Malloc(Length);
     MemCpy(Option->Description,Name,Length);
     return NumberOfCharacters;
 }
 
-/**
- * Create a description string for the device by reading the ATA serial number
- *
- * @param Option The boot option
- * @param Name The buffer to fill with the ATA serial number
- * @param NameSize The current index of the last character in the Name parameter
- *
- * @retval UINTN the new index of the last character in the Name parameter
- */
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   ConstructBootOptionNameBySerialNumber
+//
+// Description: 
+//
+// Input:       BOOT_OPTION *Option - 
+//              CHAR16 *Name -
+//              UINTN NameSize - 
+//
+// Output:      
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 UINTN ConstructAtaBootOptionNameBySerialNumber(
     BOOT_OPTION *Option, CHAR16 *Name, UINTN NameSize
 ){
@@ -1729,15 +1842,19 @@ UINTN ConstructAtaBootOptionNameBySerialNumber(
     return NumberOfCharacters;
 }
 
-/**
- * Create a description string for the device by reading the USB serial number
- *
- * @param Option The boot option
- * @param Name The buffer to fill with the USB serial number
- * @param NameSize The current index of the last character in the Name parameter
- *
- * @retval UINTN the new index of the last character in the Name parameter
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   ConstructUsbBootOptionNameBySerialNumber
+//
+// Description: 
+//
+// Input:       BOOT_OPTION *Option - 
+//              CHAR16 *Name -
+//              UINTN NameSize - 
+//
+// Output:      
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 UINTN ConstructUsbBootOptionNameBySerialNumber(
     BOOT_OPTION *Option, CHAR16 *Name, UINTN NameSize
 ){
@@ -1760,7 +1877,7 @@ UINTN ConstructUsbBootOptionNameBySerialNumber(
 	if(EFI_ERROR(Status)) return 0;
 
     if (DevDesc.StrSerialNumber) {
-            Status = UsbIo->UsbGetStringDescriptor(UsbIo, 0x0409, DevDesc.StrSerialNumber, &UsbSerialNumber);
+            Status = UsbIo->UsbGetStringDescriptor(UsbIo, 0x0409, DevDesc.StrSerialNumber, &UsbSerialNumber);      
 			if(EFI_ERROR(Status)) return 0;
 			pBS->CopyMem( Name, UsbSerialNumber, (Wcslen(UsbSerialNumber)+1)*2 );
 			NumberOfCharacters = Wcslen(UsbSerialNumber);
@@ -1769,15 +1886,18 @@ UINTN ConstructUsbBootOptionNameBySerialNumber(
 	return 0;
 }
 
-/**
- * Create a description string for the device by calling the Internal Build name functions
- *
- * @param Option The boot option
- * @param Name The buffer to fill with the boot option name
- * @param NameSize The current index of the last character in the Name parameter
- *
- * @retval UINTN the new index of the last character in the Name parameter
- */
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   ConstructInternalBootOptionName
+//
+// Description: 
+//
+// Input:       BOOT_OPTION *Option -
+//
+// Output:      
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 UINTN ConstructInternalBootOptionName(
     BOOT_OPTION *Option, CHAR16 *Name, UINTN NameSize
 ){
@@ -1801,16 +1921,18 @@ UINTN ConstructInternalBootOptionName(
     return 0;
 }
 
-/**
- * Create a description string for the by calling the internal helper functions
- * UpdateBootOptionWithBootDeviceInfo and ConstructInternalBootOptionName
- *
- * @param Device The boot device
- * @param Name The buffer to fill with the device name
- * @param NameSize The current index of the last character in the Name parameter
- *
- * @retval UINTN the new index of the last character in the Name parameter
- */
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   ConstructInternalDeviceName
+//
+// Description: 
+//
+// Input:       BOOT_OPTION *Option -
+//
+// Output:      
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 UINTN ConstructInternalDeviceName(
     BOOT_DEVICE *Device, CHAR16 *Name, UINTN NameSize
 ){
@@ -1824,16 +1946,6 @@ UINTN ConstructInternalDeviceName(
 	return ConstructInternalBootOptionName(&BootOption, Name, NameSize);
 }
 
-/**
- * Attempt to match the OptionDevicePath to the Boot Device by directly comparing
- * the device paths.
- *
- * @param OptionDevicePath The device path to test against the boot device
- * @param Device The boot device
- *
- * @retval TRUE The device path matches the boot device
- * @retval FALSE The device path does not match the boot device
- */
 BOOLEAN AmiDeviceNameDevicePathTest(
 	EFI_DEVICE_PATH_PROTOCOL *OptionDevicePath, BOOT_DEVICE *Device
 ){
@@ -1846,7 +1958,7 @@ BOOLEAN AmiDeviceNameDevicePathTest(
     if(    NameDp->Header.Header.Type != HARDWARE_DEVICE_PATH
         || NameDp->Header.Header.SubType != HW_VENDOR_DP
         || guidcmp(
-                &AmiDeviceNameDevicePathGuid,
+                &AmiDeviceNameDevicePathGuid, 
                 &NameDp->Header.Guid
            ) != 0
     ) return FALSE;
@@ -1856,23 +1968,37 @@ BOOLEAN AmiDeviceNameDevicePathTest(
     );
     if (NumberOfCharacters==0) return FALSE;
     //convert number of charcters into string buffer size
-    Size = (NumberOfCharacters+1)*sizeof(CHAR16);
-    return
+    Size = (NumberOfCharacters+1)*sizeof(CHAR16);    
+    return  
            Size == NODE_LENGTH(&NameDp->Header.Header)-sizeof(*NameDp)
         && !MemCmp(Name,NameDp+1,Size);
 }
 
-/**
- * Adds another device path to an array of boot option device paths
- *
- * @param FilePathListPtr
- *      On input, pointer to the current boot option FilePathList
- *      On output, pointer to the new FilePathList. Memory used by original FilePathList is deallocated.
- * @param FilePathListLength
- *      On input, pointer to the length of the current FilePathList
- *      On output, pointer to the length of the new FilePathList
- * @param DevicePath Device path to add to the FilePathList
- */
+//*************************************************************************
+//<AMI_PHDR_START>
+//
+// Name: AddDevicePathToFilePathList
+//
+// Description:
+//   Adds another device path to an array of boot option device paths
+//
+// Input:
+//   IN OUT EFI_DEVICE_PATH_PROTOCOL **FilePathListPtr
+//      On input, pointer to the current boot option FilePathList
+//      On output, pointer to the new FilePathList. Memory used by original FilePathList is deallocated.
+//
+//   IN OUT UINTN *FilePathListLength,
+//      On input, pointer to the length of the current FilePathList
+//      On output, pointer to the length of the new FilePathList
+//
+//   IN EFI_DEVICE_PATH_PROTOCOL *DevicePath
+//      Device path to add to the FilePathList
+//
+// Output:
+//  VOID
+//
+//<AMI_PHDR_END>
+//*************************************************************************
 VOID AddDevicePathToFilePathList(
     EFI_DEVICE_PATH_PROTOCOL **FilePathListPtr, UINTN *FilePathListLength,
     EFI_DEVICE_PATH_PROTOCOL *DevicePath
@@ -1881,40 +2007,44 @@ VOID AddDevicePathToFilePathList(
 	UINTN DevicePathLength;
 	EFI_DEVICE_PATH_PROTOCOL *NewFilePathList;
 
-    if (   FilePathListPtr == NULL
-        || FilePathListLength == NULL
+    if (   FilePathListPtr == NULL 
+        || FilePathListLength == NULL 
         || DevicePath == NULL
     ) return;
 
     DevicePathLength = DPLength(DevicePath);
     if (*FilePathListPtr == NULL) *FilePathListLength = 0;
-
+    
 	NewFilePathList = Malloc(*FilePathListLength + DevicePathLength);
     if ( *FilePathListPtr != NULL ){
 	    MemCpy(NewFilePathList, *FilePathListPtr, *FilePathListLength);
         pBS->FreePool(*FilePathListPtr);
     }
 	MemCpy(
-        (UINT8*)NewFilePathList+*FilePathListLength,
+        (UINT8*)NewFilePathList+*FilePathListLength, 
         DevicePath, DevicePathLength
     );
     *FilePathListLength += DevicePathLength;
 	*FilePathListPtr = NewFilePathList;
 }
 
-/**
- * Create a new device path for the boot option by copying the handle's device path
- *
- * @param Option The boot option to crate a device path
- *
- * @retval TRUE The device path was created
- * @retval FALSE The device path was not created
- */
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   BuildEfiFilePath
+//
+// Description: 
+//
+// Input:       BOOT_OPTION *Option - 
+//
+// Output:      
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 BOOLEAN BuildEfiFilePath(BOOT_OPTION *Option){
 	EFI_DEVICE_PATH_PROTOCOL *Dp;
 	EFI_STATUS Status;
 
-    if (   Option->FilePathList!=NULL
+    if (   Option->FilePathList!=NULL 
         || Option->BbsEntry != NULL
         || Option->DeviceHandle == INVALID_HANDLE
     ) return FALSE;
@@ -1926,16 +2056,19 @@ BOOLEAN BuildEfiFilePath(BOOT_OPTION *Option){
 }
 
 #ifdef CSM_SUPPORT
-/**
- * Build a legacy device path for this device by parsing the device's actual device path
- *
- * @param Option The boot option to create a device path for
- *
- * @retval TRUE The device path was created
- * @retval FALSE The device path was not created
- *
- * @note  function only available, and used, if CSM_SUPPORT token is defined and enabled
- */
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   BuildLegacyFilePath
+//
+// Description: 
+//
+// Input:       BOOT_OPTION *Option - 
+//
+// Output:      
+//
+// Note: function only available, and used, if CSM_SUPPORT token is defined and enabled
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 BOOLEAN BuildLegacyFilePath(BOOT_OPTION *Option){
     static struct {
 		BBS_BBS_DEVICE_PATH bbs;
@@ -1956,23 +2089,26 @@ BOOLEAN BuildLegacyFilePath(BOOT_OPTION *Option){
 	return TRUE;
 }
 
-/**
- * Build a AMI BBS Device Path instance for this boot option
- *
- * @param Option Boot option to create an AMI BBS device path instance for
- *
- * @retval TRUE The device path was created
- * @retval FALSE The device path was not created
- *
- * @note  function only available, and used, if CSM_SUPPORT token is defined and enabled
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   BuildLegacyLocationFilePath
+//
+// Description: 
+//
+// Input:       BOOT_OPTION *Option - 
+//
+// Output:      
+//
+// Note: function only available, and used, if CSM_SUPPORT token is defined and enabled
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 BOOLEAN BuildLegacyLocationFilePath(BOOT_OPTION *Option){
     static struct {
 		AMI_BBS_DEVICE_PATH amibbs;
 		EFI_DEVICE_PATH_PROTOCOL end;
 	} AmiBbsDpTemplate = {
 		{
-		    {
+		    { 
               { HARDWARE_DEVICE_PATH, HW_VENDOR_DP, sizeof(AMI_BBS_DEVICE_PATH) },
 		      AMI_BBS_DEVICE_PATH_GUID
             },
@@ -1983,8 +2119,8 @@ BOOLEAN BuildLegacyLocationFilePath(BOOT_OPTION *Option){
 
     EFI_DEVICE_PATH_PROTOCOL *Dp;
 
-    if (Option->BbsEntry == NULL) return FALSE;
-	if (   Option->DeviceHandle == INVALID_HANDLE
+    if (Option->BbsEntry == NULL) return FALSE;    
+	if (   Option->DeviceHandle == INVALID_HANDLE 
         || EFI_ERROR(pBS->HandleProtocol(Option->DeviceHandle, &gEfiDevicePathProtocolGuid, &Dp))
     ){
         Dp = &AmiBbsDpTemplate.amibbs.Header.Header;
@@ -2002,17 +2138,21 @@ BOOLEAN BuildLegacyLocationFilePath(BOOT_OPTION *Option){
 }
 #endif
 
-/**
- * Build a device path name for this device by calling the ConstructInternalBootOptionName function
- *
- * @param Option The boot option to create a device path for
- *
- * @retval TRUE The device path was created
- * @retval FALSE The device path was not created
- */
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   BuildNameFilePath
+//
+// Description: 
+//
+// Input:       BOOT_OPTION *Option - 
+//
+// Output:      
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 BOOLEAN BuildNameFilePath(BOOT_OPTION *Option){
 	static AMI_DEVICE_NAME_DEVICE_PATH AmiNameDpTemplate = {
-        {
+        { 
             { HARDWARE_DEVICE_PATH, HW_VENDOR_DP, sizeof(AMI_DEVICE_NAME_DEVICE_PATH) },
             AMI_DEVICE_NAME_DEVICE_PATH_GUID
         }
@@ -2033,10 +2173,10 @@ BOOLEAN BuildNameFilePath(BOOT_OPTION *Option){
     );
     if (NumberOfCharacters==0) return FALSE;
     //convert number of charcters into string buffer size
-    Size = (NumberOfCharacters+1)*sizeof(CHAR16);
+    Size = (NumberOfCharacters+1)*sizeof(CHAR16);    
 
     Dp = Malloc(sizeof(AmiNameDpTemplate)+Size+sizeof(EndOfDevicePathNode));
-    ASSERT(Dp!=NULL);
+    ASSERT(Dp!=NULL)
     if (Dp==NULL) return FALSE;
     NameDp = (AMI_DEVICE_NAME_DEVICE_PATH*)Dp;
 
@@ -2051,14 +2191,18 @@ BOOLEAN BuildNameFilePath(BOOT_OPTION *Option){
     return TRUE;
 }
 
-/**
- * Build a device path name for this device by calling the BuildFilePathFunctions elink list
- *
- * @param Option The boot option to create a device path for
- *
- * @retval TRUE The device path was created
- * @retval FALSE The device path was not created
- */
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   BuildBootOptionFilePath
+//
+// Description: 
+//
+// Input:       BOOT_OPTION *Option - 
+//
+// Output:      
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 BOOLEAN BuildBootOptionFilePath(BOOT_OPTION *Option){
 	UINT32 i;
     BOOLEAN FilePathCreated = FALSE;
@@ -2069,10 +2213,19 @@ BOOLEAN BuildBootOptionFilePath(BOOT_OPTION *Option){
     return FilePathCreated;
 }
 
-/**
- * Create boot options for the the newly discovered boot devices that have not been matched to
- * existing boot options
- */
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   CreateBootOptionsForNewBootDevices
+//
+// Description: 
+//
+// Input:       DLIST *BootOptionList - 
+//              DLIST *BootDeviceList -
+//
+// Output:      
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID CreateBootOptionsForNewBootDevices(){
 	DLINK *Link;
     BOOT_DEVICE *Device;
@@ -2091,15 +2244,23 @@ VOID CreateBootOptionsForNewBootDevices(){
     DUMP_BOOT_OPTION_LIST(BootOptionList,"Before Processing");
 }
 
-/**
- * If normalization is enabled, regenerates all the description strings and/or file path lists instead
- * of attempting to rely on the information that was read out the boot options
- */
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   NormalizeBootOptions
+//
+// Description: If normalization is enabled, regenerates all the description strings
+//              and/or file path lists
+//
+// Input:       none
+//
+// Output:      none
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID NormalizeBootOptions(){
     DLINK *Link;
     BOOT_OPTION *Option;
 
-    // Normalize boot options
+    // Normalize boot options 
 	//(regenerate the description string and the file path list)
     FOR_EACH_BOOT_OPTION(BootOptionList,Link,Option){
 		if (   !Option->FwBootOption || !IsBootOptionWithDevice(Option)
@@ -2122,21 +2283,27 @@ VOID NormalizeBootOptions(){
 	        CHAR16 *OldDescription = Option->Description;
             Option->Description = NULL;
 		    ConstructBootOptionName(Option);
-            if (Option->Description == NULL)
+            if (Option->Description == NULL) 
                 Option->Description = OldDescription;
-            else if (OldDescription != NULL)
+            else if (OldDescription != NULL) 
                 pBS->FreePool(OldDescription);
         }
 	}
 }
 
-/**
- * Debug function to dump the current BootOptionList (in the order its encountered) and output the
- * information for debugging
- *
- * @param BootOptionList Pointer to the list of boot options
- * @param ListCaption The caption to output to describe this list
- */
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   DumpBootOptionList
+//
+// Description: 
+//
+// Input:       DLIST *BootOptionList -
+//              CHAR8 *ListCaption - 
+//
+// Output:      
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID DumpBootOptionList(DLIST *BootOptionList, CHAR8 *ListCaption){
 	DLINK *Link;
     BOOT_OPTION *Option;
@@ -2159,13 +2326,18 @@ VOID DumpBootOptionList(DLIST *BootOptionList, CHAR8 *ListCaption){
     }
 }
 
-/**
- * Return the required size to store this boot option
- *
- * @param Option Pointer to the boot option
- *
- * @retval UINTN The size required to store this boot option
- */
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   GetBootOptionPackedSize
+//
+// Description: 
+//
+// Input:       BOOT_OPTION *Option - 
+//
+// Output:      
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 UINTN GetBootOptionPackedSize(BOOT_OPTION *Option){
 	return
 		  sizeof(EFI_LOAD_OPTION)
@@ -2174,15 +2346,19 @@ UINTN GetBootOptionPackedSize(BOOT_OPTION *Option){
 		+ Option->OptionalDataSize;
 }
 
-/**
- * Using the passed NvramOption as a starting point, pack the passed Option into the OptionalData area of the
- * NvramOption. Return a pointer to the new memory.
- *
- * @param Option The Boot Option to pack behind the NvramOption
- * @param NvramOption The start of the NvramOption
- *
- * @return Pointer to the new memory
- */
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   PackBootOption
+//
+// Description: 
+//
+// Input:       BOOT_OPTION *Option - 
+//              EFI_LOAD_OPTION *NvramOption - 
+//
+// Output:      
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID* PackBootOption(BOOT_OPTION *Option, EFI_LOAD_OPTION *NvramOption){
 		UINTN DescriptionSize;
 		UINT8 *Ptr;
@@ -2197,10 +2373,18 @@ VOID* PackBootOption(BOOT_OPTION *Option, EFI_LOAD_OPTION *NvramOption){
 		return Ptr;
 }
 
-/**
- * Save the boot options into NVRAM as L"BootXXXX" variables, and then update the
- * L"BootOrder" NVRAM Variable
- */
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   SaveBootOptions
+//
+// Description: 
+//
+// Input:       DLIST *BootOptionList - 
+//
+// Output:      
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID SaveBootOptions(){
 	UINTN BootOrderSize;
 	UINT16 *BootOrder;
@@ -2225,8 +2409,8 @@ VOID SaveBootOptions(){
 		EFI_STATUS Status;
 		BOOLEAN HasNestedOptions = FALSE;
 
-        //Make sure the boot option is well-formed
-        if(    Option->FilePathListLength == 0
+        //Meke sure the boot option is well-formed
+        if(    Option->FilePathListLength == 0 
             || Option->FilePathList == NULL
             || Option->BootOptionNumber == INVALID_BOOT_OPTION_NUMBER
         ){
@@ -2244,7 +2428,7 @@ VOID SaveBootOptions(){
             FOR_EACH_LIST_ELEMENT(Option->Link.pNext, TmpLink, NestedOption, BOOT_OPTION){
 				if (Option->BootOptionNumber != NestedOption->BootOptionNumber)
                     break;
-				NvramOptionSize +=   AMI_NESTED_BOOT_OPTION_HEADER_SIZE +
+				NvramOptionSize +=   AMI_NESTED_BOOT_OPTION_HEADER_SIZE + 
 				                   + GetBootOptionPackedSize(NestedOption)
                                    + sizeof(UINT32); //signature;
                 //TRACE((-1,"Nested(%X) size loop: size=%X\n",Option->BootOptionNumber,NvramOptionSize));
@@ -2254,7 +2438,7 @@ VOID SaveBootOptions(){
 		NvramOption = Malloc(NvramOptionSize);
 		Ptr = PackBootOption(Option,NvramOption);
 		if (Option->FwBootOption){
-			if (HasNestedOptions || Option->GroupHeader)
+			if (HasNestedOptions)
 				WriteUnaligned32((UINT32*)Ptr,AMI_GROUP_BOOT_OPTION_SIGNATURE);
 			else
 				WriteUnaligned32((UINT32*)Ptr,AMI_SIMPLE_BOOT_OPTION_SIGNATURE);
@@ -2263,7 +2447,7 @@ VOID SaveBootOptions(){
             if (HasNestedOptions){
                 FOR_EACH_LIST_ELEMENT(Option->Link.pNext, TmpLink, NestedOption, BOOT_OPTION){
     				NESTED_BOOT_OPTION *NestedPackedOption;
-
+    
     				if (Option->BootOptionNumber != NestedOption->BootOptionNumber)
                         break;
     				NestedPackedOption = (NESTED_BOOT_OPTION*)Ptr;
@@ -2290,7 +2474,7 @@ VOID SaveBootOptions(){
 			);
 		}
         //TRACE((-1,"Saving %d: %X; %X; ods=%d\n",Option->BootOptionNumber,Ptr+Option->OptionalDataSize,(UINT8*)NvramOption+NvramOptionSize,Option->OptionalDataSize));
-		ASSERT(Ptr+Option->OptionalDataSize == (UINT8*)NvramOption+NvramOptionSize);
+		ASSERT(Ptr+Option->OptionalDataSize == (UINT8*)NvramOption+NvramOptionSize) 
 		Swprintf(BootStr,L"Boot%04X",Option->BootOptionNumber);
 		Status = pRS->SetVariable(
 			BootStr, &EfiVariableGuid,
@@ -2310,9 +2494,19 @@ VOID SaveBootOptions(){
 	pBS->FreePool(BootOrder);
 }
 
-/**
- * This function initializes the global variables. Must be called before any other boot option processing function can be used.
-*/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   UpdateBootOptionVariables
+//
+// Description: This function initializes the global variables.
+//              Must be called before any other boot option processing function can be used.
+//
+// Input:       none
+//
+// Output:      none
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID UpdateBootOptionVariables(){
     LoadStrings(TheImageHandle, &HiiHandle);
 	DListInit(BootOptionList);
@@ -2321,7 +2515,7 @@ VOID UpdateBootOptionVariables(){
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2013, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **

@@ -26,8 +26,6 @@ Intel Corporation.
 **/
 #include "PchInit.h"
 
-#define SATA_DISDEVSLP_547178_WORKAROUND          1
-
 EFI_STATUS
 ConfigureSataAhci (
   DXE_PCH_PLATFORM_POLICY_PROTOCOL    *PchPlatformPolicy,
@@ -209,26 +207,6 @@ ConfigureSata (
     }
   }
 
-  /// AMI_OVERRIDE - EIP162262 >>
-  /// Disabled native IDE controller if system do not connect SATA HDD on the port. >>
-  ///
-  /// If there is no device connected to any SATA port and hot plug function is disabled,
-  /// then disable SATA controller.
-  ///
-  if (SataPortsEnabled == 0) {
-    DEBUG ((EFI_D_ERROR | EFI_D_INFO, "Putting SATA into D3 Hot State.\n"));
-    MmioOr32 ((UINTN) (PciD19F0RegBase + R_PCH_SATA_PMCS), B_PCH_SATA_PMCS_PS);
-    S3BootScriptSaveMemWrite (
-      EfiBootScriptWidthUint32,
-      (UINTN) (PciD19F0RegBase + R_PCH_SATA_PMCS),
-      1,
-      (VOID *) (UINTN) (PciD19F0RegBase + R_PCH_SATA_PMCS)
-      );
-    *FuncDisableReg |= B_PCH_PMC_FUNC_DIS_SATA;
-    return EFI_SUCCESS;
-  }
-  /// AMI_OVERRIDE - EIP162262 <<
-  
   ///
   /// Set MAP register
   /// Set D19:F0 MAP[13:8] to 1b if SATA Port 0/1 is disabled
@@ -832,21 +810,6 @@ ConfigureSataAhci (
       1,
       &DwordReg
       );
-
-#if SATA_DISDEVSLP_547178_WORKAROUND
-	//Disable DevSleep
-    MmioAnd32 (
-      (UINTN) (AhciBar + (R_PCH_SATA_AHCI_PXDEVSLP0 + (0x80 * Index))),
-      (UINT32)~(B_PCH_SATA_AHCI_PXDEVSLP1_DSP)
-      );
-    DwordReg = MmioRead32 (AhciBar + (R_PCH_SATA_AHCI_PXDEVSLP0 + (0x80 * Index)));
-    S3BootScriptSaveMemWrite (
-      EfiBootScriptWidthUint32,
-      (UINTN) (AhciBar + (R_PCH_SATA_AHCI_PXDEVSLP0 + (0x80 * Index))),
-      1,
-      &DwordReg
-      );
-#endif
   }
 
   ///

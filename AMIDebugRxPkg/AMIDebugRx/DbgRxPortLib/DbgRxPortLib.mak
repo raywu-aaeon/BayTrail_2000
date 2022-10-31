@@ -1,7 +1,7 @@
 #**********************************************************************
 #**********************************************************************
 #**                                                                  **
-#**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+#**        (C)Copyright 1985-2011, American Megatrends, Inc.         **
 #**                                                                  **
 #**                       All Rights Reserved.                       **
 #**                                                                  **
@@ -13,19 +13,15 @@
 #**********************************************************************
 
 #**********************************************************************
-# $Header: /AptioV/BIN/AMIDebugRx/DbgRxPortLib/DbgRxPortLib.mak 4     12/31/14 6:22p Sudhirv $
+# $Header: $
 #
-# $Revision: 4 $
+# $Revision: $
 #
-# $Date: 12/31/14 6:22p $
+# $Date: $
 #**********************************************************************
 # Revision History
 # ----------------
-# $Log: /AptioV/BIN/AMIDebugRx/DbgRxPortLib/DbgRxPortLib.mak $
-# 
-# 4     12/31/14 6:22p Sudhirv
-# Updated for AMI Debug for UEFI 3.01.0016 Label
-# 
+# $Log: $
 # 
 # 
 #**********************************************************************
@@ -42,13 +38,6 @@
 #-----------------------------------------------------------------------
 #<AMI_FHDR_END>
 #**********************************************************************
-# Make sure that Debugger and USBRedirection modules are not enabled togather
-ifeq ("$(AMI_DEBUGGER_SUPPORT)", "1")
-  ifeq ("$(USB_REDIRECTION_SUPPORT)", "1")
-    $(error  AMI_DEBUGGER_SUPPORT requires the USB_REDIRECTION_SUPPORT SDL token to be 0)
-  endif
-endif
-
 Prepare : $(BUILD_DIR)/PEIDbgRxPortELink.h
 
 $(BUILD_DIR)/PEIDbgRxPortELink.h :  $(BUILD_DIR)/token.mak
@@ -59,7 +48,7 @@ $(BUILD_DIR)/PEIDbgRxPortELink.h :  $(BUILD_DIR)/token.mak
 #**********************************************************************
 #**********************************************************************
 #**                                                                  **
-#**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+#**        (C)Copyright 1985-2011, American Megatrends, Inc.         **
 #**                                                                  **
 #**                       All Rights Reserved.                       **
 #**                                                                  **

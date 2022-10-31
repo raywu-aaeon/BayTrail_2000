@@ -5,7 +5,6 @@
 	RefName = "AmiPkg"
 [files]
 "AmiPkg.dec"
-"AmiPkg.chm"
 [parts]
 "AmiPkg.Configuration"
 "AmiPkg.Build"

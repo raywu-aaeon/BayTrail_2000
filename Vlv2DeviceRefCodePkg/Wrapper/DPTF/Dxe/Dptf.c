@@ -811,31 +811,24 @@ DptfDriverEntry(
 VOID
 SocThermInit ()
 {
-  UINT8 AUX2;
-  UINT8 AUX3;
-  UINT8 TjMax;
-  UINT8 Therm_point_2x = 0x55;
-  
+  UINT8 AUX3 = 0, TjMax = 90;
 #define MSR_CPU_THERM_TEMPERATURE       0x1a2
 
   TjMax = RShiftU64(AsmReadMsr64(MSR_CPU_THERM_TEMPERATURE), 16) & 0xFF;
-  
-  if((UINT8)gDptfDrvData.CpuParticipantCriticalTemperature > TjMax){
-    AUX3 = 0; //SETUP option is not used
-  }else{
-    AUX3 = TjMax - (UINT8)gDptfDrvData.CpuParticipantCriticalTemperature; // SETUP option is used
-  }
-  AUX2 = TjMax - Therm_point_2x;
+  if (TjMax == 127) TjMax = 90;
 
-  MsgBus32Write(VLV_PUNIT, PUNIT_PTMC, 0x0003070C);// enable AUX3 and AUX2
+  AUX3 = (UINT8)(gDptfDrvData.CpuParticipantCriticalTemperature > TjMax ? TjMax : gDptfDrvData.CpuParticipantCriticalTemperature);
+  AUX3 = TjMax - AUX3;
+
+  MsgBus32Write(VLV_PUNIT, PUNIT_PTMC, 0x00030708);
   MsgBus32Write(VLV_PUNIT, PUNIT_GFXT, 0x0000C000);
   MsgBus32Write(VLV_PUNIT, PUNIT_VEDT, 0x00000004);
   MsgBus32Write(VLV_PUNIT, PUNIT_ISPT, 0x00000004);
   // Program PTPS according to the DTS critical temperature 
   //MsgBus32Write(VLV_PUNIT, PUNIT_PTPS, 0x00000000);
-  MsgBus32Write(VLV_PUNIT, PUNIT_PTPS, (AUX3<<24)|(AUX2<<16)); // program AUX3 and AUX2
-  MsgBus32Write(VLV_PUNIT, PUNIT_TE_AUX2, 0x00000001);
-  MsgBus32Write(VLV_PUNIT, PUNIT_TTE_VRIccMax, 0x00061028);
+  MsgBus32Write(VLV_PUNIT, PUNIT_PTPS, AUX3 << 24);
+  MsgBus32Write(VLV_PUNIT, PUNIT_TE_AUX3, 0x00061029);
+  MsgBus32Write(VLV_PUNIT, PUNIT_TTE_VRIccMax, 0x00061029);
   MsgBus32Write(VLV_PUNIT, PUNIT_TTE_VRHot, 0x00061029);
   MsgBus32Write(VLV_PUNIT, PUNIT_TTE_XXPROCHOT, 0x00061029);
   MsgBus32Write(VLV_PUNIT, PUNIT_TTE_SLM0, 0x00001029);

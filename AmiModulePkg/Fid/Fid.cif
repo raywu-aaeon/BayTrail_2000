@@ -3,9 +3,8 @@
 	category = ModulePart
 	LocalRoot = "AmiModulePkg\Fid\"
 	RefName = "AmiModulePkg.Fid"
-[INF]
-"Fid.inf"
 [files]
 "Fid.sdl"	
-"Fid.chm"	
+[INF]
+"Fid.inf"
 <endComponent>

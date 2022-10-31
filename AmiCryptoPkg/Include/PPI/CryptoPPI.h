@@ -12,11 +12,15 @@
 //**********************************************************************
 //**********************************************************************
 
-/** @file
-   CryptoPPI.h
-   AMI Digital Signature PPI Protocol Definition
-**/
-
+//**********************************************************************
+//<AMI_FHDR_START>
+//
+// Name:  CryptoPPI.h
+//
+// Description:	AMI Digital Signature Protocol Definition
+//
+//<AMI_FHDR_END>
+//**********************************************************************
 #ifndef ___AMI_DIGITAL_SIGNATURE_PEI__H__
 #define ___AMI_DIGITAL_SIGNATURE_PEI__H__
 
@@ -24,7 +28,21 @@
 extern "C" {
 #endif
 
-#include <Library/CryptLib.h>
+// Flags to define type of signature to process
+#define EFI_CRYPT_RSASSA_PKCS1V15     1
+#define EFI_CRYPT_RSASSA_PSS          2
+
+///
+/// SHA-1 digest size in bytes.
+///
+#define SHA1_DIGEST_SIZE    20
+///
+/// SHA-256 digest size in bytes
+///
+#define SHA256_DIGEST_SIZE  32
+
+#define DEFAULT_RSA_KEY_MODULUS_LEN 256 // 2048 bits
+#define DEFAULT_RSA_SIG_LEN DEFAULT_RSA_KEY_MODULUS_LEN // This is true as long as > data
 
 #define AMI_DIGITAL_SIGNATURE_PPI_GUID \
     { 0x86c29aa5, 0xdb0, 0x4343, 0xbd, 0x52, 0x7a, 0x72, 0x9f, 0x37, 0xc9, 0x6d }
@@ -89,16 +107,13 @@ EFI_STATUS
   OUT UINT8                  *Hash
   );    
 
-struct _AMI_CRYPT_DIGITAL_SIGNATURE_PPI {
+typedef struct _AMI_CRYPT_DIGITAL_SIGNATURE_PPI  {
   PEI_CRYPT_DS_HASH           Hash;
   PEI_CRYPT_DS_VERIFY_KEY     VerifyKey; // compares Key with Platform Signing key(PKpub)
   PEI_CRYPT_DS_VERIFY_SIG     VerifySig;
   PEI_CRYPT_DS_GET_KEY        GetKey;  
   PEI_CRYPT_DS_VERIFY_PKCS7SIG   VerifyPkcs7Sig;
 };
-
-extern EFI_GUID gAmiDigitalSignaturePPIGuid;
-
 /****** DO NOT WRITE BELOW THIS LINE *******/
 #ifdef __cplusplus
 }

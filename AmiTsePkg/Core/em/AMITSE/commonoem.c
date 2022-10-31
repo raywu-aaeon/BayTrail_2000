@@ -2,7 +2,7 @@
 //*****************************************************************//
 //*****************************************************************//
 //**                                                             **//
-//**         (C)Copyright 2015, American Megatrends, Inc.        **//
+//**         (C)Copyright 2011, American Megatrends, Inc.        **//
 //**                                                             **//
 //**                     All Rights Reserved.                    **//
 //**                                                             **//
@@ -24,10 +24,15 @@
 //*****************************************************************//
 //*****************************************************************//
 //*****************************************************************//
-/** @file commonoem.c
-    contains default implementation of TSE hooks
-
-**/
+//<AMI_FHDR_START>
+//----------------------------------------------------------------------------
+//
+// Name:		Commonoem.c
+//
+// Description:	contains default implementation of TSE hooks
+//
+//----------------------------------------------------------------------------
+//<AMI_FHDR_END>
 
 #ifdef TSE_FOR_APTIO_4_50
 
@@ -36,7 +41,6 @@
 #include <Protocol/SimpleTextIn.h>
 #include <Protocol/EfiOemBadging.h>
 #include <Protocol/AMIPostMgr.h>
-#include <Protocol/EsaTseInterfaces.h>
 #include "AMITSEStrTokens.h"
 #include "AMITSEElinks.h"
 #include <AmiDxeLib.h>
@@ -51,20 +55,6 @@ typedef struct {
 } AMI_EFI_KEY_DATA;
 #endif
 #endif
-
-#pragma pack (1)
-#ifndef _TSE_EFI_IFR_FORM_SET
-#define _TSE_EFI_IFR_FORM_SET
-typedef struct _TSE_EFI_IFR_FORM_SET {
-  EFI_IFR_OP_HEADER        Header;
-  EFI_GUID                 Guid;
-  EFI_STRING_ID            FormSetTitle;
-  EFI_STRING_ID            Help;
-  UINT8                    Flags;
-  EFI_GUID                 ClassGuid[1];
-} TSE_EFI_IFR_FORM_SET;
-#endif
-#pragma pack ()
 
 #if TSE_USE_AMI_EFI_KEYCODE_PROTOCOL
 EFI_GUID gAmiEfiKeycodeProtocolGuid = AMI_EFIKEYCODE_PROTOCOL_GUID;
@@ -95,6 +85,14 @@ EfiLibAllocateZeroPool (
 #define CHAR_TAB              0x0009
 #define CHAR_LINEFEED         0x000A
 #define CHAR_CARRIAGE_RETURN  0x000D
+
+//EIP120622 >>
+#define EFI_TPL_DRIVER                 6
+#define EFI_TPL_APPLICATION         4
+#define EFI_TPL_CALLBACK            8
+#define EFI_TPL_NOTIFY              16
+#define EFI_TPL_HIGH_LEVEL          31
+//EIP120622 <<
 
 #ifndef SCAN_NULL
 #define SCAN_NULL       EFI_SCAN_NULL
@@ -205,7 +203,7 @@ EfiLibAllocateZeroPool (
 #include "TseElinks.h"
 #include "AMIVfr.h"
 #if MINISETUP_MOUSE_SUPPORT
-#include "Include/Protocol/MouseProtocol.h"
+#include "Include\Protocol\MouseProtocol.h"
 extern DXE_MOUSE_PROTOCOL *TSEMouse;
 #endif
 #include <setupdata.h>
@@ -243,9 +241,6 @@ typedef struct _HII_FORM_ADDRESS
 HII_FORM_ADDRESS RootPageList[] = {	AMITSE_SUBPAGE_AS_ROOT_PAGE_LIST { NULL_GUID, 0, NULL}, };
 HII_FORM_ADDRESS HiddenPageList[] = { AMITSE_HIDDEN_PAGE_LIST { NULL_GUID, 0, NULL}, };
 HII_FORM_ADDRESS RootPageOrder[] = { AMITSE_ROOT_PAGE_ORDER  };
-EFI_GUID gSuppressDynamicFormsetList[] = { AMITSE_SUPPRESS_DYNAMIC_FORMSET_LIST NULL_GUID };
-EFI_GUID gFormSetClassGuidList[] = {AMITSE_FILTER_CLASSGUID_FORMSETS, NULL_GUID};
-VAR_DYNAMICPARSING_HANDLESUPPRESS gHandleSuppressVarList [] = {AMITSE_DYNAMICPARSING_HANDLE_SUPPRESS_LIST {NULL_GUID, ""}};
 
 extern BOOLEAN
 EfiCompareGuid (
@@ -280,35 +275,33 @@ VOID StopClickEvent(VOID);
 VOID TSEStringReadLoopExitHook(VOID);
 VOID MouseStop(VOID);
 VOID MouseRefresh(VOID);
-VOID SwitchToPostScreenHook(VOID);
+VOID SwitchToPostScreenHook(VOID);//EIP-111415 SwitchToPostScreenHook
 
-VOID UpdateGoPUgaDraw (VOID);
-extern BOOLEAN   IsWaitForKeyEventSupport (VOID);
-
+//EIP81959
 #ifndef KEY_STATE_EXPOSED
 #define KEY_STATE_EXPOSED   0x40
 #endif
-static BOOLEAN gPostScreenMsg = FALSE;
+static BOOLEAN gPostScreenMsg = FALSE;				//EIP 84199 ProcessConInAvailability needs protection against getting called twice
 
 BOOLEAN gIsRootPageOrderPresent = FALSE;
 //UINT16 *gRootPageOrder;
 HII_FORM_ADDRESS *gRootPageOrder;
 UINT16 gRootPageOrderIndex = 0;
-UINTN	CurrentScreenresolutionX, CurrentScreenresolutionY;
-extern UINTN gPostStatus;
-extern BOOLEAN gOsRecoverySupported;
-extern BOOLEAN gPlatformRecoverySupported;
-extern BOOLEAN IsTSEGopNotificationSupport();
-/**
-    This function is the generic implementation of
-    drawing quiet boot logo. This function is available
-    as an ELINK.
 
-    @param VOID
-
-    @retval VOID
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:	DrawQuietBootLogo
+//
+// Description:	This function is the generic implementation of
+//              drawing quiet boot logo. This function is available
+//              as an ELINK.
+//
+// Input:		VOID
+//
+// Output:		VOID
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS SetNativeResFromEdid (VOID);
 VOID DrawQuietBootLogo(VOID)
 {
@@ -332,10 +325,10 @@ VOID DrawQuietBootLogo(VOID)
 
 	// Draw the Logo
 #if TSE_SUPPORT_NATIVE_RESOLUTION
-	SetNativeResFromEdid ();		
+	SetNativeResFromEdid ();		//EIP94702
 #endif
 	Status = GetGraphicsBitMapFromFV( &LogoFile, (VOID**)&ImageData, &ImageSize );
-	MouseStop();
+	MouseStop();//EIP 62763 : Stopping the mouse before drawing the Quiet boot logo. 
   	if ( !EFI_ERROR(Status) )
 	{
         //No need for initializing CoordinateX and CoordinateY
@@ -356,12 +349,8 @@ VOID DrawQuietBootLogo(VOID)
         AdjustSize = FALSE;
 		if (EFI_SUCCESS != Status)
 		{
-			AddBgrtToAcpi = FALSE;			//Not Adding BGRT table to ACPI
+			AddBgrtToAcpi = FALSE;			//EIP 58954 Not Adding BGRT table to ACPI
 		}
-		
-        if ( !EFI_ERROR(Status) && IsTSEGopNotificationSupport() )
-            SaveGraphicsScreen();
-        
         //In case of gif animation not to clear the image data
         if (!GifImageFlag)
 	        MemFreePointer((VOID **)&ImageData);
@@ -372,7 +361,7 @@ VOID DrawQuietBootLogo(VOID)
 
 	if (!EFI_ERROR (Status))
 	{
-		if (!gAddBgrtResolutions)		//to support oem logo module. If logo.ffs not present from TSE then this wiil set the gAddBgrtResolutions.
+		if (!gAddBgrtResolutions)		//EIP64402 to support oem logo module. If logo.ffs not present from TSE then this wiil set the gAddBgrtResolutions.
 		{
 			gAddBgrtResolutions = 1;
 		}
@@ -414,18 +403,15 @@ VOID DrawQuietBootLogo(VOID)
 		                        &Width,
 		                        &Height
 		                        );
-				if (EFI_SUCCESS != Status)			//Not Adding BGRT table to ACPI
+				if (EFI_SUCCESS != Status)			//EIP 58954 Not Adding BGRT table to ACPI
 				{
 					AddBgrtToAcpi = FALSE;
 				}
 		        AdjustSize = FALSE;
 		
-		        if ( !EFI_ERROR(Status) && IsTSEGopNotificationSupport() )
-		            SaveGraphicsScreen();
-		        
-		        //In case of gif animation not to clear the image data
-		        if(!GifImageFlag)
-		            MemFreePointer((VOID **)&ImageData);	        
+	        //In case of gif animation not to clear the image data
+	        if(!GifImageFlag)
+		        MemFreePointer((VOID **)&ImageData);
 			}
 	  	}
 		if(NoOfHandles)
@@ -436,26 +422,26 @@ VOID DrawQuietBootLogo(VOID)
 	{
 		ContribBGRTTableToAcpi (GifImageFlag);
 	}
-	MouseRefresh();
-	GetScreenResolution(&CurrentScreenresolutionX, &CurrentScreenresolutionY);
+	MouseRefresh();//EIP 62763 : Refreshing the mouse after drawing the Quiet boot logo.
 }
 
-/**
-    This function is a hook called when TSE determines
-    that console is available. This function is available
-    as ELINK. In the generic implementation boot password
-    is prompted in this function.
-
-    @param VOID
-
-    @retval BOOLEAN. Should return TRUE if the screen was used to
-        ask password; FALSE if the screen was not used to ask
-        password.
-
-**/
-extern EFI_STATUS InitEsaTseInterfaces (void);	
-extern VOID MouseInit(VOID);
-
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:	ProcessConInAvailability
+//
+// Description:	This function is a hook called when TSE determines
+//              that console is available. This function is available
+//              as ELINK. In the generic implementation boot password
+//              is prompted in this function.
+//
+// Input:		VOID
+//
+// Output:		BOOLEAN. Should return TRUE if the screen was used to
+//              ask password; FALSE if the screen was not used to ask
+//              password.
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 BOOLEAN ProcessConInAvailability(VOID)
 {
 	UINTN NoOfRetries;
@@ -463,13 +449,10 @@ BOOLEAN ProcessConInAvailability(VOID)
 	UINTN Index;
 	EFI_INPUT_KEY Key;
 	BOOLEAN bScreenUsed = FALSE;
-	 UINT32	PasswordType = 0;
-	 EFI_STATUS Status = EFI_SUCCESS;
-	 EFI_TPL OldTpl;
 #if SETUP_PRINT_EVAL_MSG || SETUP_PRINT_ENTER_SETUP_MSG
 	CHAR16 *text = NULL;
 #endif
-	if (!gPostScreenMsg)							//ProcessConInAvailability needs protection against getting called twice
+	if (!gPostScreenMsg)							//EIP 84199 ProcessConInAvailability needs protection against getting called twice
 	{
 #if SETUP_PRINT_EVAL_MSG
     //Print evaluation message here
@@ -478,7 +461,7 @@ BOOLEAN ProcessConInAvailability(VOID)
 			PostManagerDisplayPostMessage(text);
 		MemFreePointer( (VOID **)&text );
 #endif
-#if SETUP_PRINT_ENTER_SETUP_MSG
+#if SETUP_PRINT_ENTER_SETUP_MSG //EIP:40772 - new token to control Setup enter message display
 		text = HiiGetString( gHiiHandle, STRING_TOKEN(STR_DEL_ENTER_SETUP) );
 		if ( text != NULL )
 			PostManagerDisplayPostMessage(text);
@@ -490,69 +473,59 @@ BOOLEAN ProcessConInAvailability(VOID)
 	// Don't Ask for Password if it is already entered. 
 	if ( gPasswordType == AMI_PASSWORD_NONE )
 	{	
+	//EIP120622 >>
+	    EFI_TPL OldTpl;
+	    
+        OldTpl = gBS->RaiseTPL( EFI_TPL_HIGH_LEVEL );
+        gBS->RestoreTPL( EFI_TPL_APPLICATION );
+        
+	
 		PasswordInstalled = PasswordCheckInstalled();
 		NoOfRetries = 3;
 	
 		if(CheckSystemPasswordPolicy(PasswordInstalled))
 		{
-			  bScreenUsed = TRUE;
-		  
-			  Status =	InitEsaTseInterfaces ();
-
-			  OldTpl = gBS->RaiseTPL (TPL_HIGH_LEVEL);
-			  gBS->RestoreTPL (TPL_APPLICATION);
-			  
-#if SETUP_GIF_LOGO_SUPPORT
-			  GifImageFlag = FALSE;
-#endif
-			  					
-			  if (!EFI_ERROR (Status))
-				{
-					PasswordType = gEsaInterfaceForTSE->CheckSystemPassword (AMI_PASSWORD_NONE, &NoOfRetries, NULL);
-					 gPasswordType = PasswordType; // setting the gPasswordType in Esa Boot Only.
-					 MouseInit();
-				}
-				else{
-					PasswordType = CheckSystemPassword( AMI_PASSWORD_NONE, &NoOfRetries, NULL);
-				}
-				if(AMI_PASSWORD_NONE == PasswordType)
-				{
-					while(1)
-					{
-						//Patch
-						//Ctl-Alt-Del is not recognized by core unless a
-						//ReadKeyStroke is issued
-						gBS->WaitForEvent( 1, &(gST->ConIn->WaitForKey), &Index );
-						gST->ConIn->ReadKeyStroke( gST->ConIn, &Key );
-					}
-				}
-				gBS->RaiseTPL (TPL_HIGH_LEVEL);
-				gBS->RestoreTPL (OldTpl);
-							  
+	        bScreenUsed = TRUE;
+	        if(AMI_PASSWORD_NONE == CheckSystemPassword( AMI_PASSWORD_NONE, &NoOfRetries, NULL))
+	        {
+	            while(1)
+	            {
+	                //Patch
+	                //Ctl-Alt-Del is not recognized by core unless a
+	                //ReadKeyStroke is issued
+	                gBS->WaitForEvent( 1, gST->ConIn->WaitForKey, &Index );
+	                gST->ConIn->ReadKeyStroke( gST->ConIn, &Key );
+	            }
+            }
         }
+        gBS->RaiseTPL( OldTpl );
+      //EIP120622 <<  
     }
     return bScreenUsed;
 }
 
-/**
-    This function is a hook called when TSE determines
-    that SETUP utility has to be displayed. This function
-    is available as ELINK. In the generic implementation
-    setup password is prompted in this function.
-
-    @param VOID
-
-    @retval VOID
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:	ProcessEnterSetup
+//
+// Description:	This function is a hook called when TSE determines
+//              that SETUP utility has to be displayed. This function
+//              is available as ELINK. In the generic implementation
+//              setup password is prompted in this function.
+//
+// Input:		VOID
+//
+// Output:		VOID
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID ProcessEnterSetup(VOID)
 {
     UINTN NoOfRetries;
     UINT32 PasswordInstalled = AMI_PASSWORD_NONE;
     UINTN Index;
     EFI_INPUT_KEY Key;
-    EFI_TPL OldTpl;
-    
+
     if ( gPasswordType == AMI_PASSWORD_NONE )
     {
 
@@ -564,58 +537,48 @@ VOID ProcessEnterSetup(VOID)
         }
         else
         {
-        	   EFI_STATUS Status = EFI_SUCCESS;
-        	   UINT32		PasswordType = 0;
+		//EIP120622 >>
+    	    EFI_TPL OldTpl;
+    	    
+            OldTpl = gBS->RaiseTPL( EFI_TPL_HIGH_LEVEL );
+            gBS->RestoreTPL( EFI_TPL_APPLICATION );
+
             NoOfRetries = 3;
 
-            MouseStop ();              //Stopping before clearing the screen
-            CleanUpLogo();
-            MouseRefresh (); 
-         
-            Status =	InitEsaTseInterfaces ();
-            
-            OldTpl = gBS->RaiseTPL (TPL_HIGH_LEVEL);
-            gBS->RestoreTPL (TPL_APPLICATION);
-            
-            if (!EFI_ERROR (Status))
-      	    {
-      	    		PasswordType = gEsaInterfaceForTSE->CheckSystemPassword (AMI_PASSWORD_USER, &NoOfRetries, NULL);
-					gPasswordType = PasswordType; // setting the gPasswordType in Esa Boot Only.
-      	    }
-      	    else
-      	    {
-      	    	PasswordType = CheckSystemPassword (AMI_PASSWORD_USER, &NoOfRetries, NULL);
-      	    }
-            if(AMI_PASSWORD_NONE == PasswordType)
+            if(AMI_PASSWORD_NONE == CheckSystemPassword( AMI_PASSWORD_USER, &NoOfRetries, NULL))
             {
                 while(1)
                 {
                     //Patch
                     //Ctl-Alt-Del is not recognized by core unless a
                     //ReadKeyStroke is issued
-                    gBS->WaitForEvent( 1, &(gST->ConIn->WaitForKey), &Index );
+                    gBS->WaitForEvent( 1, gST->ConIn->WaitForKey, &Index );
                     gST->ConIn->ReadKeyStroke( gST->ConIn, &Key );
                 }
             }
-            gBS->RaiseTPL (TPL_HIGH_LEVEL);
-            gBS->RestoreTPL (OldTpl);
-                        
+            gBS->RaiseTPL( OldTpl );
+         //EIP120622 <<
         }
     }
 }
 
-/**
-    This function is a hook called when TSE determines
-    that it has to load the boot options in the boot
-    order. This function is available as ELINK. OEM
-    may decide to prompt for boot password in this
-    function.
-
-    @param VOID
-
-    @retval VOID
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:	ProcessEnterSetup
+//
+// Description:	This function is a hook called when TSE determines
+//              that it has to load the boot options in the boot
+//              order. This function is available as ELINK. In the
+//              generic implementation this function is empty. OEM
+//              may decide to prompt for boot password in this
+//              function.
+//
+// Input:		VOID
+//
+// Output:		VOID
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID ProcessProceedToBoot(VOID)
 {
 }
@@ -624,18 +587,23 @@ VOID ProcessProceedToBoot(VOID)
 
 USER_CONTROL_KEY_DATA	gUserCtrlKeyData[]= { CONTROL_KEY_MAP_LIST };
 
-/**
-    Function to validate the selected key based the key data.
-
-    @param UserCtrlKeyData: User initialized data for the key 
-					Key: Key provided by SimpleTextIn protocol
-					KeyCodeProtocolSupport: flag to verify KeyShiftState.
-
-    @retval TRUE/FALSE
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:	GetKeySelection
+//
+// Description: Function to validate the selected key based the key data.
+//
+// Input:		UserCtrlKeyData: User initialized data for the key 
+//					Key: Key provided by SimpleTextIn protocol
+//					KeyCodeProtocolSupport: flag to verify KeyShiftState.
+//
+// Output:		TRUE/FALSE
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 BOOLEAN GetKeySelection(USER_CONTROL_KEY_DATA UserCtrlKeyData, AMI_EFI_KEY_DATA AmiKey, BOOLEAN KeyCodeProtocolSupport)
 {
+	///EIP-47387: Start
 	if (KeyCodeProtocolSupport)
 	{ 
 #if TSE_USE_AMI_EFI_KEYCODE_PROTOCOL
@@ -655,31 +623,37 @@ BOOLEAN GetKeySelection(USER_CONTROL_KEY_DATA UserCtrlKeyData, AMI_EFI_KEY_DATA 
 		return 1;		
 	}
 	return 0;	
+	///EIP-47387: End
 }
 
-/**
-    This function is a hook called inside setup utility
-    to determine the action to be taken for a particular
-    key press. This function is available as ELINK. OEMs
-    may choose to have a different action or a different
-    key. With this function OEMs can change key mappings
-    for the controls in the setup utility. Post hot keys
-    and Setup utility hot keys are out of this functions
-    scope.
-
-    @param Key: Key provided by SimpleTextIn protocol
-
-    @retval CONTROL_ACTION: enumeration defined in commonoem.h.
-        Input EFI_INPUT_KEY has to mapped to one of the
-        enumerations in CONTROL_ACTION.
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:	MapControlKeys
+//
+// Description:	This function is a hook called inside setup utility
+//              to determine the action to be taken for a particular
+//              key press. This function is available as ELINK. OEMs
+//              may choose to have a different action or a different
+//              key. With this function OEMs can change key mappings
+//              for the controls in the setup utility. Post hot keys
+//              and Setup utility hot keys are out of this functions
+//              scope.
+//
+// Input:		Key: Key provided by SimpleTextIn protocol
+//
+// Output:		CONTROL_ACTION: enumeration defined in commonoem.h.
+//              Input EFI_INPUT_KEY has to mapped to one of the
+//              enumerations in CONTROL_ACTION.
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 CONTROL_ACTION MapControlKeys(AMI_EFI_KEY_DATA key)
 {
 	UINT8 CtrlCnt=0;
 	UINT32 UserCtrlKeyCount=0;
 	UserCtrlKeyCount = ( sizeof(gUserCtrlKeyData) / sizeof(USER_CONTROL_KEY_DATA));
 
+///EIP-47387: Start
 #if TSE_USE_AMI_EFI_KEYCODE_PROTOCOL
 	///To get the selected key data with shiftstate using Keycode protocol. 
 	for( CtrlCnt=0; CtrlCnt<UserCtrlKeyCount; CtrlCnt++ )
@@ -699,6 +673,7 @@ CONTROL_ACTION MapControlKeys(AMI_EFI_KEY_DATA key)
 		}
 	}
 #endif    
+///EIP-47387: End
 	
  	if( CharIsAlpha(key.Key.UnicodeChar) ) 
         return ControlActionAlpha;
@@ -708,14 +683,19 @@ CONTROL_ACTION MapControlKeys(AMI_EFI_KEY_DATA key)
     return ControlActionUnknown;
 }
 
-/**
-    Adds OSIndication support
-
-    @param VOID
-
-    @retval VOID
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:	SupportOSIndication
+//
+// Description:	Adds OSIndication support
+//
+// Input:		VOID
+//
+// Output:		VOID
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
+#define EFI_OS_INDICATIONS_BOOT_TO_FW_UI	0x0000000000000001
 VOID SupportOSIndication (VOID)
 {
 	EFI_STATUS 	Status = EFI_SUCCESS;
@@ -724,35 +704,16 @@ VOID SupportOSIndication (VOID)
 	UINT64 		OsIndications = 0;
 	UINTN 		DataSize = sizeof (UINT64);
 	UINT32 		Attributes = 0;
-	UINT32      OsIndicationsSupportAttributes = EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS;
 	UINT32 		BootFlow = BOOT_FLOW_CONDITION_FIRST_BOOT;
 	EFI_GUID 	BootFlowGuid = BOOT_FLOW_VARIABLE_GUID;
 
-
-	Status = pRS->GetVariable (L"OsIndicationsSupported",
-						&EfiGlobalVariableGuid,
-						&(OsIndicationsSupportAttributes),
-						&DataSize,
-						(VOID *)&OsIndicationsSupported);
-	if(!EFI_ERROR (Status) && DataSize)
-	{
-		OsIndicationsSupported = OsIndicationsSupported|EFI_OS_INDICATIONS_BOOT_TO_FW_UI;
-	}
-	Status = pRS->SetVariable (L"OsIndicationsSupported", &EfiGlobalVariableGuid, OsIndicationsSupportAttributes, DataSize, (VOID *)&OsIndicationsSupported);
+	Status = pRS->SetVariable (L"OsIndicationsSupported", &EfiGlobalVariableGuid, (EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS), DataSize, (VOID *)&OsIndicationsSupported);
 	if (!EFI_ERROR (Status))
 	{
 		DataSize = sizeof (UINT64);
 		Status = pRS->GetVariable (L"OsIndications", &EfiGlobalVariableGuid, &Attributes, &DataSize, (VOID *)&OsIndications);
 		if (!EFI_ERROR (Status))
 		{
-			if(OsIndications & EFI_OS_INDICATIONS_START_OS_RECOVERY)
-			{
-				gOsRecoverySupported=TRUE;
-			}
-			if(OsIndications & EFI_OS_INDICATIONS_START_PLATFORM_RECOVERY)
-			{
-				gPlatformRecoverySupported=TRUE;
-			}
 			if (OsIndications & EFI_OS_INDICATIONS_BOOT_TO_FW_UI)
 			{
 				Status = pRS->SetVariable (L"BootFlow", 
@@ -767,29 +728,27 @@ VOID SupportOSIndication (VOID)
 	}
 }
 
-#if TSE_BUILD_AS_APPLICATION
-extern UINTN 		gArgCount;
-extern 	CHAR16 	**gArgv;
-UINTN atoi_base (CHAR16 *string, UINT8 base);
-#endif
-
-/**
-    This function is a hook called at the end of TSE
-    driver entry. This function is available as ELINK.
-    In the generic implementation TSE installs Key
-    monitoring protocol. OEMs may choose to do additional
-    logic here.
-
-    @param VOID
-
-    @retval VOID
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:	MinisetupDriverEntryHook
+//
+// Description:	This function is a hook called at the end of TSE
+//              driver entry. This function is available as ELINK.
+//              In the generic implementation TSE installs Key
+//              monitoring protocol. OEMs may choose to do additional
+//              logic here.
+//
+// Input:		VOID
+//
+// Output:		VOID
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID MinisetupDriverEntryHook(VOID)
 {
 #if TSE_DEBUG_MESSAGES
     EFI_STATUS 	Status;
-    EFI_GUID    guidDbgPrint = TSE_DEBUG_MESSAGES_GUID; 
+    EFI_GUID    guidDbgPrint = EFI_GLOBAL_VARIABLE_GUID; 
     UINTN dbgVarSize = sizeof(gDbgPrint); 
     UINT16 FeatureBit ;
     
@@ -812,34 +771,28 @@ VOID MinisetupDriverEntryHook(VOID)
 
     if(!EFI_ERROR( Status ) )
 		gDbgPrint = FeatureBit ;
-#if TSE_BUILD_AS_APPLICATION
-    if (1 == gArgCount)
-    {
-	    gDbgPrint = 0;
-    }
-    else
-    {
-	    gDbgPrint = (UINT16)atoi_base (gArgv [1], 10);
-    }
-#endif    
 #endif
 #if OSIndication_SUPPORT
 	SupportOSIndication ();
 #endif
 }
 
-/**
-    This function is a hook called at the begining of the
-    PostManagerHandShake protocol function. This function
-    is available as ELINK. In the generic implementation
-    TSE gets keys from key monitor filter. OEMs may choose
-    to do additional logic here.
-
-    @param VOID
-
-    @retval VOID
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:	PostManagerHandShakeHook
+//
+// Description:	This function is a hook called at the begining of the
+//              PostManagerHandShake protocol function. This function
+//              is available as ELINK. In the generic implementation
+//              TSE gets keys from key monitor filter. OEMs may choose
+//              to do additional logic here.
+//
+// Input:		VOID
+//
+// Output:		VOID
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID PostManagerHandShakeHook(VOID)
 {
 #if SETUP_SUPPORT_KEY_MONITORING
@@ -848,14 +801,18 @@ VOID PostManagerHandShakeHook(VOID)
 }
 
 
-/**
-    Displays STR_ACK_BBS_POPUP message in screen	
-
-    @param VOID
-
-    @retval VOID
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:	PrintEnterBBSPopupMessage
+//
+// Description: Displays STR_ACK_BBS_POPUP message in screen	
+//
+// Input:		VOID
+//
+// Output:		VOID
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID PrintEnterBBSPopupMessage ()
 {
     if(gEnterBoot != TRUE) // Print the "Entering Boot" message only once
@@ -873,19 +830,23 @@ VOID PrintEnterBBSPopupMessage ()
     }
 }
 
-/**
-    Displays STR_ACK_ENTER_SETUP message in screen	
-
-    @param VOID
-
-    @retval VOID
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:	PrintEnterSetupMessage
+//
+// Description: Displays STR_ACK_ENTER_SETUP message in screen	
+//
+// Input:		VOID
+//
+// Output:		VOID
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 void PrintEnterSetupMessage()
 {
    	if(gEnterSetup != TRUE) // To print the "Entering setup" message only once
 	{
-#if SETUP_PRINT_ENTER_SETUP_MSG
+#if SETUP_PRINT_ENTER_SETUP_MSG	//EIP:40772 - new token to control Setup enter message display
 		CHAR16 *text = NULL;
 
 	        //Print Entering setup here
@@ -898,14 +859,18 @@ void PrintEnterSetupMessage()
 	}
 }
 
-/**
-    This function is  called to check and Deactivate the Softkbd
-
-    @param VOID
-
-    @retval VOID
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:	CheckandDeactivateSoftkbd
+//
+// Description:	This function is  called to check and Deactivate the Softkbd
+//
+// Input:		VOID
+//
+// Output:		VOID
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 void CheckandDeactivateSoftkbd()
 {
 	 if(TSEMouseIgnoreMouseActionHook() == TRUE)
@@ -931,7 +896,7 @@ BOOLEAN CheckOEMKey(AMI_EFI_KEY_DATA* AmiKey, UINT16 UnicodeCharSDL, UINT16 Scan
         bShiftStateMatch = TRUE;*/
     if (AmiKey->KeyState.KeyShiftState & SHIFT_STATE_VALID)
     {
-        bShiftStateMatch = CheckAdvShiftState(AmiKey->KeyState.KeyShiftState, ShiftStateSDL); 
+        bShiftStateMatch = CheckAdvShiftState(AmiKey->KeyState.KeyShiftState, ShiftStateSDL);   // EIP85768
        /* if( ((AmiKey->KeyState.KeyShiftState &(~SHIFT_STATE_VALID)) & ShiftStateSDL)
             || ((AmiKey->KeyState.KeyShiftState == SHIFT_STATE_VALID) 
                   && (ShiftStateSDL == SHIFT_STATE_VALID)) )
@@ -968,17 +933,21 @@ extern OEM_KEY_CALLBACK_CHECK_FN OEM_KEY_CALLBACK_FN EndOfOemCallbackList;
 OEM_KEY_CALLBACK_CHECK_FN * OemKeyCheckFnList[] = {  OEM_KEY_CALLBACK_FN NULL };
 extern BOOT_FLOW	*gBootFlowTable;
 
-/**
-    This function to check OEMKey is consumed by any of the modules that
-    has child elink to OEM_KEY_CALLBACK_LIST. If it wants to handle the key
-    It can return success and callback funciton. The callback function will be 
-    called in Bootflowentry.
-
-    @param AMI_EFI_KEY_DATA
-
-    @retval BOOLEAN 
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:	CheckOEMKeyCallback
+//
+// Description:	This function to check OEMKey is consumed by any of the modules that
+//				has child elink to OEM_KEY_CALLBACK_LIST. If it wants to handle the key
+//				It can return success and callback funciton. The callback function will be 
+//				called in Bootflowentry.
+//
+// Input:		AMI_EFI_KEY_DATA
+//
+// Output:		BOOLEAN 
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 BOOLEAN CheckOEMKeyCallback(AMI_EFI_KEY_DATA* AmiKey)
 {
 	UINT32 ShiftState = 0;
@@ -1014,20 +983,21 @@ BOOLEAN CheckOEMKeyCallback(AMI_EFI_KEY_DATA* AmiKey)
 	return FALSE;
 }
 
-
-
-
-/**
-    This function is a hook called to perform specific
-    action for a POST hot key. This function is called
-    periodically. This function is available as ELINK.
-
-    @param Event: Timer event.
-              Context: Event context; always NULL
-
-    @retval VOID
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:	CheckForKey
+//
+// Description:	This function is a hook called to perform specific
+//              action for a POST hot key. This function is called
+//              periodically. This function is available as ELINK.
+//
+// Input:		Event: Timer event.
+//              Context: Event context; always NULL
+//
+// Output:		VOID
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID CheckForKey (EFI_EVENT Event, VOID *Context)
 {
 	EFI_STATUS Status;
@@ -1078,29 +1048,12 @@ VOID CheckForKey (EFI_EVENT Event, VOID *Context)
 #endif
          }
 #endif
-
-		if ( IsWaitForKeyEventSupport() )
-		{
-			//
-			// Check whether the keystroke is present in the system with the help of boot-service in the higher TPL at which 
-			// console driver's 'WaitForKey' event's  notification function is registered . 
-			// If keystroke is not present , do not do anything at the lower TPL at which code is running
-			//
-#if TSE_USE_AMI_EFI_KEYCODE_PROTOCOL	
-			Status = gBS->CheckEvent(pKeyCodeProtocol->WaitForKeyEx);	
-#else
-			Status = gBS->CheckEvent(gST->ConIn->WaitForKey);
-#endif
-			if (Status == EFI_NOT_READY) 
-				return;
-		}
-		
-#if TSE_USE_AMI_EFI_KEYCODE_PROTOCOL	
+#if TSE_USE_AMI_EFI_KEYCODE_PROTOCOL
 		Status = pKeyCodeProtocol->ReadEfikey( pKeyCodeProtocol, &AmiKey );
 
         // If it Partial Key make the Status as Error to ignore 
         // the Partial Key.
-		if((AmiKey.KeyState.KeyToggleState & KEY_STATE_EXPOSED) ==  KEY_STATE_EXPOSED)			// Ignoring Partial keys
+		if((AmiKey.KeyState.KeyToggleState & KEY_STATE_EXPOSED) ==  KEY_STATE_EXPOSED)			//EIP81959 - Ignoring Partial keys
 			if( (!EFI_ERROR( Status )) && (AmiKey.Key.ScanCode==0) && (AmiKey.Key.UnicodeChar==0))
 				Status = EFI_NOT_READY;
 
@@ -1108,17 +1061,10 @@ VOID CheckForKey (EFI_EVENT Event, VOID *Context)
 		{
 			do
 			{
-				if ( IsWaitForKeyEventSupport() )
-				{
-					if ( EFI_NOT_READY == gBS->CheckEvent(pKeyCodeProtocol->WaitForKeyEx) )
-					{
-						break;
-					}
-				}
 				StatusFlush = pKeyCodeProtocol->ReadEfikey( pKeyCodeProtocol, &KeyFlush );
                 // If it Partial Key make the Status as Error to ignore 
                 // the Partial Key.
-				if((KeyFlush.KeyState.KeyToggleState & KEY_STATE_EXPOSED) ==  KEY_STATE_EXPOSED)			//Ignoring Partial keys
+				if((KeyFlush.KeyState.KeyToggleState & KEY_STATE_EXPOSED) ==  KEY_STATE_EXPOSED)			//EIP81959 - Ignoring Partial keys
 					if( (!EFI_ERROR( Status )) && (KeyFlush.Key.ScanCode==0) && (KeyFlush.Key.UnicodeChar==0))
 						break;
 			} while ( ! EFI_ERROR( StatusFlush ) );
@@ -1148,7 +1094,7 @@ VOID CheckForKey (EFI_EVENT Event, VOID *Context)
 	           )
 
 			{
-				CheckandDeactivateSoftkbd();
+				CheckandDeactivateSoftkbd();// EIP62763 : Check and Deactivate if softkbd present
                 PrintEnterSetupMessage();
 			}
 #if SETUP_BBS_POPUP_ENABLE
@@ -1161,11 +1107,18 @@ VOID CheckForKey (EFI_EVENT Event, VOID *Context)
 #endif
 			)
 			{
-				CheckandDeactivateSoftkbd();
+				CheckandDeactivateSoftkbd();// EIP62763 : Check and Deactivate if softkbd present
 				PrintEnterBBSPopupMessage ();
 				gBootFlow = BOOT_FLOW_CONDITION_BBS_POPUP;
 			}
 #endif
+#if EFI_SPECIFICATION_VERSION>0x20000
+	        else if (CheckforHotKey (AmiKey))       //EIP: 62631 checking for hot boot keys
+            {
+                gBootFlow = BOOT_FLOW_HOTKEY_BOOT;
+            } 
+#endif
+
 #if TSE_USE_AMI_EFI_KEYCODE_PROTOCOL
 #if SETUP_OEM_KEY1_ENABLE
 			else if (CheckOEMKey(&AmiKey, SETUP_OEM_KEY1_UNICODE, SETUP_OEM_KEY1_SCAN,
@@ -1222,18 +1175,11 @@ VOID CheckForKey (EFI_EVENT Event, VOID *Context)
 				{
 					gQuietBoot = FALSE;
 					MouseStop();//EIP 62763 : Stopping the mouse before cleanuplogo when TAB key pressed
-					UpdateGoPUgaDraw ();		//In legacy option rom launch GOP will be removed so updating here else it will crash
 					CleanUpLogo();
 					SwitchToPostScreenHook();//EIP-111415 SwitchToPostScreenHook
 					InitPostScreen();
 				}
 			}
-#endif
-#if EFI_SPECIFICATION_VERSION>0x20000
-			else if (CheckforHotKey (AmiKey))
-			{
-				gBootFlow = BOOT_FLOW_HOTKEY_BOOT;
-			} 
 #endif
 		}
 	} while ( ! EFI_ERROR( Status ) );
@@ -1241,17 +1187,21 @@ VOID CheckForKey (EFI_EVENT Event, VOID *Context)
 
 }
 
-/**
-    This function is a hook called to perform specific
-    action for a POST hot key. This function is called
-    periodically. This function is available as ELINK.
-
-    @param Event: Timer event.
-              Context: Event context; always NULL
-
-    @retval VOID
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:	CheckForClick
+//
+// Description:	This function is a hook called to perform specific
+//              action for a POST hot key. This function is called
+//              periodically. This function is available as ELINK.
+//
+// Input:		Event: Timer event.
+//              Context: Event context; always NULL
+//
+// Output:		VOID
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID CheckForClick (EFI_EVENT Event, VOID *Context)
 {
 #if MINISETUP_MOUSE_SUPPORT
@@ -1259,16 +1209,12 @@ VOID CheckForClick (EFI_EVENT Event, VOID *Context)
 	
 	if(TSEMouseIgnoreMouseActionHook())
 	{
-		return;
+		return;// EIP62763 : Check for softkbd, if present return
 	}
      if(TSEMouse!=NULL)
      {
 	    TSEMouse->MousePoll(TSEMouse);
 	  	TSEMouse->GetButtonStatus(TSEMouse,&Button_Status);
-
-		if (TSE_POST_STATUS_PROCEED_TO_BOOT == gPostStatus)
-			StopClickEvent();
-
 		if(((Button_Status == TSEMOUSE_RIGHT_CLICK)||(Button_Status == TSEMOUSE_LEFT_DCLICK)||(Button_Status == TSEMOUSE_LEFT_CLICK))&&(!TSEMouseIgnoreMouseActionHook()))
 		{
 			TSEStringReadLoopEntryHook();
@@ -1280,149 +1226,200 @@ VOID CheckForClick (EFI_EVENT Event, VOID *Context)
 
 }
 
-/**
-    This function is a hook called before launching
-    legacy boot option. This function is available as
-    ELINK. In the generic implementation this function is
-    empty. OEMs may choose to do additional logic here.
-
-    @param VOID
-
-    @retval VOID
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:	BeforeLegacyBootLaunch
+//
+// Description:	This function is a hook called before launching
+//              legacy boot option. This function is available as
+//              ELINK. In the generic implementation this function is
+//              empty. OEMs may choose to do additional logic here.
+//
+// Input:		VOID
+//
+// Output:		VOID
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID BeforeLegacyBootLaunch(VOID)
 {
 }
 
-/**
-    This function is a hook called after launching
-    legacy boot option. This function is available as
-    ELINK. In the generic implementation this function is
-    empty. OEMs may choose to do additional logic here.
-
-    @param VOID
-
-    @retval VOID
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:	AfterLegacyBootLaunch
+//
+// Description:	This function is a hook called after launching
+//              legacy boot option. This function is available as
+//              ELINK. In the generic implementation this function is
+//              empty. OEMs may choose to do additional logic here.
+//
+// Input:		VOID
+//
+// Output:		VOID
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID AfterLegacyBootLaunch(VOID)
 {
 }
 VOID MouseDestroy(VOID);
-/**
-    This function is a hook called before launching EFI
-    boot option. This function is available as ELINK. In
-    the generic implementation this function is empty.
-    OEMs may choose to do additional logic here.
-
-    @param VOID
-
-    @retval VOID
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:	BeforeEfiBootLaunch
+//
+// Description:	This function is a hook called before launching EFI
+//              boot option. This function is available as ELINK. In
+//              the generic implementation this function is empty.
+//              OEMs may choose to do additional logic here.
+//
+// Input:		VOID
+//
+// Output:		VOID
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID BeforeEfiBootLaunch(VOID)
 {
-	StopClickEvent();
+	StopClickEvent();//EIP 86253 : Mouse and SoftKbd does not work after displaying "No option to boot to" in POST
 	MouseDestroy();
 
 }
 
-/**
-    This function is a hook called after launching EFI
-    boot option. This function is available as ELINK. In
-    the generic implementation this function is empty.
-    OEMs may choose to do additional logic here.
-
-    @param VOID
-
-    @retval VOID
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:	AfterEfiBootLaunch
+//
+// Description:	This function is a hook called after launching EFI
+//              boot option. This function is available as ELINK. In
+//              the generic implementation this function is empty.
+//              OEMs may choose to do additional logic here.
+//
+// Input:		VOID
+//
+// Output:		VOID
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID AfterEfiBootLaunch(VOID)
 {
 }
 
-/**
-    This function is a hook called after setup utility
-    saves changes based on user input. This function is
-    available as ELINK. In the generic implementation
-    this function is empty. OEMs may choose to do
-    additional logic here.
-
-    @param VOID
-
-    @retval VOID
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:	SavedConfigChanges
+//
+// Description:	This function is a hook called after setup utility
+//              saves changes based on user input. This function is
+//              available as ELINK. In the generic implementation
+//              this function is empty. OEMs may choose to do
+//              additional logic here.
+//
+// Input:		VOID
+//
+// Output:		VOID
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID SavedConfigChanges(VOID)
 {
 }
 
-/**
-    This function is a hook called after setup utility
-    loaded config defaults based on user input. This
-    function is available as ELINK. In the generic
-    implementation this function is empty. OEMs may
-    choose to do additional logic here.
-
-    @param VOID
-
-    @retval VOID
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:	LoadedConfigDefaults
+//
+// Description:	This function is a hook called after setup utility
+//              loaded config defaults based on user input. This
+//              function is available as ELINK. In the generic
+//              implementation this function is empty. OEMs may
+//              choose to do additional logic here.
+//
+// Input:		VOID
+//
+// Output:		VOID
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID LoadedConfigDefaults(VOID)
 {
 }
 
-/**
-    This function is a hook called in every iteration
-    (not every second) while TSE is waiting for POST time
-    out. This function is available as ELINK. In the generic
-    implementation this function is empty. OEMs may
-    choose to do additional logic here.
-
-    @param VOID
-
-    @retval VOID
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:	TimeOutLoopHook
+//
+// Description:	This function is a hook called in every iteration
+//              (not every second) while TSE is waiting for POST time
+//              out. This function is available as ELINK. In the generic
+//              implementation this function is empty. OEMs may
+//              choose to do additional logic here.
+//
+// Input:		VOID
+//
+// Output:		VOID
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID TimeOutLoopHook(VOID)
 {
 }
 
 VOID HiiGetEfiKey(CHAR16 *PwKey);
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:	PasswordEncode
+//
+// Description:	This function is a hook called when user entered
+//              password has to be encoded. This function is
+//              available as ELINK. OEMs may choose to use different
+//              encryption logic here.
+//
+// Input:		Password : Password array to be encrypted. Encryped
+//              password is returned in the same array.
+//              MaxSize : Max size of Password
+//
+// Output:		VOID
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
+VOID PasswordEncodeLocal (CHAR16 *, UINTN);
+VOID PasswordEncode (CHAR16 *Password, UINTN MaxSize)
+{
+   PasswordEncodeLocal (Password, MaxSize);
+}
 
-
-//PasswordEncode function moved to PasswordEncode.c
-
-/**
-    This function is a hook called when colour of a
-    control has to be decided. This function is available
-    as ELINK. OEMs may choose to use different colour
-    combination.
-
-    @param BGColor: Back ground colour
-              FGColor: Fore ground colour
-              SecBGColor: Secondary back ground colour used for
-              time, date and menu
-              SecFGColor: Secondary fore ground colour used for
-              time, date and menu
-              SelBGColor: Selected back ground colour
-              SelFGColor: Selected fore ground colour
-              NSelBGColor: Not selected back ground colour
-              NSelFGColor: Not selected fore ground colour
-              LabelBGColor: Label back ground colour
-              LabelFGColor: Label fore ground colour
-              NSelLabelFGColor: Not selected label fore ground
-              EditBGColor: Edit box back ground
-              EditFGColor: Edit box fore ground
-              PopupFGColor: Popup fore ground
-              PopupBGColor: Popup back ground
-
-    @retval EFI_STATUS: always EFI_SUCCESS
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:	SetControlColors
+//
+// Description:	This function is a hook called when colour of a
+//              control has to be decided. This function is available
+//              as ELINK. OEMs may choose to use different colour
+//              combination.
+//
+// Input:		BGColor: Back ground colour
+//              FGColor: Fore ground colour
+//              SecBGColor: Secondary back ground colour used for
+//              time, date and menu
+//              SecFGColor: Secondary fore ground colour used for
+//              time, date and menu
+//              SelBGColor: Selected back ground colour
+//              SelFGColor: Selected fore ground colour
+//              NSelBGColor: Not selected back ground colour
+//              NSelFGColor: Not selected fore ground colour
+//              LabelBGColor: Label back ground colour
+//              LabelFGColor: Label fore ground colour
+//              NSelLabelFGColor: Not selected label fore ground
+//              EditBGColor: Edit box back ground
+//              EditFGColor: Edit box fore ground
+//              PopupFGColor: Popup fore ground
+//              PopupBGColor: Popup back ground
+//
+// Output:		EFI_STATUS: always EFI_SUCCESS
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS SetControlColors(UINT8 *BGColor, UINT8 *FGColor, UINT8 *SecBGColor, UINT8 *SecFGColor, 
 								 UINT8 *SelBGColor, UINT8 *SelFGColor, UINT8 *NSelBGColor, UINT8 *NSelFGColor,
 								 UINT8 *LabelBGColor, UINT8 *LabelFGColor,UINT8 *NSelLabelFGColor, UINT8 *EditBGColor, UINT8 *EditFGColor,
@@ -1454,98 +1451,122 @@ EFI_STATUS SetControlColors(UINT8 *BGColor, UINT8 *FGColor, UINT8 *SecBGColor, U
 	return EFI_SUCCESS;
 }
 
-/**
-    This function is the hook call the appropriate InvalidActions function.
-    OEMs may choose to do additional logic here.
-
-    @param VOID
-
-    @retval VOID
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:	InvalidActionHook
+//
+// Description:	This function is the hook call the appropriate InvalidActions function.
+//				OEMs may choose to do additional logic here.
+//
+// Input:		VOID
+//
+// Output:		VOID
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID InvalidActionHook(VOID)
 {
 	/// Call the Invalid action function (Ex: Beep )
 }
 
-/**
-    This function is a hook called after setup utility
-    loaded user defaults based on user input. This
-    function is available as ELINK. In the generic
-    implementation this function is empty. OEMs may
-    choose to do additional logic here.
-
-    @param VOID
-
-    @retval VOID
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:	LoadedUserDefaults
+//
+// Description:	This function is a hook called after setup utility
+//              loaded user defaults based on user input. This
+//              function is available as ELINK. In the generic
+//              implementation this function is empty. OEMs may
+//              choose to do additional logic here.
+//
+// Input:		VOID
+//
+// Output:		VOID
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID LoadedUserDefaults(VOID)
 {
 }
 
-/**
-    This function is a hook called after setup utility
-    loaded Oem defaults based on user input. This
-    function is available as ELINK. In the generic
-    implementation this function is empty. OEMs may
-    choose to do additional logic here.
-
-    @param VOID
-
-    @retval VOID
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:	LoadedBuildDefaults
+//
+// Description:	This function is a hook called after setup utility
+//              loaded Oem defaults based on user input. This
+//              function is available as ELINK. In the generic
+//              implementation this function is empty. OEMs may
+//              choose to do additional logic here.
+//
+// Input:		VOID
+//
+// Output:		VOID
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID LoadedBuildDefaults(VOID)
 {
 }
 
-/**
-    This function is a hook called after setup utility
-    loaded previously saved values based on user input. This
-    function is available as ELINK. In the generic
-    implementation this function is empty. OEMs may
-    choose to do additional logic here.
-
-    @param VOID
-
-    @retval VOID
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:	LoadedPreviousValues
+//
+// Description:	This function is a hook called after setup utility
+//              loaded previously saved values based on user input. This
+//              function is available as ELINK. In the generic
+//              implementation this function is empty. OEMs may
+//              choose to do additional logic here.
+//
+// Input:		VOID
+//
+// Output:		VOID
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID LoadedPreviousValues(VOID)
 {
 	//UpdateControlStatus(TRUE);
 }
 
-/**
-    This function is a hook called after some control 
-    modified in the setup utility by user. This
-    function is available as ELINK. In the generic
-    implementation this function is empty. OEMs may
-    choose to do additional logic here.
-
-    @param VOID
-
-    @retval VOID
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:	SetupConfigModified
+//
+// Description:	This function is a hook called after some control 
+//				modified in the setup utility by user. This
+//              function is available as ELINK. In the generic
+//              implementation this function is empty. OEMs may
+//              choose to do additional logic here.
+//
+// Input:		VOID
+//
+// Output:		VOID
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID SetupConfigModified(VOID)
 {
 	//UpdateControlStatus(TRUE);
 }
 
-/**
-    This function is a hook called when user loads the manufacturing
-    or optimal defaults. This function is
-    available as ELINK. OEMs may override the function and  
-    decide the policy.
-
-    @param defaults : (NVRAM_VARIABLE *)optimal or manufacturing
-        data : Messagebox
-
-    @retval VOID
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:	LoadSetupDefaults
+//
+// Description:	This function is a hook called when user loads the manufacturing
+//              or optimal defaults. This function is
+//              available as ELINK. OEMs may override the function and  
+//              decide the policy.
+//
+// Input:		defaults : (NVRAM_VARIABLE *)optimal or manufacturing
+//              data : Messagebox
+//
+// Output:		VOID
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID _LoadDefaults( NVRAM_VARIABLE *defaults, UINTN data );
 VOID LoadSetupDefaults (VOID *defaults, UINTN data )
 {
@@ -1553,126 +1574,150 @@ VOID LoadSetupDefaults (VOID *defaults, UINTN data )
 	_LoadDefaults((NVRAM_VARIABLE *)defaults, data );
 }
 
-/**
-    This function is a hook called after some control 
-    modified in the setup utility by user. This
-    function is available as ELINK. In the generic
-    implementation this function is empty. OEMs may
-    choose to do additional logic here.
-
-    @param VOID
-
-    @retval VOID
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:	SetupConfigModified
+//
+// Description:	This function is a hook called after some control 
+//				modified in the setup utility by user. This
+//              function is available as ELINK. In the generic
+//              implementation this function is empty. OEMs may
+//              choose to do additional logic here.
+//
+// Input:		VOID
+//
+// Output:		VOID
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID PreSystemResetHook(VOID)
 {
 	///to have the oem customizations just before resetting
 }
 
-/**
-    This function is a hook called when user activates
-    configurable post hot key 1. This function is
-    available as ELINK. Generic implementation is empty.
-    OEMs may choose to use different logic here.
-
-    @param bootFlowPtr: Boot flow entry that triggered this call
-
-    @retval always EFI_SUCCESS
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:	OemKey1Hook
+//
+// Description:	This function is a hook called when user activates
+//              configurable post hot key 1. This function is
+//              available as ELINK. Generic implementation is empty.
+//              OEMs may choose to use different logic here.
+//
+// Input:		bootFlowPtr: Boot flow entry that triggered this call
+//
+// Output:		always EFI_SUCCESS
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS	OemKey1Hook ( BOOT_FLOW *bootFlowPtr )
 {
 	EFI_STATUS Status = EFI_SUCCESS;
 	//
-	// Add code here on enabling SETUP_OEM_KEY1_ENABLE for callback
+	// TODO:: Add hook
 
 	return Status;
 }
 
-/**
-    This function is a hook called when user activates
-    configurable post hot key 2. This function is
-    available as ELINK. Generic implementation is empty.
-    OEMs may choose to use different logic here.
-
-    @param bootFlowPtr: Boot flow entry that triggered this call
-
-    @retval always EFI_SUCCESS
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:	OemKey2Hook
+//
+// Description:	This function is a hook called when user activates
+//              configurable post hot key 2. This function is
+//              available as ELINK. Generic implementation is empty.
+//              OEMs may choose to use different logic here.
+//
+// Input:		bootFlowPtr: Boot flow entry that triggered this call
+//
+// Output:		always EFI_SUCCESS
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS	OemKey2Hook ( BOOT_FLOW *bootFlowPtr )
 {
 	EFI_STATUS Status = EFI_SUCCESS;
 	//
-	// Add code here on enabling SETUP_OEM_KEY2_ENABLE for callback
+	// TODO:: Add hook
 
 	return Status;
 }
 
-/**
-    This function is a hook called when user activates
-    configurable post hot key 3. This function is
-    available as ELINK. Generic implementation is empty.
-    OEMs may choose to use different logic here.
-
-    @param bootFlowPtr: Boot flow entry that triggered this call
-
-    @retval always EFI_SUCCESS
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:	OemKey3Hook
+//
+// Description:	This function is a hook called when user activates
+//              configurable post hot key 3. This function is
+//              available as ELINK. Generic implementation is empty.
+//              OEMs may choose to use different logic here.
+//
+// Input:		bootFlowPtr: Boot flow entry that triggered this call
+//
+// Output:		always EFI_SUCCESS
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS	OemKey3Hook ( BOOT_FLOW *bootFlowPtr )
 {
 	EFI_STATUS Status = EFI_SUCCESS;
 	//
-	// Add code here on enabling SETUP_OEM_KEY3_ENABLE for callback
+	// TODO:: Add hook
 
 	return Status;
 }
 
-/**
-    This function is a hook called when user activates
-    configurable post hot key 4. This function is
-    available as ELINK. Generic implementation is empty.
-    OEMs may choose to use different logic here.
-
-    @param bootFlowPtr: Boot flow entry that triggered this call
-
-    @retval always EFI_SUCCESS
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:	OemKey4Hook
+//
+// Description:	This function is a hook called when user activates
+//              configurable post hot key 4. This function is
+//              available as ELINK. Generic implementation is empty.
+//              OEMs may choose to use different logic here.
+//
+// Input:		bootFlowPtr: Boot flow entry that triggered this call
+//
+// Output:		always EFI_SUCCESS
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS	OemKey4Hook ( BOOT_FLOW *bootFlowPtr )
 {
 	EFI_STATUS Status = EFI_SUCCESS;
 	//
-	// Add code here on enabling SETUP_OEM_KEY4_ENABLE for callback
+	// TODO:: Add hook
 
 	return Status;
 }
 
-/**
-    This function is a hook called inside setup utility
-    to determine the action to be taken for a particular
-    Mouse Click. This function is available as ELINK. OEMs
-    may choose to have a different action or a different
-    mouse click. 
-
-    @param pMouseInfo 
-
-    @retval CONTROL_ACTION: enumeration defined in commonoem.h.
-        Input EFI_INPUT_KEY has to mapped to one of the
-        enumerations in CONTROL_ACTION.
-
-**/ 
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:	MapControlMouseAction
+//
+// Description:	This function is a hook called inside setup utility
+//              to determine the action to be taken for a particular
+//              Mouse Click. This function is available as ELINK. OEMs
+//              may choose to have a different action or a different
+//              mouse click. 
+//
+// Input:		MOUSE_INFO *pMouseInfo
+//
+// Output:		CONTROL_ACTION: enumeration defined in commonoem.h.
+//              Input EFI_INPUT_KEY has to mapped to one of the
+//              enumerations in CONTROL_ACTION.
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END> 
 CONTROL_ACTION MapControlMouseAction(VOID *pTempInfo)
 {
-    MOUSE_INFO *pMouseInfo = (MOUSE_INFO *)pTempInfo ;
+    MOUSE_INFO *pMouseInfo = (MOUSE_INFO *)pTempInfo ;// EIP-111918: Modified usage for GCC build.    
     
     if(pMouseInfo!=NULL)
 	{
 	    if(TSEMOUSE_RIGHT_CLICK == pMouseInfo->ButtonStatus)
 			return ControlActionAbort;
-#if SINGLE_CLICK_ACTIVATION
+#if SINGLE_CLICK_ACTIVATION			//EIP74141 providing select option for single click too
 		if(TSEMOUSE_LEFT_DCLICK == pMouseInfo->ButtonStatus || TSEMOUSE_LEFT_CLICK == pMouseInfo->ButtonStatus)
 			return ControlActionSelect;
 #else
@@ -1682,51 +1727,63 @@ CONTROL_ACTION MapControlMouseAction(VOID *pTempInfo)
 		if(TSEMOUSE_LEFT_DCLICK == pMouseInfo->ButtonStatus)
 			return ControlActionSelect;
 #endif
-		if(TSEMOUSE_LEFT_DOWN == pMouseInfo->ButtonStatus)		
+		if(TSEMOUSE_LEFT_DOWN == pMouseInfo->ButtonStatus)		//EIP74968
 			return ControlMouseActionLeftDown;
 
-		if(TSEMOUSE_LEFT_UP == pMouseInfo->ButtonStatus)		
+		if(TSEMOUSE_LEFT_UP == pMouseInfo->ButtonStatus)		//EIP74968
 			return ControlMouseActionLeftUp;
 
 	}
     return ControlActionUnknown;
 }
 
-/**
-    This function is a hook called when Boots from 
-    BBS popup or Bootoverride page. 
-
-    @param VOID
-
-    @retval VOID
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:	ProcessProceedToBootNow
+//
+// Description:	This function is a hook called when Boots from 
+//				BBS popup or Bootoverride page. 
+//
+// Input:		VOID
+//
+// Output:		VOID
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID ProcessProceedToBootNow(VOID)
 {
 }
-/**
-    This function is a hook called when TSE determines
-    that console out is available. This function is available
-    as ELINK. 
-
-    @param VOID
-
-    @retval VOID
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:	ProcessConOutAvailable
+//
+// Description:	This function is a hook called when TSE determines
+//              that console out is available. This function is available
+//              as ELINK. 
+//
+// Input:		VOID
+//
+// Output:		VOID	
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID ProcessConOutAvailable(VOID)
 {
 }
 
-/**
-    This function Fixes the SubPage as root pages from
-    AMITSE_SUBPAGE_AS_ROOT_PAGE_LIST
-
-    @param VOID
-
-    @retval VOID
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:	FixSubPageAsRootPageList
+//
+// Description:	This function Fixes the SubPage as root pages from
+//				AMITSE_SUBPAGE_AS_ROOT_PAGE_LIST
+//
+// Input:		VOID
+//
+// Output:		VOID
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID FixSubPageAsRootPageList()
 {
 	UINTN RootPageListCount = sizeof(RootPageList) / sizeof (HII_FORM_ADDRESS);
@@ -1736,7 +1793,7 @@ VOID FixSubPageAsRootPageList()
 	// Support to Handle some child pages as root pages.
 	for(j=0; j<RootPageListCount;j++)
 	{
-	    for ( i = 0; i < (UINTN)gPages->PageCount; i++ ) 
+	    for ( i = 0; i < (UINTN)gPages->PageCount; i++ ) // EIP110194
 		{
 			info = (PAGE_INFO*)((UINTN)gApplicationData + gPages->PageList[i]);
 
@@ -1758,15 +1815,19 @@ VOID FixSubPageAsRootPageList()
 	}
 }
 
-/**
-    This function Fixes the Hides pages from
-    AMITSE_HIDDEN_PAGE_LIST
-
-    @param VOID
-
-    @retval VOID
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:	FixSubPageAsRootPageList
+//
+// Description:	This function Fixes the Hides pages from
+//				AMITSE_HIDDEN_PAGE_LIST
+//
+// Input:		VOID
+//
+// Output:		VOID
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID FixHiddenPageList(VOID)
 {
 	UINTN HiddenPageListCount = sizeof(HiddenPageList) / sizeof (HII_FORM_ADDRESS);
@@ -1776,7 +1837,7 @@ VOID FixHiddenPageList(VOID)
 	// To Hide Pages
 	for(j=0; j<HiddenPageListCount;j++)
 	{
-		for ( i = 0; i < (UINTN)gPages->PageCount; i++ ) 
+		for ( i = 0; i < (UINTN)gPages->PageCount; i++ ) // EIP110194
 		{
 			info = (PAGE_INFO*)((UINTN)gApplicationData + gPages->PageList[i]);
 
@@ -1802,19 +1863,23 @@ VOID FixHiddenPageList(VOID)
 }
 
 VOID TseUpdateRootPageOrder(VOID);
-/**
-    This function is a hook called just before creating
-    the setup application for oem customizations. This function is
-    available as ELINK. OEMs may choose to do additional logic here. 
-
-    @param VOID
-
-    @retval VOID
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:	ProcessUIInitHook
+//
+// Description:	This function is a hook called just before creating
+//						the setup application for oem customizations. This function is
+// 					available as ELINK. OEMs may choose to do additional logic here. 
+//
+// Input:		VOID
+//
+// Output:		VOID
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID ProcessUIInitHook(VOID)
 {
-	CheckandDeactivateSoftkbd ();
+	CheckandDeactivateSoftkbd ();		//EIP82552 Deactivating softkbd when time out occurs in post and enters into setup
 #if AMITSE_SUBPAGE_AS_ROOT_PAGE_LIST_SUPPORT
 	FixSubPageAsRootPageList ();
 #endif
@@ -1824,28 +1889,36 @@ VOID ProcessUIInitHook(VOID)
 	TseUpdateRootPageOrder();
 }
 
-/**
-    This function is a hook called After post screen is initilzed.
-    This function is available as ELINK. In the generic implementation this function
-    is empty. OEMs may choose to do additional logic here.
-
-    @param VOID
-
-    @retval VOID
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:	AfterInitPostScreen
+//
+// Description:	This function is a hook called After post screen is initilzed.
+//      This function is available as ELINK. In the generic implementation this function
+//		is empty. OEMs may choose to do additional logic here.
+//
+// Input:		VOID
+//
+// Output:		VOID
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID AfterInitPostScreen(VOID)
 {
 
 }
-/**
-    This function is to update the Root page order from the specified elink.
-
-    @param VOID
-
-    @retval VOID
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:	TseUpdateRootPageOrder
+//
+// Description:	This function is to update the Root page order from the specified elink.
+//
+// Input:		VOID
+//
+// Output:		VOID
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID TseUpdateRootPageOrder(VOID)
 {
 
@@ -1854,17 +1927,6 @@ VOID TseUpdateRootPageOrder(VOID)
 	UINTN RootPageOrderCount = sizeof(RootPageOrder) / sizeof (HII_FORM_ADDRESS);
 	UINTN j,k;
 	EFI_GUID gSetupPageOrderGuid = SETUP_ROOT_PAGE_ORDER_GUID, NullGuid = NULL_GUID;
-	UINT32 *currentBootFlow;
-	UINTN size = 0;
-	UINT32 BootFlow = BOOT_FLOW_CONDITION_NORMAL;
-
-	//gBootFlow is changing constantly so better get it from NVRAM and proceed
-	currentBootFlow = VarGetNvramName( L"BootFlow", &_gBootFlowGuid, NULL, &size );
-	if (NULL != currentBootFlow)
-	{
-		BootFlow = *currentBootFlow;
-		MemFreePointer ((VOID **)&currentBootFlow);
-	}
 
 	if((1 == RootPageOrderCount)&&(EfiCompareGuid(&NullGuid,&RootPageOrder[0].formsetGuid)))
 		return;
@@ -1876,14 +1938,12 @@ VOID TseUpdateRootPageOrder(VOID)
 	if (NULL == gRootPageOrder)
 		return;
 	// To Hide Pages
-	
-	
 	for(j=0; j<RootPageOrderCount;j++)
 	{
-		if ( (EfiCompareGuid (&gSetupPageOrderGuid,&RootPageOrder[j].formsetGuid)) && (RootPageOrder[j].formId == BootFlow) )
+		if((EfiCompareGuid(&gSetupPageOrderGuid,&RootPageOrder[j].formsetGuid))&&(RootPageOrder[j].formId == gBootFlow))
 		{
 			k=++j;
-			while (!( (EfiCompareGuid (&gSetupPageOrderGuid,&RootPageOrder[k].formsetGuid)) || (EfiCompareGuid(&NullGuid,&RootPageOrder[k].formsetGuid)) ) )
+			while(!((EfiCompareGuid(&gSetupPageOrderGuid,&RootPageOrder[k].formsetGuid)) || (EfiCompareGuid(&NullGuid,&RootPageOrder[k].formsetGuid))))
 			{
 				gBS->CopyMem (&gRootPageOrder[gRootPageOrderIndex], &RootPageOrder[k], sizeof (HII_FORM_ADDRESS));
 				gRootPageOrderIndex ++;
@@ -1893,36 +1953,22 @@ VOID TseUpdateRootPageOrder(VOID)
 			break;
 		}
 	}
-	//If root page ordering is not found for any bootflow then trying for BOOT_FLOW_CONDITION_NORMAL bootflow. Helpful for BOOT_FLOW_CONDITION_OEM_KEY1 etc.,,
-	if ( (FALSE == gIsRootPageOrderPresent) && (BOOT_FLOW_CONDITION_NORMAL != BootFlow) )
-	{
-		for(j=0; j<RootPageOrderCount;j++)
-		{
-			if ( (EfiCompareGuid (&gSetupPageOrderGuid,&RootPageOrder[j].formsetGuid)) && (RootPageOrder[j].formId == BOOT_FLOW_CONDITION_NORMAL) )
-			{
-				k=++j;
-				while (!( (EfiCompareGuid (&gSetupPageOrderGuid,&RootPageOrder[k].formsetGuid)) || (EfiCompareGuid(&NullGuid,&RootPageOrder[k].formsetGuid)) ) )
-				{
-					gBS->CopyMem (&gRootPageOrder[gRootPageOrderIndex], &RootPageOrder[k], sizeof (HII_FORM_ADDRESS));
-					gRootPageOrderIndex ++;
-					gIsRootPageOrderPresent = TRUE;
-					k ++;
-				}
-				break;
-			}
-		}
-	}
+
 #endif
 }
-/**
-    This function test for SubPage as root pages from
-    AMITSE_SUBPAGE_AS_ROOT_PAGE_LIST
-
-    @param info 
-
-    @retval BOOLEAN
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   isSubPageRootPage
+//
+// Description: This function test for SubPage as root pages from
+//              AMITSE_SUBPAGE_AS_ROOT_PAGE_LIST
+//
+// Input:       PAGE_INFO *info
+//
+// Output:      BOOLEAN
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 BOOLEAN isSubPageRootPage(PAGE_INFO *info)
 {
     UINTN RootPageListCount = sizeof(RootPageList) / sizeof (HII_FORM_ADDRESS);
@@ -1951,15 +1997,19 @@ BOOLEAN isSubPageRootPage(PAGE_INFO *info)
     }
     return FALSE ;
 }
-/**
-    This function returns the number of SubPage as root pages from
-    AMITSE_SUBPAGE_AS_ROOT_PAGE_LIST.
-
-    @param VOID
-
-    @retval UINTN Number of SubPages as root pages
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   GetSubPageAsRootPageCount
+//
+// Description: This function returns the number of SubPage as root pages from
+//              AMITSE_SUBPAGE_AS_ROOT_PAGE_LIST.
+//
+// Input:       VOID
+//
+// Output:      UINTN - Number of SubPages as root pages
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 UINTN GetSubPageAsRootPageCount(VOID)
 {
     UINTN RootPageListCount = 0 ;  
@@ -1968,137 +2018,31 @@ UINTN GetSubPageAsRootPageCount(VOID)
     
     return RootPageListCount ;
 }
-/**
-    This function is a hook called during SwitchToPostScreen post.
-    This function is available as ELINK. In the generic implementation this function
-    is empty. OEMs may choose to do additional logic here.
-
-    @param VOID
-
-    @retval VOID
-
-**/
+//EIP-111415 SwitchToPostScreenHook Start
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:	SwitchToPostScreen
+//
+// Description:	This function is a hook called during SwitchToPostScreen post.
+//      				This function is available as ELINK. In the generic implementation this function
+//						is empty. OEMs may choose to do additional logic here.
+//
+// Input:		VOID
+//
+// Output:		VOID
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID SwitchToPostScreen(VOID)
 {
 
 }
-
-/**
-    This function filter formset and display formset based on ClassGUID mentioned in elink AMITSE_FILTER_CLASSGUID_FORMSETS 
-
-    @param EFI_IFR_FORMSET. Formset to compare with elink classGuid.
-
-    @retval BOOLEAN. Return TRUE formset matches with elink ClassGuid else FALSE
-
-**/
-BOOLEAN ShowClassGuidFormsets (TSE_EFI_IFR_FORM_SET *FormSet )
-{
-#if SHOW_FORMSETS_WITH_CLASSGUID
-	UINT16 FilterListcount = sizeof(gFormSetClassGuidList) / sizeof (EFI_GUID);
-	UINT16 index = 0;
-
-	if (FormSet->ClassGuid)
-	{
-		for (index = 0; index < (FilterListcount-1); index++)//(FilterListcount-1) To avoid check with NULL guid
-		{
-			if ( EfiCompareGuid ( FormSet->ClassGuid, &gFormSetClassGuidList[index])  )
-				return TRUE;
-		}
-		return FALSE;
-	}
-#endif
-	return TRUE;//if token is disable
-}
-
-
-/**
-    This function suppress dynamic formset mentioned in the elink AMITSE_SUPPRESS_DYNAMIC_FORMSET_LIST
-
-    @param GUID. Formset guid to compare with gSuppressDynamicFormsetList elink guids.
-
-    @retval BOOLEAN. Return TRUE if any guid matches with gSuppressDynamicFormsetList elink else FALSE
-
-**/
-BOOLEAN HideDynamicFormsets (EFI_GUID *FormSetGuid )
-{
-#if AMITSE_SUPPRESS_DYNAMIC_FORMSET
-	UINTN suppressDynamicFormsetListCount = sizeof(gSuppressDynamicFormsetList) / sizeof (EFI_GUID);
-	UINT16 index = 0;
-
-	if (FormSetGuid)
-	{
-		for (index = 0; index < (suppressDynamicFormsetListCount-1); index++)
-		{
-			if ( EfiCompareGuid ( FormSetGuid, &gSuppressDynamicFormsetList[index])  )
-				return TRUE;
-		}
-	}
-#endif
-	return FALSE;
-}
-
-/**
-    This function informs to match the handle or not for creating new variable using VAR_DYNAMICPARSING_HANDLESUPPRESS_LIST ELink
-
-    @param EFI_GUID *, CHAR16	*
-
-    @retval BOOLEAN. Return TRUE handle matches with elink else FALSE
-
-**/
-CHAR8* StrDup16to8(CHAR16 *String);
-INTN EfiStrCmp (IN CHAR16   *String, IN CHAR16   *String2);
-BOOLEAN VariableHandleSuppressed (EFI_GUID *VariableGuid, CHAR16	*VariableName)
-{
-#if SUPPRESS_HANDLE_FOR_VAR_CREATION	
-	UINTN HandleSuppressListCount = sizeof (gHandleSuppressVarList)/sizeof (VAR_DYNAMICPARSING_HANDLESUPPRESS);
-	UINTN i = 0;
-	CHAR8 *VariableNameStr8 = (CHAR8 *)NULL;
-	
-	VariableNameStr8 = StrDup16to8 (VariableName);
-	if (NULL == VariableNameStr8)
-	{
-		return FALSE;
-	}
-	for(i=0; i < HandleSuppressListCount; i++)
-	{
-		if ( (EfiCompareGuid(VariableGuid, &(gHandleSuppressVarList [i].VariableGuid))) && (Strcmp (VariableNameStr8, gHandleSuppressVarList [i].VariableName) ==0) )
-		{
-			return TRUE;
-		}
-	}
-#endif	
-	return FALSE;
-}
-BOOLEAN IsTseBuild()
-{
-    BOOLEAN   TseBuildStatus = TRUE;
-#ifndef BUILD_FOR_ESA
-    TseBuildStatus = TRUE;
-#else
-    TseBuildStatus = FALSE;
-#endif
-    return TseBuildStatus;
-}
-
-
-BOOLEAN DefaultEntryStatus()
-{
-	BOOLEAN   ErrorInEntryStatus = TRUE;
-	
-	//IsTseBuild() can be used , but it will add both code
-#ifndef BUILD_FOR_ESA	
-		ErrorInEntryStatus = FALSE;
-#else
-		ErrorInEntryStatus = TRUE;
-#endif
-	return ErrorInEntryStatus;
-}
-
+//EIP-111415 SwitchToPostScreenHook Ends
 //*****************************************************************//
 //*****************************************************************//
 //*****************************************************************//
 //**                                                             **//
-//**         (C)Copyright 2015, American Megatrends, Inc.        **//
+//**         (C)Copyright 2013, American Megatrends, Inc.        **//
 //**                                                             **//
 //**                     All Rights Reserved.                    **//
 //**                                                             **//

@@ -15,7 +15,7 @@
   PeCoffLoaderGetPeHeader() routine will do basic check for PE/COFF header.
   PeCoffLoaderGetImageInfo() routine will do basic check for whole PE/COFF image.
 
-  Copyright (c) 2006 - 2014, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2006 - 2012, Intel Corporation. All rights reserved.<BR>
   Portions copyright (c) 2008 - 2009, Apple Inc. All rights reserved.<BR>
   This program and the accompanying materials
   are licensed and made available under the terms and conditions of the BSD License
@@ -28,6 +28,7 @@
 **/
 
 #include "BasePeCoffLibInternals.h"
+#include "token.h" //EIP137990
 
 /**
   Adjust some fields in section header for TE image.
@@ -241,18 +242,19 @@ PeCoffLoaderGetPeHeader (
       HeaderWithoutDataDir = sizeof (EFI_IMAGE_OPTIONAL_HEADER32) - sizeof (EFI_IMAGE_DATA_DIRECTORY) * EFI_IMAGE_NUMBER_OF_DIRECTORY_ENTRIES;
       if (((UINT32)Hdr.Pe32->FileHeader.SizeOfOptionalHeader - HeaderWithoutDataDir) !=
           Hdr.Pe32->OptionalHeader.NumberOfRvaAndSizes * sizeof (EFI_IMAGE_DATA_DIRECTORY)) {
+//EIP137990 >>
+#if !defined(ANDROID_SUPPORT)||(ANDROID_SUPPORT==0)
+// Workaround: Kernel.efi of Android image is not supported in Core 5.008.
         ImageContext->ImageError = IMAGE_ERROR_UNSUPPORTED;
         return RETURN_UNSUPPORTED;
+#endif
+//EIP137990 <<
       }
 
       SectionHeaderOffset = ImageContext->PeCoffHeaderOffset + sizeof (UINT32) + sizeof (EFI_IMAGE_FILE_HEADER) + Hdr.Pe32->FileHeader.SizeOfOptionalHeader;
       //
       // 3. Check the FileHeader.NumberOfSections field.
       //
-      if (Hdr.Pe32->OptionalHeader.SizeOfImage <= SectionHeaderOffset) {
-        ImageContext->ImageError = IMAGE_ERROR_UNSUPPORTED;
-        return RETURN_UNSUPPORTED;
-      }
       if ((Hdr.Pe32->OptionalHeader.SizeOfImage - SectionHeaderOffset) / EFI_IMAGE_SIZEOF_SECTION_HEADER <= Hdr.Pe32->FileHeader.NumberOfSections) {
         ImageContext->ImageError = IMAGE_ERROR_UNSUPPORTED;
         return RETURN_UNSUPPORTED;
@@ -261,14 +263,6 @@ PeCoffLoaderGetPeHeader (
       //
       // 4. Check the OptionalHeader.SizeOfHeaders field.
       //
-      if (Hdr.Pe32->OptionalHeader.SizeOfHeaders <= SectionHeaderOffset) {
-        ImageContext->ImageError = IMAGE_ERROR_UNSUPPORTED;
-        return RETURN_UNSUPPORTED;
-      }
-      if (Hdr.Pe32->OptionalHeader.SizeOfHeaders >= Hdr.Pe32->OptionalHeader.SizeOfImage) {
-        ImageContext->ImageError = IMAGE_ERROR_UNSUPPORTED;
-        return RETURN_UNSUPPORTED;
-      }
       if ((Hdr.Pe32->OptionalHeader.SizeOfHeaders - SectionHeaderOffset) / EFI_IMAGE_SIZEOF_SECTION_HEADER < (UINT32)Hdr.Pe32->FileHeader.NumberOfSections) {
         ImageContext->ImageError = IMAGE_ERROR_UNSUPPORTED;
         return RETURN_UNSUPPORTED;
@@ -363,10 +357,6 @@ PeCoffLoaderGetPeHeader (
       //
       // 3. Check the FileHeader.NumberOfSections field.
       //
-      if (Hdr.Pe32Plus->OptionalHeader.SizeOfImage <= SectionHeaderOffset) {
-        ImageContext->ImageError = IMAGE_ERROR_UNSUPPORTED;
-        return RETURN_UNSUPPORTED;
-      }
       if ((Hdr.Pe32Plus->OptionalHeader.SizeOfImage - SectionHeaderOffset) / EFI_IMAGE_SIZEOF_SECTION_HEADER <= Hdr.Pe32Plus->FileHeader.NumberOfSections) {
         ImageContext->ImageError = IMAGE_ERROR_UNSUPPORTED;
         return RETURN_UNSUPPORTED;
@@ -375,14 +365,6 @@ PeCoffLoaderGetPeHeader (
       //
       // 4. Check the OptionalHeader.SizeOfHeaders field.
       //
-      if (Hdr.Pe32Plus->OptionalHeader.SizeOfHeaders <= SectionHeaderOffset) {
-        ImageContext->ImageError = IMAGE_ERROR_UNSUPPORTED;
-        return RETURN_UNSUPPORTED;
-      }
-      if (Hdr.Pe32Plus->OptionalHeader.SizeOfHeaders >= Hdr.Pe32Plus->OptionalHeader.SizeOfImage) {
-        ImageContext->ImageError = IMAGE_ERROR_UNSUPPORTED;
-        return RETURN_UNSUPPORTED;
-      }
       if ((Hdr.Pe32Plus->OptionalHeader.SizeOfHeaders - SectionHeaderOffset) / EFI_IMAGE_SIZEOF_SECTION_HEADER < (UINT32)Hdr.Pe32Plus->FileHeader.NumberOfSections) {
         ImageContext->ImageError = IMAGE_ERROR_UNSUPPORTED;
         return RETURN_UNSUPPORTED;
@@ -515,8 +497,13 @@ PeCoffLoaderGetPeHeader (
       //
       if (SectionHeader.VirtualAddress < ImageContext->SizeOfHeaders || 
           SectionHeader.PointerToRawData < ImageContext->SizeOfHeaders) {
+//EIP137990 >>
+#if !defined(ANDROID_SUPPORT)||(ANDROID_SUPPORT==0)
+// Workaround: Kernel.efi of Android image is not supported in Core 5.008.
         ImageContext->ImageError = IMAGE_ERROR_UNSUPPORTED;
         return RETURN_UNSUPPORTED;
+#endif
+//EIP137990 <<
       }
 
       //

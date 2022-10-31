@@ -27,8 +27,7 @@
 "MdeModulePkg.Disk"
 "MdeModulePkg.Ebc"
 "MdeModulePkg.HiiDatabase"
-"MdeModulePkg.Pcd"
+"MdeModulePkg.Pcd"   
 "MdeModulePkg.SecurityStub"
-"MdeModulePkg.Timestamp"
 "UefiCpuPkg.CpuIo"
 <endComponent>

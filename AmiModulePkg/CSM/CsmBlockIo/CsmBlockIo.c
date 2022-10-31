@@ -19,8 +19,8 @@
 **/
 
 #include "CsmBlockIo.h"
-#include <Protocol/Legacy8259.h>
-#include <Protocol/IdeControllerInit.h>
+#include <Protocol\Legacy8259.h>
+#include <Protocol\IdeControllerInit.h>
 
 // EFI Driver Binding Protocol Instance
 EFI_DRIVER_BINDING_PROTOCOL gCsmBlockIoDriverBinding = {
@@ -58,16 +58,22 @@ CSM_LEGACY_DRIVE            *mDriveParameterBuffer;
 //    has gOnboardRaidGuid installed on it
 //
 #define ONBOARD_RAID_GUID \
-    { 0x5d206dd3, 0x516a, 0x47dc, { 0xa1, 0xbc, 0x6d, 0xa2, 0x4, 0xaa, 0xbe, 0x8 }};
-
+    { 0x5d206dd3, 0x516a, 0x47dc, 0xa1, 0xbc, 0x6d, 0xa2, 0x4, 0xaa, 0xbe, 0x8};
 EFI_GUID    gOnboardRaidGuid = ONBOARD_RAID_GUID;
+BOOLEAN     gOnboardRaid = FALSE;
+
+// The following variable used as a global switch to prevent multiple execution of
+// Start function for the onboard RAID controller that has gOnboardRaidGuid
+// installed on its handle
+//
+BOOLEAN     gOnboardRaidHandledCsmBlockIo = FALSE;
+
 
 // The following GUID is used to ensure the Start function is executed after all
 // individual drives in RAID are unlocked before RAID Option ROM is executed
 //
 #define HDD_UNLOCKED_GUID \
-    { 0x1fd29be6, 0x70d0, 0x42a4, { 0xa6, 0xe7, 0xe5, 0xd1, 0xe, 0x6a, 0xc3, 0x76 }};
-
+    { 0x1fd29be6, 0x70d0, 0x42a4, 0xa6, 0xe7, 0xe5, 0xd1, 0xe, 0x6a, 0xc3, 0x76};
 EFI_GUID gHddUnlockedGuid = HDD_UNLOCKED_GUID;
 
 
@@ -125,24 +131,6 @@ CsmBlockIoSupported (
         return Status;
     }
 
-    // Check whether DevicePath Protocol has been installed on this controller
-    Status = pBS->OpenProtocol( Controller,
-                    &gEfiDevicePathProtocolGuid,
-                    (VOID**)&ParentDevicePath,
-                    This->DriverBindingHandle,
-                    Controller,
-                    EFI_OPEN_PROTOCOL_BY_DRIVER );
-
-    if (EFI_ERROR (Status)) {
-        return Status;
-    }
-
-    pBS->CloseProtocol (
-                    Controller,
-                    &gEfiDevicePathProtocolGuid,
-                    This->DriverBindingHandle,
-                    Controller);
-
     // Check whether this is Onboard RAID
     Status = pBS->OpenProtocol( Controller,
                     &gOnboardRaidGuid,
@@ -163,7 +151,7 @@ CsmBlockIoSupported (
                     Controller,
                     EFI_OPEN_PROTOCOL_TEST_PROTOCOL );
 #endif
-        if(EFI_ERROR(Status)) {
+        if(EFI_ERROR(Status) || gOnboardRaidHandledCsmBlockIo) {
             return EFI_UNSUPPORTED;
         }
 
@@ -176,9 +164,16 @@ CsmBlockIoSupported (
                     Controller,   
                     EFI_OPEN_PROTOCOL_TEST_PROTOCOL);
 
+        pBS->CloseProtocol ( Controller,
+                    &gEfiIdeControllerInitProtocolGuid,
+                    This->DriverBindingHandle,
+                    Controller);
+
         if (EFI_ERROR(Status)) {
-            return EFI_UNSUPPORTED;
+            return Status;
         }
+
+        gOnboardRaid = TRUE;            
 
         return EFI_SUCCESS;
     }
@@ -206,6 +201,22 @@ CsmBlockIoSupported (
         This->DriverBindingHandle,
         Controller );
 
+    // Check whether DevicePath Protocol has been installed on this controller
+    Status = pBS->OpenProtocol( Controller,
+                    &gEfiDevicePathProtocolGuid,
+                    (VOID**)&ParentDevicePath,
+                    This->DriverBindingHandle,
+                    Controller,
+                    EFI_OPEN_PROTOCOL_BY_DRIVER );
+    if (EFI_ERROR (Status)) {
+        return Status;
+    }
+
+    pBS->CloseProtocol (
+                    Controller,
+                    &gEfiDevicePathProtocolGuid,
+                    This->DriverBindingHandle,
+                    Controller);
 
     //  Status is EFI_SUCCESS here
 
@@ -273,11 +284,9 @@ CsmBlockIoStart (
     BOOLEAN                     BbsEntryPresent[MAX_BBS_ENTRIES_NO] = {0};
     UINTN                       FirstNewBbsEntry = 0;
     EFI_LEGACY_BIOS_EXT_PROTOCOL *LegacyBiosExt;
-    BOOLEAN                     OnboardRaidController=FALSE;
-    EFI_DEVICE_PATH_PROTOCOL    *ChildPciDevPath;
-    UINT8                       NumberOfBbsEntriesBeforeOprom = 0;
-    UINT8                       NumberOfBbsEntriesAfterOprom = 0;
-    UINT8                       NewBbsEntries;
+    UINT8   NumberOfBbsEntriesBeforeOprom = 0;
+    UINT8   NumberOfBbsEntriesAfterOprom = 0;
+    UINT8   NewBbsEntries;
 
     // See if the Legacy BIOS Protocol is available
     Status = pBS->LocateProtocol( &gEfiLegacyBiosProtocolGuid,
@@ -293,31 +302,8 @@ CsmBlockIoStart (
         return Status;
     }
 
-    Status = pBS->OpenProtocol( Controller,
-                    &gEfiDevicePathProtocolGuid,
-                    (VOID**)&PciDevPath,
-                    This->DriverBindingHandle,
-                    Controller,
-                    EFI_OPEN_PROTOCOL_BY_DRIVER );
-
-    if (EFI_ERROR (Status)) {
-        return Status;
-    }
-
-    // Check whether this is Onboard RAID
-    Status = pBS->OpenProtocol( Controller,
-                    &gOnboardRaidGuid,
-                    NULL,
-                    This->DriverBindingHandle,
-                    Controller,
-                    EFI_OPEN_PROTOCOL_TEST_PROTOCOL );
-
-    if (!EFI_ERROR (Status)) {
-        OnboardRaidController=TRUE;
-    }
-    
     //  Open PCI I/O Protocol
-    if (OnboardRaidController) {
+    if (gOnboardRaid) {
         Status = pBS->OpenProtocol( Controller,
                 &gEfiPciIoProtocolGuid,
                 (VOID **)&PciIo,
@@ -335,6 +321,7 @@ CsmBlockIoStart (
     }
 
     if  ( EFI_ERROR(Status) ) {
+        gOnboardRaid = FALSE;
         return Status;
     }
 
@@ -351,6 +338,37 @@ CsmBlockIoStart (
 
     // Store HW interrupt vector, to be restored for PnP ROMs
     TempInt = ivt[irq];
+
+    // Open Device Path Protocol
+    if (gOnboardRaid) {
+        Status = pBS->OpenProtocol( Controller,
+                &gEfiDevicePathProtocolGuid,
+                (VOID**)&PciDevPath,
+                This->DriverBindingHandle,
+                Controller,
+                EFI_OPEN_PROTOCOL_GET_PROTOCOL );
+    } else {
+        Status = pBS->OpenProtocol( Controller,
+                &gEfiDevicePathProtocolGuid,
+                (VOID**)&PciDevPath,
+                This->DriverBindingHandle,
+                Controller,
+                EFI_OPEN_PROTOCOL_BY_DRIVER );
+    }
+
+    if (EFI_ERROR (Status)) {
+        pBS->CloseProtocol( Controller,
+                &gEfiPciIoProtocolGuid,
+                This->DriverBindingHandle,
+                Controller );
+        gOnboardRaid = FALSE;
+        return Status;
+    }
+
+    if (gOnboardRaid) {
+        gOnboardRaidHandledCsmBlockIo = TRUE;
+        gOnboardRaid = FALSE;
+    }
 
     // Enable the device
     Status = PciIo->Attributes (PciIo,
@@ -484,7 +502,7 @@ CsmBlockIoStart (
         }
 
         // Zero the private device structure
-        pBS->SetMem (PrivateBlockIoStruc, sizeof (CSM_BLOCK_IO_DEV), 0);
+        ZeroMemory (PrivateBlockIoStruc, sizeof (CSM_BLOCK_IO_DEV));
 
         // Initialize the private device structure
         PrivateBlockIoStruc->ControllerHandle   = Controller;
@@ -524,28 +542,14 @@ CsmBlockIoStart (
             {
                 *(UINTN*)(&(BbsTable[FirstNewBbsEntry + j].IBV1)) = (UINTN)(PrivateBlockIoStruc->Handle);
             }
-            // For Onboard Raid controller use device path protocol 
-            // and other Raid controller uses the PciIO protocol.	
-            
-            if(OnboardRaidController) {
-                // Open For Child Device
-                Status = pBS->OpenProtocol( Controller,
-                    &gEfiDevicePathProtocolGuid,
-                    (VOID**)&ChildPciDevPath,
-                    This->DriverBindingHandle,
-                    PrivateBlockIoStruc->Handle,
-                    EFI_OPEN_PROTOCOL_BY_CHILD_CONTROLLER );
 
-            } else {
-
-                // Open For Child Device
-                Status = pBS->OpenProtocol( Controller,
+            // Open For Child Device
+            Status = pBS->OpenProtocol( Controller,
                     &gEfiPciIoProtocolGuid,
                     (VOID**)&PrivateBlockIoStruc->PciIo,
                     This->DriverBindingHandle,
                     PrivateBlockIoStruc->Handle,
                     EFI_OPEN_PROTOCOL_BY_CHILD_CONTROLLER );
-            }
         } else {
             pBS->FreePool (PrivateBlockIoStruc);
         }
@@ -595,7 +599,6 @@ CsmBlockIoStop (
     EFI_BLOCK_IO_PROTOCOL       *BlockIo;
     CSM_BLOCK_IO_DEV            *PrivateBlockIoStruc;
     UINTN                       i;
-    BOOLEAN                     OnboardRaidController=FALSE;
 
     //  Decrement the number of current users
     mCurrentUsers--;
@@ -607,23 +610,10 @@ CsmBlockIoStop (
         mRealModeBuffer = 0;
     }
 
-    // Check whether this is Onboard RAID
-    Status = pBS->OpenProtocol( Controller,
-                            &gOnboardRaidGuid,
-                            NULL,
-                            This->DriverBindingHandle,
-                            Controller,
-                            EFI_OPEN_PROTOCOL_TEST_PROTOCOL );
-
-    if (!EFI_ERROR (Status)) {
-        OnboardRaidController=TRUE;
-    }
-
     AllChildrenStopped = TRUE;
 
     // Close protocols and shut down hardware for each child handle.
     for (i = 0; i < NumberOfChildren; i++) {
-
         Status = pBS->OpenProtocol( ChildHandleBuffer[i],
                     &gEfiBlockIoProtocolGuid,
                     (VOID**)&BlockIo,
@@ -635,13 +625,6 @@ CsmBlockIoStop (
         }
 
         PrivateBlockIoStruc = (CSM_BLOCK_IO_DEV *) BlockIo;
-
-        if(OnboardRaidController) {
-            pBS->CloseProtocol( Controller,
-                            &gEfiDevicePathProtocolGuid,
-                            This->DriverBindingHandle,
-                            ChildHandleBuffer[i] );
-        }
 
         //  Release PCI I/O and Block IO Protocols on the clild handle.
         Status = pBS->UninstallMultipleProtocolInterfaces( ChildHandleBuffer[i],
@@ -661,13 +644,10 @@ CsmBlockIoStop (
             EFI_PCI_DEVICE_ENABLE,
             NULL);
 
-
-        if(!OnboardRaidController) {
-            pBS->CloseProtocol( Controller,
-                            &gEfiPciIoProtocolGuid,
-                            This->DriverBindingHandle,
-                            ChildHandleBuffer[i] );
-        }
+        pBS->CloseProtocol( Controller,
+            &gEfiPciIoProtocolGuid,
+            This->DriverBindingHandle,
+            ChildHandleBuffer[i] );
 
         pBS->FreePool (PrivateBlockIoStruc);
     }  // end for loop
@@ -681,12 +661,10 @@ CsmBlockIoStop (
             This->DriverBindingHandle,
             Controller );
 
-    if(!OnboardRaidController) {
-        Status = pBS->CloseProtocol( Controller,
-                            &gEfiPciIoProtocolGuid,
-                            This->DriverBindingHandle,
-                            Controller);
-    }
+    Status = pBS->CloseProtocol( Controller,
+            &gEfiPciIoProtocolGuid,
+            This->DriverBindingHandle,
+            Controller );
 
     return EFI_SUCCESS;
 }
@@ -793,6 +771,18 @@ UINTN AlignAddress (UINTN Address)
         return sizeof(UINTN) - ((UINTN)Address % sizeof(UINTN));
     } else {
         return 0;
+    }
+}
+
+VOID ZeroMemory (
+    VOID    *Buffer,
+    UINTN   Size
+)
+{
+    UINT8   *Ptr;
+    Ptr = Buffer;
+    while (Size--) {
+        *(Ptr++) = 0;
     }
 }
 

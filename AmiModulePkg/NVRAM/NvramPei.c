@@ -479,7 +479,7 @@ PeiInitNVHelper (
         VarPpi->MainInfo = NULL;
         NvramMode=NVRAM_MODE_RESET_CONFIGURATION;
 #if NV_SIMULATION_NO_FLASH_READS
-        PEI_TRACE((-1, PeiServices, "PEI: NVRAM PEIM is working in simulation mode.\n"));
+        PEI_TRACE((-1, PeiServices, "PEI: NVRAM PEIM is working in sumulation mode.\n"));
 #else
         PEI_TRACE((-1, PeiServices, "PEI: NVRAM header corruption is detected\n"));
 #endif        
@@ -526,7 +526,7 @@ PeiInitNVHelper (
             }
         }
         if (!IsNvramDataCompatible(PeiServices, &VarPpi->Ppi)){
-            PEI_TRACE((-1, PeiServices, "PEI: Incompatible NVRAM detected\n"));
+            PEI_TRACE((-1, PeiServices, "PEI: Incompactible NVRAM detected\n"));
             VarPpi->MainInfo = NULL;
             VarPpi->InfoCount=0;
         }

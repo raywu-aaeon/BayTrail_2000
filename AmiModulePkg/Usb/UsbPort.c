@@ -1,21 +1,37 @@
-//**********************************************************************
-//**********************************************************************
-//**                                                                  **
-//**        (C)Copyright 1985-2016, American Megatrends, Inc.         **
-//**                                                                  **
-//**                       All Rights Reserved.                       **
-//**                                                                  **
-//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093        **
-//**                                                                  **
-//**                       Phone: (770)-246-8600                      **
-//**                                                                  **
-//**********************************************************************
-//**********************************************************************
+//****************************************************************************
+//****************************************************************************
+//**                                                                        **
+//**             (C)Copyright 1985-2010, American Megatrends, Inc.          **
+//**                                                                        **
+//**                          All Rights Reserved.                          **
+//**                                                                        **
+//**                 5555 Oakbrook Pkwy, Norcross, GA 30093                 **
+//**                                                                        **
+//**                          Phone (770)-246-8600                          **
+//**                                                                        **
+//****************************************************************************
+//****************************************************************************
 
-/** @file UsbPort.c
-    AMI USB Porting file
+//****************************************************************************
+// $Header: /Alaska/SOURCE/Modules/USB/ALASKA/usbport.c 60    9/13/12 1:41a Ryanchou $
+//
+// $Revision: 60 $
+//
+// $Date: 9/13/12 1:41a $
+//
+//****************************************************************************
+//
+//<AMI_FHDR_START>
+//-----------------------------------------------------------------------------
+//
+//  Name:   USBPORT.C
+//
+//  Description:    AMI USB Porting file
+//
+//-----------------------------------------------------------------------------
+//<AMI_FHDR_END>
 
-**/
+//****************************************************************************
 
 #include <Token.h>
 #include <Setup.h>
@@ -35,13 +51,17 @@ static UINT8   DeviceNumber=1;
 //-----------------------------------------------------------------------------
 // This part is linked with USBRT and located in SMI
 
-/**
-    This table contains list of vendor & device IDs of USB
-    devices that are non-compliant. This is currently used
-    only for USB mass storage devices but can be extended to
-    other type of non-compliant devices also.
-
-**/
+//<AMI_THDR_START>
+//----------------------------------------------------------------------------
+// Name:        USBBadDeviceTable
+//
+// Description: This table contains list of vendor & device IDs of USB
+//              devices that are non-compliant. This is currently used
+//              only for USB mass storage devices but can be extended to
+//              other type of non-compliant devices also.
+//
+//----------------------------------------------------------------------------
+//<AMI_THDR_END>
 
 USB_BADDEV_STRUC    gUsbBadDeviceTable[] = {
 // Intel, Lacie hard disk
@@ -135,10 +155,6 @@ USB_BADDEV_STRUC    gUsbBadDeviceTable[] = {
 		0xFF, 0xFF, 0xFF,
 		0},
 										//<(EIP75441+)
-// Genovation USB Mini-Terminal Model #904-RJ
-	{0x16C0, 0x0604,
-		0, 0, 0,
-		USB_INCMPT_DISABLE_DEVICE},
 #ifdef USB_BAD_DEVICES
 	USB_BAD_DEVICES
 #endif
@@ -150,167 +166,143 @@ UINT16 gKbcSetTypeRate11CharsSec=KEY_REPEAT_DELAY;
 UINT16 gKbcSetTypeDelay500MSec=KEY_REPEAT_INITIAL_DELAY;
 extern  USB_GLOBAL_DATA  *gUsbData;  //EIP58029
 
+//(EIP74609+)>
 DEV_INFO*   USB_GetDeviceInfoStruc(UINT8, DEV_INFO*, UINT8, HC_STRUC*);
 
-/**
-    This function intends to skip port.
-  
-**/ 
-
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        OEMSkipList
+//
+// Description:	This function intends to skip port.
+//  
+// Notes:
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END> 
 BOOLEAN 
 OEMSkipList (
-    UINT8       HubAddr,
-    UINT8       PortNum, 	
-	UINT16      Bdf,
-	UINT8       BaseClass,
+    UINT8       bHubAddr,
+    UINT8       bPortNum, 	
+	UINT16		wBDF,
+	UINT8		bBaseClass,
     UINT8       VaildBaseClass
 )
 {
                                         //(EIP88776+)>
-    USB_SKIP_LIST   *UsbSkipListTable;
-    DEV_INFO        *TmpDevInfo;
-    UINT8           TablePortNumber; 
-    UINT8           ConnectDeviceNumber;
-	UINT8           ConnectPortNumber;	
-    UINT16          i; 
-    UINT16          TableLevel; 
-    UINT16          ConnectLevel;
-    UINT32          TablePath; 
-    UINT32          ConnectPath;
-    UINT32          ConnectPathMask;
+	USB_SKIP_LIST					*gUsbSkipListTable;
+	DEV_INFO   						*tmpDevInfo;
+	UINT8 							TablePortNumber; 
+    UINT8                           ConnectDeviceNumber;
+	UINT8							ConnectPortNumber;	
+	UINT16							i; 
+	UINT16							TableLevel; 
+	UINT16							ConnectLevel;
+    UINT32                          TablePath; 
+	UINT32							ConnectPath;
  
-    UsbSkipListTable = (USB_SKIP_LIST*) gUsbData->gUsbSkipListTable;
+	gUsbSkipListTable = (USB_SKIP_LIST*) gUsbData->gUsbSkipListTable;
 
-    if (UsbSkipListTable == NULL) {
-        return FALSE;
-    }
+	if (gUsbSkipListTable == NULL) return FALSE;
 	
-    for ( ; (UsbSkipListTable->wBDF != 0); UsbSkipListTable++) {
-        TablePortNumber = UsbSkipListTable->bRootPort;
-        TablePath = UsbSkipListTable->dRoutePath;
-        for (i = 1; i < 5; i++, TablePath >>= 4) {
-            if (TablePath == 0) {
-                break;
-            }
+    for ( ; (gUsbSkipListTable->wBDF != 0); gUsbSkipListTable++) 
+	{
+		TablePortNumber = gUsbSkipListTable->bRootPort;
+		TablePath = gUsbSkipListTable->dRoutePath;
+        for (i = 1; i < 5; i++ ,TablePath >>= 4){
+        	if (TablePath == 0) break;
 		}
 
-        TablePath = UsbSkipListTable->dRoutePath;
+        TablePath = gUsbSkipListTable->dRoutePath;
         TableLevel = i;
-        USB_DEBUG(DEBUG_INFO, 4, "TableLevel = %x TablePath = %x TablePortNumber = %x BDF = %x\n",
-                TableLevel,TablePath,TablePortNumber, UsbSkipListTable->wBDF);
+        USB_DEBUG(4, "TableLevel = %x TablePath = %x TablePortNumber = %x BDF = %x\n",TableLevel,TablePath,TablePortNumber,gUsbSkipListTable->wBDF);
 
         //get connect path and level
-        ConnectDeviceNumber = HubAddr; 
-        ConnectPortNumber = PortNum;		
-        for (i = 1, ConnectPath = 0; i < 5; i++) {	
-            if (ConnectDeviceNumber & BIT7) {
-                break;
-            }
+		ConnectDeviceNumber = bHubAddr; 
+		ConnectPortNumber = bPortNum;		
+        for (i = 1, ConnectPath = 0; i < 5; i++)
+        {
+			
+            if (ConnectDeviceNumber & BIT7) break;
             ConnectPath = ConnectPath << 4; 
             ConnectPath |= ConnectPortNumber;
 
-            // Get the device info structure for the matching device address
-            TmpDevInfo = USB_GetDeviceInfoStruc(
-                                        USB_SRCH_DEV_ADDR, 
-                                        0, 
-                                        ConnectDeviceNumber, 
-                                        0);
-            if (TmpDevInfo == NULL) {
-                break;
-            }
-            ConnectDeviceNumber = TmpDevInfo->bHubDeviceNumber;
-            ConnectPortNumber   = TmpDevInfo->bHubPortNumber;             
+			// Get the device info structure for the matching device address
+			tmpDevInfo = USB_GetDeviceInfoStruc (
+										USB_SRCH_DEV_ADDR, 
+										0, 
+										ConnectDeviceNumber, 
+										0);
+			if (tmpDevInfo == NULL) break;
+	        ConnectDeviceNumber = tmpDevInfo->bHubDeviceNumber;
+            ConnectPortNumber   = tmpDevInfo->bHubPortNumber;             
         }
         ConnectLevel = i; 
-        USB_DEBUG(DEBUG_INFO, 4, "ConnectLevel = %x ConnectPath = %x ConnectPortNumber = %x BDF = %x\n",
-                    ConnectLevel, ConnectPath, ConnectPortNumber, Bdf);
+        USB_DEBUG(4, "ConnectLevel = %x ConnectPath = %x ConnectPortNumber = %x BDF = %x \n",ConnectLevel,ConnectPath,ConnectPortNumber,wBDF);
 
-        //Skip by all 
-        if (UsbSkipListTable->bSkipType == SKIP_FOR_ALLCONTROLLER) {
-            if (UsbSkipListTable->bFlag == SKIP_FLAG_SKIP_LEVEL) {
-                if (TableLevel != ConnectLevel) {
-                    continue;
-                }
+		//Skip by all 
+		if (gUsbSkipListTable->bSkipType == SKIP_FOR_ALLCONTROLLER)
+		{
+            if (gUsbSkipListTable->bFlag == SKIP_FLAG_SKIP_LEVEL)
+            {
+                if (TableLevel != ConnectLevel) continue;                          
             }
 			
-            if (UsbSkipListTable->bBaseClass == 0) {
-                return TRUE;
-            }
+			if (gUsbSkipListTable->bBaseClass == 0) return TRUE;
 			
-            if (UsbSkipListTable->bBaseClass == BaseClass) {
-                return TRUE;
-            }
+  			if (gUsbSkipListTable->bBaseClass == bBaseClass) return TRUE;
 			
 			continue;
 		}
 
-        if (UsbSkipListTable->wBDF != Bdf) {
-            continue;
-        }
+		if (gUsbSkipListTable->wBDF != wBDF) continue;
 
-        //Skip by controller
-        if (UsbSkipListTable->bRootPort == 0) {
-            if (UsbSkipListTable->bBaseClass != 0) {         
-                if (UsbSkipListTable->bBaseClass != BaseClass) {
-                    continue;
-                } else {
-                    return TRUE;                    
-                }
-            }
+        //skip by controller
+		if (gUsbSkipListTable->bRootPort == 0)
+		{
+			if (gUsbSkipListTable->bBaseClass != 0)
+            {         
+				if (gUsbSkipListTable->bBaseClass != bBaseClass) {
+					continue;
+				} else {
+        			return TRUE;                    
+				}
+            }    
+		
             return TRUE;                                
-        }
-        //Skip usb ports which include down stream ports.
-        if (UsbSkipListTable->bFlag == SKIP_FLAG_SKIP_MULTI_LEVEL) {
-            ConnectPathMask = 0xFFFFFFFF >> (4 * (8 - (TableLevel)));
-            ConnectPathMask = ConnectPathMask >> 4;
-            if (((ConnectPath & ConnectPathMask) == TablePath) && (ConnectPortNumber == TablePortNumber)){
-                if (UsbSkipListTable->bBaseClass != 0) {
-                    if (UsbSkipListTable->bBaseClass == BaseClass) {
-                        return TRUE;
-                    }
-                    continue;
-                }
-                return TRUE;
-            }
-            continue;
-        }
-        
-        if (TableLevel != ConnectLevel) {
-            continue;
-        }
-		//Skip usb ports on the same level.
-        if (UsbSkipListTable->bFlag == SKIP_FLAG_SKIP_LEVEL) {
-            if (UsbSkipListTable->bBaseClass == 0) {
-                return TRUE;
-            }
+		}
+
+        if (TableLevel != ConnectLevel) continue;
+		
+        if (gUsbSkipListTable->bFlag == SKIP_FLAG_SKIP_LEVEL)
+        {
+            if (gUsbSkipListTable->bBaseClass == 0) return TRUE;             
 			
-            if (UsbSkipListTable->bBaseClass == BaseClass) {
-                return TRUE;
-            }
+            if (gUsbSkipListTable->bBaseClass == bBaseClass) return TRUE;
         }
-        for (i = 0; i < TableLevel; i++, ConnectPath >>= 4, TablePath >>= 4) {
-            if (i == (TableLevel - 1)) { 
-                switch (UsbSkipListTable->bFlag) {
+		
+        for (i = 0; i < TableLevel; i++, ConnectPath >>= 4, TablePath >>= 4)
+        {
+            if (i == (TableLevel - 1)) {
+                
+                switch (gUsbSkipListTable->bFlag)
+                {
                     case SKIP_FLAG_SKIP_PORT:
                         if ((ConnectPath == TablePath) && (ConnectPortNumber == TablePortNumber)){
-                            if (UsbSkipListTable->bBaseClass != 0) {
-                                if (UsbSkipListTable->bBaseClass == BaseClass) {
-                                    return TRUE;
-                                }
+                            if (gUsbSkipListTable->bBaseClass != 0){
+                                if (gUsbSkipListTable->bBaseClass == bBaseClass) return TRUE;
                                 break;
                             }
                             return TRUE;
                         }
                         break;						
                     case SKIP_FLAG_KEEP_PORT:
-                        if (ConnectPortNumber == TablePortNumber) {
-                            if (ConnectPath == TablePath) {
-                                if (UsbSkipListTable->bBaseClass != 0) {
-                                    if (VaildBaseClass == 1) {
-                                        if (UsbSkipListTable->bBaseClass != BaseClass) {
+                        if (ConnectPortNumber == TablePortNumber){
+                            if (ConnectPath == TablePath){
+                                if (gUsbSkipListTable->bBaseClass != 0){
+                                    if(VaildBaseClass == 1)
+                                        if (gUsbSkipListTable->bBaseClass != bBaseClass) 
                                             return TRUE;
-                                        }
-                                    }
                                 }
                                 break;                                
                             }
@@ -321,49 +313,23 @@ OEMSkipList (
                         break;
                 }                
             } else {
-                if ((ConnectPath & 0xf) != (TablePath & 0xf)) {
-                    break;
-                }
-            }
+                if ((ConnectPath & 0xf) != (TablePath & 0xf)) break;
+			}
         }
-    }
+	}
 	
-    return FALSE;
+	return FALSE;
                                         //<(EIP88776+)
 }
-
-/**
-    This function provides Oem to check for non-compliant 
-    USB devices and updates the data structures appropriately 
-    to support the device.
-
-    @param  HCStruc - HCStruc pointer
-            DevInfo - Device information structure pointer
-            Desc    - Pointer to the descriptor structure
-            DescLength - End offset of the device descriptor
-
-    @retval Updated DevInfo->wIncompatFlags field
-
-**/
-
-VOID
-UsbOemCheckNonCompliantDevice(
-	HC_STRUC*	HCStruc,
-	DEV_INFO*	DevInfo,
-	UINT8*		Desc,
-	UINT16		Length,
-	UINT16		DescLength
-)
-{
-}
-
+//<(EIP74609+) 
+ 
 // End of SMI part of USBPORT.C
 //-----------------------------------------------------------------------------
 #else
 //-----------------------------------------------------------------------------
 // This part is linked with UHCD and located outside SMI
 extern  USB_GLOBAL_DATA  *gUsbData;  //EIP58029
-
+//extern  EFI_GUID gEfiSetupGuid;
 EFI_GUID gEfiSetupGuid = SETUP_GUID;
 
 UINT8 gFddHotplugSupport = USB_HOTPLUG_FDD;
@@ -388,51 +354,54 @@ UINT8 SkipCardReaderConnectBeep = SKIP_CARD_READER_CONNECT_BEEP_IF_NO_MEDIA;    
 //USB_SUPPORT_SETUP           gSetupData;					//(EIP99882-)
 
 //(EIP51653+)>
-/**
-    This function returns a name string of connected mass storage
-    device.
-
-    @param SkipStruc - Pointer to a skip list to be filled
-        TotalStruc - Size of the data to copy to a buffer
-    @retval VOID
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        UsbGetSkipList
+//
+// Description: This function returns a name string of connected mass storage
+//              device.
+//
+// Input:       SkipStruc - Pointer to a skip list to be filled
+//              TotalStruc - Size of the data to copy to a buffer
+// Output:      None
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 VOID
-EFIAPI
 UsbGetSkipList(
     USB_SKIP_LIST	*SkipStruc,
     UINT8			TotalStruc
 )
 {
-	EFI_STATUS  Status;
+	EFI_STATUS						Status;
 
-	Status = gBS->AllocatePool(
+	Status = pBS->AllocatePool(
 			EfiRuntimeServicesData,
-			(TotalStruc + 1) * sizeof(USB_SKIP_LIST),
+			TotalStruc*sizeof(USB_SKIP_LIST),
 			&(gUsbData->gUsbSkipListTable));
-    
-    if (EFI_ERROR(Status)) {
-        return;
-    }
-    
-    gBS->SetMem(gUsbData->gUsbSkipListTable, (TotalStruc + 1) * sizeof(USB_SKIP_LIST), 0);
-	gBS->CopyMem(gUsbData->gUsbSkipListTable, SkipStruc, TotalStruc * sizeof(USB_SKIP_LIST));
+	pBS->CopyMem(gUsbData->gUsbSkipListTable,SkipStruc, TotalStruc*sizeof(USB_SKIP_LIST));
 
-	return;
+	return ;
 }
 //<(EIP51653+) 
 
-/**
-    This function is called from the UHCD entry point, HcPciInfo
-    can be updated here depending on the platform and/or chipset
-    requirements.
-
-    @param VOID
-
-    @retval EFI_STATUS Updating succeeded / failed
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:  UpdateHcPciInfo
+//
+// Description: This function is called from the UHCD entry point, HcPciInfo
+//              can be updated here depending on the platform and/or chipset
+//              requirements.
+//
+// Input:       None
+//
+// Output:      EFI_STATUS - Updating succeeded / failed
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 EFI_STATUS
 UpdateHcPciInfo()
@@ -441,25 +410,28 @@ UpdateHcPciInfo()
 }
 
 
-/**
-    This procedure return specific USB host controller index and
-    port number for BIOS to give specific mass storage device
-    have highest boot priority.
-
-    @param VOID
-
-    @retval 
-        EFI_SUCCESS         USB boot device assigned
-        UsbHcIndx       USB host index (1-based)
-        UsbHubPortIndx  USB hub port index (1-based)
-        EFI_UNSUPPORTED     No USB boot device assigned
-        EFI_INVALID_PARAMETER   UsbHcIndx or UsbHubPortIndx are NULL
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:    OemGetAssignedUsbBootPort
+//
+// Description: This procedure return specific USB host controller index and
+//              port number for BIOS to give specific mass storage device
+//              have highest boot priority.
+//
+// Input: 	None
+//
+// Output:
+//          EFI_SUCCESS         USB boot device assigned
+//              UsbHcIndx       USB host index (1-based)
+//              UsbHubPortIndx  USB hub port index (1-based)
+//          EFI_UNSUPPORTED     No USB boot device assigned
+//          EFI_INVALID_PARAMETER   UsbHcIndx or UsbHubPortIndx are NULL
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 EFI_STATUS
-EFIAPI
-OemGetAssignUsbBootPort(
+OemGetAssignUsbBootPort (
     UINT8   *UsbHcIndx,
     UINT8   *UsbHubPortIndx
 )
@@ -480,20 +452,26 @@ OemGetAssignUsbBootPort(
 }
 
 
-/**
-    This is porting function that fills in USB related fields in
-    gSetupData variable according to the setup settings and OEM
-    policy.
-
-    @param Pointers to USB data, Boot Services and Runtime Services
-
-    @retval The status of gSetupData initialization
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:    InitUsbSetupVars
+//
+// Description: This is porting function that fills in USB related fields in
+//              gSetupData variable according to the setup settings and OEM
+//              policy.
+//
+// Input: 	    Pointers to USB data, Boot Services and Runtime Services
+//
+// Output:      The status of gSetupData initialization
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 EFI_STATUS
 InitUsbSetupVars (
-    USB_GLOBAL_DATA         *UsbData
+    USB_GLOBAL_DATA         *UsbData,
+    EFI_BOOT_SERVICES       *pBS,
+    EFI_RUNTIME_SERVICES    *pRS
 )
 {
 
@@ -502,55 +480,34 @@ InitUsbSetupVars (
     EFI_STATUS          Status;
     UINT8               Index;
     USB_MASS_DEV_VALID  MassDevValid= {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-    UINT32              VariableAttributes = EFI_VARIABLE_BOOTSERVICE_ACCESS;
-    USB_CONTROLLER_NUM  UsbControllerNum;
-
-#if USB_SETUP_VARIABLE_RUNTIME_ACCESS
-    VariableAttributes |= EFI_VARIABLE_RUNTIME_ACCESS;
-#endif
-
-    UsbControllerNum.UhciNum = 0;
-    UsbControllerNum.OhciNum = 0;
-    UsbControllerNum.EhciNum = 0;
-    UsbControllerNum.XhciNum = 0;
-    VariableSize = sizeof(UsbControllerNum);
-    
-    Status = gRT->SetVariable(L"UsbControllerNum",
-        &gEfiSetupGuid,
-        VariableAttributes,
-        VariableSize,
-        &UsbControllerNum);
 
     MassDevNum.UsbMassDevNum = 0;
     MassDevNum.IsInteractionAllowed = 1;
     VariableSize = sizeof(MassDevNum);
 
-    Status = gRT->SetVariable(L"UsbMassDevNum",
+    Status = pRS->SetVariable( L"UsbMassDevNum",
         &gEfiSetupGuid,
-        VariableAttributes,
+        EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS,
         VariableSize,
-        &MassDevNum);
+        &MassDevNum );
 
     //
     // Initilize the Variable to 0
     //        
     VariableSize = sizeof(MassDevValid);
-    Status = gRT->SetVariable( L"UsbMassDevValid",
+    Status = pRS->SetVariable( L"UsbMassDevValid",
         &gEfiSetupGuid,
-        VariableAttributes,
+        EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS,
         VariableSize,
         &MassDevValid );
 
-    if (UsbData == NULL) {
-        return EFI_SUCCESS;
-    }
 
     VariableSize = sizeof(USB_SUPPORT_SETUP);
-    Status = gRT->GetVariable( L"UsbSupport", &gEfiSetupGuid, NULL,
+    Status = pRS->GetVariable( L"UsbSupport", &gEfiSetupGuid, NULL,
                         &VariableSize, &UsbData->UsbSetupData);
     if (EFI_ERROR(Status)) {
         // Set default values and save "UsbSupport" variable.
-        gBS->SetMem(&UsbData->UsbSetupData, sizeof(UsbData->UsbSetupData), 0);
+        pBS->SetMem(&UsbData->UsbSetupData, sizeof(UsbData->UsbSetupData), 0);
 
 		UsbData->UsbSetupData.UsbMainSupport = 1;
 
@@ -570,12 +527,11 @@ InitUsbSetupVars (
 		UsbData->UsbSetupData.UsbHiSpeedSupport = 1;
         UsbData->UsbSetupData.UsbMassDriverSupport = 1;
 
-        VariableAttributes |= EFI_VARIABLE_NON_VOLATILE;
-
-        Status = gRT->SetVariable(
+        Status = pRS->SetVariable(
                     L"UsbSupport",
                     &gEfiSetupGuid,
-                    VariableAttributes,
+                    EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS
+                    | EFI_VARIABLE_RUNTIME_ACCESS,
                     sizeof(UsbData->UsbSetupData),
                     &UsbData->UsbSetupData );
     }
@@ -612,14 +568,19 @@ InitUsbSetupVars (
 }
 
 
-/**
-    Returns the status of "USB legacy support" question from Setup.
-
-    @param VOID
-
-    @retval 0 Enable, 1 - Disable, 2 - Auto
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:   UsbSetupGetLegacySupport
+//
+// Description: Returns the status of "USB legacy support" question from Setup.
+//
+// Input:       None
+//
+// Output:      0 - Enable, 1 - Disable, 2 - Auto
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT8 UsbSetupGetLegacySupport()
 {
@@ -627,11 +588,16 @@ UINT8 UsbSetupGetLegacySupport()
 }
 
 
-/**
-    Updates "UsbMassDevNum" setup variable according to the number
-    of installed mass storage devices.
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:   UpdateMassDevicesForSetup
+//
+// Description: Updates "UsbMassDevNum" setup variable according to the number
+//              of installed mass storage devices.
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 EFI_STATUS
 UpdateMassDevicesForSetup()
@@ -642,14 +608,11 @@ UpdateMassDevicesForSetup()
     USB_MASS_DEV_NUM    SetupData;
     UINT8       MassDevValid[16]={0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
     UINT8       i;
-    UINT32      VariableAttributes = EFI_VARIABLE_BOOTSERVICE_ACCESS;
 
-#if USB_SETUP_VARIABLE_RUNTIME_ACCESS
-    VariableAttributes |= EFI_VARIABLE_RUNTIME_ACCESS;
-#endif
-
+// TODO:: remove this later when INTERACTIVE options are properly implemented for
+// both USB and BOOT page to display THE SAME boot devices.
     VariableSize = sizeof(SetupData);
-    Status = gRT->GetVariable( L"UsbMassDevNum",
+    Status = pRS->GetVariable( L"UsbMassDevNum",
         &gEfiSetupGuid,
         NULL,
         &VariableSize,
@@ -663,9 +626,9 @@ UpdateMassDevicesForSetup()
 
     SetupData.UsbMassDevNum = devs.NumUsbMass;
 
-    Status = gRT->SetVariable( L"UsbMassDevNum",
+    Status = pRS->SetVariable( L"UsbMassDevNum",
         &gEfiSetupGuid,
-        VariableAttributes,
+        EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS,
         VariableSize,
         &SetupData );
 
@@ -678,31 +641,35 @@ UpdateMassDevicesForSetup()
 
     VariableSize = sizeof(USB_MASS_DEV_VALID);
 
-    Status = gRT->SetVariable( L"UsbMassDevValid",
+    Status = pRS->SetVariable( L"UsbMassDevValid",
         &gEfiSetupGuid,
-        VariableAttributes,
+        EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS,
         VariableSize,
         &MassDevValid );
 
     return Status;
 }
 
-/**
-    Returns maximum device slots to be enabled and programmed
-    in MaxSlotsEn field of XHCI CONFIG register. Valid range
-    is 1...HCPARAMS1.MaxSlots (see xhci.h for details)
-
-    @retval EFI_SUCCESS Valid value is reported in MaxSlots
-    @retval EFI_UNSUPPORTED Function is not ported; MaxSlots will
-        be used from HCPARAMS1 field.
-    @note  Porting is optional
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        Usb3OemGetMaxDeviceSlots
+//
+// Description: Returns maximum device slots to be enabled and programmed
+//              in MaxSlotsEn field of XHCI CONFIG register. Valid range
+//              is 1...HCPARAMS1.MaxSlots (see xhci.h for details)
+//
+// Output:      EFI_SUCCESS         - Valid value is reported in MaxSlots
+//              EFI_UNSUPPORTED     - Function is not ported; MaxSlots will
+//                                    be used from HCPARAMS1 field.
+// Notes:       Porting is optional
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 EFI_STATUS
 Usb3OemGetMaxDeviceSlots(
-	IN	    HC_STRUC    *HcStruc,
-    IN	OUT UINT8       *MaxSlots
+    OUT UINT8   *MaxSlots
 )
 {
     return EFI_UNSUPPORTED;
@@ -734,12 +701,11 @@ XHCI_InterruptHandler (
     gPic->EndOfInterrupt (gPic, gVector);
     
     pBS->RestoreTPL (OriginalTPL);
-    USB_DEBUG(DEBUG_INFO, 3, "xhci interrupt..\n");
+    USB_DEBUG(3, "xhci interrupt..\n");
 }
 */
 
 VOID
-EFIAPI
 XhciTimerCallback(
     EFI_EVENT   Event,
     VOID        *Context
@@ -747,35 +713,41 @@ XhciTimerCallback(
 {
 	EFI_TPL OriginalTPL;
     
-    OriginalTPL = gBS->RaiseTPL (TPL_HIGH_LEVEL);
+    OriginalTPL = pBS->RaiseTPL (TPL_HIGH_LEVEL);
 
     // Execute XHCI_ProcessInterrupt using SW SMI, Context points to HC_STRUC
     UsbSmiHc(opHC_ProcessInterrupt, USB_HC_XHCI, Context);
 
-	gBS->RestoreTPL (OriginalTPL);
+	pBS->RestoreTPL (OriginalTPL);
 }
 
 
-/**
-    Purpose of this function is to install event handlers for different
-    USB host controllers.
-
-    @param 
-        Pointer to a host controller data structure
-
-    @retval 
-        EFI_SUCCESS on a successful handler installation, otherwise EFI_NOT_READY
-  
-    @note  
-  1. Currently implemented for XHCI only. UHCI, OHCI and EHCI currently have the
-  HW SMI registration routines in their HC Start functions.
-
-  2. This function is a part of UHCD, not a part of USBRT (SMI). It may only have
-  a code that installs a non-SMI event handler, e.h. timer callback function for
-  HC event polling, or HW interrupt handler. SMI handlers are installed in the
-  USBRT entry point (amiusb.c).
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        USBPort_InstallEventHandler
+//
+// Description:
+//  Purpose of this function is to install event handlers for different
+//  USB host controllers.
+//
+// Input:
+//  Pointer to a host controller data structure
+//
+// Output:
+//  EFI_SUCCESS on a successful handler installation, otherwise EFI_NOT_READY
+//  
+// Notes:
+//  1. Currently implemented for XHCI only. UHCI, OHCI and EHCI currently have the
+//  HW SMI registration routines in their HC Start functions.
+//
+//  2. This function is a part of UHCD, not a part of USBRT (SMI). It may only have
+//  a code that installs a non-SMI event handler, e.h. timer callback function for
+//  HC event polling, or HW interrupt handler. SMI handlers are installed in the
+//  USBRT entry point (amiusb.c).
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 EFI_STATUS
 USBPort_InstallEventHandler(
@@ -809,7 +781,7 @@ USBPort_InstallEventHandler(
 #endif
 
 //EIP128872 <<
-/*
+
 #if USBInt1C_SUPPORT
 #if defined(CSM_SUPPORT) && CSM_SUPPORT		//(EIP69136+)
 
@@ -861,7 +833,6 @@ USBPort_InstallEventHandler(
 
 #endif										//(EIP69136+)
 #endif
-*/
 
 /*
     // Install HW interrupt handler on HcStruc->Irq IRQ level
@@ -894,17 +865,25 @@ USBPort_InstallEventHandler(
 #endif
 
 #if USB_DIFFERENTIATE_IDENTICAL_DEVICE_NAME
-/**
-    This function will insert the USB device number into the devicename string.
-    Format----> "U(DeviceNumber)-DevNameString"
-
-    @param 
-        Pointer to a device data structure
-
-         
-    @retval VOID
-  
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        AddPortNumbertoDeviceString
+//
+// Description:
+//  This function will insert the USB device number into the devicename string.
+//    Format----> "U(DeviceNumber)-DevNameString"
+//
+// Input:
+//  Pointer to a device data structure
+//
+// Output:
+//  VOID
+//  
+// Notes:
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID
 AddPortNumbertoDeviceString(
     DEV_INFO        *Device
@@ -953,17 +932,16 @@ AddPortNumbertoDeviceString(
 }
 #endif
 
-//**********************************************************************
-//**********************************************************************
-//**                                                                  **
-//**        (C)Copyright 1985-2016, American Megatrends, Inc.         **
-//**                                                                  **
-//**                       All Rights Reserved.                       **
-//**                                                                  **
-//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093        **
-//**                                                                  **
-//**                       Phone: (770)-246-8600                      **
-//**                                                                  **
-//**********************************************************************
-//**********************************************************************
-
+//****************************************************************************
+//****************************************************************************
+//**                                                                        **
+//**             (C)Copyright 1985-2010, American Megatrends, Inc.          **
+//**                                                                        **
+//**                          All Rights Reserved.                          **
+//**                                                                        **
+//**                 5555 Oakbrook Pkwy, Norcross, GA 30093                 **
+//**                                                                        **
+//**                          Phone (770)-246-8600                          **
+//**                                                                        **
+//****************************************************************************
+//****************************************************************************

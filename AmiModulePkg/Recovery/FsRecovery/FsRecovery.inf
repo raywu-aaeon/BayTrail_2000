@@ -1,7 +1,7 @@
 #**********************************************************************
 #**********************************************************************
 #**                                                                  **
-#**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+#**        (C)Copyright 1985-2013, American Megatrends, Inc.         **
 #**                                                                  **
 #**                       All Rights Reserved.                       **
 #**                                                                  **
@@ -45,12 +45,13 @@
 [LibraryClasses]
   PeimEntryPoint
   AmiPeiLib
+  NTFSRecoverylib
+  EXTRecoverylib
   
 [Pcd]
   gAmiModulePkgTokenSpaceGuid.PcdRecoveryImageSize
   gAmiModulePkgTokenSpaceGuid.PcdCdRecoverySupport
   gAmiModulePkgTokenSpaceGuid.PcdFatRecoverySupport
-  gAmiModulePkgTokenSpaceGuid.PcdRecoveryImageName
   
 [Ppis]
   gEfiPeiDeviceRecoveryModulePpiGuid    ## PRODUCES
@@ -60,14 +61,13 @@
   gBlockDeviceCapsuleGuid
   
 [Depex]
-  gEfiPeiBootInRecoveryModePpiGuid AND
-  gEfiPeiMemoryDiscoveredPpiGuid AND
-  gEfiPeiDecompressPpiGuid
+  gEfiPeiMemoryDiscoveredPpiGuid AND 
+  gEfiPeiBootInRecoveryModePpiGuid
 
 #**********************************************************************
 #**********************************************************************
 #**                                                                  **
-#**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+#**        (C)Copyright 1985-2013, American Megatrends, Inc.         **
 #**                                                                  **
 #**                       All Rights Reserved.                       **
 #**                                                                  **

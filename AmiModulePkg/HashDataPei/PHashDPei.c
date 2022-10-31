@@ -1,7 +1,7 @@
 //****************************************************************************
 //****************************************************************************
 //**                                                                        **
-//**             (C)Copyright 1985-2014, American Megatrends, Inc.          **
+//**             (C)Copyright 1985-2013, American Megatrends, Inc.          **
 //**                                                                        **
 //**                          All Rights Reserved.                          **
 //**                                                                        **
@@ -47,14 +47,7 @@
 #include <Pi\PiHob.h>
 #include <PeiRamBoot.h>
 //(CSP20130813A+)<<
-#include <AmiRomLayout.h>
-#include <Library/AmiRomLayoutLib.h>
-//EIP178977 >>
-#if REDUCE_PRE_BB_SIZE_TO_124K == 1
-#include <Ppi/Capsule.h>
-#include <Ppi/FirmwareVolumeInfo.h>
-#endif
-//EIP178977 <<
+#include <RomLayout.h>  //<EIP134987+> 2013/09/09
 
 #define AMI_PLATFORM_FV_ADDRESS_HOB_GUID\
     { 0xf1966d02, 0x6eb3, 0x4378, 0x96, 0x35, 0x77, 0xd, 0x3b, 0xa8, 0x9a, 0xcc }
@@ -94,6 +87,12 @@ static EFI_PEI_PPI_DESCRIPTOR mPpiList[] = {
 { 0x36E835BB, 0x661D, 0x4D37, 0x8D, 0xE5, 0x88, 0x53, 0x25, 0xDA, 0xE9, 0x10 }
 EFI_GUID gRomCacheEnablePpiGuid = ROM_CACHE_ENABLE_PPI_GUID;
 
+//<EIP134987+> 2013/09/09 >>>
+EFI_STATUS GetRomLayout(
+    IN  EFI_PEI_SERVICES **PeiServices,
+    OUT ROM_AREA         **Layout
+);
+//<EIP134987+> 2013/09/09 <<<
 
 EFI_STATUS
 VerifyFvBeforePublish (
@@ -186,7 +185,7 @@ VerifyFvBeforePublish (
     HOB_ROM_IMAGE           *pPrbHob;
     EFI_GUID                HobRomImageGuid = ROM_IMAGE_MEMORY_HOB_GUID;
     EFI_HOB_FIRMWARE_VOLUME *FVHob;  //<EIP134987+> 2013/09/04
-    AMI_ROM_AREA            *Area, *RomLayout = AmiGetFirstRomArea();
+    ROM_AREA                *RomLayout = NULL;  //<EIP134987+> 2013/09/09
 
     // 1. Find PeiRamBoot HOB. 
     for ((*PeiServices)->GetHobList(PeiServices,&p); \
@@ -199,7 +198,7 @@ VerifyFvBeforePublish (
 	//If didn't find PeiRamBoot hob, there might be corrupt firmware volume.
 	//Calculate the hash directly.
     if( Result != 0 ) {
-        Status = PeiHashSha256 (PeiServices, (UINT32)HASH_DATA_ADDRESS, \
+        Status = PeiHashSha256 (PeiServices, (UINT32)MICROCODE_ADDRESS, \
                                             HASH_DATA_SIZE, HASH_KEY_DATA_ADDRESS);
         if (!EFI_ERROR(Status)) return EFI_SUCCESS;
         Status = PeiHashSha256 (PeiServices, (UINT32)HASH_FV_BB_ADDRESS, \
@@ -275,14 +274,16 @@ VerifyFvBeforePublish (
     }
 
 //<EIP134987+> 2013/09/09 >>>
+    Status = GetRomLayout(PeiServices, &RomLayout);
     if ( EFI_ERROR(Status) || (RomLayout == NULL) ) {
         return Status;
     } else {
-        for(Area = RomLayout; Area != NULL; Area = AmiGetNextRomArea(Area)) {
-          if(Area->Address == FV_BB_ADDRESS) {
-              Area->Address = FvBbMemoryBase;
-              break;
-          }
+        while(RomLayout->Size != 0) {
+            if(RomLayout->Address == FV_BB_ADDRESS) {
+                RomLayout->Address = FvBbMemoryBase;
+                break;
+            }
+            RomLayout++;
         }
     }
 //<EIP134987+> 2013/09/09 <<<
@@ -482,11 +483,7 @@ EFI_STATUS PHashDPeiEntry (
 {
 	EFI_STATUS	Status = EFI_SUCCESS;
     EFI_BOOT_MODE           BootMode = BOOT_WITH_FULL_CONFIGURATION;  //(CSP20130813A+)
-//EIP178977 >>	
-#if REDUCE_PRE_BB_SIZE_TO_124K == 1
-    PEI_CAPSULE_PPI     *Capsule;
-#endif  
-//EIP178977 <<	
+
 //	EFI_GUID	gEfiHashAlgorithmSha256Guid = EFI_HASH_ALGORITHM_SHA256_GUID;
 //	AMI_CRYPT_DIGITAL_SIGNATURE_PPI	*pAmiSigPPI = NULL;
 //	UINT8 	*Addr[1];
@@ -496,66 +493,11 @@ EFI_STATUS PHashDPeiEntry (
 //    EFI_HOB_FV_ADDRESS                  *FVAddress;
 //    EFI_GUID                        AmiPlatformFVAddressHobGuid = AMI_PLATFORM_FV_ADDRESS_HOB_GUID;
 
-//CSP20140805_28 >>
-    Status = (*PeiServices)->RegisterForShadow (FfsHeader);
-    if( !EFI_ERROR(Status) )
-        return EFI_SUCCESS;
-//CSP20140805_28 <<
-
+    
     // Install the PHashDPeiEntry Init Policy PPI
     Status = (*PeiServices)->InstallPpi(PeiServices, &mPpiList[0]);
     ASSERT_PEI_ERROR(PeiServices, Status);    
-
-//EIP178977 >>	    
-#if REDUCE_PRE_BB_SIZE_TO_124K == 1
-    Status = (*PeiServices)->LocatePpi (PeiServices,
-                                        &gPeiCapsulePpiGuid,
-                                        0,
-                                        NULL,
-                                        (VOID **)&Capsule
-                                        );
-    if (Status == EFI_SUCCESS) {
-
-      if (Capsule->CheckCapsuleUpdate ((EFI_PEI_SERVICES**)PeiServices) == EFI_SUCCESS){
-          // Capsule mode , we publish FV_BB before memoryinit.
-          EFI_PHYSICAL_ADDRESS AreaAddress;
-          EFI_PEI_PPI_DESCRIPTOR *FirmwareVolume;
-          EFI_PEI_FIRMWARE_VOLUME_INFO_PPI *FirmwareVolumeInfo;
-          EFI_GUID gEfiFirmwareVolumeInfoPpiGuid = EFI_PEI_FIRMWARE_VOLUME_INFO_PPI_GUID;
-  
-          Status = (*PeiServices)->AllocatePool(
-                                      PeiServices,
-                                      sizeof(EFI_PEI_PPI_DESCRIPTOR) + sizeof(EFI_PEI_FIRMWARE_VOLUME_INFO_PPI),
-                                      (VOID **)&FirmwareVolume);	
-          if(EFI_ERROR(Status))
-              return EFI_VOLUME_FULL;
-          // Verify 
-          Status = PeiHashSha256 (PeiServices, (UINT32)HASH_DATA_ADDRESS, \
-                                              HASH_DATA_SIZE, HASH_KEY_DATA_ADDRESS);
-          
-          if(!EFI_ERROR(Status)) {
-
-        	  FirmwareVolumeInfo = (EFI_PEI_FIRMWARE_VOLUME_INFO_PPI*)(FirmwareVolume + 1);
-        	  AreaAddress = FV_BB_BASE;
-        	  FirmwareVolumeInfo->FvFormat = ((EFI_FIRMWARE_VOLUME_HEADER*)AreaAddress)->FileSystemGuid;
-        	  FirmwareVolumeInfo->FvInfo = (VOID *)(UINTN)AreaAddress;
-        	  FirmwareVolumeInfo->FvInfoSize = FV_BB_SIZE;
-        	  //  FirmwareVolumeInfo->ParentFvName = FvName;
-        	  //  FirmwareVolumeInfo->ParentFileName = FfsName;
-
-        	  FirmwareVolume->Ppi =   FirmwareVolumeInfo;
-        	  FirmwareVolume->Flags = EFI_PEI_PPI_DESCRIPTOR_PPI | EFI_PEI_PPI_DESCRIPTOR_TERMINATE_LIST;
-        	  FirmwareVolume->Guid =  &gEfiFirmwareVolumeInfoPpiGuid;
-        
-        	  Status = (*PeiServices)->InstallPpi(PeiServices, FirmwareVolume);
-
-          }//end of PeiHashSha256
-       }//end of Capsule->CheckCapsuleUpdate
-    }
     
-#endif 
-//EIP178977 <<	
-
 //(CSP20130813A+)>>
     Status = (*PeiServices)->GetBootMode (PeiServices, &BootMode);
     if (EFI_ERROR(Status) || (BootMode == BOOT_ON_S3_RESUME)) return EFI_SUCCESS;
@@ -622,7 +564,7 @@ EFI_STATUS PHashDPeiEntry (
 //****************************************************************************
 //****************************************************************************
 //**                                                                        **
-//**             (C)Copyright 1985-2014, American Megatrends, Inc.          **
+//**             (C)Copyright 1985-2013, American Megatrends, Inc.          **
 //**                                                                        **
 //**                          All Rights Reserved.                          **
 //**                                                                        **

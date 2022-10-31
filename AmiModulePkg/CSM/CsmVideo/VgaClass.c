@@ -262,14 +262,6 @@ IsValidEfiCntlChar (
   IN  CHAR16  c
   );
 
-BOOLEAN BlockSimpleOutIstallation = FALSE;
-extern EFI_GUID gOpromStartEndProtocolGuid;
-
-VOID VgaClassOpromCallback(IN EFI_EVENT Event, IN VOID *Context)
-{
-    BlockSimpleOutIstallation = !BlockSimpleOutIstallation;
-}
-
 //
 // Driver Entry Point
 //
@@ -292,16 +284,10 @@ VgaClassDriverEntryPoint (
   Returns:
     EFI_STATUS
 --*/
+// GC_TODO:    ImageHandle - add argument and description to function comment
+// GC_TODO:    SystemTable - add argument and description to function comment
 {
-  EFI_EVENT   Event;
-  EFI_STATUS  Status;
-  VOID        *NotifyRegistration;
-  
   InitAmiLib(ImageHandle, SystemTable);
-
-  Status = RegisterProtocolCallback(&gOpromStartEndProtocolGuid, VgaClassOpromCallback,
-                  NULL, &Event, &NotifyRegistration);
-  ASSERT_EFI_ERROR(Status);
 
   gVgaClassDriverBinding.DriverBindingHandle = ImageHandle;
   gVgaClassDriverBinding.ImageHandle = ImageHandle;
@@ -335,6 +321,9 @@ VgaClassDriverBindingSupported (
     EFI_STATUS
   
 --*/
+// GC_TODO:    This - add argument and description to function comment
+// GC_TODO:    Controller - add argument and description to function comment
+// GC_TODO:    RemainingDevicePath - add argument and description to function comment
 {
   EFI_STATUS                  Status;
   EFI_VGA_MINI_PORT_PROTOCOL  *VgaMiniPort;
@@ -394,6 +383,10 @@ VgaClassDriverBindingStart (
     EFI_STATUS
     
 --*/
+// GC_TODO:    This - add argument and description to function comment
+// GC_TODO:    Controller - add argument and description to function comment
+// GC_TODO:    RemainingDevicePath - add argument and description to function comment
+// GC_TODO:    EFI_OUT_OF_RESOURCES - add return value to function comment
 {
   EFI_STATUS                  Status;
   EFI_VGA_MINI_PORT_PROTOCOL  *VgaMiniPort;
@@ -513,10 +506,7 @@ VgaClassDriverBindingStart (
     goto ErrorExit;
   }
 
-  if (BlockSimpleOutIstallation)
-      Status = EFI_SUCCESS;
-  else
-      Status = pBS->InstallMultipleProtocolInterfaces (
+  Status = pBS->InstallMultipleProtocolInterfaces (
                   &Controller,
                   &gEfiSimpleTextOutProtocolGuid,
                   &VgaClassPrivate->SimpleTextOut,
@@ -566,46 +556,48 @@ VgaClassDriverBindingStop (
     EFI_STATUS
   
 --*/
+// GC_TODO:    This - add argument and description to function comment
+// GC_TODO:    Controller - add argument and description to function comment
+// GC_TODO:    NumberOfChildren - add argument and description to function comment
+// GC_TODO:    ChildHandleBuffer - add argument and description to function comment
+// GC_TODO:    EFI_SUCCESS - add return value to function comment
 {
   EFI_STATUS                    Status;
   EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL  *SimpleTextOut;
   VGA_CLASS_DEV                 *VgaClassPrivate;
 
-  if (BlockSimpleOutIstallation == FALSE)
-  {
-      Status = pBS->OpenProtocol (
-                      Controller,
-                      &gEfiSimpleTextOutProtocolGuid,
-                      (VOID **) &SimpleTextOut,
-                      This->DriverBindingHandle,
-                      Controller,
-                      EFI_OPEN_PROTOCOL_GET_PROTOCOL
-                      );
-      if (EFI_ERROR (Status)) {
-        return Status;
-      }
-    
-      VgaClassPrivate = VGA_CLASS_DEV_FROM_THIS (SimpleTextOut);
-    
-      //
-      // Report that VGA Class driver is being disabled
-      //
-      /*ReportStatusCodeWithDevicePath (
-        EFI_PROGRESS_CODE,
-        EFI_PERIPHERAL_LOCAL_CONSOLE | EFI_P_PC_DISABLE,
-        0,
-        &gEfiCallerIdGuid,
-        VgaClassPrivate->DevicePath
-        );
-    */
-      Status = pBS->UninstallProtocolInterface (
-                      Controller,
-                      &gEfiSimpleTextOutProtocolGuid,
-                      &VgaClassPrivate->SimpleTextOut
-                      );
-      if (EFI_ERROR (Status)) {
-        return Status;
-      }
+  Status = pBS->OpenProtocol (
+                  Controller,
+                  &gEfiSimpleTextOutProtocolGuid,
+                  (VOID **) &SimpleTextOut,
+                  This->DriverBindingHandle,
+                  Controller,
+                  EFI_OPEN_PROTOCOL_GET_PROTOCOL
+                  );
+  if (EFI_ERROR (Status)) {
+    return Status;
+  }
+
+  VgaClassPrivate = VGA_CLASS_DEV_FROM_THIS (SimpleTextOut);
+
+  //
+  // Report that VGA Class driver is being disabled
+  //
+  /*ReportStatusCodeWithDevicePath (
+    EFI_PROGRESS_CODE,
+    EFI_PERIPHERAL_LOCAL_CONSOLE | EFI_P_PC_DISABLE,
+    0,
+    &gEfiCallerIdGuid,
+    VgaClassPrivate->DevicePath
+    );
+*/
+  Status = pBS->UninstallProtocolInterface (
+                  Controller,
+                  &gEfiSimpleTextOutProtocolGuid,
+                  &VgaClassPrivate->SimpleTextOut
+                  );
+  if (EFI_ERROR (Status)) {
+    return Status;
   }
   //
   // Release PCI I/O and VGA Mini Port Protocols on the controller handle.
@@ -624,8 +616,7 @@ VgaClassDriverBindingStop (
         Controller
         );
 
-  if (BlockSimpleOutIstallation == FALSE)
-      pBS->FreePool (VgaClassPrivate);
+  pBS->FreePool (VgaClassPrivate);
 
   return EFI_SUCCESS;
 }
@@ -638,6 +629,22 @@ VgaClassReset (
   IN  EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL        *This,
   IN  BOOLEAN                             ExtendedVerification
   )
+/*++
+
+Routine Description:
+
+  GC_TODO: Add function description
+
+Arguments:
+
+  This                  - GC_TODO: add argument description
+  ExtendedVerification  - GC_TODO: add argument description
+
+Returns:
+
+  GC_TODO: add return values
+
+--*/
 {
   EFI_STATUS    Status;
   VGA_CLASS_DEV *VgaClassPrivate;
@@ -668,6 +675,22 @@ VgaClassOutputString (
   IN  EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL    *This,
   IN  CHAR16                          *WString
   )
+/*++
+
+Routine Description:
+
+  GC_TODO: Add function description
+
+Arguments:
+
+  This    - GC_TODO: add argument description
+  WString - GC_TODO: add argument description
+
+Returns:
+
+  EFI_SUCCESS - GC_TODO: Add description for return value
+
+--*/
 {
   EFI_STATUS                  Status;
   VGA_CLASS_DEV               *VgaClassDev;
@@ -791,6 +814,23 @@ VgaClassTestString (
   IN  EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL    *This,
   IN  CHAR16                          *WString
   )
+/*++
+
+Routine Description:
+
+  GC_TODO: Add function description
+
+Arguments:
+
+  This    - GC_TODO: add argument description
+  WString - GC_TODO: add argument description
+
+Returns:
+
+  EFI_UNSUPPORTED - GC_TODO: Add description for return value
+  EFI_SUCCESS - GC_TODO: Add description for return value
+
+--*/
 {
   while (*WString != 0x0000) {
     if (!(IsValidAscii (*WString) || IsValidEfiCntlChar (*WString) || LibIsValidTextGraphics (*WString, NULL, NULL))) {
@@ -808,6 +848,21 @@ EFIAPI
 VgaClassClearScreen (
   IN  EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL    *This
   )
+/*++
+
+Routine Description:
+
+  GC_TODO: Add function description
+
+Arguments:
+
+  This  - GC_TODO: add argument description
+
+Returns:
+
+  EFI_SUCCESS - GC_TODO: Add description for return value
+
+--*/
 {
   EFI_STATUS    Status;
   VGA_CLASS_DEV *VgaClassDev;
@@ -849,6 +904,23 @@ VgaClassSetAttribute (
   IN  EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL    *This,
   IN  UINTN                           Attribute
   )
+/*++
+
+Routine Description:
+
+  GC_TODO: Add function description
+
+Arguments:
+
+  This      - GC_TODO: add argument description
+  Attribute - GC_TODO: add argument description
+
+Returns:
+
+  EFI_SUCCESS - GC_TODO: Add description for return value
+  EFI_UNSUPPORTED - GC_TODO: Add description for return value
+
+--*/
 {
 //*** AMI PORTING BEGIN ***//
 // Comparison of unsigned value with zero
@@ -869,6 +941,24 @@ VgaClassSetCursorPosition (
   IN  UINTN                           Column,
   IN  UINTN                           Row
   )
+/*++
+
+Routine Description:
+
+  GC_TODO: Add function description
+
+Arguments:
+
+  This    - GC_TODO: add argument description
+  Column  - GC_TODO: add argument description
+  Row     - GC_TODO: add argument description
+
+Returns:
+
+  EFI_UNSUPPORTED - GC_TODO: Add description for return value
+  EFI_SUCCESS - GC_TODO: Add description for return value
+
+--*/
 {
   EFI_STATUS    Status;
   VGA_CLASS_DEV *VgaClassDev;
@@ -905,6 +995,22 @@ VgaClassEnableCursor (
   IN  EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL    *This,
   IN  BOOLEAN                         Visible
   )
+/*++
+
+Routine Description:
+
+  GC_TODO: Add function description
+
+Arguments:
+
+  This    - GC_TODO: add argument description
+  Visible - GC_TODO: add argument description
+
+Returns:
+
+  EFI_SUCCESS - GC_TODO: Add description for return value
+
+--*/
 {
   VGA_CLASS_DEV *VgaClassDev;
 
@@ -937,6 +1043,26 @@ VgaClassQueryMode (
   OUT UINTN                           *Columns,
   OUT UINTN                           *Rows
   )
+/*++
+
+Routine Description:
+
+  GC_TODO: Add function description
+
+Arguments:
+
+  This        - GC_TODO: add argument description
+  ModeNumber  - GC_TODO: add argument description
+  Columns     - GC_TODO: add argument description
+  Rows        - GC_TODO: add argument description
+
+Returns:
+
+  EFI_UNSUPPORTED - GC_TODO: Add description for return value
+  EFI_UNSUPPORTED - GC_TODO: Add description for return value
+  EFI_SUCCESS - GC_TODO: Add description for return value
+
+--*/
 {
   VGA_CLASS_DEV *VgaClassDev;
 
@@ -974,6 +1100,22 @@ VgaClassSetMode (
   IN  EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL    *This,
   IN  UINTN                           ModeNumber
   )
+/*++
+
+Routine Description:
+
+  GC_TODO: Add function description
+
+Arguments:
+
+  This        - GC_TODO: add argument description
+  ModeNumber  - GC_TODO: add argument description
+
+Returns:
+
+  EFI_UNSUPPORTED - GC_TODO: Add description for return value
+
+--*/
 {
   EFI_STATUS    Status;
   VGA_CLASS_DEV *VgaClassDev;
@@ -1003,6 +1145,24 @@ SetVideoCursorPosition (
   IN  UINTN          Row,
   IN  UINTN          MaxColumn
   )
+/*++
+
+Routine Description:
+
+  GC_TODO: Add function description
+
+Arguments:
+
+  VgaClassDev - GC_TODO: add argument description
+  Column      - GC_TODO: add argument description
+  Row         - GC_TODO: add argument description
+  MaxColumn   - GC_TODO: add argument description
+
+Returns:
+
+  GC_TODO: add return values
+
+--*/
 {
   Column    = Column & 0xff;
   Row       = Row & 0xff;
@@ -1026,6 +1186,23 @@ WriteCrtc (
   IN  UINT16         Address,
   IN  UINT8          Data
   )
+/*++
+
+Routine Description:
+
+  GC_TODO: Add function description
+
+Arguments:
+
+  VgaClassDev - GC_TODO: add argument description
+  Address     - GC_TODO: add argument description
+  Data        - GC_TODO: add argument description
+
+Returns:
+
+  GC_TODO: add return values
+
+--*/
 {
   VgaClassDev->PciIo->Io.Write (
                           VgaClassDev->PciIo,
@@ -1072,6 +1249,7 @@ Returns:
     TRUE if Gpaphic is a supported Unicode Box Drawing character.
 
 --*/
+// GC_TODO:    Graphic - add argument and description to function comment
 {
   UNICODE_TO_CHAR *Table;
 
@@ -1105,6 +1283,21 @@ BOOLEAN
 IsValidAscii (
   IN  CHAR16  Ascii
   )
+/*++
+
+Routine Description:
+
+  GC_TODO: Add function description
+
+Arguments:
+
+  Ascii - GC_TODO: add argument description
+
+Returns:
+
+  GC_TODO: add return values
+
+--*/
 {
   if ((Ascii >= 0x20) && (Ascii <= 0x7f)) {
     return TRUE;
@@ -1118,6 +1311,21 @@ BOOLEAN
 IsValidEfiCntlChar (
   IN  CHAR16  c
   )
+/*++
+
+Routine Description:
+
+  GC_TODO: Add function description
+
+Arguments:
+
+  c - GC_TODO: add argument description
+
+Returns:
+
+  GC_TODO: add return values
+
+--*/
 {
   if (c == CHAR_NULL || c == CHAR_BACKSPACE || c == CHAR_LINEFEED || c == CHAR_CARRIAGE_RETURN) {
     return TRUE;

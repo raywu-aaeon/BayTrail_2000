@@ -8,5 +8,4 @@
 "SataControllerGuid.h"
 "SmbusArpMap.h"
 "Vlv2Variable.h"
-"S3SupportHob.h"
 <endComponent>

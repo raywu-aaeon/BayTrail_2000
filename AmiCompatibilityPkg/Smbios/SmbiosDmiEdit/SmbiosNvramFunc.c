@@ -1,7 +1,7 @@
 //**********************************************************************//
 //**********************************************************************//
 //**                                                                  **//
-//**        (C)Copyright 1985-2015, American Megatrends, Inc.         **//
+//**        (C)Copyright 1985-2013, American Megatrends, Inc.         **//
 //**                                                                  **//
 //**                       All Rights Reserved.                       **//
 //**                                                                  **//
@@ -24,7 +24,7 @@
 #include <AmiDxeLib.h>
 #include <Token.h>
 #include <Protocol/AmiSmbios.h>
-#include "SmbiosDmiEdit.h"
+#include "SmbiosDMIEdit.h"
 
 #if SMBIOS_DMIEDIT_DATA_LOC == 2
 static BOOLEAN      DmiEditVarPresent =  FALSE;
@@ -39,15 +39,24 @@ UINTN               BufferSize;
 UINTN               DmiDataLength[DMI_ARRAY_COUNT];
 UINT8               gRecoveryKeepDMIFlag = FALSE;
 
-/**
-    Preserve the DMIEdit data by loading its data into memory
-    prior to flashing
-
-    @param None
-
-    @retval None
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   PreserveDmiEditData
+//
+// Description: Preserve the DMIEdit data by loading its data into memory
+//              prior to flashing
+//
+// Input:       None
+//
+// Output:      None
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID
 PreserveDmiEditData (VOID)
 {
@@ -106,15 +115,24 @@ PreserveDmiEditData (VOID)
     }
 }
 
-/**
-    Restore the DMIEdit data in NVRAM with data previously loaded
-    in memory by PreserveDmiEditData.
-
-    @param None
-
-    @retval None
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   RestoreDmiEditData
+//
+// Description: Restore the DMIEdit data in NVRAM with data previously loaded
+//              in memory by PreserveDmiEditData.
+//
+// Input:       None
+//
+// Output:      None
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID
 RestoreDmiEditData (VOID)
 {
@@ -154,15 +172,24 @@ RestoreDmiEditData (VOID)
     }
 }
 
-/**
-    Preserve the DMIEdit data by loading its data into memory
-    prior to flashing (for capsule mode)
-
-    @param None
-
-    @retval None
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   RecoveryPreserveDmiEditData
+//
+// Description: Preserve the DMIEdit data by loading its data into memory
+//              prior to flashing (for capsule mode)
+//
+// Input:       None
+//
+// Output:      None
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID
 RecoveryPreserveDmiEditData (VOID)
 {
@@ -190,21 +217,30 @@ RecoveryPreserveDmiEditData (VOID)
     pRS->SetVariable (
             PreserveSmbiosNvramVar,
             &gEfiSmbiosNvramGuid,
-            EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_NON_VOLATILE,
+            EFI_VARIABLE_RUNTIME_ACCESS | EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_NON_VOLATILE,
             0,
             NULL
             );
 }
 
-/**
-    Restore the DMIEdit data in NVRAM with data previously loaded
-    in memory by PreserveDmiEditData (for capsule mode)
-
-    @param None
-
-    @retval None
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   RecoveryRestoreDmiEditData
+//
+// Description: Restore the DMIEdit data in NVRAM with data previously loaded
+//              in memory by PreserveDmiEditData (for capsule mode)
+//
+// Input:       None
+//
+// Output:      None
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID
 RecoveryRestoreDmiEditData (VOID)
 {
@@ -219,7 +255,7 @@ RecoveryRestoreDmiEditData (VOID)
 //**********************************************************************//
 //**********************************************************************//
 //**                                                                  **//
-//**        (C)Copyright 1985-2015, American Megatrends, Inc.         **//
+//**        (C)Copyright 1985-2013, American Megatrends, Inc.         **//
 //**                                                                  **//
 //**                       All Rights Reserved.                       **//
 //**                                                                  **//

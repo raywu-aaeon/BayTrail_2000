@@ -1,7 +1,7 @@
 //*************************************************************************
 //*************************************************************************
 //**                                                                     **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.            **
+//**        (C)Copyright 1985-2012, American Megatrends, Inc.            **
 //**                                                                     **
 //**                       All Rights Reserved.                          **
 //**                                                                     **
@@ -11,25 +11,30 @@
 //**                                                                     **
 //*************************************************************************
 //*************************************************************************
-/** @file 
-	Default Font package provided by the Graphics Console Driver
 
-	This file contains the Default Font Glyph package that provided by the 
-	Graphics Console Driver.  It is installed in a callback once the 
-	Hii Database Driver is installed.
-
-*/
 //**********************************************************************
-/// number of glyphs in the structure
+// $Header: /Alaska/SOURCE/Core/EDK/DxeMain/USFontPack.c 4     4/11/12 5:13p Artems $
+//
+// $Revision: 4 $
+//
+// $Date: 4/11/12 5:13p $
+//**********************************************************************
+
+//**********************************************************************
+//<AMI_FHDR_START>
+//
+// Name:	<This File Name>
+//
+// Description:	
+//
+//<AMI_FHDR_END>
+//**********************************************************************
 #define NUMBER_OF_GLYPHS 0xf2
-/// Size of the Font package
 #define PACKAGE_SIZE (NUMBER_OF_GLYPHS*22+8)
-/// Lower byte of the font package size
 #define SIZE_LO (UINT8)PACKAGE_SIZE
-/// Upper Byte of the font package size
 #define SIZE_HI (UINT8)(PACKAGE_SIZE>>8)
 
-/// Font package that contains the US Latin Glyps + Box Draw and Arrows
+//Package for US Latin Glyps + Box Draw and Arrows
 unsigned char UsStdNarrowGlyphData[] = {
 	SIZE_LO, SIZE_HI, 0x00, //Header.Length
    0x07, 			 //Header.Type 1=Font
@@ -283,7 +288,7 @@ unsigned char UsStdNarrowGlyphData[] = {
 //*************************************************************************
 //*************************************************************************
 //**                                                                     **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.            **
+//**        (C)Copyright 1985-2012, American Megatrends, Inc.            **
 //**                                                                     **
 //**                       All Rights Reserved.                          **
 //**                                                                     **

@@ -13,22 +13,43 @@
 //*************************************************************************
 
 //**********************************************************************
-// $Header: $
+// $Header: /Alaska/SOURCE/Modules/SharkBayRefCodes/Haswell/AMI Cpu PKG/CPU Core/CpuSmbios.c 4     2/27/13 5:00a Crystallee $
 //
-// $Revision: $
+// $Revision: 4 $
 //
-// $Date: $
+// $Date: 2/27/13 5:00a $
 //**********************************************************************
 // Revision History
 // ----------------
-// $Log: $
+// $Log: /Alaska/SOURCE/Modules/SharkBayRefCodes/Haswell/AMI Cpu PKG/CPU Core/CpuSmbios.c $
+// 
+// 4     2/27/13 5:00a Crystallee
+// [TAG]  		EIP115822
+// [Category]  	Improvement
+// [Description]  	Add SMBIOS type7 information for L4 cache if CPU
+// supported
+// And create a token to control this.
+// 
+// 3     3/21/12 4:33a Davidhsieh
+// 
+// 2     3/20/12 3:23a Davidhsieh
+// Create SMBIOS type4 and type7 in AMI CPU module part
+// 
+// 1     2/07/12 3:58a Davidhsieh
+//
 // 
 //**********************************************************************
 
-/** @file AmiCpuSmbios.c
-    Installs TYPE 4 and TYPE 7 SMBIOS tables.
-
-**/
+//<AMI_FHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        AmiCpuSmbios.c
+//
+// Description:
+//  Installs TYPE 4 and TYPE 7 SMBIOS tables.
+//
+//---------------------------------------------------------------------------
+//<AMI_FHDR_END>
 
 #include <AmiDxeLib.h>
 #include <Protocol\AmiSmBios.h>
@@ -84,17 +105,22 @@ typedef struct {
     UINT8 Tok;
 } SMBIOS_TABLE_STR_BUFFER;
 
-/**
-    Initialize string buffer variables
-
-        
-    @param Buffer Buffer address
-    @param Size Buffer Size
-    @param StrBuffer String Buffer structure
-
-    @retval VOID
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:   EstablishStringBuffer
+//
+// Description: Initialize string buffer variables
+//
+// Input:
+//  IN VOID *Buffer - Buffer address
+//  IN UINT32 Size - Buffer Size
+//  OUT SMBIOS_TABLE_STR_BUFFER **StrBuffer - String Buffer structure
+//
+// Output: VOID
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 VOID EstablishStringBuffer(
     IN  VOID   *Buffer,
@@ -117,16 +143,21 @@ VOID EstablishStringBuffer(
 
 }
 
-/**
-    Add string to buffer and return token value.
-
-        
-    @param StrBuffer String Buffer structure
-    @param Str Pointer to string.
-
-    @retval UINT8 token of string
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:   AddStrGetTok
+//
+// Description: Add string to buffer and return token value.
+//
+// Input:
+//  IN SMBIOS_TABLE_STR_BUFFER *StrBuffer - String Buffer structure
+//  IN UINT8 *Str - Pointer to string.
+//
+// Output: UINT8 - token of string
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT8 AddStrGetTok(
     IN SMBIOS_TABLE_STR_BUFFER *StrBuffer,
@@ -148,45 +179,60 @@ UINT8 AddStrGetTok(
     return StrBuffer->Tok;
 }
 
-/**
-    Get amount storage space used by strings.
-
-        
-    @param StrBuffer String Buffer structure
-
-    @retval UINT32 Size needed for strings.
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:  GetBufferSizeUsed
+//
+// Description: Get amount storage space used by strings.
+//
+// Input:
+//  IN SMBIOS_TABLE_STR_BUFFER *StrBuffer - String Buffer structure
+//
+// Output: UINT32 - Size needed for strings.
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT32 GetBufferSizeUsed(IN SMBIOS_TABLE_STR_BUFFER *StrBuffer)
 {
     return StrBuffer->StrBufSize - StrBuffer->StrBufAvail;
 }
 
-/**
-    Remove String Buffer structure.
-
-        
-    @param StrBuffer String Buffer structure
-
-    @retval VOID
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:  RemoveStringBuffer
+//
+// Description: Remove String Buffer structure.
+//
+// Input:
+//  IN SMBIOS_TABLE_STR_BUFFER *StrBuffer - String Buffer structure
+//
+// Output: VOID
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 VOID RemoveStringBuffer(IN SMBIOS_TABLE_STR_BUFFER *StrBuffer)
 {
     pBS->FreePool(StrBuffer);
 }
 
-/**
-    Get the max speed from the brand string.
-
-        
-    @param CpuBrandString Pointer to CPU brand string.
-
-    @retval UINT32 frequency found in MHz.
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:   GetMaxSpeedFromBrandString
+//
+// Description: Get the max speed from the brand string.
+//
+// Input:
+//  IN CHAR8    *CpuBrandString - Pointer to CPU brand string.
+//
+// Output:  UINT32 - frequency found in MHz.
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT32 GetMaxSpeedFromBrandString(IN CHAR8 *CpuBrandString)
 {
@@ -236,14 +282,19 @@ UINT32 GetMaxSpeedFromBrandString(IN CHAR8 *CpuBrandString)
     return FreqStringFound ? Atoi(FrequencyString) : 0;
 }
 
-/**
-    Store cache information in variables.
-
-    @param VOID
-
-    @retval VOID
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:  CollectCacheInfo
+//
+// Description: Store cache information in variables.
+//
+// Input:  VOID
+//
+// Output: VOID
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 VOID CollectCacheInfo()
 {
@@ -304,14 +355,19 @@ VOID CollectCacheInfo()
 }
 
 #define TYPE7_STRING_BUFFER_SIZE 100
-/**
-    Create SMBIOS Table 7
-
-    @param CacheLevel (L1, L2, L3)
-
-    @retval UINT16 Handle for table.
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:  CreateSmbiosTable7
+//
+// Description: Create SMBIOS Table 7
+//
+// Input:  IN UINT8 CacheLevel (L1, L2, L3)
+//
+// Output: UINT16 - Handle for table.
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT16 CreateSmbiosTable7(IN UINT8 CacheLevel)
 {
@@ -389,14 +445,19 @@ UINT16 CreateSmbiosTable7(IN UINT8 CacheLevel)
     return !EFI_ERROR(Status) ? Handle : 0xffff;
 }
 
-/**
-    Return family type from Brand String.
-
-    @param BrandString 
-
-    @retval UINT8 Family
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:  AutodetectFamily
+//
+// Description: Return family type from Brand String.
+//
+// Input:  IN CHAR8 *BrandString
+//
+// Output: UINT8 - Family
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT8 AutodetectFamily(IN CHAR8 *BrandString)
 {
@@ -418,14 +479,19 @@ UINT8 AutodetectFamily(IN CHAR8 *BrandString)
 
 #define TYPE4_STRING_BUFFER_SIZE 200
 
-/**
-    Create SMBIOS Table 4
-
-    @param PhysSocket 
-
-    @retval VOID
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:  CreateSmbiosTable4
+//
+// Description: Create SMBIOS Table 4
+//
+// Input:  IN UINT32 PhysSocket
+//
+// Output: VOID
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 VOID CreateSmbiosTable4(IN UINT32 PhysSocket)
 {
@@ -444,7 +510,7 @@ VOID CreateSmbiosTable4(IN UINT32 PhysSocket)
     EstablishStringBuffer((UINT8*)ProcInfo + sizeof(SMBIOS_PROCESSOR_INFO), TYPE4_STRING_BUFFER_SIZE, &StrBuffer);
 
     ProcInfo->StructureType.Type = 4;
-    ProcInfo->StructureType.Length = 0x30;    //EIP232100
+    ProcInfo->StructureType.Length = 0x2a;
     ProcInfo->StructureType.Handle = 0xfffe;    //To be updated by SMBIOS driver.   
  
     if (PhysSocket >= SMBIOS_MAX_NUM_SOCKETS) ProcInfo->SocketDesignation = 0;
@@ -488,10 +554,7 @@ VOID CreateSmbiosTable4(IN UINT32 PhysSocket)
     ProcInfo->ThreadCount = NumSupportedCpuCores() * NumSupportedThreadsPerCore(); //This must be the same across sockets.
     ProcInfo->ProcessorChar = 4; //X64 Support
     ProcInfo->Family2 = ProcInfo->Family;
-    ProcInfo->CoreCount2 = ProcInfo->CoreCount;  //EIP232100
-    ProcInfo->CoreEnabled2 = ProcInfo->CoreEnabled;  //EIP232100
-    ProcInfo->ThreadCount2 = ProcInfo->ThreadCount;  //EIP232100
-    
+
     ActStrBufSize = GetBufferSizeUsed(StrBuffer);
     if (ActStrBufSize == 0) {
         *(UINT16*)(ProcInfo + 1) = 0;    //Double NULL.
@@ -517,16 +580,21 @@ VOID CreateSmbiosTable4(IN UINT32 PhysSocket)
     RemoveStringBuffer(StrBuffer);
 }
 
-/**
-    Create CPU SMBIOS Tables 4 and 7.
-
-        
-    @param Event Not used
-    @param Context Note Used
-
-    @retval VOID
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:  CreateCpuSmbiosTables
+//
+// Description: Create CPU SMBIOS Tables 4 and 7.
+//
+// Input:
+//  IN EFI_EVENT Event - Not used
+//  IN VOID *Context - Note Used
+//
+// Output: VOID
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 VOID CreateCpuSmbiosTables(IN EFI_EVENT Event, IN VOID *Context)
 {
@@ -568,14 +636,19 @@ VOID CreateCpuSmbiosTables(IN EFI_EVENT Event, IN VOID *Context)
 	}
 }
 
-/**
-    Create CPU SMBIOS Tables. Installs notification on SMBIOS handlers.
-
-    @param VOID
-
-    @retval VOID
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:  CpuSmbios
+//
+// Description: Create CPU SMBIOS Tables. Installs notification on SMBIOS handlers.
+//
+// Input: VOID
+//
+// Output: VOID
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 EFI_STATUS
 AmiCpuSmbiosEntryPoint(

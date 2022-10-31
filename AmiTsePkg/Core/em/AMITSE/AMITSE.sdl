@@ -19,7 +19,7 @@ End
 
 TOKEN
 	Name  = "TSE_MINOR"
-	Value  = "0x18"
+	Value  = "0x16"
 	Help  = "TSE Minor Version number"
 	TokenType = Expression
 	TargetMAK = Yes
@@ -28,7 +28,7 @@ End
 
 TOKEN
 	Name  = "TSE_BUILD"
-	Value  = "0x1263"
+	Value  = "0x1242"
 	Help  = "TSE Build number"
 	TokenType = Expression
 	TargetMAK = Yes
@@ -82,15 +82,6 @@ TOKEN
 End
 
 TOKEN
-	Name  = "TSE_WATCHDOG_TIMER"
-	Value  = "1"
-	Help  = "Token to set watch dog timer support"
-	TokenType = Boolean
-	TargetMAK = Yes
-	TargetH = Yes
-End
-
-TOKEN
 	Name  = "SETUP_OEM_FORMAT_LOGO_SUPPORT"
 	Value  = "0"
 	Help  = "GIF Logo support in Setup"
@@ -103,15 +94,6 @@ TOKEN
 	Name  = "SETUP_GRAYOUT_READONLY_CONTROL"
 	Value  = "0"
 	Help  = "Diaplay readonly controls as grayout"
-	TokenType = Boolean
-	TargetMAK = Yes
-	TargetH = Yes
-End
-
-TOKEN
-	Name  = "TSE_SETUP_GRAYOUT_SELECTABLE"
-	Value  = "0"
-	Help  = "0 is DEFAULT. set 1=> to allow grayed-out options set focus and to be selectable by the user. Set 0=> to make grayed-out options not to focus and editable"
 	TokenType = Boolean
 	TargetMAK = Yes
 	TargetH = Yes
@@ -152,9 +134,18 @@ End
 
 TOKEN
 	Name  = "HPKTOOL"
+	Value  = "$(SILENT)$(TSEBIN_DIR)\HPKTOOL"
+	TokenType = Expression
+	TargetMAK = Yes
+	Token = "EFI_SPECIFICATION_VERSION" "<=" "0x20000"
+End
+
+TOKEN
+	Name  = "HPKTOOL"
 	Value  = "$(SILENT)$(TSEBIN_DIR)\UefiHPKTOOL"
 	TokenType = Expression
 	TargetMAK = Yes
+	Token = "EFI_SPECIFICATION_VERSION" ">" "0x20000"
 End
 
 TOKEN
@@ -176,7 +167,7 @@ End
 TOKEN
 	Name  = "SETUP_ENTRY_UNICODE"
 	Value  = "0x0000"
-	Help  = "Set to one of the defined constants from EFI_SIMPLE_TEXT_INPUT protocol or a character value like L'a'. Remember to check STR_DEL_ENTER_SETUP string in AmiTSEStr.uni."
+	Help  = "Set to one of the defined constants from EFI_SIMPLE_TEXT_INPUT protocol or a character value like L'a'. Remember to check STR_DEL_ENTER_SETUP string in MiniSetupStr.uni."
 	TokenType = Expression
 	TargetH = Yes
 End
@@ -184,7 +175,7 @@ End
 TOKEN
 	Name  = "SETUP_ENTRY_SCAN"
 	Value  = "EFI_SCAN_DEL"
-	Help  = "Set to one of the defined constants from EFI_SIMPLE_TEXT_INPUT protocol. Remember to check STR_DEL_ENTER_SETUP string in AmiTSEStr.uni, and STR_DEL_ENTER_SETUP_SREDIR in Terminal.uni if using Serial Redirection"
+	Help  = "Set to one of the defined constants from EFI_SIMPLE_TEXT_INPUT protocol. Remember to check STR_DEL_ENTER_SETUP string in MiniSetupStr.uni."
 	TokenType = Expression
 	TargetH = Yes
 End
@@ -208,7 +199,7 @@ End
 TOKEN
 	Name  = "SETUP_ALT_ENTRY_UNICODE"
 	Value  = "0x0000"
-	Help  = "Set to one of the defined constants from EFI_SIMPLE_TEXT_INPUT protocol or a character value like L'a'. Remember to check STR_DEL_ENTER_SETUP string in AmiTSEStr.uni."
+	Help  = "Set to one of the defined constants from EFI_SIMPLE_TEXT_INPUT protocol or a character value like L'a'. Remember to check STR_DEL_ENTER_SETUP string in MiniSetupStr.uni."
 	TokenType = Expression
 	TargetH = Yes
 	Token = "SETUP_ALT_ENTRY_ENABLE" "!=" "0"
@@ -217,7 +208,7 @@ End
 TOKEN
 	Name  = "SETUP_ALT_ENTRY_SCAN"
 	Value  = "EFI_SCAN_ESC"
-	Help  = "Set to one of the defined constants from EFI_SIMPLE_TEXT_INPUT protocol. Remember to check STR_DEL_ENTER_SETUP string in AmiTSEStr.uni,and STR_DEL_ENTER_SETUP_SREDIR in Terminal.uni if using Serial Redirection"
+	Help  = "Set to one of the defined constants from EFI_SIMPLE_TEXT_INPUT protocol. Remember to check STR_DEL_ENTER_SETUP string in MiniSetupStr.uni."
 	TokenType = Expression
 	TargetH = Yes
 	Token = "SETUP_ALT_ENTRY_ENABLE" "!=" "0"
@@ -259,17 +250,7 @@ End
 TOKEN
 	Name  = "SETUP_BBS_POPUP_ENABLE"
 	Value  = "0"
-	Help  = "Enable or disable the SETUP_BBS_POPUP_ENABLE."
-	TokenType = Boolean
-	TargetH = Yes
-End
-
-
-
-TOKEN
-	Name  = "POPUP_MENU_ENTER_SETUP"
-	Value  = "1"
-	Help  = "1 => Allows to enter setup from BBS popup"
+	Help  = "Enable or disable the SETUP_BBS_POPUP_ENABLE. CAUTION This works only if complete TSE sources are present."
 	TokenType = Boolean
 	TargetH = Yes
 End
@@ -286,7 +267,7 @@ End
 TOKEN
 	Name  = "POPUP_MENU_ENTRY_SCAN"
 	Value  = "EFI_SCAN_F7"
-	Help  = "Set to one of the defined constants from EFI_SIMPLE_TEXT_INPUT protocol.Remember to check STR_BBS_POPUP_SREDIR in Terminal.uni if using Serial Redirection. "
+	Help  = "Set to one of the defined constants from EFI_SIMPLE_TEXT_INPUT protocol"
 	TokenType = Expression
 	TargetH = Yes
 	Token = "SETUP_BBS_POPUP_ENABLE" "!=" "0"
@@ -432,7 +413,7 @@ End
 TOKEN
 	Name  = "SETUP_PASSWORD_LENGTH"
 	Value  = "20"
-	Help  = "Default maximum password length. TSE Source needed to change the length"
+	Help  = "Default maximum password length."
 	TokenType = Integer
 	TargetH = Yes
 End
@@ -484,7 +465,7 @@ TOKEN
 	TokenType = Boolean
 	TargetMAK = Yes
 	TargetH = Yes
-	Token = "X64_SUPPORT" "=" "1"
+	Token = "x64_BUILD" "=" "1"
 End
 
 TOKEN
@@ -589,7 +570,7 @@ End
 TOKEN
 	Name  = "MINISETUP_MOUSE_SUPPORT"
 	Value  = "0"
-	Help  = "Mouse support."
+	Help  = "Mouse suport."
 	TokenType = Boolean
 	TargetEQU = Yes
 	TargetH = Yes
@@ -598,7 +579,7 @@ End
 TOKEN
 	Name  = "OLD_MOUSE_DRIVER_SUPPORT"
 	Value  = "0"
-	Help  = "Old Mouse Driver Mouse support."
+	Help  = "Old Mouse Driver Mouse suport."
 	TokenType = Boolean
 	TargetH = Yes
 	Token = "MINISETUP_MOUSE_SUPPORT" "!=" "0"
@@ -625,7 +606,7 @@ End
 TOKEN
 	Name  = "SETUP_STORE_KEYCODE_PASSWORD"
 	Value  = "0"
-	Help  = "For Extended Password support, the Value can be 1 or 2. Set Value as 1 to support Efi Key as password. Set Value as 2 to support Scan Code in password. Need AMIKeyCode Protocol & TSE sources support, Set Value as 0 to support Unicode in password, which is the default"
+	Help  = "For Extened Password support, the Value can be 1 or 2. Set Value as 1 to support Efi Key as password. Set Value as 2 to support Scan Code in password. Need AMIKeyCode Protocol & TSE sources support, Set Value as 0 to support Unicode in password, which is the default"
 	TokenType = Integer
 	TargetEQU = Yes
 	TargetH = Yes
@@ -651,7 +632,7 @@ End
 TOKEN
 	Name  = "STYLE_DATE_FORMAT"
 	Value  = "0"
-	Help  = "Controls the Date Format. Possible values are 0 to 4. 0 -> MMDDYYYY, 1 -> YYYYDDMM, 2 -> DDMMYYYY, 3 -> YYYYMMDD. Need TSE source to change the value"
+	Help  = "Controls the Date Format. (Default 0 => mm/dd/yyyy) (1 => yyyy/dd/mm)"
 	TokenType = Integer
 	TargetH = Yes
 	Range  = "0-3"
@@ -923,8 +904,7 @@ End
 
 TOKEN
 	Name  = "SETUP_IDE_SECURITY_SUPPORT"
-	Value  = "0"
-	Help  = "0 =>IDE Security Interactive Password  1=> IDE Security Non interactive Password."
+	Value  = "1"
 	TokenType = Boolean
 	TargetH = Yes
 	Token = "SECURITY_SUPPORT" "=" "1"
@@ -961,15 +941,6 @@ TOKEN
 	Help  = "Allows Dynamic IFR Pages to be relocated under subpages. Make sure to have the VFR changes to show the dynamic pages"
 	TokenType = Boolean
 	TargetH = Yes
-End
-
-TOKEN
-    Name  = "GROUP_DYNAMIC_PAGES_BY_CLASSCODE"
-    Value  = "0"
-    Help  = "Allows Dynamic IFR Pages to be grouped by type under subpages. Make sure to have the VFR changes to show the dynamic pages"
-    TokenType = Boolean
-    TargetH = Yes
-    Token = "SETUP_GROUP_DYNAMIC_PAGES" "!=" "0"
 End
 
 TOKEN
@@ -1051,6 +1022,7 @@ TOKEN
 	Help  = "1 = Enabling Driver health support in TSE and 0 = Disabling Driver health support in TSE."
 	TokenType = Boolean
 	TargetH = Yes
+	Token = "EFI_SPECIFICATION_VERSION" ">=" "0x20014"
 End
 
 TOKEN
@@ -1070,6 +1042,7 @@ TOKEN
 	TargetMAK = Yes
 	TargetH = Yes
 	Lock = Yes
+	Token = "EFI_SPECIFICATION_VERSION" ">=" "0x2000A"
 End
 
 TOKEN
@@ -1310,14 +1283,6 @@ TOKEN
 	Name  = "OVERRIDE_PopupPwdAuthenticateIDEPwd"
 	Value  = "0"
 	Help  = "set to 1 if oem wants to override the PopupPwdAuthenticateIDEPwd function from Board module."
-	TokenType = Boolean
-	TargetH = Yes
-End
-
-TOKEN
-	Name  = "OVERRIDE_CheckForIDEPasswordInstalled"
-	Value  = "0"
-	Help  = "set to 1 if oem wants to override the CheckForIDEPasswordInstalled function from Board module."
 	TokenType = Boolean
 	TargetH = Yes
 End
@@ -1579,11 +1544,11 @@ TOKEN
 End
 
 TOKEN
-	Name  = "OVERRIDE_MainSetupLoopInitHook"
-	Value  = "0"
-	Help  = "set to 1 if OEM wants to override the MainSetupLoopInitHook function from Board module."
-	TokenType = Boolean
-	TargetH = Yes
+    Name  = "OVERRIDE_MainSetupLoopInitHook"
+    Value  = "0"
+    Help  = "set to 1 if OEM wants to override the MainSetupLoopInitHook function from Board module."
+    TokenType = Boolean
+    TargetH = Yes
 End
 
 TOKEN
@@ -1755,14 +1720,6 @@ TOKEN
 End
 
 TOKEN
-	Name  = "OVERRIDE_CsmBBSBootOptionName"
-	Value  = "0"
-	Help  = "0 is Default. Set to 1 if OEM wants to override the CsmBBSBootOptionName function from Board module."
-	TokenType = Boolean
-	TargetH = Yes
-End
-
-TOKEN
 	Name  = "MSGBOX_PROGRESS_BAR_SEGMENT_COUNT"
 	Value  = "20"
 	Help  = "Mod of 100 with this number should be 0, for example (100 % 20 = 0)."
@@ -1796,6 +1753,15 @@ TOKEN
 End
 
 TOKEN
+	Name  = "TSE_GNUC_BUILD_SUPPORT"
+	Value  = "0"
+	Help  = "Turn on to to build under GCC"
+	TokenType = Boolean
+	TargetMAK = Yes
+	TargetH = Yes
+End
+
+TOKEN
 	Name  = "TSE_USE_GETGYLPH_PRINTLENGH"
 	Value  = "1"
 	Help  = "Turn on to to build under Aptio 5"
@@ -1805,9 +1771,18 @@ End
 
 TOKEN
 	Name  = "INI_FILE_PATH"
+	Value  = "$(TSEBIN_DIR)\setup.ini"
+	TokenType = Expression
+	TargetMAK = Yes
+	Token = "EFI_SPECIFICATION_VERSION" "<=" "0x20000"
+End
+
+TOKEN
+	Name  = "INI_FILE_PATH"
 	Value  = "$(TSEBIN_DIR)/Uefisetup.ini"
 	TokenType = Expression
 	TargetMAK = Yes
+	Token = "EFI_SPECIFICATION_VERSION" ">" "0x20000"
 End
 
 TOKEN
@@ -1832,6 +1807,7 @@ TOKEN
 	Help  = "1 => Hide LOAD_OPTION_HIDDEN Boot option. 0 => Shows all boot options."
 	TokenType = Boolean
 	TargetH = Yes
+	Token = "EFI_SPECIFICATION_VERSION" ">" "0x20000"
 End
 
 TOKEN
@@ -1912,52 +1888,18 @@ TOKEN
 	TargetH = Yes
 End
 
-
-TOKEN
-	Name  = "TEXT_EXCESS_SUPPORT"
-	Value  = "0"
-	Help  = "0 default , if 1 then  string will we adjusted on whole width of the frame on condition right side of frame have no strings and string is exceeding from frame "
-	TokenType = Boolean
-	TargetH = Yes
-End
-
-TOKEN
-	Name  = "BOOT_TO_IMAGE_CODE_TYPE_SUPPORT"
-	Value  = "1"
-	Help  = "1 default ,if 0 then it will boot any boot option type if 1 then boot option on the basis of image code type(Application) if match then only boot"
-	TokenType = Boolean
-	TargetH = Yes
-End
-
 TOKEN
 	Name  = "OEMLogo_FILE_PATH"
-	Value  = "AmiTsePkg/Core/em/AMITSE/OEMLogo.bmp"
+	Value  = "AmiTsePkg\Core\em\AMITSE\OEMLogo.bmp"
 	TokenType = Expression
 	TargetMAK = Yes
 	TargetFDF = Yes
 	Token = "TSE_OEM_POSTLOGO_SUPPORT" "=" "1"
 End
-TOKEN
-	Name = "OEMLOGO_UI_FILE_NAME"
-	Value = "OEMLogo.bmp"
-	Help  = "Token to display the oem logo name in change logo utility"
-	TokenType = Expression
-	TargetMAK = Yes
-	TargetFDF = Yes
-End
 
 TOKEN
 	Name  = "LOGO_FILE_NAME"
 	Value  = "AmiTsePkg/Core/em/AMITSE/Logo.bmp"
-	TokenType = Expression
-	TargetMAK = Yes
-	TargetFDF = Yes
-End
-
-TOKEN
-	Name = "LOGO_UI_FILE_NAME"
-	Value = "Logo.bmp"
-	Help  = "Token to display the quiet boot logo name in change logo utility"
 	TokenType = Expression
 	TargetMAK = Yes
 	TargetFDF = Yes
@@ -2001,7 +1943,7 @@ End
 
 TOKEN
 	Name  = "TSE_CALLBACK_SPEC_VERSION"
-	Value  = "0"
+	Value  = "EFI_SPECIFICATION_VERSION"
 	Help  = "Version to change the callback functionality"
 	TokenType = Integer
 	TargetMAK = Yes
@@ -2059,7 +2001,7 @@ End
 
 TOKEN
 	Name  = "SUPPORT_ESRT"
-	Value  = "1"
+	Value  = "0"
 	Help  = "Enable to support ESRT"
 	TokenType = Boolean
 	TargetH = Yes
@@ -2204,364 +2146,6 @@ TOKEN
 	Name  = "TSE_DONOT_LOAD_SYSTEM_ACCESS_FOR_USER_DEFAULT"
 	Value  = "0"
 	Help  = "0 is DEFAULT.1 => To enable to not to load SystemAccess variable on pressing Restore User Default. 0=> To load SystemAccess variable on pressing Restore User Default"
-	TokenType = Boolean
-	TargetH = Yes
-End
-
-TOKEN
-	Name  = "SHOW_FORMSETS_WITH_CLASSGUID"
-	Value  = "1"
-	Help  = "1 is DEFAULT.1 => To display formset based on formset ClassGUID in elink AMITSE_FILTER_CLASSGUID_FORMSETS(By default this elink will have EFI_HII_PLATFORM_SETUP_FORMSET_GUID and EFI_HII_DRIVER_HEALTH_FORMSET_GUID). 0 => To display all formset and no filter in formsets."
-	TokenType = Boolean
-	TargetH = Yes
-End
-
-TOKEN
-	Name  = "TSE_DBG_DISABLE_APPDESTRUCTOR"
-	Value  = "0"
-	Help  = "0 => Free the TSE used memory. 1 => Won't free the TSE used memory, may be used only for debugging purposes. CAUTION: If making the token to 1 then TSE won't free the memory it used. We recommend not to make it enable."
-	TokenType = Boolean
-	TargetH = Yes
-	Token = "DEBUG_MODE" "=" "1"
-End
-
-TOKEN
-	Name  = "TSE_HASH_PASSWORD"
-	Value  = "1"
-	Help  = "1 is Default. 1 => To encode the entered password using hash algorithm. Make it enabled only when cryptopkg or amicryptopkg is available. 0 => Encode entered password using TSE logic."
-	TokenType = Boolean
-	TargetMAK = Yes
-	TargetH = Yes
-End
-
-TOKEN
-	Name  = "TSE_PWD_ENCRYPT_USING_SHA256"
-	Value  = "0"
-	Help  = "0 is Default. 1 => To use SHA256 algorithm to encode the password. 0 => Use SHA1 algorithm to encode the password"
-	TokenType = Boolean
-	TargetMAK = Yes
-	TargetH = Yes
-	Token = "TSE_HASH_PASSWORD" "=" "1"
-End
-
-TOKEN
-	Name  = "AMITSE_SUPPRESS_DYNAMIC_FORMSET"
-	Value  = "0"
-	Help  = "0 is Default. 1 -> To suppress dynamic formset mentioned in elink AMITSE_SUPPRESS_DYNAMIC_FORMSET_LIST and do not show in setup. 0 -> Display dynamic page and not to suppress dynamic page"
-	TokenType = Boolean
-	TargetH = Yes
-End
-
-TOKEN
-	Name  = "SUPPRESS_HANDLE_FOR_VAR_CREATION"
-	Value  = "0"
-	Help  = "0 is DEFAULT.0 => Includes handle comparison to create new variable cache in TSE. 1 => Won't compare handle to create new variable. The variable detail should present in AMITSE_DYNAMICPARSING_HANDLE_SUPPRESS_LIST to not compare handle"
-	TokenType = Boolean
-	TargetH = Yes
-End
-
-TOKEN
-	Name  = "TSE_BUILD_AS_APPLICATION"
-	Value  = "0"
-	Help  = "0 => Includes TSE in output image, for normal boot process. 1 => Builds TSE as application. Wont't include in output image. Need TSE source to avail this feature"
-	TokenType = Boolean
-	TargetMAK = Yes
-	TargetH = Yes
-End
-
-TOKEN
-	Name  = "OVERRIDE_GetGraphicsBitMapFromFV"
-	Value  = "0"
-	Help  = "set to 1 if OEM wants to override the GetGraphicsBitMapFromFV function from Board module."
-	TokenType = Boolean
-	TargetH = Yes
-End
-
-TOKEN
-	Name  = "OVERRIDE_CheckAdvShiftState"
-	Value  = "0"
-	Help  = "set to 1 if OEM wants to override the CheckAdvShiftState function from Board module."
-	TokenType = Boolean
-	TargetH = Yes
-End
-
-TOKEN
-	Name  = "OVERRIDE_LaunchSecBootPathFromEnabledDevs"
-	Value  = "0"
-	Help  = "set to 1 if OEM wants to override the LaunchSecBootPathFromEnabledDevs function from Board module."
-	TokenType = Boolean
-	TargetH = Yes
-End
-
-TOKEN
-	Name  = "OVERRIDE_FramePasswordAdvancedCallback"
-	Value  = "0"
-	Help  = "set to 1 if OEM wants to override the FramePasswordAdvancedCallback function from Board module."
-	TokenType = Boolean
-	TargetH = Yes
-End
-
-TOKEN
-	Name  = "OVERRIDE_TseLaunchFileSystem"
-	Value  = "0"
-	Help  = "set to 1 if OEM wants to override the TseLaunchFileSystem function from Board module."
-	TokenType = Boolean
-	TargetH = Yes
-End
-
-TOKEN
-	Name  = "TSE_DEFAULT_SETUP_PASSWORD_SUPPORT"
-	Value  = "0"
-	Help  = "0 is default.set 1=> to Enable default setup password"
-	TokenType = Expression
-	TargetMAK = Yes
-	TargetH = Yes
-End
-
-TOKEN
-	Name  = "DEFAULT_SETUP_PWD_AT_FIRSTBOOT_ONLY"
-	Value  = "1"
-	Help  = "1 is default. 1 => Sets the TSE_ADMIN_PASSWORD and TSE_USER_PASSWORD at first boot only. 0 => Sets TSE_ADMIN_PASSWORD and TSE_USER_PASSWORD in TSE defaults, on load defaults these data will be loaded"
-	TokenType = Expression
-	TargetMAK = Yes
-	TargetH = Yes
-	Token = "TSE_DEFAULT_SETUP_PASSWORD_SUPPORT" "=" "1"
-End
-
-TOKEN
-	Name  = "TSE_ADMIN_PASSWORD"
-	Value  ='"EMPTY_DATA"'
-	Help  = "If default admin password is not required, it will not be set; in that case keep EMPTY_DATA as a default value. Otherwise, replace EMPTY_DATA with the new value of default admin password. Keep the double quotes - they are necessary to support special characters."
-	TokenType = Expression
-	TargetMAK = Yes
-	TargetH = Yes
-	Range =  "From PASSWORD_MIN_SIZE to SETUP_PASSWORD_LENGTH"
-	Token = "TSE_DEFAULT_SETUP_PASSWORD_SUPPORT" "=" "1"
-End
-
-TOKEN
-	Name  = "TSE_USER_PASSWORD"
-	Value  = '"EMPTY_DATA"'
-	Help  = "If default user password is not required, it will not be set; in that case keep EMPTY_DATA as a default value. Otherwise, replace EMPTY_DATA with the new value of default user password. Keep the double quotes - they are necessary to support special characters."
-	TokenType = Expression
-	TargetMAK = Yes
-	TargetH = Yes
-	Range =  "From PASSWORD_MIN_SIZE to SETUP_PASSWORD_LENGTH"
-	Token = "TSE_DEFAULT_SETUP_PASSWORD_SUPPORT" "=" "1"
-End
-
-TOKEN
-	Name  = "RT_ACCESS_SUPPORT_IN_HPKTOOL"
-	Value  = "0"
-	Help  = "0 is default. 0=> Not to set RT flag for Varstore variables. 1=> enable to add RT attribute for Varstore variables, uefisetup.ini attributes persists"
-	TokenType = Expression
-	TargetMAK = Yes
-	TargetH = Yes
-End
-
-TOKEN
-	Name  = "RT_ACCESS_FOR_EFIVARSTORE"
-	Value  = "0"
-	Help  = "0 is default. 0=> Not to set RT flag for EfiVarstore variables. 1=> enable to add RT attribute for Efivarstore variables, uefisetup.ini attributes persists. It is User's responsibility to secure the variable to which User providing RT attribute."
-	TokenType = Expression
-	TargetMAK = Yes
-	TargetH = Yes
-End
-
-TOKEN
-	Name  = "DISABLE_ESC_IN_BBS"
-	Value  = "0"
-	Help  = "0 is DEFAULT.1 => To disable ESC behaviour in BBS menu and retain in BBS menu. 0 => To enable ESC behaviour in BBS menu."
-	TokenType = Boolean
-	TargetH = Yes
-End
-
-TOKEN
-	Name  = "TSE_FOR_EDKII_SUPPORT"
-	Value  = "0"
-	Help  = "0 is DEFAULT. TSE source support is mandatory. 0 => No support for building TSE in EDK project. 1 => Support to build TSE in EDK project"
-	TokenType = Boolean
-	TargetH = Yes
-End
-
-TOKEN
-	Name  = "OVERRIDE_ESAInitFvHook"
-	Value  = "0"
-	Help  = "set to 1 if OEM wants to override the ESAInitFvHook function from Board module."
-	TokenType = Boolean
-	TargetH = Yes
-End
-
-TOKEN
-	Name  = "OVERRIDE_SetMessageBoxProgressType"
-	Value  = "0"
-	Help  = "set to 1 if OEM wants to override the SetMessageBoxProgressType function from Board module."
-	TokenType = Boolean
-	TargetH = Yes
-End
-
-TOKEN
-	Name  = "OVERRIDE_SetResAndScreenBufferHook"
-	Value  = "0"
-	Help  = "Default is 0. 1=> If OEM wants to override the SetResAndScreenBufferHook function and to set the required supported text mode"
-	TokenType = Boolean
-	TargetH = Yes
-End
-
-TOKEN
-	Name  = "TSE_RECALCULATE_LAYOUT_TO_MAX_RES"
-	Value  = "0"
-	Help  = "Default is 0. 1=> Sets the Max TextMode"
-	TokenType = Boolean
-	TargetH = Yes
-End
-
-TOKEN
-	Name  = "TSE_BEST_TEXT_GOP_MODE"
-	Value  = "0"
-	Help  = "0 is DEFAULT.1 => To save and restore text(100*31) and GOP(800*600) mode before using any TSE Interfaces in post/after TSE. 0 => Not to handle text and GOP mode before using any TSE interfaces in post/after TSE and use post mode without any change."
-	TokenType = Boolean
-	TargetH = Yes
-End
-
-TOKEN
-	Name  = "TSE_SUPPORT_DEFAULT_FOR_STRING_CONTROL"
-	Value  = "1"
-	Help  = "1 is DEFAULT. 1 => To construct optimal and failsafe defaults for STRING type controls based on CONTROLPtr from controlInfo.0 => Not to construct and load optimal and failsafe defaults for STRING type controls."
-	TokenType = Boolean
-	TargetH = Yes
-End
-
-TOKEN
-	Name  = "TSE_SUPPORT_WRITE_CHAR_LAST_ROW_COLUMN"
-	Value  = "0"
-	Help  = "0 is DEFAULT. 1 => To support writing a char in last row column without scrolling the screen.0 => Not to support writing a char in last row column without scrolling the screen"
-	TokenType = Boolean
-	TargetH = Yes
-	Token = "AMI_MODULE_PKG_VERSION" ">=" "25"
-End
-
-TOKEN
-	Name  = "TSE_FULL_SCREEN_POST_SUPPORT"
-	Value  = "0"
-	Help  = "0 is DEFAULT.1 => To set (100 x 31) text mode in post if (100 x 31) is available. 0 => Don't try to set (100 x 31) text mode continue with what is available."
-	TokenType = Boolean
-	TargetH = Yes
-End
-
-TOKEN
-	Name  = "TSE_MASM_PATH"
-	Value  = ""
-	Help  = "Token to set the MASM path. If experiencing build error in command line then set the MASM path here. Path should terminated with slash eg.,$(CCX86DIR)/../"
-	TokenType = Expression
-	TargetMAK = Yes
-	TargetH = Yes
-End
-
-TOKEN
-	Name  = "TSE_MOUSE_POST_TRIGGER_TIME"
-	Value  = "5000000"
-	Help  = "0.5Sec => Default. The number of 100ns in which mouse event is checked in POST,"
-	TokenType = Integer
-	TargetMAK = Yes
-	TargetH = Yes
-End
-
-TOKEN
-	Name  = "TSE_SKIP_ORPHAN_BOOT_ORDER_VARIABLE"
-	Value  = "0"
-	Help  = "0 => Default. 1 => Skip to create TSE bootData if Boot#### variable not present in bootOrder. 0 => Create TSE bootData if Boot#### variable not present in bootOrder "
-	TokenType = Boolean
-	TargetH = Yes
-End
-
-TOKEN
-	Name  = "TSE_ISOLATE_SETUP_DATA"
-	Value  = "1"
-	Help  = "1 is Default. 1 => To Isolate SetupData in separate FFS. 0 => To maintain SetupData.bin and AMITSE.efi in one FFS"
-	TokenType = Boolean
-	TargetMAK = Yes
-	TargetFDF = Yes
-	TargetH = Yes
-End
-
-TOKEN
-	Name  = "TSE_WAIT_FOR_KEY_EVENT_BEFORE_READ"
-	Value  = "0"
-	Help  = "0 is Default. 0 => Not-to-wait for any event to signalled before execution. 1=> To Stops execution until an event is signaled."
-	TokenType = Boolean
-	TargetH = Yes
-End
-
-TOKEN
-	Name  = "DEFAULT_CONDITIONAL_EXPRESSION_SUPPORT"
-	Value  = "0"
-	Help  = "0 is Default. 0 => To skip evaluating default value for Conditional Expression 1=> To evaluating default value for Conditional Expression"
-	TokenType = Boolean
-	TargetH = Yes
-End
-
-TOKEN
-	Name  = "TSE_DISPLAY_FORMSET_PARSING_ERROR"
-	Value  = "0"
-	Help  = "0 is Default. 0 => Will not show formset parsing error to the user; 1 => Show the parsing error using Post Message box. The problematic formset won't be shown in either case."
-	TokenType = Boolean
-	TargetH = Yes
-End
-
-TOKEN
-	Name  = "TSE_CACHE_PLATFORM_LANG"
-	Value  = "0"
-	Help  = "0 is Default. 0 =>Gets the Current System language From Nvram. 1=>Gets the Current System language From Cache variable and this cache variable will update on changing the System language With in TSE.However if some other module changes System Language,TSE will not know it."
-	TokenType = Boolean
-	TargetMAK = Yes
-	TargetH = Yes
-End
-
-TOKEN
-    Name   = "TSE_RECOVERY_SUPPORT"
-    Value  = "0"
-    Help   = "0 is Default. 1=>Enables OSRecovery and Platform Recovery feature in TSE. 2=>Disables Recovery feature in TSE"
-    TokenType = Boolean
-    TargetH = Yes
-End
-
-TOKEN
-	Name  = "ESA_RECONNECT_SUPPORT"
-	Value  = "1"
-	Help  = "1 is Default. 0 => Not To support mantis 1194[EFI_IFR_FLAG_RECONNECT_REQUIRED] for ESA  1=> To support mantis 1194[EFI_IFR_FLAG_RECONNECT_REQUIRED] for ESA"
-	TokenType = Boolean
-	TargetH = Yes
-End
-
-TOKEN
-	Name  = "OVERRIDE_TSEBreakInteractiveBbsPopup"
-	Value  = "0"
-	Help  = "Default is 0. 1=> If OEM wants to override TSEBreakInteractiveBbsPopup function and not rely on TSE_BREAK_INTERACTIVE_BBS_POPUP token to break the BBS popup loop"
-	TokenType = Boolean
-	TargetH = Yes
-End
-
-TOKEN
-	Name  = "TSE_BREAK_INTERACTIVE_BBS_POPUP"
-	Value  = "0"
-	Help  = "0 is Default. 0 => To show BBS popup always interactively 1=> To break the interactive loop of BBS popup"
-	TokenType = Boolean
-	TargetH = Yes
-End
-
-TOKEN
-	Name  = "TSE_BOOT_TO_DISABLED_BOOT_OPTIONS"
-	Value  = "0"
-	Help  = "0=>Disabled legacy Boot Options are won't boot from BootOver Ride and BBS page 1=>Disabled legacy Boot Options will boot from BootOver ride and BBS page"
-	TokenType = Boolean
-	TargetH = Yes
-End
-
-TOKEN
-	Name  = "TSE_GOP_NOTIFICATION_SUPPORT"
-	Value  = "1"
-	Help  = "1 is Default. 0 => Do not install GOP notification processing.[Assumes GOP won't be updated.] 1=> Install and process GOP notifications"
 	TokenType = Boolean
 	TargetH = Yes
 End
@@ -3420,42 +3004,6 @@ ELINK
 End
 
 ELINK
-	Name  = "BootFlowExitHook,"
-	Parent  = "BootFlowExitHookHook,"
-	InvokeOrder = AfterParent
-End
-
-ELINK
-	Name  = "HOOK38,"
-	Parent  = "AMITSE_Hooks"
-	Priority  = 38
-	Help  = "Anchor for hook #38 - DO NOT MODIFY."
-	InvokeOrder = AfterParent
-End
-
-ELINK
-	Name  = "SetupEntryHook,"
-	Parent  = "HOOK38,"
-	Priority  = 38
-	InvokeOrder = AfterParent
-End
-
-ELINK
-	Name  = "HOOK39,"
-	Parent  = "AMITSE_Hooks"
-	Priority  = 39
-	Help  = "Anchor for hook #39 - DO NOT MODIFY."
-	InvokeOrder = AfterParent
-End
-
-ELINK
-	Name  = "BootFlowExitHookHook,"
-	Parent  = "HOOK39,"
-	Priority  = 39
-	InvokeOrder = AfterParent
-End
-
-ELINK
 	Name  = "LastTSEHook"
 	Parent  = "HOOK0,"
 	Help  = "Anchor for last hook - DO NOT MODIFY"
@@ -3475,12 +3023,12 @@ ELINK
 	InvokeOrder = AfterParent
 End
 
+ELINK
+	Name  = "{{SCAN_F11, 0},0, SetupShowDebugScreen, 0 },"
+	Parent  = "HOTKEY_LIST"
+	InvokeOrder = AfterParent
+End
 
-#ELINK
-#	Name  = "{{SCAN_F11, 0},0, SetupShowDebugScreen, 0 },"
-#	Parent  = "HOTKEY_LIST"
-#	InvokeOrder = AfterParent
-#End
 ELINK
 	Name  = "{{TSE_PRN_SCRN_KEY_SCAN,0},0, PrntScrnKeyNotification, 0 },"
 	Parent  = "HOTKEY_LIST"
@@ -3717,18 +3265,6 @@ ELINK
 End
 
 ELINK
-	Name  = "$(TSEBIN_DIR)/commonoem.c"
-	Parent  = "TSE_SOURCE_FILES"
-	InvokeOrder = AfterParent
-End
-
-ELINK
-	Name  = "$(TSEBIN_DIR)/CommonHelper.c"
-	Parent  = "TSE_SOURCE_FILES"
-	InvokeOrder = AfterParent
-End
-
-ELINK
 	Name  = "TSE_STRING_FILES"
 	InvokeOrder = ReplaceParent
 End
@@ -3880,39 +3416,8 @@ ELINK
 End
 
 ELINK
-	Name  = "gTSEScreenMgmtProtocolGuid"
-	Parent  = "ADDITIONAL_AMITSE_Protocols"
-	InvokeOrder = AfterParent
-End
-
-ELINK
-	Name  = "ADDITIONAL_AMITSE_PCDs"
-	InvokeOrder = ReplaceParent
-End
-
-ELINK
-	Name  = "gAmiTsePkgTokenSpaceGuid.AmiTsePcdResetType"
-	Parent  = "ADDITIONAL_AMITSE_PCDs"
-	InvokeOrder = AfterParent
-End
-
-ELINK
-	Name  = "{ 0x93039971, 0x8545, 0x4b04,  0xb4, 0x5e, 0x32, 0xeb, 0x83, 0x26, 0x4, 0xe },{ 0xf22fc20c, 0x8cf4, 0x45eb, 0x8e, 0x6, 0xad, 0x4e, 0x50, 0xb9, 0x5d, 0xd3 }"
-	Parent  = "AMITSE_FILTER_CLASSGUID_FORMSETS"
-	InvokeOrder = AfterParent
-End
-
-ELINK
-	Name  = "AmiModulePkg/AmiModulePkg.dec"
-	Parent  = "ADDITIONAL_AMITSE_Packages"
-	Token = "TSE_FOR_EDKII_SUPPORT" "!=" "1"
-	InvokeOrder = AfterParent
-End
-
-ELINK
 	Name  = "$(NVRAM_DIR)/NvramRead.c"
 	Parent  = "TSE_SOURCE_FILES"
-	Token = "TSE_FOR_EDKII_SUPPORT" "!=" "1"
 	InvokeOrder = AfterParent
 End
 
@@ -3928,78 +3433,12 @@ ELINK
 	InvokeOrder = ReplaceParent
 End
 
-ELINK
-	Name  = "AMITSE_FILTER_CLASSGUID_FORMSETS"
-	InvokeOrder = ReplaceParent
-End
-
-ELINK
-	Name  = "AMITSE_SUPPRESS_DYNAMIC_FORMSET_LIST"
-	Help  = "Provide GUIDs of dynmaic formset to suppress. Terminate entry with comma"
-	InvokeOrder = ReplaceParent
-End
-
-ELINK
-	Name  = "AMITSE_DYNAMICPARSING_HANDLE_SUPPRESS_LIST"
-	Help  = "Provide Guid followed by variable name with single quotes. Terminate entry with comma"
-	InvokeOrder = ReplaceParent
-End
-
-ELINK
-	Name  = "gSetupCompleteRedrawGuid"
-	Parent  = "ADDITIONAL_AMITSE_Guids"
-	InvokeOrder = AfterParent
-End
-
-ELINK
-	Name  = "gEvaluateDefaults4FirstBootGuid"
-	Parent  = "ADDITIONAL_AMITSE_Guids"
-	InvokeOrder = AfterParent
-End
-
-OUTPUTREGISTER
-	Name  = "AUTOGEN_AMITSE_ELINKS"
-	Path  = "Build"
-	File  = "AMITSEElinks.h"
-	Template  = "AMITSEElinks.txt"
-End
-
-OUTPUTREGISTER
-	Name  = "AUTOGEN_AMITSE_HOTKEY_ELINKS"
-	Path  = "Build"
-	File  = "HotKeyElinks.h"
-	Template  = "HotKeyElinks.txt"
-End
-
-OUTPUTREGISTER
-	Name  = "AUTOGEN_AMITSE_HOTCLICK_ELINKS"
-	Path  = "Build"
-	File  = "HotClickElinks.h"
-	Template  = "HotClickElinks.txt"
-End
-
-
-#ELINK
-#	Name  = "{{ 0xE770BB69, 0xBCB4, 0x4D04, 0x9E, 0x97, 0x23, 0xFF, 0x94, 0x56, 0xFE, 0xAC }, {'S','y','s','t','e','m','A','c','c','e','s','s'}},"
-#	Parent  = "AMITSE_DYNAMICPARSING_HANDLE_SUPPRESS_LIST"
-#	Help  = "Provide GUIDs of variable and Variable name as above formate to suppress while parsing variable if it is present already in other formset."
-#	InvokeOrder = AfterParent
-#End
 INFComponent
 	Name  = "AMITSE"
 	File  = "../../../../Build/AMITSE.inf"
 	Package  = "AmiTsePkg"
 	ModuleTypes  = "DXE_DRIVER"
-	Token = "TSE_FOR_EDKII_SUPPORT" "!=" "1"
 	Skip_Packaging = Yes
-End
-
-INFComponent
-	Name  = "AMITSE"
-	File  = "../../../../Build/AMITSE.inf"
-	Package  = "AmiTsePkg"
-	ModuleTypes  = "DXE_DRIVER"
-	Token = "TSE_FOR_EDKII_SUPPORT" "=" "1"
 End
 
 INFComponent
@@ -4007,7 +3446,6 @@ INFComponent
 	File  = "SmallLogo.inf"
 	Package  = "AmiTsePkg"
 	ModuleTypes  = "USER_DEFINED"
-	Token = "TSE_FOR_EDKII_SUPPORT" "!=" "1"
 End
 
 INFComponent
@@ -4015,31 +3453,19 @@ INFComponent
 	File  = "SignOn\SignOn.inf"
 	Package  = "AmiTsePkg"
 	ModuleTypes  = "USER_DEFINED"
-	Token = "TSE_FOR_EDKII_SUPPORT" "!=" "1"
 End
 
 FFS_FILE
 	Name  = "AmiTseFdfFileStatement"
 	FD_AREA  = "FV_MAIN"
 	FILE_Stmt  = "AmiTsePkg/Core/em/AMITSE/AmiTseFdfFileStatement.txt"
-	Token = "TSE_FOR_EDKII_SUPPORT" "!=" "1"
 End
 
 FFS_FILE
 	Name  = "AmiTseRomHoleFdfFileStatement"
 	FD_AREA  = "FV_MAIN"
-	FILE_Stmt  = "AmiTsePkg/Core/em/AMITSE/Romhole.txt"
+	FILE_Stmt  = "AmiTsePkg\Core\em\AMITSE\Romhole.txt"
 	Token = "TSE_ROMHOLE_SUPPORT" "=" "1"
-	Token = "NESTED_FV_MAIN" "=" "0"
-End
-
-FFS_FILE
-	Name  = "AmiTseRomHoleFdfFileStatement"
-	FD_AREA  = "FV_MAIN_WRAPPER"
-	Index  = '"BEFORE" "FvMainCompressed"'
-	FILE_Stmt  = "AmiTsePkg/Core/em/AMITSE/Romhole.txt"
-	Token = "TSE_ROMHOLE_SUPPORT" "=" "1"
-	Token = "NESTED_FV_MAIN" "=" "1"
 End
 
 FFS_FILE
@@ -4047,13 +3473,12 @@ FFS_FILE
 	FD_AREA  = "FV_MAIN"
 	FILE_Stmt  = "AmiTsePkg/Core/em/AMITSE/Logoffs.txt"
 	Token = "TSE_ROMHOLE_SUPPORT" "=" "0"
-	Token = "TSE_FOR_EDKII_SUPPORT" "!=" "1"
 End
 
 FFS_FILE
 	Name  = "AmiTseLogoFfsFdfFileStatement"
 	FD_AREA  = "FV_LOGOROMHOLE"
-	FILE_Stmt  = "AmiTsePkg/Core/em/AMITSE/Logoffs.txt"
+	FILE_Stmt  = "AmiTsePkg\Core\em\AMITSE\Logoffs.txt"
 	Token = "TSE_ROMHOLE_SUPPORT" "=" "1"
 End
 
@@ -4062,22 +3487,13 @@ FFS_FILE
 	FD_AREA  = "FV_MAIN"
 	INFComponent  = "AmiTsePkg.SignOn"
 	Rule_Override  = "SubtypeGuidUncompressed"
-	Token = "TSE_FOR_EDKII_SUPPORT" "!=" "1"
-End
-
-FFS_FILE
-	Name  = "SetupDataFdFileStatement"
-	FD_AREA  = "FV_MAIN"
-	FILE_Stmt  = "AmiTsePkg/Core/em/AMITSE/SetupDataFdFileStatement.txt"
-	Token = "TSE_ISOLATE_SETUP_DATA" "=" "1"
 End
 
 FD_AREA
 	Name  = "FV_LOGOROMHOLE"
 	TYPE  = "StandAlone"
-	FD_INFO  = "AMIROM"
+	FD_INFO = "AMIROM"
 	Size  = "$(ROMHOLE_BLOCK_SIZE) * $(ROMHOLE_NUMBER_OF_BLOCK)"
-	Attributes  = "0x7ffe"
 	Guid  = "E54D9684-2735-43ef-A379-30F2F592BA10"
 	Token = "TSE_ROMHOLE_SUPPORT" "=" "1"
 End

@@ -6,7 +6,7 @@
 #
 #/*++
 #
-#  Copyright (c) 2012 - 2015 Intel Corporation. All rights reserved
+#  Copyright (c) 2012 - 2013 Intel Corporation. All rights reserved
 #  This software and associated documentation (if any) is furnished
 #  under a license and may only be used or copied in accordance
 #  with the terms of the license. Except as permitted by such
@@ -35,6 +35,9 @@
 [sources.common]
   PchS3Support.h
   PchS3Support.c
+  GetImage.c
+  ..\Common\PchInitVar.c
+  ..\Common\PchInitVar.h
 
 [Packages]
   MdePkg/MdePkg.dec
@@ -49,8 +52,6 @@
   UefiBootServicesTableLib
   UefiRuntimeServicesTableLib
   UefiLib
-  IoLib
-  HobLib
 
 [Guids]  
   gPchInitVariableGuid
@@ -59,9 +60,10 @@
   gEfiLoadPeImageProtocolGuid
   gEfiPchS3SupportProtocolGuid
   gEfiFirmwareVolume2ProtocolGuid
-  gEfiPchS3SupportSmmProtocolGuid
-  gEfiSpiDataProtocolGuid
   
 [Depex]
-  gEfiBootScriptSaveProtocolGuid
+  gEfiBootScriptSaveProtocolGuid AND 
+  gEfiFirmwareVolume2ProtocolGuid AND 
+  gEfiVariableArchProtocolGuid AND 
+  gEfiLoadPeImageProtocolGuid
 

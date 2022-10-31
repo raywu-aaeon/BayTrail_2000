@@ -4,7 +4,7 @@
 # 2) Dispatch PEIM from discovered FV.
 # 3) Handoff control to DxeIpl to load DXE core and enter DXE phase.
 #
-# Copyright (c) 2006 - 2013, Intel Corporation. All rights reserved.<BR>
+# Copyright (c) 2006 - 2012, Intel Corporation. All rights reserved.<BR>
 #
 #  This program and the accompanying materials
 #  are licensed and made available under the terms and conditions of the BSD License
@@ -58,6 +58,7 @@
   AmiModulePkg/AmiModulePkg.dec
 #*** AMI PORTING END ***#
 
+
 [LibraryClasses]
   BaseMemoryLib
   PeCoffGetEntryPointLib
@@ -76,6 +77,7 @@
 #*** AMI PORTING BEGIN ***#
   TimerLib
   PrintLib
+  ReportFVLib
 #*** AMI PORTING END ***#
 
 [Guids]
@@ -85,16 +87,14 @@
   
 [Ppis]
   gEfiPeiStatusCodePpiGuid                      ## SOMETIMES_CONSUMES (PeiReportStatusService is not ready if this PPI doesn't exist)
-  gEfiPeiResetPpiGuid                           ## SOMETIMES_CONSUMES (PeiResetService is not ready if this PPI doesn't exist)
+  gEfiPeiResetPpiGuid                           ## SOMETIMES_CONSUMES (PeiResetService is not ready if this PPI doesn't exist) 
   gEfiDxeIplPpiGuid                             ## CONSUMES
   gEfiPeiMemoryDiscoveredPpiGuid                ## PRODUCES
   gEfiPeiDecompressPpiGuid                      ## CONSUMES
-  gEfiPeiFirmwareVolumeInfoPpiGuid              ## NOTIFY   ## SOMETIMES_PRODUCES (Produce FvInfoPpi if the encapsulated FvImage is found)
-  gEfiPeiFirmwareVolumeInfo2PpiGuid             ## NOTIFY   ## SOMETIMES_PRODUCES (Produce FvInfo2Ppi if the encapsulated FvImage is found)
+  gEfiPeiFirmwareVolumeInfoPpiGuid              ## NOTIFY   ## SOMETIMES_PRODUCES (Produce FvInfoPpi if the encapsulated FvImage is found) 
   gEfiPeiLoadFilePpiGuid                        ## PRODUCES ## SOMETIMES_CONSUMES (The default load PeImage logic will be used when this PPI doesn't exist)
   gEfiPeiSecurity2PpiGuid                       ## NOTIFY
-  gEfiTemporaryRamSupportPpiGuid                ## SOMETIMES_CONSUMES
-  gEfiTemporaryRamDonePpiGuid                   ## SOMETIMES_CONSUMES
+  gEfiTemporaryRamSupportPpiGuid                ## CONSUMES
 #//*** AMI PORTING BEGIN ***//
   gEfiPeiLoadedImagePpiGuid                     ## PRODUCES
 #//**** AMI PORTING END ****//
@@ -112,4 +112,4 @@
   gEfiMdeModulePkgTokenSpaceGuid.PcdLoadFixAddressBootTimeCodePageNumber     ## SOMETIMES_CONSUMES 
   gEfiMdeModulePkgTokenSpaceGuid.PcdLoadFixAddressRuntimeCodePageNumber      ## SOMETIMES_CONSUMES 
   gEfiMdeModulePkgTokenSpaceGuid.PcdLoadModuleAtFixAddressEnable             ## CONSUMES  
-  gEfiMdeModulePkgTokenSpaceGuid.PcdShadowPeimOnS3Boot                       ## SOMETIMES_CONSUMES 
+  

@@ -1,7 +1,7 @@
 //**********************************************************************//
 //**********************************************************************//
 //**                                                                  **//
-//**        (C)Copyright 1985-2015, American Megatrends, Inc.         **//
+//**        (C)Copyright 1985-2013, American Megatrends, Inc.         **//
 //**                                                                  **//
 //**                       All Rights Reserved.                       **//
 //**                                                                  **//
@@ -12,21 +12,25 @@
 //**********************************************************************//
 //**********************************************************************//
 
-/** @file SmbiosDmiEdit.c
-    This file contains SMI registration and handler codes
-
-**/
+//**********************************************************************//
+// $Header: /Alaska/SOURCE/Modules/SMBIOS/SmbiosDMIEditSupport/SmbiosDMIEdit.c 21    6/06/12 3:07p Davidd $
+//
+// $Revision: 21 $
+//
+// $Date: 6/06/12 3:07p $
+//**********************************************************************//
+//**********************************************************************//
 
 #include <AmiDxeLib.h>
 #include <Token.h>
 #include <AmiHobs.h>
 #include <Smm.h>
 #include <AmiSmm.h>
-#include <Protocol/SmmSwDispatch2.h>
-#include <Protocol/LoadedImage.h>
-#include <Protocol/SmmBase2.h>
-#include <Protocol/SmmCpu.h>
-#include <Protocol/AmiSmbios.h>
+#include <Protocol\SmmSwDispatch2.h>
+#include <Protocol\LoadedImage.h>
+#include <Protocol\SmmBase2.h>
+#include <Protocol\SmmCpu.h>
+#include <Protocol\AmiSmbios.h>
 #include "SmbiosDmiEdit.h"
 
 #define FLASH_DEVICE_BASE (0xFFFFFFFF - FLASH_SIZE + 1)
@@ -34,32 +38,23 @@
 EFI_GUID						gSwSmiCpuTriggerGuid = SW_SMI_CPU_TRIGGER_GUID;
 
 EFI_SMM_SYSTEM_TABLE2			*mSmst;
-#if (AMI_MODULE_PKG_VERSION < 25)
-    EFI_PHYSICAL_ADDRESS            TsegStart = 0;
-    EFI_PHYSICAL_ADDRESS            TsegEnd = 0;
-#else
-	#include <Library/AmiBufferValidationLib.h>
-#endif
+EFI_PHYSICAL_ADDRESS            TsegStart = 0;
+EFI_PHYSICAL_ADDRESS            TsegEnd = 0;
 
 #if !defined(SMBIOS_DMIEDIT_DATA_LOC) || (SMBIOS_DMIEDIT_DATA_LOC != 2)
-#include <Protocol/SmbiosGetFlashDataProtocol.h>
-#include <Protocol/SmiFlash.h>
-#include <Protocol/FlashProtocol.h>
+#include <Protocol\SmbiosGetFlashDataProtocol.h>
+#include <Protocol\SmiFlash.h>
 
-FLASH_PROTOCOL 					*mFlash = NULL;
+extern EFI_GUID gEfiSmiFlashProtocolGuid;
+
 EFI_SMBIOS_FLASH_DATA_PROTOCOL  *mSmbiosFlashDataProtocol;
 EFI_SMI_FLASH_PROTOCOL          *mSmiFlash;
-#endif                                          // SMBIOS_DMIEDIT_DATA_LOC
+#endif                                  // SMBIOS_DMIEDIT_DATA_LOC
 
 //----------------------------------------------------------------------------
 //  External Variables
 //----------------------------------------------------------------------------
-#if SMBIOS_2X_SUPPORT
 extern  SMBIOS_TABLE_ENTRY_POINT    *SmbiosTableEntryPoint;
-#endif                                          // SMBIOS_2X_SUPPORT
-#if SMBIOS_3X_SUPPORT
-extern  SMBIOS_3X_TABLE_ENTRY_POINT *SmbiosV3TableEntryPoint;
-#endif                                          // SMBIOS_3X_SUPPORT
 extern  UINT8                       *ScratchBufferPtr;
 extern  UINT16                      MaximumBufferSize;
 
@@ -71,35 +66,17 @@ extern VOID DisableShadowWrite();
 extern VOID GetSmbiosTableF000 (VOID);
 extern VOID WriteOnceStatusInit(VOID);
 
-// For Smbios version 2.x
-#if (SMBIOS_2X_SUPPORT == 1)
-extern UINT16 GetSmbiosV2Info(
-    IN OUT  GET_SMBIOS_INFO     *p
+extern UINT16 GetSmbiosInfo(
+    IN OUT  GET_SMBIOS_INFO   *p
 );
 
-extern UINT16 GetSmbiosV2Structure(
+extern UINT16 GetSmbiosStructure(
     IN OUT  GET_SMBIOS_STRUCTURE    *p
 );
 
-extern UINT16 SetSmbiosV2Structure(
-    IN SET_SMBIOS_STRUCTURE     *p
+extern UINT16 SetSmbiosStructure(
+    IN SET_SMBIOS_STRUCTURE    *p
 );
-#endif                                          // SMBIOS_2X_SUPPORT
-
-// For Smbios version 3.x
-#if (SMBIOS_3X_SUPPORT == 1)
-extern UINT16 GetSmbiosV3Info(
-    IN OUT  GET_SMBIOS_V3_INFO  *p
-);
-
-extern UINT16 GetSmbiosV3Structure(
-    IN OUT  GET_SMBIOS_V3_STRUCTURE    *p
-);
-
-extern UINT16 SetSmbiosV3Structure(
-    IN SET_SMBIOS_V3_STRUCTURE  *p
-);
-#endif                                          // SMBIOS_3X_SUPPORT
 
 #if !defined(SMBIOS_DMIEDIT_DATA_LOC) || (SMBIOS_DMIEDIT_DATA_LOC != 2)
 extern FLASH_DATA_INFO GetFlashDataInfo(
@@ -124,22 +101,30 @@ SmiHandler (
     IN  OUT	UINTN	*CommBufferSize
 );
 
-/**
-    DMIEdit support driver entry point
-
-    @param ImageHandle
-    @param SystemTable
-
-    @return EFI_STATUS
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   SmbiosDmiEditSupportInstall
+//
+// Description: DMIEdit support driver entry point
+//
+// Input:       IN EFI_HANDLE           ImageHandle,
+//              IN EFI_SYSTEM_TABLE     *SystemTable
+//
+// Output:      EFI_STATUS
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
 SmbiosDmiEditSupportInstall(
     IN EFI_HANDLE           ImageHandle,
 	IN EFI_SYSTEM_TABLE     *SystemTable
 )
 {
-#if (AMI_MODULE_PKG_VERSION < 25)
     EFI_STATUS              Status;
     CPUINFO_HOB             *CpuInfoHob = NULL;
     EFI_GUID                CpuInfoHobGuid = AMI_CPUINFO_HOB_GUID;
@@ -155,23 +140,29 @@ SmbiosDmiEditSupportInstall(
             TsegEnd = CpuInfoHob->TsegAddress + CpuInfoHob->TsegSize;
         }
     }
-#else
-	InitAmiLib(ImageHandle, SystemTable);
-#endif
 
     return InitSmmHandler(ImageHandle, SystemTable, InSmmFunction, NULL);
 }
 
-/**
-    Initialize pointers and register SW SMI handlers for
-    DMIEdit support.
-
-    @param ImageHandle
-    @param SystemTable
-
-    @return EFI_STATUS
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   InSmmFunction
+//
+// Description: Initialize pointers and register SW SMI handlers for
+//              DMIEdit support.
+//
+// Input:       IN EFI_HANDLE           ImageHandle,
+//              IN EFI_SYSTEM_TABLE     *SystemTable
+//
+// Output:      EFI_STATUS
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
 InSmmFunction(
     IN EFI_HANDLE           ImageHandle,
@@ -179,22 +170,16 @@ InSmmFunction(
 )
 {
     EFI_STATUS                      Status;
-    EFI_SMM_SW_DISPATCH2_PROTOCOL   *SwDispatch;
-    EFI_SMM_BASE2_PROTOCOL          *SmmBase;
-#if REGISTER_SW_SMI_FN50 || REGISTER_SW_SMI_FN51 || REGISTER_SW_SMI_FN52 || REGISTER_SW_SMI_FN53
-    EFI_HANDLE                      SwHandle = NULL;
+    UINTN                           Index;
+    EFI_HANDLE                      SwHandle  = NULL;
     EFI_SMM_SW_REGISTER_CONTEXT     SwContext;
-#endif
+    EFI_SMM_SW_DISPATCH2_PROTOCOL   *SwDispatch;
+    AMI_SMBIOS_PROTOCOL             *SmbiosProtocol;
+    EFI_SMM_BASE2_PROTOCOL          *SmmBase;
 
-#if DMIEDIT_DEBUG_TRACE
-    TRACE((-1, "In DmiEdit InSmmFunction\n"));
-#endif
     Status = pBS->LocateProtocol (&gEfiSmmBase2ProtocolGuid, NULL, &SmmBase);
     ASSERT_EFI_ERROR(Status);
     if(EFI_ERROR(Status)) {
-#if DMIEDIT_DEBUG_TRACE
-        TRACE((-1, "SmmBase not found!\n"));
-#endif
         return Status;
     }
 
@@ -204,9 +189,6 @@ InSmmFunction(
     Status = pBS->LocateProtocol (&gAmiSmbiosFlashDataProtocolGuid, NULL, &mSmbiosFlashDataProtocol);
     ASSERT_EFI_ERROR(Status);
     if (EFI_ERROR(Status)) {
-#if DMIEDIT_DEBUG_TRACE
-        TRACE((-1, "SmbiosFlashDataProtocol not found!\n"));
-#endif
         return Status;
     }
 
@@ -215,77 +197,59 @@ InSmmFunction(
     Status = mSmst->SmmLocateProtocol (&gEfiSmiFlashProtocolGuid, NULL, &mSmiFlash);
     ASSERT_EFI_ERROR(Status);
     if (EFI_ERROR(Status)) {
-#if DMIEDIT_DEBUG_TRACE
-        TRACE((-1, "SmiFlash not found!\n"));
-#endif
         return Status;
     }
-
-    Status = mSmst->SmmLocateProtocol (&gFlashSmmProtocolGuid, NULL, &mFlash);
-    if (EFI_ERROR(Status)) return Status;
 #endif
 
     WriteOnceStatusInit();
+
+    Status = pBS->LocateProtocol (&gAmiSmbiosProtocolGuid, NULL, &SmbiosProtocol);
+    ASSERT_EFI_ERROR(Status);
+    if(EFI_ERROR(Status)) {
+        return Status;
+    }
+
+    SmbiosTableEntryPoint = SmbiosProtocol->SmbiosGetTableEntryPoint();
+    ScratchBufferPtr = SmbiosProtocol->SmbiosGetScratchBufferPtr();
+	MaximumBufferSize = SmbiosProtocol->SmbiosGetBufferMaxSize();
 
     // Register the SW SMI handler
     Status = mSmst->SmmLocateProtocol (&gEfiSmmSwDispatch2ProtocolGuid, NULL, &SwDispatch);
     ASSERT_EFI_ERROR(Status);
 
-#if REGISTER_SW_SMI_FN50
-    SwContext.SwSmiInputValue = 0x50;
-    Status = SwDispatch->Register (SwDispatch, SmiHandler, &SwContext, &SwHandle);
+    for(Index = 0x50; Index <= 0x52; Index++) {
+        SwContext.SwSmiInputValue = Index;
+        Status = SwDispatch->Register (SwDispatch, SmiHandler, &SwContext, &SwHandle);
 
-    if (EFI_ERROR (Status)) {
-        return Status;
+        if (EFI_ERROR (Status)) {
+            return Status;
+        }
     }
-#endif
-
-#if REGISTER_SW_SMI_FN51
-    SwContext.SwSmiInputValue = 0x51;
-    Status = SwDispatch->Register (SwDispatch, SmiHandler, &SwContext, &SwHandle);
-
-    if (EFI_ERROR (Status)) {
-        return Status;
-    }
-#endif
-
-#if REGISTER_SW_SMI_FN52
-    SwContext.SwSmiInputValue = 0x52;
-    Status = SwDispatch->Register (SwDispatch, SmiHandler, &SwContext, &SwHandle);
-
-    if (EFI_ERROR (Status)) {
-        return Status;
-    }
-#endif
-
-#if REGISTER_SW_SMI_FN53
-    SwContext.SwSmiInputValue = 0x53;
-    Status = SwDispatch->Register (SwDispatch, SmiHandler, &SwContext, &SwHandle);
-
-    if (EFI_ERROR (Status)) {
-        return Status;
-    }
-#endif
 
     return EFI_SUCCESS;
 }
 
-/**
-    Check address to avoid TSEG area.
-
-    @param Address starting address
-    @param Function DMIEdit function
-
-    @retval EFI_SUCCESS Access granted
-    @retval DMI_BAD_PARAMETER Access denied!
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   CheckAddress
+//
+// Description: Check address to avoid TSEG area.
+//
+// Input:
+//  Address     - starting address
+//  Function    - DMIEdit function
+//
+// Output:
+//  EFI_SUCCESS         - Access granted
+//  DMI_BAD_PARAMETER   - Access denied!
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 UINT16
 CheckAddress (
     IN UINT8 *Address,
     IN UINT8 Function
 )
-#if (AMI_MODULE_PKG_VERSION < 25)
 {
     UINT16  Status;
 
@@ -301,7 +265,6 @@ CheckAddress (
         }
         else {
             switch(Function) {
-#if (SMBIOS_2X_SUPPORT == 1)
                 case 0x50:  {
                                 if ((EFI_PHYSICAL_ADDRESS)(((GET_SMBIOS_INFO*)Address)->DmiBiosRevision32BitAddr) >= TsegStart &&
                                     (EFI_PHYSICAL_ADDRESS)(((GET_SMBIOS_INFO*)Address)->DmiBiosRevision32BitAddr) <= TsegEnd) {
@@ -325,179 +288,38 @@ CheckAddress (
                                 }
                                 break;
                             }
-                case 0x51:  {
-                                if ((EFI_PHYSICAL_ADDRESS)(((GET_SMBIOS_STRUCTURE*)Address)->Handle32BitAddr) >= TsegStart &&
-                                    (EFI_PHYSICAL_ADDRESS)(((GET_SMBIOS_STRUCTURE*)Address)->Handle32BitAddr) <= TsegEnd) {
-                                    Status = DMI_BAD_PARAMETER;
-                                }
+                case 0x51:
+                case 0x52:  {
                                 if ((EFI_PHYSICAL_ADDRESS)(((GET_SMBIOS_STRUCTURE*)Address)->Buffer32BitAddr) >= TsegStart &&
                                     (EFI_PHYSICAL_ADDRESS)(((GET_SMBIOS_STRUCTURE*)Address)->Buffer32BitAddr) <= TsegEnd) {
                                     Status = DMI_BAD_PARAMETER;
                                 }
                             }
-#endif                                          // SMBIOS_2X_SUPPORT
-#if (SMBIOS_3X_SUPPORT == 1)
-                case 0x53: 	switch((UINT8)*Address) {
-                				case 0x58:	{
-												if ((EFI_PHYSICAL_ADDRESS)(((GET_SMBIOS_V3_INFO*)Address)->DmiBiosRevision64BitAddr) >= TsegStart &&
-													(EFI_PHYSICAL_ADDRESS)(((GET_SMBIOS_V3_INFO*)Address)->DmiBiosRevision64BitAddr) <= TsegEnd) {
-													Status = DMI_BAD_PARAMETER;
-												}
-												if ((EFI_PHYSICAL_ADDRESS)(((GET_SMBIOS_V3_INFO*)Address)->NumStructures64BitAddr) >= TsegStart &&
-													(EFI_PHYSICAL_ADDRESS)(((GET_SMBIOS_V3_INFO*)Address)->NumStructures64BitAddr) <= TsegEnd) {
-													Status = DMI_BAD_PARAMETER;
-												}
-												if ((EFI_PHYSICAL_ADDRESS)(((GET_SMBIOS_V3_INFO*)Address)->StructureSize64BitAddr) >= TsegStart &&
-													(EFI_PHYSICAL_ADDRESS)(((GET_SMBIOS_V3_INFO*)Address)->StructureSize64BitAddr) <= TsegEnd) {
-													Status = DMI_BAD_PARAMETER;
-												}
-												if ((EFI_PHYSICAL_ADDRESS)(((GET_SMBIOS_V3_INFO*)Address)->DmiStorageBase64BitAddr) >= TsegStart &&
-													(EFI_PHYSICAL_ADDRESS)(((GET_SMBIOS_V3_INFO*)Address)->DmiStorageBase64BitAddr) <= TsegEnd) {
-													Status = DMI_BAD_PARAMETER;
-												}
-												if ((EFI_PHYSICAL_ADDRESS)(((GET_SMBIOS_V3_INFO*)Address)->DmiStorageSize64BitAddr) >= TsegStart &&
-													(EFI_PHYSICAL_ADDRESS)(((GET_SMBIOS_V3_INFO*)Address)->DmiStorageSize64BitAddr) <= TsegEnd) {
-													Status = DMI_BAD_PARAMETER;
-												}
-												break;
-                							}
-								case 0x59:  {
-												if ((EFI_PHYSICAL_ADDRESS)(((GET_SMBIOS_V3_STRUCTURE*)Address)->Handle64BitAddr) >= TsegStart &&
-													(EFI_PHYSICAL_ADDRESS)(((GET_SMBIOS_V3_STRUCTURE*)Address)->Handle64BitAddr) <= TsegEnd) {
-													Status = DMI_BAD_PARAMETER;
-												}
-												if ((EFI_PHYSICAL_ADDRESS)(((GET_SMBIOS_V3_STRUCTURE*)Address)->Buffer64BitAddr) >= TsegStart &&
-													(EFI_PHYSICAL_ADDRESS)(((GET_SMBIOS_V3_STRUCTURE*)Address)->Buffer64BitAddr) <= TsegEnd) {
-													Status = DMI_BAD_PARAMETER;
-												}
-											}
-							}
-#endif                                          // SMBIOS_3X_SUPPORT
             }
         }
     }
 
     return Status;
 }
-#else											// AMI_MODULE_PKG_VERSION >= 25
-{
-    UINT16  Status;
 
-    Status = EFI_SUCCESS;
-
-	if (AmiValidateMemoryBuffer(Address, 1)) {
-		Status = DMI_BAD_PARAMETER;
-	}
-	else {
-		switch(Function) {
-#if (SMBIOS_2X_SUPPORT == 1)
-			case 0x50:  {
-							if (AmiValidateMemoryBuffer((UINT8*)((GET_SMBIOS_INFO*)Address)->DmiBiosRevision32BitAddr, 1) |
-								AmiValidateMemoryBuffer((UINT8*)((GET_SMBIOS_INFO*)Address)->NumStructures32BitAddr, 1) |
-								AmiValidateMemoryBuffer((UINT8*)((GET_SMBIOS_INFO*)Address)->StructureSize32BitAddr, 1) |
-								AmiValidateMemoryBuffer((UINT8*)((GET_SMBIOS_INFO*)Address)->DmiStorageBase32BitAddr, 1) |
-								AmiValidateMemoryBuffer((UINT8*)((GET_SMBIOS_INFO*)Address)->DmiStorageSize32BitAddr, 1)) {
-								Status = DMI_BAD_PARAMETER;
-							}
-							break;
-						}
-			case 0x51:  {
-							if (AmiValidateMemoryBuffer((UINT8*)((GET_SMBIOS_STRUCTURE*)Address)->Handle32BitAddr, 1)) {
-								Status = DMI_BAD_PARAMETER;
-							}
-							if (AmiValidateMemoryBuffer((UINT8*)((GET_SMBIOS_STRUCTURE*)Address)->Buffer32BitAddr, 1)) {
-								Status = DMI_BAD_PARAMETER;
-							}
-						}
-#endif                                          // SMBIOS_2X_SUPPORT
-#if (SMBIOS_3X_SUPPORT == 1)
-			case 0x53: 	switch((UINT8)*Address) {
-							case 0x58:	{
-											if (AmiValidateMemoryBuffer((UINT8*)((GET_SMBIOS_V3_INFO*)Address)->DmiBiosRevision64BitAddr, 1) |
-												AmiValidateMemoryBuffer((UINT8*)((GET_SMBIOS_V3_INFO*)Address)->NumStructures64BitAddr, 1) |
-												AmiValidateMemoryBuffer((UINT8*)((GET_SMBIOS_V3_INFO*)Address)->StructureSize64BitAddr, 1) |
-												AmiValidateMemoryBuffer((UINT8*)((GET_SMBIOS_V3_INFO*)Address)->DmiStorageBase64BitAddr, 1) |
-												AmiValidateMemoryBuffer((UINT8*)((GET_SMBIOS_V3_INFO*)Address)->DmiStorageSize64BitAddr, 1)) {
-												Status = DMI_BAD_PARAMETER;
-											}
-											break;
-										}
-							case 0x59:  {
-											if (AmiValidateMemoryBuffer((UINT8*)((GET_SMBIOS_V3_STRUCTURE*)Address)->Handle64BitAddr, 1)) {
-												Status = DMI_BAD_PARAMETER;
-											}
-											if (AmiValidateMemoryBuffer((UINT8*)((GET_SMBIOS_V3_STRUCTURE*)Address)->Buffer64BitAddr, 1)) {
-												Status = DMI_BAD_PARAMETER;
-											}
-										}
-						}
-#endif                                          // SMBIOS_3X_SUPPORT
-		}
-	}
-
-    return Status;
-}
-#endif
-
-/**
-    Get pointers to Smbios Entry Point
-**/
-VOID
-GetSmbiosPointers (VOID)
-{
-    UINTN                   Size;
-
-#if SMBIOS_2X_SUPPORT
-    Size = sizeof(SMBIOS_TABLE_ENTRY_POINT*);
-    pRS->GetVariable(L"SmbiosEntryPointTable",
-                            &gAmiSmbiosNvramGuid,
-                            NULL,
-                            &Size,
-                            &SmbiosTableEntryPoint);
-#if DMIEDIT_DEBUG_TRACE
-    TRACE((-1, "SmbiosDataTable at %08x\n", SmbiosTableEntryPoint));
-#endif
-#endif                                          // SMBIOS_2X_SUPPORT
-
-#if SMBIOS_3X_SUPPORT
-    Size = sizeof(SMBIOS_3X_TABLE_ENTRY_POINT*);
-    pRS->GetVariable(L"SmbiosV3EntryPointTable",
-                            &gAmiSmbiosNvramGuid,
-                            NULL,
-                            &Size,
-                            &SmbiosV3TableEntryPoint);
-#if DMIEDIT_DEBUG_TRACE
-    TRACE((-1, "SmbiosV3EntryPointTable at %08x\n", SmbiosV3TableEntryPoint));
-#endif
-#endif                                          // SMBIOS_3X_SUPPORT
-
-    Size = sizeof(UINT8*);
-    pRS->GetVariable(L"SmbiosScratchBuffer",
-                            &gAmiSmbiosNvramGuid,
-                            NULL,
-                            &Size,
-                            &ScratchBufferPtr);
-#if DMIEDIT_DEBUG_TRACE
-    TRACE((-1, "Scratch Buffer at %08x\n", ScratchBufferPtr));
-#endif
-
-    Size = sizeof(UINT16);
-    pRS->GetVariable(L"MaximumTableSize",
-                            &gAmiSmbiosNvramGuid,
-                            NULL,
-                            &Size,
-                            &MaximumBufferSize);
-}
-
-/**
-    Handles the SMI
-
-    @param DispatchHandle
-    @param DispatchContext
-
-    @return EFI_STATUS
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   SmiHandler
+//
+// Description: Handles the SMI
+//
+// Input:       IN EFI_HANDLE                    DispatchHandle
+//              IN EFI_SMM_SW_DISPATCH_CONTEXT   *DispatchContext
+//
+// Output:      None
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
 SmiHandler (
     IN  EFI_HANDLE  DispatchHandle,
@@ -513,21 +335,10 @@ SmiHandler (
     EFI_GUID                SmmCpuProtocolGuid = EFI_SMM_CPU_PROTOCOL_GUID;
     EFI_SMM_CPU_PROTOCOL    *SmmCpuProtocol;
     EFI_SMM_SW_CONTEXT      *SwContext = (EFI_SMM_SW_CONTEXT*)CommBuffer;
-    static BOOLEAN          ValidPointers = FALSE;
 
-#if DMIEDIT_DEBUG_TRACE
-    TRACE((-1, "In SmiHandler\n"));
-#endif
+    GetSmbiosTableF000();
 
-    if (!ValidPointers) {
-#if DMIEDIT_DEBUG_TRACE
-        TRACE((-1, "Getting Smbios pointers"));
-#endif
-        GetSmbiosPointers();
-        ValidPointers = TRUE;
-    }
-
-    Cpu = SwContext->SwSmiCpuIndex;
+ 	Cpu = SwContext->SwSmiCpuIndex;
 
     mSmst->SmmLocateProtocol(
                         &SmmCpuProtocolGuid,
@@ -544,63 +355,25 @@ SmiHandler (
                             &pInterface
                             );
 
-#if (SMBIOS_2X_SUPPORT == 0) && (SMBIOS_3X_SUPPORT == 1)
-{
-    VOID    *pInterfaceHigh;
-
-    SmmCpuProtocol->ReadSaveState(
-                            SmmCpuProtocol,
-                            4,
-                            EFI_SMM_SAVE_STATE_REGISTER_RCX,
-                            Cpu,
-                            &pInterfaceHigh
-                            );
-
-    pInterface = (VOID*)((UINT64)pInterface | Shl64((UINT64)pInterfaceHigh, 32));
-}
-#endif
-
     Data = ((EFI_SMM_SW_CONTEXT*)CommBuffer)->CommandPort;
 
     RetStatus = CheckAddress(pInterface, Data);
-#if DMIEDIT_DEBUG_TRACE
-    TRACE((-1, "CheckAddress Status = %04x\n", RetStatus));
-#endif
 
     if (RetStatus == EFI_SUCCESS) {
-#if DMIEDIT_DEBUG_TRACE
-        TRACE((-1, "\nDmiEdit FN%x Start\n", Data));
-#endif
-        RetStatus = DMI_FUNCTION_NOT_SUPPORTED;
         switch(Data) {
-#if (SMBIOS_2X_SUPPORT == 1)
-            case 0x50:  RetStatus = GetSmbiosV2Info(pInterface);
+            case 0x50:
+                        RetStatus = GetSmbiosInfo(pInterface);
                         break;
-            case 0x51:  RetStatus = GetSmbiosV2Structure(pInterface);
+            case 0x51:
+                        RetStatus = GetSmbiosStructure(pInterface);
                         break;
-            case 0x52:  EnableShadowWrite();
-                        RetStatus = SetSmbiosV2Structure(pInterface);
+            case 0x52:
+                        EnableShadowWrite();
+                        RetStatus = SetSmbiosStructure(pInterface);
                         DisableShadowWrite();
-                        break;
-#endif                                          // SMBIOS_2X_SUPPORT
-#if (SMBIOS_3X_SUPPORT == 1)
-            case 0x53:  switch(*(UINT8*)pInterface) {
-                            case 0x58:  RetStatus = GetSmbiosV3Info(pInterface);
-                                        break;
-                            case 0x59:  RetStatus = GetSmbiosV3Structure(pInterface);
-                                        break;
-                            case 0x5a:  EnableShadowWrite();
-                                        RetStatus = SetSmbiosV3Structure(pInterface);
-                                        DisableShadowWrite();
-                                        break;
-                        }
-#endif                                          // SMBIOS_3X_SUPPORT
         }
     }
 
-#if DMIEDIT_DEBUG_TRACE
-	TRACE((-1, " DmiEdit FN%x End - SMI return status = %04x\n", Data, RetStatus));
-#endif
     SmmCpuProtocol->WriteSaveState(
                             SmmCpuProtocol,
                             2,
@@ -613,17 +386,26 @@ SmiHandler (
 }
 
 #if !defined(SMBIOS_DMIEDIT_DATA_LOC) || SMBIOS_DMIEDIT_DATA_LOC != 2
-/**
-    Write to the flash part starting at "Address" for a length
-    of "Size".
-
-    @param Address
-    @param Data
-    @param Size
-
-    @return EFI_STATUS
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   WriteToFlash
+//
+// Description: Write to the flash part starting at "Address" for a length
+//              of "Size".
+//
+// Input:       IN VOID    *Address,
+//              IN VOID    *Data,
+//              IN UINTN   Size
+//
+// Output:      EFI_STATUS
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
 WriteToFlash(
     IN VOID    *Address,
@@ -632,28 +414,39 @@ WriteToFlash(
 )
 {
 	EFI_STATUS	Status;
+	FUNC_BLOCK	FuncBlock;
 
-	Status = mFlash->DeviceWriteEnable();
+	Status = mSmiFlash->EnableFlashWrite(&FuncBlock);
 	if (EFI_ERROR(Status)) return Status;
 
-	Status = mFlash->Write(Address, Size, Data);
-
-	mFlash->DeviceWriteDisable();
-
+    FuncBlock.BlockAddr = (UINT32)Address - (0xffffffff - FLASH_SIZE + 1);
+	FuncBlock.BlockSize = (UINT32)Size;
+	FuncBlock.BufAddr = (UINT64)Data;
+	Status = mSmiFlash->WriteFlash(&FuncBlock);
+	mSmiFlash->DisableFlashWrite(&FuncBlock);
 	return Status;
 }
 
-/**
-    Searches the Flash Data Table for a record of Type and
-    Offset. If found, the existing data will be replaced with
-    the new data, else the data will be added as a new record.
-
-    @param TableInfo
-    @param Data
-
-    @retval UINT16 Status
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   UpdateSmbiosTable
+//
+// Description: Searches the Flash Data Table for a record of Type and
+//              Offset. If found, the existing data will be replaced with
+//              the new data, else the data will be added as a new record.
+//
+// Input:       IN TABLE_INFO  TableInfo,
+//              IN UINT8       *Data
+//
+// Output:      EFI_STATUS
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 UINT16
 UpdateSmbiosTable(
     IN TABLE_INFO  *TableInfo,
@@ -704,7 +497,7 @@ UpdateSmbiosTable(
     }
 
     if (FlashDataInfo.Location) {
-        UINT32     FlashDataOffset;
+        UINT32              	FlashDataOffset;
 
         // Allocate 64K GetFlashInfo buffer in SMM.
         Status = mSmst->SmmAllocatePages ( AllocateAnyPages, \
@@ -766,12 +559,11 @@ UpdateSmbiosTable(
             return DMI_ADD_STRUCTURE_FAILED;
         }
         FuncBlock[0].BufAddr = SmmBuffer;
-        FuncBlock[1].BufAddr = SmmBuffer + FuncBlock[0].BlockSize;
+            FuncBlock[1].BufAddr = SmmBuffer + FuncBlock[0].BlockSize;
 
         // Read the whole SmbiosFlashData Blocks.
         for (i = 0; i < Count; i++) {
-            Status = mFlash->Read((VOID*)(FuncBlock[i].BlockAddr + FLASH_DEVICE_BASE), \
-                                FuncBlock[i].BlockSize, (VOID*)FuncBlock[i].BufAddr);
+            Status = mSmiFlash->ReadFlash(&FuncBlock[i]);
             if (Status) {
                 // Free buffer and return error.
                 mSmst->SmmFreePages (Buffer, 1);
@@ -819,14 +611,20 @@ UpdateSmbiosTable(
                        (UINT32)gFlashData + (UINT32)FLASHDATA_SIZE - (UINT32)FlashDataInfo.Location);
 
         // Write the block buffer with updated SmbiosFlashData back.
+        Status = mSmiFlash->EnableFlashWrite(&FuncBlock[0]);
+
         if (!EFI_ERROR(Status)) {
             for (i = 0; i < Count; i++) {
-                Status = mFlash->Update( \
-										(VOID*)(FuncBlock[i].BlockAddr + FLASH_DEVICE_BASE), \
-										FuncBlock[i].BlockSize, (VOID*)FuncBlock[i].BufAddr
-										);
-                if (EFI_ERROR(Status)) break;
+                // Erase Flash
+                Status = mSmiFlash->EraseFlash(&FuncBlock[i]);
+                if (Status) break;
+
+                // Write Flash
+                Status = mSmiFlash->WriteFlash(&FuncBlock[i]);
+                if (Status) break;
             }
+
+			mSmiFlash->DisableFlashWrite(&FuncBlock[0]);
 		}
 
         // Free the Block Buffer in SMM.
@@ -874,7 +672,7 @@ UpdateSmbiosTable(
 //**********************************************************************//
 //**********************************************************************//
 //**                                                                  **//
-//**        (C)Copyright 1985-2015, American Megatrends, Inc.         **//
+//**        (C)Copyright 1985-2013, American Megatrends, Inc.         **//
 //**                                                                  **//
 //**                       All Rights Reserved.                       **//
 //**                                                                  **//

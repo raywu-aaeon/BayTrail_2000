@@ -6,7 +6,6 @@
 [INF]
 "PeiDbgHostStatusLib.inf"
 "DxeDbgHostStatusLib.inf"
-"SmmDbgHostStatusLib.inf"
 "CommonDebugLib.inf"
 [files]
 "DbgHostStatusLib.sdl"	

@@ -69,7 +69,7 @@ HandOffToDxeCore (
   UpdateStackHob ((EFI_PHYSICAL_ADDRESS)(UINTN) BaseOfStack, STACK_SIZE);
   
 //*** AMI PORTING BEGIN ***//
-  DEBUG ((DEBUG_INFO | DEBUG_LOAD, "DXE-Core.Entry(%p)\n", DxeCoreEntryPoint));
+  DEBUG ((DEBUG_INFO | DEBUG_LOAD, "DXE-Core.Entry(%X)\n", DxeCoreEntryPoint));
   REPORT_STATUS_CODE(EFI_PROGRESS_CODE,DXE_CORE_STARTED);
 //*** AMI PORTING END *****//
 

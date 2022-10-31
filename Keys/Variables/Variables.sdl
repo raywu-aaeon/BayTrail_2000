@@ -1,69 +1,67 @@
 TOKEN
-    Name  = "DefaultSecVariables_SUPPORT"
-    Value  = "1"
-    TokenType = Boolean
-    Master = Yes
+	Name  = "DefaultSecVariables_SUPPORT"
+	Value  = "1"
+	TokenType = Boolean
+	Master = Yes
 End
 
 TOKEN
     Name  = "DBT_include"
-    Value  = "0"
-    TokenType = Boolean
-    TargetMAK = Yes
-    TargetFDF = Yes
+	Value  = "0"
+	TokenType = Boolean
+	TargetMAK = Yes
 End
 
 TOKEN
     Name  = "DBX_include"
-    Value  = "1"
-    TokenType = Boolean
-    TargetMAK = Yes
-    TargetFDF = Yes
+	Value  = "1"
+	TokenType = Boolean
+	TargetMAK = Yes
 End
 
 TOKEN
     Name  = "PkVarFile"
-    Value  = "$(SecVariables_DIR)$(PATH_SLASH)PK"
-    TokenType = Expression
-    TargetMAK = Yes
+	Value  = "$(SecVariables_DIR)\PK"
+	TokenType = Expression
+	TargetMAK = Yes
 End
 
 TOKEN
     Name  = "KekVarFile"
-    Value  = "$(SecVariables_DIR)$(PATH_SLASH)KEK"
-    TokenType = Expression
-    TargetMAK = Yes
+	Value  = "$(SecVariables_DIR)\KEK"
+	TokenType = Expression
+	TargetMAK = Yes
 End
 
 TOKEN
     Name  = "dbVarFile"
-    Value  = "$(SecVariables_DIR)$(PATH_SLASH)db"
-    TokenType = Expression
-    TargetMAK = Yes
+	Value  = "$(SecVariables_DIR)\db"
+	TokenType = Expression
+	TargetMAK = Yes
 End
 
 TOKEN
     Name  = "dbtVarFile"
-    Value  = "$(SecVariables_DIR)$(PATH_SLASH)dbt"
-    TokenType = Expression
-    TargetMAK = Yes
+	Value  = "$(SecVariables_DIR)\dbt"
+	TokenType = Expression
+	TargetMAK = Yes
 End
 
 TOKEN
     Name  = "dbxVarFile"
-    Value  = "$(SecVariables_DIR)$(PATH_SLASH)dbx"
-    TokenType = Expression
-    TargetMAK = Yes
+	Value  = "$(SecVariables_DIR)\dbx"
+	TokenType = Expression
+	TargetMAK = Yes
 End
 
 PATH
-    Name  = "SecVariables_DIR"
-    Help  = "Path to Variables Module in Project"
+	Name  = "SecVariables_DIR"
+	Help  = "Path to Variables Module in Project"
 End
 
 MODULE
-    Help  = "Includes Variables.mak to Project"
-    File  = "Variables.mak"
+	Help  = "Includes Variables.mak to Project"
+	File  = "Variables.mak"
 End
 
 ELINK
@@ -122,8 +120,34 @@ ELINK
 End
 
 FFS_FILE
-    Name  = "PKfileStatement"
-    FD_AREA  = "FV_MAIN"
-    FILE_Stmt  = "Keys/Variables/PKfileStatement.txt"
+	Name  = "PKfileStatement"
+	FD_AREA  = "FV_MAIN"
+	FILE_Stmt  = "Keys\Variables\PKfileStatement.txt"
+End
+
+FFS_FILE
+	Name  = "KEKfileStatement"
+	FD_AREA  = "FV_MAIN"
+	FILE_Stmt  = "Keys\Variables\KEKfileStatement.txt"
+End
+
+FFS_FILE
+	Name  = "DBfileStatement"
+	FD_AREA  = "FV_MAIN"
+	FILE_Stmt  = "Keys\Variables\DBfileStatement.txt"
+End
+
+FFS_FILE
+	Name  = "DBTfileStatement"
+	FD_AREA  = "FV_MAIN"
+	FILE_Stmt  = "Keys\Variables\DBTfileStatement.txt"
+	Token = "DBT_include" "=" "1"
+End
+
+FFS_FILE
+	Name  = "DBXfileStatement"
+	FD_AREA  = "FV_MAIN"
+	FILE_Stmt  = "Keys\Variables\DBXfileStatement.txt"
+	Token = "DBX_include" "=" "1"
 End
 

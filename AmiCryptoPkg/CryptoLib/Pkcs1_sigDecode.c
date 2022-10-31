@@ -194,7 +194,7 @@ int pkcs_1_pss_decode(const unsigned char *msghash, unsigned long msghashlen,
    size_t len[3];
 
    ghLen        = msghashlen;
-   modulus_len = (modulus_bitlen>>3) + ((modulus_bitlen & 7) ? 1 : 0);
+   modulus_len = (modulus_bitlen>>3) + (modulus_bitlen & 7 ? 1 : 0);
 
 //   DEFAULT_RSA_KEY_MODULUS_LEN
    /* check sizes */

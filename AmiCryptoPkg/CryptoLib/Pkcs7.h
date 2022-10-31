@@ -1,7 +1,7 @@
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2013, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **
@@ -12,10 +12,9 @@
 //**********************************************************************
 //**********************************************************************
 //**********************************************************************
-
-/** @file
- PKCS#7 Authenticode SignedData parsing and processing
-**/
+/*
+ * PKCS#7 Authenticode SignedData parsing and processing
+*/
 
 #ifndef PKCS7_H
 #define PKCS7_H
@@ -24,9 +23,7 @@
 
 typedef enum { SHA1, SHA256, SHA384, SHA512} HASH_ALG;
 
-///
-/// SignerInfo.authAttributes
-///
+// SignerInfo.authAttributes
 struct pkcs7_signer_info_authAttr_st {
 // authAttributes
     const u8 *auth_attrib_start;
@@ -48,9 +45,7 @@ struct pkcs7_signer_info_authAttr_st {
     unsigned long serial_number;
 };
 
-///
-/// SignerInfo
-///
+// SignerInfo
 struct pkcs7_signer_info_st {
     unsigned long version;    // 1
 // issuer_and_serial#
@@ -66,18 +61,14 @@ struct pkcs7_signer_info_st {
     size_t enc_digest_len;
 };
 
-///
-/// TimeStampInfo = SignerInfo
-///#define pkcs7_signer_info_Timestamp_st pkcs7_signer_info_st
-///
+// TimeStampInfo = SignerInfo
+//#define pkcs7_signer_info_Timestamp_st pkcs7_signer_info_st
 
-///
-/// Pkcs7 SignedData
-///
+// Pkcs7 SignedData
 struct pkcs7_signed_data_st {
-// ContentInfo.Content
-    const u8 *Content_start;    // der value start
-    size_t Content_len;
+// ContentInfo
+    const u8 *contentInfo_start;    // der value start
+    size_t contentInfo_len;
 // Digest_alg
     struct x509_algorithm_identifier Digest_alg;
     const u8 *Digest;        // file digest
@@ -111,7 +102,7 @@ struct pkcs7_cert_revoke_info {
 // x509 helper routines
 void x509_certificate_free(struct x509_certificate *cert);
 int x509_parse_name(const u8 *buf, size_t len, struct x509_name *name,const u8 **next);
-int x509_parse_time(const u8 *buf, size_t len, unsigned int/*u8*/ asn1_tag, os_time_t *val);
+int x509_parse_time(const u8 *buf, size_t len, u8 asn1_tag, os_time_t *val);
 int x509_parse_algorithm_identifier(const u8 *buf, size_t len,
 struct x509_algorithm_identifier *id, const u8 **next);
 void x509_free_name(struct x509_name *name);
@@ -120,8 +111,6 @@ int x509_pkcs_oid(struct asn1_oid *oid);
 int x509_digest_oid(struct asn1_oid *oid);
 int x509_sha1_oid(struct asn1_oid *oid);
 int x509_sha256_oid(struct asn1_oid *oid);
-int x509_sha384_oid(struct asn1_oid *oid);
-int x509_sha512_oid(struct asn1_oid *oid);
 int x509_valid_issuer(const struct x509_certificate *cert);
 // Pkcs7 
 struct pkcs7_signed_data_st * Pkcs7_parse_Authenticode_certificate(const u8 *buf, size_t len);
@@ -137,9 +126,6 @@ int Pkcs7_return_cerificate_ptr(struct pkcs7_signed_data_st *SignedData,
                                 u8** CAcert, size_t *CAcert_len,
                                 u8** SignCert, size_t *SignCert_len);
 int Pkcs7_return_digestAlgorithm(struct pkcs7_signed_data_st *PKCS7cert, u8* HashType);
-
-int Pkcs7_x509_return_SubjectNameStr(u8 *pCert, size_t cert_len, 
-                                     u8 *buf,   size_t len);
 
 int Pkcs7_x509_return_cert_pubKey(struct x509_certificate *pCert,
                                   u8 **public_key, size_t *public_key_len);
@@ -172,9 +158,6 @@ int Pkcs7_x509_signed_certificate_chain_validate(
                     struct pkcs7_signed_data_st *SignedData,
                     const  u8 *trusted,
                     int *reason);
-
-int Pkcs7_x509_get_certificates_List(struct pkcs7_signed_data_st *SignedData, BOOLEAN bChained,
-                    u8** CertList, size_t* ListLength);
 
 #endif /* CONFIG_INTERNAL_X509 */
 

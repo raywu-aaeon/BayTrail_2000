@@ -152,27 +152,6 @@ EFI_STATUS AmiSdlPciGetHostBridges(AMI_SDL_PCI_DEV_INFO ***HostBridgesBuffer, UI
 // <AMI_PHDR_START>
 //-------------------------------------------------------------------------
 //
-// Procedure: AmiSdlFindRbBySegBus()
-//
-// Description: Finds Root Bridge SDL record by PCI Segment and Bus Number
-//
-// Input: UINT32                Segment     PCI Segment Number
-//
-// Input: UINT8                 Bus         PCI Bus Number
-//
-// Output: AMI_SDL_PCI_DEV_INFO *Record     Pointer at AMI_SDL_PCI_DEV_INFO structure 
-//                                          of a RootBridge record matching with search criteria.
-//
-// Output: UINTN                *Index      Pointer to Index that will be updated. 
-//
-// Notes:
-//-------------------------------------------------------------------------
-// <AMI_PHDR_END>
-EFI_STATUS AmiSdlFindRbBySegBus(IN UINT32 Segment, IN UINT8 Bus, OUT AMI_SDL_PCI_DEV_INFO **Record, OUT UINTN *Index);
-
-// <AMI_PHDR_START>
-//-------------------------------------------------------------------------
-//
 // Procedure:
 //
 // Description:

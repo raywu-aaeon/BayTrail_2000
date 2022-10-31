@@ -24,10 +24,15 @@
 //*****************************************************************//
 //*****************************************************************//
 //*****************************************************************//
-/** @file TseElinks.h
-    Header file for Elink related customizations
-
-**/
+//<AMI_FHDR_START>
+//----------------------------------------------------------------------------
+//
+// Name:		TseElinks.h
+//
+// Description:	Header file for Elink related customizations
+//
+//----------------------------------------------------------------------------
+//<AMI_FHDR_END>
 
 #ifndef _TSEELINKS_H_
 #define _TSEELINKS_H_
@@ -45,7 +50,7 @@ VOID HandleLoadOptimalDefaults(VOID);
 VOID HandleSaveUserDefaults(VOID);
 VOID HandleRestoreUserDefaults(VOID);
 VOID HandleBootAddBootOption(VOID);
-VOID HandleLaunchFileSystem(VOID);
+VOID HandleLaunchFileSystem(VOID);	//EIP_41615 related to file browser support in AddBootOption
 VOID HandleLaunchFileSystemDriver (VOID);
 VOID HandleDriverAddDriverOption (VOID);
 VOID SaveUserDefaultsSilently(VOID);

@@ -2,7 +2,7 @@
 //*****************************************************************//
 //*****************************************************************//
 //**                                                             **//
-//**         (C)Copyright 2014, American Megatrends, Inc.        **//
+//**         (C)Copyright 2012, American Megatrends, Inc.        **//
 //**                                                             **//
 //**                     All Rights Reserved.                    **//
 //**                                                             **//
@@ -19,17 +19,6 @@
 //
 // $Date: 11/02/12 10:15a $
 //*****************************************************************
-//*****************************************************************
-//
-//	peidebug.h
-//
-//
-// Revision History
-// ----------------
-// $Log: /AptioV/SRC/AMIDebugRxPkg/Include/Library/AMIpeidebug.h $
-// 
-//
-//*****************************************************************
 
 //<AMI_FHDR_START>
 //----------------------------------------------------------------------------
@@ -45,28 +34,33 @@
 #include "token.h"
 
 
-//#if USB_DEBUG_TRANSPORT
+#if USB_DEBUG_TRANSPORT
 #include <Library\EHCI.h>
-//#endif
+#endif
 
 #define EFI_PEI_DBG_BASEADDRESS_PPI_GUID \
   { 0x9bf4e141, 0xa4ec, 0x4d72,  {0xbc, 0xc4, 0x94, 0x2, 0x1d, 0x2b, 0x80, 0xbd }}
 
 UINTN GetDbgDataBaseAddress();
-BOOLEAN IsPMModeEnabled (UINT8);
 
 #define	PEI_DEBUG_DATASECTION_BASEADDRESS	GetDbgDataBaseAddress()	//Starting address of PEI debugger data section
 #define PEI_DEBUG_DATASECTION_SIZE		    0x2048
 #define IRQ_VECTOR_BASE	0x8
 
+typedef struct {
+	UINT8	Signature[4];
+	UINT32	DATABASEADDRESS;
+}PEI_DBG_DATA_SECTION;
+
+extern	PEI_DBG_DATA_SECTION		PeiDbgDataSection;
 #define PEI_DEBUG_DATA_BASEADDRESS  GetDbgDataBaseAddress() //(PeiDbgDataSection.DATABASEADDRESS)
 
 #define IDT_ENTRIES					0x0	    // Number of Entries in IDT
 #define IDT_SIZE					0x0        // Total Size = 160 Bytes
 #define CONTEXT_SIZE				0x74	    // Total Size = 116 Bytes
-#define XPORTLOCALVAR_SIZE			0x69	    // Total Size =  101 Bytes
-#define XPORTGLOBALVAR_SIZE			0x30	    // Total Size =  24 Bytes
-#define DBGRLOCALVAR_SIZE			0x82	    // Total Size =  69 Bytes
+#define XPORTLOCALVAR_SIZE			0x65	    // Total Size =  101 Bytes
+#define XPORTGLOBALVAR_SIZE			0x18	    // Total Size =  24 Bytes
+#define DBGRLOCALVAR_SIZE			0x38	    // Total Size =  56 Bytes
 #define XPORTEXPTNBUF_SIZE			0x20	    // Total Size =  32 Bytes
 #define GLOBALBUF_SIZE				0x210	    // Total Size = 528 Bytes
 #define ACKBUF_SIZE					0x0a		// Total Size =  10 Bytes
@@ -111,9 +105,6 @@ typedef struct _AMI_PEI_TRANSPORT_PROTOCOL	{
 	UINT16	(*SendNoAck)();
 	RETURN_STATUS	(*ConsoleIn)();
 	VOID 	(*SendExptn)();
-	RETURN_STATUS	(*ReInitialize)();
-	RETURN_STATUS	(*SmmReInitialize)();
-	RETURN_STATUS	(*UpdateTargetState)();
 } AMI_PEI_TRANSPORT_PROTOCOL;
 
 typedef	struct{
@@ -121,7 +112,7 @@ typedef	struct{
 	VOID	(*ExceptionCallback)();
 	VOID	(*SendMessage)();
 	UINTN	(*PeiDbgr_EnableDebugSupport)(UINTN BrkPtAddr);
-	UINTN	(*PeiDbgr_SendPeiLoadImage)(UINTN FileHandle,UINTN ImageAddr,UINTN ImageSize,UINTN EntryPoint,void * PDBFileName);
+	UINTN	(*PeiDbgr_SendPeiLoadImage)(UINTN FileHandle,UINTN ImageAddr,UINTN ImageSize,void * PDBFileName);
 	VOID	(*DoSpecialBreakPoint)(UINT32 EaxValue,UINT32 EdxValue);
 }AMI_DEBUGGER_INTERFACE;
 
@@ -143,12 +134,11 @@ typedef struct {
 	UINT8	m_IsHostConnected;
 	UINT8	m_IsPeiDbgIsNotS3;
 	UINT64	m_PeiDbgRxInitTimerVal;
-	UINT8	m_IsPMModeEnabled;
-//#if !USB_DEBUG_TRANSPORT
+#if !USB_DEBUG_TRANSPORT
 	UINT16  m_BaseAddr;
 	//To obtain info from Porting template support, and use it to publish HOB
 	UINT8	m_SIO_LDN_UART;			//Logical Device Number for COM port
-//#else
+#else
 	UINT32	USBBASE;
 	UINT32	USB2_DEBUG_PORT_REGISTER_INTERFACE;
 	UINT8	gDebugUSBAddress;
@@ -178,7 +168,7 @@ typedef struct {
 	UINT8	m_PCI_EHCI_DEVICE_NUMBER;
 	UINT8	m_PCI_EHCI_FUNCTION_NUMBER;
 	UINT8	m_PCI_EHCI_BAR_OFFSET;
-//#endif
+#endif
 
 }SerXPortGblData_T;
 
@@ -192,10 +182,10 @@ typedef struct {
 	UINTN	ContextData;
 	VOID	(*IRQRegisterHandler)(UINTN,UINTN);
 
-//#if USB_DEBUG_TRANSPORT
+#if USB_DEBUG_TRANSPORT
 //Additional interface for PeiDbgSIO module to reinit EHCI memory base
 	void	(*PeiDbgSIO_Init_USB_EHCI)(VOID *);
-//#endif
+#endif
 }SerXPortGblVar_T;
 
 typedef struct {
@@ -226,18 +216,6 @@ typedef struct {
 	RETURN_STATUS (*UpdateFVHob)();
 	UINT8	m_SMMEntryBreak;
 	UINT8	m_SMMExitBreak;
-	UINT8	m_SMMDispatchLoaded;
-	UINTN 	m_INT1Hndlr;
-	UINTN 	m_INT3Hndlr;
-	UINTN 	m_TmrHndlr;
-	UINT8 	m_DbgInitPending;
-	UINT64 	m_DbgInitTimeStart;
-	UINT64 	m_DbgInitTimeEnd;
-	UINT8	m_PerfDataAvailable;
-	UINTN	m_SmmDebugDataAddress;
-	UINT8	m_IsRuntime;
-	UINT32	m_CarBaseAddress;
-	UINT32	m_CarEndAddress;
 }DbgGblData_T;
 
 #pragma pack()
@@ -266,7 +244,7 @@ void DriverSpecialBreakPoint(UINT32 EaxVal, UINT32 EdxVal);
 //*****************************************************************//
 //*****************************************************************//
 //**                                                             **//
-//**         (C)Copyright 2014, American Megatrends, Inc.        **//
+//**         (C)Copyright 2012, American Megatrends, Inc.        **//
 //**                                                             **//
 //**                     All Rights Reserved.                    **//
 //**                                                             **//

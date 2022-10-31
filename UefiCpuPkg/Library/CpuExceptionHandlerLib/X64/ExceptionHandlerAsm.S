@@ -1,5 +1,5 @@
 #------------------------------------------------------------------------------ ;
-# Copyright (c) 2012 - 2014, Intel Corporation. All rights reserved.<BR>
+# Copyright (c) 2012, Intel Corporation. All rights reserved.<BR>
 # This program and the accompanying materials
 # are licensed and made available under the terms and conditions of the BSD License
 # which accompanies this distribution.  The full text of the license may be found at
@@ -21,267 +21,114 @@
 #------------------------------------------------------------------------------
 
 
+#EXTRN ASM_PFX(mErrorCodeFlag):DWORD # Error code flags for exceptions
 
 ASM_GLOBAL ASM_PFX(CommonExceptionHandler)
 ASM_GLOBAL ASM_PFX(CommonInterruptEntry)
-ASM_GLOBAL ASM_PFX(HookAfterStubHeaderEnd)
 
-#EXTRN ASM_PFX(mErrorCodeFlag):DWORD # Error code flags for exceptions
-#EXTRN ASM_PFX(mDoFarReturnFlag):QWORD  # Do far return flag
+
 .text
 
 #
-# exception handler stub table
+# point to the external interrupt vector table
 #
 Exception0Handle:
-    .byte   0x6a    #  push #VectorNum
-    .byte   0
-    pushq   %rax
-    .byte   0x48, 0xB8
-    .quad   ASM_PFX(CommonInterruptEntry)
-    jmp     *%rax
+    pushq   $0
+    jmp     ASM_PFX(CommonInterruptEntry)
 Exception1Handle:
-    .byte   0x6a    #  push #VectorNum
-    .byte   1
-    pushq   %rax
-    .byte   0x48, 0xB8
-    .quad   ASM_PFX(CommonInterruptEntry)
-    jmp     *%rax
+    pushq   $1
+    jmp     ASM_PFX(CommonInterruptEntry)
 Exception2Handle:
-    .byte   0x6a    #  push #VectorNum
-    .byte   2
-    pushq   %rax
-    .byte   0x48, 0xB8
-    .quad   ASM_PFX(CommonInterruptEntry)
-    jmp     *%rax
+    pushq   $2
+    jmp     ASM_PFX(CommonInterruptEntry)
 Exception3Handle:
-    .byte   0x6a    #  push #VectorNum
-    .byte   3
-    pushq   %rax
-    .byte   0x48, 0xB8
-    .quad   ASM_PFX(CommonInterruptEntry)
-    jmp     *%rax
+    pushq   $3
+    jmp     ASM_PFX(CommonInterruptEntry)
 Exception4Handle:
-    .byte   0x6a    #  push #VectorNum
-    .byte   4
-    pushq   %rax
-    .byte   0x48, 0xB8
-    .quad   ASM_PFX(CommonInterruptEntry)
-    jmp     *%rax
+    pushq   $4
+    jmp     ASM_PFX(CommonInterruptEntry)
 Exception5Handle:
-    .byte   0x6a    #  push #VectorNum
-    .byte   5
-    pushq   %rax
-    .byte   0x48, 0xB8
-    .quad   ASM_PFX(CommonInterruptEntry)
-    jmp     *%rax
+    pushq   $5
+    jmp     ASM_PFX(CommonInterruptEntry)
 Exception6Handle:
-    .byte   0x6a    #  push #VectorNum
-    .byte   6
-    pushq   %rax
-    .byte   0x48, 0xB8
-    .quad   ASM_PFX(CommonInterruptEntry)
-    jmp     *%rax
+    pushq   $6
+    jmp     ASM_PFX(CommonInterruptEntry)
 Exception7Handle:
-    .byte   0x6a    #  push #VectorNum
-    .byte   7
-    pushq   %rax
-    .byte   0x48, 0xB8
-    .quad   ASM_PFX(CommonInterruptEntry)
-    jmp     *%rax
+    pushq   $7
+    jmp     ASM_PFX(CommonInterruptEntry)
 Exception8Handle:
-    .byte   0x6a    #  push #VectorNum
-    .byte   8
-    pushq   %rax
-    .byte   0x48, 0xB8
-    .quad   ASM_PFX(CommonInterruptEntry)
-    jmp     *%rax
+    pushq   $8
+    jmp     ASM_PFX(CommonInterruptEntry)
 Exception9Handle:
-    .byte   0x6a    #  push #VectorNum
-    .byte   9
-    pushq   %rax
-    .byte   0x48, 0xB8
-    .quad   ASM_PFX(CommonInterruptEntry)
-    jmp     *%rax
+    pushq   $9
+    jmp     ASM_PFX(CommonInterruptEntry)
 Exception10Handle:
-    .byte   0x6a    #  push #VectorNum
-    .byte   10
-    pushq   %rax
-    .byte   0x48, 0xB8
-    .quad   ASM_PFX(CommonInterruptEntry)
-    jmp     *%rax
+    pushq   $10
+    jmp     ASM_PFX(CommonInterruptEntry)
 Exception11Handle:
-    .byte   0x6a    #  push #VectorNum
-    .byte   11
-    pushq   %rax
-    .byte   0x48, 0xB8
-    .quad   ASM_PFX(CommonInterruptEntry)
-    jmp     *%rax
+    pushq   $11
+    jmp     ASM_PFX(CommonInterruptEntry)
 Exception12Handle:
-    .byte   0x6a    #  push #VectorNum
-    .byte   12
-    pushq   %rax
-    .byte   0x48, 0xB8
-    .quad   ASM_PFX(CommonInterruptEntry)
-    jmp     *%rax
+    pushq   $12
+    jmp     ASM_PFX(CommonInterruptEntry)
 Exception13Handle:
-    .byte   0x6a    #  push #VectorNum
-    .byte   13
-    pushq   %rax
-    .byte   0x48, 0xB8
-    .quad   ASM_PFX(CommonInterruptEntry)
-    jmp     *%rax
+    pushq   $13
+    jmp     ASM_PFX(CommonInterruptEntry)
 Exception14Handle:
-    .byte   0x6a    #  push #VectorNum
-    .byte   14
-    pushq   %rax
-    .byte   0x48, 0xB8
-    .quad   ASM_PFX(CommonInterruptEntry)
-    jmp     *%rax
+    pushq   $14
+    jmp     ASM_PFX(CommonInterruptEntry)
 Exception15Handle:
-    .byte   0x6a    #  push #VectorNum
-    .byte   15
-    pushq   %rax
-    .byte   0x48, 0xB8
-    .quad   ASM_PFX(CommonInterruptEntry)
-    jmp     *%rax
+    pushq   $15
+    jmp     ASM_PFX(CommonInterruptEntry)
 Exception16Handle:
-    .byte   0x6a    #  push #VectorNum
-    .byte   16
-    pushq   %rax
-    .byte   0x48, 0xB8
-    .quad   ASM_PFX(CommonInterruptEntry)
-    jmp     *%rax
+    pushq   $16
+    jmp     ASM_PFX(CommonInterruptEntry)
 Exception17Handle:
-    .byte   0x6a    #  push #VectorNum
-    .byte   17
-    pushq   %rax
-    .byte   0x48, 0xB8
-    .quad   ASM_PFX(CommonInterruptEntry)
-    jmp     *%rax
+    pushq   $17
+    jmp     ASM_PFX(CommonInterruptEntry)
 Exception18Handle:
-    .byte   0x6a    #  push #VectorNum
-    .byte   18
-    pushq   %rax
-    .byte   0x48, 0xB8
-    .quad   ASM_PFX(CommonInterruptEntry)
-    jmp     *%rax
+    pushq   $18
+    jmp     ASM_PFX(CommonInterruptEntry)
 Exception19Handle:
-    .byte   0x6a    #  push #VectorNum
-    .byte   19
-    pushq   %rax
-    .byte   0x48, 0xB8
-    .quad   ASM_PFX(CommonInterruptEntry)
-    jmp     *%rax
+    pushq   $19
+    jmp     ASM_PFX(CommonInterruptEntry)
 Exception20Handle:
-    .byte   0x6a    #  push #VectorNum
-    .byte   20
-    pushq   %rax
-    .byte   0x48, 0xB8
-    .quad   ASM_PFX(CommonInterruptEntry)
-    jmp     *%rax
+    pushq   $20
+    jmp     ASM_PFX(CommonInterruptEntry)
 Exception21Handle:
-    .byte   0x6a    #  push #VectorNum
-    .byte   21
-    pushq   %rax
-    .byte   0x48, 0xB8
-    .quad   ASM_PFX(CommonInterruptEntry)
-    jmp     *%rax
+    pushq   $21
+    jmp     ASM_PFX(CommonInterruptEntry)
 Exception22Handle:
-    .byte   0x6a    #  push #VectorNum
-    .byte   22
-    pushq   %rax
-    .byte   0x48, 0xB8
-    .quad   ASM_PFX(CommonInterruptEntry)
-    jmp     *%rax
+    pushq   $22
+    jmp     ASM_PFX(CommonInterruptEntry)
 Exception23Handle:
-    .byte   0x6a    #  push #VectorNum
-    .byte   23
-    pushq   %rax
-    .byte   0x48, 0xB8
-    .quad   ASM_PFX(CommonInterruptEntry)
-    jmp     *%rax
+    pushq   $23
+    jmp     ASM_PFX(CommonInterruptEntry)
 Exception24Handle:
-    .byte   0x6a    #  push #VectorNum
-    .byte   24
-    pushq   %rax
-    .byte   0x48, 0xB8
-    .quad   ASM_PFX(CommonInterruptEntry)
-    jmp     *%rax
+    pushq   $24
+    jmp     ASM_PFX(CommonInterruptEntry)
 Exception25Handle:
-    .byte   0x6a    #  push #VectorNum
-    .byte   25
-    pushq   %rax
-    .byte   0x48, 0xB8
-    .quad   ASM_PFX(CommonInterruptEntry)
-    jmp     *%rax
+    pushq   $25
+    jmp     ASM_PFX(CommonInterruptEntry)
 Exception26Handle:
-    .byte   0x6a    #  push #VectorNum
-    .byte   26
-    pushq   %rax
-    .byte   0x48, 0xB8
-    .quad   ASM_PFX(CommonInterruptEntry)
-    jmp     *%rax
+    pushq   $26
+    jmp     ASM_PFX(CommonInterruptEntry)
 Exception27Handle:
-    .byte   0x6a    #  push #VectorNum
-    .byte   27
-    pushq   %rax
-    .byte   0x48, 0xB8
-    .quad   ASM_PFX(CommonInterruptEntry)
-    jmp     *%rax
+    pushq   $27
+    jmp     ASM_PFX(CommonInterruptEntry)
 Exception28Handle:
-    .byte   0x6a    #  push #VectorNum
-    .byte   28
-    pushq   %rax
-    .byte   0x48, 0xB8
-    .quad   ASM_PFX(CommonInterruptEntry)
-    jmp     *%rax
+    pushq   $28
+    jmp     ASM_PFX(CommonInterruptEntry)
 Exception29Handle:
-    .byte   0x6a    #  push #VectorNum
-    .byte   29
-    pushq   %rax
-    .byte   0x48, 0xB8
-    .quad   ASM_PFX(CommonInterruptEntry)
-    jmp     *%rax
+    pushq   $29
+    jmp     ASM_PFX(CommonInterruptEntry)
 Exception30Handle:
-    .byte   0x6a    #  push #VectorNum
-    .byte   30
-    pushq   %rax
-    .byte   0x48, 0xB8
-    .quad   ASM_PFX(CommonInterruptEntry)
-    jmp     *%rax
+    pushq   $30
+    jmp     ASM_PFX(CommonInterruptEntry)
 Exception31Handle:
-    .byte   0x6a    #  push #VectorNum
-    .byte   31
-    pushq   %rax
-    .byte   0x48, 0xB8
-    .quad   ASM_PFX(CommonInterruptEntry)
-    jmp     *%rax
-    
-HookAfterStubHeaderBegin:
-    .byte   0x6a      # push
-VectorNum:
-    .byte   0         # 0 will be fixed 
-    pushq   %rax
-    .byte   0x48, 0xB8      # movq    ASM_PFX(HookAfterStubHeaderEnd), %rax
-    .quad   ASM_PFX(HookAfterStubHeaderEnd)
-    jmp     *%rax
-ASM_GLOBAL ASM_PFX(HookAfterStubHeaderEnd)
-ASM_PFX(HookAfterStubHeaderEnd):
-    movq    %rsp, %rax
-    andl    $0x0fffffff0, %esp  # make sure 16-byte aligned for exception context
-    subq    $0x18, %rsp         # reserve room for filling exception data later
-    pushq   %rcx
-    movq    8(%rax), %rcx
-    pushq   %rax
-    movabsl ASM_PFX(mErrorCodeFlag), %eax
-    bt      %ecx, %eax
-    popq    %rax
-    jnc     NoErrorData
-    pushq   (%rsp)            # push additional rcx to make stack alignment
-NoErrorData:
-    xchgq   (%rsp), %rcx      # restore rcx, save Exception Number in stack
-    pushq   (%rax)            # push rax into stack to keep code consistence
+    pushq   $31
+    jmp     ASM_PFX(CommonInterruptEntry)
+
 
 #---------------------------------------;
 # CommonInterruptEntry                  ;
@@ -291,7 +138,6 @@ NoErrorData:
 ASM_GLOBAL ASM_PFX(CommonInterruptEntry)
 ASM_PFX(CommonInterruptEntry):
     cli
-    popq    %rax
     #
     # All interrupt handlers are invoked through interrupt gates, so
     # IF flag automatically cleared at the entry point
@@ -299,13 +145,12 @@ ASM_PFX(CommonInterruptEntry):
     #
     # Calculate vector number
     #
-    xchgq   (%rsp), %rcx       # get the return address of call, actually, it is the address of vector number.
-    andq     $0x0FF, %rcx
+    xchgq   (%rsp), %rcx # get the return address of call, actually, it is the address of vector number.
     cmp     $32, %ecx          # Intel reserved vector for exceptions?
     jae     NoErrorCode
     pushq   %rax
-    movabsl ASM_PFX(mErrorCodeFlag), %eax
-    bt      %ecx, %eax
+    leaq    ASM_PFX(mErrorCodeFlag)(%rip), %rax
+    bt      %ecx, (%rax) 
     popq    %rax
     jc      CommonInterruptEntry_al_0000
 
@@ -320,8 +165,6 @@ NoErrorCode:
 CommonInterruptEntry_al_0000:
     pushq   %rbp
     movq    %rsp, %rbp
-    pushq   $0          # check EXCEPTION_HANDLER_CONTEXT.OldIdtHandler
-    pushq   $0          # check EXCEPTION_HANDLER_CONTEXT.ExceptionDataFlag
 
     #
     # Stack:
@@ -542,56 +385,20 @@ CommonInterruptEntry_al_0000:
     movq    %rbp, %rsp
     popq    %rbp
     addq    $16, %rsp
-    cmpq    $0, -32(%rsp)      # check EXCEPTION_HANDLER_CONTEXT.OldIdtHandler
-    jz      DoReturn           # check EXCEPTION_HANDLER_CONTEXT.ExceptionDataFlag
-    cmpb    $1, -40(%rsp)
-    jz      ErrorCode
-    jmp     *-32(%rsp)
-ErrorCode:
-    subq    $8, %rsp
-    jmp     *-24(%rsp)
-
-DoReturn:
-    pushq   %rax
-    movabsq ASM_PFX(mDoFarReturnFlag), %rax
-    cmpq    $0, %rax          # Check if need to do far return instead of IRET
-    popq    %rax
-    jz      DoIret
-    pushq   %rax
-    movq    %rsp, %rax        # save old RSP to rax
-    movq    0x20(%rsp), %rsp
-    pushq   0x10(%rax)        # save CS in new location
-    pushq   0x8(%rax)         # save EIP in new location
-    pushq   0x18(%rax)        # save EFLAGS in new location
-    movq    (%rax), %rax      # restore rax
-    popfq                     # restore EFLAGS
-    .byte   0x48              # prefix to composite "retq" with next "retf"
-    retf                      # far return
-DoIret:
     iretq
 
 
 #-------------------------------------------------------------------------------------
-#  AsmGetTemplateAddressMap (&AddressMap);
+#  AsmGetAddressMap (&AddressMap);
 #-------------------------------------------------------------------------------------
 # comments here for definition of address map
-ASM_GLOBAL ASM_PFX(AsmGetTemplateAddressMap)
-ASM_PFX(AsmGetTemplateAddressMap):
+ASM_GLOBAL ASM_PFX(GetTemplateAddressMap)
+ASM_PFX(GetTemplateAddressMap):
 
         movabsq      $Exception0Handle, %rax
         movq         %rax, (%rcx)
         movq         $(Exception1Handle - Exception0Handle), 0x08(%rcx)
-        movabsq      $HookAfterStubHeaderBegin, %rax
-        movq         %rax, 0x10(%rcx)
-        ret
 
-#-------------------------------------------------------------------------------------
-#  AsmVectorNumFixup (*VectorBase, VectorNum);
-#-------------------------------------------------------------------------------------
-ASM_GLOBAL ASM_PFX(AsmVectorNumFixup)
-ASM_PFX(AsmVectorNumFixup):
-        movq  %rdx, %rax
-        movb  %al, (VectorNum - HookAfterStubHeaderBegin)(%rcx)
         ret
 
 #END

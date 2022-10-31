@@ -6,7 +6,7 @@
 **/
 /**
 
-Copyright (c) 2012 - 2015 Intel Corporation. All rights reserved
+Copyright (c) 2012 - 2013 Intel Corporation. All rights reserved
 This software and associated documentation (if any) is furnished
 under a license and may only be used or copied in accordance
 with the terms of the license. Except as permitted by such
@@ -37,19 +37,13 @@ Intel Corporation.
   { \
     0xD9072C35, 0xEB8F, 0x43ad, 0xA2, 0x20, 0x34, 0xD4, 0x0E, 0x2A, 0x82, 0x85 \
   }
-#define EFI_SPI_DATA_PROTOCOL_GUID \
-  { \
-    0xd617e1a8, 0x207d, 0x4544, 0xb1, 0x2d, 0x94, 0xd0, 0x96, 0x60, 0xa2, 0xd1 \
-  }
 extern EFI_GUID                   gEfiSpiProtocolGuid;
 extern EFI_GUID                   gEfiSmmSpiProtocolGuid;
-extern EFI_GUID                   gEfiSpiDataProtocolGuid;
 
 ///
 /// Forward reference for ANSI C compatibility
 ///
 typedef struct _EFI_SPI_PROTOCOL  EFI_SPI_PROTOCOL;
-typedef struct _EFI_SPI_DATA_PROTOCOL EFI_SPI_DATA_PROTOCOL;
 
 ///
 /// SPI protocol data structures and definitions
@@ -269,27 +263,6 @@ struct _EFI_SPI_PROTOCOL {
   EFI_SPI_INIT    Init;
   EFI_SPI_LOCK    Lock;
   EFI_SPI_EXECUTE Execute;
-};
-
-///
-/// This protocol provides data about the Flash device to non-SPI modules in order to 
-/// allow other entities to determine if their data is coming directly from Flash or 
-/// if it is coming from other areas of memory.
-///
-struct _EFI_SPI_DATA_PROTOCOL {
-  ///
-  /// The offset of the start of the BIOS image within memory space address.
-  ///
-  UINTN BiosStartMemoryAddress;
-  ///
-  /// The the BIOS Image size in flash. This value is platform specific
-  /// and depends on the system flash map. Please note BIOS Image size may
-  /// be smaller than BIOS Region size (in Descriptor Mode) or the flash size
-  /// (in Non Descriptor Mode), and in this case, BIOS Image will be placed
-  /// at the top end of the BIOS Region (in Descriptor Mode) or the flash
-  /// (in Non Descriptor Mode)
-  ///
-  UINTN BiosSize;
 };
 
 #endif

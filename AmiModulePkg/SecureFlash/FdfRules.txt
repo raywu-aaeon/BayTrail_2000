@@ -1,0 +1,14 @@
+################################################################################
+#
+# Rules are use with the [FV] section's module INF type to define
+# how an FFS file is created for a given INF file. The following Rule are the default
+# rules for the different module type. User can add the customized rules to define the
+# content of the FFS file.
+#
+################################################################################
+
+[Rule.Common.USER_DEFINED.SubtypeGuidUncompressedUnchecksummed]
+  FILE FREEFORM = $(NAMED_GUID) {
+    SUBTYPE_GUID GUID=$(SECTION_GUID) BIN  |.bin
+  }
+

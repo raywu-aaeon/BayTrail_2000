@@ -7,7 +7,6 @@
 "Rmisc.asl"	
 "HPTIMER.ASL"	
 "RTC0.ASL"	
-"SB_EXT.ASL"	
-"PchUart.asl"	
-"SbPcie.asl"	
+"SB_EXT.ASL"
+"PchUart.asl"
 <endComponent>

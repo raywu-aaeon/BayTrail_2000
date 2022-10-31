@@ -62,13 +62,6 @@ Device (GDM1)
     }
     Return (0xF)
   }
-  Method (_PSC, 0) { 
-    If (LEqual (\DM1P, 0)) { 
-      Return (0) 
-    } Else { 
-      Return (3) 
-    } 
-  }
 }
 
 //
@@ -108,13 +101,6 @@ Device (GDM2)
       Return (0x0)
     }
     Return (0xF)
-  }
-  Method (_PSC, 0) { 
-     If (LEqual (\DM2P, 0)) { 
-       Return (0) 
-     } Else { 
-       Return (3) 
-     } 
   }
 }
 
@@ -207,16 +193,10 @@ Device(URT1)
   //Name (_CLS, Package (3) {0x07, 0x80, 0x00})
   Name (_DDN, "Intel(R) HS-UART Controller #1 - 80860F0A")
   Name (_UID, 1)
-#ifdef WIN8_SUPPORT
-    Method(_DEP){
-    	if (LAnd(LGreaterEqual(OSYS, 2013), LEqual(S0IX, 1))) {
-			Return(Package() {\_SB.PEPD})
-		}Else{
-			Return(Package(){})
-		}
-	}
-#endif
-
+  Name(_DEP, Package(0x1)
+  {
+    PEPD
+  })
   Name (RBUF, ResourceTemplate ()
   {
     Memory32Fixed (ReadWrite, 0x00000000, 0x00001000, BAR0)
@@ -372,16 +352,10 @@ Device(URT2)
   //Name (_CLS, Package (3) {0x07, 0x80, 0x00})
   Name (_DDN, "Intel(R) HS-UART Controller #2 - 80860F0C")
   Name (_UID, 2)
-#ifdef WIN8_SUPPORT
-    Method(_DEP){
-    	if (LAnd(LGreaterEqual(OSYS, 2013), LEqual(S0IX, 1))) {
-			Return(Package() {\_SB.PEPD})
-		}Else{
-			Return(Package(){})
-		}
-	}
-#endif
-
+  Name(_DEP, Package(0x1)
+  {
+    PEPD
+  })
   Name (RBUF, ResourceTemplate ()
   {
     Memory32Fixed (ReadWrite, 0x00000000, 0x00001000, BAR0)
@@ -476,16 +450,10 @@ Device(SPI1)
   Name (_HID, "80860F0E")
   Name (_CID, "80860F0E")
   //Name (_CLS, Package (3) {0x0C, 0x80, 0x00})
-#ifdef WIN8_SUPPORT
-    Method(_DEP){
-    	if (LAnd(LGreaterEqual(OSYS, 2013), LEqual(S0IX, 1))) {
-			Return(Package() {\_SB.PEPD})
-		}Else{
-			Return(Package(){})
-		}
-	}
-#endif
-
+  Name(_DEP, Package(0x1)
+  {
+    PEPD
+  })
   Name (_DDN, "Intel(R) SPI Controller - 80860F0E")
   //Name (_UID, 1)
 
@@ -586,16 +554,10 @@ Device(I2C1)
   Name (_HID, "80860F41")
   Name (_CID, "80860F41")
   //Name (_CLS, Package (3) {0x0C, 0x80, 0x00})
-#ifdef WIN8_SUPPORT
-    Method(_DEP){
-    	if (LAnd(LGreaterEqual(OSYS, 2013), LEqual(S0IX, 1))) {
-			Return(Package() {\_SB.PEPD})
-		}Else{
-			Return(Package(){})
-		}
-	}
-#endif
-
+  Name(_DEP, Package(0x1)
+  {
+    PEPD
+  })
   Name (_DDN, "Intel(R) I2C Controller #1 - 80860F41")
   Name (_UID, 1)
 
@@ -679,16 +641,10 @@ Device(I2C2)
   Name (_HID, "80860F41")
   Name (_CID, "80860F41")
   //Name (_CLS, Package (3) {0x0C, 0x80, 0x00})
-#ifdef WIN8_SUPPORT
-    Method(_DEP){
-    	if (LAnd(LGreaterEqual(OSYS, 2013), LEqual(S0IX, 1))) {
-			Return(Package() {\_SB.PEPD})
-		}Else{
-			Return(Package(){})
-		}
-	}
-#endif
-
+  Name(_DEP, Package(0x1)
+  {
+    PEPD
+  })
   Name (_DDN, "Intel(R) I2C Controller #2 - 80860F42")
   Name (_UID, 2)
 
@@ -819,16 +775,10 @@ Device(I2C3)
   //Name (_CLS, Package (3) {0x0C, 0x80, 0x00})
   Name (_DDN, "Intel(R) I2C Controller #3 - 80860F43")
   Name (_UID, 3)
-#ifdef WIN8_SUPPORT
-    Method(_DEP){
-    	if (LAnd(LGreaterEqual(OSYS, 2013), LEqual(S0IX, 1))) {
-			Return(Package() {\_SB.PEPD})
-		}Else{
-			Return(Package(){})
-		}
-	}
-#endif
-
+  Name(_DEP, Package(0x1)
+  {
+    PEPD
+  })
   Name (RBUF, ResourceTemplate ()
   {
     Memory32Fixed (ReadWrite, 0x00000000, 0x00001000, BAR0)
@@ -913,16 +863,10 @@ Device(I2C4)
   // Name (_CLS, Package (3) {0x0C, 0x80, 0x00})
   Name (_DDN, "Intel(R) I2C Controller #4 - 80860F44")
   Name (_UID, 4)
-#ifdef WIN8_SUPPORT
-    Method(_DEP){
-    	if (LAnd(LGreaterEqual(OSYS, 2013), LEqual(S0IX, 1))) {
-			Return(Package() {\_SB.PEPD})
-		}Else{
-			Return(Package(){})
-		}
-	}
-#endif
-
+  Name(_DEP, Package(0x1)
+  {
+    PEPD
+  })
   Name (RBUF, ResourceTemplate ()
   {
     Memory32Fixed (ReadWrite, 0x00000000, 0x00001000, BAR0)
@@ -1609,16 +1553,10 @@ Device(I2C5)
   //Name (_CLS, Package (3) {0x0C, 0x80, 0x00})
   Name (_DDN, "Intel(R) I2C Controller #5 - 80860F45")
   Name (_UID, 5)
-#ifdef WIN8_SUPPORT
-    Method(_DEP){
-    	if (LAnd(LGreaterEqual(OSYS, 2013), LEqual(S0IX, 1))) {
-			Return(Package() {\_SB.PEPD})
-		}Else{
-			Return(Package(){})
-		}
-	}
-#endif
-
+  Name(_DEP, Package(0x1)
+  {
+    PEPD
+  })
   Name (RBUF, ResourceTemplate ()
   {
     Memory32Fixed (ReadWrite, 0x00000000, 0x00001000, BAR0)
@@ -1783,16 +1721,10 @@ Device(I2C6)
   //Name (_CLS, Package (3) {0x0C, 0x80, 0x00})
   Name (_DDN, "Intel(R) I2C Controller #6 - 80860F46")
   Name (_UID, 6)
-#ifdef WIN8_SUPPORT
-    Method(_DEP){
-    	if (LAnd(LGreaterEqual(OSYS, 2013), LEqual(S0IX, 1))) {
-			Return(Package() {\_SB.PEPD})
-		}Else{
-			Return(Package(){})
-		}
-	}
-#endif
-
+  Name(_DEP, Package(0x1)
+  {
+    PEPD
+  })
   Name (RBUF, ResourceTemplate ()
   {
     Memory32Fixed (ReadWrite, 0x00000000, 0x00001000, BAR0)
@@ -2192,6 +2124,7 @@ Device(I2C6)
   {
     Name (_ADR, Zero)
     Name (_HID, "ATML2000")
+    Name (_CID, "PNP0C02")
     Name (_UID, 10)
 
     Method (_STA, 0, NotSerialized)
@@ -2246,16 +2179,10 @@ Device(I2C7)
   //Name (_CLS, Package (3) {0x0C, 0x80, 0x00})
   Name (_DDN, "Intel(R) I2C Controller #7 - 80860F47")
   Name (_UID, 7)
-#ifdef WIN8_SUPPORT
-    Method(_DEP){
-    	if (LAnd(LGreaterEqual(OSYS, 2013), LEqual(S0IX, 1))) {
-			Return(Package() {\_SB.PEPD})
-		}Else{
-			Return(Package(){})
-		}
-	}
-#endif
-
+  Name(_DEP, Package(0x1)
+  {
+    PEPD
+  })
   Name (RBUF, ResourceTemplate ()
   {
     Memory32Fixed (ReadWrite, 0x00000000, 0x00001000, BAR0)

@@ -2,7 +2,7 @@
 //*****************************************************************//
 //*****************************************************************//
 //**                                                             **//
-//**         (C)Copyright 2015, American Megatrends, Inc.        **//
+//**         (C)Copyright 2011, American Megatrends, Inc.        **//
 //**                                                             **//
 //**                     All Rights Reserved.                    **//
 //**                                                             **//
@@ -16,6 +16,7 @@
 #ifndef __HOTCLICK_BIN_H__
 #define __HOTCLICK_BIN_H__
 
+///EIP 115082 : Referance to Style module is removed. Managed from Style hooks
 // Hotclick template moved to StyleHoook.h
 extern VOID LegacyMainFrameHandlewithMouse( VOID *app, VOID *hotclick, VOID *cookie );
 extern VOID LegacyHelpFrameHandlewithMouse( VOID *app, VOID *hotclick, VOID *cookie );
@@ -27,7 +28,7 @@ extern VOID LegacyNavFrameHandlewithMouse( VOID *app, VOID *hotclick, VOID *cook
 //*****************************************************************//
 //*****************************************************************//
 //**                                                             **//
-//**         (C)Copyright 2015, American Megatrends, Inc.        **//
+//**         (C)Copyright 2011, American Megatrends, Inc.        **//
 //**                                                             **//
 //**                     All Rights Reserved.                    **//
 //**                                                             **//

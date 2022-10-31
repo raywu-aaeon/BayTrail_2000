@@ -64,7 +64,7 @@ EFI_DRIVER_BINDING_PROTOCOL gBiosVideoDriverBinding = {
   NULL
 };
 
-// The following is copied from GraphicsConsole: share the type and variable definitions between these two drivers
+//TODO: this is copied from GraphicsConsole: share the type and variable definitions between these two drivers
 #define MAX_RES             0
 #define MIN_RES             -1
 typedef struct _TEXT_MODE  {
@@ -934,7 +934,7 @@ Returns:
       } else {
         BiosVideoPrivate->DevicePath = AppendDevicePathNode (ParentDevicePath, RemainingDevicePath);
       }
-
+      //TODO
       pBS->InstallMultipleProtocolInterfaces (
                       &BiosVideoPrivate->Handle,
                       &gEfiDevicePathProtocolGuid, BiosVideoPrivate->DevicePath,
@@ -2691,7 +2691,7 @@ Routine Description:
   //
   // Frame BufferSize remain unchanged
   //
-  This->Mode->FrameBufferBase = (EFI_PHYSICAL_ADDRESS)(UINTN) ModeData->LinearFrameBuffer;
+  This->Mode->FrameBufferBase = (EFI_PHYSICAL_ADDRESS) ModeData->LinearFrameBuffer;
   This->Mode->FrameBufferSize = ModeData->FrameBufferSize;
 
   BiosVideoPrivate->HardwareNeedsStarting = FALSE;

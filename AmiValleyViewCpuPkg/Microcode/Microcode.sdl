@@ -137,7 +137,7 @@ End
 
 TOKEN
     Name  = "M0130672"
-    Value  = "0"
+    Value  = "1"
     Help  = "Intel(R) ValleyView B-1 Stepping"
     TokenType = Boolean
 End
@@ -157,13 +157,6 @@ TOKEN
 End
 
 TOKEN
-    Name  = "M0130679"
-    Value  = "1"
-    Help  = "Intel(R) ValleyView D-0 Stepping"
-    TokenType = Boolean
-End
-
-TOKEN
     Name  = "M0230671"
     Value  = "0"
     Help  = "Intel(R) ValleyView A-0 Stepping"
@@ -172,7 +165,7 @@ End
 
 TOKEN
     Name  = "M0230672"
-    Value  = "0"
+    Value  = "1"
     Help  = "Intel(R) ValleyView B-0 Stepping"
     TokenType = Boolean
 End
@@ -222,7 +215,7 @@ ELINK
 End
 
 ELINK
-    Name  = "$(MICROCODE_DIR)\M0230673325.PDB"
+    Name  = "$(MICROCODE_DIR)\M0230673322.PDB"
     Parent  = "$(Intel_ValleyView)"
     Help  = "Intel(R) ValleyView B-2 Stepping"
     Token = "M0230673" "=" "1"
@@ -231,7 +224,7 @@ ELINK
 End
 
 ELINK
-    Name  = "$(MICROCODE_DIR)\M0230678832.PDB"
+    Name  = "$(MICROCODE_DIR)\M0230678816.PDB"
     Parent  = "$(Intel_ValleyView)"
     Help  = "Intel(R) ValleyView C-0 Stepping"
     Token = "M0230678" "=" "1"
@@ -258,7 +251,7 @@ ELINK
 End
 
 ELINK
-    Name  = "$(MICROCODE_DIR)\M0C30673325.PDB"
+    Name  = "$(MICROCODE_DIR)\M0C30673322.PDB"
     Parent  = "$(Intel_ValleyView)"
     Help  = "Intel(R) ValleyView B2/B3 Stepping"
     Token = "M0C30673" "=" "1"
@@ -267,7 +260,7 @@ ELINK
 End
 
 ELINK
-    Name  = "$(MICROCODE_DIR)\M0C30678833.PDB"
+    Name  = "$(MICROCODE_DIR)\M0C30678815.PDB"
     Parent  = "$(Intel_ValleyView)"
     Help  = "Intel(R) ValleyView C0 Stepping"
     Token = "M0C30678" "=" "1"
@@ -303,7 +296,7 @@ ELINK
 End
 
 ELINK
-    Name  = "$(MICROCODE_DIR)\M0130673324.PDB"
+    Name  = "$(MICROCODE_DIR)\M0130673322.PDB"
     Parent  = "$(Intel_ValleyView)"
     Help  = "Intel(R) ValleyView B-1 Stepping"
     Token = "M0130673" "=" "1"
@@ -316,15 +309,6 @@ ELINK
     Parent  = "$(Intel_ValleyView)"
     Help  = "Intel(R) ValleyView C-0 Stepping"
     Token = "M0130678" "=" "1"
-    Token = "ValleyView_Industry" "=" "1"
-    InvokeOrder = AfterParent
-End
-
-ELINK
-    Name  = "$(MICROCODE_DIR)\M0130679903.PDB"
-    Parent  = "$(Intel_ValleyView)"
-    Help  = "Intel(R) ValleyView D-0 Stepping"
-    Token = "M0130679" "=" "1"
     Token = "ValleyView_Industry" "=" "1"
     InvokeOrder = AfterParent
 End

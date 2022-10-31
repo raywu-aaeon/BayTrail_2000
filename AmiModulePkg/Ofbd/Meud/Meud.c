@@ -25,9 +25,13 @@
 // 
 // 
 //**********************************************************************
-/** @file Meud.c
-
-**/
+//<AMI_FHDR_START>
+//
+// Name:	Meud.c
+//
+// Description:
+//
+//<AMI_FHDR_END>
 //**********************************************************************
 #include "Efi.h"
 #include "Token.h"
@@ -38,21 +42,23 @@
 #include <Protocol\SmiFlash.h>
 #include <Flash.h>
 
-extern FLASH_REGIONS_DESCRIPTOR FlashRegionsDescriptor[];
-
 EFI_SMI_FLASH_PROTOCOL *mSmiFlash;
 UINT32 FlashCapacity;
-/**
-    Locate SmiFlash protocol callback
-
-        
-    @param Event 
-    @param Context 
-
-         
-    @retval VOID
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:	MEUDCallback
+//
+// Description:	Locate SmiFlash protocol callback
+//
+// Input:
+//      IN EFI_EVENT    Event
+//      IN VOID         *Context
+//
+// Output:
+//      VOID
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 #if defined(PI_SPECIFICATION_VERSION)&&(PI_SPECIFICATION_VERSION>=0x0001000A)
 EFI_STATUS
 MEUDCallback (
@@ -79,23 +85,27 @@ MEUDCallback (
     if(EFI_ERROR(Status)) mSmiFlash = NULL:
 #endif
 }
-/**
-    OFBD ME Firmware Update InSmm Function
-
-        
-    @param VOID
-
-         
-    @retval VOID
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:	MEUDInSmm
+//
+// Description:	OFBD ME Firmware Update InSmm Function
+//
+// Input:
+//      VOID
+//
+// Output:
+//      VOID
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID MEUDInSmm(VOID)
 {
-    EFI_STATUS  Status;
-    EFI_GUID    gEfiSmiFlashProtocolGuid = EFI_SMI_FLASH_GUID;
-    EFI_SMM_BASE2_PROTOCOL  *mSmmBase2;
-    EFI_SMM_SYSTEM_TABLE2   *pSmst = NULL;
-    EFI_GUID    gEfiSmmBase2ProtocolGuid = EFI_SMM_BASE2_PROTOCOL_GUID;
+    EFI_STATUS     Status;
+    EFI_GUID       gEfiSmiFlashProtocolGuid = EFI_SMI_FLASH_GUID;
+    EFI_SMM_BASE2_PROTOCOL *mSmmBase2;
+    EFI_SMM_SYSTEM_TABLE2*		  pSmst = NULL;
+    EFI_GUID 	gEfiSmmBase2ProtocolGuid     = EFI_SMM_BASE2_PROTOCOL_GUID;
 
     FlashCapacity = GetFlashCapacity();
 
@@ -130,16 +140,20 @@ VOID MEUDInSmm(VOID)
     CSP_MEUDInSmm();
 }
 
-/**
-    OFBD ME Firmware Update Entry point
-
-        
-    @param Buffer 
-    @param pOFBDDataHandled 
-         
-    @retval VOID
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:	MEUDEntry
+//
+// Description:	OFBD ME Firmware Update Entry point
+//
+// Input:
+//      IN VOID             *Buffer
+//      IN OUT UINT8        *pOFBDDataHandled
+// Output:
+//      VOID
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID MEUDEntry (
     IN VOID             *Buffer,
     IN OUT UINT8        *pOFBDDataHandled )
@@ -301,7 +315,7 @@ VOID MEUDEntry (
                     if(Buffer1 > MEUDStructPtr->ddBlockAddr)
                         (UINTN)Address = FLASH_BASE_ADDRESS(Buffer1);
 
-                    //FlashDeviceWriteEnable();
+                    FlashDeviceWriteEnable();
 
                     for (; FlashStatus && Size > 0; Address += FlashBlockSize, Size -= FlashBlockSize)
                     {
@@ -309,7 +323,7 @@ VOID MEUDEntry (
                          FlashStatus = FlashEraseBlock(Address);
                          FlashBlockWriteDisable(Address);
                      }
-                     //FlashDeviceWriteDisable();
+                     FlashDeviceWriteDisable();
                      if(FlashStatus)
                      {
                          *pOFBDDataHandled = 0xFF;
@@ -340,107 +354,135 @@ VOID MEUDEntry (
                     if((MEUDStructPtr->ddBlockAddr == Offset) && (Length != 0))
                         MemCpy(Data,MacAddr,6);
 
-                    //FlashDeviceWriteEnable();
+                    FlashDeviceWriteEnable();
 
                     FlashBlockWriteEnable(Address);
                     FlashStatus = FlashProgram(Address, Data, Size);
                     FlashBlockWriteDisable(Address);
 
-                    //FlashDeviceWriteDisable();
+                    FlashDeviceWriteDisable();
                     if(FlashStatus)
                     {
                         *pOFBDDataHandled = 0xFF;
                         MEUDStructPtr->bReturnStatus =  OFBD_TC_MEUD_OK;
                     }
                     break;
+                       // Read
+                       case 8 :
+                           (UINTN)Address = FLASH_BASE_ADDRESS(MEUDStructPtr->ddBlockAddr);
+                           Data = (UINT8*)pOFBDHdr;
+                           (UINTN)Data += MEUDStructPtr->ddFlashBufOffset;
 
-                // Read
-                case 8 :
-                    (UINTN)Address = FLASH_BASE_ADDRESS(MEUDStructPtr->ddBlockAddr);
-                    Data = (UINT8*)pOFBDHdr;
-                    (UINTN)Data += MEUDStructPtr->ddFlashBufOffset;
+                           FlashRead(Address, Data, MEUDStructPtr->ddBlockSize);
+                           *pOFBDDataHandled = 0xFF;
+                           MEUDStructPtr->bReturnStatus =  OFBD_TC_MEUD_OK;
+                           break;
 
-                    FlashRead(Address, Data, MEUDStructPtr->ddBlockSize);
-                    *pOFBDDataHandled = 0xFF;
-                    MEUDStructPtr->bReturnStatus =  OFBD_TC_MEUD_OK;
-                    break;
+                       case 9 :
+                           // Get Info
+                           {
+                               UINT16    TotalBlocks = 0;
 
-                case 9 :
-                    // Get Info
-                    {
-                        UINT8    Index = 0;
-                        UINT16   TotalBlocks = 0;
+                               // Get FD
+                               Status = GetRegionOffset(0 ,
+                                   &MEInfoStructPtr->BlockInfo[TotalBlocks].StartAddress,
+                                   &MEInfoStructPtr->BlockInfo[TotalBlocks].BlockSize);
 
-                        //Search for all regions
-                        for( Index = 0; Index < MAX_BLK; Index++ )
-                        {
-                            if( FlashRegionsDescriptor[Index].FlashRegion == MAX_BLK )
-                                break;
+                               // Fill FD Info
+                               if(!EFI_ERROR(Status))
+                               {
+                                   MemCpy(MEInfoStructPtr->BlockInfo[TotalBlocks].Command,"FDR",4);
+                                   MemCpy(MEInfoStructPtr->BlockInfo[TotalBlocks].Description,
+                                          "Flash Flash-Descriptor Region",64);
+                                   MEInfoStructPtr->BlockInfo[TotalBlocks].Type = FDT_BLK;
+                                   // Status = 1 means Protect
+                                   MEInfoStructPtr->BlockInfo[TotalBlocks].Status = 0;
+                                   TotalBlocks += 1;
+                               }
+                               // Get GBE
+                               Status = GetRegionOffset(3 ,
+                                   &MEInfoStructPtr->BlockInfo[TotalBlocks].StartAddress,
+                                   &MEInfoStructPtr->BlockInfo[TotalBlocks].BlockSize);
 
-                            Status = GetRegionOffset(
-                                        FlashRegionsDescriptor[Index].FlashRegion,
-                                        &MEInfoStructPtr->BlockInfo[TotalBlocks].StartAddress,
-                                        &MEInfoStructPtr->BlockInfo[TotalBlocks].BlockSize );
-                            if( !EFI_ERROR(Status) )
-                            {
-                                UINT8   String[32];
+                               // Fill GBE Info
+                               if(!EFI_ERROR(Status))
+                               {
+                                   MemCpy(MEInfoStructPtr->BlockInfo[TotalBlocks].Command,"GBER",4);
+                                   MemCpy(MEInfoStructPtr->BlockInfo[TotalBlocks].Description,
+                                          "Flash GBE Region",64);
+                                   MEInfoStructPtr->BlockInfo[TotalBlocks].Type = GBE_BLK;
+                                   // Status = 1 means Protect
+                                   MEInfoStructPtr->BlockInfo[TotalBlocks].Status = 0;
+                                   TotalBlocks += 1;
+                               }
 
-                                MemCpy(
-                                    MEInfoStructPtr->BlockInfo[TotalBlocks].Command,
-                                    FlashRegionsDescriptor[Index].Command,
-                                    4 );
+                               // Get PDR
+                               Status = GetRegionOffset(4 ,
+                                   &MEInfoStructPtr->BlockInfo[TotalBlocks].StartAddress,
+                                   &MEInfoStructPtr->BlockInfo[TotalBlocks].BlockSize);
 
-                                MemCpy( &String[0], "Flash ", 6 );
-                                MemCpy( &String[6], FlashRegionsDescriptor[Index].Command, 4 );
-                                MemCpy( &String[10], " Region", 8 );
+                               // Fill PDR Info
+                               if(!EFI_ERROR(Status))
+                               {
+                                   MemCpy(MEInfoStructPtr->BlockInfo[TotalBlocks].Command,"PDR",4);
+                                   MemCpy(MEInfoStructPtr->BlockInfo[TotalBlocks].Description,
+                                          "Flash PDR Region",64);
+                                   MEInfoStructPtr->BlockInfo[TotalBlocks].Type = PDR_BLK;
+                                   // Status = 1 means Protect
+                                   MEInfoStructPtr->BlockInfo[TotalBlocks].Status = 0;
+                                   TotalBlocks += 1;
+                               }
 
-                                MemCpy(
-                                    MEInfoStructPtr->BlockInfo[TotalBlocks].Description,
-                                    String,
-                                    18 );
+                               // Get ME
+                               Status = GetRegionOffset(2 ,
+                                   &MEInfoStructPtr->BlockInfo[TotalBlocks].StartAddress,
+                                   &MEInfoStructPtr->BlockInfo[TotalBlocks].BlockSize);
 
-                                MEInfoStructPtr->BlockInfo[TotalBlocks].Type = FlashRegionsDescriptor[Index].FlashRegion;
+                               // Fill ME Info
+                               if(!EFI_ERROR(Status))
+                               {
+                                   MemCpy(MEInfoStructPtr->BlockInfo[TotalBlocks].Command,"MER",4);
+                                   MemCpy(MEInfoStructPtr->BlockInfo[TotalBlocks].Description,
+                                          "Flash Entire ME Region",64);
+                                   MEInfoStructPtr->BlockInfo[TotalBlocks].Type = ME_BLK;
+                                   // Status = 1 means Protect
+                                   MEInfoStructPtr->BlockInfo[TotalBlocks].Status = 0;
+                                   TotalBlocks += 1;
+                               }
 
-                                // Status = 1 means Protect
-                                MEInfoStructPtr->BlockInfo[TotalBlocks].Status = 0;
-
-                                TotalBlocks += 1;
-                            }
-                        }
-                        //
-                        // Fill SPS Partition Info
-                        //
+                               //
+                               // Fill SPS Partition Info
+                               //
 #if defined(OPR1_LENGTH)
-                        // OPR1
-                        MEInfoStructPtr->BlockInfo[TotalBlocks].StartAddress = OPR1_START;
-                        MEInfoStructPtr->BlockInfo[TotalBlocks].BlockSize = OPR1_LENGTH;
+                               // OPR1
+                               MEInfoStructPtr->BlockInfo[TotalBlocks].StartAddress = OPR1_START;
+                               MEInfoStructPtr->BlockInfo[TotalBlocks].BlockSize = OPR1_LENGTH;
+                                   // OPR2
+                               if(OPR2_LENGTH != 0)
+                                   MEInfoStructPtr->BlockInfo[TotalBlocks].BlockSize += OPR2_LENGTH;
 
-                        // OPR2
-                        if(OPR2_LENGTH != 0)
-                            MEInfoStructPtr->BlockInfo[TotalBlocks].BlockSize += OPR2_LENGTH;
+                               MemCpy(MEInfoStructPtr->BlockInfo[TotalBlocks].Command,"OPR",4);
+                               MemCpy(MEInfoStructPtr->BlockInfo[TotalBlocks].Description,
+                                      "Flash Operation Region of SPS",64);
 
-                        MemCpy( MEInfoStructPtr->BlockInfo[TotalBlocks].Command,"OPR", 4 );
-                        MemCpy( MEInfoStructPtr->BlockInfo[TotalBlocks].Description,
-                                "Flash Operation Region of SPS", 64 );
-
-                        MEInfoStructPtr->BlockInfo[TotalBlocks].Type = ME_OPR_BLK;
-                        // Status = 1 means Protect
-                        MEInfoStructPtr->BlockInfo[TotalBlocks].Status = 0;
-                        TotalBlocks += 1;
+                               MEInfoStructPtr->BlockInfo[TotalBlocks].Type = ME_OPR_BLK;
+                               // Status = 1 means Protect
+                               MEInfoStructPtr->BlockInfo[TotalBlocks].Status = 0;
+                               TotalBlocks += 1;
 #endif
-                        MEInfoStructPtr->TotalBlocks = TotalBlocks;
-                        *pOFBDDataHandled = 0xFF;
-                        MEUDStructPtr->bReturnStatus = OFBD_TC_MEUD_OK;
-                    }
-                    break;
+                               MEInfoStructPtr->TotalBlocks = TotalBlocks;
+                               *pOFBDDataHandled = 0xFF;
+                               MEUDStructPtr->bReturnStatus =  OFBD_TC_MEUD_OK;
 
-                case 10 :
-                    // ME Process Handle
-                    // In CSP_MEUD.c
-                    MEProcessHandler(&MEProcessStructPtr);
-                    *pOFBDDataHandled = 0xFF;
-                    MEUDStructPtr->bReturnStatus =  OFBD_TC_MEUD_OK;
-                    break;
+                           }
+                           break;
+                       case 10 :
+                           // ME Process Handle
+                           // In CSP_MEUD.c
+                           MEProcessHandler(&MEProcessStructPtr);
+                           *pOFBDDataHandled = 0xFF;
+                           MEUDStructPtr->bReturnStatus =  OFBD_TC_MEUD_OK;
+                           break;
 #endif //#if (OFBD_VERSION >= 0x0210)
                 }// End of Switch
             }

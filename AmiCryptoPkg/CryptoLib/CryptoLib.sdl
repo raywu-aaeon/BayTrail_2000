@@ -1,16 +1,9 @@
 TOKEN
-    Name  = "CryptoLib_SUPPORT"
-    Value  = "1"
-    Help  = "Switch for Enabling CryptoLib support in the project"
-    TokenType = Boolean
-    Master = Yes
-End
-
-TOKEN
-    Name  = "AmiBaseCryptLib_SUPPORT"
-    Value  = "1"
-    Help  = "Include AmiCryptoPkg instance of BaseCryptLib in the project"
-    TokenType = Boolean
+	Name  = "CryptoLib_SUPPORT"
+	Value  = "1"
+	Help  = "Switch for Enabling CryptoLib support in the project"
+	TokenType = Boolean
+	Master = Yes
 End
 
 TOKEN
@@ -21,44 +14,15 @@ TOKEN
     TargetH = Yes
     TargetMAK = Yes
     Range  = "0-1-2"
-End
-
-TOKEN
-    Name  = "CRYPTO_trace_level"
-    Value  = "1"
-    Help  = "0-skip debug messages, 1- short trace, 2- full trace"
-    TokenType = Integer
-    TargetH = Yes
-    TargetMAK = Yes
-    Range  = "0-1-2"
-    Token = "DEBUG_MODE" "!=" "0"
-End
-
-TOKEN
-    Name  = "SHA256_FAST"
-    Value  = "0"
-    Help  = "Generates faster hash code (SHA256, SHA384 & SHA512). Adds ~4k to compressed Crypto PPI and DXE driver binaries"
-    TokenType = Integer
-    TargetH = Yes
-    Range  = "0-1"
 End
 
 TOKEN
     Name  = "CONFIG_PEI_PKCS7"
-    Value  = "1"
-    Help  = "Support x509 & Pkcs7 in PEI CryptoLib. Adds ~8kb to CryptoPEI binary"
+    Value  = "0"
+    Help  = "Support x509 & Pkcs7 in PEI CryptoLib. Add ~8kb to CryptoPEI binary"
     TokenType = Integer
     TargetH = Yes
     TargetMAK = Yes
-    Range  = "0-1"
-End
-
-TOKEN
-    Name  = "CONFIG_X509_CERTIFICATE_EXPIRATION"
-    Value  = "0"
-    Help  = "0- Ignore time stamp in x509 certs"
-    TokenType = Integer
-    TargetH = Yes
     Range  = "0-1"
 End
 
@@ -71,8 +35,36 @@ TOKEN
     Range  = "0-1"
 End
 
+TOKEN
+    Name  = "AmiBaseCryptLib_SUPPORT"
+    Value  = "1"
+    Help  = "Support Ami implementation of EDKII BaseCryptLib"
+    TokenType = Boolean
+End
+
+TOKEN
+    Name  = "AmiBaseCryptLib_SUPPORT"
+    Value  = "0"
+    TokenType = Boolean
+    Token = "BaseCryptLib_SUPPORT" "=" "1"
+End
+    
 PATH
     Name  = "Cryptlib_DIR"
+End
+
+INFComponent
+	Name  = "BaseCryptLib"
+	File  = "BaseCryptLib.inf"
+    Package  = "AmiCryptoPkg"
+    Token = "AmiBaseCryptLib_SUPPORT" "=" "1"
+End
+
+
+LibraryMapping
+    Class  = "BaseCryptLib"
+    Instance  = "AmiCryptoPkg.BaseCryptLib"
+    Token = "AmiBaseCryptLib_SUPPORT" "=" "1"
 End
 
 INFComponent
@@ -81,12 +73,9 @@ INFComponent
     Package  = "AmiCryptoPkg"
 End
 
-INFComponent
-    Name  = "RuntimeAmiCryptLib"
-    File  = "RuntimeAmiCryptLib.inf"
-    Package  = "AmiCryptoPkg"
-    Arch  = "IA32 X64 IPF ARM"
-    ModuleTypes  = "DXE_RUNTIME_DRIVER"
+LibraryMapping
+    Class  = "AmiCryptLib"
+    Instance  = "AmiCryptoPkg.AmiCryptLib"
 End
 
 INFComponent
@@ -95,45 +84,8 @@ INFComponent
     Package  = "AmiCryptoPkg"
 End
 
-INFComponent
-    Name  = "BaseCryptLib"
-    File  = "BaseCryptLib.inf"
-    Package  = "AmiCryptoPkg"
-    ModuleTypes  = "DXE_DRIVER"
-    Token = "AmiBaseCryptLib_SUPPORT" "=" "1"
-End
-
-LibraryMapping
-    Class  = "AmiCryptLib"
-    Instance  = "AmiCryptoPkg.AmiCryptLib"
-    Arch  = "IA32 X64 IPF ARM AARCH64"
-    ModuleTypes  = "DXE_SMM_DRIVER DXE_DRIVER DXE_CORE UEFI_APPLICATION UEFI_DRIVER"
-End
-
-LibraryMapping
-    Class  = "AmiCryptLib"
-    Instance  = "AmiCryptoPkg.RuntimeAmiCryptLib"
-    ModuleTypes  = "DXE_RUNTIME_DRIVER"
-End
-
 LibraryMapping
     Class  = "PeiCryptLib"
     Instance  = "AmiCryptoPkg.PeiCryptLib"
-    Arch  = "IA32 AARCH64"
+    Arch  = "IA32"
 End
-
-LibraryMapping
-    Class  = "BaseCryptLib"
-    Instance  = "AmiCryptoPkg.BaseCryptLib"
-    Arch  = "IA32 X64 IPF ARM"
-    Token = "AmiBaseCryptLib_SUPPORT" "=" "1"
-End
-
-LibraryMapping
-    Class  = "BaseCryptLib"
-    Instance  = "AmiCryptoPkg.PeiCryptLib"
-    Arch  = "IA32 AARCH64"
-    ModuleTypes  = "PEIM"
-    Token = "AmiBaseCryptLib_SUPPORT" "=" "1"
-End
-

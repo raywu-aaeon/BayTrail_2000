@@ -1,7 +1,7 @@
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2016, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2012, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **
@@ -11,49 +11,60 @@
 //**                                                                  **
 //**********************************************************************
 //**********************************************************************
+// $Header: /Alaska/SOURCE/Modules/SdioDriver/SdioInt13.c 2     4/19/11 6:58a Lavanyap $
+//
+// $Revision: 2 $
+//
+// $Date: 4/19/11 6:58a $
+//**********************************************************************
 
-/** @file SdioInt13.c
-    Sdio driver for Legacy mode
-
-**/
-
-//----------------------------------------------------------------------
+//**********************************************************************
+//<AMI_FHDR_START>
+//
+// Name:    SdioDriver.c
+//
+// Description: Sdio driver for Legacy mode
+//<AMI_FHDR_END>
+//**********************************************************************
 
 #include "AmiDxeLib.h"
-#include <Protocol/SdioInt13Protocol.h>
-#include <Protocol/ComponentName.h>
-#include <Protocol/LegacyBiosExt.h>
-#include <Protocol/LegacyBios.h>
-#include <Protocol/PciIo.h>
-#include <Protocol/BlockIo.h>
-#include <Protocol/DiskInfo.h>
+#include <Protocol\SdioInt13Protocol.h>
+#include <Protocol\ComponentName.h>
+#include <Protocol\LegacyBiosExt.h>
+#include <Protocol\LegacyBios.h>
+#include <Protocol\PciIo.h>
+#include <protocol\BlockIo.h>
+#include <Protocol\PDiskInfo.h>
+#include <Protocol\SdioBus.h>
 #include "SdioInt13.h"
-#include "Token.h"
-#include "Pci.h"
-
-//----------------------------------------------------------------------
+#include "token.h"
+#include "pci.h"
 
 EFI_LEGACY_BIOS_EXT_PROTOCOL        *gBiosExtensions = NULL;
 UINT13_DATA                         *gI13BinData = NULL;
 EFI_SDIO_PROTOCOL                   gAmiSdio;
 UINT8                               gBootOverrideDeviceIndx = 0;
 
-/**
-    SDIO INT13 driver entry point. Installs call back notification on 
-    gEfiSdioProtocolGuid installation.
 
-    @param  ImageHandle
-    @param  SystemTable
-
-    @retval  EFI_STATUS
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+// Procedure:   SdioInt13EntryPoint
+//
+// Description: SDIO INT13 driver entry point. Installs callback notification
+//              on gEfiSdioProtocolGuid installation.
+//
+// Input:       IN EFI_HANDLE        ImageHandle,
+//              IN EFI_SYSTEM_TABLE  *SystemTable
+//
+// Output:      EFI_STATUS
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 EFI_STATUS
-EFIAPI
-SdioInt13EntryPoint (
-    IN  EFI_HANDLE       ImageHandle,
-    IN  EFI_SYSTEM_TABLE *SystemTable
+SdioInt13EntryPoint(
+    IN EFI_HANDLE        ImageHandle,
+    IN EFI_SYSTEM_TABLE  *SystemTable
 )
 {
     EFI_STATUS  Status;
@@ -76,16 +87,17 @@ SdioInt13EntryPoint (
     return Status;
 }
 
-/**
-    Initialization of data structures and placement of runtime
-    code of SDIO INT13
 
-    @param  ImageHandle
-    @param  SystemTable
-
-    @retval  EFI_STATUS
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+//  Name:           InitInt13RuntimeImage
+//
+//  Description:    Initialization of data structures and placement of runtime
+//                  code of SDIO INT13
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 EFI_STATUS
 InitInt13RuntimeImage()
@@ -94,11 +106,12 @@ InitInt13RuntimeImage()
     VOID        *Image;
     UINTN       ImageSize = 0;
 
+
     //
     // Get the SDIO INT13 runtime image
     //
     Status = pBS->LocateProtocol(
-        &gEfiLegacyBiosExtProtocolGuid, NULL, (VOID **)&gBiosExtensions);
+        &gEfiLegacyBiosExtProtocolGuid, NULL, &gBiosExtensions);
     if (EFI_ERROR(Status)) return Status;
 
     Status = gBiosExtensions->GetEmbeddedRom(
@@ -125,33 +138,31 @@ InitInt13RuntimeImage()
     }
 
     // Copy image to shadow E000/F000 area
-    gI13BinData = (UINT13_DATA*)((UINTN)gBiosExtensions->CopyLegacyTable(Image, (UINT16)ImageSize, 0x10, 2));
+    (UINTN)gI13BinData = gBiosExtensions->CopyLegacyTable(Image, (UINT16)ImageSize, 0x10, 2);
 
     return EFI_SUCCESS;
 }
 
-/**
-    This function retrieves SDIO device name, copies it into
-    lower memory and returns a pointer to the string.
 
-    @param  DevIndex
-    @param  DevNameStringSrc
-    @param  StringDestinationSegment
-    @param  StringDestinationOffset
-    @param  MfgStringDestinationSegment
-    @param  MfgStringDestinationOffset
-
-    @retval  EFI_STATUS
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        CreateDeviceName
+//
+// Description: This function retrieves SDIO device name, copies it into
+//              lower memory and returns a pointer to the string.
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 EFI_STATUS
-CreateDeviceName (
-    UINT8  DevIndex,
-    UINT8  *DevNameStringSrc,
-    UINT16 *StringDestinationSegment,
-    UINT16 *StringDestinationOffset,
-    UINT16 *MfgStringDestinationSegment,
-    UINT16 *MfgStringDestinationOffset
+CreateDeviceName(
+    UINT8   DevIndex,
+    UINT8   *DevNameStringSrc,
+    UINT16  *StringDestinationSegment,
+    UINT16  *StringDestinationOffset,
+    UINT16  *MfgStringDestinationSegment,
+    UINT16  *MfgStringDestinationOffset
 )
 {
     UINT8 *DevName = (gI13BinData->SdioMassI13Dev)[DevIndex].DeviceNameString;
@@ -160,7 +171,7 @@ CreateDeviceName (
     //
     // Copy the string, compact it on the way (no more that one ' ' in a row)
     //
-    for (i=0; i<31 && *DevNameStringSrc != 0; i++, DevNameStringSrc++)
+    for (i=0; i<31, *DevNameStringSrc != 0; i++, DevNameStringSrc++)
     {
         if ((*DevNameStringSrc == 0x20) && (*(DevNameStringSrc-1) == 0x20)) continue;
         *DevName++ = *DevNameStringSrc;  // DevNameStringSrc incremented unconditionally
@@ -179,29 +190,29 @@ CreateDeviceName (
 }
 
 
-/**
-    This function takes the device index within SDIOMASS_INT13_DEV 
-    list and prepares BBS entry for this device.
-
-    @param  DevIndex
-    @param  SdioMassDevice
-    @param  BbsEntry
-
-    @retval  EFI_STATUS
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        CreateBbsEntry
+//
+// Description: This function takes the device index within SDIOMASS_INT13_DEV
+//              list and prepares BBS entry for this device.
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 EFI_STATUS
-CreateBbsEntry (
-    UINT8  DevIndex,
-    IN     SDIO_MASS_DEV *SdioMassDevice,
-    OUT    BBS_TABLE     *BbsEntry
+CreateBbsEntry(
+    UINT8           DevIndex,
+    IN SDIO_MASS_DEV *SdioMassDevice,
+    OUT BBS_TABLE   *BbsEntry
 )
 {
-    EFI_STATUS       Status;
-    UINT8            Handle;
-    UINT8            DevAndSysType;
-    UINT8            BaidDeviceType;
-    BBS_STATUS_FLAGS StatusFlags;
+    EFI_STATUS  Status;
+    UINT8       Handle;
+    UINT8       DevAndSysType;
+    UINT8       BaidDeviceType;
+    BBS_STATUS_FLAGS    StatusFlags;
 
     ASSERT(DevIndex < SDIODEVS_MAX_ENTRIES);
 
@@ -272,34 +283,29 @@ CreateBbsEntry (
 }
 
 
-/**
-    This function installs SDIO INT13 device
-
-    @param  SdioMassDevice
-
-    @retval  EFI_STATUS
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:  SdioInstallLegacyDevice
+//
+// Description: This function installs SDIO INT13 device
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 EFI_STATUS
-EFIAPI
 SdioInstallLegacyDevice (
     SDIO_MASS_DEV    *SdioMassDevice
 )
 {
-    BBS_TABLE     BbsEntry;
-    EFI_STATUS    Status;
-    UINT8         EntryNumber = 0xff;
-    UINT8         Index;
-    SDIO_DEV_INFO *Device=(SDIO_DEV_INFO*)SdioMassDevice->DevInfo;
+    BBS_TABLE   BbsEntry;
+    EFI_STATUS  Status;
+    UINT8       EntryNumber = 0xff;
+    UINT8       Index;
+    SDIO_DEV_INFO    *Device;
 
     TRACE((-1, "Installing SDIO INT13 device %x\n", SdioMassDevice));
 
-    // If the device Block size is not equal to 512 bytes 
-    // Don't add the device as the INT13 device ( Legacy supported device). 
-    if(Device->wBlockSize != 512 ) {
-        return EFI_SUCCESS;
-    }
-    
     //
     // See if device is already in the list, if yes - return error.
     //
@@ -342,6 +348,7 @@ SdioInstallLegacyDevice (
     //
     // Update device geometry related information
     //
+    Device = (SDIO_DEV_INFO*)SdioMassDevice->DevInfo;
     (gI13BinData->SdioMassI13Dev)[Index].NumHeads = Device->bNonLBAHeads;
     (gI13BinData->SdioMassI13Dev)[Index].LBANumHeads = Device->bHeads;
     (gI13BinData->SdioMassI13Dev)[Index].NumCylinders = Device->wNonLBACylinders;
@@ -361,7 +368,7 @@ SdioInstallLegacyDevice (
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2016, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2012, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **

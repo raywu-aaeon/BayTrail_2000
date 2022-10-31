@@ -46,10 +46,6 @@
         key   = AUTO_ID(SECURE_VAR_INSTALL_ID),
         name  = SecureVarPresent,
         guid  = SECURITY_FORM_SET_GUID;
-    varstore SECURE_BOOT_VENDOR_KEY_VAR,
-        key   = AUTO_ID(SECURE_VAR_VENDOR_KEY_ID),
-        name  = VendorKeys,
-        guid  = {0x8BE4DF61,0x93CA,0x11d2,0xAA,0xD,0x0,0xE0,0x98,0x03,0x2B,0x8C};
     varstore SETUP_MODE_VAR,
         key   = AUTO_ID(SETUP_MODE_ID),
         name  = SetupMode,
@@ -74,8 +70,7 @@
     //
     goto SECURE_BOOT_SUBMENU_FORM_ID,
     prompt  = STRING_TOKEN(SECURE_BOOT_MENU_FORM_TITLE),
-    help    = STRING_TOKEN(SECURE_BOOT_MENU_FORM_HELP),
-    flags   = INTERACTIVE, key = AUTO_ID(SECURE_BOOT_MENU_REFRESH);
+    help    = STRING_TOKEN(SECURE_BOOT_MENU_FORM_HELP);
 
   #endif
 
@@ -87,7 +82,7 @@
     title     = STRING_TOKEN(SECURE_BOOT_MENU_FORM_TITLE);
 
         SEPARATOR
-        suppressif NOT ideqval SETUP_MODE_VAR.Value == 0;
+        suppressif  ideqval SETUP_MODE_VAR.Value == 1;
             text 
                 help   = STRING_TOKEN(STR_EMPTY),
                 text   = STRING_TOKEN(STR_PLATFORM_MODE),
@@ -95,7 +90,7 @@
                 flags  = 0,
                 key    = 0;
         endif;
-        suppressif NOT ideqval SETUP_MODE_VAR.Value == 1;
+        suppressif  ideqval SETUP_MODE_VAR.Value == 0;
             text 
                 help   = STRING_TOKEN(STR_EMPTY),
                 text   = STRING_TOKEN(STR_PLATFORM_MODE),
@@ -103,7 +98,7 @@
                 flags  = 0,
                 key    = 0;
         endif;
-        suppressif NOT ideqval SECURE_BOOT_VAR.Value == 0;
+        suppressif  ideqval SECURE_BOOT_VAR.Value == 1;
             text 
                 help   = STRING_TOKEN(STR_EMPTY),
                 text   = STRING_TOKEN(STR_PLATFORM_SECURE_MODE),
@@ -111,7 +106,7 @@
                 flags  = 0,
                 key    = 0;
         endif;
-        suppressif NOT ideqval SECURE_BOOT_VAR.Value == 1;
+        suppressif  ideqval SECURE_BOOT_VAR.Value == 0;
             text 
                 help   = STRING_TOKEN(STR_EMPTY),
                 text   = STRING_TOKEN(STR_PLATFORM_SECURE_MODE),
@@ -119,31 +114,6 @@
                 flags  = 0,
                 key    = 0;
         endif;
-        suppressif NOT ideqval SECURE_BOOT_VENDOR_KEY_VAR.Value == 1;
-            text 
-                help   = STRING_TOKEN(STR_EMPTY),
-                text   = STRING_TOKEN(STR_VENDOR_KEYS_MODE),
-                text   = STRING_TOKEN(STR_ACTIVE),
-                flags  = 0,
-                key    = 0;
-        endif;
-        suppressif NOT ideqval SECURE_BOOT_VENDOR_KEY_VAR.Value == 0;
-            text 
-                help   = STRING_TOKEN(STR_EMPTY),
-                text   = STRING_TOKEN(STR_VENDOR_KEYS_MODE),
-                text   = STRING_TOKEN(STR_INACTIVE),
-                flags  = 0,
-                key    = 0;
-        endif;
-        suppressif TRUE;
-            oneof varid  = SECURE_BOOT_SETUP_VAR.BackDoorVendorKeyChange,
-               prompt = STRING_TOKEN(STR_VENDOR_KEYS_MODE),
-               help = STRING_TOKEN(STR_EMPTY_STRING),
-               default = 0,
-               option text = STRING_TOKEN(STR_ENABLED), value = 0, flags = MANUFACTURING | RESET_REQUIRED;
-            endoneof;
-        endif;
-        
         //
         // Define controls to be added to the main page of the formset
         //
@@ -158,12 +128,11 @@
                 option text = STRING_TOKEN(STR_ENABLED), value = 1, flags = MANUFACTURING | RESET_REQUIRED | INTERACTIVE;
             endoneof;
             oneof varid  = SECURE_BOOT_SETUP_VAR.SecureBootMode,
-                questionid = AUTO_ID(SECURE_BOOT_MODE_CHANGE_KEY),
                 prompt = STRING_TOKEN(STR_SECURE_BOOT_MODE),
                 help = STRING_TOKEN(STR_SECURE_BOOT_MODE_HELP),
                 default = DEFAULT_SECURE_BOOT_MODE,
-                option text = STRING_TOKEN(SECURE_BOOT_STANDARD), value = 0, flags = MANUFACTURING | RESET_REQUIRED | INTERACTIVE;
-                option text = STRING_TOKEN(SECURE_BOOT_CUSTOM), value = 1, flags = RESET_REQUIRED | INTERACTIVE;
+                option text = STRING_TOKEN(SECURE_BOOT_STANDARD), value = 0, flags = MANUFACTURING | RESET_REQUIRED;
+                option text = STRING_TOKEN(SECURE_BOOT_CUSTOM), value = 1, flags = RESET_REQUIRED;
             endoneof;
         endif;
         //
@@ -172,14 +141,13 @@
          grayoutif ideqval SYSTEM_ACCESS.Access == SYSTEM_PASSWORD_USER OR ideqval SECURE_BOOT_SETUP_VAR.SecureBootMode == 0;
             goto SECURE_KEY_MANAGEMENT_FORM_ID,
             prompt  = STRING_TOKEN(STR_KEY_MANAGEMENT_TITLE),
-            help    = STRING_TOKEN(STR_KEY_MANAGEMENT_HELP),
-            flags   = INTERACTIVE, key = AUTO_ID(KEY_MANAGEMENT_MENU_REFRESH);
+            help    = STRING_TOKEN(STR_KEY_MANAGEMENT_HELP);
      #if (defined(ENABLE_IMAGE_EXEC_POLICY_OVERRIDE) && ENABLE_IMAGE_EXEC_POLICY_OVERRIDE == 1)
             goto IMAGE_EXEC_POLICY_FORM_ID,
             prompt  = STRING_TOKEN(IMAGE_EXEC_POLICY_FORM_TITLE),
             help    = STRING_TOKEN(IMAGE_EXEC_POLICY_FORM_HELP);
      #endif   
-         endif;
+        endif;
     endform;
 
     form formid = AUTO_ID(SECURE_KEY_MANAGEMENT_FORM_ID),
@@ -197,65 +165,202 @@
         // Define goto commands for the forms defined in this file
         //
         SEPARATOR
-        suppressif ideqval SECURE_VAR_INSTALL_VAR.PK == 0 OR ideqval SECURE_BOOT_SETUP_VAR.DefaultKeyProvision == 1;
+        suppressif  ideqval SECURE_VAR_INSTALL_VAR.PK == 0 OR ideqval SECURE_BOOT_SETUP_VAR.DefaultKeyProvision == 1;
             goto SECURE_KEY_MANAGEMENT_FORM_ID,
             prompt  = STRING_TOKEN(STR_FORCE_SETUP_MODE),
             help    = STRING_TOKEN(STR_FORCE_SETUP_MODE_HELP),
-            flags   = INTERACTIVE | RESET_REQUIRED, key = AUTO_ID(FORCE_SETUP_KEY);
+            flags   = INTERACTIVE, key = AUTO_ID(FORCE_SETUP_KEY);
         endif;
-        suppressif NOT ideqval SECURE_VAR_INSTALL_VAR.PK == 0 AND ideqval SECURE_BOOT_SETUP_VAR.DefaultKeyProvision == 0;
+        suppressif  ideqval SECURE_VAR_INSTALL_VAR.PK == 1 AND ideqval SECURE_BOOT_SETUP_VAR.DefaultKeyProvision == 0;
             goto SECURE_KEY_MANAGEMENT_FORM_ID,
             prompt  = STRING_TOKEN(STR_FORCE_DEFAULT_MODE),
             help    = STRING_TOKEN(STR_FORCE_DEFAULT_MODE_HELP),
-            flags   = INTERACTIVE | RESET_REQUIRED, key = AUTO_ID(FORCE_DEFAULT_KEY);
+            flags   = INTERACTIVE, key = AUTO_ID(FORCE_DEFAULT_KEY);
         endif;
-        grayoutif ideqval SECURE_VAR_INSTALL_VAR.PK == 0 AND ideqval SECURE_VAR_INSTALL_VAR.KEK == 0 AND ideqval SECURE_VAR_INSTALL_VAR.DBT == 0 AND ideqval SECURE_VAR_INSTALL_VAR.DB == 0 AND ideqval SECURE_VAR_INSTALL_VAR.DBX == 0;
+        grayoutif ideqval SECURE_VAR_INSTALL_VAR.PK == 0 AND ideqval SECURE_VAR_INSTALL_VAR.KEK == 0 AND ideqval SECURE_VAR_INSTALL_VAR.DB == 0 AND ideqval SECURE_VAR_INSTALL_VAR.DBX == 0;
             goto SECURE_KEY_MANAGEMENT_FORM_ID,
             prompt  = STRING_TOKEN(STR_GET_ALL_VARS),
-            help    = STRING_TOKEN(STR_GET_KEYS_HELP),
+            help    = STRING_TOKEN(STR_GET_PK_HELP),
             flags   = INTERACTIVE, key = AUTO_ID(GET_PK_KEY);
         endif;
-
         SEPARATOR   
-        SUBTITLE(STRING_TOKEN(STR_KEY_TITLE))
-       
+        suppressif  NOT ideqval SECURE_VAR_INSTALL_VAR.PK == 0;
+            text 
+                help   = STRING_TOKEN(STR_EMPTY),
+                text   = STRING_TOKEN(STR_MANAGE_PK),
+                text   = STRING_TOKEN(STR_NOT_INSTALLED),
+                flags  = 0,
+                key    = 0;
+        endif;
+        suppressif  NOT ideqval SECURE_VAR_INSTALL_VAR.PK == 1;
+            text 
+                help   = STRING_TOKEN(STR_EMPTY),
+                text   = STRING_TOKEN(STR_MANAGE_PK),
+                text   = STRING_TOKEN(STR_INSTALLED),
+                flags  = 0,
+                key    = 0;
+        endif;
+
+        grayoutif ideqval SECURE_VAR_INSTALL_VAR.PK == 0;
+            goto SECURE_KEY_MANAGEMENT_FORM_ID,
+            prompt  = STRING_TOKEN(STR_DELETE_PK),
+            help    = STRING_TOKEN(STR_DELETE_PK_HELP),
+            flags   = INTERACTIVE, key = AUTO_ID(DELETE_PK_KEY);
+        endif;
         goto SECURE_KEY_MANAGEMENT_FORM_ID,
-        prompt  = STRING_TOKEN(STR_PK_TITLE),
-        help    = STRING_TOKEN(STR_KEY_UPDATE_HELP),
-        flags   = INTERACTIVE, key = AUTO_ID(MANAGE_PK_KEY);
+        prompt  = STRING_TOKEN(STR_SET_PK),
+        help    = STRING_TOKEN(STR_APPEND_KEK_ENTRY_HELP),
+        flags   = INTERACTIVE, key = AUTO_ID(SET_PK_KEY);
+
+       SEPARATOR   
+        
+       suppressif NOT ideqval SECURE_VAR_INSTALL_VAR.KEK == 0;
+            text 
+                help   = STRING_TOKEN(STR_EMPTY),
+                text   = STRING_TOKEN(STR_MANAGE_KEK),
+                text   = STRING_TOKEN(STR_NOT_INSTALLED),
+                flags  = 0,
+                key    = 0;
+        endif;
+        suppressif NOT ideqval SECURE_VAR_INSTALL_VAR.KEK == 1;
+            text 
+                help   = STRING_TOKEN(STR_EMPTY),
+                text   = STRING_TOKEN(STR_MANAGE_KEK),
+                text   = STRING_TOKEN(STR_INSTALLED),
+                flags  = 0,
+                key    = 0;
+        endif;
+
+        grayoutif ideqval SECURE_VAR_INSTALL_VAR.KEK == 0;
+            goto SECURE_KEY_MANAGEMENT_FORM_ID,
+            prompt  = STRING_TOKEN(STR_DELETE_KEK),
+            help    = STRING_TOKEN(STR_DELETE_PK_HELP),
+            flags   = INTERACTIVE, key = AUTO_ID(DELETE_KEK_KEY);
+        endif;
 
         goto SECURE_KEY_MANAGEMENT_FORM_ID,
-        prompt  = STRING_TOKEN(STR_KEK_TITLE),
-        help    = STRING_TOKEN(STR_KEY_UPDATE_HELP),
-        flags   = INTERACTIVE, key = AUTO_ID(MANAGE_KEK_KEY);
+        prompt  = STRING_TOKEN(STR_SET_KEK),
+        help    = STRING_TOKEN(STR_APPEND_KEK_ENTRY_HELP),
+        flags   = INTERACTIVE, key = AUTO_ID(SET_KEK_KEY);
 
         goto SECURE_KEY_MANAGEMENT_FORM_ID,
-        prompt  = STRING_TOKEN(STR_DB_TITLE),
-        help    = STRING_TOKEN(STR_KEY_UPDATE_HELP),
-        flags   = INTERACTIVE, key = AUTO_ID(MANAGE_DB_KEY);
+        prompt  = STRING_TOKEN(STR_APPEND_KEK_ENTRY),
+        help    = STRING_TOKEN(STR_APPEND_KEK_ENTRY_HELP),
+        flags   = INTERACTIVE, key = AUTO_ID(APPEND_KEK_KEY);
+            
+        suppressif NOT ideqval SECURE_VAR_INSTALL_VAR.DB == 0;
+            text 
+                help   = STRING_TOKEN(STR_EMPTY),
+                text   = STRING_TOKEN(STR_MANAGE_DB),
+                text   = STRING_TOKEN(STR_NOT_INSTALLED),
+                flags  = 0,
+                key    = 0;
+        endif;
+        suppressif NOT ideqval SECURE_VAR_INSTALL_VAR.DB == 1;
+            text 
+                help   = STRING_TOKEN(STR_EMPTY),
+                text   = STRING_TOKEN(STR_MANAGE_DB),
+                text   = STRING_TOKEN(STR_INSTALLED),
+                flags  = 0,
+                key    = 0;
+        endif;
+
+        grayoutif ideqval SECURE_VAR_INSTALL_VAR.DB == 0;
+            goto SECURE_KEY_MANAGEMENT_FORM_ID,
+            prompt  = STRING_TOKEN(STR_DELETE_DB),
+            help    = STRING_TOKEN(STR_DELETE_PK_HELP),
+            flags   = INTERACTIVE, key = AUTO_ID(DELETE_DB_KEY);
+        endif;
 
         goto SECURE_KEY_MANAGEMENT_FORM_ID,
-        prompt  = STRING_TOKEN(STR_DBX_TITLE),
-        help    = STRING_TOKEN(STR_KEY_UPDATE_HELP),
-        flags   = INTERACTIVE, key = AUTO_ID(MANAGE_DBX_KEY);
+        prompt  = STRING_TOKEN(STR_SET_DB),
+        help    = STRING_TOKEN(STR_APPEND_KEK_ENTRY_HELP),
+        flags   = INTERACTIVE, key = AUTO_ID(SET_DB_KEY);
 
         goto SECURE_KEY_MANAGEMENT_FORM_ID,
-        prompt  = STRING_TOKEN(STR_DBT_TITLE),
-        help    = STRING_TOKEN(STR_KEY_UPDATE_HELP),
-        flags   = INTERACTIVE, key = AUTO_ID(MANAGE_DBT_KEY);
+        prompt  = STRING_TOKEN(STR_APPEND_DB_ENTRY),
+        help    = STRING_TOKEN(STR_APPEND_KEK_ENTRY_HELP),
+        flags   = INTERACTIVE, key = AUTO_ID(APPEND_DB_KEY);
+
+       suppressif NOT ideqval SECURE_VAR_INSTALL_VAR.DBT == 0;
+            text 
+                help   = STRING_TOKEN(STR_EMPTY),
+                text   = STRING_TOKEN(STR_MANAGE_DBT),
+                text   = STRING_TOKEN(STR_NOT_INSTALLED),
+                flags  = 0,
+                key    = 0;
+        endif;
+        suppressif NOT ideqval SECURE_VAR_INSTALL_VAR.DBT == 1;
+            text 
+                help   = STRING_TOKEN(STR_EMPTY),
+                text   = STRING_TOKEN(STR_MANAGE_DBT),
+                text   = STRING_TOKEN(STR_INSTALLED),
+                flags  = 0,
+                key    = 0;
+        endif;
+
+        grayoutif ideqval SECURE_VAR_INSTALL_VAR.DBT == 0;
+            goto SECURE_KEY_MANAGEMENT_FORM_ID,
+            prompt  = STRING_TOKEN(STR_DELETE_DBT),
+            help    = STRING_TOKEN(STR_DELETE_PK_HELP),
+            flags   = INTERACTIVE, key = AUTO_ID(DELETE_DBT_KEY);
+        endif;
+
+        goto SECURE_KEY_MANAGEMENT_FORM_ID,
+        prompt  = STRING_TOKEN(STR_SET_DBT),
+        help    = STRING_TOKEN(STR_APPEND_KEK_ENTRY_HELP),
+        flags   = INTERACTIVE, key = AUTO_ID(SET_DBT_KEY);
+
+        goto SECURE_KEY_MANAGEMENT_FORM_ID,
+        prompt  = STRING_TOKEN(STR_APPEND_DBT_ENTRY),
+        help    = STRING_TOKEN(STR_APPEND_KEK_ENTRY_HELP),
+        flags   = INTERACTIVE, key = AUTO_ID(APPEND_DBT_KEY);
+
+       suppressif NOT ideqval SECURE_VAR_INSTALL_VAR.DBX == 0;
+            text 
+                help   = STRING_TOKEN(STR_EMPTY),
+                text   = STRING_TOKEN(STR_MANAGE_DBX),
+                text   = STRING_TOKEN(STR_NOT_INSTALLED),
+                flags  = 0,
+                key    = 0;
+        endif;
+        suppressif NOT ideqval SECURE_VAR_INSTALL_VAR.DBX == 1;
+            text 
+                help   = STRING_TOKEN(STR_EMPTY),
+                text   = STRING_TOKEN(STR_MANAGE_DBX),
+                text   = STRING_TOKEN(STR_INSTALLED),
+                flags  = 0,
+                key    = 0;
+        endif;
+
+        grayoutif ideqval SECURE_VAR_INSTALL_VAR.DBX == 0;
+            goto SECURE_KEY_MANAGEMENT_FORM_ID,
+            prompt  = STRING_TOKEN(STR_DELETE_DBX),
+            help    = STRING_TOKEN(STR_DELETE_PK_HELP),
+            flags   = INTERACTIVE, key = AUTO_ID(DELETE_DBX_KEY);
+        endif;
+
+        goto SECURE_KEY_MANAGEMENT_FORM_ID,
+        prompt  = STRING_TOKEN(STR_SET_DBX),
+        help    = STRING_TOKEN(STR_APPEND_KEK_ENTRY_HELP),
+        flags   = INTERACTIVE, key = AUTO_ID(SET_DBX_KEY);
+
+        goto SECURE_KEY_MANAGEMENT_FORM_ID,
+        prompt  = STRING_TOKEN(STR_APPEND_DBX_ENTRY),
+        help    = STRING_TOKEN(STR_APPEND_KEK_ENTRY_HELP),
+        flags   = INTERACTIVE, key = AUTO_ID(APPEND_DBX_KEY);
 
     endform;
-    
+
 #if (defined(ENABLE_IMAGE_EXEC_POLICY_OVERRIDE) && ENABLE_IMAGE_EXEC_POLICY_OVERRIDE == 1)
     form formid = AUTO_ID(IMAGE_EXEC_POLICY_FORM_ID),
     title     = STRING_TOKEN(IMAGE_EXEC_POLICY_FORM_TITLE);
 
-        text 
-                help   = STRING_TOKEN(STR_EMPTY),
-                text   = STRING_TOKEN(STR_LOAD_FROM_FV),
-                text   = STRING_TOKEN(ALWAYS_ENABLED),
-                flags  = 0,
-                key    = 0;
+        oneof varid  = SECURE_BOOT_SETUP_VAR.Load_from_FV,
+            prompt = STRING_TOKEN(STR_LOAD_FROM_FV),
+            help = STRING_TOKEN(STR_LOAD_FROM_HELP),
+            option text = STRING_TOKEN(ALWAYS_ENABLED), value = 0,  flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;
+        endoneof;
 
         oneof varid  = SECURE_BOOT_SETUP_VAR.Load_from_OROM,
             prompt = STRING_TOKEN(STR_LOAD_FROM_OROM),

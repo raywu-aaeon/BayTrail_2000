@@ -23,22 +23,3 @@ INFComponent
     ModuleTypes  = "DXE_RUNTIME_DRIVER"
     Token = "SMM_SUPPORT" "=" "1"
 End
-
-TOKEN
-    Name  = "====== SA50027: Fundation_09 for 5.11(SmmCore_03) ======"
-    TokenType = Expression
-End
-
-INFComponent    # EIP288532
-	Name  = "SmmMemLib"
-	File  = "SmmMemLib.inf"
-	Package  = "MdeModulePkg"
-	Token = "SMM_SUPPORT" "=" "1"
-End
-
-LibraryMapping  # EIP288532
-	Class  = "SmmMemLib"
-	Instance  = "MdeModulePkg.SmmMemLib"
-	ModuleTypes  = "DXE_SMM_DRIVER SMM_CORE"
-	Token = "SMM_SUPPORT" "=" "1"
-End

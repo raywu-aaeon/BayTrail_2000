@@ -1,8 +1,0 @@
-<component>
-	name = "AhciBus Protocol"
-	category = ModulePart
-	LocalRoot = "AmiModulePkg\Include\Protocol\"
-	RefName = "AhciBusProtocol"
-[files]
-"AmiAhciBus.h"	
-<endComponent>

@@ -1,28 +1,33 @@
-//***********************************************************************
-//***********************************************************************
-//**                                                                   **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.          **
-//**                                                                   **
-//**                       All Rights Reserved.                        **
-//**                                                                   **
-//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093         **
-//**                                                                   **
-//**                       Phone: (770)-246-8600                       **
-//**                                                                   **
-//***********************************************************************
-//***********************************************************************
+//**********************************************************************
+//**********************************************************************
+//**                                                                  **
+//**        (C)Copyright 1985-2012, American Megatrends, Inc.         **
+//**                                                                  **
+//**                       All Rights Reserved.                       **
+//**                                                                  **
+//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093        **
+//**                                                                  **
+//**                       Phone: (770)-246-8600                      **
+//**                                                                  **
+//**********************************************************************
+//**********************************************************************
 
-/** @file 
-StdEc.c
-
-This function is used to support flashing AMI EC firmware.
-
-*/
-
-//---------------------------------------------------------------------------
-// Include Files
-//---------------------------------------------------------------------------
-
+//**********************************************************************
+// $Header: /AptioV/Source/Modules/Ofbd/StdEc/StdEc.c $
+//
+// $Revision: $
+//
+// $Date: $
+//**********************************************************************
+//<AMI_FHDR_START>
+//
+// Name:	StdEc.c
+//
+// Description: 
+// This function is used to support flashing AMI EC firmware.
+//
+//<AMI_FHDR_END>
+//**********************************************************************
 #include <Efi.h>
 #include <Token.h>
 #include <AmiLib.h>
@@ -31,16 +36,19 @@ This function is used to support flashing AMI EC firmware.
 #include "../Ofbd.h"
 
 UINT8	PMBase30 = 0 ;		//	(for Intel ICHx)
-
-/**
-    ObFullRead
-
-	Waits for Output Buffer Full and then reads the data port
-		
-    @param pOFBDHdr - Ofbd header.
-
-    @return UINT8 - KBC Data port data
-*/ 
+//**********************************************************************
+//<AMI_PHDR_START>
+//
+// Procedure:	ObFullRead
+//
+// Description:	Waits for Output Buffer Full and then reads the data port
+//
+// Input:		None
+//
+// Output:		KBC Data port data
+//
+//<AMI_PHDR_END>
+//**********************************************************************                
 
 UINT8 ObFullRead()
 {
@@ -59,14 +67,19 @@ void IbFree()
 		}
 	}
 }
-
-/**
-    WriteKeyboardCommand
-
-	Writes command to KBC.
-		
-    @param bCmd - Command to send to KBC.
-*/             
+//**********************************************************************
+//<AMI_PHDR_START>
+//
+// Procedure:	WriteKeyboardCommand
+//
+// Description:	Writes command to KBC.
+//
+// Input:		Command to send to KBC
+//
+// Output:		None
+//
+//<AMI_PHDR_END>
+//**********************************************************************                
 
 void WriteKeyboardCommand(UINT8 bCmd)
 {
@@ -74,15 +87,19 @@ void WriteKeyboardCommand(UINT8 bCmd)
 	IoWrite8(EC_KBC_CMD_PORT, bCmd);
 	IbFree();
 }
-
-/**
-    WriteKeyboardData
-
-	Writes data to KBC.
-		
-    @param bData - Data to send to KBC.
-*/      
-           
+//**********************************************************************
+//<AMI_PHDR_START>
+//
+// Procedure:	WriteKeyboardData
+//
+// Description:	Writes data to KBC.
+//
+// Input:		Data to send to KBC
+//
+// Output:		None
+//
+//<AMI_PHDR_END>
+//**********************************************************************                
 void WriteKeyboardData(UINT8 bData)
 {
 	IbFree();
@@ -90,17 +107,19 @@ void WriteKeyboardData(UINT8 bData)
 	IbFree();
 }
 
-/**
-    Ofbd (Send EC Command handle)
-
-	Writes EC command to EC Firmware.
-	
-    @param bCmd - EC command.
-
-    @return EFI_STATUS
-    @retval EFI_SUCCESS Function executed successfully
-*/ 
-
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:	OFBDECCommand
+//
+// Description:	EC command
+//
+// Input:
+//      IN UINT8            bCmd
+// Output:
+//      EFI_STATUS
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
 OFBDECCommand(IN UINT8 bCmd)
 {
@@ -112,18 +131,20 @@ OFBDECCommand(IN UINT8 bCmd)
 
     return(Status);
 }
-
-/**
-    Ofbd (EC data checksum handle)
-
-	computes EC data checksum
-	
-    @param BuffPtr - data buffer.
-    @param Size - data size.
-
-    @retval UINT32 - data checksum
-*/ 
-
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:	OFBDECCheckSum
+//
+// Description:	computes EC data checksum
+//
+// Input:
+//      IN UINT8 *BuffPtr
+//      IN UINT32 Size
+// Output:
+//      UINT32
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 UINT32
 OFBDECCheckSum(IN UINT8 *BuffPtr, IN UINT32 Size)
 {
@@ -135,17 +156,20 @@ OFBDECCheckSum(IN UINT8 *BuffPtr, IN UINT32 Size)
 
     return (~CheckSum);
 }
-
-/**
-	USB Keyboard Mouse Disable function.
-	
-    @param ECStructPtr - Ofbd Type Code 54 Structure Header.
-    @param ReturnErr - error value returns
-
-    @return EFI_STATUS
-    @retval EFI_SUCCESS Function executed successfully
-*/ 
-
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:	USBKeyboardMouseDisable
+//
+// Description:	USB Keyboard Mouse Disable
+//
+// Input:
+//      IN OFBD_TC_54_STD_EC_STRUCT *ECStructPtr
+//      OUT UINT8 *ReturnErr
+// Output:
+//      EFI_STATUS
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
 USBKeyboardMouseDisable(
     IN OFBD_TC_54_STD_EC_STRUCT *ECStructPtr,
@@ -164,17 +188,20 @@ USBKeyboardMouseDisable(
 
     return(Status);
 }
-
-/**
-	USB Keyboard Mouse Enable function.
-	
-    @param ECStructPtr - Ofbd Type Code 54 Structure Header.
-    @param ReturnErr - error value returns
-
-    @return EFI_STATUS
-    @retval EFI_SUCCESS Function executed successfully
-*/ 
-
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:	USBKeyboardMouseEnable
+//
+// Description:	USB Keyboard Mouse Enable
+//
+// Input:
+//      IN OFBD_TC_54_STD_EC_STRUCT *ECStructPtr,
+//      IN UINT8 *ReturnErr)
+// Output:
+//      EFI_STATUS
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
 USBKeyboardMouseEnable(
     IN OFBD_TC_54_STD_EC_STRUCT *ECStructPtr,
@@ -191,18 +218,19 @@ USBKeyboardMouseEnable(
 
     return(Status);
 }
-
-/**
-    Ofbd (Standard EC firmware Start function handle)
-
-	for EC firmware entry flash mode and start transmit data
-	
-    @param ECStructPtr - Ofbd Type Code 54 Structure Header.
-    
-    @return EFI_STATUS
-    @retval EFI_SUCCESS Function executed successfully
-*/ 
-
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:	OFBDStdECStart
+//
+// Description:	for EC firmware entry flash mode and start transmit data
+//
+// Input:
+//      IN OUT OFBD_TC_54_STD_EC_STRUCT *ECStructPtr
+// Output:
+//      EFI_STATUS
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
 OFBDStdECStart(
     IN OUT OFBD_TC_54_STD_EC_STRUCT *ECStructPtr)
@@ -253,18 +281,19 @@ OFBDStdECStart(
 
     return(Status);
 }
-
-/**
-    Ofbd (Standard EC firmware Flash function handle)
-
-	for EC firmware to transmit data during flash mode
-	
-    @param ECStructPtr - Ofbd Type Code 54 Structure Header.
-    
-    @return EFI_STATUS
-    @retval EFI_SUCCESS Function executed successfully
-*/ 
-
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:	OFBDStdECFlash
+//
+// Description:	for EC firmware to transmit data
+//
+// Input:
+//      IN OFBD_TC_54_STD_EC_STRUCT *ECStructPtr
+// Output:
+//      EFI_STATUS
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
 OFBDStdECFlash(IN OFBD_TC_54_STD_EC_STRUCT *ECStructPtr)
 {
@@ -317,19 +346,20 @@ OFBDStdECFlash(IN OFBD_TC_54_STD_EC_STRUCT *ECStructPtr)
 
     return(Status);
 }
-
-/**
-    Ofbd (Standard EC firmware exit flash mode function handle)
-
-	for EC firmware leave flash mode and finished transmit data
-	
-    @param ECStructPtr - Ofbd Type Code 54 Structure Header.
-    @param pOFBDHdr - Ofbd header.
-    
-    @return EFI_STATUS
-    @retval EFI_SUCCESS Function executed successfully
-*/ 
-
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:	OFBDStdECEnd
+//
+// Description:	for EC firmware leave flash mode and finished transmit data
+//
+// Input:
+//      IN OUT OFBD_TC_54_STD_EC_STRUCT *ECStructPtr
+//      IN OUT OFBD_HDR *pOFBDHdr
+// Output:
+//      EFI_STATUS
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
 OFBDStdECEnd(
     IN OUT OFBD_TC_54_STD_EC_STRUCT *ECStructPtr, 
@@ -354,19 +384,20 @@ OFBDStdECEnd(
 
     return(Status);
 }
-
-/**
-    Ofbd (Standard EC Flash handle)
-
-	Embedded Controller flash protocol is for Flash Utility to flash Embedded Controller.
-	
-	@param ECStructPtr - Ofbd Type Code 54 Structure Header.
-    @param pOFBDHdr - Ofbd header.
-
-    @return EFI_STATUS
-    @retval EFI_SUCCESS Function executed successfully
-*/ 
-
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:	OFBDStdECFlashHandle
+//
+// Description:	OFBD Standard EC Flash Handle
+//
+// Input:
+//      IN OUT OFBD_TC_54_STD_EC_STRUCT *ECStructPtr
+//      IN OUT OFBD_HDR *pOFBDHdr
+// Output:
+//      EFI_STATUS
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
 OFBDStdECFlashHandle(
     IN OUT OFBD_TC_54_STD_EC_STRUCT *ECStructPtr, 
@@ -401,17 +432,20 @@ OFBDStdECFlashHandle(
 
     return(Status);
 }
-
-/**
-   	This function is Ofbd Standard EC Flash function entry point
-
-	@param Buffer - Ofbd header.
-  	@param pOFBDDataHandled - handle value returns
-  	
-	@retval	0xFF means Function executed successfully
-	@retval	0xFE means Function error occured
-*/ 
-
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:	OFBDEntryPoint
+//
+// Description:	OFBD Standard EC Flash Entry Point
+//
+// Input:
+//      IN VOID             *Buffer
+//      IN OUT UINT8        *pOFBDDataHandled
+// Output:
+//      VOID
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID StdECEntry (
     IN VOID             *Buffer,
     IN OUT UINT8        *pOFBDDataHandled )
@@ -466,7 +500,7 @@ VOID StdECEntry (
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2012, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **

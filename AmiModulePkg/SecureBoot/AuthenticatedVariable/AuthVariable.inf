@@ -2,6 +2,8 @@
 INF_VERSION 	= 0x00010015
 VERSION_STRING 	= 1.0
 BASE_NAME 		= AuthVariable
+#MODULE_TYPE 	= BASE
+#LIBRARY_CLASS  = AuthVariable|DXE_DRIVER DXE_CORE DXE_RUNTIME_DRIVER DXE_SMM_DRIVER
 MODULE_TYPE     = UEFI_DRIVER
 LIBRARY_CLASS   = NULL
 FILE_GUID 		= 4FECFAA8-3439-4518-8090-B22D9E9267FA
@@ -16,8 +18,12 @@ AuthVariable.h
   AmiCompatibilityPkg/AmiCompatibilityPkg.dec
   AmiModulePkg/AmiModulePkg.dec
   AmiCryptoPkg/AmiCryptoPkg.dec
+  IntelFrameworkPkg\IntelFrameworkPkg.dec
+  #Build/Platform.dec
 
 [LibraryClasses]
+#  AmiDxeLib
+#  UefiDriverEntryPoint
   AmiCryptLib
 
 [Guids]

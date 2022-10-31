@@ -52,12 +52,8 @@
 
 #define _SHOW_LOG_
 #define CAP_BACKUP_BINARY L"Capsule.bin"
-//EIP175650 >>
-#if defined( EC_SUPPORT ) && ( EC_SUPPORT == 1 )
-#include "Library/KscLib.h"
+#include "KscLib.h"
 #define LOW_BATTERY 25 
-#endif
-//EIP175650 <<
 EFI_SPI_PROTOCOL  *mSpiProtocol;
 FLASH_PROTOCOL    *Flash = NULL;  //AMI_OVERRIDE - EIP153486 Fault Tolerant Function
 UINT8             *mFileBuffer;
@@ -697,10 +693,8 @@ SysUpdateEntry(
 //  EFI_HANDLE                            FvProtocolHandle;
 //  UINT8                                 *ShellPtr = NULL;
 //  UINTN                                 ShellSize;
-#if defined( EC_SUPPORT ) && ( EC_SUPPORT == 1 ) //EIP175650 
   UINT8                                 BatteryStatus;
   UINT8                                 BatteryCapacity;
-#endif //EIP175650 
   //
   //FOTA backup handle variables
   //
@@ -826,7 +820,6 @@ SysUpdateEntry(
   //directly.
   //
 
-#if defined( EC_SUPPORT ) && ( EC_SUPPORT == 1 ) //EIP175650 
   // Make sure Current Battery Capacity > 25%
   // Disallowed Case:
   // 1.AC + Battery < 25%
@@ -855,7 +848,6 @@ SysUpdateEntry(
       } //End if !EFI_ERROR(Status)
     } // End if (BatteryStatus && BIT3)
   }  
-#endif //EIP175650 
 
   Status = PreUpdateCheck(&PwrStatus);
   if( Status == EFI_ABORTED) {

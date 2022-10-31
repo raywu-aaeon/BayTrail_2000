@@ -28,7 +28,7 @@
 #include <Library/DebugLib.h>
 #include <Library/PeiServicesLib.h>
 #include <Library/BaseMemoryLib.h>
-#include <Library/AmiReportFvLib.h>
+#include <Library/AmiReportFVLib.h>
 #include <Library/ReportStatusCodeLib.h>
 
 

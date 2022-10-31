@@ -2,7 +2,7 @@
 Implementation for EFI_HII_IMAGE_PROTOCOL.
 
 
-Copyright (c) 2007 - 2013, Intel Corporation. All rights reserved.<BR>
+Copyright (c) 2007 - 2008, Intel Corporation. All rights reserved.<BR>
 This program and the accompanying materials
 are licensed and made available under the terms and conditions of the BSD License
 which accompanies this distribution.  The full text of the license may be found at
@@ -81,6 +81,7 @@ GetImageIdOrAddress (
     case EFI_HII_IIBT_EXT1:
       Length8 = *(ImageBlock + sizeof (EFI_HII_IMAGE_BLOCK) + sizeof (UINT8));
       ImageBlock += Length8;
+      ImageIdCurrent++;
       break;
     case EFI_HII_IIBT_EXT2:
       CopyMem (
@@ -89,6 +90,7 @@ GetImageIdOrAddress (
         sizeof (UINT16)
         );
       ImageBlock += Length16;
+      ImageIdCurrent++;
       break;
     case EFI_HII_IIBT_EXT4:
       CopyMem (
@@ -97,6 +99,7 @@ GetImageIdOrAddress (
         sizeof (UINT32)
         );
       ImageBlock += Length32;
+      ImageIdCurrent++;
       break;
 
     case EFI_HII_IIBT_IMAGE_1BIT:

@@ -1,23 +1,33 @@
-//***********************************************************************
-//***********************************************************************
-//**                                                                   **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.          **
-//**                                                                   **
-//**                       All Rights Reserved.                        **
-//**                                                                   **
-//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093         **
-//**                                                                   **
-//**                       Phone: (770)-246-8600                       **
-//**                                                                   **
-//***********************************************************************
-//***********************************************************************
-
-/** @file IdeBus.h
-    This file contains the Includes, Definitions, typedefs,
-    Variable and External Declarations, Structure and
-    function prototypes needed for the IdeBus driver
-
-**/
+//**********************************************************************
+//**********************************************************************
+//**                                                                  **
+//**        (C)Copyright 1985-2012, American Megatrends, Inc.         **
+//**                                                                  **
+//**                       All Rights Reserved.                       **
+//**                                                                  **
+//**         5555 Oakbrook Pkwy, Suite 200, Norcross, GA 30093        **
+//**                                                                  **
+//**                       Phone: (770)-246-8600                      **
+//**                                                                  **
+//**********************************************************************
+//**********************************************************************
+// $Header: /Alaska/SOURCE/Core/Modules/IdeBus/IdeBus.h 29    7/20/12 6:14a Anandakrishnanl $
+//
+// $Revision: 29 $
+//
+// $Date: 7/20/12 6:14a $
+//**********************************************************************
+//<AMI_FHDR_START>
+//----------------------------------------------------------------------------
+//
+// Name:	IdeBus.h
+//
+// Description:	This file contains the Includes, Definitions, typedefs,
+//		        Variable and External Declarations, Structure and
+//              function prototypes needed for the IdeBus driver
+//
+//----------------------------------------------------------------------------
+//<AMI_FHDR_END>
 
 
 #ifndef _IdeBus_
@@ -27,27 +37,21 @@
 extern "C" {
 #endif
 
-//---------------------------------------------------------------------------
-
+#include <Efi.h>
 #include <Token.h>
+#include <Dxe.h>
 #include <AmiDxeLib.h>
-#include "Protocol/PciIo.h"
-#include "Protocol/DevicePath.h"
-#include "Protocol/DriverBinding.h"
-#include "Protocol/BlockIo.h"
-#include <IndustryStandard/AmiAtaAtapi.h>
-#include <Protocol/AmiIdeBus.h>
-#include <Protocol/AmiHddSecurityInit.h>
-#include <Protocol/AmiHddSmartInit.h>
-#include <Protocol/AmiHddOpalSecInit.h>
-#include <Protocol/AmiAtaPassThruInit.h>
-#include <Protocol/AmiScsiPassThruInit.h>
-#include <Protocol/ComponentName.h>
-#include <Protocol/BootScriptSave.h>
-#include <Protocol/AtaPassThru.h>
-#include <Protocol/AmiIdeBusBoard.h>
+#include "Protocol\PciIo.h"
+#include "Protocol\DevicePath.h"
+#include "protocol\DriverBinding.h"
+#include "protocol\BlockIo.h"
+#include "Protocol\PDiskInfo.h"
+#include "Protocol\PIDEController.h"
+#include "Protocol\PIDEBus.h"
+#include <Protocol\ComponentName.h>
+#include <Protocol\BootScriptSave.h>
+#include <protocol\AtaPassThru.h>
 
-//---------------------------------------------------------------------------
 
 #define     IDE_BUS_DRIVER_VERSION              0x01
 
@@ -56,33 +60,13 @@ extern "C" {
 #define     SECONDARY_COMMAND_BLOCK             0x170
 #define     SECONDARY_CONTROL_BLOCK             0x376
 
-#ifndef BUSY_CLEAR_TIMEOUT
 #define     BUSY_CLEAR_TIMEOUT                  1000            // 1Sec
-#endif
-
-#ifndef DRDY_TIMEOUT
 #define     DRDY_TIMEOUT                        1000            // 1Sec
-#endif
-
-#ifndef DRQ_TIMEOUT
 #define     DRQ_TIMEOUT                         10              // 10msec
-#endif
-
-#ifndef DRQ_CLEAR_TIMEOUT
 #define     DRQ_CLEAR_TIMEOUT                   1000            // 1sec
-#endif
-
-#ifndef DRQ_SET_TIMEOUT
 #define     DRQ_SET_TIMEOUT                     10              // 10msec
-#endif
-
-#ifndef HP_COMMAND_COMPLETE_TIMEOUT
 #define     HP_COMMAND_COMPLETE_TIMEOUT         2000            // 2Sec
-#endif
-
-#ifndef COMMAND_COMPLETE_TIMEOUT
 #define     COMMAND_COMPLETE_TIMEOUT            5000            // 5Sec
-#endif
 
 #define     BLKIO_REVISION                      1
 
@@ -102,14 +86,14 @@ extern "C" {
 #define     INQUIRY_DATA_LENGTH                 0x96
 #define     READ_CAPACITY_DATA_LENGTH           0x08
 
-//	PCI Configure Space equates
+//	PCI Config Space equates
 #define     PROGRAMMING_INTERFACE_OFFSET        0x09
 #define     IDE_SUB_CLASS_CODE                  0x0A
-#define     SCC_IDE_CONTROLLER                  0x01
-#define     SCC_AHCI_CONTROLLER                 0x06
-#define     SCC_RAID_CONTROLLER                 0x04
+#define     SCC_IDE_CONTROLLER              0x01
+#define     SCC_AHCI_CONTROLLER             0x06
+#define     SCC_RAID_CONTROLLER             0x04
 #define     IDE_BASE_CLASS_CODE                 0x0B
-#define     BASE_CODE_IDE_CONTROLLER            0x01
+#define     BASE_CODE_IDE_CONTROLLER        0x01
 #define     PRIMARY_COMMAND_BLOCK_OFFSET        0x10
 #define     PRIMARY_CONTROL_BLOCK_OFFSET        0x14
 #define     SECONDARY_COMMAND_BLOCK_OFFSET      0x18
@@ -122,156 +106,126 @@ extern "C" {
 #define ZeroMemory( Buffer, Size ) pBS->SetMem( Buffer, Size, 0 )
 
 
-// Forward reference for pure ANSI compatibility
-typedef struct _AMI_IDE_BUS_PROTOCOL AMI_IDE_BUS_PROTOCOL;
+//###DEBUG  Uncomment the following for Required Debug Level.
 
-typedef struct {
+//#define   Debug_Level_1
+//#define   Debug_Level_2
+//#define   Debug_Level_3
+
+//###DEBUG END
+
+// Forward reference for pure ANSI compatability
+typedef struct _IDE_BUS_PROTOCOL IDE_BUS_PROTOCOL;
+
+typedef struct
+{
     UINT32 Lowdword;
     UINT32 Upperdword;
 } STRUCT_U64_U32;
 
-typedef struct {
-    UINT8   PrimaryChannel;
-    UINT8   PrimaryMasterDevice;
-    UINT8   PrimarySlaveDevice;
-    UINT8   SecondaryChannel;
-    UINT8   SecondaryMasterDevice;
-    UINT8   SecondarySlaveDevice;
-    UINT8   BusMasterEnable;
-    UINT8   HPMask;
-    UINT8   Flags;
-    UINT8   Acoustic_Management_Level;
-} CONTROLLER_INFO;  
+VOID EfiDebugPrint (
+    IN UINTN ErrorLevel,
+    IN CHAR8 *Format,
+    ... );
+
+EFI_STATUS CreateIdeDevicePath (
+    IN EFI_DRIVER_BINDING_PROTOCOL *This,
+    IN EFI_HANDLE                  Controller,
+    IDE_BUS_INIT_PROTOCOL          *IdeBusInitInterface,
+    IDE_BUS_PROTOCOL               *IdeBusInterface,
+    IN EFI_DEVICE_PATH_PROTOCOL    *RemainingDevicePath,
+    UINT8                          Current_Channel,
+    UINT8                          Current_Device );
+
+EFI_STATUS InitIdeBlockIO (
+    IDE_BUS_PROTOCOL *IdeBusInterface );
+
+EFI_STATUS InitIdeDiskInfo (
+    IDE_BUS_PROTOCOL *IdeBusInterface );
 
 EFI_STATUS
-CreateIdeDevicePath (
-    IN  EFI_DRIVER_BINDING_PROTOCOL     *This,
-    IN   EFI_HANDLE                     Controller,
-    AMI_IDE_BUS_INIT_PROTOCOL           *IdeBusInitInterface,
-    AMI_IDE_BUS_PROTOCOL                *IdeBusInterface,
-    IN  EFI_DEVICE_PATH_PROTOCOL        *RemainingDevicePath,
-    UINT8                               Current_Channel,
-    UINT8                               Current_Device
-);
+InstallBusInitProtocol(
+    IN EFI_HANDLE Controller,
+    IDE_BUS_INIT_PROTOCOL           * IdeBusInitInterface,
+    VOID    * IdeControllerInterface
+    );
 
 EFI_STATUS
-InitIdeBlockIO (
-    AMI_IDE_BUS_PROTOCOL        *IdeBusInterface
-);
+ConfigureIdeDeviceAndController(
+    IDE_BUS_PROTOCOL                * IdeBusInterface,
+    VOID         * IdeControllerInterface,
+    IDE_BUS_INIT_PROTOCOL           * IdeBusInitInterface
+    );
 
-EFI_STATUS
-InitIdeDiskInfo (
-    AMI_IDE_BUS_PROTOCOL        *IdeBusInterface
-);
+UINT8 ReturnMSBset (
+    UINT32 Data );
 
-EFI_STATUS
-InstallBusInitProtocol (
-    IN                          EFI_HANDLE Controller,
-    AMI_IDE_BUS_INIT_PROTOCOL   * IdeBusInitInterface,
-    VOID                        * IdeControllerInterface
-);
+EFI_STATUS IdeReadByte (
+    IN EFI_PCI_IO_PROTOCOL *PciIO,
+    IN UINT16              Register,
+    OUT UINT8              *Data8 );
 
-EFI_STATUS
-ConfigureIdeDeviceAndController (
-    AMI_IDE_BUS_PROTOCOL                * IdeBusInterface,
-    VOID                                * IdeControllerInterface,
-    AMI_IDE_BUS_INIT_PROTOCOL           * IdeBusInitInterface
-);
+EFI_STATUS IdeReadMultipleByte (
+    IN EFI_PCI_IO_PROTOCOL *PciIO,
+    IN UINT16              Register,
+    IN UINT32              Count,
+    OUT UINT8              *Data8 );
 
-UINT8
-ReturnMSBset (
-    UINT32       Data
-);
+EFI_STATUS IdeReadWord (
+    IN EFI_PCI_IO_PROTOCOL *PciIO,
+    IN UINT16              Register,
+    OUT UINT16             *Data16 );
 
-EFI_STATUS
-IdeReadByte (
-    IN  EFI_PCI_IO_PROTOCOL     *PciIO,
-    IN  UINT16                  Register,
-    OUT UINT8                   *Data8
-);
+EFI_STATUS IdeReadMultipleWord (
+    IN EFI_PCI_IO_PROTOCOL *PciIO,
+    IN UINT16              Register,
+    IN UINT32              Count,
+    OUT UINT16             *Data16 );
 
-EFI_STATUS
-IdeReadMultipleByte (
-    IN  EFI_PCI_IO_PROTOCOL     *PciIO,
-    IN  UINT16                  Register,
-    IN  UINT32                  Count,
-    OUT UINT8                   *Data8
-);
+EFI_STATUS IdeWriteByte (
+    IN EFI_PCI_IO_PROTOCOL *PciIO,
+    IN UINT16              Register,
+    IN UINT8               Data8 );
 
-EFI_STATUS
-IdeReadWord (
-    IN  EFI_PCI_IO_PROTOCOL     *PciIO,
-    IN  UINT16                  Register,
-    OUT UINT16                  *Data16
-);
+EFI_STATUS IdeWriteMultipleByte (
+    IN EFI_PCI_IO_PROTOCOL *PciIO,
+    IN UINT16              Register,
+    IN UINT32              Count,
+    IN UINT8               *Data8 );
 
-EFI_STATUS
-IdeReadMultipleWord (
-    IN  EFI_PCI_IO_PROTOCOL     *PciIO,
-    IN  UINT16                  Register,
-    IN  UINT32                  Count,
-    OUT UINT16                  *Data16
-);
+EFI_STATUS IdeWriteWord (
+    IN EFI_PCI_IO_PROTOCOL *PciIO,
+    IN UINT16              Register,
+    IN UINT16              Data16 );
 
-EFI_STATUS
-IdeWriteByte (
-    IN  EFI_PCI_IO_PROTOCOL     *PciIO,
-    IN  UINT16                  Register,
-    IN  UINT8                   Data8
-);
+EFI_STATUS IdeWriteMultipleWord (
+    IN EFI_PCI_IO_PROTOCOL *PciIO,
+    IN UINT16              Register,
+    IN UINT32              Count,
+    IN UINT16              *Data16 );
 
-EFI_STATUS
-IdeWriteMultipleByte (
-    IN   EFI_PCI_IO_PROTOCOL    *PciIO,
-    IN  UINT16                  Register,
-    IN  UINT32                  Count,
-    IN  UINT8                   *Data8
-);
+EFI_STATUS IdeWriteDword (
+    IN EFI_PCI_IO_PROTOCOL *PciIO,
+    IN UINT16              Register,
+    IN UINT32              Data32 );
 
-EFI_STATUS
-IdeWriteWord (
-    IN  EFI_PCI_IO_PROTOCOL     *PciIO,
-    IN  UINT16                  Register,
-    IN  UINT16                  Data16
-);
-
-EFI_STATUS
-IdeWriteMultipleWord (
-    IN  EFI_PCI_IO_PROTOCOL     *PciIO,
-    IN  UINT16                  Register,
-    IN  UINT32                  Count,
-    IN  UINT16                  *Data16
-);
-
-EFI_STATUS
-IdeWriteDword (
-    IN  EFI_PCI_IO_PROTOCOL     *PciIO,
-    IN  UINT16                  Register,
-    IN  UINT32                  Data32
-);
-
-EFI_STATUS
-AtaReadWritePio (
-    IN  AMI_IDE_BUS_PROTOCOL *IdeBusInterface,
+EFI_STATUS AtaReadWritePio (
+    IN IDE_BUS_PROTOCOL *IdeBusInterface,
     VOID                *Buffer,
     UINTN               ByteCount,
     UINT64              LBA,
     UINT8               readWriteCommand,
-    BOOLEAN             ReadWrite
-);
+    BOOLEAN             ReadWrite );
 
-EFI_STATUS
-IssueAtaReadWriteCommand (
-    IN  AMI_IDE_BUS_PROTOCOL *IdeBusInterface,
+EFI_STATUS IssueAtaReadWriteCommand (
+    IN IDE_BUS_PROTOCOL *IdeBusInterface,
     UINT64              LBA,
     INT32               SectorCount,
     UINT8               Command, 
-    UINT8               Features
-);
+    UINT8               Features );
 
-EFI_STATUS
-AtaPioDataIn (
-    IN  AMI_IDE_BUS_PROTOCOL    *IdeBusInterface,
+EFI_STATUS AtaPioDataIn (
+    IN IDE_BUS_PROTOCOL *IdeBusInterface,
     VOID                *Buffer,
     UINT32              ByteCount,
     UINT8               Features,
@@ -281,43 +235,37 @@ AtaPioDataIn (
     UINT8               LBAHigh,
     UINT8               DeviceReg,
     UINT8               Command,
-    BOOLEAN             Multiple
-);
+    BOOLEAN             Multiple );
 
-EFI_STATUS
-AtaPioDataOut (
-    IN  AMI_IDE_BUS_PROTOCOL    *IdeBusInterface,
-    VOID                *Buffer,
-    UINTN               ByteCount,
-    UINT8               Features,
-    UINT32              SectorCountIn,
-    UINT8               LBALow,
-    UINT8               LBALowExp,
-    UINT8               LBAMid,
-    UINT8               LBAMidExp,
-    UINT8               LBAHigh,
-    UINT8               LBAHighExp,
-    UINT8               Device,
-    UINT8               Command,
-    BOOLEAN             ReadWrite,
-    BOOLEAN             Multiple
-);
+EFI_STATUS AtaPioDataOut (
+    IN IDE_BUS_PROTOCOL *IdeBusInterface,
+    VOID                 *Buffer,
+    UINTN                ByteCount,
+    UINT8                Features,
+    UINT32               SectorCountIn,
+    UINT8                LBALow,
+    UINT8                LBALowExp,
+    UINT8                LBAMid,
+    UINT8                LBAMidExp,
+    UINT8                LBAHigh,
+    UINT8                LBAHighExp,
+    UINT8                Device,
+    UINT8                Command,
+    BOOLEAN              ReadWrite,
+    BOOLEAN              Multiple );
 
-EFI_STATUS
-IdeNonDataCommand (
-    IN  AMI_IDE_BUS_PROTOCOL    *IdeBusInterface,
+EFI_STATUS IdeNonDataCommand (
+    IN IDE_BUS_PROTOCOL *IdeBusInterface,
     UINT8               Features,
     UINT8               SectorCount,
     UINT8               LBALow,
     UINT8               LBAMid,
     UINT8               LBAHigh,
     UINT8               Device,
-    UINT8               Command
-);
+    UINT8               Command );
 
-EFI_STATUS
-IdeNonDataCommandExp (
-    IN  AMI_IDE_BUS_PROTOCOL    *IdeBusInterface,
+EFI_STATUS IdeNonDataCommandExp (
+    IN IDE_BUS_PROTOCOL *IdeBusInterface,
     UINT8               Features,
     UINT8               SectorCount,
     UINT8               SectorCountExp,
@@ -328,470 +276,320 @@ IdeNonDataCommandExp (
     UINT8               LBAHigh,
     UINT8               LBAHighExp,
     UINT8               Device,
-    UINT8               Command
-);
+    UINT8               Command );
 
-EFI_STATUS
-AtaIdentifyCommand (
-    IN  AMI_IDE_BUS_PROTOCOL    *IdeBusInterface,
-    IN  OUT VOID                *Buffer
-);
+EFI_STATUS AtaIdentifyCommand (
+    IN IDE_BUS_PROTOCOL *IdeBusInterface,
+    IN OUT VOID         *Buffer );
 
-EFI_STATUS
-AtapiIdentifyCommand (
-    IN  AMI_IDE_BUS_PROTOCOL    *IdeBusInterface,
-    IN  OUT VOID                *Buffer
-);
+EFI_STATUS AtapiIdentifyCommand (
+    IN IDE_BUS_PROTOCOL *IdeBusInterface,
+    IN OUT VOID         *Buffer );
 
-EFI_STATUS
-GetIdentifyData (
-    IN  AMI_IDE_BUS_PROTOCOL    *IdeBusInterface,
-    IN  OUT VOID                *Buffer
-);
+EFI_STATUS GetIdentifyData (
+    IN IDE_BUS_PROTOCOL *IdeBusInterface,
+    IN OUT VOID         *Buffer );
 
-EFI_STATUS
-IdeSetFeatureCommand (
-    IN  AMI_IDE_BUS_PROTOCOL    *IdeBusInterface,
-    UINT8                       SubCommand,
-    UINT8                       Mode
-);
+EFI_STATUS IdeSetFeatureCommand (
+    IN IDE_BUS_PROTOCOL *IdeBusInterface,
+    UINT8               SubCommand,
+    UINT8               Mode );
 
-EFI_STATUS
-IdeSoftReset (
-    IN  AMI_IDE_BUS_PROTOCOL    *IdeBusInterface
-);
+EFI_STATUS IdeSoftReset (
+    IN IDE_BUS_PROTOCOL *IdeBusInterface );
 
-EFI_STATUS
-WaitForCmdCompletion (
-    IN  AMI_IDE_BUS_PROTOCOL    *IdeBusInterface
-);
+EFI_STATUS WaitForCmdCompletion (
+    IN IDE_BUS_PROTOCOL *IdeBusInterface );
 
-EFI_STATUS
-WaitForCmdCompletionWithTimeOutValue (
-    IN  AMI_IDE_BUS_PROTOCOL    *IdeBusInterface,
-    IN  UINT32                  TimeOutvalue
-);
+EFI_STATUS WaitForCmdCompletionWithTimeOutValue (
+    IN IDE_BUS_PROTOCOL *IdeBusInterface,
+    IN UINT32           TimeOutvalue );
 
-EFI_STATUS
-CheckDriveReady (
-    IN  AMI_IDE_BUS_PROTOCOL    *IdeBusInterface
-);
+EFI_STATUS CheckDriveReady (
+    IN IDE_BUS_PROTOCOL *IdeBusInterface );
 
-EFI_STATUS
-WaitforBitSet (
-    IN  EFI_PCI_IO_PROTOCOL *PciIO,
-    UINT16                  AlternateStatusReg,
-    UINT8                   BitSet,
-    UINT32                  TimeOut
-);
+EFI_STATUS WaitforBitSet (
+    IN EFI_PCI_IO_PROTOCOL *PciIO,
+    UINT16                 AlternateStatusReg,
+    UINT8                  BitSet,
+    UINT32                 TimeOut );
 
-EFI_STATUS
-WaitforBitClear (
-    IN  EFI_PCI_IO_PROTOCOL *PciIO,
-    UINT16                  AlternateStatus,
-    UINT8                   BitSet,
-    UINT32                  Timeout
-);
+EFI_STATUS WaitforBitClear (
+    IN EFI_PCI_IO_PROTOCOL *PciIO,
+    UINT16                 AlternateStatus,
+    UINT8                  BitSet,
+    UINT32                 Timeout );
 
-EFI_STATUS
-WaitforBitClearWithoutTimeout (
-    IN  EFI_PCI_IO_PROTOCOL *PciIO,
-    UINT16                  AlternateStatus,
-    UINT8                   BitClear
-);
+EFI_STATUS WaitforBitClearWithoutTimeout (
+    IN EFI_PCI_IO_PROTOCOL *PciIO,
+    UINT16                 AlternateStatus,
+    UINT8                  BitClear );
 
-EFI_STATUS
-ControllerPresence (
-    AMI_IDE_BUS_PROTOCOL    *IdeBusInterface 
-);
+EFI_STATUS ControllerPresence (
+    IDE_BUS_PROTOCOL *IdeBusInterface );
 
-void
-DisableIdeInterrupt (
-    IN  AMI_IDE_BUS_PROTOCOL    *IdeBusInterface
-);
+void DisableIdeInterrupt (
+    IN IDE_BUS_PROTOCOL *IdeBusInterface );
 
-EFI_STATUS
-DetectIdeDevice (
-    AMI_IDE_BUS_PROTOCOL    *IdeBusInterface
-);
+EFI_STATUS DetectIdeDevice (
+    IDE_BUS_PROTOCOL *IdeBusInterface );
 
-EFI_STATUS
-ConfigureIdeDevice (
-    AMI_IDE_BUS_PROTOCOL        *IdeBusInterface,
-    AMI_IDE_BUS_INIT_PROTOCOL   *IdeBusInitInterface
-);
+EFI_STATUS ConfigureIdeDevice (
+    IDE_BUS_PROTOCOL      *IdeBusInterface,
+    IDE_BUS_INIT_PROTOCOL *IdeBusInitInterface );
 
-EFI_STATUS
-InitAcousticSupport (
-    IN  AMI_IDE_BUS_PROTOCOL    *IdeBusInterface
-);
+EFI_STATUS InitAcousticSupport (
+    IN IDE_BUS_PROTOCOL *IdeBusInterface );
 
-EFI_STATUS
-UpdateBaseAddress (
-    AMI_IDE_BUS_PROTOCOL        *IdeBusInterface
-);
+EFI_STATUS UpdateBaseAddress (
+    IDE_BUS_PROTOCOL *IdeBusInterface );
 
-EFI_STATUS
-IdeBusSupported (
-    IN  EFI_DRIVER_BINDING_PROTOCOL *This,
-    IN  EFI_HANDLE                  Controller,
-    IN  EFI_DEVICE_PATH_PROTOCOL    *RemainingDevicePath
-);
+EFI_STATUS IdeBusSupported (
+    IN EFI_DRIVER_BINDING_PROTOCOL *This,
+    IN EFI_HANDLE                  Controller,
+    IN EFI_DEVICE_PATH_PROTOCOL    *RemainingDevicePath );
 
-EFI_STATUS
-IdeBusStart (
-    IN  EFI_DRIVER_BINDING_PROTOCOL *This,
-    IN  EFI_HANDLE                  Controller,
-    IN  EFI_DEVICE_PATH_PROTOCOL    *RemainingDevicePath
-);
+EFI_STATUS IdeBusStart (
+    IN EFI_DRIVER_BINDING_PROTOCOL *This,
+    IN EFI_HANDLE                  Controller,
+    IN EFI_DEVICE_PATH_PROTOCOL    *RemainingDevicePath );
 
-EFI_STATUS
-IdeBusStop (
-    IN   EFI_DRIVER_BINDING_PROTOCOL    *This,
-    IN  EFI_HANDLE                      Controller,
-    IN  UINTN                           NumberOfChildren,
-    IN  EFI_HANDLE                      *ChildHandleBuffer
-);
+EFI_STATUS IdeBusStop (
+    IN EFI_DRIVER_BINDING_PROTOCOL *This,
+    IN EFI_HANDLE                  Controller,
+    IN UINTN                       NumberOfChildren,
+    IN EFI_HANDLE                  *ChildHandleBuffer );
 
-EFI_STATUS
-AtaReset (
-    IN  EFI_BLOCK_IO_PROTOCOL   *This,
-    IN  BOOLEAN                 ExtendedVerification
-);
+EFI_STATUS AtaReset (
+    IN EFI_BLOCK_IO_PROTOCOL *This,
+    IN BOOLEAN               ExtendedVerification );
 
-EFI_STATUS
-AtaBlkRead (
-    IN  EFI_BLOCK_IO_PROTOCOL   *This,
-    IN  UINT32                  MediaId,
-    IN  EFI_LBA                 LBA,
-    IN  UINTN                   BufferSize,
-    OUT VOID                    *Buffer
-);
+EFI_STATUS AtaBlkRead (
+    IN EFI_BLOCK_IO_PROTOCOL *This,
+    IN UINT32                MediaId,
+    IN EFI_LBA               LBA,
+    IN UINTN                 BufferSize,
+    OUT VOID                 *Buffer );
 
-EFI_STATUS
-AtaBlkWrite (
-    IN  EFI_BLOCK_IO_PROTOCOL   *This,
-    IN  UINT32                  MediaId,
-    IN  EFI_LBA                 LBA,
-    IN  UINTN                   BufferSize,
-    IN  VOID                    *Buffer
-);
+EFI_STATUS AtaBlkWrite (
+    IN EFI_BLOCK_IO_PROTOCOL *This,
+    IN UINT32                MediaId,
+    IN EFI_LBA               LBA,
+    IN UINTN                 BufferSize,
+    IN VOID                  *Buffer );
 
-EFI_STATUS
-AtaBlkFlush (
-    IN  EFI_BLOCK_IO_PROTOCOL   *This
-);
+EFI_STATUS AtaBlkFlush (
+    IN EFI_BLOCK_IO_PROTOCOL *This );
 
-EFI_STATUS
-AtapiReset (
-    IN  EFI_BLOCK_IO_PROTOCOL   *This,
-    IN  BOOLEAN                 ExtendedVerification
-);
+EFI_STATUS AtapiReset (
+    IN EFI_BLOCK_IO_PROTOCOL *This,
+    IN BOOLEAN               ExtendedVerification );
 
-EFI_STATUS
-AtapiBlkRead (
-    IN  EFI_BLOCK_IO_PROTOCOL   *This,
-    IN  UINT32                  MediaId,
-    IN  EFI_LBA                 LBA,
-    IN  UINTN                   BufferSize,
-    OUT VOID                    *Buffer
-);
+EFI_STATUS AtapiBlkRead (
+    IN EFI_BLOCK_IO_PROTOCOL *This,
+    IN UINT32                MediaId,
+    IN EFI_LBA               LBA,
+    IN UINTN                 BufferSize,
+    OUT VOID                 *Buffer );
 
-EFI_STATUS
-AtapiBlkWrite (
-    IN  EFI_BLOCK_IO_PROTOCOL   *This,
-    IN  UINT32                  MediaId,
-    IN  EFI_LBA                 LBA,
-    IN  UINTN                   BufferSize,
-    IN  VOID                    *Buffer
-);
+EFI_STATUS AtapiBlkWrite (
+    IN EFI_BLOCK_IO_PROTOCOL *This,
+    IN UINT32                MediaId,
+    IN EFI_LBA               LBA,
+    IN UINTN                 BufferSize,
+    IN VOID                  *Buffer );
 
-EFI_STATUS
-AtapiBlkFlush (
-    IN  EFI_BLOCK_IO_PROTOCOL   *This
-);
+EFI_STATUS AtapiBlkFlush (
+    IN EFI_BLOCK_IO_PROTOCOL *This );
 
-EFI_STATUS
-DetectAtapiMedia (
-    AMI_IDE_BUS_PROTOCOL    *IdeBusInterface
-);
+EFI_STATUS DetectAtapiMedia (
+    IDE_BUS_PROTOCOL *IdeBusInterface );
 
-EFI_STATUS
-AtapiInquiryData (
-    AMI_IDE_BUS_PROTOCOL *IdeBusInterface,
+EFI_STATUS AtapiInquiryData (
+    IDE_BUS_PROTOCOL *IdeBusInterface,
     UINT8            *InquiryData,
-    IN OUT UINT16    *InquiryDataSize
-);
+    IN OUT UINT16    *InquiryDataSize );
 
-EFI_STATUS
-AtapiReadWritePio (
-    IN  AMI_IDE_BUS_PROTOCOL    *IdeBusInterface,
-    VOID                        *Buffer,
-    UINTN                       ByteCount,
-    UINT64                      LBA,
-    UINT8                       ReadWriteCommand,
-    BOOLEAN                     READWRITE
-);
+EFI_STATUS AtapiReadWritePio (
+    IN IDE_BUS_PROTOCOL *IdeBusInterface,
+    VOID                *Buffer,
+    UINTN               ByteCount,
+    UINT64              LBA,
+    UINT8               ReadWriteCommand,
+    BOOLEAN             READWRITE );
 
-EFI_STATUS
-AtapiWritePio (
-    IN  AMI_IDE_BUS_PROTOCOL    *IdeBusInterface,
-    VOID                        *Buffer,
-    UINTN                       ByteCount,
-    UINT64                      LBA,
-    UINT8                       WriteCommand
-);
+EFI_STATUS AtapiWritePio (
+    IN IDE_BUS_PROTOCOL *IdeBusInterface,
+    VOID                *Buffer,
+    UINTN               ByteCount,
+    UINT64              LBA,
+    UINT8               WriteCommand );
 
-EFI_STATUS 
-AtaAtapiDmaDataCommand (
-    IN AMI_IDE_BUS_PROTOCOL *IdeBusInterface,
-    IN OUT VOID         *Buffer,
-    IN UINTN            ByteCount,
-    IN UINT8            Features,
-    IN UINT32           SectorCountIn,
-    IN UINT8            LbaLow,
-    IN UINT8            LbaLowExp,
-    IN UINT8            LbaMid,
-    IN UINT8            LbaMidExp,
-    IN UINT8            LbaHigh,
-    IN UINT8            LbaHighExp,
-    IN UINT8            Device,
-    IN UINT8            Command,
-    IN BOOLEAN          ReadWrite
-);
+EFI_STATUS GeneralAtapiCommandAnddData (
+    IN IDE_BUS_PROTOCOL *IdeBusInterface,
+    UINT8               *Buffer,
+    UINT16              ByteCount );
 
-EFI_STATUS
-IssueAtapiPacketCommand (
-    IN  AMI_IDE_BUS_PROTOCOL    *IdeBusInterface,
-    UINT16                      *PacketBuffer,
-    UINT8                       Features,
-    UINT16                      ByteCount
-);
+EFI_STATUS IssueAtapiPacketCommand (
+    IN IDE_BUS_PROTOCOL *IdeBusInterface,
+    UINT16              *PacketBuffer,
+    UINT8               Features,
+    UINT16              ByteCount );
 
-EFI_STATUS
-IssueAtapiReset (
-    IN  AMI_IDE_BUS_PROTOCOL    *IdeBusInterface,
-    IN  BOOLEAN                 TESTUNITREADY
-);
+EFI_STATUS IssueAtapiReset (
+    IN IDE_BUS_PROTOCOL *IdeBusInterface,
+    IN BOOLEAN          TESTUNITREADY );
 
-EFI_STATUS
-HandleAtapiError (
-    IN  AMI_IDE_BUS_PROTOCOL    *IdeBusInterface
-);
+EFI_STATUS HandleAtapiError (
+    IN IDE_BUS_PROTOCOL *IdeBusInterface );
 
-EFI_STATUS
-DiskInfoInquiry (
-    IN  EFI_DISK_INFO_PROTOCOL  *This,
-    IN  OUT VOID                *InquiryData,
-    IN  OUT UINT32              *InquiryDataSize
-);
+EFI_STATUS DiskInfoInquiry (
+    IN EFI_DISK_INFO_PROTOCOL *This,
+    IN OUT VOID               *InquiryData,
+    IN OUT UINT32             *InquiryDataSize );
 
-EFI_STATUS
-DiskInfoIdentify (
-    EFI_DISK_INFO_PROTOCOL  *This,
-    IN  OUT VOID            *IdentifyData,
-    IN  OUT UINT32          *IdentifyDataSize
-);
+EFI_STATUS DiskInfoIdentify (
+    EFI_DISK_INFO_PROTOCOL *This,
+    IN OUT VOID            *IdentifyData,
+    IN OUT UINT32          *IdentifyDataSize );
 
-EFI_STATUS
-DiskInfoSenseData (
+EFI_STATUS DiskInfoSenseData (
     EFI_DISK_INFO_PROTOCOL *This,
     VOID                   *SenseData,
     UINT32                 *SenseDataSize,
-    UINT8                  *SenseDataNumber
-);
+    UINT8                  *SenseDataNumber );
 
-EFI_STATUS 
-DiskInfoWhichIDE (
-    IN  EFI_DISK_INFO_PROTOCOL  *This,
-    OUT UINT32                  *IdeChannel,
-    OUT UINT32                  *IdeDevice
-);
+EFI_STATUS DiskInfoWhichIDE (
+    IN EFI_DISK_INFO_PROTOCOL *This,
+    OUT UINT32                *IdeChannel,
+    OUT UINT32                *IdeDevice );
 
-EFI_STATUS
-GetOddType (
-    IN  AMI_IDE_BUS_PROTOCOL    *IdeBusInterface,
-    IN  OUT UINT16              *OddType
-);
+EFI_STATUS GetOddType (
+    IN IDE_BUS_PROTOCOL *IdeBusInterface,
+    IN OUT UINT16       *OddType );
 
-EFI_STATUS
-GetOddLoadingType (
-    IN  AMI_IDE_BUS_PROTOCOL    *IdeBusInterface,
-    IN  OUT UINT8               *OddLoadingType
-);
+EFI_STATUS GetOddLoadingType(
+    IN IDE_BUS_PROTOCOL *IdeBusInterface,
+    IN OUT UINT8        *OddLoadingType );
 
-ODD_TYPE 
-GetEnumOddType (
-    IN  UINT16  OddType
-);
+ODD_TYPE GetEnumOddType (
+    IN UINT16 OddType );
 
-BOOLEAN
-Check48BitCommand (
-    UINT8   Command
-);
+BOOLEAN Check48BitCommand (
+    UINT8 Command );
 
-EFI_STATUS
-StartStopUnitCommand (
-    IN  AMI_IDE_BUS_PROTOCOL    *IdeBusInterface,
-    IN  UINT8                   LoEjStart
-);
+EFI_STATUS StartStopUnitCommand (
+    IN IDE_BUS_PROTOCOL *IdeBusInterface,
+    IN UINT8            LoEjStart );
 
-EFI_STATUS
-TestUnitReady (
-    IN  AMI_IDE_BUS_PROTOCOL    *IdeBusInterface
-);
+EFI_STATUS TestUnitReady (
+    IN IDE_BUS_PROTOCOL *IdeBusInterface );
 
-EFI_STATUS
-CheckCHKonEntry (
-    IN  AMI_IDE_BUS_PROTOCOL    *IdeBusInterface
-);
+EFI_STATUS CheckCHKonEntry (
+    IN IDE_BUS_PROTOCOL *IdeBusInterface );
 
-EFI_STATUS
-ReadAtapiData (
-    IN  AMI_IDE_BUS_PROTOCOL    *IdeBusInterface,
-    void                        *Data,
-    UINT16                      *BytesRead
-);
+EFI_STATUS ReadAtapiData (
+    IN IDE_BUS_PROTOCOL *IdeBusInterface,
+    void                *Data,
+    UINT16              *BytesRead );
 
-EFI_STATUS
-WriteAtapiData (
-    IN  AMI_IDE_BUS_PROTOCOL    *IdeBusInterface,
-    OUT void                    *Data,
-    OUT UINT16                  *BytesRead
-);
+EFI_STATUS WriteAtapiData (
+    IN IDE_BUS_PROTOCOL *IdeBusInterface,
+    OUT void            *Data,
+    OUT UINT16          *BytesRead );
 
-EFI_STATUS
-GeneralAtapiCommandAndData (
-    IN  AMI_IDE_BUS_PROTOCOL    *IdeBusInterface,
-    UINT8                       *PacketBuffer,
-    UINT8                       *Buffer,
-    UINT16                      *ByteCount
-);
+EFI_STATUS GeneralAtapiCommandAndData (
+    IN IDE_BUS_PROTOCOL *IdeBusInterface,
+    UINT8               *PacketBuffer,
+    UINT8               *Buffer,
+    UINT16              *ByteCount );
 
-EFI_STATUS
-AtaReadWriteBusMaster (
-    IN  AMI_IDE_BUS_PROTOCOL    *IdeBusInterface,
-    IN  OUT VOID                *Buffer,
-    IN  UINTN                   ByteCount,
-    IN  UINT64                  LBA,
-    IN  UINT8                   ReadWriteCommand,
-    IN  BOOLEAN                 ReadWrite
-);
+EFI_STATUS AtaReadWriteBusMaster (
+    IN IDE_BUS_PROTOCOL *IdeBusInterface,
+    IN OUT VOID         *Buffer,
+    IN UINTN            ByteCount,
+    IN UINT64           LBA,
+    IN UINT8            ReadWriteCommand,
+    IN BOOLEAN          ReadWrite );
 
-EFI_STATUS
-AtapiReadWriteBusMaster (
-    IN   AMI_IDE_BUS_PROTOCOL   *IdeBusInterface,
-    IN  OUT VOID                *Buffer,
-    IN  UINTN                   ByteCount,
-    IN  UINT64                  LBA,
-    IN  UINT8                   ReadWriteCommand,
-    IN  BOOLEAN                 READWRITE 
-);
+EFI_STATUS AtapiReadWriteBusMaster (
+    IN IDE_BUS_PROTOCOL *IdeBusInterface,
+    IN OUT VOID         *Buffer,
+    IN UINTN            ByteCount,
+    IN UINT64           LBA,
+    IN UINT8            ReadWriteCommand,
+    IN BOOLEAN          READWRITE );
 
-EFI_STATUS
-CreateDescriptorTable (
-    IN  OUT UINTN               *DescriptorBuffer,
-    IN  UINT8                   *StartAddress,
-    IN  UINTN                   ByteCount,
-    OUT UINTN                   *RemainingByteCount
-);
+EFI_STATUS CreateDescriptorTable (
+    IN OUT UINTN *DescriptorBuffer,
+    IN UINT8     *StartAddress,
+    IN UINTN     ByteCount,
+    OUT UINTN    *RemainingByteCount );
 
-EFI_STATUS
-InitBusMasterRegisters (
-    IN  AMI_IDE_BUS_PROTOCOL    *IdeBusInterface,
-    IN  OUT UINTN               DescriptorBuffer,
-    IN  BOOLEAN                 ReadWrite
-);
+EFI_STATUS InitBusMasterRegisters (
+    IN IDE_BUS_PROTOCOL *IdeBusInterface,
+    IN OUT UINTN        DescriptorBuffer,
+    IN BOOLEAN          ReadWrite );
 
-EFI_STATUS
-StartStopBusMastering (
-    IN  AMI_IDE_BUS_PROTOCOL    *IdeBusInterface,
-    IN  BOOLEAN                 StartStop
-);
+EFI_STATUS StartStopBusMastering (
+    IN IDE_BUS_PROTOCOL *IdeBusInterface,
+    IN BOOLEAN          StartStop );
 
-EFI_STATUS
-WaitforDMAtoCompletion (
-    IN  AMI_IDE_BUS_PROTOCOL    *IdeBusInterface,
-    IN  UINTN                   TimeDelay
-);
+EFI_STATUS WaitforDMAtoCompletion (
+    IN IDE_BUS_PROTOCOL *IdeBusInterface,
+    IN UINTN            TimeDelay );
 
-BOOLEAN
-DMACapable (
-    IN  AMI_IDE_BUS_PROTOCOL    *IdeBusInterface
-);
+BOOLEAN DMACapable (
+    IN IDE_BUS_PROTOCOL *IdeBusInterface );
 
-EFI_STATUS
-HandleATABMErrors (
-    IN  AMI_IDE_BUS_PROTOCOL    *IdeBusInterface
-);
+EFI_STATUS HandleATABMErrors (
+    IN IDE_BUS_PROTOCOL *IdeBusInterface );
 
-EFI_STATUS
-MaskandSaveInterrupt (
-    AMI_IDE_BUS_PROTOCOL        *IdeBusInterface
-);
+EFI_STATUS MaskandSaveInterrupt (
+    IDE_BUS_PROTOCOL *IdeBusInterface );
 
-EFI_STATUS
-RestoreInterrupt (
-    AMI_IDE_BUS_PROTOCOL        *IdeBusInterface
-);
+EFI_STATUS RestoreInterrupt (
+    IDE_BUS_PROTOCOL *IdeBusInterface );
 
-void
-PrintIdeDeviceInfo (
-    AMI_IDE_BUS_PROTOCOL        *IdeBusInterface
-);
+void PrintIdeDeviceInfo (
+    IDE_BUS_PROTOCOL *IdeBusInterface );
 
 //---------------------------------------------------------------------------
 // IDE POWER MANAGEMENT SUPPORT START
 //---------------------------------------------------------------------------
 
 
-EFI_STATUS
-InitIDEPowerManagement (
-    IN  AMI_IDE_BUS_PROTOCOL    *IdeBusInterface
-);
+EFI_STATUS InitIDEPowerManagement (
+    IN IDE_BUS_PROTOCOL *IdeBusInterface );
 
-UINT8
-ConvertStanbyTimeoutValue (
-    IN  UINT8                   StandbyTimeout
-);
+UINT8 ConvertStanbyTimeoutValue (
+    IN UINT8 StandbyTimeout );
 
-EFI_STATUS
-InstallIDEPowerMgmtInterface (
-    IN  AMI_IDE_BUS_PROTOCOL    *IdeBusInterface
-);
+EFI_STATUS InstallIDEPowerMgmtInterface (
+    IN IDE_BUS_PROTOCOL *IdeBusInterface );
 
-EFI_STATUS
-StopIDEPowerMgmtInterface (
-    IN  AMI_IDE_BUS_PROTOCOL    *IdeBusInterface
-);
+EFI_STATUS StopIDEPowerMgmtInterface (
+    IN IDE_BUS_PROTOCOL *IdeBusInterface );
 
 
 // IDE POWER MANAGEMENT INTERFACE SUPPORT START
 //---------------------------------------------------------------------------
   
-EFI_STATUS
-CheckPowerMode (
-    IN  AMI_HDD_POWER_MGMT_PROTOCOL *IdePowerMgmtInterface,
-    IN  OUT UINT8                   *PowerMode 
-);
+EFI_STATUS CheckPowerMode (
+    IN IDE_POWER_MGMT_INTERFACE *IdePowerMgmtInterface,
+    IN OUT UINT8                *PowerMode );
 
-EFI_STATUS
-IdleMode (
-    IN  AMI_HDD_POWER_MGMT_PROTOCOL *IdePowerMgmtInterface,
-    IN  UINT8                       StandbyTimeout
-);
+EFI_STATUS IdleMode (
+    IN IDE_POWER_MGMT_INTERFACE *IdePowerMgmtInterface,
+    IN UINT8                    StandbyTimeout );
 
-EFI_STATUS
-StandbyMode (
-    IN  AMI_HDD_POWER_MGMT_PROTOCOL *IdePowerMgmtInterface,
-    IN  UINT8                       StandbyTimeout
-);
+EFI_STATUS StandbyMode (
+    IN IDE_POWER_MGMT_INTERFACE *IdePowerMgmtInterface,
+    IN UINT8                    StandbyTimeout );
 
-EFI_STATUS
-AdvancePowerMgmtMode (
-    IN  AMI_HDD_POWER_MGMT_PROTOCOL *IdePowerMgmtInterface,
-    IN  UINT8                       AdvPowerMgmtLevel
-);
+EFI_STATUS AdvancePowerMgmtMode (
+    IN IDE_POWER_MGMT_INTERFACE *IdePowerMgmtInterface,
+    IN UINT8                    AdvPowerMgmtLevel );
 
 // IDE POWER MANAGEMENT INTERFACE SUPPORT END
 //---------------------------------------------------------------------------
@@ -802,63 +600,44 @@ AdvancePowerMgmtMode (
 //---------------------------------------------------------------------------
 
 
-EFI_STATUS
-InstallHpaInterface (
-    IN  AMI_IDE_BUS_PROTOCOL    *IdeBusInterface
+EFI_STATUS InstallHPAInterface (
+    IN IDE_BUS_PROTOCOL *IdeBusInterface );
+
+EFI_STATUS StopHPAInterface (
+    IN IDE_BUS_PROTOCOL *IdeBusInterface );
+
+EFI_STATUS GetNativeMaxAddress (
+    IN IDE_HPA_INTERFACE *This,
+    OUT UINT64           *LBA );
+
+EFI_STATUS SetMaxAddress (
+    IN IDE_HPA_INTERFACE *This,
+    OUT UINT64           LBA,
+    IN BOOLEAN           Volatile );
+
+EFI_STATUS HPADisabledLastLBA (
+    IN IDE_HPA_INTERFACE *This,
+    OUT UINT64           *LBA
 );
 
-EFI_STATUS
-StopHpaInterface (
-    IN  AMI_IDE_BUS_PROTOCOL    *IdeBusInterface
-);
+EFI_STATUS SetMaxPassword (
+    IN IDE_HPA_INTERFACE *This,
+    IN UINT8             *PasswordBuffer );
 
-EFI_STATUS
-GetNativeMaxAddress (
-    IN  AMI_HDD_HPA_PROTOCOL    *This,
-    OUT UINT64                  *LBA
-);
+EFI_STATUS SetMaxLock (
+    IN IDE_HPA_INTERFACE *This );
 
-EFI_STATUS
-SetMaxAddress (
-    IN  AMI_HDD_HPA_PROTOCOL    *This,
-    OUT UINT64                  LBA,
-    IN  BOOLEAN                 Volatile
-);
+EFI_STATUS SetMaxUnLock (
+    IN IDE_HPA_INTERFACE *This,
+    IN UINT8             *PasswordBuffer );
 
-EFI_STATUS
-HpaDisabledLastLBA (
-    IN  AMI_HDD_HPA_PROTOCOL    *This,
-    OUT UINT64                  *LBA
-);
+EFI_STATUS SetMaxFreezeLock (
+    IN IDE_HPA_INTERFACE *This );
 
-EFI_STATUS
-SetMaxPassword (
-    IN  AMI_HDD_HPA_PROTOCOL    *This,
-    IN  UINT8                   *PasswordBuffer
-);
-
-EFI_STATUS
-SetMaxLock (
-    IN  AMI_HDD_HPA_PROTOCOL    *This
-);
-
-EFI_STATUS
-SetMaxUnLock (
-    IN  AMI_HDD_HPA_PROTOCOL    *This,
-    IN  UINT8                   *PasswordBuffer
-);
-
-EFI_STATUS
-SetMaxFreezeLock (
-    IN  AMI_HDD_HPA_PROTOCOL    *This
-);
-
-EFI_STATUS
-IssueSetMaxPasswordCmd (
-    AMI_IDE_BUS_PROTOCOL        *IdeBusInterface,
-    UINT8                       *PasswordBuffer,
-    UINT8                       Cmd
-);
+EFI_STATUS IssueSetMaxPasswordCmd (
+    IDE_BUS_PROTOCOL *IdeBusInterface,
+    UINT8            *PasswordBuffer,
+    UINT8            Cmd );
 
 // HOST PROTECTED AREA SUPPORT END
 //---------------------------------------------------------------------------
@@ -866,38 +645,28 @@ IssueSetMaxPasswordCmd (
 // IDE HP SUPPORT START
 //---------------------------------------------------------------------------
 
-EFI_STATUS
-CheckHPControllerPresence (
-    IN  AMI_IDE_BUS_PROTOCOL    *IdeBusInterface
-);
+VOID IdeHPTimer (
+    IN EFI_EVENT Event,
+    IN VOID      *Context );
 
-EFI_STATUS
-FlagDeviceRemoval (
-    IN  AMI_IDE_BUS_PROTOCOL    *IdeBusInterface
-);
+EFI_STATUS CheckHPControllerPresence (
+    IN IDE_BUS_PROTOCOL *IdeBusInterface );
+
+EFI_STATUS FlagDeviceRemoval (
+    IN IDE_BUS_PROTOCOL *IdeBusInterface );
 
 //  IDE HP SUPPORT END
 //---------------------------------------------------------------------------
-EFI_STATUS
-IssueFreezeLockCommand (
-    IN  AMI_IDE_BUS_PROTOCOL        *IdeBusInterface
-);
+EFI_STATUS IssueFreezeLockCommand (
+    IN IDE_BUS_PROTOCOL *IdeBusInterface );
+EFI_STATUS ReturnSecurityStatusWrapper (
+    IN IDE_SECURITY_PROTOCOL *This,
+    UINT16                   *SecurityStatus );
 
-EFI_STATUS
-ReturnSecurityStatusWrapper (
-    IN  AMI_HDD_SECURITY_PROTOCOL   *This,
-    UINT16                          *SecurityStatus
-);
-
-EFI_STATUS
-InstallIdeFeatures (
-    IN  AMI_IDE_BUS_PROTOCOL        *IdeBusInterface
-);
-
-VOID
-UnInstallIdeFeatures (
-    IN  AMI_IDE_BUS_PROTOCOL        *IdeBusInterface
-);
+EFI_STATUS InstallIdeFeatures (
+    IN IDE_BUS_PROTOCOL *IdeBusInterface );
+VOID UnInstallIdeFeatures (
+    IN IDE_BUS_PROTOCOL *IdeBusInterface );
 
 
 /****** DO NOT WRITE BELOW THIS LINE *******/
@@ -907,16 +676,16 @@ UnInstallIdeFeatures (
 
 #endif
 
-//***********************************************************************
-//***********************************************************************
-//**                                                                   **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.          **
-//**                                                                   **
-//**                       All Rights Reserved.                        **
-//**                                                                   **
-//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093         **
-//**                                                                   **
-//**                       Phone: (770)-246-8600                       **
-//**                                                                   **
-//***********************************************************************
-//***********************************************************************
+//**********************************************************************
+//**********************************************************************
+//**                                                                  **
+//**        (C)Copyright 1985-2012, American Megatrends, Inc.         **
+//**                                                                  **
+//**                       All Rights Reserved.                       **
+//**                                                                  **
+//**         5555 Oakbrook Pkwy, Suite 200, Norcross, GA 30093        **
+//**                                                                  **
+//**                       Phone: (770)-246-8600                      **
+//**                                                                  **
+//**********************************************************************
+//**********************************************************************

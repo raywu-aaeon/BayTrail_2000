@@ -30,7 +30,7 @@ Abstract:
 #include <Library/DebugLib.h>
 #endif
 #include "../Mmrc/IpBlocks/VLVA0/Include/MMRCProjectLibraries.h"
-#include <Token.h> //EIP205408 
+
 STATUS
 ProgDdrTimingControl (
   MRC_PARAMETER_FRAME   *CurrentMrcData, UINT8 Channel
@@ -627,19 +627,19 @@ Returns:
         emrs1Command.field.dllEnabled = 0; // 0 = Enable , 1 = Disable
         emrs1Command.field.DIC0 = 1;
 
-        if(CurrentMrcData->override_dram_RTT_NOM == DRAM_RTT_NOM_DISABLED){
-          rttNom = (DDR3_EMRS1_RTTNOM_0 << 6); //multiplex address
-        }else {
-          rttNom = (DDR3_EMRS1_RTTNOM_40 << 6); //multiplex address
-        }
+#if defined DISABLED_RTT_NOM && DISABLED_RTT_NOM
+        rttNom = (DDR3_EMRS1_RTTNOM_0 << 6); //multiplex address
+#else
+        rttNom = (DDR3_EMRS1_RTTNOM_40 << 6); //multiplex address
+#endif
 
         if ((CurrentMrcData->DualChannelEnable == 0) && (CurrentMrcData->MemoryDown == 1)){
         	if ((CurrentMrcData->Channel[Channel].RankPresent[0] == 1) && (CurrentMrcData->Channel[Channel].RankPresent[1] == 0)){
-            if(CurrentMrcData->override_dram_RTT_NOM == DRAM_RTT_NOM_DISABLED){
-              rttNom = (DDR3_EMRS1_RTTNOM_0 << 6); //multiplex address
-            }else {
-              rttNom = (DDR3_EMRS1_RTTNOM_120 << 6); //multiplex address
-            }
+#if defined DISABLED_RTT_NOM && DISABLED_RTT_NOM
+        		rttNom = (DDR3_EMRS1_RTTNOM_0 << 6); //multiplex address
+#else
+        		rttNom = (DDR3_EMRS1_RTTNOM_120 << 6); //multiplex address
+#endif
         	}
         }
 
@@ -1392,13 +1392,7 @@ if (CurrentMrcData->DDRType  < DDRType_DDR3All) {
 
 #if defined DDR3_SUPPORT && DDR3_SUPPORT
 	if (DDR3_DETECTED) {
-		//EIP205408 >>
-		#if defined DEFAULT_REFRESH_2X_POLICY && DEFAULT_REFRESH_2X_POLICY
-		DRFCreg.field.tREFI = 0x2;
-		#else
 		DRFCreg.field.tREFI = 0x3;
-		#endif
-		//EIP205408 <<
 	}
 #endif
 #if defined LPDDR3_SUPPORT && LPDDR3_SUPPORT
@@ -1550,12 +1544,14 @@ STATUS ProgReadWriteFifoPtr (
 STATUS ProgComp(MRC_PARAMETER_FRAME   *CurrentMrcData, UINT8 Channel)
 {
 #if defined DDR3_SUPPORT && DDR3_SUPPORT
-
-  //MMRCCompInit1_1CH is only for 17x17 package
-  if(CurrentMrcData->currentPlatformDesign == BLK_RVP_DDR3L){
+  if((CurrentMrcData->currentPlatformDesign == BLK_RVP_DDR3L) || (CurrentMrcData->currentPlatformDesign == BBY_25x27_4LAYERS_DDR3L_MEMDOWN)){
     MMRCCompInit1_1CH (&(CurrentMrcData->ModMrcData), Channel);
   } else {
-    MMRCCompInit1 (&(CurrentMrcData->ModMrcData), Channel);
+    if ((DDR3_DETECTED) && (CurrentMrcData->DualChannelEnable == 0)){
+      MMRCCompInit1_1CH (&(CurrentMrcData->ModMrcData), Channel);
+    } else {
+      MMRCCompInit1 (&(CurrentMrcData->ModMrcData), Channel);
+    }
   }
 #else
   MMRCCompInit1 (&(CurrentMrcData->ModMrcData), Channel);
@@ -1796,7 +1792,6 @@ STATUS MMRC_Init(MRC_PARAMETER_FRAME *CurrentMrcData, UINT8 Chan){
 	CurrentMrcData->ModMrcData.CurrentDdrType = CurrentMrcData->DDRType >> 1;
 	CurrentMrcData->ModMrcData.CurrentPlatform = CurrentMrcData->currentPlatform;
 	CurrentMrcData->ModMrcData.CurrentConfiguration = CurrentMrcData->Channel[0].DimmConfigChannel;
-	CurrentMrcData->ModMrcData.Override_dram_RTT_NOM = CurrentMrcData->override_dram_RTT_NOM;
 	CurrentMrcData->ModMrcData.EccEnabled = CurrentMrcData->EccEnabled;
 	CurrentMrcData->ModMrcData.SiRevisionID = CurrentMrcData->SiRevisionID;
 	CurrentMrcData->ModMrcData.FeatureSettings.MrcDigitalDll = 0;
@@ -2029,10 +2024,10 @@ MRC_TASK_FUNCTION_DESCRIPTOR ConfigureMemoryTasks[] = {
   { (0xE<<4)|(0x2), (S5Path|FBPath|S0Path|S3Path), &SetScrambler,					CH_NONE},
   { (0xE<<4)|(0x3), (              S0Path|S3Path), &SetDDRInitializationComplete,	CH_NONE},
   { (0xE<<4)|(0x4), (              S0Path|S3Path), &PerformWake,					CH_NONE},
-  { (0xE<<4)|(0x6), (S5Path|FBPath|S0Path|S3Path), &ChangeSelfRefreshSetting,		CH_NONE},
 #if defined DDR3_ECC && DDR3_ECC
   { (0xE<<4)|(0x5), (S5Path|FBPath|S0Path       ), &MMRC_InitializeMemory,			CH_NONE},
 #endif  
+  { (0xE<<4)|(0x6), (S5Path|FBPath|S0Path|S3Path), &ChangeSelfRefreshSetting,		CH_NONE},
   { (0xF<<4)|(0x1), (S5Path|FBPath|S0Path|S3Path), &SetInitDone,					CH_NONE},
   {           0xFF, (S5Path|FBPath|S0Path|S3Path), &McDisableHPET,					CH_NONE},
   {           0xFF, (S5Path|FBPath|S0Path|S3Path), &FillOutputStructure,			CH_NONE},

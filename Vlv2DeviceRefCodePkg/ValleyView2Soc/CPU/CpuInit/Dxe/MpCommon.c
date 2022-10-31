@@ -836,9 +836,6 @@ Returns:
   SmramCpuDataTemplate.CpuPrivateDataSize         = sizeof(MP_CPU_S3_DATA_POINTER);
   SmramCpuDataTemplate.S3BootScriptTableSize      = sizeof(mMPSystemData->S3BootScriptTable);
   SmramCpuDataTemplate.S3BspMtrrTableSize         = sizeof(mMPSystemData->S3BspMtrrTable);
-
-  SaveBspMtrrForS3(); //AMI_OVERRIDE - Update the content due to PicRootBridge Update - EIP177401
-    
   //
   // Record best match for each CPU Microcode and NULL for end
   //

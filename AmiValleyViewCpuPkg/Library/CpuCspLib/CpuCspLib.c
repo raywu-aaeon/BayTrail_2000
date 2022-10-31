@@ -26,11 +26,17 @@
 //
 //**********************************************************************
 
-/** @file CpuCspLib.c
-    Contains the CPU library related functions. These functions can be linked
-    with various components in the project.
-
-**/
+//<AMI_FHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        CpuCspLib.c
+//
+// Description:
+//  Contains the CPU library related functions. These functions can be linked
+//   with various components in the project.
+//
+//---------------------------------------------------------------------------
+//<AMI_FHDR_END>
 
 //#include <Efi.h>
 #include <Token.h>
@@ -67,15 +73,19 @@ UINT16 mValleyViewFSBTable[4] = {
   1334,         // 133MHz
   1167          // 116.7MHz
 };
-
-/**
-    Return number of shared threads for a Information.
-
-    @param Level Cache level
-
-    @retval UINT8 Number of shared threads.
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:  GetCacheSharedThreads
+//
+// Description: Return number of shared threads for a Information.
+//
+// Input:  IN UINT8 Level - Cache level
+//
+// Output: UINT8 - Number of shared threads.
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 #define LIMIT_CPUID                 (1 << 22)
 
@@ -109,14 +119,18 @@ UINT8 GetCacheSharedThreads(IN UINT8 Level)
     return 0;
 }
 
-/**
-    Get the cpu Fsb From Msr 0xCD.
-
-    @param VOID
-
-    @retval FSB Value
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   GetCpuFsbFromMsr
+//
+// Description: Get the cpu Fsb From Msr 0xCD.
+//
+// Input:       VOID
+//
+// Output:      FSB Value
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 UINT32 GetCpuFsbFromMsr()
 {
     UINT64	Temp;
@@ -124,14 +138,18 @@ UINT32 GetCpuFsbFromMsr()
     return mValleyViewFSBTable[(UINT32)(Temp)];
 }
 		
-/**
-    Get the cpu signature.
-
-    @param VOID
-
-    @retval Cpu Signature
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   GetCpuSignature
+//
+// Description: Get the cpu signature.
+//
+// Input:       VOID
+//
+// Output:      Cpu Signature
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 UINT32 GetCpuSignature()
 {
     UINT32 CpuSignature, CpuIdEBX, CpuIdECX, CpuIdEDX;
@@ -149,73 +167,93 @@ typedef struct {
     UINT32 ExtFamily:8;
 } CPU_SIGNATURE;
 
-/**
-    Get the cpu family from signature.
-
-    @param UINT32 CpuSignature
-
-    @retval UINT32 Cpu Family
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   GetCpuFamily
+//
+// Description: Get the cpu family from signature.
+//
+// Input:       UINT32 CpuSignature
+//
+// Output:      UINT32 - Cpu Family
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 UINT32 GetCpuFamily(UINT32 CpuSignature)
 {
     CPU_SIGNATURE *Signature = (CPU_SIGNATURE*)&CpuSignature;
     return Signature->ExtFamily + Signature->Family;
 }
 
-/**
-    Get the cpu model from signature.
-
-    @param UINT32 CpuSignature
-
-    @retval UINT32 Cpu Model
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   GetCpuModel
+//
+// Description: Get the cpu model from signature.
+//
+// Input:       UINT32 CpuSignature
+//
+// Output:      UINT32 - Cpu Model
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 UINT32 GetCpuModel(UINT32 CpuSignature)
 {
     CPU_SIGNATURE *Signature = (CPU_SIGNATURE*)&CpuSignature;
     return (Signature->ExtModel << 4) + Signature->Model;
 }
 
-/**
-    Get the cpu platform Id.
-
-    @param VOID
-
-    @retval Cpu Platform Id
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   GetCpuPlatformId
+//
+// Description: Get the cpu platform Id.
+//
+// Input:       VOID
+//
+// Output:      Cpu Platform Id
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT32  GetCpuPlatformId(VOID)
 {
     return (UINT32)Shr64(ReadMsr(0x17), 50) & 7;
 }
 
-/**
-    Return the Smrr Base Msr
-
-    @param VOID
-
-    @retval SMRR Base
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:	GetSmrrBaseMsr
+//
+// Description:	Return the Smrr Base Msr
+//
+// Input:		VOID
+//
+// Output:		SMRR Base
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT32  GetSmrrBaseMsr()
 {
     return 0x1f2;
 }
 
-/**
-    This function writes the CPU MSR with the value provided.
-
-    @param 
-        Msr     32bit MSR index
-        Value   64bit OR Value
-        Mask    64Bit AND Mask Value
-
-    @retval VOID
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   ReadWriteMsr
+//
+// Description: This function writes the CPU MSR with the value provided.
+//
+// Input:
+//  Msr     32bit MSR index
+//  Value   64bit OR Value
+//  Mask    64Bit AND Mask Value
+//
+// Output:  VOID
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID ReadWriteMsr(UINT32 Msr, UINT64 Value, UINT64 Mask)
 {
     UINT64 OrigData = ReadMsr(Msr);
@@ -223,14 +261,18 @@ VOID ReadWriteMsr(UINT32 Msr, UINT64 Value, UINT64 Mask)
     WriteMsr(Msr, WriteData);
 }
 
-/**
-    Get number of supported threads per core.
-
-    @param VOID
-
-    @retval UINT8 Number of Threads per core.
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:	NumSupportedThreadsPerCore
+//
+// Description:	Get number of supported threads per core.
+//
+// Input:   VOID
+//
+// Output:  UINT8 Number of Threads per core.
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT8 NumSupportedThreadsPerCore()
 {
@@ -241,14 +283,18 @@ UINT8 NumSupportedThreadsPerCore()
     return (UINT8)RegEbx;
 }
 
-/**
-    Get number of supported Cpu Cores per package.
-
-    @param VOID
-
-    @retval UINT8 Number of supported Cpu Cores per package.
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:	NumSupportedCpuCores
+//
+// Description:	Get number of supported Cpu Cores per package.
+//
+// Input:   VOID
+//
+// Output:  UINT8 Number of supported Cpu Cores per package.
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT8 NumSupportedCpuCores()
 {
@@ -267,14 +313,18 @@ UINT8 NumSupportedCpuCores()
     return TotLogicalCpus / LogicalCpusPerCore;
 }
 
-/**
-    Get number of logical CPUs.
-
-    @param VOID
-
-    @retval UINT8 Number of logical CPUs.
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:	NumLogicalCpus
+//
+// Description:	Get number of logical CPUs.
+//
+// Input:   VOID
+//
+// Output:  UINT8 Number of logical CPUs.
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT8 NumLogicalCpus()
 {
@@ -282,14 +332,18 @@ UINT8 NumLogicalCpus()
     return (UINT8)MsrData;
 }
 
-/**
-    Determine if CPU is HT.
-
-    @param VOID
-
-    @retval True if HT CPU.
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   IsHtEnabled
+//
+// Description: Determine if CPU is HT.
+//
+// Input:   VOID
+//
+// Output:  True if HT CPU.
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 BOOLEAN IsHtEnabled()
 {
@@ -311,14 +365,18 @@ BOOLEAN IsHtEnabled()
     return FALSE;
 }
 
-/**
-    Returns number of CPU Cores
-
-    @param VOID
-
-    @retval Number of CPU Cores.
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   NumCpuCores
+//
+// Description: Returns number of CPU Cores
+//
+// Input: VOID
+//
+// Output:  Number of CPU Cores.
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT8 NumCpuCores()
 {
@@ -328,14 +386,18 @@ UINT8 NumCpuCores()
     return (UINT8)RegEbx;
 }
 
-/**
-    Determine if CPU thread is logical CPU 0 executing.
-
-    @param VOID
-
-    @retval True if logical CPU 0.
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   IsHt0
+//
+// Description: Determine if CPU thread is logical CPU 0 executing.
+//
+// Input: VOID   
+//
+// Output:  True if logical CPU 0.
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 BOOLEAN IsHt0()
 {
     UINT32 ApicMask;
@@ -354,14 +416,18 @@ BOOLEAN IsHt0()
     return FALSE;
 }
 
-/**
-    Determine if CPU thread is CPU Core 0 executing.
-
-    @param VOID
-
-    @retval True if logical CPU 0.
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   IsCore0
+//
+// Description: Determine if CPU thread is CPU Core 0 executing.
+//
+// Input:   VOID
+//
+// Output:  True if logical CPU 0.
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 BOOLEAN IsCore0()
 {
     UINT32 RegEax, RegEbx, RegEcx, RegEdx;
@@ -384,40 +450,52 @@ BOOLEAN IsCore0()
     return FALSE;
 }
 
-/**
-    Determine if CPU supports X64.
-
-    @param CPU_FEATURES *Features
-
-    @retval True if supported.
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   IsX64Supported
+//
+// Description: Determine if CPU supports X64.
+//
+// Input:   CPU_FEATURES *Features
+//
+// Output:  True if supported.
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 BOOLEAN IsX64Supported(CPU_FEATURES *Features)
 {
     return ((Features->ExtFeatureEdx) >> 29) & 1;
 }
 
-/**
-    Determine if CPU supports Execute Disable.
-
-    @param CPU_FEATURES *Features
-
-    @retval True if supported.
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   isXDSupported
+//
+// Description: Determine if CPU supports Execute Disable.
+//
+// Input:   CPU_FEATURES *Features
+//
+// Output:  True if supported.
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 BOOLEAN isXDSupported(CPU_FEATURES *Features)
 {
     return !!(Features->ExtFeatureEdx & (1 << 20));
 }
 
-/**
-    Determine if CPU supports Turbo mode.
-
-    @param VOID
-
-    @retval True if supported.
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:	isTurboModeSupported
+//
+// Description:	Determine if CPU supports Turbo mode.
+//
+// Input:	None
+//
+// Output:	True if supported.
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 BOOLEAN isTurboModeSupported()
 {
@@ -430,14 +508,18 @@ BOOLEAN isTurboModeSupported()
 
 }
 
-/**
-    Determine if CPU supports Programmable TDC/TDP Limit for the Turbo mode.
-
-    @param VOID
-
-    @retval True if supported.
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:	isXETdcTdpLimitSupported
+//
+// Description:	Determine if CPU supports Programmable TDC/TDP Limit for the Turbo mode.
+//
+// Input:	None
+//
+// Output:	True if supported.
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 BOOLEAN isXETdcTdpLimitSupported()
 {
@@ -449,14 +531,18 @@ BOOLEAN isXETdcTdpLimitSupported()
 
 }
 
-/**
-    Determine if CPU supports Programmable Core Ratio Limit for the Turbo mode.
-
-    @param VOID
-
-    @retval True if supported.
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:	isXECoreRatioLimitSupported
+//
+// Description:	Determine if CPU supports Programmable Core Ratio Limit for the Turbo mode.
+//
+// Input:	None
+//
+// Output:	True if supported.
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 BOOLEAN isXECoreRatioLimitSupported()
 {
@@ -466,14 +552,18 @@ BOOLEAN isXECoreRatioLimitSupported()
 	ret = (UINT32) (MsrData & (1 << XE_CORE_RATIO_PROGRAMMABLE_BIT)) ? 1:0; 
 	return ret;
 }
-/**
-    Determine if CPU supports limiting CpuId to 3.
-
-    @param VOID
-
-    @retval True if supported.
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   isLimitCpuidSupported
+//
+// Description: Determine if CPU supports limiting CpuId to 3.
+//
+// Input:   VOID
+//
+// Output:  True if supported.
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 BOOLEAN isLimitCpuidSupported()
 {
     UINT32 RegEbx, RegEcx, RegEdx;
@@ -482,67 +572,87 @@ BOOLEAN isLimitCpuidSupported()
     return LargestCPUIDFunc > 3;
 }
 
-/**
-    Determine if CPU supports machine check.
-
-    @param CPU_FEATURES *Features
-
-    @retval True if supported.
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   isMachineCheckSupported
+//
+// Description: Determine if CPU supports machine check.
+//
+// Input:   CPU_FEATURES *Features
+//
+// Output:  True if supported.
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 BOOLEAN IsMachineCheckSupported(CPU_FEATURES *Features)
 {
     //Check if MCE and MCA supported.
     return ((Features->FeatureEdx & ((1 << 7) + (1 << 14))) == ((1 << 7) + (1 << 14)));
 }
 
-/**
-    Determine if CPU supports VT extensions Vmx.
-
-    @param CPU_FEATURES *Features
-
-    @retval True if Vmx supported.
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   IsVmxSupported
+//
+// Description: Determine if CPU supports VT extensions Vmx.
+//
+// Input:   CPU_FEATURES *Features
+//
+// Output:  True if Vmx supported.
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 BOOLEAN IsVmxSupported(CPU_FEATURES *Features)
 {
     return Features->FeatureEcx & (1 << 5);
 }
 
-/**
-    Determine if CPU supports VT extensions Smx.
-
-    @param CPU_FEATURES *Features
-
-    @retval True if Smx supported.
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   IsSmxSupported
+//
+// Description: Determine if CPU supports VT extensions Smx.
+//
+// Input:   CPU_FEATURES *Features
+//
+// Output:  True if Smx supported.
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 BOOLEAN IsSmxSupported(CPU_FEATURES *Features)
 {
     return Features->FeatureEcx & (1 << 6);
 }
 
-/**
-    Determine if CPU supports Smrr.
-
-    @param CPU_FEATURES *Features
-
-    @retval True if Smx supported.
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   CPU_IsSmrrSupported
+//
+// Description: Determine if CPU supports Smrr.
+//
+// Input:   CPU_FEATURES *Features
+//
+// Output:  True if Smx supported.
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 BOOLEAN IsSmrrSupported(CPU_FEATURES *Features)
 {
     return (BOOLEAN)Features->Flags.SmrrSupport;
 }
 
-/**
-    Determine if Energy Performance Bias supported.
-
-    @param VOID
-
-    @retval BOOLEAN True if Energy Performance Bias supported.
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   IsEnergyPerfBiasSupported
+//
+// Description: Determine if Energy Performance Bias supported.
+//
+// Input:   VOID
+//
+// Output:  BOOLEAN - True if Energy Performance Bias supported.
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 BOOLEAN IsEnergyPerfBiasSupported()
 {
@@ -573,14 +683,18 @@ BOOLEAN IsEnergyPerfBiasSupported()
     return !!(RegEcx & BIT3);
 }
 
-/**
-    Determine if C-state interrupting state supported.
-
-    @param VOID
-
-    @retval BOOLEAN True if C-state interrupting supported.
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   IsCxInterruptFilteringSupported
+//
+// Description: Determine if C-state interrupting state supported.
+//
+// Input:   VOID
+//
+// Output:  BOOLEAN - True if C-state interrupting supported.
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 BOOLEAN IsCxInterruptFilteringSupported()
 {
@@ -593,14 +707,18 @@ BOOLEAN IsCxInterruptFilteringSupported()
     //DEBUG return TRUE;
 }
 
-/**
-    Determine if Vmx is enabled.
-
-    @param VOID
-
-    @retval True if Vmx enabled.
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   CPULib_IsVmxEnabled
+//
+// Description: Determine if Vmx is enabled.
+//
+// Input:   VOID
+//
+// Output:  True if Vmx enabled.
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 BOOLEAN CPULib_IsVmxEnabled()
 {
     UINT32 RegEax, RegEbx, RegEcx, RegEdx;
@@ -612,14 +730,18 @@ BOOLEAN CPULib_IsVmxEnabled()
     return !!(Msr & (1 << 2));
 }
 
-/**
-    Determine if Smx is enabled.
-
-    @param VOID
-
-    @retval True if Smx enabled.
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   CPULib_IsSmxEnabled
+//
+// Description: Determine if Smx is enabled.
+//
+// Input:   VOID
+//
+// Output:  True if Smx enabled.
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 BOOLEAN CPULib_IsSmxEnabled()
 {
     UINT32 RegEax, RegEbx, RegEcx, RegEdx;
@@ -631,14 +753,18 @@ BOOLEAN CPULib_IsSmxEnabled()
     return !!(Msr & BIT1);
 }
 
-/**
-    Determine if Smrr is enabled.
-
-    @param BOOLEAN
-
-    @retval True if Smrr is enabled.
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   CPULib_IsSmrrEnabled
+//
+// Description: Determine if Smrr is enabled.
+//
+// Input:   BOOLEAN
+//
+// Output:  True if Smrr is enabled.
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 BOOLEAN CPULib_IsSmrrEnabled()
 {
     //Once SMRR is enabled, the opened SMM Area can't be read outside of SMM.
@@ -652,14 +778,18 @@ BOOLEAN CPULib_IsSmrrEnabled()
 }
 
 
-/**
-    Is APIC enabled, xAPIC or x2APIC
-
-    @param VOID
-
-    @retval BOOLEAN True if enabled
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   CPULIB_IsLocalApicEnabled
+//
+// Description: Is APIC enabled, xAPIC or x2APIC
+//
+// Input:   VOID
+//
+// Output:  BOOLEAN - True if enabled
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 BOOLEAN CPULib_IsLocalApicEnabled()
 {
@@ -667,14 +797,18 @@ BOOLEAN CPULib_IsLocalApicEnabled()
     return !!(Msr & (1 << XAPIC_GLOBAL_ENABLE_BIT));
 }
 
-/**
-    Get C-state latency.
-
-    @param VOID
-
-    @retval BOOLEAN True if enabled
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   CPULIB_IsLocalX2ApicEnabled
+//
+// Description: Get C-state latency.
+//
+// Input:   VOID
+//
+// Output:  BOOLEAN - True if enabled
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 BOOLEAN CPULib_IsLocalX2ApicEnabled()
 {
@@ -682,28 +816,36 @@ BOOLEAN CPULib_IsLocalX2ApicEnabled()
     return !!(Msr & (1 << XAPIC_X2APIC_ENABLE_BIT));
 }
 
-/**
-    Check to see if the MSR_IA32_FEATURE_CONTROL is locked.
-
-    @param VOID
-
-    @retval BOOLEAN True if MSR_IA32_FEATURE_CONTROL is locked.
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   CPULib_IsFeatureControlLocked
+//
+// Description: Check to see if the MSR_IA32_FEATURE_CONTROL is locked.
+//
+// Input:   VOID
+//
+// Output:  BOOLEAN - True if MSR_IA32_FEATURE_CONTROL is locked.
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 BOOLEAN CPULib_IsFeatureControlLocked() {
     UINT8 Ia32FeatureCntrl = (UINT8)ReadMsr(MSR_IA32_FEATURE_CONTROL);
     return Ia32FeatureCntrl & 1;
 }
 
 
-/**
-    Returns number of CPU sockets are populated.
-
-    @param VOID
-
-    @retval UINT32 Number of CPU sockets populated.
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   NumberOfCpuSocketsPopulated
+//
+// Description: Returns number of CPU sockets are populated.
+//
+// Input:   VOID
+//
+// Output:  UINT32 - Number of CPU sockets populated.
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT32  NumberOfCpuSocketsPopulated()
 {

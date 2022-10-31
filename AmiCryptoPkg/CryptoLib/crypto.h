@@ -1,9 +1,15 @@
 /*
  * WPA Supplicant / wrapper functions for crypto libraries
- * Copyright (c) 2004-2009, Jouni Malinen <j@w1.fi>
+ * Copyright (c) 2004-2007, Jouni Malinen <j@w1.fi>
  *
- * This software may be distributed under the terms of the BSD license.
- * See README for more details.
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
+ * published by the Free Software Foundation.
+ *
+ * Alternatively, this software may be distributed under the terms of BSD
+ * license.
+ *
+ * See README and COPYING for more details.
  *
  * This file defines the cryptographic functions that need to be implemented
  * for wpa_supplicant and hostapd. When TLS is not used, internal
@@ -74,11 +80,6 @@ int __must_check fips186_2_prf(const u8 *seed, size_t seed_len, u8 *x,
 void sha256_vector(size_t num_elem, const u8 *addr[], const size_t *len,
 		   u8 *mac);
 
-void sha384_vector(size_t num_elem, const u8 *addr[], const size_t *len,
-                   u8 *mac);
-
-void sha512_vector(size_t num_elem, const u8 *addr[], const size_t *len,
-                   u8 *mac);
 /**
  * des_encrypt - Encrypt one block with DES
  * @clear: 8 octets (in)

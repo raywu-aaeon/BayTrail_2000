@@ -1,7 +1,7 @@
 //**********************************************************************//
 //**********************************************************************//
 //**                                                                  **//
-//**        (C)Copyright 1985-2015, American Megatrends, Inc.         **//
+//**        (C)Copyright 1985-2013, American Megatrends, Inc.         **//
 //**                                                                  **//
 //**                       All Rights Reserved.                       **//
 //**                                                                  **//
@@ -12,17 +12,22 @@
 //**********************************************************************//
 //**********************************************************************//
 
-/** @file SmbiosDmiEditFunc.c
-    This file provides worker functions to support DmiEdit feature
-
-**/
+//**********************************************************************//
+// $Header: /Alaska/SOURCE/Modules/SMBIOS/SmbiosDMIEditSupport/SmbiosDMIEditFunc.c 55    8/02/12 12:45p Davidd $
+//
+// $Revision: 55 $
+//
+// $Date: 8/02/12 12:45p $
+//**********************************************************************//
+//**********************************************************************//
 
 #include <AmiLib.h>
 #include <AmiDxeLib.h>
-#include <Protocol/AmiSmbios.h>
+#include <Protocol\AmiSmbios.h>
 #include "SmbiosDmiEdit.h"
 
-#define WRITE_ONCE_ENTRIES  0x10                // Maximum number of WRITE_ONCE_STATUS entries
+#define SMBIOS_SIG (UINT32)'_MS_'
+#define WRITE_ONCE_ENTRIES  0x10    // Maximum number of WRITE_ONCE_STATUS entries
 
 #if !defined(SMBIOS_DMIEDIT_DATA_LOC) || SMBIOS_DMIEDIT_DATA_LOC != 2
 extern UINT16 UpdateSmbiosTable (
@@ -40,16 +45,9 @@ UINT8                       *DmiData;
 UINTN                       DmiDataSize;
 CHAR16                      *Var = L"                ";
 UINT8                       Index;
-#endif                                          // SMBIOS_DMIEDIT_DATA_LOC
+#endif                                  // SMBIOS_DMIEDIT_DATA_LOC
 
-#if (SMBIOS_2X_SUPPORT == 1)
 SMBIOS_TABLE_ENTRY_POINT    *SmbiosTableEntryPoint = NULL;
-UINTN                       Smb2xTablePhysAddress  = 0;
-#endif                                          // SMBIOS_2X_SUPPORT
-#if (SMBIOS_3X_SUPPORT == 1)
-SMBIOS_3X_TABLE_ENTRY_POINT *SmbiosV3TableEntryPoint = NULL;
-UINTN                       Smb3xTablePhysAddress    = 0;
-#endif                                          // SMBIOS_3X_SUPPORT
 UINT8                       *ScratchBufferPtr = NULL;
 UINT16						MaximumBufferSize;
 
@@ -80,7 +78,6 @@ STRING_TABLE    StringType_2[] =   {{0x04, 1, 1},
                                     {0xff, 0, 0},
                                    };
 
-#if (TYPE3_STRUCTURE == 1)
 STRING_TABLE    StringType_3[NUMBER_OF_SYSTEM_CHASSIS][6] =
                                   {{{0x04, 1, 1},
                                     {0x06, 2, 2},
@@ -129,8 +126,7 @@ STRING_TABLE    StringType_3[NUMBER_OF_SYSTEM_CHASSIS][6] =
                                     {0xff, 0, 0},
                                    },
 #endif
-                                  };            // StringType_3
-#endif                                          // TYPE3_STRUCTURE
+                                  };                    // StringType_3
 
 STRING_TABLE    StringType_4[] =   {{0x04, 1, 1},
                                     {0x07, 2, 2},
@@ -167,33 +163,82 @@ STRING_TABLE    StringType_39[] =  {{0x05, 1, 1},
 VOID*    StringTable[] = {&StringType_0,        // 0
                           &StringType_1,        // 1
                           &StringType_2,        // 2
-#if (TYPE3_STRUCTURE == 1)
                           &StringType_3,        // 3
-#endif
                           &StringType_4,        // 4
                           &StringType_22,       // 5
                           &StringType_39,       // 6
                          };
 
-UINTN   StringTableSize = sizeof(StringTable);
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   GetSmbiosTableF000
+//
+// Description: Searches 0x0F0000 for the SMBIOS signature and fills in the
+//              SmbiosTableEntryPoint once it has been found
+//
+// Input:       None
+//
+// Output:      None
+//
+// Modified: SmbiosTableEntryPoint -is modified if table entry point found
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
+VOID
+GetSmbiosTableF000 (VOID)
+{
+    static BOOLEAN      NotDone = TRUE;
 
-/**
-    Table indicating which structure and offset can be written
-    only once or multiple times
-**/
+    if (NotDone) {
+        UINT32              *ptr32;
+        UINT16              i;
+
+        ptr32 = (UINT32*)0xF0000;
+        for (i = 0; i < (0x10000 / 16); i++, ptr32 += 4) {
+            if (*ptr32 == SMBIOS_SIG) {
+                SmbiosTableEntryPoint = (SMBIOS_TABLE_ENTRY_POINT*)ptr32;
+                NotDone = FALSE;
+                break;
+            }
+        }
+    }
+}
+
+//<AMI_THDR_START>
+//----------------------------------------------------------------------------
+// Name:        WriteOnceTable
+//
+// Description: Table indicating which structure and offset can be written
+//              only once or multiple times
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_THDR_END>
 WRITE_ONCE_TABLE WriteOnceTable[] = {
                                       {1, 4, TRUE},
                                       {2, 4, TRUE},
                                     };
 
-/**
-    Initialize NVRAM variable holding WriteOnce statuses
-
-    @param None
-
-    @retval None
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   WriteOnceStatusInit
+//
+// Description: Initialize NVRAM variable holding WriteOnce statuses
+//
+// Input:       None
+//
+// Output:      None
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID
 WriteOnceStatusInit(VOID)
 {
@@ -202,7 +247,7 @@ WriteOnceStatusInit(VOID)
     UINTN               BufferSize;
 
     BufferSize = WRITE_ONCE_ENTRIES * sizeof(WRITE_ONCE_STATUS);
-    pBS->AllocatePool(EfiBootServicesData, BufferSize, (void**)&Buffer);
+    pBS->AllocatePool(EfiBootServicesData, BufferSize, &Buffer);
 
     // Create "WriteOnceStatus" variable if it does not exist
     Status = pRS->GetVariable(L"WriteOnceStatus",
@@ -226,16 +271,25 @@ WriteOnceStatusInit(VOID)
     pBS->FreePool(Buffer);
 }
 
-/**
-    Determines if a given structure type and offset can only
-    be written once or multiple times.
-
-    @param Type
-    @param Offset
-
-    @return BOOLEAN TRUE/FALSE for Write Once/Multiple
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   isWriteOnce
+//
+// Description: Determines if a given structure type and offset can only
+//              be written once or multiple times.
+//
+// Input:       IN UINT8   Type
+//              IN UINT8   Offset
+//
+// Output:      BOOLEAN - TRUE/FALSE for Write Once/Multiple
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 BOOLEAN
 isWriteOnce(
     IN UINT8    Type,
@@ -301,17 +355,25 @@ isWriteOnce(
 }
 
 #if !defined(SMBIOS_DMIEDIT_DATA_LOC) || SMBIOS_DMIEDIT_DATA_LOC != 2
-/**
-    Searches the Flash Data Table for a record of Type and
-    Offset. If found, returns the location found, the data size,
-    and the end of data.
-
-    @param RecordInfo
-
-    @return FLASH_DATA_INFO structure contains location of flash data
-            record, its data size, and end of data
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   GetFlashDataInfo
+//
+// Description: Searches the Flash Data Table for a record of Type and
+//              Offset. If found, returns the location found, the data size,
+//              and the end of data.
+//
+// Input:       IN TABLE_INFO   RecordInfo
+//
+// Output:      FLASH_DATA_INFO
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 FLASH_DATA_INFO
 GetFlashDataInfo(
     IN TABLE_INFO   *RecordInfo
@@ -334,99 +396,68 @@ GetFlashDataInfo(
 	FlashDataInfo.EndOfData = (UINT8*)FlashDataPtr;
 	return FlashDataInfo;
 }
-#endif                                          // SMBIOS_DMIEDIT_DATA_LOC
+#endif
 
-#if (SMBIOS_2X_SUPPORT == 1)
-/**
-    Returns the SMBIOS 2.x information
-
-    @param Pointer to SMI function parameters
-
-    @return UINT16 Status (0 for success)
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   GetSmbiosInfo
+//
+// Description: Returns the SMBIOS information
+//
+// Input:       IN OUT  GET_SMBIOS_INFO   *p
+//
+// Output:      Returns 0
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 UINT16
-GetSmbiosV2Info(
+GetSmbiosInfo(
     IN OUT  GET_SMBIOS_INFO   *p
 )
 {
     if (!SmbiosTableEntryPoint) return DMI_FUNCTION_NOT_SUPPORTED;
-
-    *(UINT8*)p->DmiBiosRevision32BitAddr = (SMBIOS_2X_MAJOR_VERSION << 4) | SMBIOS_2X_MINOR_VERSION;
-    *(UINT16*)p->NumStructures32BitAddr = GetNumberOfStructures((UINT8*)SmbiosTableEntryPoint->TableAddress);
-    *(UINT16*)p->StructureSize32BitAddr = GetLargestStructureSize((UINT8*)SmbiosTableEntryPoint->TableAddress);
-    *(UINT32*)p->DmiStorageBase32BitAddr = SmbiosTableEntryPoint->TableAddress;
-    if (Smb2xTablePhysAddress != 0) {
-        *(UINT32*)p->DmiStorageBase32BitAddr = (UINT32)Smb2xTablePhysAddress;
-    }
-    else {
-        *(UINT32*)p->DmiStorageBase32BitAddr = SmbiosTableEntryPoint->TableAddress;
-    }
-    *(UINT16*)p->DmiStorageSize32BitAddr = MaximumBufferSize;
+    p->DmiBiosRevision = SmbiosTableEntryPoint->SmbiosBCDRevision;
+    p->NumStructures = SmbiosTableEntryPoint->NumberOfSmbiosStructures;
+    p->StructureSize = SmbiosTableEntryPoint->MaxStructureSize;
+    p->pDmiStorageBase = SmbiosTableEntryPoint->TableAddress;
+    p->DmiStorageSize = MaximumBufferSize;
 
     return 0;
 }
-#endif                                          // SMBIOS_2X_SUPPORT
 
-#if (SMBIOS_3X_SUPPORT == 1)
-/**
-    Returns the SMBIOS 3.x information
-
-    @param Pointer to SMI function parameters
-
-    @return UINT16 Status (0 for success)
-
-**/
-UINT16
-GetSmbiosV3Info(
-    IN OUT  GET_SMBIOS_V3_INFO   *p
-)
-{
-    if (!SmbiosV3TableEntryPoint) return DMI_FUNCTION_NOT_SUPPORTED;
-
-    *(UINT8*)p->DmiBiosRevision64BitAddr = (SMBIOS_3X_MAJOR_VERSION << 4) | SMBIOS_3X_MINOR_VERSION;
-    *(UINT16*)p->NumStructures64BitAddr = GetNumberOfStructures((UINT8*)SmbiosV3TableEntryPoint->TableAddress);
-    *(UINT16*)p->StructureSize64BitAddr = GetLargestStructureSize((UINT8*)SmbiosV3TableEntryPoint->TableAddress);
-    *(UINT64*)p->DmiStorageBase64BitAddr = (UINT64)SmbiosV3TableEntryPoint->TableAddress;
-    if (Smb3xTablePhysAddress != 0) {
-        *(UINT64*)p->DmiStorageBase64BitAddr = Smb3xTablePhysAddress;
-    }
-    else {
-        *(UINT64*)p->DmiStorageBase64BitAddr = (UINT64)SmbiosV3TableEntryPoint->TableAddress;
-    }
-    *(UINT16*)p->DmiStorageSize64BitAddr = MaximumBufferSize;
-
-    return 0;
-}
-#endif                                          // SMBIOS_3X_SUPPORT
-
-/**
-    Searches the structure table for a record with its handle
-    equal to the input Handle.
-    Returns the pointer to the structure if found.
-    Returns NULL if not found
-
-    @param Handle
-
-    @return UINT8 Pointer to structure found
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   GetStructureByHandle
+//
+// Description: Searches the structure table for a record with its handle
+//              equal to the input Handle.
+//              Returns the pointer to the structure if found.
+//              Returns NULL if not found
+//
+// Input:       IN UINT16    *Handle
+//
+// Output:      UINT8* - Pointer to structure found
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 UINT8*
 GetStructureByHandle(
     IN UINT16    *Handle
 )
 {
-    UINT8   *SmbiosTableNext;
-
-#if (SMBIOS_2X_SUPPORT == 1)
-    UINT8   *SmbiosTable = (UINT8*)(UINTN)((SMBIOS_TABLE_ENTRY_POINT*)SmbiosTableEntryPoint)->TableAddress;
+    UINT8   *SmbiosTable = (UINT8*)((SMBIOS_TABLE_ENTRY_POINT*)SmbiosTableEntryPoint)->TableAddress;
     UINT8   *SmbiosTableEnd = SmbiosTable + ((SMBIOS_TABLE_ENTRY_POINT*)SmbiosTableEntryPoint)->TableLength;
-#elif (SMBIOS_3X_SUPPORT == 1)
-    UINT8   *SmbiosTable = (UINT8*)(UINTN)((SMBIOS_3X_TABLE_ENTRY_POINT*)SmbiosV3TableEntryPoint)->TableAddress;
-    UINT8   *SmbiosTableEnd = SmbiosTable + ((SMBIOS_3X_TABLE_ENTRY_POINT*)SmbiosV3TableEntryPoint)->TableMaximumSize;
-#else
-    return NULL;
-#endif                                          // SMBIOS_2X_SUPPORT
+    UINT8   *SmbiosTableNext;
 
     while(SmbiosTable < SmbiosTableEnd && ((SMBIOS_STRUCTURE_HEADER*)SmbiosTable)->Type != 127) {
         SmbiosTableNext = SmbiosTable + GetStructureLength(SmbiosTable);
@@ -438,39 +469,40 @@ GetStructureByHandle(
     return NULL;
 }
 
-/**
-    Searches the structure table for a record with its handle
-    equal to the input Handle.
-    Returns the pointer to the structure if found.
-    Returns NULL if not found
-
-    @param Handle
-
-    @return UINT8 Pointer to structure found.
-            Sets Handle to the handle of the next structure
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   GetStructureByHandleThenUpdateHandle
+//
+// Description: Searches the structure table for a record with its handle
+//              equal to the input Handle.
+//              Returns the pointer to the structure if found.
+//              Returns NULL if not found
+//
+// Input:       IN UINT16    *Handle
+//
+// Output:      UINT8* - Pointer to structure found
+//              Sets Handle to the handle of the next structure
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 UINT8*
 GetStructureByHandleThenUpdateHandle(
     IN UINT16    *Handle
 )
 {
-    UINT8   *SmbiosTableNext;
-
-#if (SMBIOS_2X_SUPPORT == 1)
-    UINT8   *SmbiosTable = (UINT8*)(UINTN)((SMBIOS_TABLE_ENTRY_POINT*)SmbiosTableEntryPoint)->TableAddress;
+    UINT8   *SmbiosTable = (UINT8*)((SMBIOS_TABLE_ENTRY_POINT*)SmbiosTableEntryPoint)->TableAddress;
     UINT8   *SmbiosTableEnd = SmbiosTable + ((SMBIOS_TABLE_ENTRY_POINT*)SmbiosTableEntryPoint)->TableLength;
-#elif (SMBIOS_3X_SUPPORT == 1)
-    UINT8   *SmbiosTable = (UINT8*)(UINTN)((SMBIOS_3X_TABLE_ENTRY_POINT*)SmbiosV3TableEntryPoint)->TableAddress;
-    UINT8   *SmbiosTableEnd = SmbiosTable + ((SMBIOS_3X_TABLE_ENTRY_POINT*)SmbiosV3TableEntryPoint)->TableMaximumSize;
-#else
-    return NULL;
-#endif                                          // SMBIOS_2X_SUPPORT
+    UINT8   *SmbiosTableNext;
 
     if (*Handle == 0) {
         SmbiosTableNext = SmbiosTable + GetStructureLength(SmbiosTable);
-        if (SmbiosTableNext >= SmbiosTableEnd) *Handle = 0xffff;    //Last handle?
-        else *Handle = ((DMI_STRUC*)SmbiosTableNext)->Handle;       //Return next handle
+        if (SmbiosTableNext >= SmbiosTableEnd) *Handle = 0xffff;  //Last handle?
+        else *Handle = ((DMI_STRUC*)SmbiosTableNext)->Handle;     //Return next handle
         return SmbiosTable;
     }
 
@@ -478,99 +510,77 @@ GetStructureByHandleThenUpdateHandle(
         SmbiosTableNext = SmbiosTable + GetStructureLength(SmbiosTable);
         if (((DMI_STRUC*)SmbiosTable)->Handle == *Handle) {
             if (SmbiosTableNext >= SmbiosTableEnd || ((DMI_STRUC*)SmbiosTable)->Type == 127 ) *Handle = 0xffff;  //Last handle?
-            else *Handle = ((DMI_STRUC*)SmbiosTableNext)->Handle;   //Return next handle
+            else *Handle = ((DMI_STRUC*)SmbiosTableNext)->Handle;     //Return next handle
             return SmbiosTable;
         }
 
         SmbiosTable = SmbiosTableNext;
     }
 
-    return NULL;
+  return NULL;
 }
 
-#if (SMBIOS_2X_SUPPORT == 1)
-/**
-    Searches the structure table for a record with its handle
-    equal to the input Handle and copies its content into
-    the provided buffer.
-
-    @param Pointer to SMI function parameters
-
-    @return GET_SMBIOS_STRUCTURE Input pointer "p" is loaded with
-            structure data.
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   GetSmbiosStructure
+//
+// Description: Searches the structure table for a record with its handle
+//              equal to the input Handle and copies its content into
+//              the provided buffer.
+//
+// Input:       IN OUT  GET_SMBIOS_STRUCTURE    *p
+//
+// Output:      GET_SMBIOS_STRUCTURE* - Input pointer "p" is loaded with
+//                                      structure data.
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 UINT16
-GetSmbiosV2Structure(
-    IN OUT  GET_SMBIOS_STRUCTURE		*p
+GetSmbiosStructure(
+    IN OUT  GET_SMBIOS_STRUCTURE    *p
 )
 {
-    UINT8       *SmbStructurePtr;
-    UINT32      TableSize;
-    UINT8       *src;
-    UINT8       *dest;
+    UINT8     *SmbStructurePtr;
+    UINT32    TableSize;
+    UINT8     *src, *dest;
 
     if (!SmbiosTableEntryPoint) return DMI_FUNCTION_NOT_SUPPORTED;
 
-    SmbStructurePtr = GetStructureByHandleThenUpdateHandle((UINT16*)(UINTN)p->Handle32BitAddr);
+    SmbStructurePtr = GetStructureByHandleThenUpdateHandle((UINT16*)p->Handle32BitAddr);
     if (!SmbStructurePtr) return DMI_INVALID_HANDLE;
 
     TableSize = GetStructureLength(SmbStructurePtr);
 
     src = SmbStructurePtr;
-    dest = (UINT8*)(UINTN)p->Buffer32BitAddr;
-    while(TableSize--) *dest++ = *src++;        // Copy Table
+    dest = (UINT8*)p->Buffer32BitAddr;
+    while(TableSize--) *dest++ = *src++;  //Copy Table
 
     return 0;
 }
-#endif                                          // SMBIOS_2X_SUPPORT
 
-#if (SMBIOS_3X_SUPPORT == 1)
-/**
-    Searches the structure table for a record with its handle
-    equal to the input Handle and copies its content into
-    the provided buffer.
-
-    @param Pointer to SMI function parameters
-
-    @return GET_SMBIOS_STRUCTURE Input pointer "p" is loaded with
-            structure data.
-
-**/
-UINT16
-GetSmbiosV3Structure(
-    IN OUT  GET_SMBIOS_V3_STRUCTURE    *p
-)
-{
-    UINT8       *SmbStructurePtr;
-    UINT32      TableSize;
-    UINT8       *src;
-    UINT8       *dest;
-
-    if (!SmbiosV3TableEntryPoint) return DMI_FUNCTION_NOT_SUPPORTED;
-
-    SmbStructurePtr = GetStructureByHandleThenUpdateHandle((UINT16*)(UINTN)p->Handle64BitAddr);
-    if (!SmbStructurePtr) return DMI_INVALID_HANDLE;
-
-    TableSize = GetStructureLength(SmbStructurePtr);
-
-    src = SmbStructurePtr;
-    dest = (UINT8*)(UINTN)p->Buffer64BitAddr;
-    while(TableSize--) *dest++ = *src++;        // Copy Table
-
-    return 0;
-}
-#endif                                          // SMBIOS_3X_SUPPORT
-
-/**
-    Returns the length of the structure pointed by BufferStart
-    in bytes
-
-    @param BufferStart
-
-    @return UINT16 Size of the structure
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   GetStructureLength
+//
+// Description: Returns the length of the structure pointed by BufferStart
+//              in bytes
+//
+// Input:       IN UINT8     *BufferStart
+//
+// Output:      UINT16 - Size of the structure
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 UINT16
 GetStructureLength(
     IN UINT8     *BufferStart
@@ -587,32 +597,33 @@ GetStructureLength(
     return (UINT16)(BufferEnd + 2 - BufferStart);   // +2 for double zero terminator
 }
 
-/**
-    Returns the instance of the input structure type and its handle
-
-    @param Type
-    @param Handle
-
-    @return UINT8 Instance number (1-based) if found, or 0 if not found
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   GetInstanceByTypeHandle
+//
+// Description: Returns the instance of the input structure type and its handle
+//
+// Input:       IN UINT8    Type
+//              IN UINT16   Handle
+//
+// Output:      Instance number (1-based) if found, or 0 if not found
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 UINT8
 GetInstanceByTypeHandle(
     IN UINT8    Type,
     IN UINT16   Handle
 )
 {
-    UINT8   Instance = 0;                       // 1-based
-
-#if (SMBIOS_2X_SUPPORT == 1)
-    UINT8   *Table = (UINT8*)(UINTN)((SMBIOS_TABLE_ENTRY_POINT*)SmbiosTableEntryPoint)->TableAddress;
+    UINT8   *Table = (UINT8*)((SMBIOS_TABLE_ENTRY_POINT*)SmbiosTableEntryPoint)->TableAddress;
     UINT8   *TableEnd = Table + ((SMBIOS_TABLE_ENTRY_POINT*)SmbiosTableEntryPoint)->TableLength;
-#elif (SMBIOS_3X_SUPPORT == 1)
-    UINT8   *Table = (UINT8*)(UINTN)((SMBIOS_3X_TABLE_ENTRY_POINT*)SmbiosV3TableEntryPoint)->TableAddress;
-    UINT8   *TableEnd = Table + ((SMBIOS_3X_TABLE_ENTRY_POINT*)SmbiosV3TableEntryPoint)->TableMaximumSize;
-#else
-    return 0;					                // Not found
-#endif                                          // SMBIOS_2X_SUPPORT
+    UINT8   Instance = 0;		// 1-based
 
     while ((Table < TableEnd) && ((SMBIOS_STRUCTURE_HEADER*)Table)->Type != 127) {
         if (((SMBIOS_STRUCTURE_HEADER*)Table)->Type == Type) {
@@ -626,31 +637,41 @@ GetInstanceByTypeHandle(
         Table = Table + GetStructureLength(Table);
     }
 
-    return 0;					                // Not found
+    return 0;					// Not found
 }
 
-/**
-    Find structure type starting from memory location pointed by
-    Buffer
-
-    @param Buffer
-    @param StructureFoundPtr
-    @param SearchType
-    @param Instance
-
-
-    @retval TRUE Structure found
-    @retval FALSE Structure not found
-
-        If SearchType is found:
-        UINT8   **Buffer - Points to the next structure
-        UINT8   **StructureFoundPtr - Points to the structure
-        that was found
-        If SearchType is not found:
-        UINT8   **Buffer - No change
-        UINT8   **StructureFoundPtr = NULL
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   FindStructureType
+//
+// Description: Find structure type starting from memory location pointed by
+//              Buffer
+//
+// Input:       IN OUT  UINT8   **Buffer
+//              IN OUT  UINT8   **StructureFoundPtr
+//              IN      UINT8   SearchType
+//              IN      UINT8   Instance
+//
+// Output:
+//              BOOLEAN
+//                  TRUE  - Structure found
+//                  FALSE - Structure not found
+//
+//              If SearchType is found:
+//                UINT8   **Buffer - Points to the next structure
+//                UINT8   **StructureFoundPtr - Points to the structure
+//                                              that was found
+//              If SearchType is not found:
+//                UINT8   **Buffer - No change
+//                UINT8   **StructureFoundPtr = NULL
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 BOOLEAN
 FindStructureType(
     IN OUT UINT8    **Buffer,
@@ -683,16 +704,25 @@ FindStructureType(
     return FindStatus;
 }
 
-/**
-    Returns the string array index for a given Offset in
-    structure pointed by input StringTablePtr
-
-    @param *StringTablePtr
-    @param Offset
-
-    @return UINT8 String array index
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   GetStringTableIndex
+//
+// Description: Returns the string array index for a given Offset in
+//              structure pointed by input StringTablePtr
+//
+// Input:       STRING_TABLE    *StringTablePtr
+//              IN UINT8        Offset
+//
+// Output:      UINT8 - String array index
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 UINT8
 GetStringTableIndex(
     STRING_TABLE    *StringTablePtr,
@@ -709,15 +739,24 @@ GetStringTableIndex(
     return i;
 }
 
-/**
-    Return the size from the Pointer Buffer to the last
-    structure 127.
-
-    @param Buffer
-
-    @return UINT16 Size of remaining structure
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   GetRemainingStructuresSize
+//
+// Description: Return the size from the Pointer Buffer to the last
+//              structure 127.
+//
+// Input:       IN UINT8    *Buffer
+//
+// Output:      Size of remaining structure
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 UINT16
 GetRemainingStructuresSize(
     IN UINT8  *Buffer
@@ -735,16 +774,25 @@ GetRemainingStructuresSize(
     return Length;
 }
 
-/**
-    Returns the checksum of "length" bytes starting from the
-    "*ChecksumSrc"
-
-    @param ChecksumSrc
-    @param length
-
-    @return UINT8 Checksum value
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   SmbiosCheckSum
+//
+// Description: Returns the checksum of "length" bytes starting from the
+//              "*ChecksumSrc"
+//
+// Input:       IN UINT8    *ChecksumSrc
+//              IN UINT8    length
+//
+// Output:      UINT8 - Checksum value
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 UINT8
 SmbiosCheckSum(
     IN UINT8    *ChecksumSrc,
@@ -760,38 +808,23 @@ SmbiosCheckSum(
     return (0 - Checksum);
 }
 
-/**
-    Returns the number of structures starting from Buffer til
-    (and including) type 127 structure.
-
-    @param  *Buffer
-
-    @return Number of structures
-
-**/
-UINT16
-GetNumberOfStructures(
-    IN UINT8    *Buffer
-)
-{
-    UINT8       *BufferPtr = Buffer;
-    UINT16      SmbiosStrucCount = 1;
-
-    while (((SMBIOS_STRUCTURE_HEADER*)BufferPtr)->Type != 127) {
-        ++SmbiosStrucCount;
-        BufferPtr += GetStructureLength(BufferPtr);
-    }
-    return SmbiosStrucCount;
-}
-
-/**
-    Returns the largest structure size
-
-    @param Buffer
-
-    @return UINT16 Largest structure size
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   GetLargestStructureSize
+//
+// Description: Returns the largest structure size
+//
+// Input:       IN UINT8    *Buffer
+//
+// Output:      UINT16 - Largest structure size
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 UINT16
 GetLargestStructureSize(
     IN UINT8     *Buffer
@@ -821,49 +854,53 @@ GetLargestStructureSize(
     return LargestStructureSize;
 }
 
-/**
-    Updates SMBIOS Entry Point Header
-
-    @param None
-
-    @retval EFI_SUCCESS
-
-**/
-EFI_STATUS
-UpdateSmbiosTableHeader(
-)
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   UpdateHeaderInfo
+//
+// Description: Updates SMBIOS Entry Point Header
+//
+// Input:       None
+//
+// Output:      None
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
+VOID
+UpdateHeaderInfo(VOID)
 {
-#if (SMBIOS_2X_SUPPORT == 1)
-    SmbiosTableEntryPoint->TableLength = GetRemainingStructuresSize((UINT8*)(UINTN)SmbiosTableEntryPoint->TableAddress);
+    SmbiosTableEntryPoint->TableLength = GetRemainingStructuresSize((UINT8*)SmbiosTableEntryPoint->TableAddress);
     SmbiosTableEntryPoint->IntermediateChecksum = 0;
     SmbiosTableEntryPoint->IntermediateChecksum = SmbiosCheckSum((UINT8*)SmbiosTableEntryPoint + 0x10, 15);
-    SmbiosTableEntryPoint->MaxStructureSize = GetLargestStructureSize((UINT8*)(UINTN)SmbiosTableEntryPoint->TableAddress);
+    SmbiosTableEntryPoint->MaxStructureSize = GetLargestStructureSize((UINT8*)SmbiosTableEntryPoint->TableAddress);
     SmbiosTableEntryPoint->EntryPointStructureChecksum = 0;
     SmbiosTableEntryPoint->EntryPointStructureChecksum = SmbiosCheckSum((UINT8*)SmbiosTableEntryPoint,
-                                                                        SmbiosTableEntryPoint->EntryPointLength);
-#endif                                          // SMBIOS_2X_SUPPORT
-
-#if (SMBIOS_3X_SUPPORT == 1)
-    SmbiosV3TableEntryPoint->TableMaximumSize = GetRemainingStructuresSize((UINT8*)SmbiosV3TableEntryPoint->TableAddress);
-
-    // Update Checksums in EPS Header
-    SmbiosV3TableEntryPoint->EntryPointStructureChecksum = 0;
-    SmbiosV3TableEntryPoint->EntryPointStructureChecksum = SmbiosCheckSum((UINT8*)SmbiosV3TableEntryPoint,
-                                                                          SmbiosV3TableEntryPoint->EntryPointLength);
-#endif                                          // SMBIOS_3X_SUPPORT
-
-    return  EFI_SUCCESS;
+                                                                          SmbiosTableEntryPoint->EntryPointLength);
 }
 
-/**
-    Return pointer to the input type string table
-
-    @param Structure Type
-
-    @return VOID Pointer to the input type string table
-            (or NULL if not found)
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   GetTypeTable
+//
+// Description: Return pointer to the input type string table
+//
+// Input:       IN UINT8      Structure Type
+//
+// Output:      Pointer to the input type string table
+//              (or NULL if not found)
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID*
 GetTypeTable(
     IN UINT8    StructType
@@ -893,20 +930,29 @@ GetTypeTable(
     }
 }
 
-/**
-    Returns the string offset for StringNumber from input string
-    buffer BufferStart
-
-    @param BufferStart
-    @param StringNumber (1-based)
-
-    @return UINT16 Offset from BufferStart
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   GetStringOffset
+//
+// Description: Returns the string offset for StringNumber from input string
+//              buffer BufferStart
+//
+// Input:       IN  UINT8   *BufferStart
+//              IN  UINT8   StringNumber (1-based)
+//
+// Output:      UINT16 - Offset from BufferStart
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 UINT16
 GetStringOffset(
     IN UINT8    *BufferStart,
-    IN UINT8    StringNumber                    // 1-based
+    IN UINT8    StringNumber          // 1-based
 )
 {
     UINT8       *BufferEnd = BufferStart;
@@ -921,19 +967,28 @@ GetStringOffset(
     return (UINT16)(BufferEnd - BufferStart);
 }
 
-/**
-    Returns pointer to the string number in structure BufferPtr
-
-    @param BufferPtr
-    @param StringNumber
-
-    @return UINT8 BufferPtr = Pointer to the #StringNumber string
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   FindString
+//
+// Description: Returns pointer to the string number in structure BufferPtr
+//
+// Input:       IN OUT  UINT8    **BufferPtr
+//              IN      UINT8    StringNumber
+//
+// Output:      UINT8   *BufferPtr = Pointer to the #StringNumber string
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 BOOLEAN
 FindString(
     IN OUT UINT8    **BufferPtr,
-    IN     UINT8    StringNumber                // 1-based
+    IN     UINT8    StringNumber          // 1-based
 )
 {
     *BufferPtr += ((SMBIOS_STRUCTURE_HEADER*)*BufferPtr)->Length;
@@ -941,16 +996,25 @@ FindString(
     return TRUE;
 }
 
-/**
-    Return the largest string number in a structure
-
-    @param StructPtr
-    @param StrTablePtr
-
-    @return UINT8 String number (1-based)
-            (or 0 if not found)
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   FindLargestStrNumber
+//
+// Description: Return the largest string number in a structure
+//
+// Input:       IN UINT8    *StructPtr
+//              IN UINT8    *StrTablePtr
+//
+// Output:      String number (1-based)
+//              (or 0 if not found)
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 UINT8
 FindLargestStrNumber (
     IN UINT8            *StructPtr,
@@ -969,20 +1033,29 @@ FindLargestStrNumber (
         StrTablePtr++;
     }
 
-    return StrNumber;                           // 1-based
+    return StrNumber;       // 1-based
 }
 
-/**
-    Return the string number for a structure "Type" at "Offset"
-
-    @param Pointer to structure
-    @param Type
-    @param Offset
-
-    @return UINT8 String number (1-based)
-            (or 0xff if not found)
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   GetStrNumber
+//
+// Description: Return the string number for a structure "Type" at "Offset"
+//
+// Input:       IN UINT8    Pointer to structure
+//              IN UINT8    Type
+//              IN UINT8    Offset
+//
+// Output:      String number (1-based)
+//              (or 0xff if not found)
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 UINT8
 GetStrNumber(
     IN  UINT8       *StructPtr,
@@ -1001,15 +1074,24 @@ GetStrNumber(
     }
 }
 
-/**
-    Zero out the string number in StructPtr
-
-    @param StructurePtr
-    @param StrNumber
-
-    @retval None
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   DeleteStringNumber
+//
+// Description: Zero out the string number in StructPtr
+//
+// Input:       IN  UINT8   *StructurePtr
+//              IN UINT8    StrNumber
+//
+// Output:      None
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID
 DeleteStringNumber (
     IN UINT8    *StructPtr,
@@ -1033,15 +1115,24 @@ DeleteStringNumber (
     }
 }
 
-/**
-    Delete string at Offset
-
-    @param StructPtr
-    @param Offset
-
-    @retval None
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   DeleteString
+//
+// Description: Delete string at Offset
+//
+// Input:       IN  UINT8   *StructPtr
+//              IN UINT8    Offset
+//
+// Output:      None
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID
 DeleteString (
     IN UINT8            *StructPtr,
@@ -1058,8 +1149,8 @@ DeleteString (
     // Delete string number
     DeleteStringNumber(StructPtr, StrNumber);
 
-    FindString(&StructPtr, StrNumber);                      // StructPtr = StrNumber string
-    TempPtr = StructPtr + Strlen((char*)StructPtr) + 1;     // Move pointer to next string
+    FindString(&StructPtr, StrNumber);              // StructPtr = StrNumber string
+    TempPtr = StructPtr + Strlen(StructPtr) + 1;    // Move pointer to next string
 
     // Find end of structure
     StructEndPtr = TempPtr;
@@ -1068,21 +1159,30 @@ DeleteString (
     }
 
     // Copy remaining strings
-    RemainingSize = StructEndPtr + 2 - TempPtr;             // Including double NULL characters
+    RemainingSize = StructEndPtr + 2 - TempPtr;     // Including double NULL characters
     MemCpy(StructPtr, TempPtr, RemainingSize);
 }
 
-/**
-    Replace the #StringNum in the input buffer *DestStructPtr
-    with StringData
-
-    @param DestStructPtr Pointer to structure to be updated
-    @param StringNum String number (1 based)
-    @param StringData String with NULL terminated character
-
-    @return EFI_STATUS
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   ReplaceString
+//
+// Description: Replace the #StringNum in the input buffer *DestStructPtr
+//              with StringData
+//
+// Input:       IN UINT8       *DestStructPtr  Pointer to structure to be updated
+//              IN UINT8       StringNum       String number (1 based)
+//              IN UINT8       *StringData     String with NULL terminated character
+//
+// Output:      EFI_STATUS
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
 ReplaceString(
     IN UINT8    *DestStructPtr,
@@ -1117,7 +1217,7 @@ ReplaceString(
     while (*(TempPtr++) != 0) {
         StringSize++;
     }
-    StringSize++;                                   // Including NULL character
+    StringSize++;                   // Including NULL character
 
     // Copy remaining strings
     MemCpy(DestStructPtr + StringSize, NextStrPtr, RemainingSize);
@@ -1128,19 +1228,28 @@ ReplaceString(
     return EFI_SUCCESS;
 }
 
-/**
-    Add new string number for a structure "Type" at "Offset".
-    Return the string index, assuming all strings exist in the
-    structure according to the Smbios specification
-
-    @param Pointer to SmbiosTable or Structure
-    @param Type
-    @param Offset
-
-    @return UINT8 String index (0-based)
-            (0xff if not found)
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   AddStringNumber
+//
+// Description: Add new string number for a structure "Type" at "Offset".
+//              Return the string index, assuming all strings exist in the
+//              structure according to the Smbios specification
+//
+// Input:       IN UINT8    Pointer to SmbiosTable or Structure
+//              IN UINT8    Type
+//              IN UINT8    Offset
+//
+// Output:      String index (0-based)
+//              (0xff if not found)
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 UINT8
 AddStringNumber(
     IN  UINT8       *SmbiosTable,
@@ -1162,7 +1271,7 @@ AddStringNumber(
             while (StrTablePtr->Offset != 0xff) {
                 if (StrTablePtr->Offset == Offset) {
                     // String index in Smbios spec
-                    Index = StrTablePtr->SpecStrNum - 1;    // 0-based
+                    Index = StrTablePtr->SpecStrNum - 1;        // 0-based
                 }
 
                 Number = *(TempPtr + StrTablePtr->Offset);
@@ -1175,22 +1284,31 @@ AddStringNumber(
             // Assign next string number to structure at input Offset
             *(TempPtr + Offset) = ++StrNumber;
 
-            return Index;                                   // 0-based
+            return Index;           // 0-based
         }
     }
 
     return 0xff;
 }
 
-/**
-    Add NULL terminator to the end of the structure
-
-    @param StructPtr
-    @param StrTablePtr
-
-    @retval None
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   AddNullTerminator
+//
+// Description: Add NULL terminator to the end of the structure
+//
+// Input:       IN UINT8   *StructPtr
+//              IN UINT8   *StrTablePtr
+//
+// Output:      None
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID
 AddNullTerminator (
     IN UINT8            *StructPtr,
@@ -1216,17 +1334,26 @@ AddNullTerminator (
     *StructPtr = 0;
 }
 
-/**
-    Updates strings in SMBIOS Structure with input Handle
-    in Runtime with DMI data
-
-    @param Handle
-    @param TableInfo
-    @param Data
-
-    @return UINT16 Status
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   UpdateStrings
+//
+// Description: Updates strings in SMBIOS Structure with input Handle
+//              in Runtime with DMI data
+//
+// Input:       IN UINT16      Handle,
+//              IN TABLE_INFO  TableInfo,
+//              IN UINT8       *Data
+//
+// Output:      UINT8 - Status
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 UINT16
 UpdateStrings(
     IN UINT16           Handle,
@@ -1239,20 +1366,14 @@ UpdateStrings(
     UINT8               *StructPtr;
     UINT8               i;
     UINT16              BlockSize;
-    UINT16              AvailableBlkSize = 0;
+    UINT16              AvailableBlkSize;
     STRING_TABLE        *StrTablePtr;
     UINT8               StrNumber;
     UINT8               Instance;
 
     // Check if enough space
-#if (SMBIOS_2X_SUPPORT == 1)
     AvailableBlkSize = MaximumBufferSize - SmbiosTableEntryPoint->TableLength;
-#else
-#if (SMBIOS_3X_SUPPORT == 1)
-    AvailableBlkSize = MaximumBufferSize - GetRemainingStructuresSize((UINT8*)SmbiosV3TableEntryPoint->TableAddress);
-#endif                                          // SMBIOS_3X_SUPPORT
-#endif                                          // SMBIOS_2X_SUPPORT
-    if (AvailableBlkSize < (Strlen((char*)Data) + 1)) {
+    if (AvailableBlkSize < (Strlen(Data) + 1)) {
         return DMI_BAD_PARAMETER;               // Not enough space
     }
 
@@ -1285,8 +1406,8 @@ UpdateStrings(
         // Update string at input Offset
         if (StrTablePtr[i].Offset == TableInfo.Offset) {
             // Update string if input data not empty, else delete it
-            if (Strlen((char*)Data)) {
-                BlockSize = (UINT16)Strlen((char*)Data) + 1;
+            if (Strlen(Data)) {
+                BlockSize = (UINT16)Strlen(Data) + 1;
                 // Add string if does not exist, else replace it
                 StrNumber = GetStrNumber(TempBuffer, TableInfo.Type, TableInfo.Offset);
                 if (StrNumber == 0) {
@@ -1313,22 +1434,31 @@ UpdateStrings(
     MemCpy(StructPtr, TempBuffer, BlockSize);
 
     // Update SMBIOS Structure Table Entry Point - Structure Table Length, Intermediate checksum
-    UpdateSmbiosTableHeader();
+    UpdateHeaderInfo();
 
     return DMI_SUCCESS;
 }
 
 #if OEM_STRING_INFO
-/**
-    Updates SMBIOS Type 11 Structure in Runtime with DMI data
-
-    @param Handle
-    @param TableInfo
-    @param Data
-
-    @return UINT8 Status
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   DynamicUpdateType11
+//
+// Description: Updates SMBIOS Type 11 Structure in Runtime with DMI data
+//
+// Input:       IN UINT16      Handle,
+//              IN TABLE_INFO  TableInfo,
+//              IN UINT8       *Data
+//
+// Output:      UINT8 - Status
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 UINT8
 DynamicUpdateType11(
     IN UINT16      Handle,
@@ -1342,7 +1472,7 @@ DynamicUpdateType11(
     UINT16              BlockSize;
     UINT16              StringSize;
     UINT8               i;
-    UINT16              AvailableBlkSize = 0;
+    UINT16              AvailableBlkSize;
     UINT8               Count;
 
     StructPtr = GetStructureByHandle(&Handle);
@@ -1353,13 +1483,8 @@ DynamicUpdateType11(
     TablePtr = StructPtr;
     TempBuffer = ScratchBufferPtr;
 
-#if (SMBIOS_2X_SUPPORT == 1)
     AvailableBlkSize = MaximumBufferSize - SmbiosTableEntryPoint->TableLength;
-#else
-    AvailableBlkSize = MaximumBufferSize - GetRemainingStructuresSize((UINT8*)SmbiosV3TableEntryPoint->TableAddress);
-#endif                                          // SMBIOS_2X_SUPPORT
-
-    if (AvailableBlkSize < (Strlen((CHAR8*)Data) + 1)) {
+    if (AvailableBlkSize < (Strlen(Data) + 1)) {
         return DMI_BAD_PARAMETER;               // Not enough space
     }
 
@@ -1373,9 +1498,9 @@ DynamicUpdateType11(
 
     // string fields
     for (i = 1; i < (Count + 1); i++) {
-        StringSize = (UINT16)Strlen((CHAR8*)TablePtr) + 1;  // Size including string NULL terminator
+        StringSize = (UINT16)Strlen(TablePtr) + 1;       // Size including string NULL terminator
         if (TableInfo.Offset == i) {
-            BlockSize = (UINT16)Strlen((CHAR8*)Data) + 1;
+            BlockSize = (UINT16)Strlen(Data) + 1;
             MemCpy(TempBuffer, Data, BlockSize);
             TempBuffer += BlockSize;
         }
@@ -1400,23 +1525,32 @@ DynamicUpdateType11(
     MemCpy(StructPtr, TempBuffer, BlockSize);
 
     // Update SMBIOS Structure Table Entry Point - Structure Table Length, Intermediate checksum
-    UpdateSmbiosTableHeader();
+    UpdateHeaderInfo();
 
     return DMI_SUCCESS;
 }
-#endif                                          // OEM_STRING_INFO
+#endif
 
 #if SYSTEM_CONFIG_OPTION_INFO
-/**
-    Updates SMBIOS Type 12 Structure in Runtime with DMI data
-
-    @param Handle
-    @param TableInfo
-    @param Data
-
-    @return UINT8 Status
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   DynamicUpdateType12
+//
+// Description: Updates SMBIOS Type 12 Structure in Runtime with DMI data
+//
+// Input:       IN UINT16      Handle,
+//              IN TABLE_INFO  TableInfo,
+//              IN UINT8       *Data
+//
+// Output:      UINT8 - Status
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 UINT8
 DynamicUpdateType12(
     IN UINT16      Handle,
@@ -1430,7 +1564,7 @@ DynamicUpdateType12(
     UINT16              BlockSize;
     UINT16              StringSize;
     UINT8               i;
-    UINT16              AvailableBlkSize = 0;
+    UINT16              AvailableBlkSize;
     UINT8               Count;
 
     StructPtr = GetStructureByHandle(&Handle);
@@ -1441,13 +1575,8 @@ DynamicUpdateType12(
     TablePtr = StructPtr;
     TempBuffer = ScratchBufferPtr;
 
-#if (SMBIOS_2X_SUPPORT == 1)
     AvailableBlkSize = MaximumBufferSize - SmbiosTableEntryPoint->TableLength;
-#else
-    AvailableBlkSize = MaximumBufferSize - GetRemainingStructuresSize((UINT8*)SmbiosV3TableEntryPoint->TableAddress);
-#endif                                          // SMBIOS_2X_SUPPORT
-
-    if (AvailableBlkSize < (Strlen((CHAR8*)Data) + 1)) {
+    if (AvailableBlkSize < (Strlen(Data) + 1)) {
         return DMI_BAD_PARAMETER;               // Not enough space
     }
 
@@ -1461,9 +1590,9 @@ DynamicUpdateType12(
 
     // string fields
     for (i = 1; i < (Count + 1); i++) {
-        StringSize = (UINT16)Strlen((CHAR8*)TablePtr) + 1;  // Size including string NULL terminator
+        StringSize = (UINT16)Strlen(TablePtr) + 1;       // Size including string NULL terminator
         if (TableInfo.Offset == i) {
-            BlockSize = (UINT16)Strlen((CHAR8*)Data) + 1;
+            BlockSize = (UINT16)Strlen(Data) + 1;
             MemCpy(TempBuffer, Data, BlockSize);
             TempBuffer += BlockSize;
         }
@@ -1488,27 +1617,38 @@ DynamicUpdateType12(
     MemCpy(StructPtr, TempBuffer, BlockSize);
 
     // Update SMBIOS Structure Table Entry Point - Structure Table Length, Intermediate checksum
-    UpdateSmbiosTableHeader();
+    UpdateHeaderInfo();
 
     return DMI_SUCCESS;
 }
-#endif                                          // SYSTEM_CONFIG_OPTION_INFO
+#endif
 
 /////////////////////////////////////////////
 // Worker function for setting structures. //
 /////////////////////////////////////////////
 
 #if !defined(SMBIOS_DMIEDIT_DATA_LOC) || SMBIOS_DMIEDIT_DATA_LOC == 2
-/**
-    Store DMIEdit data into global variables "DmiArray" and "DmiArraySize"
-
-    @param Var
-    @param Data
-    @param DataSize
-
-    @return EFI_STATUS
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   StoreNvramData
+//
+// Description: Store DMIEdit data into input variable
+//
+// Input:       IN  CHAR16  *Var
+//              IN  VOID    *Data
+//              IN  UINTN   DataSize
+//
+//              Global variable "DmiArray", "DmiArraySize",
+//
+// Output:      UINT8 - Status
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
 StoreNvramData(
     IN  CHAR16  *Var,
@@ -1561,16 +1701,25 @@ StoreNvramData(
 
     return Status;
 }
-#endif                                          // SMBIOS_DMIEDIT_DATA_LOC
+#endif
 
-/**
-    Returns the data size for DMI Function 0x52
-
-    @param Data
-
-    @return UINT16 Data Size
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   GetDmiDataSize
+//
+// Description: Returns the data size for DMI Function 0x52
+//
+// Input:       IN SET_SMBIOS_STRUCTURE_DATA   *Data,
+//
+// Output:      UINT16 - Data Size
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 UINT16
 GetDmiDataSize(
     IN SET_SMBIOS_STRUCTURE_DATA   *Data
@@ -1584,22 +1733,31 @@ GetDmiDataSize(
         case 2:
                 return 4;
         case 4:
-                return 0;                       // Delete command, size does not matter
+                return 0;                   // Delete command, size does not matter
         default:
-                return Data->DataLength;        // Add, String, or Block change command
+                return Data->DataLength;    // Add, String, or Block change command
     }
 }
 
-/**
-    Fills "TableInfo" with data from DMI Function 0x52
-
-    @param Handle
-    @param Data
-    @param TableInfo
-
-    @return UINT16 Data Size
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   GetInputDataInfo
+//
+// Description: Fills "TableInfo" with data from DMI Function 0x52
+//
+// Input:       IN      UINT16                      Handle,
+//              IN      SET_SMBIOS_STRUCTURE_DATA   *Data,
+//              IN OUT  TABLE_INFO                  *TableInfo
+//
+// Output:      UINT16 - Data Size
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID
 GetInputDataInfo(
     IN      UINT16                      Handle,
@@ -1616,20 +1774,28 @@ GetInputDataInfo(
     TableInfo->Handle = Handle;
 }
 
-/**
-    Updates Flash Data record with input DMI data
-    Updates SMBIOS Type 0 Structure in Runtime with DMI data
-
-    @param Handle
-    @param Data
-    @param Set
-
-    @return UINT8 Status
-
-    @note  Type 0 Offset 8 (Release Date) is a fixed form string. This
-           function only checks for proper length. It is up to the DMI
-           editing utility to check for the proper format.
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   SetType0
+//
+// Description: Updates Flash Data record with input DMI data
+//              Updates SMBIOS Type 0 Structure in Runtime with DMI data
+//
+// Input:       IN UINT16                      Handle,
+//              IN SET_SMBIOS_STRUCTURE_DATA   *Data,
+//              IN BOOLEAN                     Set
+//
+// Output:      UINT8 - Status
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:       Type 0 Offset 8 (Release Date) is a fixed form string. This
+//              function only checks for proper length. It is up to the DMI
+//              editing utility to check for the proper format.
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 UINT16
 SetType0(
     IN UINT16                      Handle,
@@ -1648,7 +1814,7 @@ SetType0(
     ) return DMI_BAD_PARAMETER;
 
     if ((Data->FieldOffset == 8) && (Data->DataLength != 11)) {
-        return DMI_BAD_PARAMETER;               // Date string is fixed size
+        return DMI_BAD_PARAMETER; // Date string is fixed size
     }
 
     if (Set == FALSE) return DMI_SUCCESS;
@@ -1702,7 +1868,7 @@ SetType0(
 
     Status = StoreNvramData(Var, &Data->StructureData, (UINTN)TableInfo.Size);
 }
-#endif                                          // SMBIOS_DMIEDIT_DATA_LOC
+#endif
 
     if (Status) {
         return (UINT16)Status;
@@ -1712,17 +1878,26 @@ SetType0(
     return UpdateStrings(Handle, TableInfo, Data->StructureData);
 }
 
-/**
-    Updates Flash Data record with input DMI data
-    Updates SMBIOS Type 1 Structure in Runtime with DMI data
-
-    @param Handle
-    @param Data
-    @param Set
-
-    @return UINT8 Status
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   SetType1
+//
+// Description: Updates Flash Data record with input DMI data
+//              Updates SMBIOS Type 1 Structure in Runtime with DMI data
+//
+// Input:       IN UINT16                      Handle,
+//              IN SET_SMBIOS_STRUCTURE_DATA   *Data,
+//              IN BOOLEAN                     Set
+//
+// Output:      UINT8 - Status
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 UINT16
 SetType1(
     IN UINT16                      Handle,
@@ -1732,6 +1907,8 @@ SetType1(
 {
     EFI_STATUS          Status;
     TABLE_INFO          TableInfo;
+
+    if (isWriteOnce(1, Data->FieldOffset, Handle)) return DMI_READ_ONLY;
 
     // Fill TableInfo with input data
     GetInputDataInfo(Handle, Data, &TableInfo);
@@ -1744,10 +1921,7 @@ SetType1(
         case 0x07 :
         case 0x19 :
         case 0x1a : if (Data->Command != 5) return DMI_BAD_PARAMETER;
-
                     if (Set == FALSE) return DMI_SUCCESS;
-
-				    if (isWriteOnce(1, Data->FieldOffset, Handle)) return DMI_READ_ONLY;
 
                     Status = UpdateSmbiosTable(&TableInfo, Data->StructureData);
                     break;
@@ -1785,11 +1959,6 @@ SetType1(
                         }
 
                         if (Set == FALSE) return DMI_SUCCESS;
-
-					    if (isWriteOnce(1, Data->FieldOffset, Handle)) return DMI_READ_ONLY;
-
-                        TableInfo.Offset = 8;
-                        TableInfo.Size = sizeof(EFI_GUID);
 
                         Status = UpdateSmbiosTable(&TableInfo, UuidPtr);
                     }
@@ -1831,6 +2000,12 @@ SetType1(
     DmiArray[Index].Offset = Data->FieldOffset;
     DmiArray[Index].Flags = 0;
 
+    Swprintf(Var, L"DmiVar%02x%04x%02x%02x",
+			   DmiArray[Index].Type,
+			   DmiArray[Index].Handle,
+			   DmiArray[Index].Offset,
+			   DmiArray[Index].Flags);
+
     switch (Data->FieldOffset) {
         case 0x04 :
         case 0x05 :
@@ -1839,7 +2014,6 @@ SetType1(
         case 0x19 :
         case 0x1a : if (Data->Command != 5) return DMI_BAD_PARAMETER;
                     break;
-
         default:    if ((Data->FieldOffset > 0x07) && (Data->FieldOffset < 0x18)) {
                         UINT8       *Ptr;
                         UINT8       *UuidPtr;
@@ -1874,8 +2048,6 @@ SetType1(
 
                         DmiArray[Index].Offset = 0x08;
                         NvramData = UuidPtr;
-                        TableInfo.Offset = 8;
-                        TableInfo.Size = sizeof(EFI_GUID);
                     }
                     else {
                         return DMI_BAD_PARAMETER;
@@ -1884,23 +2056,8 @@ SetType1(
 
     if (Set == FALSE) return DMI_SUCCESS;
 
-    if (isWriteOnce(1, Data->FieldOffset, Handle)) return DMI_READ_ONLY;
-
-    Swprintf(Var, L"DmiVar%02x%04x%02x%02x",
-			   DmiArray[Index].Type,
-			   DmiArray[Index].Handle,
-			   DmiArray[Index].Offset,
-			   DmiArray[Index].Flags);
-
     Status = StoreNvramData(Var, NvramData, (UINTN)TableInfo.Size);
 }
-#endif                                          // SMBIOS_DMIEDIT_DATA_LOC
-
-#if DMIEDIT_DEBUG_TRACE
-    TRACE((-1, "Change structure. Type = %x, Handle = %x, Offset = %x\n",\
-                                  TableInfo.Type,\
-                                  TableInfo.Handle,\
-                                  TableInfo.Offset));
 #endif
 
     if (Status) {
@@ -1917,17 +2074,26 @@ SetType1(
 }
 
 #if BASE_BOARD_INFO
-/**
-    Updates Flash Data record with input DMI data
-    Updates SMBIOS Type 2 Structure in Runtime with DMI data
-
-    @param Handle
-    @param Data
-    @param Set
-
-    @return UINT8 Status
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   SetType2
+//
+// Description: Updates Flash Data record with input DMI data
+//              Updates SMBIOS Type 2 Structure in Runtime with DMI data
+//
+// Input:       IN UINT16                      Handle,
+//              IN SET_SMBIOS_STRUCTURE_DATA   *Data,
+//              IN BOOLEAN                     Set
+//
+// Output:      UINT8 - Status
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 UINT16
 SetType2(
     IN UINT16                      Handle,
@@ -1996,7 +2162,7 @@ SetType2(
 
     Status = StoreNvramData(Var, &Data->StructureData, (UINTN)TableInfo.Size);
 }
-#endif                                          // SMBIOS_DMIEDIT_DATA_LOC
+#endif
 
     if (Status) {
         return (UINT16)Status;
@@ -2005,20 +2171,29 @@ SetType2(
     // Dynamically update strings in Smbios table
     return UpdateStrings(Handle, TableInfo, Data->StructureData);
 }
-#endif                                          // BASE_BOARD_INFO
+#endif
 
 #if SYS_CHASSIS_INFO
-/**
-    Updates Flash Data record with input DMI data
-    Updates SMBIOS Type 3 Structure in Runtime with DMI data
-
-    @param Handle
-    @param Data
-    @param Set
-
-    @return UINT8 Status
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   SetType3
+//
+// Description: Updates Flash Data record with input DMI data
+//              Updates SMBIOS Type 3 Structure in Runtime with DMI data
+//
+// Input:       IN UINT16                      Handle,
+//              IN SET_SMBIOS_STRUCTURE_DATA   *Data,
+//              IN BOOLEAN                     Set
+//
+// Output:      UINT8 - Status
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 UINT16
 SetType3(
     IN UINT16                      Handle,
@@ -2121,7 +2296,7 @@ SetType3(
 
     Status = StoreNvramData(Var, &Data->StructureData, (UINTN)TableInfo.Size);
 }
-#endif                                          // SMBIOS_DMIEDIT_DATA_LOC
+#endif
 
     if (Status) {
         return (UINT16)Status;
@@ -2141,20 +2316,29 @@ SetType3(
 
     return UpdateStrings(Handle, TableInfo, Data->StructureData);
 }
-#endif                                          // SYS_CHASSIS_INFO
+#endif
 
 #if PROCESSOR_DMIEDIT_SUPPORT
-/**
-    Updates Flash Data record with input DMI data
-    Updates SMBIOS Type 4 Structure in Runtime with DMI data
-
-    @param Handle
-    @param Data
-    @param Set
-
-    @return UINT8 Status
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   SetType4
+//
+// Description: Updates Flash Data record with input DMI data
+//              Updates SMBIOS Type 4 Structure in Runtime with DMI data
+//
+// Input:       IN UINT16                      Handle,
+//              IN SET_SMBIOS_STRUCTURE_DATA   *Data,
+//              IN BOOLEAN                     Set
+//
+// Output:      UINT8 - Status
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 UINT16
 SetType4(
     IN UINT16                      Handle,
@@ -2218,7 +2402,7 @@ SetType4(
 
     Status = StoreNvramData(Var, &Data->StructureData, (UINTN)TableInfo.Size);
 }
-#endif                                          // SMBIOS_DMIEDIT_DATA_LOC
+#endif
 
     if (Status) {
         return (UINT16)Status;
@@ -2227,20 +2411,29 @@ SetType4(
     // Dynamically update the structure in the Smbios table
     return UpdateStrings(Handle, TableInfo, Data->StructureData);
 }
-#endif                                          // PROCESSOR_DMIEDIT_SUPPORT
+#endif
 
 #if OEM_STRING_INFO
-/**
-    Updates Flash Data record with input DMI data
-    Updates SMBIOS Type 11 Structure in Runtime with DMI data
-
-    @param Handle
-    @param Data
-    @param Set
-
-    @return UINT8 Status
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   SetType11
+//
+// Description: Updates Flash Data record with input DMI data
+//              Updates SMBIOS Type 11 Structure in Runtime with DMI data
+//
+// Input:       IN UINT16                      Handle,
+//              IN SET_SMBIOS_STRUCTURE_DATA   *Data,
+//              IN BOOLEAN                     Set
+//
+// Output:      UINT8 - Status
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 UINT16
 SetType11(
     IN UINT16                      Handle,
@@ -2262,9 +2455,6 @@ SetType11(
         if (Set == FALSE) return DMI_SUCCESS;
 
         StringNumber = (UINT8) Data->ChangeValue;
-#if DMIEDIT_DEBUG_TRACE
-        TRACE((-1, "String number = %d\n", StringNumber));
-#endif
         return DMI_SUCCESS;
     }
 
@@ -2297,7 +2487,7 @@ SetType11(
                         &DmiArray);
 
 	if (Status == EFI_SUCCESS) {
-	    Index = DmiArray[0].Type;	            // Note: DmiArray[0] has count # instead of Type/Offset
+	    Index = DmiArray[0].Type;	// Note: DmiArray[0] has count # instead of Type/Offset
 	    ++Index;
 	}
 	else {
@@ -2317,27 +2507,36 @@ SetType11(
 
     Status = StoreNvramData(Var, &Data->StructureData, (UINTN)TableInfo.Size);
 }
-#endif                                          // SMBIOS_DMIEDIT_DATA_LOC
+#endif
 
     if (Status) {
         return (UINT16)Status;
     }
     return DynamicUpdateType11(Handle, TableInfo, Data->StructureData);
 }
-#endif                                          // OEM_STRING_INFO
+#endif
 
 #if SYSTEM_CONFIG_OPTION_INFO
-/**
-    Updates Flash Data record with input DMI data
-    Updates SMBIOS Type 12 Structure in Runtime with DMI data
-
-    @param Handle
-    @param Data
-    @param Set
-
-    @return UINT8 Status
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   SetType12
+//
+// Description: Updates Flash Data record with input DMI data
+//              Updates SMBIOS Type 12 Structure in Runtime with DMI data
+//
+// Input:       IN UINT16                      Handle,
+//              IN SET_SMBIOS_STRUCTURE_DATA   *Data,
+//              IN BOOLEAN                     Set
+//
+// Output:      UINT8 - Status
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 UINT16
 SetType12(
     UINT16                      Handle,
@@ -2412,27 +2611,36 @@ SetType12(
 
     Status = StoreNvramData(Var, &Data->StructureData, (UINTN)TableInfo.Size);
 }
-#endif                                          // SMBIOS_DMIEDIT_DATA_LOC
+#endif
 
     if (Status) {
         return (UINT16)Status;
     }
     return DynamicUpdateType12(Handle, TableInfo, Data->StructureData);
 }
-#endif                                          // SYSTEM_CONFIG_OPTION_INFO
+#endif
 
 #if PORTABLE_BATTERY_INFO
-/**
-    Updates Flash Data record with input DMI data
-    Updates SMBIOS Type 22 Structure in Runtime with DMI data
-
-    @param Handle
-    @param Data
-    @param Set
-
-    @return UINT8 Status
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   SetType22
+//
+// Description: Updates Flash Data record with input DMI data
+//              Updates SMBIOS Type 22 Structure in Runtime with DMI data
+//
+// Input:       IN UINT16                      Handle,
+//              IN SET_SMBIOS_STRUCTURE_DATA   *Data,
+//              IN BOOLEAN                     Set
+//
+// Output:      UINT8 - Status
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 UINT16
 SetType22(
     IN UINT16                      Handle,
@@ -2517,7 +2725,7 @@ SetType22(
 			   DmiArray[Index].Flags);
 
     Status = StoreNvramData(Var, &Data->StructureData, (UINTN)TableInfo.Size);
-#endif                                          // SMBIOS_DMIEDIT_DATA_LOC
+#endif
 
     if (Status) {
         return (UINT16)Status;
@@ -2556,20 +2764,29 @@ SetType22(
 
     return UpdateStrings(Handle, TableInfo, Data->StructureData);
 }
-#endif                                          // PORTABLE_BATTERY_INFO
+#endif
 
 #if SYSTEM_POWER_SUPPLY_INFO
-/**
-    Updates Flash Data record with input DMI data
-    Updates SMBIOS Type 39 Structure in Runtime with DMI data
-
-    @param Handle
-    @param Data
-    @param Set
-
-    @return UINT8 Status
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   SetType39
+//
+// Description: Updates Flash Data record with input DMI data
+//              Updates SMBIOS Type 39 Structure in Runtime with DMI data
+//
+// Input:       IN UINT16                      Handle,
+//              IN SET_SMBIOS_STRUCTURE_DATA   *Data,
+//              IN BOOLEAN                     Set
+//
+// Output:      UINT8 - Status
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 UINT16
 SetType39(
     IN UINT16                      Handle,
@@ -2653,7 +2870,7 @@ SetType39(
 
     Status = StoreNvramData(Var, &Data->StructureData, (UINTN)TableInfo.Size);
 }
-#endif                                          // SMBIOS_DMIEDIT_DATA_LOC
+#endif
 
     if (Status) {
         return (UINT16)Status;
@@ -2686,34 +2903,41 @@ SetType39(
 
     return UpdateStrings(Handle, TableInfo, Data->StructureData);
 }
-#endif                                          // SYSTEM_POWER_SUPPLY_INFO
+#endif
 
-/**
-    PnP function 52 Command 03: Add structure
-
-    @param dmiDataBuffer
-    @param Set
-
-    @return UINT8 Status
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   PnPFn52AddStructure
+//
+// Description: PnP function 52 Command 03: Add structure
+//
+// Input:       IN SET_SMBIOS_STRUCTURE_DATA    *dmiDataBuffer
+//              IN BOOLEAN                      Set
+//
+// Output:      UINT8 - Status
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 UINT16
 PnPFn52AddStructure (
-    IN SET_SMBIOS_STRUCTURE_DATA    *dmiDataBuffer,
-    IN UINT8						Control
+    IN SET_SMBIOS_STRUCTURE    *p
 )
 {
     UINT16  Status;
-#if (SMBIOS_2X_SUPPORT == 1)
-    UINT8   *SmbiosTable = (UINT8*)(UINTN)((SMBIOS_TABLE_ENTRY_POINT*)SmbiosTableEntryPoint)->TableAddress;
-#else
-    UINT8   *SmbiosTable = (UINT8*)(UINTN)((SMBIOS_3X_TABLE_ENTRY_POINT*)SmbiosV3TableEntryPoint)->TableAddress;
-#endif                                          // SMBIOS_2X_SUPPORT
+    UINT8   *SmbiosTable = (UINT8*)((SMBIOS_TABLE_ENTRY_POINT*)SmbiosTableEntryPoint)->TableAddress;
+    UINT8   *SmbiosTableEnd = SmbiosTable + ((SMBIOS_TABLE_ENTRY_POINT*)SmbiosTableEntryPoint)->TableLength;
     UINT8   *SrcPtr;
     UINT8   *DestPtr;
     UINT8   Type127Buffer[4];
+    SET_SMBIOS_STRUCTURE_DATA    *dmiDataBuffer;
     TABLE_INFO  TableInfo;
 
+    dmiDataBuffer = (SET_SMBIOS_STRUCTURE_DATA*)p->Buffer32BitAddr;
     DestPtr = GetStructureByHandle(&dmiDataBuffer->StructureHeader.Handle);
 
     if (DestPtr) {
@@ -2722,12 +2946,8 @@ PnPFn52AddStructure (
     else {
         SrcPtr = SmbiosTable;
         if (FindStructureType(&SrcPtr, &DestPtr, 127, 1)) {
-#if (SMBIOS_2X_SUPPORT == 1)
-            if ((MaximumBufferSize - SmbiosTableEntryPoint->TableLength) >= dmiDataBuffer->DataLength) {
-#else
-            if ((MaximumBufferSize - GetRemainingStructuresSize((UINT8*)(UINTN)SmbiosV3TableEntryPoint->TableAddress)) >= dmiDataBuffer->DataLength) {
-#endif                                          // SMBIOS_2X_SUPPORT
-                if (Control) {
+            if ((MaximumBufferSize - ((SMBIOS_TABLE_ENTRY_POINT*)SmbiosTableEntryPoint)->TableLength) >= dmiDataBuffer->DataLength) {
+                if (p->Control & 1) {
                     TableInfo.Type = dmiDataBuffer->StructureHeader.Type;
                     TableInfo.Offset = dmiDataBuffer->FieldOffset;
                     TableInfo.Reserved = 0;
@@ -2826,7 +3046,7 @@ PnPFn52AddStructure (
                         return (UINT16)Status;
                     }
 }
-#endif                                          // SMBIOS_DMIEDIT_DATA_LOC
+#endif
 
                     // Copy Type 127
                     MemCpy(&Type127Buffer, DestPtr, 4);
@@ -2835,7 +3055,7 @@ PnPFn52AddStructure (
                     MemCpy(DestPtr, &Type127Buffer, 4);
 
                     // Update SMBIOS Structure Table Entry Point - Structure Table Length, Intermediate checksum
-                    UpdateSmbiosTableHeader();
+                    UpdateHeaderInfo();
                 }
 
                 Status = DMI_SUCCESS;
@@ -2852,40 +3072,42 @@ PnPFn52AddStructure (
     return Status;
 }
 
-/**
-    PnP function 52 Command 04: Delete structure
-
-    @param dmiDataBuffer
-    @param Set
-
-    @return Status
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   PnPFn52DeleteStructure
+//
+// Description: PnP function 52 Command 04: Delete structure
+//
+// Input:       IN SET_SMBIOS_STRUCTURE_DATA    *dmiDataBuffer
+//              IN BOOLEAN                      Set
+//
+// Output:      UINT8 - Status
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 UINT16
 PnPFn52DeleteStructure (
-	IN SET_SMBIOS_STRUCTURE_DATA    *dmiDataBuffer,
-	IN UINT8						Control
+    IN SET_SMBIOS_STRUCTURE    *p
 )
 {
     UINT16  Status;
-    UINT8   *SmbiosTable;
-    UINT8   *SmbiosTableEnd;
+    UINT8   *SmbiosTable = (UINT8*)((SMBIOS_TABLE_ENTRY_POINT*)SmbiosTableEntryPoint)->TableAddress;
+    UINT8   *SmbiosTableEnd = SmbiosTable + ((SMBIOS_TABLE_ENTRY_POINT*)SmbiosTableEntryPoint)->TableLength;
     UINT8   *DestPtr;
     UINT16  i;
     UINT16  RemainingSize;
+    SET_SMBIOS_STRUCTURE_DATA    *dmiDataBuffer;
     TABLE_INFO  TableInfo;
 
-#if (SMBIOS_2X_SUPPORT == 1)
-    SmbiosTable = (UINT8*)(UINTN)((SMBIOS_TABLE_ENTRY_POINT*)SmbiosTableEntryPoint)->TableAddress;
-    SmbiosTableEnd = SmbiosTable + ((SMBIOS_TABLE_ENTRY_POINT*)SmbiosTableEntryPoint)->TableLength;
-#else
-    SmbiosTable = (UINT8*)(UINTN)((SMBIOS_TABLE_ENTRY_POINT*)SmbiosV3TableEntryPoint)->TableAddress;
-    SmbiosTableEnd = SmbiosTable + GetRemainingStructuresSize((UINT8*)SmbiosV3TableEntryPoint->TableAddress);
-#endif                                          // SMBIOS_2X_SUPPORT
-
+    dmiDataBuffer = (SET_SMBIOS_STRUCTURE_DATA*)p->Buffer32BitAddr;
     DestPtr = GetStructureByHandle(&((SET_SMBIOS_STRUCTURE_DATA*)dmiDataBuffer)->StructureHeader.Handle);
     if (DestPtr) {
-        if (Control) {
+        if (p->Control & 1) {
             UINT8   *SrcPtr;
 
             TableInfo.Type = dmiDataBuffer->StructureHeader.Type;
@@ -2986,7 +3208,7 @@ PnPFn52DeleteStructure (
                 return (UINT16)Status;
             }
 }
-#endif                                          // SMBIOS_DMIEDIT_DATA_LOC
+#endif
 
 			// Copy / update the remaining structures in the Smbios Table
             SrcPtr = DestPtr + GetStructureLength(DestPtr);
@@ -2999,7 +3221,7 @@ PnPFn52DeleteStructure (
             }
 
             // Update SMBIOS Structure Table Entry Point - Structure Table Length, Intermediate checksum
-            UpdateSmbiosTableHeader();
+            UpdateHeaderInfo();
         }
 
         Status = DMI_SUCCESS;
@@ -3011,30 +3233,41 @@ PnPFn52DeleteStructure (
     return Status;
 }
 
-/**
-    DMIEdit function to update the structures and saves the
-    DMI data in the Flash Part for subsequent boot.
-
-    @param Pointer to SMI function parameters
-
-    @return Status
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   SetSmbiosStructure
+//
+// Description: DMIEdit function to update the structures and saves the
+//              DMI data in the Flash Part for subsequent boot.
+//
+// Input:       IN SET_SMBIOS_STRUCTURE    *p
+//
+// Output:      UINT8 - Status
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 UINT16
 SetSmbiosStructure(
-    IN SET_SMBIOS_STRUCTURE_DATA	*Data,
-    IN UINT8						Control
+    IN SET_SMBIOS_STRUCTURE    *p
 )
 {
-    UINT8       *SmbTable;
-    UINT16		Handle = Data->StructureHeader.Handle;
+    SET_SMBIOS_STRUCTURE_DATA *Data = (SET_SMBIOS_STRUCTURE_DATA *)p->Buffer32BitAddr;
+    UINT8                     *SmbTable;
+    UINT16                    Handle = Data->StructureHeader.Handle;
 
-    if (Data->Command == 3) {                   // Add structure
-        return PnPFn52AddStructure(Data, Control&1);
+    if (!SmbiosTableEntryPoint) return DMI_FUNCTION_NOT_SUPPORTED;
+
+    if (Data->Command == 3) {           // Add structure
+        return PnPFn52AddStructure(p);
     }
 
-    if (Data->Command == 4) {                   // Delete structure
-        return PnPFn52DeleteStructure(Data, Control&1);
+    if (Data->Command == 4) {           // Delete structure
+        return PnPFn52DeleteStructure(p);
     }
 
     SmbTable = GetStructureByHandle(&Handle);
@@ -3046,128 +3279,45 @@ SetSmbiosStructure(
     // Currently only accept certain table types;
     switch (Data->StructureHeader.Type) {
         case 0:
-                return SetType0(Handle, Data, Control&1);
+                return SetType0(Handle, Data, p->Control&1);
         case 1:
-                return SetType1(Handle, Data, Control&1);
+                return SetType1(Handle, Data, p->Control&1);
 #if BASE_BOARD_INFO
         case 2:
-                return SetType2(Handle, Data, Control&1);
-#endif                                          // BASE_BOARD_INFO
+                return SetType2(Handle, Data, p->Control&1);
+#endif
 #if SYS_CHASSIS_INFO
         case 3:
-                return SetType3(Handle, Data, Control&1);
-#endif                                          // SYS_CHASSIS_INFO
+                return SetType3(Handle, Data, p->Control&1);
+#endif
 #if PROCESSOR_DMIEDIT_SUPPORT
         case 4:
-                return SetType4(Handle, Data, Control&1);
-#endif                                          // PROCESSOR_DMIEDIT_SUPPORT
+                return SetType4(Handle, Data, p->Control&1);
+#endif
 #if OEM_STRING_INFO
         case 11:
-                return SetType11(Handle, Data, Control&1);
-#endif                                          // OEM_STRING_INFO
+                return SetType11(Handle, Data, p->Control&1);
+#endif
 #if SYSTEM_CONFIG_OPTION_INFO
         case 12:
-                return SetType12(Handle, Data, Control&1);
-#endif                                          // SYSTEM_CONFIG_OPTION_INFO
+                return SetType12(Handle, Data, p->Control&1);
+#endif
 #if PORTABLE_BATTERY_INFO
         case 22:
-                return SetType22(Handle, Data, Control&1);
-#endif                                          // PORTABLE_BATTERY_INFO
+                return SetType22(Handle, Data, p->Control&1);
+#endif
 #if SYSTEM_POWER_SUPPLY_INFO
         case 39:
-                return SetType39(Handle, Data, Control&1);
-#endif                                          // SYSTEM_POWER_SUPPLY_INFO
+                return SetType39(Handle, Data, p->Control&1);
+#endif
     }
     return DMI_BAD_PARAMETER;
 }
 
-#if (SMBIOS_2X_SUPPORT == 1)
-/**
-    DMIEdit function to update Smbios 2.x structures and saves the
-    DMI data in the Flash Part for subsequent boot.
-
-    @param Pointer to SMI function parameters
-
-    @return Status
-
-**/
-UINT16
-SetSmbiosV2Structure(
-    IN SET_SMBIOS_STRUCTURE    *p
-)
-{
-    SET_SMBIOS_STRUCTURE_DATA	*dmiDataBuffer;
-    UINT8						Control;
-
-    if (!SmbiosTableEntryPoint) return DMI_FUNCTION_NOT_SUPPORTED;
-
-    dmiDataBuffer = (SET_SMBIOS_STRUCTURE_DATA *)(UINTN)p->Buffer32BitAddr;
-    Control = p->Control;
-
-    return SetSmbiosStructure(dmiDataBuffer, Control);
-}
-#endif                                          // SMBIOS_2X_SUPPORT
-
-#if (SMBIOS_3X_SUPPORT == 1)
-/**
-    DMIEdit function to update Smbios 3.x structures and saves the
-    DMI data in the Flash Part for subsequent boot.
-
-    @param Pointer to SMI function parameters
-
-    @return Status
-
-**/
-UINT16
-SetSmbiosV3Structure(
-    IN SET_SMBIOS_V3_STRUCTURE	*p
-)
-{
-    SET_SMBIOS_STRUCTURE_DATA	*dmiDataBuffer;
-    UINT8						Control;
-
-    if (!SmbiosV3TableEntryPoint) return DMI_FUNCTION_NOT_SUPPORTED;
-
-    dmiDataBuffer = (SET_SMBIOS_STRUCTURE_DATA *)(UINTN)p->Buffer64BitAddr;
-    Control = p->Control;
-
-    return SetSmbiosStructure(dmiDataBuffer, Control);
-}
-#endif                                          // SMBIOS_3X_SUPPORT
-
-#if (SMBIOS_3X_SUPPORT == 1)
-/**
-    Fills input buffer with contect of SMBIOS 3.x Table
-
-    @param Pointer to SMI function parameters
-
-    @return UINT16 Status (0 for success)
-
-**/
-UINT16
-GetSmbiosV3Table(
-    IN OUT  GET_SMBIOS_V3_TABLE   *p
-)
-{
-	UINT8		*BufferPtr;
-
-	if (!SmbiosV3TableEntryPoint) return DMI_FUNCTION_NOT_SUPPORTED;
-
-    if (p->SmbiosTableBufferSize == 0) return DMI_BUFFER_TOO_SMALL;
-
-	if (p->SmbiosTableBufferAddr == 0) return DMI_BUFFER_NOT_ALLOCATED;
-
-    BufferPtr = p->SmbiosTableBufferAddr;
-    MemCpy(BufferPtr, (UINT8*)SmbiosV3TableEntryPoint->TableAddress, p->SmbiosTableBufferSize);
-
-    return 0;
-}
-#endif                                          // SMBIOS_3X_SUPPORT
-
 //**********************************************************************//
 //**********************************************************************//
 //**                                                                  **//
-//**        (C)Copyright 1985-2015, American Megatrends, Inc.         **//
+//**        (C)Copyright 1985-2013, American Megatrends, Inc.         **//
 //**                                                                  **//
 //**                       All Rights Reserved.                       **//
 //**                                                                  **//

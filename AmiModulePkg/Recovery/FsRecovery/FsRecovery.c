@@ -11,11 +11,11 @@
 //**                                                                  **
 //**********************************************************************
 //**********************************************************************
-// $Header: $
+// $Header: /Alaska/SOURCE/Core/Modules/Recovery/FsRecovery.c 19    5/13/11 5:07p Artems $
 //
-// $Revision: $
+// $Revision: 19 $
 //
-// $Date: $
+// $Date: 5/13/11 5:07p $
 //**********************************************************************
 
 //<AMI_FHDR_START>
@@ -39,19 +39,8 @@
 #include <FsRecoveryElinks.h>
 
 #define FAT_FILE_NAME_SIZE 11
-#define FAT_ENTIRE_SIZE     0x20000      //to fit FATA12 and FAT16 tables entirely
-#define FAT_CACHE_SIZE      0x4000      
 
-typedef struct {
-    UINT8 *FatBuffer;
-    UINT32 FatBufferSize;
-    UINT32 FirstCluster;
-    UINT32 ClusterCount;
-    UINT32 MaxClusterCount;
-} FAT_WINDOW;
-
-static FAT_WINDOW *FatWindow = NULL;
-
+extern BOOLEAN NtfsRecoverySupport;
 UINT8               *ReadBuffer    = NULL;
 UINTN               BufferSize     = 0;
 UINT8               *FatBuffer     = NULL;
@@ -64,26 +53,15 @@ UINTN               PartCount;
 BOOLEAN             IsMbr;
 UINT32              GpeCount;
 UINT32              PartSector;
-UINT32              ExtOffset;
-MEMORY_BLOCK        *MemBlk;
+MASTER_BOOT_RECORD  Mbr;
 DIR_ENTRY           *FatRecoveryFiles[10];
 DIR_RECORD          *CdRecoveryFiles[10];
 EFI_PEI_SERVICES    **ThisPeiServices;
-RC_VOL_INFO         *ThisVolume;
-BOOLEAN             RootAllocated = FALSE;
-
-//const CHAR8 *RecoveryFileName = CONVERT_TO_STRING(RECOVERY_ROM);
 
 extern FsRecovery_Devices FSRECOVERY_LIST EndOfFsRecoverySupport;
 FsRecovery_Devices *FsRecoverySupport[] = {
         FSRECOVERY_LIST NULL
 };
-
-#if SEARCH_PATH
-const CHAR8 *RecoveryPath = CONVERT_TO_STRING(RECOVERY_PATH);
-CHAR8 BuiltRecoveryName[256];
-#endif
-
 //***************************************************************************
 
 //<AMI_PHDR_START>
@@ -179,10 +157,6 @@ BOOLEAN FileCompare(
                 return TRUE;
                 break;
 
-            case 0: // reached string terminator
-                return TRUE;
-                break;
-
             // wild character, it must deal with any number of matching characters 
             //  in the file name string
             case '*':                               
@@ -271,11 +245,9 @@ EFI_STATUS FileSearch(
     IN BOOLEAN IgnoreSpacesInFilename,
     IN UINT32   FileNameLength)
 {
-    CHAR8 *RecStrPtr = (CHAR8 *)RecoveryFileName;
+    CHAR8 *RecStrPtr = RecoveryFileName;
     CHAR8 *FilenamePtr = FsFilename;
 
-    PEI_TRACE((-1, ThisPeiServices, "\nSearching for %s", RecoveryFileName));
-    PEI_TRACE((-1, ThisPeiServices, "\nName checked is %s\n", FsFilename));
     if (*RecStrPtr == 0) 
     {
         return EFI_INVALID_PARAMETER;
@@ -459,97 +431,6 @@ BOOLEAN IsFat(
 
 //<AMI_PHDR_START>
 //----------------------------------------------------------------------------
-// Procedure:   ShiftFatWindow
-//
-// Description: 
-//  Re-reads FAT table so requested cluster is in cache
-//
-// Input:       
-//  IN UINT32 Cluster - cluster number
-//
-// Output:      
-//  EFI_SUCCESS - operation completed successfully
-//
-//----------------------------------------------------------------------------
-//<AMI_PHDR_END>
-EFI_STATUS ShiftFatWindow(
-    IN UINT32 Cluster
-)
-{
-    EFI_STATUS Status;
-
-    if(Cluster + FatWindow->ClusterCount >= FatWindow->MaxClusterCount)
-        Cluster = FatWindow->MaxClusterCount - FatWindow->ClusterCount;
-
-    Status = ReadDevice(ThisPeiServices, ThisVolume, ThisVolume->FatOffset + (Cluster << 2), FatWindow->FatBufferSize, FatWindow->FatBuffer);
-    if(EFI_ERROR(Status)) {
-        return Status;
-    }
-
-    FatWindow->FirstCluster = Cluster;
-    return EFI_SUCCESS;
-}
-
-//<AMI_PHDR_START>
-//----------------------------------------------------------------------------
-// Procedure:   InitFat
-//
-// Description: 
-//  Initializes FAT table cache
-//
-// Input:       
-//  IN  EFI_PEI_SERVICES **PeiServices - pointer to PEI services
-//  IN  RC_VOL_INFO *Volume - pointer to volume description structure
-//  IN UINT32 FatSize - size of FAT table
-//
-// Output:      
-//  EFI_SUCCESS - operation completed successfully
-//
-//----------------------------------------------------------------------------
-//<AMI_PHDR_END>
-EFI_STATUS InitFat(
-    IN EFI_PEI_SERVICES **PeiServices,
-    IN RC_VOL_INFO      *Volume,
-    IN UINT32           FatSize
-)
-{
-    EFI_STATUS Status;
-    UINTN FatPages;
-    EFI_PHYSICAL_ADDRESS Allocate;
-
-    if(FatWindow == NULL) {
-        Status = (*PeiServices)->AllocatePool(PeiServices, sizeof(FAT_WINDOW), &FatWindow);
-        if(EFI_ERROR(Status)) {
-            return Status;
-        }
-
-        FatPages = EFI_SIZE_TO_PAGES(FAT_ENTIRE_SIZE);
-    
-        Status = (*PeiServices)->AllocatePages(PeiServices, EfiBootServicesData, FatPages, &Allocate);
-        if(EFI_ERROR(Status)) {
-            FatWindow = NULL;
-            return Status;
-        }
-        FatWindow->FatBuffer     = (UINT8*)((UINTN)Allocate);
-    }
-
-//    FatWindow->FatBuffer     = (UINT8*)((UINTN)Allocate);
-    FatWindow->FatBufferSize = (FatSize < FAT_ENTIRE_SIZE) ? FatSize : FAT_CACHE_SIZE;
-
-    MemSet(FatWindow->FatBuffer, FatWindow->FatBufferSize, 0);
-    Status = ReadDevice(PeiServices, Volume, Volume->FatOffset, FatWindow->FatBufferSize, FatWindow->FatBuffer);
-    if(EFI_ERROR(Status)) {
-        return Status;
-    }
-
-    FatWindow->FirstCluster = 0;
-    FatWindow->ClusterCount = (FatSize < FAT_ENTIRE_SIZE) ? 0xffffffff : FAT_CACHE_SIZE >> 2;
-    FatWindow->MaxClusterCount = FatSize >> 2;      //used only for FAT32 cached tables
-    return EFI_SUCCESS;
-}
-
-//<AMI_PHDR_START>
-//----------------------------------------------------------------------------
 // Procedure:   GetClustersCount
 //
 // Description: 
@@ -578,13 +459,13 @@ UINT32 GetClustersCount(
     UINT32 Cluster = CurrentCluster;
 
     if ( FatType == FAT16 ) {
-        UINT16 *Fat16 = (UINT16 *)(FatWindow->FatBuffer);
+        UINT16 *Fat16 = (UINT16*)FatBuffer;
         while ( TRUE )
         {
             Count++;
             WorkCluster = Fat16[Cluster];
 
-            if ( WorkCluster > 0xfff7 ) {
+            if ( WorkCluster > 0xfff8 ) {
                 *NextCluster = 0;
                 break;
             }
@@ -596,20 +477,13 @@ UINT32 GetClustersCount(
             Cluster = WorkCluster;
         }
     } else if ( FatType == FAT32 ) {
-        UINT32 *Fat32;
+        UINT32 *Fat32 = (UINT32*)FatBuffer;
         while ( TRUE )
         {
             Count++;
-            if(Cluster < FatWindow->FirstCluster || Cluster > FatWindow->FirstCluster + FatWindow->ClusterCount) {
-                EFI_STATUS Status;
-                Status = ShiftFatWindow(Cluster);
-                if(EFI_ERROR(Status))
-                    return 0;
-            }
-            Fat32 = (UINT32 *)(FatWindow->FatBuffer);
-            WorkCluster = Fat32[Cluster - FatWindow->FirstCluster] & 0xfffffff;
+            WorkCluster = Fat32[Cluster] & 0xfffffff;
 
-            if ( WorkCluster > 0xffffff7 ) {
+            if ( WorkCluster > 0xffffff8 ) {
                 *NextCluster = 0;
                 break;
             }
@@ -620,41 +494,13 @@ UINT32 GetClustersCount(
             }
             Cluster = WorkCluster;
         }
-#if EXFATRecovery_SUPPORT
-    } else if ( FatType == exFAT ) {
-        UINT32 *Fat32;
-        while ( TRUE )
-        {
-            Count++;
-            if(Cluster < FatWindow->FirstCluster || Cluster > FatWindow->FirstCluster + FatWindow->ClusterCount) {
-                EFI_STATUS Status;
-                Status = ShiftFatWindow(Cluster);
-                if(EFI_ERROR(Status)) {
-                    return 0;
-                }
-            }
-            Fat32 = (UINT32 *)(FatWindow->FatBuffer);
-            WorkCluster = Fat32[Cluster - FatWindow->FirstCluster];
-
-            if ( WorkCluster > 0xfffffff7 ) {
-                *NextCluster = 0;
-                break;
-            }
-
-            if ( WorkCluster != Cluster + 1 && Continuous ) {
-                *NextCluster = WorkCluster;
-                break;
-            }
-            Cluster = WorkCluster;
-        }
-#endif
     } else {
         while ( TRUE ) {
             Count++;
-            WorkCluster = *(UINT16 *)(FatWindow->FatBuffer + Cluster + Cluster / 2);
+            WorkCluster = *(UINT16*)(FatBuffer + Cluster + Cluster / 2);
             WorkCluster = (Cluster & 1) ? WorkCluster >> 4 : WorkCluster & 0xfff;
 
-            if ( WorkCluster > 0xff7 ) {
+            if ( WorkCluster > 0xff8 ) {
                 *NextCluster = 0;
                 break;
             }
@@ -758,6 +604,7 @@ EFI_STATUS GetFatType(
     UINT32               DataClusters;
     UINT32               RootClusters;
     UINT32               DummyCluster;
+    UINTN                FatPages;
     UINTN                RootPages;
     EFI_PHYSICAL_ADDRESS Allocate;
 
@@ -778,10 +625,24 @@ EFI_STATUS GetFatType(
     RootEntries = Bs->RootEntCnt;
 
     //
-    //Init FAT table
+    //Read FAT table
     //
-    Status = InitFat(PeiServices, Volume, FatSize);
-    if(EFI_ERROR(Status)) {
+    FatPages = EFI_SIZE_TO_PAGES( FatSize );
+
+    if ( FatBufferSize < EFI_PAGES_TO_SIZE( FatPages )) {
+        Status = (*PeiServices)->AllocatePages( PeiServices, EfiBootServicesData, FatPages, &Allocate );
+
+        if ( EFI_ERROR( Status )) {
+            return Status;
+        }
+
+        FatBuffer     = (UINT8*)((UINTN)Allocate);
+        FatBufferSize = EFI_PAGES_TO_SIZE( FatPages );
+    }
+    MemSet( FatBuffer, FatBufferSize, 0 );
+    Status = ReadDevice( PeiServices, Volume, Volume->FatOffset, FatSize, FatBuffer );
+
+    if ( EFI_ERROR( Status )) {
         return Status;
     }
 
@@ -801,6 +662,7 @@ EFI_STATUS GetFatType(
 
     if ( RootBufferSize < EFI_PAGES_TO_SIZE( RootPages )) {
         Status = (*PeiServices)->AllocatePages( PeiServices, EfiBootServicesData, RootPages, &Allocate );
+
         if ( EFI_ERROR( Status )) {
             return Status;
         }
@@ -845,22 +707,22 @@ EFI_STATUS ProcessFatVolume(
     OUT VOID            *Buffer )
 {
     EFI_STATUS           Status;
+    BOOT_SECTOR          Bs;
     UINT32               i;
     UINT32               FirstFileCluster;
     UINTN                NumberOfFiles;
 
-    Status = ReadDevice( PeiServices, Volume, 0, 512, &MemBlk->Bs );
+    Status = ReadDevice( PeiServices, Volume, 0, 512, &Bs );
 
     if ( EFI_ERROR( Status )) {
         return Status;
     }
 
-    if (!IsFat( &MemBlk->Bs )) {
+    if ( !IsFat( &Bs )) {
         return EFI_NOT_FOUND;
     }
 
-    ThisVolume = Volume;
-    Status = GetFatType( PeiServices, Volume, &MemBlk->Bs );
+    Status = GetFatType( PeiServices, Volume, &Bs );
 
     if ( EFI_ERROR( Status )) {
         return Status;
@@ -916,35 +778,87 @@ EFI_STATUS ProcessFatDevice(
     IN OUT UINTN        *FileSize,
     OUT VOID            *Buffer )
 {
-    EFI_STATUS          Status;
-    EFI_STATUS          Status2;
+    EFI_STATUS         Status;
+    EFI_STATUS          Status2;  //<EIP153486+>
+//<EIP153486-> >>>
+/*
+    UINT32             i;
+    MASTER_BOOT_RECORD Mbr;
+    RC_VOL_INFO        SaveVolume;
 
     //
-    // Assume the volume is floppy-formatted
+    //save volume info
     //
-    Volume->PartitionOffset = 0; // Reset this to zero
+    SaveVolume = *Volume;
+    if ( !( PcdGetBool(PcdFatRecoverySupport)) )
+    {
+        return EFI_UNSUPPORTED;
+    }
+*/
+//<EIP153486-> <<<
+
+    //
+    //assume first sector is FAT
+    //
     Status = ProcessFatVolume( PeiServices, Volume, FileSize, Buffer );
 
     if ( !EFI_ERROR( Status )) {
         return Status;
     }
 
+//<EIP153486-> >>>
+/*
     //
-    // Not floppy formatted, look for partitions. Rread sector 0 (MBR).
+    //restore volume info
     //
-    Status = ReadDevice( PeiServices, Volume, 0, 512, &MemBlk->Mbr );
+    *Volume = SaveVolume;
+*/
+//<EIP153486> <<<
+
+    //
+    //sector 0 doesn't contain FAT table, check for MBR
+    //
+
+    //
+    //read sector 0
+    //
+    Status = ReadDevice( PeiServices, Volume, 0, 512, &Mbr );
 
     if ( EFI_ERROR( Status )) {
         return Status;
     }
 
-    if ( MemBlk->Mbr.Sig != 0xaa55 ) {
+    if ( Mbr.Sig != 0xaa55 ) {
         return EFI_NOT_FOUND;
     }
 
+//<EIP153486-> >>>
+/*
+    for ( i = 0; i < 4; i++ )
+    {
+        if ( Mbr.PartRec[i].OSType == 0
+             || Mbr.PartRec[i].OSType == 5           //extended partition not supported
+             || Mbr.PartRec[i].OSType == 15          //extended partition not supported
+             || Mbr.PartRec[i].SizeInLba == 0
+             || Mbr.PartRec[i].StartingLba == 0 ) {
+            continue;
+        }
+
+        Volume->PartitionOffset += Mbr.PartRec[i].StartingLba * 512;
+        Status = ProcessFatVolume( PeiServices, Volume, FileSize, Buffer );
+
+        if ( !EFI_ERROR( Status )) {
+            return Status;
+        }
+
+        *Volume = SaveVolume;
+    }
+*/
+//<EIP153486-> <<<
+
+//<EIP153486+> >>>
     PartCount = 0;
     PartSector = 0;
-    ExtOffset = 0;
     IsMbr = TRUE;
 
     //
@@ -961,6 +875,7 @@ EFI_STATUS ProcessFatDevice(
             }
         }
     } while (Status == EFI_SUCCESS);
+//<EIP153486+> <<<
 
     return EFI_NOT_FOUND;
 }
@@ -1160,8 +1075,6 @@ EFI_STATUS FsRecoveryRead(
     EFI_STATUS             Status;
     RC_VOL_INFO            Volume;
     EFI_PEI_BLOCK_IO_MEDIA Media;
-    UINTN                   BlockPages;
-    EFI_PHYSICAL_ADDRESS    Allocate;
     UINT32                 Index;
 
     if ( !pBlockIo || !pSize || *pSize && !pBuffer ) {
@@ -1183,17 +1096,6 @@ EFI_STATUS FsRecoveryRead(
     Volume.BlkIo     = pBlockIo;
     Volume.Device    = DeviceIndex;
     Volume.BlockSize = Media.BlockSize;
-
-    //
-    // Allocate memory for MBR, Boot Sector, etc.
-    //
-    BlockPages = EFI_SIZE_TO_PAGES( sizeof(MEMORY_BLOCK) );
-    Status = (*PeiServices)->AllocatePages( PeiServices, EfiBootServicesData, BlockPages, &Allocate );
-    if ( EFI_ERROR( Status )) {
-        return EFI_NOT_FOUND;
-    }
-    MemBlk = (MEMORY_BLOCK*)((UINTN)Allocate);
-
     for(Index = 0; FsRecoverySupport[Index]!=NULL; Index++){
         Status = FsRecoverySupport[Index](PeiServices, &Volume, pSize, pBuffer);
         if (Status == EFI_SUCCESS) break;
@@ -1228,8 +1130,8 @@ EFI_STATUS GetRecoveryFileInfo(
     OUT    BOOLEAN      *ExtendedVerification
 )
 {
-   if(pCapsuleName != NULL)
-        *pCapsuleName = (CHAR8 *) PcdGetPtr (PcdRecoveryImageName);
+    if(pCapsuleName != NULL)
+        *pCapsuleName = "AMI.ROM";
 
     if(pCapsuleSize != NULL)
         *pCapsuleSize = (UINTN) PcdGet32 (PcdRecoveryImageSize);
@@ -1495,115 +1397,6 @@ VOID AmiGetFileListFromPrimaryVolume(
     }
 }
 
-#if SEARCH_PATH
-//<AMI_PHDR_START>
-//----------------------------------------------------------------------
-//
-// Procedure:   AddRecoveryPath
-//
-// Description: 
-//  If SEARCH_PATH is ON, adds specified path to the recovery file name
-//
-// Input:
-//   VOID **FileName -- Name to add path to
-//
-// Output:
-//  None - returned in variable.
-//
-//----------------------------------------------------------------------
-//<AMI_PHDR_END>
-VOID AddRecoveryPath (
-    VOID IN OUT **FileName )
-{
-    UINTN i, j;
-    CHAR8 *TmpBuiltName = &BuiltRecoveryName[0];
-    CHAR8 *TmpRecPath = &(CHAR8)RecoveryPath[0];
-    UINTN PathSize = Strlen(TmpRecPath);
-    VOID  *TmpVoid;
-    CHAR8 *TmpFileName;
-    UINTN NameSize;
-    UINTN TotalSize;
-
-    TmpVoid = *FileName;
-    TmpFileName = (CHAR8 *)TmpVoid;
-    NameSize = Strlen(TmpFileName);
-    TotalSize = NameSize + PathSize;
-    // Build up a path and name
-    MemCpy( TmpBuiltName, TmpRecPath, PathSize );
-    for( i=PathSize, j=0; i<TotalSize; i++, j++ ) {
-        TmpBuiltName[i] = TmpFileName[j];
-    }
-    TmpBuiltName[i] = 0; // Terminate name
-    *FileName = (VOID *)TmpBuiltName;
-}
-
-//<AMI_PHDR_START>
-//----------------------------------------------------------------------
-//
-// Procedure:   IsolateName
-//
-// Description: 
-//  If SEARCH_PATH is ON, isolates each name in a path
-//
-// Input:
-//   CHAR8 **FilePath -- Path we are searching
-//
-// Output:
-//  returns TRUE if isolated name found
-//  CHAR8 **NextName -- Points to next name in the path
-//
-//----------------------------------------------------------------------
-//<AMI_PHDR_END>
-BOOLEAN IsolateName (
-    IN  CHAR8       **FilePath,
-    OUT CHAR8       **NextName
-)
-{
-    UINTN   len;
-    BOOLEAN GotName;
-    UINTN   i;
-    CHAR8   *TempPath;
-
-    TempPath = *FilePath;
-    len = Strlen(TempPath);
-    GotName = TRUE;
-    for ( i = 0; i < len; i++ ) {
-        if ( TempPath[i] == 0x2F ) { // "/"
-            GotName = FALSE;
-            TempPath[i] = 0;
-            *NextName = TempPath + i + 1;
-            return GotName;
-        }
-    }
-    return GotName;
-}
-
-#endif
-
-//<AMI_PHDR_START>
-//----------------------------------------------------------------------
-//
-// Procedure:	AmiGetFileListFromFatVolume
-//
-// Description:	
-//  Gets a list of valid recovery files from an FAT volume.
-//  As currently written, gets only one file.
-//
-// Input:
-//  DIR_ENTRY *Root - Pointer to a buffer containing the root directory
-//  UINT32 RootEntries - Number of root entries
-//  UINTN *NumberOfFiles - Pointer to number of files found
-//  DIR_ENTRY **Buffer - Pointer to buffer containing entry of
-//    the file that was found.
-//
-// Output:
-//  None - returned in variables.
-//
-// Notes:
-//  This is an e-linked function, which can be replaced.
-//
-//----------------------------------------------------------------------
-//<AMI_PHDR_END>
 VOID AmiGetFileListFromFatVolume(
     IN  DIR_ENTRY           *Root,
     IN  UINT32              RootEntries,
@@ -1612,143 +1405,27 @@ VOID AmiGetFileListFromFatVolume(
 )
 {
     UINT32 i;
+
     VOID *FileName;
     UINTN FileSize;
     EFI_STATUS Status;
-    UINT32 DirEntries;
-    DIR_ENTRY *DirPtr;
-    CHAR8 *FilePath;
-    CHAR8 FatName[12];
-#if SEARCH_PATH
-    CHAR8 *NextName;
-    UINT32 DirSize;
-    UINTN DirPages;
-    EFI_PHYSICAL_ADDRESS Allocate;
-    UINT32 Cluster;
-#endif
-#if MATCH_VOLUME_NAME
-    CHAR8 *VolumeName = CONVERT_TO_STRING(VOLUME_NAME);
-    UINT8 j;
-    BOOLEAN VolNameFound = FALSE;
-#endif
 
     *NumberOfFiles = 0;     //no files found yet
 
     Status = GetRecoveryFileInfo(ThisPeiServices, &FileName, &FileSize, NULL);
     if(EFI_ERROR(Status))
         return;
-#if SEARCH_PATH
-    AddRecoveryPath(&FileName);
-#endif
 
-    FilePath = FileName;
-    DirEntries = RootEntries;
-    DirPtr = Root;
-#if SEARCH_PATH
-    NextName = FilePath;
-
-    while ( IsolateName (&FilePath, &NextName) == FALSE ) {
-        //
-        //Find path name in directory
-        //
-        ConvertToFatFileName(FilePath, FatName);
-        for(i = 0; i < DirEntries; i++) {
-            if((DirPtr[i].FileName[0] == 0xE5) || (DirPtr[i].FileName[0] == 0)) 
-                continue;
-
-#if MATCH_VOLUME_NAME
-            if ( ((DirPtr[i].DirAttr & (ATTR_DIRECTORY | ATTR_VOLUME_ID)) == ATTR_VOLUME_ID) && IsMbr ) {
-                if ( DirPtr[i].FileName[0] == 0x20 || DirPtr[i].FileName[0] == 0xE5 ) {
-                    continue;
-                }
-                for (j=0; j<12; j++) {
-                    if ( DirPtr[i].FileName[j] == 0x20 ) {
-                        DirPtr[i].FileName[j] = 0; // Terminate name
-                    }
-                }
-                PEI_TRACE((-1, ThisPeiServices, "\nVolume name is %s\n", &DirPtr[i].FileName[0]));
-                if ( (FileCompare(&DirPtr[i].FileName[0], VolumeName, FALSE, Strlen(VolumeName))) ) {
-                    PEI_TRACE((-1, ThisPeiServices, "\nName matched\n"));
-                    VolNameFound = TRUE;
-                }
-            }
-#endif
-
-            if(!EFI_ERROR(FileSearch((CHAR8*)FatName, DirPtr[i].FileName, TRUE, FAT_FILE_NAME_SIZE))) {
-                //
-                // A match was found...
-                // Update FilePath to next name. 
-                // Update DirPtr to this directory, and read it in
-                // 
-                // *REMOVED* DirSize = DirPtr[i].FileSize;
-                //
-                // The size of a directory is not stored in it's directory entry,
-                // So we will only read in one cluster for now.
-                //
-                DirSize = ThisVolume->BytesPerCluster;
-                DirEntries = DirSize / 32;
-                Cluster = DirPtr[i].FirstClusterLo + (DirPtr[i].FirstClusterHi << 16);
-
-                DirPages = EFI_SIZE_TO_PAGES( DirSize );
-
-                if ( DirSize < EFI_PAGES_TO_SIZE( DirPages )) {
-                    Status = (*ThisPeiServices)->AllocatePages( ThisPeiServices,
-                                                 EfiBootServicesData, DirPages, &Allocate );
-                    if ( EFI_ERROR( Status )) {
-                        *NumberOfFiles = 0;
-                        return;
-                    }
-
-                    DirPtr = (DIR_ENTRY*)((UINTN)Allocate);
-                    DirSize = EFI_PAGES_TO_SIZE( DirPages );
-                }
-                MemSet( DirPtr, DirSize, 0 );
-
-                Status = GetFatData( ThisPeiServices, ThisVolume, Cluster, DirSize, DirPtr );
-                if ( EFI_ERROR( Status )) {
-                    *NumberOfFiles = 0;
-                    return;
-                }
-                FilePath = NextName;
-                break;
-            }
-        }
-    }
-#endif
     //
-    // Find file in directory
+    //Find file in root directory
     //
-    ConvertToFatFileName(FilePath, FatName);
-    PEI_TRACE((-1, ThisPeiServices, "\nEntering name search\n"));
-    for(i = 0; i < DirEntries; i++) {
-        if((DirPtr[i].FileName[0] == 0xE5) || (DirPtr[i].FileName[0] == 0)) 
+    for(i = 0; i < RootEntries; i++) {
+        if((Root[i].FileName[0] == 0xE5) || (Root[i].FileName[0] == 0)) 
             continue;
 
-#if MATCH_VOLUME_NAME && SEARCH_PATH == 0
-        if ( ((DirPtr[i].DirAttr & (ATTR_DIRECTORY | ATTR_VOLUME_ID)) == ATTR_VOLUME_ID) && IsMbr ) {
-            if ( DirPtr[i].FileName[0] == 0x20 || DirPtr[i].FileName[0] == 0xE5 ) {
-                continue;
-            }
-            for (j=0; j<12; j++) {
-                if ( DirPtr[i].FileName[j] == 0x20 ) {
-                    DirPtr[i].FileName[j] = 0; // Terminate name
-                }
-            }
-            if ( (FileCompare(&DirPtr[i].FileName[0], VolumeName, FALSE, Strlen(VolumeName))) ) {
-                PEI_TRACE((-1, ThisPeiServices, "\nName matched\n"));
-                VolNameFound = TRUE;
-            }
-        }
-#endif
-
-        if(!EFI_ERROR(FileSearch((CHAR8*)FatName, &DirPtr[i].FileName[0], TRUE, FAT_FILE_NAME_SIZE))) {
-            Buffer[*NumberOfFiles] = &DirPtr[i];
-#if MATCH_VOLUME_NAME
-            if ( VolNameFound == TRUE ) *NumberOfFiles = 1;
-#else
+        if(!EFI_ERROR(FileSearch((CHAR8*)FileName, Root[i].FileName, TRUE, FAT_FILE_NAME_SIZE))) {
+            Buffer[*NumberOfFiles] = &Root[i];
             *NumberOfFiles = 1;
-            PEI_TRACE((-1, ThisPeiServices, "\nFound recovery file\n"));
-#endif
             break;
         }
     }
@@ -1805,36 +1482,31 @@ EFI_STATUS FindNextPartition(
     //
     if ( IsMbr ) {
         while ( PartCount < 4 ) {
-            if ( MemBlk->Mbr.PartRec[PartCount].OSType == 0xEE ) {
+            if ( Mbr.PartRec[PartCount].OSType == 0xEE ) {
                 IsMbr = FALSE; // Mark GUID partition found
                 PartCount = 0; // Reset counter
                 break;
             }
 
-            if ( MemBlk->Mbr.PartRec[PartCount].OSType == 5
-                 || MemBlk->Mbr.PartRec[PartCount].OSType == 15 ) { // Extended partition
-                if (ExtOffset == 0) { // If the first extended partition
-                    ExtOffset = MemBlk->Mbr.PartRec[PartCount].StartingLba;
-                    PartSector = ExtOffset;
-                } else {
-                    PartSector = ExtOffset + MemBlk->Mbr.PartRec[PartCount].StartingLba;
-                }
+            if ( Mbr.PartRec[PartCount].OSType == 5
+                 || Mbr.PartRec[PartCount].OSType == 15 ) { // Extended partition
+                PartSector += Mbr.PartRec[PartCount].StartingLba;
                 Volume->PartitionOffset = Mul64( 512, PartSector );
-                Status = ReadDevice( PeiServices, Volume, 0, 512, &MemBlk->Mbr );
+                Status = ReadDevice( PeiServices, Volume, 0, 512, &Mbr );
                 if ( EFI_ERROR( Status )) {
                     return Status;
                 }
                 PartCount = 0;
             }
 
-            if ( MemBlk->Mbr.PartRec[PartCount].OSType == 0
-                 || MemBlk->Mbr.PartRec[PartCount].SizeInLba == 0
-                 || MemBlk->Mbr.PartRec[PartCount].StartingLba == 0 ) {
+            if ( Mbr.PartRec[PartCount].OSType == 0
+                 || Mbr.PartRec[PartCount].SizeInLba == 0
+                 || Mbr.PartRec[PartCount].StartingLba == 0 ) {
                 PartCount++; // Check next partition
                 continue;
             }
 
-            TempSector = MemBlk->Mbr.PartRec[PartCount].StartingLba + PartSector;
+            TempSector = Mbr.PartRec[PartCount].StartingLba + PartSector;
             Volume->PartitionOffset = Mul64( 512, TempSector );
             PartCount++;
             return EFI_SUCCESS;
@@ -1846,12 +1518,12 @@ EFI_STATUS FindNextPartition(
     // Check for GUID partitions
     //
     if ( PartCount == 0 ) {
-        Offset = Mul64( 1, Volume->BlockSize ); 
-        Status = ReadDevice( PeiServices, Volume, Offset, 512, &MemBlk->Mbr );
+        Offset = Mul64( 1, Volume->BlockSize );
+        Status = ReadDevice( PeiServices, Volume, Offset, 512, &Mbr );
         if ( EFI_ERROR( Status )) {
             return Status;
         }
-        Gth = (GUID_TABLE_HEADER*)&MemBlk->Mbr.BootCode[0];
+        Gth = (GUID_TABLE_HEADER*)&Mbr.BootCode[0];
         if ( (Gth->Signature[0] == 0x45) && // Check for "EFI"
              (Gth->Signature[1] == 0x46) &&
              (Gth->Signature[2] == 0x49) )
@@ -1866,7 +1538,7 @@ EFI_STATUS FindNextPartition(
             //
             // Read in the first entry in the partition table
             //
-            Status = ReadDevice( PeiServices, Volume, Offset, 512, &MemBlk->Mbr );
+            Status = ReadDevice( PeiServices, Volume, Offset, 512, &Mbr );
             if ( EFI_ERROR( Status )) {
                 return Status;
             }
@@ -1876,30 +1548,20 @@ EFI_STATUS FindNextPartition(
     while ( PartCount < GpeCount ) {
         i = PartCount % 4;
         if ( (i == 0) && (PartCount != 0) ) {
-            Offset = Mul64( 2+(PartCount/4), Volume->BlockSize );
-            Volume->PartitionOffset = 0; // Reset this to zero
-            Status = ReadDevice( PeiServices, Volume, Offset, 512, &MemBlk->Mbr );
+            Offset = Mul64( 2+(PartCount/512), Volume->BlockSize );
+            Status = ReadDevice( PeiServices, Volume, Offset, 512, &Mbr );
             if ( EFI_ERROR( Status )) {
                 return Status;
             }
         }
         PartCount++;
-        Gbr = (GUID_BOOT_RECORD*)&MemBlk->Mbr.BootCode[0];
+        Gbr = (GUID_BOOT_RECORD*)&Mbr.BootCode[0];
         Volume->PartitionOffset = Mul64( Gbr->GuidPart[i].FirstLba, Volume->BlockSize );
-        //
-        // The partition count is incremented by 4 for each new Guid Boot Record,
-        // even if it does not contain 4 partition records. So we may find an empty
-        // partition. Exit with EFI_NOT_FOUND if there is one.
-        //
-        if ( Volume->PartitionOffset == 0 ) {
-            return EFI_NOT_FOUND;
-        }
         return EFI_SUCCESS;
     }
 
     return EFI_NOT_FOUND;
 }
-
 
 
 //**********************************************************************

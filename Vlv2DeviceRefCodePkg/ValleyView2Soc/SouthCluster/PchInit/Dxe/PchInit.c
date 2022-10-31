@@ -8,7 +8,7 @@
 **/
 /**
 
-Copyright (c) 2012 - 2015 Intel Corporation. All rights reserved
+Copyright (c) 2012 - 2013 Intel Corporation. All rights reserved
 This software and associated documentation (if any) is furnished
 under a license and may only be used or copied in accordance
 with the terms of the license. Except as permitted by such
@@ -39,7 +39,8 @@ EFI_GUID gEfiPchS3SupportProtocolGuid = EFI_PCH_S3_SUPPORT_PROTOCOL_GUID;
 #endif
 #include <IndustryStandard/Pci22.h>
 #include <Protocol/PciIo.h>
-#include <Protocol/PciEnumerationComplete.h>
+
+
 
 ///
 /// Global Variables
@@ -267,19 +268,6 @@ PchInitEntryPoint (
   return EFI_SUCCESS;
 }
 
-// AMI_OVERRIDE - EIP309084 >>
-VOID
-BytIBwgAddendumWa (
-  IN EFI_EVENT    Event,
-  IN VOID         *Context
-  )
-{
-  // BayTrail-I BWG Addendum 2.5 section A.9
-  MmioWrite32(IO_BASE_ADDRESS + 0x1130, 0x2003CC82);  // HV_DDI0_HPD
-  MmioWrite32(IO_BASE_ADDRESS + 0x1180, 0x2003CC82);  // HV_DDI1_HPD
-}
-// AMI_OVERRIDE - EIP309084 <<
-
 EFI_STATUS
 InitializePchDevice (
   IN OUT PCH_INSTANCE_PRIVATE_DATA           *PchInstance,
@@ -491,26 +479,16 @@ InitializePchDevice (
 //  ASSERT_EFI_ERROR (Status);
 // AMI_OVERRIDE - SvidSid will be programming by Sbpei.c. <<
 
-// AMI_OVERRIDE - EIP309084 >>
-  Status = EfiCreateEventReadyToBootEx (
-            TPL_CALLBACK,
-            BytIBwgAddendumWa,
-            NULL,
-            &ReadyToBootEvent
-            );
-  ASSERT_EFI_ERROR (Status);
-// AMI_OVERRIDE - EIP309084 <<  
-
   ///
   /// Create an ExitPmAuth protocol call back event.
   ///
-//  EfiCreateProtocolNotifyEvent (
-//    &gExitPmAuthProtocolGuid,
-//    TPL_CALLBACK,
-//    PchInitBeforeBoot,
-//    NULL,
-//    &Registration
-//  );
+  EfiCreateProtocolNotifyEvent (
+    &gExitPmAuthProtocolGuid,
+    TPL_CALLBACK,
+    PchInitBeforeBoot,
+    NULL,
+    &Registration
+  );
 
   Status = gBS->CreateEvent (
                   EVT_NOTIFY_SIGNAL,
@@ -528,19 +506,7 @@ InitializePchDevice (
                   );
   ASSERT_EFI_ERROR (Status);
 
-  ///
-  /// Create an gEfiPciEnumerationCompleteProtocolGuid protocol call back event.
-  ///
-  EfiCreateProtocolNotifyEvent (
-      &gEfiPciEnumerationCompleteProtocolGuid,
-      TPL_CALLBACK,
-      PchInitBeforeBoot,
-      &gEfiPciEnumerationCompleteProtocolGuid,
-      &Registration
-  );
-  
-  
-  
+
   ///
   /// Create events for PCH to do the task before ExitBootServices/LegacyBoot.
   /// It is guaranteed that only one of two events below will be signalled
@@ -1585,8 +1551,7 @@ PchInitBeforeBoot (
   // CRID support for special BYT-D sku only
   //PCH_STEPPING stepping;
   //AMI_OVERRIDE - CSP20140401_22 Fix S3 wake issue when CRID enabled (-)<<
-  STATIC EFI_PCH_S3_SUPPORT_PROTOCOL        *PchS3Support;
-  PchS3Support = NULL;
+  
 
   S3DevLtrOverrideTbl = NULL;
   DevLtrOverrideTbl   = NULL;
@@ -1595,8 +1560,7 @@ PchInitBeforeBoot (
   DEBUG ((EFI_D_INFO, "PchInitBeforeBoot() Start\n"));
 
 //AMI OVERRIDE - EIP130725 The ROM security is not actived>>
-//  Status = gBS->LocateProtocol(&gExitPmAuthProtocolGuid, NULL, &ProtocolPointer);
-  Status = gBS->LocateProtocol((EFI_GUID*)Context, NULL, &ProtocolPointer);
+  Status = gBS->LocateProtocol(&gExitPmAuthProtocolGuid, NULL, &ProtocolPointer);    
   if(EFI_ERROR(Status)) return;
 //AMI OVERRIDE - EIP130725 The ROM security is not actived<<
 
@@ -1931,16 +1895,6 @@ PchInitBeforeBoot (
     }
     UsbInitBeforeBoot (PchPlatformPolicy);
 
-    //EIP227838 >>
-        DEBUG ((EFI_D_ERROR | EFI_D_INFO, "Flash Configuration Lockdown.\n"));
-        MmioOr16 ((UINTN) (SpiBase + R_PCH_SPI_HSFS), B_PCH_SPI_HSFS_FLOCKDN);
-        S3BootScriptSaveMemWrite (
-    		    EfiBootScriptWidthUint16,
-    		    (UINTN) (SpiBase + R_PCH_SPI_HSFS),
-    		    1,
-    		    (VOID *) (UINTN) (SpiBase + R_PCH_SPI_HSFS)
-    		    );
-    //EIP227838 <<
 
     //AMI_OVERRIDE - CSP20140401_22 Fix S3 wake issue when CRID enabled (-)>>
     // CRID support for special BYT-D sku only
@@ -1961,28 +1915,6 @@ PchInitBeforeBoot (
     //AMI_OVERRIDE - CSP20140401_22 Fix S3 wake issue when CRID enabled (-)>>
   }
 
-  if (!PchS3Support) {
-     DEBUG ((EFI_D_INFO, "Locating the S3 Support Protocol - PCH Init before Boot\n"));
-
-    ///
-    /// Get the PCH S3 Support Protocol
-    ///
-    Status = gBS->LocateProtocol (
-                    &gEfiPchS3SupportProtocolGuid,
-                    NULL,
-                    (VOID **) &PchS3Support
-                    );
-    ASSERT_EFI_ERROR (Status);
-    if (EFI_ERROR (Status)) {
-      return;
-    }
-
-    Status = PchS3Support->ReadyToLock(PchS3Support);
-    if (EFI_ERROR (Status)) {
-      return;
-    }
-
-  }
   DEBUG ((EFI_D_INFO, "PchInitBeforeBoot() End\n"));
 
   return;

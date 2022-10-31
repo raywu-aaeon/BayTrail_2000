@@ -86,18 +86,6 @@ Returns:
   //
   IGfxSupported = (BOOLEAN) (McD2PciCfg16 (IGD_R_VID) != 0xFFFF);
 
-// AMI_OVERRIDE START - EIP194648
-  // Per BayTrail BWG Addendum rev. 1.8 section 10 if FB_GFX_MAX_NONTURBO_FUSE_MSB[28:24] = 04h
-  // (headless SKU) then disable the Internal Graphic Unit (IGD)
-  MsgBus32Read(VLV_FUSEEPNC, 0x2c, DwordReg);
-  DwordReg = (DwordReg >> 24) & 0x1f;   // FB_GFX_MAX_NONTURBO_FUSE_MSB[28:24]
-  if (DwordReg == 0x4) {
-      DEBUG ((EFI_D_INFO, "BayTrail headless SKU detected! Disabling IGD...\n"));
-      IGfxSupported = FALSE;
-      VlvPolicyPpi->GtConfig.InternalGraphics = IGD_DISABLE;
-  }
-// AMI_OVERRIDE END
-  
   //
   // Check external VGA devices
   //

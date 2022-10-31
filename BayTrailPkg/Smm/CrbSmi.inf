@@ -39,11 +39,9 @@
   gEfiSmmSwDispatch2ProtocolGuid
   gEfiSmmSxDispatch2ProtocolGuid
   gEfiSmmGpiDispatch2ProtocolGuid
-  gEfiSmmPowerButtonDispatch2ProtocolGuid
   
 [Depex]
 ### 5.004 not support yet ###  gEfiS3SmmSaveStateProtocolGuid AND
   gEfiSmmSwDispatch2ProtocolGuid AND
   gEfiSmmSxDispatch2ProtocolGuid AND
-  gEfiSmmGpiDispatch2ProtocolGuid AND
-  gEfiSmmPowerButtonDispatch2ProtocolGuid
+  gEfiSmmGpiDispatch2ProtocolGuid

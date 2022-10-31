@@ -11,7 +11,5 @@
 "Meud.h"	
 [parts]
 "CspMeud"
-"AutoMeud"
-"MEFwUpdLcl"
 "MeudSetup"
 <endComponent>

@@ -170,7 +170,7 @@ CreateTerminalAcpiEnDisLink (
     IN VOID            *Interface,
     IN EFI_HANDLE      Handle )
 {
-    EFI_STATUS                  Status;
+    EFI_STATUS                  Status = EFI_SUCCESS;
     EFI_ACPI_DISPATCH_PROTOCOL  *mAcpiEnDispatch;
     EFI_ACPI_DISPATCH_PROTOCOL  *mAcpiDisDispatch;
     EFI_HANDLE      RegisterHandle;
@@ -247,7 +247,7 @@ EFI_STATUS TerminalAcpiSmmEntry (
 	Status = pSmmBase2->GetSmstLocation (pSmmBase2, &gSmst2);
 	if (EFI_ERROR(Status)) return EFI_SUCCESS;
 
-	gSmst2->SmmRegisterProtocolNotify (
+	Status = gSmst2->SmmRegisterProtocolNotify (
 	                          &gEfiAcpiEnDispatchProtocolGuid,
 	                          CreateTerminalAcpiEnDisLink,
 	                          &mAcpiReg

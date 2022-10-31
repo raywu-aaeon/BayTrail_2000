@@ -1,3 +1,4 @@
+
 #*************************************************************************
 #*************************************************************************
 #**                                                                     **
@@ -46,7 +47,6 @@
 #	TargetH = Yes
 #	Range  = "0 - 0xff"
 #End
-
 TOKEN
 	Name  = "MPS_TABLE_SUPPORT"
 	Value  = "0"
@@ -76,14 +76,6 @@ TOKEN
 	TargetMAK = Yes
 	TargetH = Yes
 	Lock = Yes
-End
-
-TOKEN
-	Name  = "ACPI_DBG8_ASL_SUPPORT"
-	Value  = "$(INTEL_ARCHITECTURE_SUPPORT)"
-	Help  = "Should be used as #if ASL_ACPI_DBG8_ASL_SUPPORT to enable use of port 80 for checkpoints in asl code for compatibility with platforms without IO."
-	TokenType = Boolean
-	TargetH = Yes
 End
 
 TOKEN
@@ -130,47 +122,6 @@ TOKEN
 	Help  = "Number of S3 bytes reserved per CPU"
 	TokenType = Integer
 	TargetH = Yes
-End
-
-TOKEN
-	Name  = "ATAD_SUPPORT"
-	Value  = "0"
-	Help  = "Main switch to enable ACPI Time and Alarm support in Project"
-	TokenType = Boolean
-	TargetH = Yes
-End
-
-TOKEN
-	Name  = "ACPI_TIME_AND_ALARM_SW_SMI"
-	Value  = "0x50"
-	TokenType = Integer
-	TargetH = Yes
-	Token = "ATAD_SUPPORT" "=" "1"
-End
-
-TOKEN
-	Name  = "ATAA"
-	Value  = "$(ACPI_TIME_AND_ALARM_SW_SMI)"
-	Help  = "Token to go to ASL Name Definitions"
-	TokenType = Integer
-	TargetASL = Yes
-	Token = "ATAD_SUPPORT" "=" "1"
-End
-
-PCIDEVICE
-	Title  = "AcpiTimeAndAlarmDev"
-	Parent  = "PciHost (Virtual)"
-	Attribute  = "0x0"
-	Dev_type  = "Container"
-	Dev  = 00h
-	Fun  = 00h
-	SleepNum  = 01h
-	ASLfile  = "'AmiModulePkg\ACPI\TimeAndAlarm.asl;After Pci Tree'"
-	Token = "ATAD_SUPPORT" "=" "1"
-	DeviceType = OnBoard
-	PCIBusSize = 32bit
-	ROMMain = No
-	Virtual = Yes
 End
 
 TOKEN
@@ -1230,20 +1181,8 @@ TOKEN
 	Help  = "IA Boot Architecture\this token may be 'ored' see renge field for details"
 	TokenType = Integer
 	TargetH = Yes
-	Range  = "1 - IA_LEGACY; 2 - IA_8042; 4 - VGA Not Present; 8 - MSI Not Supported; 10h - PCIe ASPM Controls, 20h - CMOS RTC Not Present"
+	Range  = "1 - IA_LEGACY; 2 - IA_8042; 4 - VGA Not Present; 8 - MSI Not Supported; 10h - PCIe ASPM Controls"
 	Token = "ACPI_BUILD_TABLES_2_0" "=" "1"
-	Token = "ATAD_SUPPORT" "=" "0"
-End
-
-TOKEN
-	Name  = "ACPI_IA_BOOT_ARCH"
-	Value  = "0023h"
-	Help  = "IA Boot Architecture\this token may be 'ored' see renge field for details"
-	TokenType = Integer
-	TargetH = Yes
-	Range  = "1 - IA_LEGACY; 2 - IA_8042; 4 - VGA Not Present; 8 - MSI Not Supported; 10h - PCIe ASPM Controls, 20h - CMOS RTC Not Present"
-	Token = "ACPI_BUILD_TABLES_2_0" "=" "1"
-	Token = "ATAD_SUPPORT" "=" "1"
 End
 
 TOKEN
@@ -1403,16 +1342,6 @@ TOKEN
 	Value  = "$(PCI_EXPRESS_SUPPORT)"
 	Help  = "_OSC: Pci Express Native Hot Plug Control"
 	TokenType = Integer
-	Token = "INTEL_ARCHITECTURE_SUPPORT" "=" "1"
-	TargetASL = Yes
-End
-
-TOKEN
-	Name  = "PEHP"
-	Value  = "0"
-	Help  = "_OSC: Pci Express Native Hot Plug Control"
-	TokenType = Integer
-	Token = "INTEL_ARCHITECTURE_SUPPORT" "=" "0"
 	TargetASL = Yes
 End
 
@@ -1421,22 +1350,12 @@ TOKEN
 	Value  = "$(HOTPLUG_SUPPORT)"
 	Help  = "_OSC: Standard Hot Plug Controller (SHPC) Native Hot Plug control"
 	TokenType = Integer
-	Token = "INTEL_ARCHITECTURE_SUPPORT" "=" "1"
-	TargetASL = Yes
-End
-
-TOKEN
-	Name  = "SHPC"
-	Value  = "0"
-	Help  = "_OSC: Standard Hot Plug Controller (SHPC) Native Hot Plug control"
-	TokenType = Integer
-	Token = "INTEL_ARCHITECTURE_SUPPORT" "=" "0"
 	TargetASL = Yes
 End
 
 TOKEN
 	Name  = "PEPM"
-	Value  = "$(PEHP)"
+	Value  = "$(PCI_EXPRESS_SUPPORT)"
 	Help  = "_OSC: Pci Express Native Power Management Events control"
 	TokenType = Integer
 	TargetASL = Yes
@@ -1444,7 +1363,7 @@ End
 
 TOKEN
 	Name  = "PEER"
-	Value  = "$(PEHP)"
+	Value  = "$(PCI_EXPRESS_SUPPORT)"
 	Help  = "_OSC: Pci Express Advanced Error Reporting control"
 	TokenType = Integer
 	TargetASL = Yes
@@ -1452,7 +1371,7 @@ End
 
 TOKEN
 	Name  = "PECS"
-	Value  = "$(PEHP)"
+	Value  = "$(PCI_EXPRESS_SUPPORT)"
 	Help  = "_OSC: Pci Express Capability Structure control"
 	TokenType = Integer
 	TargetASL = Yes
@@ -1598,16 +1517,6 @@ TOKEN
 	Value  = "$(HPET_SUPPORT) "
 	Help  = "A value of one indicates that OSPM should use a platform\provided timer to drive any monotonically non-decreasing\counters, such as OSPM performance counter services. Which\particular platform timer will be used is OSPM specific, however,\it is recommended that the timer used is based on the following\algorithm: If the HPET is exposed to OSPM, OSPM should use\the HPET. Otherwise, OSPM will use the ACPI power\management timer. A value of one indicates that the platform is\known to have a correctly implemented ACPI power management\timer.\A platform may choose to set this flag if a internal processor clock\(or clocks in a multi-processor configuration) cannot provide\consistent monotonically non-decreasing counters.\Note: If a value of zero is present, OSPM may arbitrarily choose to\use an internal processor clock or a platform timer clock for these\operations. That is, a zero does not imply that OSPM will\necessarily use the internal processor clock to generate a\monotonically non-decreasing counter to the system.\\Note:\If system supports HPET put here $(HPET_SUPPORT) token value.\"
 	TokenType = Integer
-	Token = "INTEL_ARCHITECTURE_SUPPORT" "=" "1"
-	TargetH = Yes
-End
-
-TOKEN
-	Name  = "FACP_FLAG_USE_PLATFORM_CLOCK"
-	Value  = "0"
-	Help  = "A value of one indicates that OSPM should use a platform\provided timer to drive any monotonically non-decreasing\counters, such as OSPM performance counter services. Which\particular platform timer will be used is OSPM specific, however,\it is recommended that the timer used is based on the following\algorithm: If the HPET is exposed to OSPM, OSPM should use\the HPET. Otherwise, OSPM will use the ACPI power\management timer. A value of one indicates that the platform is\known to have a correctly implemented ACPI power management\timer.\A platform may choose to set this flag if a internal processor clock\(or clocks in a multi-processor configuration) cannot provide\consistent monotonically non-decreasing counters.\Note: If a value of zero is present, OSPM may arbitrarily choose to\use an internal processor clock or a platform timer clock for these\operations. That is, a zero does not imply that OSPM will\necessarily use the internal processor clock to generate a\monotonically non-decreasing counter to the system.\\Note:\If system supports HPET put here $(HPET_SUPPORT) token value.\"
-	TokenType = Integer
-	Token = "INTEL_ARCHITECTURE_SUPPORT" "=" "0"
 	TargetH = Yes
 End
 
@@ -1616,16 +1525,6 @@ TOKEN
 	Value  = "$(S4_WAKE_FROM_RTC_SUPPORTED)"
 	Help  = "A one indicates that the contents of the RTC_STS flag is valid when waking the system from S4.\See PM1 Status Registers Fixed Hardware Feature Status Bits for more information.\Some existing systems do not reliably set this input today, and this bit allows OSPM\to differentiate correctly functioning platforms from platforms with this errata."
 	TokenType = Integer
-	Token = "INTEL_ARCHITECTURE_SUPPORT" "=" "1"
-	TargetH = Yes
-End
-
-TOKEN
-	Name  = "FACP_FLAG_S4_RTC_STS_VALID"
-	Value  = "0"
-	Help  = "A one indicates that the contents of the RTC_STS flag is valid when waking the system from S4.\See PM1 Status Registers Fixed Hardware Feature Status Bits for more information.\Some existing systems do not reliably set this input today, and this bit allows OSPM\to differentiate correctly functioning platforms from platforms with this errata."
-	TokenType = Integer
-	Token = "INTEL_ARCHITECTURE_SUPPORT" "=" "0"
 	TargetH = Yes
 End
 
@@ -1634,16 +1533,6 @@ TOKEN
 	Value  = "$(REMOTE_POWER_ON_SUPPORTED)"
 	Help  = "A one indicates that the platform is compatible with remote power on.\That is, the platform supports OSPM leaving GPE wake events armed prior to an S5 transition.\Some existing platforms do not reliably transition to S5 with wake events enabled\(for example, the platform may immediately generate a spurious wake event after completing the S5 transition).\This flag allows OSPM to differentiate correctly functioning platforms from platforms with this type of errata."
 	TokenType = Integer
-	Token = "INTEL_ARCHITECTURE_SUPPORT" "=" "1"
-	TargetH = Yes
-End
-
-TOKEN
-	Name  = "FACP_FLAG_REMOTE_POWER_ON_CAPABLE"
-	Value  = "0"
-	Help  = "A one indicates that the platform is compatible with remote power on.\That is, the platform supports OSPM leaving GPE wake events armed prior to an S5 transition.\Some existing platforms do not reliably transition to S5 with wake events enabled\(for example, the platform may immediately generate a spurious wake event after completing the S5 transition).\This flag allows OSPM to differentiate correctly functioning platforms from platforms with this type of errata."
-	TokenType = Integer
-	Token = "INTEL_ARCHITECTURE_SUPPORT" "=" "0"
 	TargetH = Yes
 End
 
@@ -1683,150 +1572,6 @@ TOKEN
 	Name  = "=====End of FACP Fixed Featured Flags"
 	Value  = "Fixed Featured Flags Ends here"
 	TokenType = Expression
-End
-
-TOKEN
-	Name  = "GTDT_BUILD"
-	Value  = "1"
-	Help  = "Main Token to enable built in creation of Generic Timer Description Table for ARM."
-	TokenType = Boolean
-	Token = "INTEL_ARCHITECTURE_SUPPORT" "=" "0"
-	TargetH = Yes
-End
-
-TOKEN
-	Name  = "GTDT_BUILD"
-	Value  = "0"
-	Help  = "Main Token to enable built in creation of Generic Timer Description Table for ARM."
-	TokenType = Boolean
-	Token = "INTEL_ARCHITECTURE_SUPPORT" "=" "1"
-	TargetH = Yes
-End
-
-TOKEN
-	Name  = "GTDT_PHYSICAL_ADDRESS"
-	Value  = "0x2FAF080"
-	Help  = "The 64-bit physical address at which the counter block is located."
-	TokenType = Integer
-	Token = "GTDT_BUILD" "=" "1"
-	TargetH = Yes
-End
-
-TOKEN
-	Name  = "GTDT_GLOBAL_FLAGS"
-	Value  = "0x0"
-	Help  = "GTDT Global flags: Bit0 - 1: memory mapped block is present 0: memory mapped block is not present; Bit1 - Interrupt Mode: 1:Edge, 0:Level."
-	TokenType = Integer
-	Token = "GTDT_BUILD" "=" "1"
-	TargetH = Yes
-End
-
-TOKEN
-	Name  = "GTDT_SECURE_PL1_TIMER_GSIV"
-	Value  = "0x0"
-	Help  = "GSIV for the secure PL1 physical timer interrupt."
-	TokenType = Integer
-	Token = "GTDT_BUILD" "=" "1"
-	TargetH = Yes
-End
-
-TOKEN
-	Name  = "GTDT_SECURE_PL1_TIMER_FLAGS"
-	Value  = "0x0"
-	Help  = "Secure PL1 timer Flags. Bit0 - Timer interrupt Mode: 1 Interrupt is Edge triggered, 0 Interrupt is Level triggered; Bit1 - Timer Interrupt polarity: 1 Interrupt is Active low, 0 Interrupt is Active high. "
-	TokenType = Integer
-	Token = "GTDT_BUILD" "=" "1"
-	TargetH = Yes
-End
-
-TOKEN
-	Name  = "GTDT_NON_SECURE_PL1_TIMER_GSIV"
-	Value  = "0x000D"
-	Help  = "GSIV for the non-secure PL1 timer physical timer interrupt."
-	TokenType = Integer
-	Token = "GTDT_BUILD" "=" "1"
-	TargetH = Yes
-End
-
-TOKEN
-	Name  = "GTDT_NON_SECURE_PL1_TIMER_FLAGS"
-	Value  = "0x0000"
-	Help  = "Non secure PL1 timer Flags. Bit0 - Timer interrupt Mode: 1 Interrupt is Edge triggered, 0 Interrupt is Level triggered; Bit1 - Timer Interrupt polarity: 1 Interrupt is Active low, 0 Interrupt is Active high. "
-	TokenType = Integer
-	Token = "GTDT_BUILD" "=" "1"
-	TargetH = Yes
-End
-
-TOKEN
-	Name  = "GTDT_VIRTUAL_TIMER_GSIV"
-	Value  = "0x001E"
-	Help  = "GSIV for the non-secure virtual timer interrupt."
-	TokenType = Integer
-	Token = "GTDT_BUILD" "=" "1"
-	TargetH = Yes
-End
-
-TOKEN
-	Name  = "GTDT_VIRTUAL_TIMER_FLAGS"
-	Value  = "0x0000"
-	Help  = "Virtual timer Flags. Bit0 - Timer interrupt Mode: 1 Interrupt is Edge triggered, 0 Interrupt is Level triggered; Bit1 - Timer Interrupt polarity: 1 Interrupt is Active low, 0 Interrupt is Active high. "
-	TokenType = Integer
-	Token = "GTDT_BUILD" "=" "1"
-	TargetH = Yes
-End
-
-TOKEN
-	Name  = "GTDT_NON_SECURE_PL2_TIMER_GSIV"
-	Value  = "0x0000"
-	Help  = "GSIV for the non-secure PL2 timer physical timer interrupt."
-	TokenType = Integer
-	Token = "GTDT_BUILD" "=" "1"
-	TargetH = Yes
-End
-
-TOKEN
-	Name  = "GTDT_NON_SECURE_PL2_TIMER_FLAGS"
-	Value  = "0x0000"
-	Help  = "Flags for the Non-Secure PL2 physical timer. Bit0 - Timer interrupt Mode: 1 Interrupt is Edge triggered, 0 Interrupt is Level triggered; Bit1 - Timer Interrupt polarity: 1 Interrupt is Active low, 0 Interrupt is Active high. "
-	TokenType = Integer
-	Token = "GTDT_BUILD" "=" "1"
-	TargetH = Yes
-End
-
-TOKEN
-	Name  = "ARM_MADT_BUILD"
-	Value  = "1"
-	Help  = "Main Token to enable built in creation of Generic Timer Description Table for ARM."
-	TokenType = Boolean
-	Token = "INTEL_ARCHITECTURE_SUPPORT" "=" "0"
-	TargetH = Yes
-End
-
-TOKEN
-	Name  = "ARM_MADT_BUILD"
-	Value  = "0"
-	Help  = "Main Token to enable built in creation of Generic Timer Description Table for ARM."
-	TokenType = Boolean
-	Token = "INTEL_ARCHITECTURE_SUPPORT" "=" "1"
-	TargetH = Yes
-End
-
-TOKEN
-	Name  = "ARM_MADT_GIC_FLAGS"
-	Value  = "0x0001"
-	Help  = "GIC Flags. Bit0 - Enabled: If zero, this processor is unusable, and the operating system support will not attempt to use it; Bit1 - Performance Interrupt Mode: 0 - Level-triggered, 1 - Edge-Triggered."
-	TokenType = Integer
-	Token = "ARM_MADT_BUILD" "=" "1"
-	TargetH = Yes
-End
-
-TOKEN
-	Name  = "ARM_MADT_GIC_DISTR_ID"
-	Value  = "0x0200143B"
-	Help  = "This GIC Distributor’s hardware ID."
-	TokenType = Integer
-	Token = "ARM_MADT_BUILD" "=" "1"
-	TargetH = Yes
 End
 
 TOKEN
@@ -1913,6 +1658,11 @@ PATH
 	Path  = "AmiModulePkg/ACPI"
 End
 
+MODULE
+    Help  = "Includes ACPI.mak to Project"
+    File  = "ACPI.mak"
+End
+
 ELINK
 	Name  = "$(ACPI_BOARD_DIR)/ACPI.sd"
 	Parent  = "SETUP_DEFINITIONS"
@@ -1927,27 +1677,27 @@ ELINK
 End
 
 ELINK
-	Name  = "OemUpdateHeader"
-	Help  = "Parent for OEM routines called before any table is created or submitted"
-	InvokeOrder = ReplaceParent
+    Name  = "OemUpdateHeader"
+    Help  = "Parent for OEM routines called before any table is created or submitted"
+    InvokeOrder = ReplaceParent
 End
 
 OUTPUTREGISTER
 	Name  = "TOKEN_ASL"
 	Path  = "Build"
-	File  = "Token.asl"
+	File  = "TOKEN.ASL"
 End
 
 OUTPUTREGISTER
-	Name  = "TOKEN_ASLH"
-	Path  = "Build"
-	File  = "TokenAsl.h"
+	Name = "TOKEN_ASLH"
+	Path = "Build"
+	File = "TokenAsl.h"
 	Token = "IFDEF_ASL_SUPPORT" "=" "1"
-End
+End 
 
 OUTPUTREGISTER
 	Name  = "APTIO_V_DSDT"
-	Path  = "Build/"
+	Path  = "Build\"
 	File  = "DSDT.ASL"
 End
 
@@ -1959,15 +1709,8 @@ End
 
 OUTPUTREGISTER
 	Name  = "APTIO_V_IRQ_ROUTING"
-	Path  = "Build/"
+	Path  = "Build\"
 	File  = "IRQROUT.ASL"
-End
-
-OUTPUTREGISTER
-	Name  = "ACPI_ELINKS_H"
-	Path  = "Build"
-	File  = "AcpiOemElinks.h"
-	Template  = "AcpiElinkTempl.txt"
 End
 
 INFComponent
@@ -1981,7 +1724,6 @@ INFComponent
 	Name  = "S3Save"
 	File  = "S3Save.inf"
 	Package  = "AmiModulePkg"
-	Arch  = "IA32 X64"
 	ModuleTypes  = "DXE_DRIVER"
 End
 
@@ -1989,34 +1731,12 @@ INFComponent
 	Name  = "S3Restore"
 	File  = "S3Resume.inf"
 	Package  = "AmiModulePkg"
-	Arch  = "IA32 X64"
 	ModuleTypes  = "PEIM"
 End
 
 INFComponent
-	Name  = "DsdtAsl"
-	File  = "DsdtAsl.inf"
-	Package  = "AmiModulePkg"
-	ModuleTypes  = "USER_DEFINED"
+    Name  = "DsdtAsl"
+    File  = "DsdtAsl.inf"
+    Package  = "AmiModulePkg"
+    ModuleTypes  = "USER_DEFINED"
 End
-
-INFComponent
-	Name  = "BaseAcpiLib"
-	File  = "AcpiLib.inf"
-	Package  = "AmiModulePkg"
-End
-
-INFComponent
-	Name  = "TimeAndAlarmSmi"
-	File  = "TimeAndAlarmSmi.inf"
-	Package  = "AmiModulePkg"
-	ModuleTypes  = "DXE_SMM_DRIVER"
-	Token = "ATAD_SUPPORT" "=" "1"
-End
-
-LibraryMapping
-	Class  = "AmiAcpiLib"
-	Instance  = "AmiModulePkg.BaseAcpiLib"
-	ModuleTypes  = "DXE_DRIVER DXE_RUNTIME_DRIVER UEFI_APPLICATION UEFI_DRIVER"
-End
-

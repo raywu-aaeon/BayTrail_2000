@@ -1,21 +1,34 @@
-//**********************************************************************
-//**********************************************************************
-//**                                                                  **
-//**        (C)Copyright 1985-2015, American Megatrends, Inc.         **
-//**                                                                  **
-//**                       All Rights Reserved.                       **
-//**                                                                  **
-//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093        **
-//**                                                                  **
-//**                       Phone: (770)-246-8600                      **
-//**                                                                  **
-//**********************************************************************
-//**********************************************************************
+//****************************************************************************
+//****************************************************************************
+//**                                                                        **
+//**             (C)Copyright 1985-2008, American Megatrends, Inc.          **
+//**                                                                        **
+//**                          All Rights Reserved.                          **
+//**                                                                        **
+//**                 5555 Oakbrook Pkwy, Norcross, GA 30093                 **
+//**                                                                        **
+//**                          Phone (770)-246-8600                          **
+//**                                                                        **
+//****************************************************************************
+//****************************************************************************
 
-/** @file Ehci.h
-    AMI USB EHCI support header
+//****************************************************************************
+// $Header: /Alaska/SOURCE/Modules/USB/ALASKA/RT/ehci.h 10    5/04/12 5:24a Wilsonlee $
+//
+// $Revision: 10 $
+//
+// $Date: 5/04/12 5:24a $
+//****************************************************************************//---------------------------------------------------------------------------
 
-**/
+//<AMI_FHDR_START>
+//-----------------------------------------------------------------------------
+//
+//  Name:           Ehci.h
+//
+//  Description:    AMI USB EHCI support header
+//
+//-----------------------------------------------------------------------------
+//<AMI_FHDR_END>
 
 // Avoid including multiple instance of this file
 #ifndef     __EHCI_H
@@ -175,22 +188,26 @@
 
 #pragma pack(push, 1)
 
-/**
-    This is EHCI queue TD data structure used to perform
-    non-isochronous transaction in EHCI based HC
-
- Fields:   Name       Type        Description
-      ------------------------------------------------------------
-      dNextqTDPtr DWORD   Pointer to next qTD
-      dAltNextqTDPtr  DWORD   Pointer to alternate next qTD
-      dToken      DWORD   Token double word
-      dBufferPtr0 DWORD   Buffer pointer page 0
-      dBufferPtr1 DWORD   Buffer pointer page 1
-      dBufferPtr2 DWORD   Buffer pointer page 2
-      dBufferPtr3 DWORD   Buffer pointer page 3
-      dBufferPtr4 DWORD   Buffer pointer page 4
-
-**/
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name:        EHCI_QTD
+//
+// Description: This is EHCI queue TD data structure used to perform
+//      non-isochronous transaction in EHCI based HC
+//
+// Fields:   Name       Type        Description
+//      ------------------------------------------------------------
+//      dNextqTDPtr DWORD   Pointer to next qTD
+//      dAltNextqTDPtr  DWORD   Pointer to alternate next qTD
+//      dToken      DWORD   Token double word
+//      dBufferPtr0 DWORD   Buffer pointer page 0
+//      dBufferPtr1 DWORD   Buffer pointer page 1
+//      dBufferPtr2 DWORD   Buffer pointer page 2
+//      dBufferPtr3 DWORD   Buffer pointer page 3
+//      dBufferPtr4 DWORD   Buffer pointer page 4
+//
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
 
 typedef struct {
     UINT32      dNextqTDPtr;
@@ -208,26 +225,30 @@ typedef struct {
 } EHCI_QTD;
 
 
-/**
-    This is EHCI queue head data structure used to perform
-    non-isochronous transaction in EHCI based HC
-
- Fields:   Name       Type        Description
-      ------------------------------------------------------------
-      dLinkPointer    DWORD   Pointer to the next queue head
-      dEndPntCharac   DWORD   Endpoint characteristics settings
-      dEndPntCap  DWORD   Endpoint capability settings
-      dCurqTDPtr  DWORD   Pointer to current qTD
-      dNextqTDPtr DWORD   Pointer to next qTD
-      dAltNextqTDPtr  DWORD   Pointer to alternate next qTD
-      dToken      DWORD   Token double word
-      dBufferPtr0 DWORD   Buffer pointer page 0
-      dBufferPtr1 DWORD   Buffer pointer page 1
-      dBufferPtr2 DWORD   Buffer pointer page 2
-      dBufferPtr3 DWORD   Buffer pointer page 3
-      dBufferPtr4 DWORD   Buffer pointer page 4
-
-**/
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name:        EHCI_QH
+//
+// Description: This is EHCI queue head data structure used to perform
+//      non-isochronous transaction in EHCI based HC
+//
+// Fields:   Name       Type        Description
+//      ------------------------------------------------------------
+//      dLinkPointer    DWORD   Pointer to the next queue head
+//      dEndPntCharac   DWORD   Endpoint characteristics settings
+//      dEndPntCap  DWORD   Endpoint capability settings
+//      dCurqTDPtr  DWORD   Pointer to current qTD
+//      dNextqTDPtr DWORD   Pointer to next qTD
+//      dAltNextqTDPtr  DWORD   Pointer to alternate next qTD
+//      dToken      DWORD   Token double word
+//      dBufferPtr0 DWORD   Buffer pointer page 0
+//      dBufferPtr1 DWORD   Buffer pointer page 1
+//      dBufferPtr2 DWORD   Buffer pointer page 2
+//      dBufferPtr3 DWORD   Buffer pointer page 3
+//      dBufferPtr4 DWORD   Buffer pointer page 4
+//
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
 
 typedef struct {
     UINT32      dLinkPointer;
@@ -255,37 +276,8 @@ typedef struct {
     UINT32		dTokenReload;
     UINT16      Interval;
     UINT8       Pad[31-2*sizeof(void*)];    // sizeof(EHCI_QH)should be divisible by 32
-} EHCI_QH;                          // because of 32 bit pointers; the size of
-                                    // the structure has to be aligned on a 32-Byte boundary
-/*
- * 
- * Isochronous transfer related definitions
- * 
- */
- 
-// EHCI iTD max data size, EHCI Specification 1.0, section 3.3.3
-//-------------------------------------------------------------------------
-#define EHCI_ISOC_MAX_MULT 3
-#define EHCI_ISOC_MAX_PACKET_SIZE 1024
-#define EHCI_ISOC_MAX_REC_DATA_SIZE EHCI_ISOC_MAX_PACKET_SIZE*EHCI_ISOC_MAX_MULT
-
-#define EHCI_ISOC_MAX_TRANSACTION_RECORDS 8
-#define EHCI_ISOC_MAX_ITD_DATA_SIZE EHCI_FRAMELISTSIZE*EHCI_ISOC_MAX_REC_DATA_SIZE*EHCI_ISOC_MAX_TRANSACTION_RECORDS
-#define BUFFER_SIZE_PAGES EFI_SIZE_TO_PAGES(EHCI_ISOC_MAX_ITD_DATA_SIZE)
-#define EHCI_ITD_PAGE_MAX_OFFSET (0x1000-EHCI_ISOC_MAX_REC_DATA_SIZE)
-
-// Isochronous transfer descriptor
-//-------------------------------------------------------------------------
-typedef struct _EHCI_ITD {
-    UINT32  NextLinkPointer;
-    UINT32  ControlStatus[8];
-    UINT32  BufferPointer[7];
-#if EHCI_64BIT_DATA_STRUCTURE    
-    UINT32  ExtBufferPointer[7];
-    UINT32  Padding[9];
-#endif
-} EHCI_ITD;
-
+} EHCI_QH;                          // because of 32 bin pointers; the size of
+                                    // the structure has to be 32 bytes aligned
 #pragma pack(pop)
 
 #define EHCI_QUEUE_HEAD     2   // Queue head id
@@ -352,16 +344,16 @@ typedef struct {
 
 #endif      // __EHCI_H
 
-//**********************************************************************
-//**********************************************************************
-//**                                                                  **
-//**        (C)Copyright 1985-2015, American Megatrends, Inc.         **
-//**                                                                  **
-//**                       All Rights Reserved.                       **
-//**                                                                  **
-//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093        **
-//**                                                                  **
-//**                       Phone: (770)-246-8600                      **
-//**                                                                  **
-//**********************************************************************
-//**********************************************************************
+//****************************************************************************
+//****************************************************************************
+//**                                                                        **
+//**             (C)Copyright 1985-2008, American Megatrends, Inc.          **
+//**                                                                        **
+//**                          All Rights Reserved.                          **
+//**                                                                        **
+//**                 5555 Oakbrook Pkwy, Norcross, GA 30093                 **
+//**                                                                        **
+//**                          Phone (770)-246-8600                          **
+//**                                                                        **
+//****************************************************************************
+//****************************************************************************

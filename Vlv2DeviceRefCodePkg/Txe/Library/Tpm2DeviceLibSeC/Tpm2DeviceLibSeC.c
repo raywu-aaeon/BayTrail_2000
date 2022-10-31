@@ -269,29 +269,6 @@ MmioWriteBuffer32 (
   return ReturnBuffer;
 }
 
-//AMI_OVERRIDE_TXE0000_START : Support FTPM EIP226550 >>
-/**
-  Checks whether PTT is enabled (PTT_STS::PTT_EN).
-
-  @retval    TRUE    PTT is enabled.
-  @retval    FALSE   PTT is disabled. All LT writes will be dropped.
-                     All LT reads will be returned with read data value of all 0's.
-                     The bit can only be written once per ME power cycle.
-
-**/
-BOOLEAN
-EFIAPI
-PttHciPresenceCheck (
-  VOID
-  )
-{
-  if( mPttBaseAddress == 0 ){
-    return FALSE;
-  }
-  return TRUE;
-}
-//AMI_OVERRIDE_TXE0000_END EIP226550 <<
-
 /**
 
   Sets FTPM_CMD and CA_START register to a defined value to indicate that a command is

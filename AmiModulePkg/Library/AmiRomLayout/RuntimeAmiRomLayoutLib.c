@@ -30,15 +30,8 @@ extern UINT32 gAmiRomAreaSize;
 extern UINT32 gAmiRomLayoutSize;
 extern AMI_ROM_AREA *gAmiRomLayout;
 extern AMI_ROM_AREA *gAmiRomLayoutEnd;
-static EFI_EVENT   RuntimeAmiRomLayoutLibExitBootServicesEvent = NULL;
-static EFI_EVENT   RuntimeAmiRomLayoutLibVirtualAddressChangeEvent = NULL;
 
 #define ConvertPointer(p) (gRT->ConvertPointer(0, (VOID **) &(p)));
-
-VOID EFIAPI AmiRomLayoutLibExitBsNotifyEvent(IN EFI_EVENT Event, IN VOID *Context)
-{
-    gDS = NULL;
-}
 
 VOID EFIAPI AmiRomLayoutLibVirtualNotifyEvent(IN EFI_EVENT Event, IN VOID *Context)
 {
@@ -55,6 +48,7 @@ VOID EFIAPI AmiRomLayoutLibVirtualNotifyEvent(IN EFI_EVENT Event, IN VOID *Conte
 
 EFI_STATUS EFIAPI RuntimeAmiRomLayoutLibConstructor (IN EFI_HANDLE ImageHandle, IN EFI_SYSTEM_TABLE *SystemTable)
 {
+    EFI_EVENT Event;
     EFI_STATUS Status;
     AMI_ROM_LAYOUT_HOB *AmiRomLayoutHob = NULL;
     AMI_ROM_LAYOUT_HOB_ENTRY *AmiRomLayoutHobEntry = NULL;
@@ -101,24 +95,12 @@ EFI_STATUS EFIAPI RuntimeAmiRomLayoutLibConstructor (IN EFI_HANDLE ImageHandle, 
         }
     }
 
-    gBS->CreateEvent(
-        EVT_SIGNAL_EXIT_BOOT_SERVICES, TPL_CALLBACK, AmiRomLayoutLibExitBsNotifyEvent, NULL, 
-        &RuntimeAmiRomLayoutLibExitBootServicesEvent
-    );
-    gBS->CreateEvent(
-        EVT_SIGNAL_VIRTUAL_ADDRESS_CHANGE, TPL_CALLBACK, AmiRomLayoutLibVirtualNotifyEvent, NULL, 
-        &RuntimeAmiRomLayoutLibVirtualAddressChangeEvent
+    Status = gBS->CreateEvent(
+        EVT_SIGNAL_VIRTUAL_ADDRESS_CHANGE, TPL_NOTIFY, AmiRomLayoutLibVirtualNotifyEvent, NULL, &Event
     );
     return EFI_SUCCESS;
 }
 
-EFI_STATUS EFIAPI RuntimeAmiRomLayoutLibDestructor (IN EFI_HANDLE ImageHandle, IN EFI_SYSTEM_TABLE *SystemTable)
-{
-    gBS->CloseEvent(RuntimeAmiRomLayoutLibExitBootServicesEvent);
-    gBS->CloseEvent(RuntimeAmiRomLayoutLibVirtualAddressChangeEvent);
-    
-    return EFI_SUCCESS;
-}
 
 /**
  * @param AreaGuid
@@ -128,14 +110,9 @@ EFI_STATUS AmiPublishFvArea(IN AMI_ROM_AREA *FvArea)
 {
     EFI_STATUS Status = EFI_INVALID_PARAMETER;
     EFI_HANDLE FvHandle = NULL;
-    
-    // gDS is reset to NULL in the exit-boot-services callback
-    // No FV publishing at runtime.
-    if (gDS==NULL) return EFI_UNSUPPORTED;
-    
+
     if(FvArea != NULL)
     {
-        if (FvArea->Address == AMI_ROM_AREA_NOT_MEMORY_MAPPED) return EFI_NO_MAPPING;
         Status = gDS->ProcessFirmwareVolume((VOID*)(FvArea->Address), FvArea->Size, &FvHandle);
     }
     return Status;

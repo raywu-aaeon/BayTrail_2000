@@ -1,40 +1,45 @@
-//***********************************************************************
-//***********************************************************************
-//**                                                                   **
-//**        (C)Copyright 1985-2016, American Megatrends, Inc.          **
-//**                                                                   **
-//**                       All Rights Reserved.                        **
-//**                                                                   **
-//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093         **
-//**                                                                   **
-//**                       Phone: (770)-246-8600                       **
-//**                                                                   **
-//***********************************************************************
-//***********************************************************************
+//****************************************************************************
+//****************************************************************************
+//**                                                                        **
+//**             (C)Copyright 1985-2013, American Megatrends, Inc.          **
+//**                                                                        **
+//**                          All Rights Reserved.                          **
+//**                                                                        **
+//**                 5555 Oakbrook Pkwy, Norcross, GA 30093                 **
+//**                                                                        **
+//**                          Phone (770)-246-8600                          **
+//**                                                                        **
+//****************************************************************************
+//****************************************************************************
+// $Header: /Alaska/SOURCE/Modules/HddSecurity/HddPassword/HddPassword.h 8     6/28/11 6:24a Anandv $
+//
+// $Revision: 8 $
+//
+// $Date: 6/28/11 6:24a $
+//
+//*****************************************************************************
+//*****************************************************************************//
 
-/** @file AmiTseHddSecurity.h
-    Header file for the HddPassword
-
-**/
-
-#ifndef _HDD_SECURITY_AMITSE_H_
-#define _HDD_SECURITY_AMITSE_H_
-
+//<AMI_FHDR_START>
 //---------------------------------------------------------------------------
+//
+// Name: HddPassword.h
+//
+// Description:	Header file for the HddPassword
+//
+//---------------------------------------------------------------------------
+//<AMI_FHDR_END>
+
+#ifndef _IDEPASSWORD_H_
+#define _IDEPASSWORD_H_
 
 #include "AmiStatusCodes.h"
-#include "AMITSEStrTokens.h"
 
-//---------------------------------------------------------------------------
+#include "AMITSEStrTokens.h"
 
 #define HDD_UNLOCKED_GUID \
     { 0x1fd29be6, 0x70d0, 0x42a4, 0xa6, 0xe7, 0xe5, 0xd1, 0xe, 0x6a, 0xc3, 0x76};
 
-#define HDD_PASSWORD_PROMPT_ENTER_GUID \
-    { 0x8e8d584a, 0x6e32, 0x44bf, { 0xb9, 0x6e, 0x1d, 0x27, 0x7, 0xc4, 0xeb, 0x5c } }
-
-#define HDD_PASSWORD_PROMPT_EXIT_GUID \
-    { 0xe22af903, 0xfd6f, 0x4d22, { 0x94, 0xce, 0xf8, 0x49, 0xc6, 0x14, 0xc3, 0x45 } }
 
 #define     SECURITY_SET_PASSWORD           0xF1
 #define     SECURITY_UNLOCK                 0xF2
@@ -43,8 +48,12 @@
 #define     SECURITY_FREEZE_LOCK            0xF5
 #define     SECURITY_DISABLE_PASSWORD       0xF6
 #define     SECURITY_BUFFER_LENGTH          512     // Bytes
-#define     HDD_MODEL_NUMBER_LENGTH         39     // Model number is 40 (0-39) bytes
-#define     SPACE_ASCII_VALUE               0x20
+
+#define     SecuritySupportedMask       0x0001
+#define     SecurityEnabledMask         0x0002
+#define     SecurityLockedMask          0x0004
+#define     SecurityFrozenMask          0x0008
+
 
 #ifndef AMI_DXE_BS_EC_INVALID_IDE_PASSWORD
   #define AMI_DXE_BS_EC_INVALID_IDE_PASSWORD (AMI_STATUS_CODE_CLASS\
@@ -71,6 +80,7 @@ extern VOID MemFreePointer (VOID **ptr);
 extern VOID MemCopy( VOID *dest, VOID *src, UINTN size );
 extern UINT16 HiiAddString( /*EFI_HII_HANDLE*/VOID* handle, CHAR16 *string );
 extern CHAR16 *HiiGetString( VOID* handle, UINT16 token );
+VOID* IDEPasswordGetDataPtr( UINTN Index);
 extern VOID    CheckForKeyHook( EFI_EVENT Event, VOID *Context );
 extern UINTN TestPrintLength ( IN CHAR16   *String );
 extern VOID _DrawPasswordWindow(UINT16 PromptToken, UINTN PasswordLength, UINTN *CurrXPos, UINTN *CurrYPos);
@@ -80,145 +90,69 @@ extern VOID    ClearScreen( UINT8 Attrib );
 extern EFI_STATUS ShowPostMsgBox(IN CHAR16  *MsgBoxTitle,IN CHAR16  *Message,IN UINT8  MsgBoxType, UINT8 *pSelection);
 extern VOID    *SaveScreen( VOID );
 
-#if TSE_BUILD > 0x1206
-BOOLEAN 
-IsPasswordSupportNonCaseSensitive(
-);
-VOID 
-UpdatePasswordToNonCaseSensitive(
-        CHAR16 *Password, 
-        UINTN PwdLength
-);
-#endif
-
-VOID
-EFIAPI
-HddNotificationFunction (
-    EFI_EVENT   Event,
-    VOID *HddRegContext
-);
-
-EFI_STATUS
-IDEPasswordUpdateAllHddWithValidatedPsw (
-    UINT8   *Password,
-    VOID    *Ptr,
-    BOOLEAN bCheckUser
-);
-
-VOID
-IDEPasswordCheck (
-    VOID
-);
-
-UINT16
-InitHddSecurityInternalDataPtr(
-);
-
-VOID* 
-IDEPasswordGetDataPtr( 
-        UINTN Index
-);
-
-BOOLEAN
-HddPasswordGetDeviceName (
-    EFI_HANDLE Controller,
-    CHAR16 **wsName
-);
-
-BOOLEAN
-CheckSecurityStatus (
-    AMI_HDD_SECURITY_PROTOCOL   *HddSecurityProtocol,
-    BOOLEAN                     *Locked,
-    UINT16                      Mask
-);
-
-EFI_STATUS
-IDEPasswordAuthenticateHdd (
-    CHAR16      *Password,
-    VOID        * Ptr,
-    BOOLEAN     bCheckUser
-);
-
-VOID
-IDEUpdateConfig (
-    VOID  *TempideSecConfig,
-    UINTN value
-);
-
-VOID IDEUpdateConfigAllHdd(
-    VOID  *TempideSecConfig,
-    UINTN value 
-);
-
-VOID
-SearchTseHardDiskField (
-    IN  OUT BOOLEAN *pbCheckUser,
-    IN  OUT BOOLEAN *pEnabledBit,
-    IN  OUT UINT8   *pHardDiskNumber,
-    IN  VOID        *data
-);
-
-VOID
-EfiStrCpy (
-    IN CHAR16   *Destination,
-    IN CHAR16   *Source
-);
-
-UINTN
-EfiStrLen (
-    IN CHAR16 *String
-);
-
-extern  VOID    
-TSEIDEPasswordCheck (
-);
-
-VOID
-HddSecuritySignalProtocolEvent (
-    IN  EFI_GUID    *ProtocolGuid
-);
-
-EFI_STATUS
-IDEPasswordAuthenticate (
-    CHAR16  *Password,
-    VOID*   Ptr,
+EFI_STATUS IDEPasswordAuthenticate(
+    CHAR16 *Password,
+    VOID* Ptr,
     BOOLEAN bCheckUser
 );
 
 EFI_STATUS
 EfiLibReportStatusCode (
-    IN EFI_STATUS_CODE_TYPE     Type,
-    IN EFI_STATUS_CODE_VALUE    Value,
-    IN UINT32                   Instance,
-    IN EFI_GUID                 *CallerId OPTIONAL,
-    IN EFI_STATUS_CODE_DATA     *Data     OPTIONAL
+  IN EFI_STATUS_CODE_TYPE     Type,
+  IN EFI_STATUS_CODE_VALUE    Value,
+  IN UINT32                   Instance,
+  IN EFI_GUID                 *CallerId OPTIONAL,
+  IN EFI_STATUS_CODE_DATA     *Data     OPTIONAL
   );
 
 VOID *
 EfiLibAllocateZeroPool (
-    IN  UINTN   AllocationSize
-);
+  IN  UINTN   AllocationSize
+  );
 
 UINTN
 SPrint (
-    OUT CHAR16        *Buffer,
-    IN  UINTN         BufferSize,
-    IN  CONST CHAR16  *Format,
+  OUT CHAR16        *Buffer,
+  IN  UINTN         BufferSize,
+  IN  CONST CHAR16  *Format,
   ...
   );
+//#include "tsecommon.h"
 
-#endif 
+//#define EFI_DP_TYPE_MASK                    0x7F
+//#define EFI_DP_TYPE_UNPACKED                0x80
+//#if !defined(SECURITY_SETUP_ON_SAME_PAGE) || SECURITY_SETUP_ON_SAME_PAGE == 0
+//#define END_DEVICE_PATH_TYPE                0x7f
+//#define END_ENTIRE_DEVICE_PATH_SUBTYPE      0xff
+//
+//#define DevicePathType( a )           (((a)->Type) & EFI_DP_TYPE_MASK)
+//#define DevicePathSubType( a )        ((a)->SubType)
+//#define DevicePathNodeLength( a )     (((a)->Length[0]) | ((a)->Length[1] << 8))
+//#define NextDevicePathNode( a )       ((EFI_DEVICE_PATH_PROTOCOL*) (((UINT8*) (\
+//                                                                         a))\
+//                                                                    +\
+//                                                                   DevicePathNodeLength( a )))
+//#define IsDevicePathEndType( a )      (\
+//                                                                    DevicePathType( \
+//            a ) == END_DEVICE_PATH_TYPE)
+//#define IsDevicePathEndSubType( a )   ((a)->SubType ==\
+//                                       END_ENTIRE_DEVICE_PATH_SUBTYPE)
+//#define IsDevicePathEnd( a )          (IsDevicePathEndType( a )\
+//                                       && IsDevicePathEndSubType( a ))
+//#endif
 
-//***********************************************************************
-//***********************************************************************
-//**                                                                   **
-//**        (C)Copyright 1985-2016, American Megatrends, Inc.          **
-//**                                                                   **
-//**                       All Rights Reserved.                        **
-//**                                                                   **
-//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093         **
-//**                                                                   **
-//**                       Phone: (770)-246-8600                       **
-//**                                                                   **
-//***********************************************************************
-//***********************************************************************
+#endif /* _PASSWORD_H_ */
+
+//****************************************************************************
+//****************************************************************************
+//**                                                                        **
+//**             (C)Copyright 1985-2013, American Megatrends, Inc.          **
+//**                                                                        **
+//**                          All Rights Reserved.                          **
+//**                                                                        **
+//**                 5555 Oakbrook Pkwy, Norcross, GA 30093                 **
+//**                                                                        **
+//**                          Phone (770)-246-8600                          **
+//**                                                                        **
+//****************************************************************************
+//****************************************************************************

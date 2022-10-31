@@ -64,8 +64,7 @@
 [Guids]
   gAmtReadyToBootGuid
   gSeCPlatformReadyToBootGuid
-  gEfiEventExitBootServicesGuid
-  
+
 [Depex]
   gEfiCpuIo2ProtocolGuid AND
   gEfiPciRootBridgeIoProtocolGuid AND

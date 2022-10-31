@@ -2,8 +2,14 @@
  * RSA
  * Copyright (c) 2006, Jouni Malinen <j@w1.fi>
  *
- * This software may be distributed under the terms of the BSD license.
- * See README for more details.
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
+ * published by the Free Software Foundation.
+ *
+ * Alternatively, this software may be distributed under the terms of BSD
+ * license.
+ *
+ * See README and COPYING for more details.
  */
 
 #include "includes.h"
@@ -13,7 +19,6 @@
 #include "asn1.h"
 #include "bignum.h"
 #include "rsa.h"
-
 
 struct crypto_rsa_key {
 	int private_key; /* whether private key is set */

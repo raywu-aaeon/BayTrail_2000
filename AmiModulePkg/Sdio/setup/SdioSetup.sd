@@ -1,7 +1,7 @@
 //****************************************************************************
 //****************************************************************************
 //**                                                                        **
-//**             (C)Copyright 1985-2014, American Megatrends, Inc.          **
+//**             (C)Copyright 1985-2012, American Megatrends, Inc.          **
 //**                                                                        **
 //**                          All Rights Reserved.                          **
 //**                                                                        **
@@ -12,14 +12,21 @@
 //****************************************************************************
 //****************************************************************************
 
+//**********************************************************************
+// $Header: /Alaska/SOURCE/Modules/SdioDriver/SdioSetup.sd 2     4/19/11 7:01a Lavanyap $
+//
+// $Revision: 2 $
+//
+// $Date: 4/19/11 7:01a $
+//**********************************************************************
 
 #ifdef SETUP_DATA_DEFINITION
-//***********************************************************/
-//* Put NVRAM data definitions here.
-//* For example:	UINT8 Data1;
-//* These definitions will be converted by the build process
-//* to a definitions of SETUP_DATA fields.
-//***********************************************************/
+/***********************************************************/
+/* Put NVRAM data definitions here.
+/* For example:	UINT8 Data1;
+/* These definitions will be converted by the build process
+/* to a definitions of SETUP_DATA fields.
+/***********************************************************/
 #endif
 
 //**********************************************************************
@@ -27,305 +34,306 @@
 //**********************************************************************
 #ifdef ADVANCED_FORM_SET
 #ifdef FORM_SET_TYPEDEF
-#pragma pack(1)
-typedef struct{
-    UINT8  SdEmul;
-    UINT64 SdMmcAddress;
-}SDMMC_EMULATION;
 
 typedef struct {
-    UINT8           SdioMode;
-    UINT8           SdioMassDevNum;
-    SDMMC_EMULATION SdioEmu[8];
+    UINT8   SdioMode;
+    UINT8   SdioEmu1;
+    UINT8   SdioEmu2;
+    UINT8   SdioEmu3;
+    UINT8   SdioEmu4;
+    UINT8   SdioEmu5;
+    UINT8   SdioEmu6;
+    UINT8   SdioEmu7;
+    UINT8   SdioEmu8;
+    UINT8   SdioMassDevNum;
 } SDIO_DEV_CONFIGURATION;
-#pragma pack()
+
 #endif
 
 #ifdef FORM_SET_VARSTORE
-    varstore SDIO_DEV_CONFIGURATION,
-        key   = AUTO_ID(SDIO_DEV_CONFIGURATION_KEY),
-        name  = SdioDevConfiguration,
-        guid  = SETUP_GUID;
+	varstore SDIO_DEV_CONFIGURATION,
+		key   = AUTO_ID(SDIO_DEV_CONFIGURATION_KEY),
+		name  = SdioDevConfiguration,
+		guid  = SETUP_GUID;
 
 #endif
 
-    #ifdef FORM_SET_ITEM
-        //
-        // Define controls to be added to the main page of the formset
-        //
-    #endif
+	#ifdef FORM_SET_ITEM
+		//
+		// Define controls to be added to the main page of the formset
+		//
+	#endif
 
-    #ifdef FORM_SET_GOTO
-    //
-    // Define goto commands for the forms defined in this file
-    //
-    goto SDIO_CONFIG_FORM_ID,
-        prompt  = STRING_TOKEN(STR_SDIO_CONFIGURATION),
-        help    = STRING_TOKEN(STR_SDIO_CONFIGURATION_HELP);
-    #endif
+	#ifdef FORM_SET_GOTO
+	//
+	// Define goto commands for the forms defined in this file
+	//
+	goto SDIO_CONFIG_FORM_ID,
+		prompt  = STRING_TOKEN(STR_SDIO_CONFIGURATION),
+		help    = STRING_TOKEN(STR_SDIO_CONFIGURATION_HELP);
+	#endif
 
-    #ifdef FORM_SET_FORM
-        //
-        // Define forms
-        //
-        form formid = AUTO_ID(SDIO_CONFIG_FORM_ID),
-        title = STRING_TOKEN(STR_SDIO_CONFIGURATION);
+	#ifdef FORM_SET_FORM
+		//
+		// Define forms
+		//
+		form formid = AUTO_ID(SDIO_CONFIG_FORM_ID),
+		title = STRING_TOKEN(STR_SDIO_CONFIGURATION);
 
-        SUBTITLE(STRING_TOKEN(STR_SDIO_CONFIGURATION))
+		SUBTITLE(STRING_TOKEN(STR_SDIO_CONFIGURATION))
+		SEPARATOR
+
+		grayoutif ideqval SYSTEM_ACCESS.Access == SYSTEM_PASSWORD_USER;
+		oneof varid     = SDIO_DEV_CONFIGURATION.SdioMode,
+			prompt      = STRING_TOKEN(STR_SDIO_MODE),
+			help        = STRING_TOKEN(STR_SDIO_MODE_HELP),
+			option text = STRING_TOKEN(STR_SDIO_AUTO),	value = 0, flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;
+			option text = STRING_TOKEN(STR_SDIO_DMA),	value = 1, flags = RESET_REQUIRED;
+			option text = STRING_TOKEN(STR_SDIO_PIO),	value = 2, flags = RESET_REQUIRED;
+		endoneof;
+		endif;
+
+		SEPARATOR
+	    suppressif ideqval SDIO_DEV_CONFIGURATION.SdioMassDevNum == 0;
+		text
+			help   = STRING_TOKEN(STR_EMPTY),
+			text   = STRING_TOKEN(STR_SDIO_EMULATION),
+			text   = STRING_TOKEN(STR_EMPTY),
+			flags  = 0,
+			key    = 0;
+		endif;
+
         SEPARATOR
+		text
+			help   = STRING_TOKEN(STR_EMPTY),
+			text   = STRING_TOKEN(STR_SDIO_DEVICE1_DETAILS),
+			text   = STRING_TOKEN(STR_EMPTY),
+			flags  = 0,
+			key    = 0;
 
-        grayoutif ideqval SYSTEM_ACCESS.Access == SYSTEM_PASSWORD_USER;
-        oneof varid     = SDIO_DEV_CONFIGURATION.SdioMode,
-            prompt      = STRING_TOKEN(STR_SDIO_MODE),
-            help        = STRING_TOKEN(STR_SDIO_MODE_HELP),
-            option text = STRING_TOKEN(STR_SDIO_AUTO),	value = 0, flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;
-            option text = STRING_TOKEN(STR_SDIO_ADMA),	value = 1, flags = RESET_REQUIRED;
-            option text = STRING_TOKEN(STR_SDIO_SDMA),	value = 2, flags = RESET_REQUIRED;
-            option text = STRING_TOKEN(STR_SDIO_PIO),	value = 3, flags = RESET_REQUIRED;
-        endoneof;
-        endif;
+		text
+			help   = STRING_TOKEN(STR_EMPTY),
+			text   = STRING_TOKEN(STR_SDIO_DEVICE1_LOCATION),
+			text   = STRING_TOKEN(STR_EMPTY),
+			flags  = 0,
+			key    = 0;
 
-        SEPARATOR
-        suppressif ideqval SDIO_DEV_CONFIGURATION.SdioMassDevNum == 0;
-        text
-            help   = STRING_TOKEN(STR_EMPTY),
-            text   = STRING_TOKEN(STR_SDIO_EMULATION),
-            text   = STRING_TOKEN(STR_EMPTY),
-            flags  = 0,
-            key    = 0;
-        endif;
-
-        SEPARATOR
-        text
-            help   = STRING_TOKEN(STR_EMPTY),
-            text   = STRING_TOKEN(STR_SDIO_DEVICE1_DETAILS),
-            text   = STRING_TOKEN(STR_EMPTY),
-            flags  = 0,
-            key    = 0;
-
-        text
-            help   = STRING_TOKEN(STR_EMPTY),
-            text   = STRING_TOKEN(STR_SDIO_DEVICE1_LOCATION),
-            text   = STRING_TOKEN(STR_EMPTY),
-            flags  = 0,
-            key    = 0;
-
-        suppressif NOT ideqvallist SDIO_DEV_CONFIGURATION.SdioMassDevNum == 1 2 3 4 5 6 7 8;
-        grayoutif ideqval SYSTEM_ACCESS.Access == SYSTEM_PASSWORD_USER;
-        oneof varid     = SDIO_DEV_CONFIGURATION.SdioEmu[0].SdEmul,
-            prompt      = STRING_TOKEN(STR_SDIO_DEVICE1),
-            help        = STRING_TOKEN(STR_SDIO_EMULATION_TYPE_HELP),
-            option text = STRING_TOKEN(STR_SDIO_AUTO),	          value = 0, flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;
-            option text = STRING_TOKEN(STR_SDIO_EMUL_FLOPPY),     value = 1, flags = RESET_REQUIRED;
-            option text = STRING_TOKEN(STR_SDIO_EMUL_FORCED_FDD), value = 2, flags = RESET_REQUIRED;
-            option text = STRING_TOKEN(STR_SDIO_EMUL_HDD),        value = 3, flags = RESET_REQUIRED;
-        endoneof;
+	    suppressif ideqval SDIO_DEV_CONFIGURATION.SdioMassDevNum == 0;
+		grayoutif ideqval SYSTEM_ACCESS.Access == SYSTEM_PASSWORD_USER;
+		oneof varid     = SDIO_DEV_CONFIGURATION.SdioEmu1,
+			prompt      = STRING_TOKEN(STR_SDIO_DEVICE1),
+			help        = STRING_TOKEN(STR_SDIO_EMULATION_TYPE_HELP),
+			option text = STRING_TOKEN(STR_SDIO_AUTO),	          value = 0, flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;
+			option text = STRING_TOKEN(STR_SDIO_EMUL_FLOPPY),     value = 1, flags = RESET_REQUIRED;
+			option text = STRING_TOKEN(STR_SDIO_EMUL_FORCED_FDD), value = 2, flags = RESET_REQUIRED;
+			option text = STRING_TOKEN(STR_SDIO_EMUL_HDD),        value = 3, flags = RESET_REQUIRED;
+		endoneof;
         SUPPRESS_GRAYOUT_ENDIF
 
-        SEPARATOR
+		SEPARATOR
 
-        text
-            help   = STRING_TOKEN(STR_EMPTY),
-            text   = STRING_TOKEN(STR_SDIO_DEVICE2_DETAILS),
-            text   = STRING_TOKEN(STR_EMPTY),
-            flags  = 0,
-            key    = 0;
+		text
+			help   = STRING_TOKEN(STR_EMPTY),
+			text   = STRING_TOKEN(STR_SDIO_DEVICE2_DETAILS),
+			text   = STRING_TOKEN(STR_EMPTY),
+			flags  = 0,
+			key    = 0;
 
-        text
-            help   = STRING_TOKEN(STR_EMPTY),
-            text   = STRING_TOKEN(STR_SDIO_DEVICE2_LOCATION),
-            text   = STRING_TOKEN(STR_EMPTY),
-            flags  = 0,
-            key    = 0;
+		text
+			help   = STRING_TOKEN(STR_EMPTY),
+			text   = STRING_TOKEN(STR_SDIO_DEVICE2_LOCATION),
+			text   = STRING_TOKEN(STR_EMPTY),
+			flags  = 0,
+			key    = 0;
 
-        suppressif NOT ideqvallist SDIO_DEV_CONFIGURATION.SdioMassDevNum == 2 3 4 5 6 7 8;
-        grayoutif ideqval SYSTEM_ACCESS.Access == SYSTEM_PASSWORD_USER;
-        oneof varid     = SDIO_DEV_CONFIGURATION.SdioEmu[1].SdEmul,
-            prompt      = STRING_TOKEN(STR_SDIO_DEVICE2),
-            help        = STRING_TOKEN(STR_SDIO_EMULATION_TYPE_HELP),
-            option text = STRING_TOKEN(STR_SDIO_AUTO),	          value = 0, flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;
-            option text = STRING_TOKEN(STR_SDIO_EMUL_FLOPPY),     value = 1, flags = RESET_REQUIRED;
-            option text = STRING_TOKEN(STR_SDIO_EMUL_FORCED_FDD), value = 2, flags = RESET_REQUIRED;
-            option text = STRING_TOKEN(STR_SDIO_EMUL_HDD),        value = 3, flags = RESET_REQUIRED;
-        endoneof;
+	    suppressif ideqval SDIO_DEV_CONFIGURATION.SdioMassDevNum == 1 OR ideqval SDIO_DEV_CONFIGURATION.SdioMassDevNum == 0;
+		grayoutif ideqval SYSTEM_ACCESS.Access == SYSTEM_PASSWORD_USER;
+		oneof varid     = SDIO_DEV_CONFIGURATION.SdioEmu2,
+			prompt      = STRING_TOKEN(STR_SDIO_DEVICE2),
+			help        = STRING_TOKEN(STR_SDIO_EMULATION_TYPE_HELP),
+			option text = STRING_TOKEN(STR_SDIO_AUTO),	          value = 0, flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;
+			option text = STRING_TOKEN(STR_SDIO_EMUL_FLOPPY),     value = 1, flags = RESET_REQUIRED;
+			option text = STRING_TOKEN(STR_SDIO_EMUL_FORCED_FDD), value = 2, flags = RESET_REQUIRED;
+			option text = STRING_TOKEN(STR_SDIO_EMUL_HDD),        value = 3, flags = RESET_REQUIRED;
+		endoneof;
         SUPPRESS_GRAYOUT_ENDIF
 
-        SEPARATOR
+		SEPARATOR
 
-        text
-            help   = STRING_TOKEN(STR_EMPTY),
-            text   = STRING_TOKEN(STR_SDIO_DEVICE3_DETAILS),
-            text   = STRING_TOKEN(STR_EMPTY),
-            flags  = 0,
-            key    = 0;
+		text
+			help   = STRING_TOKEN(STR_EMPTY),
+			text   = STRING_TOKEN(STR_SDIO_DEVICE3_DETAILS),
+			text   = STRING_TOKEN(STR_EMPTY),
+			flags  = 0,
+			key    = 0;
 
-        text
-            help   = STRING_TOKEN(STR_EMPTY),
-            text   = STRING_TOKEN(STR_SDIO_DEVICE3_LOCATION),
-            text   = STRING_TOKEN(STR_EMPTY),
-            flags  = 0,
-            key    = 0;
+		text
+			help   = STRING_TOKEN(STR_EMPTY),
+			text   = STRING_TOKEN(STR_SDIO_DEVICE3_LOCATION),
+			text   = STRING_TOKEN(STR_EMPTY),
+			flags  = 0,
+			key    = 0;
 
-        suppressif NOT ideqvallist SDIO_DEV_CONFIGURATION.SdioMassDevNum == 3 4 5 6 7 8;
-        grayoutif ideqval SYSTEM_ACCESS.Access == SYSTEM_PASSWORD_USER;
-        oneof varid     = SDIO_DEV_CONFIGURATION.SdioEmu[2].SdEmul,
-            prompt      = STRING_TOKEN(STR_SDIO_DEVICE3),
-            help        = STRING_TOKEN(STR_SDIO_EMULATION_TYPE_HELP),
-            option text = STRING_TOKEN(STR_SDIO_AUTO),	          value = 0, flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;
-            option text = STRING_TOKEN(STR_SDIO_EMUL_FLOPPY),     value = 1, flags = RESET_REQUIRED;
-            option text = STRING_TOKEN(STR_SDIO_EMUL_FORCED_FDD), value = 2, flags = RESET_REQUIRED;
-            option text = STRING_TOKEN(STR_SDIO_EMUL_HDD),        value = 3, flags = RESET_REQUIRED;
-        endoneof;
+	    suppressif ideqval SDIO_DEV_CONFIGURATION.SdioMassDevNum == 2 OR ideqval SDIO_DEV_CONFIGURATION.SdioMassDevNum == 1 OR ideqval SDIO_DEV_CONFIGURATION.SdioMassDevNum == 0;
+		grayoutif ideqval SYSTEM_ACCESS.Access == SYSTEM_PASSWORD_USER;
+		oneof varid     = SDIO_DEV_CONFIGURATION.SdioEmu3,
+			prompt      = STRING_TOKEN(STR_SDIO_DEVICE3),
+			help        = STRING_TOKEN(STR_SDIO_EMULATION_TYPE_HELP),
+			option text = STRING_TOKEN(STR_SDIO_AUTO),	          value = 0, flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;
+			option text = STRING_TOKEN(STR_SDIO_EMUL_FLOPPY),     value = 1, flags = RESET_REQUIRED;
+			option text = STRING_TOKEN(STR_SDIO_EMUL_FORCED_FDD), value = 2, flags = RESET_REQUIRED;
+			option text = STRING_TOKEN(STR_SDIO_EMUL_HDD),        value = 3, flags = RESET_REQUIRED;
+		endoneof;
         SUPPRESS_GRAYOUT_ENDIF
 
-        SEPARATOR
+		SEPARATOR
 
-        text
-            help   = STRING_TOKEN(STR_EMPTY),
-            text   = STRING_TOKEN(STR_SDIO_DEVICE4_DETAILS),
-            text   = STRING_TOKEN(STR_EMPTY),
-            flags  = 0,
-            key    = 0;
+		text
+			help   = STRING_TOKEN(STR_EMPTY),
+			text   = STRING_TOKEN(STR_SDIO_DEVICE4_DETAILS),
+			text   = STRING_TOKEN(STR_EMPTY),
+			flags  = 0,
+			key    = 0;
 
-        text
-            help   = STRING_TOKEN(STR_EMPTY),
-            text   = STRING_TOKEN(STR_SDIO_DEVICE4_LOCATION),
-            text   = STRING_TOKEN(STR_EMPTY),
-            flags  = 0,
-            key    = 0;
+		text
+			help   = STRING_TOKEN(STR_EMPTY),
+			text   = STRING_TOKEN(STR_SDIO_DEVICE4_LOCATION),
+			text   = STRING_TOKEN(STR_EMPTY),
+			flags  = 0,
+			key    = 0;
 
-        suppressif NOT ideqvallist SDIO_DEV_CONFIGURATION.SdioMassDevNum == 4 5 6 7 8;
-        grayoutif ideqval SYSTEM_ACCESS.Access == SYSTEM_PASSWORD_USER;
-        oneof varid     = SDIO_DEV_CONFIGURATION.SdioEmu[3].SdEmul,
-            prompt      = STRING_TOKEN(STR_SDIO_DEVICE4),
-            help        = STRING_TOKEN(STR_SDIO_EMULATION_TYPE_HELP),
-            option text = STRING_TOKEN(STR_SDIO_AUTO),	          value = 0, flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;
-            option text = STRING_TOKEN(STR_SDIO_EMUL_FLOPPY),     value = 1, flags = RESET_REQUIRED;
-            option text = STRING_TOKEN(STR_SDIO_EMUL_FORCED_FDD), value = 2, flags = RESET_REQUIRED;
-            option text = STRING_TOKEN(STR_SDIO_EMUL_HDD),        value = 3, flags = RESET_REQUIRED;
-        endoneof;
+	    suppressif ideqval SDIO_DEV_CONFIGURATION.SdioMassDevNum == 3 OR ideqval SDIO_DEV_CONFIGURATION.SdioMassDevNum == 2 OR ideqval SDIO_DEV_CONFIGURATION.SdioMassDevNum == 1 OR ideqval SDIO_DEV_CONFIGURATION.SdioMassDevNum == 0;
+		grayoutif ideqval SYSTEM_ACCESS.Access == SYSTEM_PASSWORD_USER;
+		oneof varid     = SDIO_DEV_CONFIGURATION.SdioEmu4,
+			prompt      = STRING_TOKEN(STR_SDIO_DEVICE4),
+			help        = STRING_TOKEN(STR_SDIO_EMULATION_TYPE_HELP),
+			option text = STRING_TOKEN(STR_SDIO_AUTO),	          value = 0, flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;
+			option text = STRING_TOKEN(STR_SDIO_EMUL_FLOPPY),     value = 1, flags = RESET_REQUIRED;
+			option text = STRING_TOKEN(STR_SDIO_EMUL_FORCED_FDD), value = 2, flags = RESET_REQUIRED;
+			option text = STRING_TOKEN(STR_SDIO_EMUL_HDD),        value = 3, flags = RESET_REQUIRED;
+		endoneof;
         SUPPRESS_GRAYOUT_ENDIF
 
-        SEPARATOR
+		SEPARATOR
 
-        text
-            help   = STRING_TOKEN(STR_EMPTY),
-            text   = STRING_TOKEN(STR_SDIO_DEVICE5_DETAILS),
-            text   = STRING_TOKEN(STR_EMPTY),
-            flags  = 0,
-            key    = 0;
+		text
+			help   = STRING_TOKEN(STR_EMPTY),
+			text   = STRING_TOKEN(STR_SDIO_DEVICE5_DETAILS),
+			text   = STRING_TOKEN(STR_EMPTY),
+			flags  = 0,
+			key    = 0;
 
-        text
-            help   = STRING_TOKEN(STR_EMPTY),
-            text   = STRING_TOKEN(STR_SDIO_DEVICE5_LOCATION),
-            text   = STRING_TOKEN(STR_EMPTY),
-            flags  = 0,
-            key    = 0;
+		text
+			help   = STRING_TOKEN(STR_EMPTY),
+			text   = STRING_TOKEN(STR_SDIO_DEVICE5_LOCATION),
+			text   = STRING_TOKEN(STR_EMPTY),
+			flags  = 0,
+			key    = 0;
 
-        suppressif NOT ideqvallist SDIO_DEV_CONFIGURATION.SdioMassDevNum == 5 6 7 8;
-        grayoutif ideqval SYSTEM_ACCESS.Access == SYSTEM_PASSWORD_USER;
-        oneof varid     = SDIO_DEV_CONFIGURATION.SdioEmu[4].SdEmul,
-            prompt      = STRING_TOKEN(STR_SDIO_DEVICE5),
-            help        = STRING_TOKEN(STR_SDIO_EMULATION_TYPE_HELP),
-            option text = STRING_TOKEN(STR_SDIO_AUTO),	          value = 0, flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;
-            option text = STRING_TOKEN(STR_SDIO_EMUL_FLOPPY),     value = 1, flags = RESET_REQUIRED;
-            option text = STRING_TOKEN(STR_SDIO_EMUL_FORCED_FDD), value = 2, flags = RESET_REQUIRED;
-            option text = STRING_TOKEN(STR_SDIO_EMUL_HDD),        value = 3, flags = RESET_REQUIRED;
-        endoneof;
+	    suppressif ideqval SDIO_DEV_CONFIGURATION.SdioMassDevNum == 4 OR ideqval SDIO_DEV_CONFIGURATION.SdioMassDevNum == 3 OR ideqval SDIO_DEV_CONFIGURATION.SdioMassDevNum == 2 OR ideqval SDIO_DEV_CONFIGURATION.SdioMassDevNum == 1 OR ideqval SDIO_DEV_CONFIGURATION.SdioMassDevNum == 0;
+		grayoutif ideqval SYSTEM_ACCESS.Access == SYSTEM_PASSWORD_USER;
+		oneof varid     = SDIO_DEV_CONFIGURATION.SdioEmu5,
+			prompt      = STRING_TOKEN(STR_SDIO_DEVICE5),
+			help        = STRING_TOKEN(STR_SDIO_EMULATION_TYPE_HELP),
+			option text = STRING_TOKEN(STR_SDIO_AUTO),	          value = 0, flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;
+			option text = STRING_TOKEN(STR_SDIO_EMUL_FLOPPY),     value = 1, flags = RESET_REQUIRED;
+			option text = STRING_TOKEN(STR_SDIO_EMUL_FORCED_FDD), value = 2, flags = RESET_REQUIRED;
+			option text = STRING_TOKEN(STR_SDIO_EMUL_HDD),        value = 3, flags = RESET_REQUIRED;
+		endoneof;
         SUPPRESS_GRAYOUT_ENDIF
 
-        SEPARATOR
+		SEPARATOR
 
-        text
-            help   = STRING_TOKEN(STR_EMPTY),
-            text   = STRING_TOKEN(STR_SDIO_DEVICE6_DETAILS),
-            text   = STRING_TOKEN(STR_EMPTY),
-            flags  = 0,
-            key    = 0;
+		text
+			help   = STRING_TOKEN(STR_EMPTY),
+			text   = STRING_TOKEN(STR_SDIO_DEVICE6_DETAILS),
+			text   = STRING_TOKEN(STR_EMPTY),
+			flags  = 0,
+			key    = 0;
 
-        text
-            help   = STRING_TOKEN(STR_EMPTY),
-            text   = STRING_TOKEN(STR_SDIO_DEVICE6_LOCATION),
-            text   = STRING_TOKEN(STR_EMPTY),
-            flags  = 0,
-            key    = 0;
+		text
+			help   = STRING_TOKEN(STR_EMPTY),
+			text   = STRING_TOKEN(STR_SDIO_DEVICE6_LOCATION),
+			text   = STRING_TOKEN(STR_EMPTY),
+			flags  = 0,
+			key    = 0;
 
-        suppressif NOT ideqvallist SDIO_DEV_CONFIGURATION.SdioMassDevNum == 6 7 8;
-        grayoutif ideqval SYSTEM_ACCESS.Access == SYSTEM_PASSWORD_USER;
-        oneof varid     = SDIO_DEV_CONFIGURATION.SdioEmu[5].SdEmul,
-            prompt      = STRING_TOKEN(STR_SDIO_DEVICE6),
-            help        = STRING_TOKEN(STR_SDIO_EMULATION_TYPE_HELP),
-            option text = STRING_TOKEN(STR_SDIO_AUTO),	          value = 0, flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;
-            option text = STRING_TOKEN(STR_SDIO_EMUL_FLOPPY),     value = 1, flags = RESET_REQUIRED;
-            option text = STRING_TOKEN(STR_SDIO_EMUL_FORCED_FDD), value = 2, flags = RESET_REQUIRED;
-            option text = STRING_TOKEN(STR_SDIO_EMUL_HDD),        value = 3, flags = RESET_REQUIRED;
-        endoneof;
+	    suppressif ideqval SDIO_DEV_CONFIGURATION.SdioMassDevNum == 5 OR ideqval SDIO_DEV_CONFIGURATION.SdioMassDevNum == 4 OR ideqval SDIO_DEV_CONFIGURATION.SdioMassDevNum == 3 OR ideqval SDIO_DEV_CONFIGURATION.SdioMassDevNum == 2 OR ideqval SDIO_DEV_CONFIGURATION.SdioMassDevNum == 1 OR ideqval SDIO_DEV_CONFIGURATION.SdioMassDevNum == 0;
+		grayoutif ideqval SYSTEM_ACCESS.Access == SYSTEM_PASSWORD_USER;
+		oneof varid     = SDIO_DEV_CONFIGURATION.SdioEmu6,
+			prompt      = STRING_TOKEN(STR_SDIO_DEVICE6),
+			help        = STRING_TOKEN(STR_SDIO_EMULATION_TYPE_HELP),
+			option text = STRING_TOKEN(STR_SDIO_AUTO),	          value = 0, flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;
+			option text = STRING_TOKEN(STR_SDIO_EMUL_FLOPPY),     value = 1, flags = RESET_REQUIRED;
+			option text = STRING_TOKEN(STR_SDIO_EMUL_FORCED_FDD), value = 2, flags = RESET_REQUIRED;
+			option text = STRING_TOKEN(STR_SDIO_EMUL_HDD),        value = 3, flags = RESET_REQUIRED;
+		endoneof;
         SUPPRESS_GRAYOUT_ENDIF
 
-        SEPARATOR
+		SEPARATOR
 
-        text
-            help   = STRING_TOKEN(STR_EMPTY),
-            text   = STRING_TOKEN(STR_SDIO_DEVICE7_DETAILS),
-            text   = STRING_TOKEN(STR_EMPTY),
-            flags  = 0,
-            key    = 0;
+		text
+			help   = STRING_TOKEN(STR_EMPTY),
+			text   = STRING_TOKEN(STR_SDIO_DEVICE7_DETAILS),
+			text   = STRING_TOKEN(STR_EMPTY),
+			flags  = 0,
+			key    = 0;
 
-        text
-            help   = STRING_TOKEN(STR_EMPTY),
-            text   = STRING_TOKEN(STR_SDIO_DEVICE7_LOCATION),
-            text   = STRING_TOKEN(STR_EMPTY),
-            flags  = 0,
-            key    = 0;
+		text
+			help   = STRING_TOKEN(STR_EMPTY),
+			text   = STRING_TOKEN(STR_SDIO_DEVICE7_LOCATION),
+			text   = STRING_TOKEN(STR_EMPTY),
+			flags  = 0,
+			key    = 0;
 
-        suppressif NOT ideqvallist SDIO_DEV_CONFIGURATION.SdioMassDevNum == 7 8;
-        grayoutif ideqval SYSTEM_ACCESS.Access == SYSTEM_PASSWORD_USER;
-        oneof varid     = SDIO_DEV_CONFIGURATION.SdioEmu[6].SdEmul,
-            prompt      = STRING_TOKEN(STR_SDIO_DEVICE7),
-            help        = STRING_TOKEN(STR_SDIO_EMULATION_TYPE_HELP),
-            option text = STRING_TOKEN(STR_SDIO_AUTO),	          value = 0, flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;
-            option text = STRING_TOKEN(STR_SDIO_EMUL_FLOPPY),     value = 1, flags = RESET_REQUIRED;
-            option text = STRING_TOKEN(STR_SDIO_EMUL_FORCED_FDD), value = 2, flags = RESET_REQUIRED;
-            option text = STRING_TOKEN(STR_SDIO_EMUL_HDD),        value = 3, flags = RESET_REQUIRED;
-        endoneof;
+	    suppressif ideqval SDIO_DEV_CONFIGURATION.SdioMassDevNum == 6 OR ideqval SDIO_DEV_CONFIGURATION.SdioMassDevNum == 5 OR ideqval SDIO_DEV_CONFIGURATION.SdioMassDevNum == 4 OR ideqval SDIO_DEV_CONFIGURATION.SdioMassDevNum == 3 OR ideqval SDIO_DEV_CONFIGURATION.SdioMassDevNum == 2 OR ideqval SDIO_DEV_CONFIGURATION.SdioMassDevNum == 1 OR ideqval SDIO_DEV_CONFIGURATION.SdioMassDevNum == 0;
+		grayoutif ideqval SYSTEM_ACCESS.Access == SYSTEM_PASSWORD_USER;
+		oneof varid     = SDIO_DEV_CONFIGURATION.SdioEmu7,
+			prompt      = STRING_TOKEN(STR_SDIO_DEVICE7),
+			help        = STRING_TOKEN(STR_SDIO_EMULATION_TYPE_HELP),
+			option text = STRING_TOKEN(STR_SDIO_AUTO),	          value = 0, flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;
+			option text = STRING_TOKEN(STR_SDIO_EMUL_FLOPPY),     value = 1, flags = RESET_REQUIRED;
+			option text = STRING_TOKEN(STR_SDIO_EMUL_FORCED_FDD), value = 2, flags = RESET_REQUIRED;
+			option text = STRING_TOKEN(STR_SDIO_EMUL_HDD),        value = 3, flags = RESET_REQUIRED;
+		endoneof;
         SUPPRESS_GRAYOUT_ENDIF
 
-        SEPARATOR
+		SEPARATOR
 
-        text
-            help   = STRING_TOKEN(STR_EMPTY),
-            text   = STRING_TOKEN(STR_SDIO_DEVICE8_DETAILS),
-            text   = STRING_TOKEN(STR_EMPTY),
-            flags  = 0,
-            key    = 0;
+		text
+			help   = STRING_TOKEN(STR_EMPTY),
+			text   = STRING_TOKEN(STR_SDIO_DEVICE8_DETAILS),
+			text   = STRING_TOKEN(STR_EMPTY),
+			flags  = 0,
+			key    = 0;
 
-        text
-            help   = STRING_TOKEN(STR_EMPTY),
-            text   = STRING_TOKEN(STR_SDIO_DEVICE8_LOCATION),
-            text   = STRING_TOKEN(STR_EMPTY),
-            flags  = 0,
-            key    = 0;
+		text
+			help   = STRING_TOKEN(STR_EMPTY),
+			text   = STRING_TOKEN(STR_SDIO_DEVICE8_LOCATION),
+			text   = STRING_TOKEN(STR_EMPTY),
+			flags  = 0,
+			key    = 0;
 
-        suppressif NOT ideqvallist SDIO_DEV_CONFIGURATION.SdioMassDevNum == 8;
-        grayoutif ideqval SYSTEM_ACCESS.Access == SYSTEM_PASSWORD_USER;
-        oneof varid     = SDIO_DEV_CONFIGURATION.SdioEmu[7].SdEmul,
-            prompt      = STRING_TOKEN(STR_SDIO_DEVICE8),
-            help        = STRING_TOKEN(STR_SDIO_EMULATION_TYPE_HELP),
-            option text = STRING_TOKEN(STR_SDIO_AUTO),	          value = 0, flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;
-            option text = STRING_TOKEN(STR_SDIO_EMUL_FLOPPY),     value = 1, flags = RESET_REQUIRED;
-            option text = STRING_TOKEN(STR_SDIO_EMUL_FORCED_FDD), value = 2, flags = RESET_REQUIRED;
-            option text = STRING_TOKEN(STR_SDIO_EMUL_HDD),        value = 3, flags = RESET_REQUIRED;
-        endoneof;
+	    suppressif ideqval SDIO_DEV_CONFIGURATION.SdioMassDevNum == 7 OR ideqval SDIO_DEV_CONFIGURATION.SdioMassDevNum == 6 OR ideqval SDIO_DEV_CONFIGURATION.SdioMassDevNum == 5 OR ideqval SDIO_DEV_CONFIGURATION.SdioMassDevNum == 4 OR ideqval SDIO_DEV_CONFIGURATION.SdioMassDevNum == 3 OR ideqval SDIO_DEV_CONFIGURATION.SdioMassDevNum == 2 OR ideqval SDIO_DEV_CONFIGURATION.SdioMassDevNum == 1 OR ideqval SDIO_DEV_CONFIGURATION.SdioMassDevNum == 0;
+		grayoutif ideqval SYSTEM_ACCESS.Access == SYSTEM_PASSWORD_USER;
+		oneof varid     = SDIO_DEV_CONFIGURATION.SdioEmu8,
+			prompt      = STRING_TOKEN(STR_SDIO_DEVICE8),
+			help        = STRING_TOKEN(STR_SDIO_EMULATION_TYPE_HELP),
+			option text = STRING_TOKEN(STR_SDIO_AUTO),	          value = 0, flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;
+			option text = STRING_TOKEN(STR_SDIO_EMUL_FLOPPY),     value = 1, flags = RESET_REQUIRED;
+			option text = STRING_TOKEN(STR_SDIO_EMUL_FORCED_FDD), value = 2, flags = RESET_REQUIRED;
+			option text = STRING_TOKEN(STR_SDIO_EMUL_HDD),        value = 3, flags = RESET_REQUIRED;
+		endoneof;
         SUPPRESS_GRAYOUT_ENDIF
 
-        endform;
-    #endif
+		endform;
+	#endif
 #endif // ADVANCED_FORM_SET
 
 //****************************************************************************
 //****************************************************************************
 //**                                                                        **
-//**             (C)Copyright 1985-2014, American Megatrends, Inc.          **
+//**             (C)Copyright 1985-2012, American Megatrends, Inc.          **
 //**                                                                        **
 //**                          All Rights Reserved.                          **
 //**                                                                        **

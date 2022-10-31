@@ -1,133 +1,148 @@
-//***********************************************************************
-//***********************************************************************
-//**                                                                   **
-//**        (C)Copyright 1985-2016, American Megatrends, Inc.          **
-//**                                                                   **
-//**                       All Rights Reserved.                        **
-//**                                                                   **
-//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093         **
-//**                                                                   **
-//**                       Phone: (770)-246-8600                       **
-//**                                                                   **
-//***********************************************************************
-//***********************************************************************
+//****************************************************************************
+//****************************************************************************
+//**                                                                        **
+//**             (C)Copyright 1985-2013, American Megatrends, Inc.          **
+//**                                                                        **
+//**                          All Rights Reserved.                          **
+//**                                                                        **
+//**                 5555 Oakbrook Pkwy, Norcross, GA 30093                 **
+//**                                                                        **
+//**                          Phone (770)-246-8600                          **
+//**                                                                        **
+//****************************************************************************
+//****************************************************************************
+// $Header: /Alaska/SOURCE/Modules/HddSecurity/HddPassword/HddPassword.c 31    6/07/12 12:34a Jittenkumarp $
+//
+// $Revision: 31 $
+//
+// $Date: 6/07/12 12:34a $
+//
+//*****************************************************************************
+//*****************************************************************************//
 
-/** @file AmiTseHddSecurity.c
-    Provides the Hdd password Screen support in the setup.
-
-**/
-
+//<AMI_FHDR_START>
 //---------------------------------------------------------------------------
+//
+// Name: Hddpassword.c
+//
+// Description: Provides the Hddpassword Screen support in the setup.
+//
+//---------------------------------------------------------------------------
+//<AMI_FHDR_END>
 
 #include "AmiDxeLib.h"
-#include "Token.h"
-#include "Protocol/HiiDatabase.h"
-#include "Protocol/HiiString.h"
-#include "Protocol/PciIo.h"
-#include "Protocol/BlockIo.h"
-#include <Protocol/SimpleTextIn.h>
-#include <Protocol/SimpleTextOut.h>
-#include <Protocol/AMIPostMgr.h>
-#include <Protocol/DevicePath.h>
-#include <Protocol/DiskInfo.h>
-#include "HddSecurityCommon.h"
-#include "AmiTseHddSecurity.h"
-#include "AMIVfr.h"
-#if SETUP_SAME_SYS_HDD_PW
-#include "Core/em/AMITSE/Inc/PwdLib.h"
-#include "Core/em/AMITSE/Inc/variable.h"
-#endif
-
-#if ( defined(NVMe_SUPPORT) && (NVMe_SUPPORT != 0) )
-  #include "Nvme/NvmeController.h"
-  #include "Protocol/AmiNvmeController.h"
-  #include "Nvme/NvmePassthru.h"
-#endif
-
-#if defined(SETUP_IDE_SECURITY_SUPPORT) && SETUP_IDE_SECURITY_SUPPORT
+#include "token.h"
+#include "Include\UefiHii.h"
+#include "Protocol\HiiDatabase.h"
+#include "Protocol\HiiString.h"
 #if defined(SECURITY_SETUP_ON_SAME_PAGE) && SECURITY_SETUP_ON_SAME_PAGE
 #include "minisetup.h"
 #endif
-
-EFI_GUID gIDESecGuid                 = IDE_SECURITY_CONFIG_GUID;
+#include "Protocol\PciIo.h"
+#include "Protocol\BlockIo.h"
+#include "Protocol\PDiskInfo.h"
+#include "Protocol\PIDEController.h"
+#include "Protocol\PIDEBus.h"
+#include "Protocol\PAhciBus.h"
+#include <Protocol/SimpleTextIn.h>
+#include <Protocol/SimpleTextOut.h>
+#include <Protocol/AMIPostMgr.h>
+#include "AmiVfr.h"
+#include "AmiTseHddSecurity.h"
+#include "Protocol\DevicePath.h"
+#if SETUP_SAME_SYS_HDD_PW
+#include "Core\EM\AMITSE\Inc\PwdLib.h"
+#include "Core\EM\AMITSE\Inc\Variable.h"
 #endif
 
 #if defined(AmiChipsetPkg_SUPPORT) && AmiChipsetPkg_SUPPORT
 #include "SbSataProtocol.h"
 SB_HDD_POLICY_PROTOCOL      *gSbHddPolicyPtr=NULL;
-EFI_GUID                    gSbHddPolicyProtocolGuid    = SB_HDD_POLICY_PROTOCOL_GUID;
+EFI_GUID   gSbHddPolicyProtocolGuid    = SB_HDD_POLICY_PROTOCOL_GUID;
 #endif
-
-BOOLEAN CheckAllController=FALSE;
-//---------------------------------------------------------------------------
-
-EFI_GUID gHddPasswordPromptEnterGuid = HDD_PASSWORD_PROMPT_ENTER_GUID;
-EFI_GUID gHddPasswordPromptExitGuid  = HDD_PASSWORD_PROMPT_EXIT_GUID;
+extern EFI_GUID   gHddSecurityEndProtocolGuid ;
+extern EFI_GUID   gIdeSecurityInterfaceGuid ;
+EFI_GUID   gHddUnlockedGuid             = HDD_UNLOCKED_GUID;
+EFI_GUID   gIDESecGuid                 = IDE_SECURITY_CONFIG_GUID;
 
 static EFI_HII_STRING_PROTOCOL *HiiString = NULL;
-static CHAR8                   *SupportedLanguages=NULL;
-HDD_SECURITY_INTERNAL_DATA     *HddSecurityInternalData = NULL;
-EFI_HANDLE                     gHddSecEndHandle = NULL;
-EFI_HANDLE                     HddNotifyHandle;
-static  EFI_HANDLE             *gHandleBuffer = NULL;
-EFI_EVENT                      HddNotifyEvent;
-VOID                           *HddNotifyRegistration;
-BOOLEAN                        HddFreeze      = FALSE;
-UINT16                         gHddSecurityCount = 0;
-BOOLEAN                        gIsSbHddPolicyPresent= FALSE;
-#if defined(SETUP_IDE_SECURITY_SUPPORT) && SETUP_IDE_SECURITY_SUPPORT
+static CHAR8          *SupportedLanguages=NULL;
+
+
+typedef struct
+{
+    IDE_SECURITY_PROTOCOL *IDEPasswordSecurity;
+    UINT16                NameToken;
+    UINT16                PromptToken;
+    BOOLEAN               Locked;
+    BOOLEAN               LoggedInAsMaster;
+    BOOLEAN               Validated;
+    UINT8                 PWD[IDE_PASSWORD_LENGTH + 1];
+} IDE_SECURITY_DATA;
+
+#if TSE_BUILD > 0x1206
+BOOLEAN IsPasswordSupportNonCaseSensitive();
+VOID UpdatePasswordToNonCaseSensitive(CHAR16 *Password, UINTN PwdLength);
+#endif
+
+VOID HddNotificationFunction(EFI_EVENT Event, VOID *HddRegContext);
+VOID IDEPasswordCheck(VOID);
+UINT16 IDEPasswordGetName(UINT16 Index);
+UINT16 IDESecurityProtocolInit();
+BOOLEAN HddPasswordGetDeviceName(EFI_HANDLE Controller,CHAR16 **wsName);
+BOOLEAN CheckSecurityStatus (
+    IDE_SECURITY_PROTOCOL *IDEPasswordSecurity,
+    BOOLEAN               *Locked,
+    UINT16                Mask );
+EFI_STATUS IDEPasswordAuthenticateHdd(
+    CHAR16  *Password,
+    VOID    * Ptr,
+    BOOLEAN bCheckUser );
+
 #if defined(SECURITY_SETUP_ON_SAME_PAGE) && SECURITY_SETUP_ON_SAME_PAGE
+VOID IDEUpdateConfig(
+    VOID  *TempideSecConfig,
+    UINTN value );
+
+VOID SearchTseHardDiskField ( 
+	BOOLEAN *pbCheckUser, BOOLEAN *pEnabledBit, 
+	UINT8 *pHardDiskNumber, VOID *data ); 	
+
 EFI_STRING_ID  ConfigPromptToken = 0;
 extern UINTN gInvalidPasswordFailMsgBox;
 #else
 UINTN               gCurrIDESecPage;
 #endif
-#endif
 
-/**
-    Internal function that installs/uninstall protocol
-    with a specified GUID and NULL interface.
-    Such protocols can be used as event signaling mechanism.
-
-    @param ProtocolGuid Pointer to the protocol GUID
-
-    @retval VOID
-
-**/
-VOID
-HddSecuritySignalProtocolEvent (
-    IN  EFI_GUID    *ProtocolGuid
-)
-{
-
-    EFI_HANDLE  Handle = NULL;
-
-    pBS->InstallProtocolInterface (
-                                &Handle,
-                                ProtocolGuid,
-                                EFI_NATIVE_INTERFACE,
-                                NULL );
-
-    pBS->UninstallProtocolInterface (
-                                Handle,
-                                ProtocolGuid,
-                                NULL);
-    return;
-}
+IDE_SECURITY_DATA   *IDEPasswordSecurityData = NULL;
+EFI_HANDLE          gHddSecEndHandle = NULL;
+EFI_HANDLE          HddNotifyHandle;
+static  EFI_HANDLE  *gHandleBuffer = NULL;
+EFI_EVENT           HddNotifyEvent;
+VOID                *HddNotifyRegistration;
+BOOLEAN             HddFreeze      = FALSE;
+UINT16              gIDESecurityCount = 0;
+BOOLEAN             gFlag = FALSE;
 
 
-/**
-    Register the Protocol call back event
+VOID EfiStrCpy (IN CHAR16 *Destination,IN CHAR16 *Source);
+UINTN   EfiStrLen (IN CHAR16 *String);
+extern  VOID TSEIDEPasswordCheck();
 
-    @param VOID
-
-    @retval VOID
-
-**/
-BOOLEAN
-RegisterHddNotification (
-    VOID
-)
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   RegisterHddNotification
+//
+// Description: Register the Protocol call back event
+//
+//
+// Input:       VOID
+//
+// Output:      VOID
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
+BOOLEAN RegisterHddNotification( VOID )
 {
     EFI_STATUS Status ;
 
@@ -137,211 +152,162 @@ RegisterHddNotification (
                                 &HddNotifyRegistration,
                                 &HddNotifyEvent);
 
-    ASSERT_EFI_ERROR(Status);
-    Status = gBS->RegisterProtocolNotify(   &gAmiHddSecurityEndProtocolGuid,
+	ASSERT_EFI_ERROR(Status);									
+    Status = gBS->RegisterProtocolNotify(   &gHddSecurityEndProtocolGuid,
                                             HddNotifyEvent,
                                             &HddNotifyRegistration);
-    ASSERT_EFI_ERROR(Status);
+	ASSERT_EFI_ERROR(Status);										
 
     //
-    // get any of these events that have occurred in the past
-    // When no con in devices are present this function is called later in BDS after InitConVars,
-    // by that time if more than one controller present, Collect all controller and install gAmiHddPasswordVerifiedGuid
-    CheckAllController = TRUE;
+    // get any of these events that have occured in the past
+    //
     gBS->SignalEvent( HddNotifyEvent );
 
     return FALSE;
 }
 
-/**
-    HDD notification function gets called when HddSecurityEnd Protocol get installed.
-
-    @param EFI_EVENT Event - Event to signal
-    @param void HddRegContext - Event specific context (pointer to NotifyRegisteration
-
-    @retval VOID
-
-**/
-VOID
-EFIAPI
-HddNotificationFunction (
-    EFI_EVENT   Event,
-    VOID        *HddRegContext
-)
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   HddNotificationFunction
+//
+// Description: Hdd notification function gets called when HddSecurityEnd Protocol get installed.
+//
+// Input:
+//                  EFI_EVENT Event - Event to signal
+//                  void HddRegContext - Event specific context (pointer to NotifyRegisteration
+//
+// Output:      none
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
+VOID HddNotificationFunction( EFI_EVENT Event, VOID *HddRegContext )
 {
-    EFI_STATUS                  Status;
-    EFI_HANDLE                  *HandleBuffer = NULL;
-#if defined(SETUP_IDE_SECURITY_SUPPORT) && SETUP_IDE_SECURITY_SUPPORT
-    IDE_SECURITY_CONFIG         *pHddSecurityConfig = NULL;
-    IDE_SECURITY_CONFIG          HddSecurityConfig;
-    UINTN                       HddSecurityConfigSize = 0;
-#endif
-    HDD_SECURITY_INTERNAL_DATA  *DataPtr=NULL;
-    UINTN                       NumHandles;
-    UINTN                       Index=0;
-    EFI_HANDLE                  Handle = NULL;
-    EFI_GUID                    AmiTseHddNotifyGuid = AMI_TSE_HDD_NOTIFY_GUID;
-    UINTN BufferSize = sizeof(UINTN);
+    EFI_STATUS          Status;
+    EFI_HANDLE          *HandleBuffer = NULL;
+    IDE_SECURITY_CONFIG     *IdeSecConfig = NULL;
+    IDE_SECURITY_CONFIG     ideSecConfig;
+    IDE_SECURITY_DATA       *DataPtr=NULL;
+    UINTN                   NumHandles;
+    UINTN                   IdeSecConfigSize = 0;
+    UINTN                   Index=0;
 
-    if ( HddRegContext == NULL ) {
+    if ( HddRegContext == NULL )
         return;
-    }
+    //
+    // Initialise IdeSecConfig information if this variable is not set already.
+    // 
+    IdeSecConfig = VarGetNvramName( L"IDESecDev", &gIDESecGuid, NULL, &IdeSecConfigSize );
 
-#if defined(SETUP_IDE_SECURITY_SUPPORT) && SETUP_IDE_SECURITY_SUPPORT
-    // Initialize IdeSecConfig information if this variable is not set already.
-    pHddSecurityConfig = VarGetNvramName( L"IDESecDev", &gIDESecGuid, NULL, &HddSecurityConfigSize );
+    if ( !IdeSecConfig ) {
 
-    if ( !pHddSecurityConfig ) {
+        IdeSecConfig = EfiLibAllocateZeroPool( sizeof(IDE_SECURITY_CONFIG));
 
-        pHddSecurityConfig = EfiLibAllocateZeroPool( sizeof(IDE_SECURITY_CONFIG));
-
-        if ( pHddSecurityConfig == NULL ) {
+        if ( IdeSecConfig == NULL ) {
             return;
         }
-        MemSet( pHddSecurityConfig, sizeof(IDE_SECURITY_CONFIG), 0);
+        MemSet( IdeSecConfig, sizeof(IDE_SECURITY_CONFIG), 0);
         VarSetNvramName( L"IDESecDev",
                          &gIDESecGuid,
                          EFI_VARIABLE_BOOTSERVICE_ACCESS,
-                         pHddSecurityConfig,
+                         IdeSecConfig,
                          sizeof(IDE_SECURITY_CONFIG));
     } else {
-        MemFreePointer( (VOID **)&pHddSecurityConfig );
+        MemFreePointer( (VOID **)&IdeSecConfig );
     }
-#endif
 
+    //
     //Locate the handle
-    if(CheckAllController) {
-        // Locate all Handles that were installed previously.
-        CheckAllController = FALSE;
-        Status = gBS->LocateHandleBuffer(   ByProtocol,
-                                            &gAmiHddSecurityEndProtocolGuid,
-                                            NULL,
-                                            &NumHandles,
-                                            &HandleBuffer);
-    } else {
-        Status = gBS->LocateHandleBuffer(   ByRegisterNotify,
-                                            NULL,
-                                            *(VOID**)HddRegContext,
-                                            &NumHandles,
-                                            &HandleBuffer);
-    }
+    //
+    Status = gBS->LocateHandleBuffer(   ByRegisterNotify,
+                                        NULL,
+                                        *(VOID**)HddRegContext,
+                                        &NumHandles,
+                                        &HandleBuffer);
 
+    //
     // If protocol not installed return
+    //
     if ( EFI_ERROR( Status ))
         return;
 
-    //Locate the Security Protocols
-    gHddSecurityCount = InitHddSecurityInternalDataPtr();
+    gHddSecEndHandle = HandleBuffer[0];
 
-    for(Index=0; Index<gHddSecurityCount; Index++) {
+    //
+    //Locate the Security Protocols
+    //
+    gIDESecurityCount = IDESecurityProtocolInit();
+    
+    for(Index=0; Index<gIDESecurityCount; Index++){
         //
         //Initialize the DataPtr
         //
-        DataPtr = (HDD_SECURITY_INTERNAL_DATA *) IDEPasswordGetDataPtr(Index);
+        DataPtr = (IDE_SECURITY_DATA *) IDEPasswordGetDataPtr(Index);
 
         //
-        // Search for locked Hard disc and not password verification done
+        // Search for locked Hard disc and not password verification done 
         //
         if(DataPtr->Locked && !DataPtr->Validated){
-            break;
+            break;            
         }
     }
 
+    //
     // Validate the password only if HDD is locked
-    if( (gHddSecurityCount != 0 ) && (NULL != DataPtr ) &&
+    //
+    if( (gIDESecurityCount != 0 ) && (NULL != DataPtr ) && 
             (DataPtr->Locked ) && (!DataPtr->Validated ) ){
-
         TSEIDEPasswordCheck();
-    }
-
-#if defined(SETUP_IDE_SECURITY_SUPPORT) && SETUP_IDE_SECURITY_SUPPORT
-    else {
+    } else {
           //
           // Update the IdeSecConfig information .
-          //
-          MemSet( &HddSecurityConfig, sizeof(HddSecurityConfig), 0 );
-          HddSecurityConfig.Count = gHddSecurityCount;
+          // 
+          MemSet( &ideSecConfig, sizeof(ideSecConfig), 0 );
+          ideSecConfig.Count = gIDESecurityCount;
           VarSetNvramName( L"IDESecDev",
                      &gIDESecGuid,
                      EFI_VARIABLE_BOOTSERVICE_ACCESS,
-                     &HddSecurityConfig,
-                     sizeof(HddSecurityConfig));
-    }
-#endif
-
-    // ConnectController once HDD is unlocked when no CONOUT present.
-    for (Index=0; Index<gHddSecurityCount; Index++) {
-        //Initialize the DataPtr
-        DataPtr = (HDD_SECURITY_INTERNAL_DATA *) IDEPasswordGetDataPtr(Index);
-
-        Status = pBS->ConnectController(DataPtr->DeviceHandle,
-                                        NULL,
-                                        NULL,
-                                        TRUE);
-    }
-    
-    // Install gAmiHddPasswordVerifiedGuid on specific Controller Handle.
-    for(Index = 0; Index < NumHandles; Index++){
-
-        gHddSecEndHandle = HandleBuffer[Index];
-
-        // Install the Unlocked Protocol to notify HDD has been unlocked
-        // In case gAmiHddPasswordVerifiedGuid is already installed
-        // on gHddSecEndHandle, Error shall be ignored to proceed.
-        if ( gHddSecEndHandle != NULL ) {
-            gBS->InstallProtocolInterface( &gHddSecEndHandle,
-                                           &gAmiHddPasswordVerifiedGuid,
-                                           EFI_NATIVE_INTERFACE,
-                                           NULL);
-        }
+                     &ideSecConfig,
+                     sizeof(ideSecConfig));
     }
 
-    gBS->FreePool(HandleBuffer);
-    
-    Status = pBS->LocateHandle ( ByProtocol,
-                                  &AmiTseHddNotifyGuid,
-                                  NULL,
-                                  &BufferSize,
-                                  &Handle );
-    if (Status == EFI_SUCCESS) {
-        Status = pBS->ReinstallProtocolInterface(
-                        Handle,
-                        &AmiTseHddNotifyGuid,
-                        NULL,
-                        NULL);
-    } else {
-     
-        // Notify setup modules that AMITSE initialized HDD data.
-        Status = gBS->InstallProtocolInterface( &Handle, 
-                                                &AmiTseHddNotifyGuid, 
+    //
+    // Install the Unlocked Protocol to nitify HDD has been unlocked
+    //
+    if ( gHddSecEndHandle != NULL ) {
+        Status = gBS->InstallProtocolInterface( &gHddSecEndHandle,
+                                                &gHddUnlockedGuid,
                                                 EFI_NATIVE_INTERFACE,
-                                                NULL );
+                                                NULL);
+		ASSERT_EFI_ERROR (Status);
     }
-     
+
     return;
 }
 
-/**
-    Add the String to HII Database using HiiString Protocol
-
-    @param HiiHandle
-    @param String
-
-    @retval VOID
-
-**/
-EFI_STRING_ID
-PrivateHiiAddString (
-    IN  EFI_HII_HANDLE  HiiHandle,
-    IN  CHAR16 *        String
-)
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   PrivateHiiAddString
+//
+// Description: Add the String to Hii Database using HiiString Protocol
+//
+// Input:       
+//              IN EFI_HII_HANDLE HiiHandle,
+//              IN CHAR16 *     String
+//
+// Output:      none
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
+EFI_STRING_ID PrivateHiiAddString(
+    IN EFI_HII_HANDLE HiiHandle,
+    IN CHAR16 *     String)
 {
-    EFI_STATUS      Status;
-    CHAR8*          Languages = NULL;
-    UINTN           LangSize = 0;
-    CHAR8*          CurrentLanguage;
-    BOOLEAN         LastLanguage = FALSE;
-    EFI_STRING_ID   StringId = 0;
+    EFI_STATUS Status;
+    CHAR8* Languages = NULL;
+    UINTN LangSize = 0;
+    CHAR8* CurrentLanguage;
+    BOOLEAN LastLanguage = FALSE;
+    EFI_STRING_ID  StringId = 0;
 
     if(HiiString == NULL) {
         Status = pBS->LocateProtocol(&gEfiHiiStringProtocolGuid, NULL, (VOID **) &HiiString);
@@ -353,7 +319,7 @@ PrivateHiiAddString (
     if(SupportedLanguages == NULL) {
         Status = HiiString->GetLanguages(HiiString, HiiHandle, Languages, &LangSize);
         if(Status == EFI_BUFFER_TOO_SMALL) {
-            Status = pBS->AllocatePool(EfiBootServicesData, LangSize, (VOID**)&Languages);
+            Status = pBS->AllocatePool(EfiBootServicesData, LangSize, &Languages);
             if(EFI_ERROR(Status)) {
                 //
                 //not enough resources to allocate string
@@ -371,14 +337,14 @@ PrivateHiiAddString (
         //
         //point CurrentLanguage to start of new language
         //
-        CurrentLanguage = Languages;
+        CurrentLanguage = Languages;        
         while(*Languages != ';' && *Languages != 0)
             Languages++;
 
         //
         //Last language in language list
         //
-        if(*Languages == 0) {
+        if(*Languages == 0) {       
             LastLanguage = TRUE;
             if(StringId == 0) {
                 Status = HiiString->NewString(HiiString, HiiHandle, &StringId, CurrentLanguage, NULL, String, NULL);
@@ -392,7 +358,7 @@ PrivateHiiAddString (
             //
             //put null-terminator
             //
-            *Languages = 0;
+            *Languages = 0;         
             if(StringId == 0) {
                 Status = HiiString->NewString(HiiString, HiiHandle, &StringId, CurrentLanguage, NULL, String, NULL);
             } else {
@@ -405,25 +371,28 @@ PrivateHiiAddString (
             }
         }
     }
-    return StringId;
+    return StringId;        
 }
 
-/**
-    Add the String to HiiDatabase
-
-    @param HiiHandle
-    @param String
-
-    @retval VOID
-
-**/
-EFI_STRING_ID
-PasswordHiiAddString (
-    IN  EFI_HII_HANDLE  HiiHandle,
-    IN  CHAR16          *String
-)
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   PasswordHiiAddString
+//
+// Description: Add the String to HiiDatabase 
+//
+// Input:       
+//              IN EFI_HII_HANDLE HiiHandle,
+//              IN CHAR16 *     String
+//
+// Output:      none
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
+EFI_STRING_ID PasswordHiiAddString(
+    IN EFI_HII_HANDLE HiiHandle,
+    IN CHAR16 * String )
 {
-    EFI_STRING_ID   StringId = 0;
+    EFI_STRING_ID  StringId = 0;
 
     StringId=PrivateHiiAddString( HiiHandle, String );
 
@@ -435,170 +404,144 @@ PasswordHiiAddString (
     }
 
     return StringId;
-}
+}    
 
-/**
-    Function checks the Locally stored AmiHddSecurityProtocol handles are valid or not
-
-    @param HandleBuffer
-    @param Count
-
-    @retval BOOLEAN
-
-**/
-
-BOOLEAN IsStoredPasswordDevHandleValid(
-    EFI_HANDLE    *HandleBuffer,
-    UINTN          Count
-)
-{
-    UINTN    i, j;
-    BOOLEAN  AllPwddDevHandleAreValid=TRUE;
-    
-    for( i=0; i<gHddSecurityCount; i++ ) {
-        for( j=0; j<Count; j++ ) {
-            if( gHandleBuffer[i] == HandleBuffer[j]) {
-                break;
-            }
-        }
-        if(j==Count){
-            gHandleBuffer[i] = 0;
-            AllPwddDevHandleAreValid=FALSE;
-        }
-    }
-    
-    if (gHddSecurityCount!=Count) {
-        return FALSE;
-    }
-    
-    return AllPwddDevHandleAreValid;
-}
-
-/**
-    Locate the Security Protocols and return the information
-
-    @param VOID
-
-    @retval VOID
-
-**/
-UINT16
-InitHddSecurityInternalDataPtr (
-)
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   IDESecurityProtocolInit
+//
+// Description: Locate the Security Protocols and return the information
+//
+// Input:       none
+//
+// Output:      none
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
+UINT16 IDESecurityProtocolInit( )
 {
     EFI_STATUS                      Status;
     EFI_HANDLE                      *HandleBuffer = NULL;
     UINT16                          i, j, HDDCount = 0;
     UINTN                           Count;
-    CHAR16                          *Name, *Temp1;
+    CHAR16                          * Name, *Temp1;
     CHAR16                          Temp[60];
-    AMI_HDD_SECURITY_PROTOCOL       *HddSecurityProtocol = NULL;
-    HDD_SECURITY_INTERNAL_DATA      *DataPtr             = NULL;
+    IDE_SECURITY_PROTOCOL           *IDEPasswordSecurity = NULL;
+    IDE_SECURITY_DATA               *DataPtr             = NULL;
     EFI_DEVICE_PATH_PROTOCOL        *DevicePath;
     EFI_DEVICE_PATH_PROTOCOL        *DevicePathNode;
     PCI_DEVICE_PATH                 *PciDevicePath;
-    AMI_HDD_SECURITY_INTERFACE      *Security = NULL;
+    SECURITY_PROTOCOL               *Security = NULL;
     UINT32                          HddPortNumber;
     CHAR16                          *Buff=L"P";
     EFI_DISK_INFO_PROTOCOL          *DiskInfoPtr=NULL;
     UINT32                          PortNumber;
     UINT32                          PMPortNumber;
-    HDD_SECURITY_INTERNAL_DATA      *TempIDEPasswordSecurityData = NULL;
+    IDE_SECURITY_DATA               *TempIDEPasswordSecurityData = NULL;
 #if defined(AmiChipsetPkg_SUPPORT) && AmiChipsetPkg_SUPPORT
     UINT32                          IdeChannel;
     UINT32                          IdeDevice;
 #endif
-
-#if defined(SETUP_IDE_SECURITY_SUPPORT) && SETUP_IDE_SECURITY_SUPPORT
+			
 #if defined(SECURITY_SETUP_ON_SAME_PAGE) && SECURITY_SETUP_ON_SAME_PAGE
     if(ConfigPromptToken == 0)
     ConfigPromptToken = PasswordHiiAddString( gHiiHandle, L"HDD Security Configuration" );
 #endif
-#endif
     Status = gBS->LocateHandleBuffer(   ByProtocol,
-                                        &gAmiHddSecurityProtocolGuid,
+                                        &gIdeSecurityInterfaceGuid,
                                         NULL,
                                         &Count,
                                         &HandleBuffer);
 
+    //
     // If already data has been found return with that information
-    if ( gHddSecurityCount != 0 && HddSecurityInternalData != NULL ) {
-        // Check the locally stored AmiHddSecurityProtocol handles are valid or not
-        if(IsStoredPasswordDevHandleValid(HandleBuffer,Count)) {
-            return gHddSecurityCount;     // HddSecurityInternalData is valid
+    //
+    if ( gIDESecurityCount != 0 && IDEPasswordSecurityData != NULL ) {
+        if ( gIDESecurityCount == Count ) {
+            return gIDESecurityCount;     //the IDE struct is valid
         }
+
+        //
+        // New HDD device found. Need to validate the password for the new HDD 
+        // and skip the HDD that has been already validated.
+        //
+        TempIDEPasswordSecurityData = IDEPasswordSecurityData;
+        IDEPasswordSecurityData = EfiLibAllocateZeroPool( Count * sizeof(IDE_SECURITY_DATA));
+        //
+        // Copy the Existing HDD data
+        //
+        MemCopy( IDEPasswordSecurityData, TempIDEPasswordSecurityData, sizeof(IDE_SECURITY_DATA) * gIDESecurityCount );
+        MemFreePointer((VOID**)&TempIDEPasswordSecurityData );
+        DataPtr = IDEPasswordSecurityData;
+        //
+        // DataPtr moved to free Entry
+        //       
+        DataPtr+=gIDESecurityCount;
+        HDDCount=gIDESecurityCount;  
+  
+    } else {
+        //
+        // Allocate the buffer for DataPtr
+        //
+        IDEPasswordSecurityData = EfiLibAllocateZeroPool( Count * sizeof(IDE_SECURITY_DATA));
+        DataPtr = IDEPasswordSecurityData;
     }
 
-     //
-     // New HDD device found. Need to validate the password for the new HDD
-     // and skip the HDD that has been already validated.
-     //
-     TempIDEPasswordSecurityData = HddSecurityInternalData;
-     
-     HddSecurityInternalData = EfiLibAllocateZeroPool( Count * sizeof(HDD_SECURITY_INTERNAL_DATA));
-     if(HddSecurityInternalData) {
-         MemSet(HddSecurityInternalData,sizeof(HDD_SECURITY_INTERNAL_DATA) * Count,0 );
-     }
+    if ( EFI_ERROR( Status )) {
+        return 0;
+    }
 
-     DataPtr = HddSecurityInternalData;
+
     if(DataPtr == NULL) {
         return 0;
     }
 
     for ( i = 0; i < Count; i++ ) {
-
+        //
         // Check if already Validate or not. If already validate don't verify the password again.
-        if ( gHandleBuffer != NULL && gHddSecurityCount != 0 ) {
-            j = gHddSecurityCount;
+        //
+        if ( gHandleBuffer != NULL && gIDESecurityCount != 0 ) {
+            j = gIDESecurityCount;
 
             do {
-                if ( HandleBuffer[i] == gHandleBuffer[j-1] ) {
+                if ( HandleBuffer[i] == gHandleBuffer[j - 1] ) {
                     break;
                 }
                 j--;
             } while ( j != 0 );
 
-            if ( j != 0 ) {
-                MemCopy((HddSecurityInternalData+i),(TempIDEPasswordSecurityData+(j-1)),sizeof(HDD_SECURITY_INTERNAL_DATA));
-                HDDCount++;
+            if ( j != 0 )
                 continue;
-            }
         }
-
-        DataPtr = HddSecurityInternalData+i;
 
         //
         // Get the PasswordSecurity Protocol
         //
         Status = gBS->OpenProtocol( HandleBuffer[i],
-                                    &gAmiHddSecurityProtocolGuid,
-                                    (VOID**) &HddSecurityProtocol,
+                                    &gIdeSecurityInterfaceGuid,
+                                    (VOID**) &IDEPasswordSecurity,
                                     NULL,
                                     HandleBuffer[i],
                                     EFI_OPEN_PROTOCOL_GET_PROTOCOL);
 
         if ( EFI_ERROR( Status ))
             continue;
-        
-        Security = (AMI_HDD_SECURITY_INTERFACE *)HddSecurityProtocol;
-        Security->PostHddCount = (VOID*)&gHddSecurityCount;
-        Security->PostHddData = (VOID**)&HddSecurityInternalData;
-        
-        if( Security->BusInterfaceType == AmiStorageInterfaceAhci ) {
+        //
+        // Handle the DiskInfo Protocol
+        //   
+        Status = gBS->OpenProtocol( HandleBuffer[i],
+                                    &gEfiDiskInfoProtocolGuid,
+                                    (VOID**) &DiskInfoPtr,
+                                    NULL,
+                                    HandleBuffer[i],
+                                    EFI_OPEN_PROTOCOL_GET_PROTOCOL);
 
-            // Handle the DiskInfo Protocol
-            Status = gBS->OpenProtocol( HandleBuffer[i],
-                                        &gEfiDiskInfoProtocolGuid,
-                                        (VOID**) &DiskInfoPtr,
-                                        NULL,
-                                        HandleBuffer[i],
-                                        EFI_OPEN_PROTOCOL_GET_PROTOCOL);
-            if ( EFI_ERROR( Status )) {
-                continue;
-            }
+        if ( EFI_ERROR( Status )){
+            continue;
         }
-
+        //
         // Locate the device path Protocol
+        //
         Status = gBS->OpenProtocol( HandleBuffer[i],
                                     &gEfiDevicePathProtocolGuid,
                                     (VOID**)&DevicePath,
@@ -606,11 +549,12 @@ InitHddSecurityInternalDataPtr (
                                     HandleBuffer[i],
                                     EFI_OPEN_PROTOCOL_GET_PROTOCOL);
 
-        if ( EFI_ERROR( Status )) {
+        if ( EFI_ERROR( Status )){
             continue;
         }
 
         DevicePathNode = DevicePath;
+
         //
         // Traverse the Device Path structure till we reach HARDWARE_DEVICE_PATH
         //
@@ -628,21 +572,21 @@ InitHddSecurityInternalDataPtr (
 
         if (PciDevicePath == NULL) continue;
 
-        Security = (AMI_HDD_SECURITY_INTERFACE *)HddSecurityProtocol;
+        Security=(SECURITY_PROTOCOL *)IDEPasswordSecurity;
 
-        if( Security->BusInterfaceType == AmiStorageInterfaceAhci ) {
+        if(Security->ModeFlag){
             //
-            //  Controller is in AHCI Mode, Call WhichIde function to find out Port Number
+            //  Controller is in Ahci Mode, Call WhichIde function to find out Port Number
             //
             DiskInfoPtr->WhichIde(DiskInfoPtr,&PortNumber,&PMPortNumber);
             //
             //  Assign the PortNumber to HddPortNumber.This Port Number is displayed in Setup.
-            //
+            //  
             HddPortNumber=PortNumber;
 
-            gIsSbHddPolicyPresent=TRUE;
+            gFlag=TRUE;
 
-        } else if( Security->BusInterfaceType == AmiStorageInterfaceIde ) {
+        }else{
 
 
 #if defined(AmiChipsetPkg_SUPPORT) && AmiChipsetPkg_SUPPORT
@@ -650,13 +594,13 @@ InitHddSecurityInternalDataPtr (
             if(gSbHddPolicyPtr==NULL){
                 Status=gBS->LocateProtocol(&gSbHddPolicyProtocolGuid,
                                             NULL, \
-                                            (VOID**)&gSbHddPolicyPtr);
+                                            &gSbHddPolicyPtr);
             }
 
             if(gSbHddPolicyPtr!=NULL){
 
                 //
-                //  Find out the Primary/Secondary,Master/Slave Info from WhichIde function
+                //  Find out the Primary/Secondary,Master/Slave Info from WhichIde function  
                 //
                 DiskInfoPtr->WhichIde(DiskInfoPtr,&IdeChannel,&IdeDevice);
                 //
@@ -666,50 +610,60 @@ InitHddSecurityInternalDataPtr (
                                                     IdeChannel,IdeDevice,&PortNumber);
 
                 HddPortNumber=PortNumber;
+            
+                gFlag=TRUE;
 
-                gIsSbHddPolicyPresent=TRUE;
-
-            } else{
+            }else{
 
                 //
-                // SB HDD Policy Protocol is not Present.
+                // SB HDD Policy Protocol is not Present. 
                 //
-                gIsSbHddPolicyPresent=FALSE;
+                gFlag=FALSE;
             }
 #endif
         }
-
-        if ( CheckSecurityStatus( HddSecurityProtocol, &(DataPtr->Locked), SecurityLockedMask )) {
-            DataPtr->HddSecurityProtocol = HddSecurityProtocol;
+        if ( CheckSecurityStatus( IDEPasswordSecurity, &(DataPtr->Locked), SecurityLockedMask )) {
+            DataPtr->IDEPasswordSecurity = IDEPasswordSecurity;
 
             if ( HddPasswordGetDeviceName( HandleBuffer[i], &Name )) {
-
                 DataPtr->NameToken = PasswordHiiAddString( gHiiHandle, Name );
-
-                if ( Security->BusInterfaceType == AmiStorageInterfaceNvme ) {
+                Name[12] = 0;
+                if(gFlag){
+                    //
                     //  Display the the Port Number in Setup
-                    SPrint( Temp, 60, L"%s",Name );
+                    //             
+                    SPrint( Temp, 60, L"%s%d:%s", Buff, HddPortNumber, Name );
                     DataPtr->PromptToken = PasswordHiiAddString( gHiiHandle, Temp );
-                } else {
-                    if(gIsSbHddPolicyPresent) {
-
-                        //  Display the the Port Number in Setup
-                        SPrint( Temp, 60, L"%s%d:%s", Buff, HddPortNumber, Name );
-                        DataPtr->PromptToken = PasswordHiiAddString( gHiiHandle, Temp );
-                    } else{
-
-                        //  If SB HDD Policy Protocol is not Installed Use STR_IDE_SECURITY_PROMPT
-                        //  token to display the String Information.
-                        Temp1 = HiiGetString( gHiiHandle, STRING_TOKEN( STR_IDE_SECURITY_PROMPT ));
-                        SPrint( Temp, 60, L"%s%d:%s", Temp1,HDDCount,Name);
-                        DataPtr->PromptToken = PasswordHiiAddString( gHiiHandle, Temp );
-                        MemFreePointer( (VOID **)&Temp1);
-                    }
+                }else{
+                    //
+                    //  If SB HDD Policy Protocol is not Installed Use STR_IDE_SECURITY_PROMPT
+                    //  token to display the String Information.
+                    //
+                    Temp1 = HiiGetString( gHiiHandle, STRING_TOKEN( STR_IDE_SECURITY_PROMPT ));
+                    SPrint( Temp, 60, L"%s%d:%s", Temp1,HDDCount,Name);
+                    DataPtr->PromptToken = PasswordHiiAddString( gHiiHandle, Temp );
                 }
-            } 
+            } else {
+                if(gFlag){
+                    //
+                    //  Display the the Port Number in Setup
+                    //      
+                    SPrint( Temp, 60, L"%s%d", Buff, HddPortNumber );
+                    DataPtr->NameToken   = PasswordHiiAddString( gHiiHandle, Temp );
+                    DataPtr->PromptToken = PasswordHiiAddString( gHiiHandle, Temp );
+                }else{
+                    //
+                    //  If SB HDD Policy Protocol is not Installed Use STR_IDE_SECURITY_PROMPT
+                    //  token to display the String Information.
+                    //
+                    Temp1 = HiiGetString( gHiiHandle, STRING_TOKEN( STR_IDE_SECURITY_PROMPT ));
+                    SPrint( Temp, 60, L"%s%d", Temp1, HDDCount);
+                    DataPtr->NameToken   = PasswordHiiAddString( gHiiHandle, Temp );
+                    DataPtr->PromptToken = PasswordHiiAddString( gHiiHandle, Temp );
+                }
+            }
             DataPtr->Validated = FALSE;
-            DataPtr->PostHiiHandle = gHiiHandle;
-            DataPtr->DeviceHandle = HandleBuffer[i];
+            DataPtr++;
             HDDCount++;
          }// end if
 
@@ -723,54 +677,57 @@ InitHddSecurityInternalDataPtr (
     MemCopy( gHandleBuffer, HandleBuffer, sizeof(EFI_HANDLE) * Count );
 
     MemFreePointer((VOID**)&HandleBuffer );
-    MemFreePointer((VOID**)&TempIDEPasswordSecurityData);
 
     //
-    //if no HDD is supported
+    //if no hd is supported
     //
     if ( HDDCount == 0 ) {
-        MemFreePointer((VOID**)&HddSecurityInternalData );
-        HddSecurityInternalData=NULL;
+        MemFreePointer((VOID**)&IDEPasswordSecurityData );
+        IDEPasswordSecurityData=NULL;
     }
 
     return HDDCount;
 }
 
-/**
-    Return HDD Locked Information
-
-    @param UINTN       Index
-
-    @retval VOID
-
-**/
-BOOLEAN
-IDEPasswordGetLocked (
-    UINTN   Index
-)
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   IDEPasswordGetLocked
+//
+// Description: Return Hdd Locked Information
+//
+// Input:       UINTN       Index
+//
+// Output:      none
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
+BOOLEAN IDEPasswordGetLocked(
+    UINTN Index )
 {
-    HDD_SECURITY_INTERNAL_DATA   *DataPtr = (HDD_SECURITY_INTERNAL_DATA*)IDEPasswordGetDataPtr( Index );
+    IDE_SECURITY_DATA *DataPtr = (IDE_SECURITY_DATA*)IDEPasswordGetDataPtr( Index );
 
-    if(DataPtr == NULL) {
-        return 0;
+	if(DataPtr == NULL) {
+		return 0;	
     }
     return DataPtr->Locked;
 }
 
-/**
-    return the Security Status Information
-
-    @param VOID
-
-    @retval VOID
-
-**/
-BOOLEAN
-CheckSecurityStatus (
-    AMI_HDD_SECURITY_PROTOCOL   *HddSecurityProtocol,
-    BOOLEAN                     *ReqStatus,
-    UINT16                      Mask
-)
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   CheckSecurityStatus
+//
+// Description: return the Security Status Information
+//
+// Input:       none
+//
+// Output:      none
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
+BOOLEAN CheckSecurityStatus(
+    IDE_SECURITY_PROTOCOL *IDEPasswordSecurity,
+    BOOLEAN               *ReqStatus,
+    UINT16                Mask )
 {
     UINT16     SecurityStatus = 0;
     EFI_STATUS Status;
@@ -778,7 +735,7 @@ CheckSecurityStatus (
     //
     //get the security status of the device
     //
-    Status = HddSecurityProtocol->ReturnSecurityStatus( HddSecurityProtocol, &SecurityStatus );
+    Status = IDEPasswordSecurity->ReturnSecurityStatus( IDEPasswordSecurity, &SecurityStatus );
 
     if ( EFI_ERROR( Status ))
         return FALSE;
@@ -787,18 +744,19 @@ CheckSecurityStatus (
     return TRUE;
 }
 
-/**
-    return the Device path Length
-
-    @param VOID
-
-    @retval VOID
-
-**/
-UINTN
-HddPasswordDPLength (
-    EFI_DEVICE_PATH_PROTOCOL    *pDp
-)
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   HddPasswordDPLength
+//
+// Description: return the Device path Length
+//
+// Input:       none
+//
+// Output:      none
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
+UINTN HddPasswordDPLength( EFI_DEVICE_PATH_PROTOCOL *pDp )
 {
     UINTN Size = 0;
 
@@ -811,18 +769,19 @@ HddPasswordDPLength (
     return Size + END_DEVICE_PATH_LENGTH;
 }
 
-/**
-    Returns pointer on very last DP node before END_OF_DEVICE_PATH node
-
-    @param VOID
-
-    @retval VOID
-
-**/
-VOID*
-HddPasswordDPGetLastNode (
-    EFI_DEVICE_PATH_PROTOCOL    *pDp
-)
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   HddPasswordDPGetLastNode
+//
+// Description: Returns pointer on very last DP node before END_OF_DEVICE_PATH node
+//
+// Input:       none
+//
+// Output:      none
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
+VOID* HddPasswordDPGetLastNode( EFI_DEVICE_PATH_PROTOCOL *pDp )
 {
     EFI_DEVICE_PATH_PROTOCOL *dp = NULL;
 
@@ -832,18 +791,20 @@ HddPasswordDPGetLastNode (
     return dp;
 }
 
-/**
-    Copy the Device path to another Memory buffer
-
-    @param EFI_DEVICE_PATH_PROTOCOL *pDp
-
-    @retval VOID
-
-**/
-VOID*
-HddPasswordDPCopy (
-    EFI_DEVICE_PATH_PROTOCOL    *pDp
-)
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   HddPasswordDPCopy
+//
+// Description: Copy the Device path to another Memory buffer
+//
+// Input:
+//              EFI_DEVICE_PATH_PROTOCOL *pDp
+//
+// Output:      none
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
+VOID* HddPasswordDPCopy( EFI_DEVICE_PATH_PROTOCOL *pDp )
 {
     UINTN l  = HddPasswordDPLength( pDp );
     UINT8 *p = EfiLibAllocateZeroPool( l );
@@ -852,65 +813,47 @@ HddPasswordDPCopy (
     return p;
 }
 
-/**
-    Return the Drive String Name
-
-    @param EFI_HANDLE Controller - the handle of the drive
-    @param CHAR16 **wsName - returned pointer to the drive string
-
-    @retval BOOLEAN TRUE - drive string has been found and is in wsName
-        - FALSE - drive string has not been found
-
-    @note  it is the caller's responsibility to deallocate the space used for
-      wsName
-
-**/
-BOOLEAN
-HddPasswordGetDeviceName (
-    EFI_HANDLE  Controller,
-    CHAR16      **wsName
-)
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   HddPasswordGetDeviceName
+//
+// Description: Return the Drive String Name
+//
+// Input:   EFI_HANDLE Controller - the handle of the drive
+//          CHAR16 **wsName - returned pointer to the drive string
+//
+// Output:  BOOLEAN - TRUE - drive string has been found and is in wsName
+//                  - FALSE - drive string has not been found
+//
+//  Notes: it is the caller's responsibility to deallocate the space used for
+//      wsName
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
+BOOLEAN HddPasswordGetDeviceName(EFI_HANDLE Controller, CHAR16 **wsName)
 {
-    EFI_STATUS                  Status;
-    AMI_HDD_SECURITY_INTERFACE  *Security = NULL;
+    EFI_STATUS Status;
+    SECURITY_PROTOCOL *Security = NULL;
 
     CHAR16 *DeviceName;
     BOOLEAN ReturnStatus = FALSE;
-    UINT8 Index = 0;
 
-    // Get the AMI_HDD_SECURITY_INTERFACE (actually getting the AMI_HDD_SECURITY_PROTOCOL, but
-    //  the AMI_HDD_SECURITY_INTERFACE is an extended version with more information)
-    Status = gBS->HandleProtocol(Controller, &gAmiHddSecurityProtocolGuid, (VOID**)&Security);
+    // Get the SECURITY_PROTOCOL (actually getting the IDE_SECURITY_PROTOCOL, but
+    //  the SECURITY_PROTOCOL is an extended version with more information)
+    Status = gBS->HandleProtocol(Controller, &gIdeSecurityInterfaceGuid, &Security);
     if ( !EFI_ERROR(Status) ) {
         // Check the SATA controller operating mode, and based on the mode, get the UnicodeString
         //  name of the device
-        if ( Security->BusInterfaceType == AmiStorageInterfaceAhci ) {
-#if ( defined(AHCI_SUPPORT) && (AHCI_SUPPORT != 0) )
+        if ( Security->ModeFlag ) {
             DeviceName = ((SATA_DEVICE_INTERFACE*)Security->BusInterface)->UDeviceName->UnicodeString;
-#endif
-        } else if ( Security->BusInterfaceType == AmiStorageInterfaceIde ) {
-#if ( defined(IdeBusSrc_SUPPORT) && (IdeBusSrc_SUPPORT != 0) )
-            DeviceName = ((AMI_IDE_BUS_PROTOCOL*)Security->BusInterface)->IdeDevice.UDeviceName->UnicodeString;
-#endif
-        } else if ( Security->BusInterfaceType == AmiStorageInterfaceNvme ) {
-#if ( defined(NVMe_SUPPORT) && (NVMe_SUPPORT != 0) )
-         DeviceName = \
-           ((NVM_EXPRESS_PASS_THRU_INSTANCE*)Security->BusInterface)->NvmeControllerProtocol->UDeviceName->UnicodeString;
-#endif
+        } else {
+            DeviceName = ((IDE_BUS_PROTOCOL*)Security->BusInterface)->IdeDevice.UDeviceName->UnicodeString;
         }
 
-        // Allocate space to copy the UNICODE device name string
+        // Allocate space to copy the unicode device name string
         *wsName = EfiLibAllocateZeroPool( sizeof(CHAR16)*(EfiStrLen(DeviceName)+1));
 
         if ( *wsName!=NULL ) {
-            // To remove the spaces from the HardDisk Model Number
-            for (Index = HDD_MODEL_NUMBER_LENGTH; Index >= 0; Index-- ) {
-
-                if (DeviceName[Index] != SPACE_ASCII_VALUE) { 
-                    break;
-                }
-                DeviceName[Index] = 0;
-            }
             EfiStrCpy( *wsName, DeviceName);
             ReturnStatus = TRUE;
         }
@@ -920,43 +863,41 @@ HddPasswordGetDeviceName (
     return ReturnStatus;
 }
 
-/**
-    Get the password and Validate the HDD password
-
-    @param UINT16 PromptToken,
-    @param VOID *DataPtr
-
-    @retval VOID
-
-**/
-VOID
-AMI_CheckIDEPassword (
-    UINT16  PromptToken,
-    VOID    *DataPtr
-)
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   AMI_CheckIDEPassword
+//
+// Description: Get the password and Validate the HDD password
+//
+// Input:
+//          UINT16 PromptToken,
+//          VOID *DataPtr
+//
+// Output:      none
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
+VOID AMI_CheckIDEPassword(UINT16 PromptToken, VOID *DataPtr)
 {
-    UINTN       CurrXPos, CurrYPos, i;
-    CHAR16      *PasswordEntered;
-    EFI_STATUS  Status   =   EFI_ACCESS_DENIED;
-
-    #if SETUP_ASK_MASTER_PASSWORD
+    UINTN      CurrXPos, CurrYPos, i;
+    CHAR16     *PasswordEntered;
+    EFI_STATUS Status     = EFI_ACCESS_DENIED;
+	
+	#if SETUP_ASK_MASTER_PASSWORD
     UINT32     IdePasswordFlags = 0;
-    #endif
-
+	#endif
+	
     UINTN      BoxLength  = IDE_PASSWORD_LENGTH;
     CHAR16     *DescToken = NULL;
-    CHAR16     *HelpMsgToken = NULL;
 
     UINT16     SecurityStatus=0;
-    AMI_HDD_SECURITY_PROTOCOL *HddSecurityProtocol = NULL;
-    CHAR16      *UnlckHddCBToken = NULL;
-    UINTN       CB_BoxLength=0;
-    UINTN       Help_MsgLength=0;
+    IDE_SECURITY_PROTOCOL *IDEPasswordSecurity = NULL;  
+    CHAR16     *UnlckHddCBToken = NULL;    
+    UINTN      CB_BoxLength=0;     
 
     CheckForKeyHook((EFI_EVENT)NULL, NULL );
     gST->ConIn->Reset( gST->ConIn, FALSE );
 
-    
     DescToken = HiiGetString( gHiiHandle, STRING_TOKEN( STR_IDE_ENTER_USER ));
 
     if ( DescToken ) {
@@ -972,55 +913,36 @@ AMI_CheckIDEPassword (
             CB_BoxLength = TestPrintLength( UnlckHddCBToken ) / NG_SIZE;
         }
     }
-    MemFreePointer((VOID**) &UnlckHddCBToken );
-    
-    HelpMsgToken = HiiGetString( gHiiHandle, STRING_TOKEN( STR_IDE_HELP_MESSAGE ));
-    if ( HelpMsgToken ) {
-           if ( (TestPrintLength( HelpMsgToken ) / NG_SIZE) > Help_MsgLength ) {
-               Help_MsgLength = TestPrintLength( HelpMsgToken ) / NG_SIZE;
-           }
-    }
-    MemFreePointer((VOID**) &HelpMsgToken );
-       
-    HddSecuritySignalProtocolEvent(&gHddPasswordPromptEnterGuid);
+    MemFreePointer((VOID**) &UnlckHddCBToken );          
+
     //
     //Draw password window
     //
 #if ALL_HDD_SAME_PW
     PromptToken = STRING_TOKEN( STR_IDE_SECURITY_PROMPT );
 #endif
-    _DrawPasswordWindow( PromptToken, Help_MsgLength, &CurrXPos, &CurrYPos );
+    _DrawPasswordWindow( PromptToken, BoxLength, &CurrXPos, &CurrYPos );
 
     PasswordEntered = EfiLibAllocateZeroPool((IDE_PASSWORD_LENGTH + 1) * sizeof(CHAR16));
-    HddSecurityProtocol=((HDD_SECURITY_INTERNAL_DATA* )DataPtr)->HddSecurityProtocol;
+    IDEPasswordSecurity=((IDE_SECURITY_DATA* )DataPtr)->IDEPasswordSecurity;    
     //
     //Give four chances to enter user password
     //
     for ( i = 0; i < USER_PASSWORD_RETRY_ATTEMPTS; i++ ) {
-        Status = HddSecurityProtocol->ReturnSecurityStatus(HddSecurityProtocol, &SecurityStatus );
+        Status = IDEPasswordSecurity->ReturnSecurityStatus(IDEPasswordSecurity, &SecurityStatus );
         if(Status == EFI_SUCCESS && (SecurityStatus>>4)& 0x1){
             _DrawPasswordWindow( PromptToken, CB_BoxLength, &CurrXPos, &CurrYPos );
             _ReportInBox(CB_BoxLength,STRING_TOKEN(STR_IDE_UNLCK_COLD),CurrXPos,CurrYPos,TRUE);
-            HddSecuritySignalProtocolEvent(&gHddPasswordPromptExitGuid);
-            if (gST->ConOut != NULL) {
-                //Disable cursor, set desired attributes and clear screen
-                gST->ConOut->EnableCursor( gST->ConOut, FALSE );
-                gST->ConOut->SetAttribute( gST->ConOut, (EFI_BACKGROUND_BLACK | EFI_WHITE));
-                gST->ConOut->ClearScreen( gST->ConOut);
-            }
             return ;
-        }
-        _ReportInBox( BoxLength, STRING_TOKEN(STR_IDE_ENTER_USER), CurrXPos, CurrYPos - 1 , FALSE );
-#if MASTER_PASSWORD_ENABLE && SETUP_ASK_MASTER_PASSWORD
-        _ReportInBox( Help_MsgLength, STRING_TOKEN(STR_IDE_HELP_MESSAGE), CurrXPos, CurrYPos + 1 , FALSE );
-#endif
-        
-        Status = _GetPassword( PasswordEntered,
-                             IDE_PASSWORD_LENGTH,
-                             CurrXPos,
-                             CurrYPos,
-                             NULL );
-        if ( EFI_SUCCESS != Status ) {
+        }        
+        _ReportInBox( BoxLength, STRING_TOKEN(STR_IDE_ENTER_USER), CurrXPos, CurrYPos - 1, FALSE );
+
+        if ( EFI_SUCCESS !=_GetPassword(
+                                PasswordEntered,
+                                IDE_PASSWORD_LENGTH,
+                                CurrXPos,
+                                CurrYPos,
+                                NULL )) {
             break;
         } // end if
 
@@ -1038,20 +960,17 @@ AMI_CheckIDEPassword (
 
     #if SETUP_ASK_MASTER_PASSWORD
 
-    if ( EFI_SUCCESS != Status ) {
-        
-        if(EFI_ABORTED != Status && MAXIMUM_HDD_UNLOCK_ATTEMPTS != USER_PASSWORD_RETRY_ATTEMPTS) {
-            _ReportInBox( IDE_PASSWORD_LENGTH, STRING_TOKEN(STR_ERROR_PSWD), CurrXPos, CurrYPos, TRUE );
-        }
+    if ( EFI_SUCCESS != Status ) {       
+         _ReportInBox( IDE_PASSWORD_LENGTH, STRING_TOKEN(STR_ERROR_PSWD), CurrXPos, CurrYPos, TRUE );
         //
         // Checking if the master password is installed
         //
-        Status=((HDD_SECURITY_INTERNAL_DATA*)DataPtr)->HddSecurityProtocol->ReturnIdePasswordFlags(
-            ((HDD_SECURITY_INTERNAL_DATA*)DataPtr)->HddSecurityProtocol,
+        Status=((IDE_SECURITY_DATA*)DataPtr)->IDEPasswordSecurity->ReturnIdePasswordFlags(
+            ((IDE_SECURITY_DATA*)DataPtr)->IDEPasswordSecurity,
             &IdePasswordFlags );
 
         if((Status == EFI_SUCCESS)&&((IdePasswordFlags>>16)&1)) {
-            if ( i < MAXIMUM_HDD_UNLOCK_ATTEMPTS ) {
+            if ( i < MAXIMUM_HDD_UNLOCK_ATTEMPTS ) {           
                 BoxLength = IDE_PASSWORD_LENGTH;
                 DescToken = HiiGetString( gHiiHandle, STRING_TOKEN( STR_IDE_ENTER_MASTER ));
 
@@ -1074,34 +993,24 @@ AMI_CheckIDEPassword (
             //Give remaining chances to enter Master password
             //
             for (; i < MAXIMUM_HDD_UNLOCK_ATTEMPTS; i++ ) {
-                Status = HddSecurityProtocol->ReturnSecurityStatus(HddSecurityProtocol, &SecurityStatus );
+                Status = IDEPasswordSecurity->ReturnSecurityStatus(IDEPasswordSecurity, &SecurityStatus );
                 if(Status == EFI_SUCCESS && (SecurityStatus>>4)& 0x1){
                     _DrawPasswordWindow( PromptToken, CB_BoxLength, &CurrXPos, &CurrYPos );
                     _ReportInBox(CB_BoxLength,STRING_TOKEN(STR_IDE_UNLCK_COLD),CurrXPos,CurrYPos,TRUE);
-                    HddSecuritySignalProtocolEvent(&gHddPasswordPromptExitGuid);
-                    if (gST->ConOut != NULL) {
-                        //Disable cursor, set desired attributes and clear screen
-                        gST->ConOut->EnableCursor( gST->ConOut, FALSE );
-                        gST->ConOut->SetAttribute( gST->ConOut, (EFI_BACKGROUND_BLACK | EFI_WHITE));
-                        gST->ConOut->ClearScreen( gST->ConOut);
-                    }
                     return ;
-                }
+                }                
                 _ReportInBox( BoxLength, STRING_TOKEN(
                               STR_IDE_ENTER_MASTER ), CurrXPos, CurrYPos - 1,
                           FALSE );
 
-                Status = _GetPassword( PasswordEntered, 
-                                   IDE_PASSWORD_LENGTH, 
-                                   CurrXPos,
-                                   CurrYPos, 
-                                   NULL );
-                if ( EFI_SUCCESS != Status ) {
+                if ( EFI_SUCCESS !=
+                     _GetPassword( PasswordEntered, IDE_PASSWORD_LENGTH, CurrXPos,
+                                   CurrYPos, NULL )) {
                     break;
                 }
 
                 //
-                // validate the Master password
+                // Vaidate the Master password
                 //
                 Status = IDEPasswordAuthenticate( PasswordEntered, DataPtr, FALSE );
 
@@ -1124,7 +1033,7 @@ AMI_CheckIDEPassword (
 
     MemFreePointer((VOID**)&PasswordEntered );
 
-    if ( EFI_SUCCESS != Status || i>=MAXIMUM_HDD_UNLOCK_ATTEMPTS) {
+    if ( EFI_SUCCESS != Status ) {
         //Report Invalid password
         _ReportInBox( IDE_PASSWORD_LENGTH, STRING_TOKEN(
                           STR_IDE_ERROR_PSWD ), CurrXPos, CurrYPos, TRUE );
@@ -1135,47 +1044,53 @@ AMI_CheckIDEPassword (
                                 NULL,
                                 NULL );
     }
-    HddSecuritySignalProtocolEvent(&gHddPasswordPromptExitGuid);
-    if (gST->ConOut != NULL) {
-        //Disable cursor, set desired attributes and clear screen
-        gST->ConOut->EnableCursor( gST->ConOut, FALSE );
-        gST->ConOut->SetAttribute( gST->ConOut, (EFI_BACKGROUND_BLACK | EFI_WHITE));
-        gST->ConOut->ClearScreen( gST->ConOut);
-    }
+
+    ClearScreen( EFI_BACKGROUND_BLACK | EFI_LIGHTGRAY );
 
     return;
 }
 
-/**
-    Send Freeze command all the HDD
-
-    @param VOID
-
-    @retval VOID
-
-**/
-VOID
-IDEPasswordFreezeDevices (
-)
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   IDEPasswordFreezeDevices
+//
+// Description: Send Frezze command all the HDD
+//
+// Input:       none
+//
+// Output:      none
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
+VOID IDEPasswordFreezeDevices( )
 {
     EFI_STATUS            Status;
     EFI_HANDLE            *HandleBuffer;
     UINT16                i;
     UINTN                 Count;
-    AMI_HDD_SECURITY_PROTOCOL *HddSecurityProtocol = NULL;
+    IDE_SECURITY_PROTOCOL *IDEPasswordSecurity = NULL;
 
-    // Return if Hdd FreezeLock command is already sent
-    if( HddFreeze ) {
-        return;
+    HddFreeze = TRUE;
+
+    if(IDEPasswordSecurityData != NULL) {
+        //
+        // Clear the Password
+        //
+        MemSet( IDEPasswordSecurityData, sizeof(IDE_SECURITY_DATA) * gIDESecurityCount, 0);
+        //
+        // Free up the Memory
+        //
+        MemFreePointer((VOID**)&IDEPasswordSecurityData );
+        IDEPasswordSecurityData=NULL;
     }
 
     Status = gBS->LocateHandleBuffer(
-                                ByProtocol,
-                                &gAmiHddSecurityProtocolGuid,
-                                NULL,
-                                &Count,
-                                &HandleBuffer
-                                );
+        ByProtocol,
+        &gIdeSecurityInterfaceGuid,
+        NULL,
+        &Count,
+        &HandleBuffer
+        );
 
     if ( EFI_ERROR( Status )) {
         return;
@@ -1186,13 +1101,13 @@ IDEPasswordFreezeDevices (
         // get password security protocol
         //
         Status = gBS->OpenProtocol(
-                                HandleBuffer[i],
-                                &gAmiHddSecurityProtocolGuid,
-                                (VOID**) &HddSecurityProtocol,
-                                NULL,
-                                HandleBuffer[i],
-                                EFI_OPEN_PROTOCOL_GET_PROTOCOL
-                                );
+            HandleBuffer[i],
+            &gIdeSecurityInterfaceGuid,
+            (VOID**) &IDEPasswordSecurity,
+            NULL,
+            HandleBuffer[i],
+            EFI_OPEN_PROTOCOL_GET_PROTOCOL
+            );
 
         if ( EFI_ERROR( Status )) {
             continue;
@@ -1201,84 +1116,92 @@ IDEPasswordFreezeDevices (
         //
         //Send Freeze lock command
         //
-        Status= HddSecurityProtocol->SecurityFreezeLock( HddSecurityProtocol );
-        if(Status == EFI_SUCCESS) {
-            HddFreeze = TRUE;
-        }
-        
+        IDEPasswordSecurity->SecurityFreezeLock( IDEPasswordSecurity );
+
+        Status = gBS->CloseProtocol(
+            HandleBuffer[i],
+            &gIdeSecurityInterfaceGuid,
+            NULL,
+            HandleBuffer[i]
+            );
     }// end of for
     MemFreePointer((VOID**)&HandleBuffer );
 
     return;
 }
 
-/**
-    Updates the HDD password for the current HDD alone.
-
-    @param UINT32 Index,
-    @param CHAR16 *Password,
-    @param BOOLEAN bCheckUser
-
-    @retval VOID
-
-**/
-BOOLEAN
-IDEPasswordUpdateHdd (
-    UINT32      Index,
-    CHAR16      *Password,
-    BOOLEAN     bCheckUser
-)
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   IDEPasswordUpdateHdd
+//
+// Description: Updates the HDD password for the current HDD alone.
+//
+// Input:
+//              UINT32 Index,
+//              CHAR16 *Password,
+//              BOOLEAN bCheckUser
+//
+// Output:      none
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
+BOOLEAN IDEPasswordUpdateHdd(UINT32 Index,CHAR16 *Password,BOOLEAN bCheckUser)
 {
-    AMI_HDD_SECURITY_PROTOCOL *HddSecurityProtocol = NULL;
+    IDE_SECURITY_PROTOCOL *IDEPasswordSecurity = NULL;
     UINT16                Control              = bCheckUser ? 0 : 1;
     UINT8                 RevisionCode         = 0;
     BOOLEAN               Locked, Enabled;
     EFI_STATUS            Status = EFI_UNSUPPORTED;
     UINT8                 Buffer[IDE_PASSWORD_LENGTH + 1];
-    UINT8                 Selection;
-    CHAR16                *MsgToken = NULL;
+    UINT8 Selection;
     #if !SETUP_SAME_SYS_HDD_PW
     UINTN                 ii;
     #endif
-    HDD_SECURITY_INTERNAL_DATA     *DataPtr;
+    IDE_SECURITY_DATA     *DataPtr;
 
 //
-// While password is set via hook in TSE to perform some OEM feature
+// While password is set via hook in tse to perfom some OEM feature
 // and SETUP_PASSWORD_NON_CASE_SENSITIVE is set, even then the
-// password will be updated as if it is case sensitive but Authenticates
+// password will be updated as if it is case sensitive but Authenticates 
 // as non case sensitive so in order to avoid such situation making
 // IDEPasswordUpdateHdd() symmetric with IDEPasswordAuthenticateHdd()
-// to update case sensitivity {EIP99649}
-//
-#if defined(HDD_SECURITY_PASSWORD_NON_CASE_SENSITIVE) && HDD_SECURITY_PASSWORD_NON_CASE_SENSITIVE
-    UpdatePasswordToNonCaseSensitive(Password, Wcslen(Password));
+// to update case sensivity {EIP99649}
+//     
+#if TSE_BUILD > 0x1206
+{        
+	UINTN             NewPwLen = 0;
+    if( IsPasswordSupportNonCaseSensitive() ) {
+        NewPwLen = EfiStrLen(Password);
+        UpdatePasswordToNonCaseSensitive(Password, NewPwLen);
+    }
+}
 #endif
 
-    DataPtr = (HDD_SECURITY_INTERNAL_DATA*)IDEPasswordGetDataPtr( Index );
-    
+    DataPtr = (IDE_SECURITY_DATA*)IDEPasswordGetDataPtr( Index );
+
     if ( DataPtr == NULL ) {
-        MsgToken = HiiGetString(gHiiHandle,
-                                STRING_TOKEN(STR_IDE_SECURITY_UNSUPPORTED)
-                                );
         ShowPostMsgBox(
                 NULL,
-                MsgToken,
+                HiiGetString(
+                            gHiiHandle,
+                            STRING_TOKEN(STR_IDE_SECURITY_UNSUPPORTED)
+                            ),
                 MSGBOX_TYPE_OK,
                 &Selection
-               ); // ShowPostMsgBox
-        MemFreePointer((VOID**)&MsgToken);
+         ); // ShowPostMsgBox
+
         return FALSE;
     }
-    HddSecurityProtocol = DataPtr->HddSecurityProtocol;
+    IDEPasswordSecurity = DataPtr->IDEPasswordSecurity;
 
     //
     //get the status of the device
     //
     if ( !(
                 CheckSecurityStatus(
-                                     HddSecurityProtocol, &Locked,
+                                     IDEPasswordSecurity, &Locked,
                                      SecurityLockedMask )
-             && CheckSecurityStatus( HddSecurityProtocol, &Enabled,
+             && CheckSecurityStatus( IDEPasswordSecurity, &Enabled,
                                      SecurityEnabledMask ))) {
         return FALSE;
     }
@@ -1288,10 +1211,10 @@ IDEPasswordUpdateHdd (
             //
             //empty string is entered -> disable password
             //
-            Status = HddSecurityProtocol->SecurityDisablePassword(
-                HddSecurityProtocol,
+            Status = IDEPasswordSecurity->SecurityDisablePassword(
+                IDEPasswordSecurity,
                 Control,
-                HddSecurityInternalData[Index].PWD );
+                IDEPasswordSecurityData[Index].PWD );
         } else {
             //
             //set new password
@@ -1310,8 +1233,8 @@ IDEPasswordUpdateHdd (
             MemCopy( Buffer, Password, IDE_PASSWORD_LENGTH + 1 );
             #endif
 
-            Status = HddSecurityProtocol->SecuritySetPassword(
-                HddSecurityProtocol,
+            Status = IDEPasswordSecurity->SecuritySetPassword(
+                IDEPasswordSecurity,
                 Control,
                 Buffer,
                 RevisionCode );
@@ -1325,48 +1248,53 @@ IDEPasswordUpdateHdd (
     return TRUE;
 }
 
-/**
-    Updates the HDD password for all the HDDs present.
-
-    @param UINT32 Index,
-    @param CHAR16 *Password,
-    @param BOOLEAN bCheckUser
-
-    @retval VOID
-
-**/
-BOOLEAN
-IDEPasswordUpdateAllHdd (
-    UINT32      Index,
-    CHAR16      *Password,
-    BOOLEAN     bCheckUser
-)
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   IDEPasswordUpdateAllHdd
+//
+// Description: Updates the HDD password for all the HDDs present.
+//
+// Input:
+//              UINT32 Index,
+//              CHAR16 *Password,
+//              BOOLEAN bCheckUser
+//
+// Output:      none
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
+BOOLEAN IDEPasswordUpdateAllHdd(
+    UINT32  Index,
+    CHAR16  *Password,
+    BOOLEAN bCheckUser )
 {
-    UINTN       i;
-    BOOLEAN     Status = FALSE;
-        for ( i = 0; i < gHddSecurityCount; i++ ) {
+    UINTN i;
+    BOOLEAN Status = FALSE;
+        for ( i = 0; i < gIDESecurityCount; i++ ) {
             Status = IDEPasswordUpdateHdd( (UINT32)i, Password, bCheckUser);
         }
     return Status;
 }
 
-/**
-    Hook function to update the password for the HDDs based
-    on the token ALL_HDD_SAME_PW.
-
-    @param  UINT32 Index,
-    @param  CHAR16 *Password,
-    @param  BOOLEAN bCheckUser
-
-    @retval VOID
-
-**/
-BOOLEAN
-IDEPasswordUpdate (
-    UINT32      Index,
-    CHAR16      *Password,
-    BOOLEAN     bCheckUser
-)
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   IDEPasswordUpdate
+//
+// Description: Hook function to update the password for the HDDs based 
+//              on the token ALL_HDD_SAME_PW.
+// Input:
+//              UINT32 Index,
+//              CHAR16 *Password,
+//              BOOLEAN bCheckUser
+//
+// Output:      none
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
+BOOLEAN IDEPasswordUpdate(
+    UINT32  Index,
+    CHAR16  *Password,
+    BOOLEAN bCheckUser )
 {
     #if ALL_HDD_SAME_PW
      return IDEPasswordUpdateAllHdd( Index, Password, bCheckUser);
@@ -1375,28 +1303,30 @@ IDEPasswordUpdate (
     #endif
 
 }
-/**
-    Unlock the HDD
-
-    @param VOID
-
-    @retval VOID
-
-**/
-VOID
-UnlockHDD (
-    VOID
-)
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   UnlockHDD
+//
+// Description: Unlock the HDD
+//
+// Input:       none
+//
+// Output:      none
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
+VOID UnlockHDD(
+    VOID )
 {
     #if SETUP_SAME_SYS_HDD_PW
     UINTN             Size=0, i;
     AMITSESETUP       *TSESetup;
-    HDD_SECURITY_INTERNAL_DATA *DataPtr;
+    IDE_SECURITY_DATA *DataPtr;
     EFI_STATUS        Status;
     EFI_GUID AmiTseSetupGuid = AMITSESETUP_GUID;
 
     //
-    //Do not proceed if ADMIN password is not set
+    //Do not proceed if admin pssword is not set
     //
     if ( !(AMI_PASSWORD_USER & PasswordCheckInstalled()) ) {
         return;
@@ -1412,12 +1342,12 @@ UnlockHDD (
         //
         //For all drives
         //
-        DataPtr = HddSecurityInternalData;
+        DataPtr = IDEPasswordSecurityData;
 
-        for ( i = 0; i < gHddSecurityCount; i++ ) {
+        for ( i = 0; i < gIDESecurityCount; i++ ) {
             if ( DataPtr->Locked ) {
                 //
-                //ask for the password if locked
+                //ask fot the password if locked
                 //
                 Status = IDEPasswordAuthenticateHdd( TSESetup->UserPassword,
                                                   DataPtr,
@@ -1443,18 +1373,19 @@ UnlockHDD (
     #endif //#if SETUP_SAME_SYS_HDD_PW
 }
 
-/**
-    Set the HDD password
-
-    @param VOID
-
-    @retval VOID
-
-**/
-VOID
-SetHDDPassword (
-    VOID
-)
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   SetHDDPassword
+//
+// Description: Set the HDD password
+//
+// Input:       none
+//
+// Output:      none
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
+VOID SetHDDPassword(VOID)
 {
     #if SETUP_SAME_SYS_HDD_PW
     UINTN       Size=0, i;
@@ -1472,9 +1403,9 @@ SetHDDPassword (
         //
         //For all drives
         //
-        for ( i = 0; i < gHddSecurityCount; i++ ) {
+        for ( i = 0; i < gIDESecurityCount; i++ ) {
             Status = IDEPasswordUpdateHdd( (UINT32)i, TSESetup->UserPassword, TRUE);
-            ASSERT_EFI_ERROR (Status);
+			ASSERT_EFI_ERROR (Status);
         }
     }
 
@@ -1482,413 +1413,340 @@ SetHDDPassword (
     #endif //#if SETUP_SAME_SYS_HDD_PW
 }
 
-/**
-    Validate the HDD password
-
-    @param VOID
-
-    @retval VOID
-
-**/
-VOID
-IDEPasswordCheck (
-)
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   IDEPasswordCheck
+//
+// Description: Validate the HDD password
+//
+// Input:       none
+//
+// Output:      none
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
+VOID IDEPasswordCheck()
 {
-#if ALL_HDD_SAME_PW
-    EFI_STATUS  Status = EFI_SUCCESS;
-#endif
-#if !SETUP_SAME_SYS_HDD_PW
-    HDD_SECURITY_INTERNAL_DATA   *DataPtr;
+    #if !SETUP_SAME_SYS_HDD_PW
+    IDE_SECURITY_DATA   *DataPtr;
+#if !ALL_HDD_SAME_PW
     UINT16              i;
-#if defined(SETUP_IDE_SECURITY_SUPPORT) && SETUP_IDE_SECURITY_SUPPORT
+#endif
 #if defined(SECURITY_SETUP_ON_SAME_PAGE) && SECURITY_SETUP_ON_SAME_PAGE
-    UINTN           HddIndex = 0;
+    UINTN				IDE_idex = 0;
 #endif
-#endif
-#endif
-#if defined(SETUP_IDE_SECURITY_SUPPORT) && SETUP_IDE_SECURITY_SUPPORT
-    IDE_SECURITY_CONFIG HddSecurityConfig;
-#endif
+    BOOLEAN             ScreenCorrupted = FALSE;
+    #endif
+    IDE_SECURITY_CONFIG ideSecConfig;
 
+    //
     // build IDESecurity data
-    gHddSecurityCount = InitHddSecurityInternalDataPtr( );
+    //
 
-    if ( HddSecurityInternalData == NULL || gHddSecurityCount == 0
+    gIDESecurityCount = IDESecurityProtocolInit( );
+
+    if ( IDEPasswordSecurityData == NULL || gIDESecurityCount == 0
          || HddFreeze ) {
         return;
     }
 
-#if SETUP_SAME_SYS_HDD_PW
+    #if SETUP_SAME_SYS_HDD_PW
         UnlockHDD();
-#else
-    DataPtr   = HddSecurityInternalData;
+    #else
+    DataPtr   = IDEPasswordSecurityData;
 #if !ALL_HDD_SAME_PW
-    for ( i = 0; i < gHddSecurityCount; i++ ) {
+    for ( i = 0; i < gIDESecurityCount; i++ ) {
+#endif
         if ( DataPtr->Locked && (!DataPtr->Validated)) {
-            //ask for the password if locked
+            //
+            //ask fot the password if locked
+            //
             DataPtr->Validated = TRUE;
             AMI_CheckIDEPassword( DataPtr->PromptToken, (VOID*)DataPtr );
+            ScreenCorrupted = TRUE;
         }
+#if !ALL_HDD_SAME_PW
         DataPtr++;
     }// end of for
-#else
-
-    for ( i = 0; i < gHddSecurityCount; i++ ) {
-        // Check if Password is validated for a Device, if yes, Use the same Password buffer
-        if( DataPtr->Validated && !DataPtr->Locked ) {
-
-            Status = IDEPasswordUpdateAllHddWithValidatedPsw (
-                              DataPtr->PWD,
-                              DataPtr,
-                              DataPtr->LoggedInAsMaster? 0:1 );
-            if(!EFI_ERROR(Status)) {
-                break;
-            }
-        }
-        DataPtr++;
-    }// end of for
-    // Ask Password from User
-    if( i == gHddSecurityCount ) {
-        DataPtr = HddSecurityInternalData;
-        if ( DataPtr->Locked && (!DataPtr->Validated)) {
-            //ask for the password if locked
-            DataPtr->Validated = TRUE;
-            AMI_CheckIDEPassword( DataPtr->PromptToken, (VOID*)DataPtr );
-        }
-    }
 #endif
-#endif
+    //
+    // If the Screen Corrupted , Redraw the Screen
+    //
+    //    if(ScreenCorrupted) {
+    //        DrawScreenAgain(OldScreen);
+    //    }
+    #endif
 
-#if defined(SETUP_IDE_SECURITY_SUPPORT) && SETUP_IDE_SECURITY_SUPPORT
-    MemSet( &HddSecurityConfig, sizeof(HddSecurityConfig), 0 );
-    HddSecurityConfig.Count = gHddSecurityCount;
+    MemSet( &ideSecConfig, sizeof(ideSecConfig), 0 );
+    ideSecConfig.Count = gIDESecurityCount;
 #if defined(SECURITY_SETUP_ON_SAME_PAGE) && SECURITY_SETUP_ON_SAME_PAGE
-    for( HddIndex = 0 ; HddIndex < gHddSecurityCount ; HddIndex++ )
+    for( IDE_idex = 0 ; IDE_idex < gIDESecurityCount ; IDE_idex++ )
     {
-        IDEUpdateConfig( &HddSecurityConfig, HddIndex );
+        IDEUpdateConfig( &ideSecConfig, IDE_idex );
     }
 #endif
     VarSetNvramName( L"IDESecDev",
                      &gIDESecGuid,
                      EFI_VARIABLE_BOOTSERVICE_ACCESS,
-                     &HddSecurityConfig,
-                     sizeof(HddSecurityConfig));
-#endif
+                     &ideSecConfig,
+                     sizeof(ideSecConfig));
     return;
 }
 
-
-#if defined(SETUP_IDE_SECURITY_SUPPORT) && SETUP_IDE_SECURITY_SUPPORT
-/**
-    Initializes the structure IDE_SECURITY_CONFIG for the current
-    HDD if the data pointer to the structure HDD_SECURITY_INTERNAL_DATA is
-    initialized already.
-
-    @param IDE_SECURITY_CONFIG *ptrHddSecurityConfig
-    @param  UINTN value
-
-    @retval VOID
-
-**/
-VOID
-UpdateSetupDataByHddIndex(
-    VOID    *ptrHddSecurityConfig,
-    UINTN   value
-)
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   IDEUpdateConfigHdd
+//
+// Description: Initializes the structure IDE_SECURITY_CONFIG for the current
+//              HDD if the data pointer to the structure IDE_SECURITY_DATA is
+//              initialized already.
+//
+// Input:
+//              IDE_SECURITY_CONFIG *ideSecConfig
+//              UINTN value
+//
+// Output:      none
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
+VOID IDEUpdateConfigHdd(
+    VOID  *TempideSecConfig,
+    UINTN value )
 {
-    HDD_SECURITY_INTERNAL_DATA    *DataPtr             = NULL;
-    AMI_HDD_SECURITY_PROTOCOL     *HddSecurityProtocol = NULL;
-    BOOLEAN                       Status;
-    UINT32                        IdePasswordFlags = 0;
-    EFI_STATUS                    ReturnStatus;
-    IDE_SECURITY_CONFIG           *HddSecurityConfig
-        = (IDE_SECURITY_CONFIG*)ptrHddSecurityConfig;
+    IDE_SECURITY_DATA     *DataPtr             = NULL;
+    IDE_SECURITY_PROTOCOL *IDEPasswordSecurity = NULL;
+    BOOLEAN               Status;
+    UINT32                IdePasswordFlags = 0;
+    EFI_STATUS            ReturnStatus;
+    IDE_SECURITY_CONFIG   *ideSecConfig
+        = (IDE_SECURITY_CONFIG*)TempideSecConfig;
 
-    //Set current HDD security page
+
+    //
+    //Set current IDE security page
+    //
 #if defined(SECURITY_SETUP_ON_SAME_PAGE) && SECURITY_SETUP_ON_SAME_PAGE
 
-    if ( gHddSecurityCount == 0 || HddSecurityInternalData == NULL ) {
-        //try to initialize, if not initialized
-        gHddSecurityCount = InitHddSecurityInternalDataPtr( );
-    }
-
-    for( value=0; value<gHddSecurityCount; value++ ) {
-        DataPtr = (HDD_SECURITY_INTERNAL_DATA*)IDEPasswordGetDataPtr( value );
-
-        if ( DataPtr ) {
-            HddSecurityProtocol = DataPtr->HddSecurityProtocol;
-
-            CheckSecurityStatus(
-                    HddSecurityProtocol,
-                    &Status,
-                    SecuritySupportedMask );
-            HddSecurityConfig->Supported[value] = Status ? 1 : 0;
-            CheckSecurityStatus(
-                    HddSecurityProtocol,
-                    &Status,
-                    SecurityEnabledMask );
-            HddSecurityConfig->Enabled[value] = Status ? 1 : 0;
-            CheckSecurityStatus(
-                    HddSecurityProtocol,
-                    &Status,
-                    SecurityLockedMask );
-            HddSecurityConfig->Locked[value] = Status ? 1 : 0;
-            CheckSecurityStatus(
-                    HddSecurityProtocol,
-                    &Status,
-                    SecurityFrozenMask );
-            HddSecurityConfig->Frozen[value] = Status ? 1 : 0;
-            ReturnStatus = HddSecurityProtocol->ReturnIdePasswordFlags(
-                               HddSecurityProtocol,
-                               &IdePasswordFlags );
-
-            if ( EFI_ERROR( ReturnStatus )) {
-                return;
-            }
-
-            HddSecurityConfig->UserPasswordStatus[value]
-                = (IdePasswordFlags & 0x00020000) ? 1 : 0;
-            HddSecurityConfig->MasterPasswordStatus[value]
-                = (IdePasswordFlags & 0x00010000) ? 1 : 0;
-
-            HddSecurityConfig->ShowMaster[value] = 0x0000;
-
-            if ( HddSecurityConfig->Locked[value] ) {
-                HddSecurityConfig->ShowMaster[value] = 0x0001;
-            } else if ( (DataPtr->LoggedInAsMaster)) {
-                HddSecurityConfig->ShowMaster[value] = 0x0001;
-            } else if ( !(HddSecurityConfig->UserPasswordStatus[value])) {
-                HddSecurityConfig->ShowMaster[value] = 0x0001;
-            }
-        }// end if
-    }
-#else
-    gCurrIDESecPage = value;
-
-    DataPtr = (HDD_SECURITY_INTERNAL_DATA*)IDEPasswordGetDataPtr( value );
+    DataPtr = (IDE_SECURITY_DATA*)IDEPasswordGetDataPtr( value );
 
     if ( DataPtr ) {
-        HddSecurityProtocol = DataPtr->HddSecurityProtocol;
+        IDEPasswordSecurity = DataPtr->IDEPasswordSecurity;
 
         CheckSecurityStatus(
-            HddSecurityProtocol,
+            IDEPasswordSecurity,
             &Status,
             SecuritySupportedMask );
-        HddSecurityConfig->Supported = Status ? 1 : 0;
+        ideSecConfig->Supported[value] = Status ? 1 : 0;
         CheckSecurityStatus(
-            HddSecurityProtocol,
+            IDEPasswordSecurity,
             &Status,
             SecurityEnabledMask );
-        HddSecurityConfig->Enabled = Status ? 1 : 0;
+        ideSecConfig->Enabled[value] = Status ? 1 : 0;
         CheckSecurityStatus(
-            HddSecurityProtocol,
+            IDEPasswordSecurity,
             &Status,
             SecurityLockedMask );
-        HddSecurityConfig->Locked = Status ? 1 : 0;
+        ideSecConfig->Locked[value] = Status ? 1 : 0;
         CheckSecurityStatus(
-            HddSecurityProtocol,
+            IDEPasswordSecurity,
             &Status,
             SecurityFrozenMask );
-        HddSecurityConfig->Frozen = Status ? 1 : 0;
-        ReturnStatus         = HddSecurityProtocol->ReturnIdePasswordFlags(
-            HddSecurityProtocol,
+        ideSecConfig->Frozen[value] = Status ? 1 : 0;
+        ReturnStatus         = IDEPasswordSecurity->ReturnIdePasswordFlags(
+            IDEPasswordSecurity,
             &IdePasswordFlags );
 
         if ( EFI_ERROR( ReturnStatus )) {
             return;
         }
 
-        HddSecurityConfig->UserPasswordStatus
+        ideSecConfig->UserPasswordStatus[value]
             = (IdePasswordFlags & 0x00020000) ? 1 : 0;
-        HddSecurityConfig->MasterPasswordStatus
+        ideSecConfig->MasterPasswordStatus[value]
             = (IdePasswordFlags & 0x00010000) ? 1 : 0;
 
-        HddSecurityConfig->ShowMaster = 0x0000;
+        ideSecConfig->ShowMaster[value] = 0x0000;
 
-        if ( HddSecurityConfig->Locked ) {
-            HddSecurityConfig->ShowMaster = 0x0001;
+        if ( ideSecConfig->Locked[value] ) {
+            ideSecConfig->ShowMaster[value] = 0x0001;
         } else if ( (DataPtr->LoggedInAsMaster)) {
-            HddSecurityConfig->ShowMaster = 0x0001;
-        } else if ( !(HddSecurityConfig->UserPasswordStatus)) {
-            HddSecurityConfig->ShowMaster = 0x0001;
+            ideSecConfig->ShowMaster[value] = 0x0001;
+        } else if ( !(ideSecConfig->UserPasswordStatus[value])) {
+            ideSecConfig->ShowMaster[value] = 0x0001;
+        }
+    }// end if
+#else
+    gCurrIDESecPage = value;
+
+    DataPtr = (IDE_SECURITY_DATA*)IDEPasswordGetDataPtr( value );
+
+    if ( DataPtr ) {
+        IDEPasswordSecurity = DataPtr->IDEPasswordSecurity;
+
+        CheckSecurityStatus(
+            IDEPasswordSecurity,
+            &Status,
+            SecuritySupportedMask );
+        ideSecConfig->Supported = Status ? 1 : 0;
+        CheckSecurityStatus(
+            IDEPasswordSecurity,
+            &Status,
+            SecurityEnabledMask );
+        ideSecConfig->Enabled = Status ? 1 : 0;
+        CheckSecurityStatus(
+            IDEPasswordSecurity,
+            &Status,
+            SecurityLockedMask );
+        ideSecConfig->Locked = Status ? 1 : 0;
+        CheckSecurityStatus(
+            IDEPasswordSecurity,
+            &Status,
+            SecurityFrozenMask );
+        ideSecConfig->Frozen = Status ? 1 : 0;
+        ReturnStatus         = IDEPasswordSecurity->ReturnIdePasswordFlags(
+            IDEPasswordSecurity,
+            &IdePasswordFlags );
+
+        if ( EFI_ERROR( ReturnStatus )) {
+            return;
+        }
+
+        ideSecConfig->UserPasswordStatus
+            = (IdePasswordFlags & 0x00020000) ? 1 : 0;
+        ideSecConfig->MasterPasswordStatus
+            = (IdePasswordFlags & 0x00010000) ? 1 : 0;
+
+        ideSecConfig->ShowMaster = 0x0000;
+
+        if ( ideSecConfig->Locked ) {
+            ideSecConfig->ShowMaster = 0x0001;
+        } else if ( (DataPtr->LoggedInAsMaster)) {
+            ideSecConfig->ShowMaster = 0x0001;
+        } else if ( !(ideSecConfig->UserPasswordStatus)) {
+            ideSecConfig->ShowMaster = 0x0001;
         }
     }// end if
 #endif
     return;
 }
 
-/**
-    Initializes the structure IDE_SECURITY_CONFIG for all the
-    HDDs present if the data pointer to the structure
-    HDD_SECURITY_INTERNAL_DATA is initialized already.
-
-    @param IDE_SECURITY_CONFIG *ptrHddSecurityConfig
-    @param  UINTN value
-
-    @retval VOID
-
-**/
-VOID
-UpdateSetupDataForAllHdd(
-    VOID    *ptrHddSecurityConfig,
-    UINTN   value
-)
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   IDEUpdateConfigAllHdd
+//
+// Description: Initializes the structure IDE_SECURITY_CONFIG for all the
+//              HDDs present if the data pointer to the structure
+//              IDE_SECURITY_DATA is initialized already.
+//
+// Input:
+//              IDE_SECURITY_CONFIG *ideSecConfig
+//              UINTN value
+//
+// Output:      none
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
+VOID IDEUpdateConfigAllHdd(
+    VOID  *TempideSecConfig,
+    UINTN value )
 {
-    value = 0;
+    UINTN i;
 
-    //Set current HDD security page
-    #if defined(SECURITY_SETUP_ON_SAME_PAGE) && SECURITY_SETUP_ON_SAME_PAGE
-        UpdateSetupDataByHddIndex( ptrHddSecurityConfig, value );
-    #else
-        for ( ; value < gHddSecurityCount; value++ ) {
-            UpdateSetupDataByHddIndex( ptrHddSecurityConfig, value);
-        }
-    #endif
-
+    for ( i = 0; i < gIDESecurityCount; i++ ) {
+        IDEUpdateConfigHdd( TempideSecConfig, i);
+    }
     return;
 }
 
-/**
-    Hook function to Initialize the structure IDE_SECURITY_CONFIG
-    for the HDDs based on the token ALL_HDD_SAME_PW.
-
-    @param IDE_SECURITY_CONFIG *ptrHddSecurityConfig
-    @param  UINTN value
-
-    @retval VOID
-
-**/
-VOID
-IDEUpdateConfig(
-    VOID    *ptrHddSecurityConfig,
-    UINTN   value
-)
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   IDEUpdateConfig
+//
+// Description: Hook function to Initialize the structure IDE_SECURITY_CONFIG 
+//              for the HDDs based on the token ALL_HDD_SAME_PW.   
+//
+// Input:
+//              IDE_SECURITY_CONFIG *ideSecConfig
+//              UINTN value
+//
+// Output:      none
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
+VOID IDEUpdateConfig(
+    VOID  *TempideSecConfig,
+    UINTN value )
 {
     #if ALL_HDD_SAME_PW
-     UpdateSetupDataForAllHdd( ptrHddSecurityConfig, value);
+     IDEUpdateConfigAllHdd( TempideSecConfig, value);
     #else
-     UpdateSetupDataByHddIndex( ptrHddSecurityConfig, value);
+     IDEUpdateConfigHdd( TempideSecConfig, value);
     #endif
 
 }
-/**
-    Get the Hdd name
-
-    @param VOID
-
-    @retval VOID
-
-**/
-UINT16
-IDEPasswordGetName (
-    UINT16  Index
-)
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   IDEPasswordGetName
+//
+// Description: Get the Hdd name
+//
+// Input:       none
+//
+// Output:      none
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
+UINT16 IDEPasswordGetName(
+    UINT16 Index )
 {
 #if defined(SECURITY_SETUP_ON_SAME_PAGE) && SECURITY_SETUP_ON_SAME_PAGE
     // workaround for code in special.c which fills "goto string" token with
-    // HDD name string token. In this case we do not need that.
+    // hdd name string token. In our case we dont need that.
     return ConfigPromptToken;
 #else
-    UINTN                         size = 0;
-    IDE_SECURITY_CONFIG           *HddSecurityConfig;
-    HDD_SECURITY_INTERNAL_DATA    *DataPtr = NULL;
+    UINTN size=0;
+    IDE_SECURITY_CONFIG *ideSecConfig;
+    IDE_SECURITY_DATA *DataPtr;
 
-    HddSecurityConfig = VarGetNvramName (L"IDESecDev", &gIDESecGuid, NULL, &size);
-    UpdateSetupDataByHddIndex (HddSecurityConfig, Index);
+	ideSecConfig = VarGetNvramName (L"IDESecDev", &gIDESecGuid, NULL, &size);
+    IDEUpdateConfigHdd (ideSecConfig, Index);
     VarSetNvramName (L"IDESecDev",
                      &gIDESecGuid,
                      EFI_VARIABLE_BOOTSERVICE_ACCESS,
-                     HddSecurityConfig,
+                     ideSecConfig,
                      size);
 
-    MemFreePointer((VOID **)&HddSecurityConfig);
+    MemFreePointer((VOID **)&ideSecConfig);
 
-    DataPtr = (HDD_SECURITY_INTERNAL_DATA*)IDEPasswordGetDataPtr( Index );
+    DataPtr = (IDE_SECURITY_DATA*)IDEPasswordGetDataPtr( Index );
 
     if(DataPtr == NULL) {
         return 0;
-    }
+    }    
 
     return DataPtr->PromptToken;
 #endif
 }
-#endif
 
-/**
-    Function Unlock the Hdd with Valid Password
-
-    @param VOID
-
-    @retval VOID
-
-**/
-EFI_STATUS
-IDEPasswordUpdateAllHddWithValidatedPsw (
-    UINT8   *Password,
-    VOID    *Ptr,
-    BOOLEAN bCheckUser
-)
-{
-#if ALL_HDD_SAME_PW
-    HDD_SECURITY_INTERNAL_DATA *DataPtr;
-    UINTN         i;
-    EFI_STATUS    Status=EFI_NOT_FOUND;
-    CHAR16        PassWordBuffer[IDE_PASSWORD_LENGTH + 1];
-
-    //For all drives
-    DataPtr = HddSecurityInternalData;
-
-    if(DataPtr == NULL) {
-        return EFI_NOT_FOUND;
-    }
-
-    for ( i = 0; i < IDE_PASSWORD_LENGTH + 1; i++ ) {
-        PassWordBuffer[i] = Password[i];
-
-        if ( Password[i] == '\0' ) {
-            break;
-        }
-    }
-
-    for ( i = 0; i < gHddSecurityCount; i++ ) {
-
-        if( DataPtr->Locked && !DataPtr->Validated ) {
-
-            DataPtr->Validated = TRUE;
-            Status = IDEPasswordAuthenticateHdd( PassWordBuffer,
-                                                 DataPtr,
-                                                 bCheckUser );
-            if ( EFI_SUCCESS != Status ) {
-                // Unlock failed.
-                EfiLibReportStatusCode( EFI_ERROR_CODE | EFI_ERROR_MAJOR,
-                                        DXE_INVALID_IDE_PASSWORD,
-                                        0,
-                                        NULL,
-                                        NULL );
-            }            
-        }
-        DataPtr++;
-    }
-#endif
-    return EFI_SUCCESS;
-}
-
-/**
-    Validates the password for the current HDD alone.
-
-    @param CHAR16 *Password,
-    @param VOID* Ptr,
-    @param BOOLEAN bCheckUser
-
-    @retval VOID
-
-**/
-EFI_STATUS
-IDEPasswordAuthenticateHdd (
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   IDEPasswordAuthenticateHdd
+//
+// Description: Validates the Ide password for the current HDD alone.
+//
+// Input:
+//          CHAR16 *Password,
+//          VOID* Ptr,
+//          BOOLEAN bCheckUser
+//
+// Output:  none
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
+EFI_STATUS IDEPasswordAuthenticateHdd(
     CHAR16  *Password,
     VOID    * Ptr,
-    BOOLEAN bCheckUser
-)
+    BOOLEAN bCheckUser )
 {
     UINT16            Control = 0;
     EFI_STATUS        Status;
@@ -1898,12 +1756,18 @@ IDEPasswordAuthenticateHdd (
     UINTN             i;
     #endif
 
-    HDD_SECURITY_INTERNAL_DATA * DataPtr = (HDD_SECURITY_INTERNAL_DATA*)Ptr;
+    IDE_SECURITY_DATA * DataPtr = (IDE_SECURITY_DATA*)Ptr;
 
     MemSet( &Buffer, IDE_PASSWORD_LENGTH + 1, 0 );
 
-#if defined(HDD_SECURITY_PASSWORD_NON_CASE_SENSITIVE) && HDD_SECURITY_PASSWORD_NON_CASE_SENSITIVE
-    UpdatePasswordToNonCaseSensitive(Password, Wcslen(Password));
+#if TSE_BUILD > 0x1206
+{        
+	UINTN             NewPwLen = 0;
+    if( IsPasswordSupportNonCaseSensitive() ) {
+        NewPwLen = EfiStrLen(Password);
+        UpdatePasswordToNonCaseSensitive(Password, NewPwLen);
+    }
+}
 #endif
 
     #if !SETUP_SAME_SYS_HDD_PW
@@ -1921,8 +1785,8 @@ IDEPasswordAuthenticateHdd (
 
     Control = bCheckUser ? 0 : 1;
 
-    Status = (DataPtr->HddSecurityProtocol)->SecurityUnlockPassword(
-        DataPtr->HddSecurityProtocol,
+    Status = (DataPtr->IDEPasswordSecurity)->SecurityUnlockPassword(
+        DataPtr->IDEPasswordSecurity,
         Control,
         Buffer );
 
@@ -1934,7 +1798,7 @@ IDEPasswordAuthenticateHdd (
     //save password in case we need to disable it during the setup
     //
     MemCopy( &(DataPtr->PWD), &Buffer, IDE_PASSWORD_LENGTH + 1 );
-    DataPtr->Locked = FALSE;
+//    DataPtr->Locked = FALSE;
 
     if ( !bCheckUser ) {
         DataPtr->LoggedInAsMaster = TRUE;
@@ -1943,42 +1807,44 @@ IDEPasswordAuthenticateHdd (
     return EFI_SUCCESS;
 }
 
-/**
-    Validates the password for all the HDDs Present.
-
-    @param CHAR16 *Password,
-    @param VOID* Ptr,
-    @param BOOLEAN bCheckUser
-
-    @retval VOID
-
-**/
-EFI_STATUS
-IDEPasswordAuthenticateAllHdd (
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   IDEPasswordAuthenticateAllHdd
+//
+// Description: Validates the Ide password for all the HDDs Present.
+//
+// Input:
+//          CHAR16 *Password,
+//          VOID* Ptr,
+//          BOOLEAN bCheckUser
+//
+// Output:  none
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
+EFI_STATUS IDEPasswordAuthenticateAllHdd(
     CHAR16  *Password,
     VOID    * Ptr,
-    BOOLEAN bCheckUser
-)
+    BOOLEAN bCheckUser )
 {
-    HDD_SECURITY_INTERNAL_DATA *DataPtr;
+    IDE_SECURITY_DATA *DataPtr;
     UINTN i;
     EFI_STATUS        Status=EFI_NOT_FOUND;
-
+    
         //
         //For all drives
         //
-        DataPtr = HddSecurityInternalData;
+        DataPtr = IDEPasswordSecurityData;
 
         if(DataPtr == NULL) {
             return EFI_NOT_FOUND;
         }
-        
 
-        for ( i = 0; i < gHddSecurityCount; i++ ) {
+        for ( i = 0; i < gIDESecurityCount; i++ ) {
 
             Status = IDEPasswordAuthenticateHdd( Password,
-                                                 DataPtr,
-                                                 bCheckUser );
+                                              DataPtr,
+                                              bCheckUser );
             if ( EFI_SUCCESS != Status ) {
                 //
                 // Unlock failed.
@@ -1994,23 +1860,25 @@ IDEPasswordAuthenticateAllHdd (
     return Status;
 }
 
-/**
-    Hook function to validate Password for the HDDs based on
-    the token ALL_HDD_SAME_PW
-    @param
-        CHAR16 *Password,
-        VOID* Ptr,
-        BOOLEAN bCheckUser
-
-    @retval VOID
-
-**/
-EFI_STATUS
-IDEPasswordAuthenticate (
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   IDEPasswordAuthenticate
+//
+// Description: Hook function to validate IDE Password for the HDDs based on
+//              the token ALL_HDD_SAME_PW
+// Input:
+//          CHAR16 *Password,
+//          VOID* Ptr,
+//          BOOLEAN bCheckUser
+//
+// Output:  none
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
+EFI_STATUS IDEPasswordAuthenticate(
     CHAR16  *Password,
     VOID    * Ptr,
-    BOOLEAN bCheckUser
-)
+    BOOLEAN bCheckUser )
 {
     #if ALL_HDD_SAME_PW
      return IDEPasswordAuthenticateAllHdd( Password, Ptr, bCheckUser);
@@ -2020,35 +1888,36 @@ IDEPasswordAuthenticate (
 
 }
 
-/**
-    Get the internal Data pointer
-
-    @param Index - Index of HDD
-
-    @retval VOID
-
-**/
-VOID*
-IDEPasswordGetDataPtr (
-    UINTN   Index
-)
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   IDEPasswordGetDataPtr
+//
+// Description: Get the Ide password Data pointer
+//
+// Input:       none
+//
+// Output:      none
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
+VOID* IDEPasswordGetDataPtr( UINTN Index )
 {
-    HDD_SECURITY_INTERNAL_DATA *DataPtr;
+    IDE_SECURITY_DATA *DataPtr;
 
-    if ( gHddSecurityCount == 0 || HddSecurityInternalData == NULL ) {
+    if ( gIDESecurityCount == 0 || IDEPasswordSecurityData == NULL ) {
         //
         //try to initialize, if not initialized
         //
-        gHddSecurityCount = InitHddSecurityInternalDataPtr( );
+        gIDESecurityCount = IDESecurityProtocolInit( );
     }
 
-    if ( gHddSecurityCount == 0 || HddSecurityInternalData == NULL || Index >=
-         gHddSecurityCount ) {
+    if ( gIDESecurityCount == 0 || IDEPasswordSecurityData == NULL || Index >=
+         gIDESecurityCount ) {
         return NULL;
     }
 
-    DataPtr = (HDD_SECURITY_INTERNAL_DATA*)HddSecurityInternalData;
-
+    DataPtr = (IDE_SECURITY_DATA*)IDEPasswordSecurityData;
+    
     if(DataPtr == NULL) {
         return 0;
     }
@@ -2056,67 +1925,65 @@ IDEPasswordGetDataPtr (
     return (VOID*)&DataPtr[Index];
 }
 
-#if defined(SETUP_IDE_SECURITY_SUPPORT) && SETUP_IDE_SECURITY_SUPPORT
 #if defined(SECURITY_SETUP_ON_SAME_PAGE) && SECURITY_SETUP_ON_SAME_PAGE
-/**
-    function to update the HDD password
-
-    @param CONTROL_DATA *control : Selected password control data,
-    @param VOID *saveData : New password
-
-    @retval EFI_STATUS
-
-**/
-EFI_STATUS
-FramePwdCallbackIdePasswordUpdate (
-    CONTROL_DATA    *control,
-    CHAR16          *saveData
-)
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:	FramePwdCallbackIdePasswordUpdate
+//
+// Description:	function to update the ide password
+//
+// Input:		CONTROL_DATA *control : Selected password control data,
+//				VOID *saveData : New password
+//
+// Output:		EFI_STATUS
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
+EFI_STATUS FramePwdCallbackIdePasswordUpdate ( CONTROL_DATA *control, CHAR16 *saveData)
 {
     BOOLEAN bCheckUser = FALSE;
-    VOID * data =control->ControlData.ControlPtr;
-    UINT8 HardDiskNumber = 0xFF;
+	VOID * data =control->ControlData.ControlPtr;
+	UINT8 HardDiskNumber = 0xFF;
 
     // Check whether selected password control is a HDD Password control
-    if (control->ControlData.ControlVariable == VARIABLE_ID_IDE_SECURITY )
-    {
+	if (control->ControlData.ControlVariable == VARIABLE_ID_IDE_SECURITY ) 
+	{
         // find index of currently selected HDD and type of password(user/master) to update
-        SearchTseHardDiskField( &bCheckUser, NULL, &HardDiskNumber, data );
-
-        if( HardDiskNumber != 0xFF ) // If HDD index is valid
-        {
-            IDEPasswordUpdate( (UINT32)HardDiskNumber, (CHAR16*) saveData, bCheckUser ); //update it
-        }
-        return EFI_SUCCESS;
-    }
-    else
-        return EFI_UNSUPPORTED;
+		SearchTseHardDiskField( &bCheckUser, NULL, &HardDiskNumber, data );
+		
+		if( HardDiskNumber != 0xFF ) // If HDD index is valid
+		{
+			IDEPasswordUpdate( (UINT32)HardDiskNumber, (CHAR16*) saveData, bCheckUser ); //update it
+		}
+		return EFI_SUCCESS;
+	}
+	else
+    	return EFI_UNSUPPORTED;
 }
 
-/**
-    Function to authenticate the HDD password
-
-    @param POPUP_PASSWORD_DATA *popuppassword,
-    @param BOOLEAN *AbortUpdate,
-    @param VOID *data
-
-    @retval EFI_STATUS
-
-**/
-EFI_STATUS
-PopupPwdAuthenticateIDEPwd (
-    POPUP_PASSWORD_DATA *popuppassword,
-    BOOLEAN             *AbortUpdate,
-    VOID                *data
-)
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:	PopupPwdAuthenticateIDEPwd
+//
+// Description:	Function to authenticate the IDE password
+//
+// Input:		POPUP_PASSWORD_DATA *popuppassword, 
+//				BOOLEAN *AbortUpdate,
+//				VOID *data
+//
+// Output:		EFI_STATUS
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
+EFI_STATUS PopupPwdAuthenticateIDEPwd(POPUP_PASSWORD_DATA *popuppassword, BOOLEAN *AbortUpdate,VOID *data)
 {
-    EFI_STATUS Status = EFI_UNSUPPORTED;
+   	EFI_STATUS Status = EFI_UNSUPPORTED;
     CHAR16 *Text=NULL;
-    UINT8 HardDiskNumber = 0xFF;
+	UINT8 HardDiskNumber = 0xFF;
 
     // Check whether selected password control is a HDD Password control
-    if(popuppassword->ControlData.ControlVariable == VARIABLE_ID_IDE_SECURITY )
-    {
+	if(popuppassword->ControlData.ControlVariable == VARIABLE_ID_IDE_SECURITY ) 
+	{
         BOOLEAN bCheckUser = FALSE;
         BOOLEAN EnabledBit = FALSE;
         UINTN size = 0;
@@ -2126,338 +1993,216 @@ PopupPwdAuthenticateIDEPwd (
         if (NULL == ideSecConfig) {
             return EFI_NOT_FOUND;
         }
-    // find index of currently selected HDD and type of password(user/master) to authenticate
+		// find index of currently selected HDD and type of password(user/master) to authenticate
         SearchTseHardDiskField( &bCheckUser, &EnabledBit, &HardDiskNumber, data );
         // Check if password has been set for selected HDD
-        if(  ( HardDiskNumber != 0xFF )  && ideSecConfig->Enabled[HardDiskNumber] )
-        {
-                EnabledBit = TRUE;
-        }
+		if(  ( HardDiskNumber != 0xFF )  && ideSecConfig->Enabled[HardDiskNumber] )
+		{
+			EnabledBit = TRUE;
+		}
 
         // If password has been set then proceed
         if(EnabledBit)
         {
-            if( bCheckUser || ideSecConfig->MasterPasswordStatus[HardDiskNumber] )
+			if( bCheckUser || ideSecConfig->MasterPasswordStatus[HardDiskNumber] )
             {
                 // Ask for the password
-                Status = _DoPopupEdit( popuppassword, STRING_TOKEN(STR_OLD_PSWD), &Text);
+    			Status = _DoPopupEdit( popuppassword, STRING_TOKEN(STR_OLD_PSWD), &Text);
                 if(EFI_SUCCESS != Status )
                 {
                     *AbortUpdate = TRUE; // Status: Password not updated
                 }
-                else
-                {
-                    // Get AMI_HDD_SECURITY_PROTOCOL instance for current HDD
-                    void* DataPtr = TSEIDEPasswordGetDataPtr( HardDiskNumber );
+    			else
+    			{
+                    // Get IDE_SECURITY_PROTOCOL instance for current HDD
+					void* DataPtr = TSEIDEPasswordGetDataPtr( HardDiskNumber );
                     Status = TSEIDEPasswordAuthenticate( Text, DataPtr, bCheckUser ); //Authenticate it
                     if(EFI_ERROR( Status ))
-                    {
+        			{
                         // Show error message if password is wrong
-                        CallbackShowMessageBox( (UINTN)gInvalidPasswordFailMsgBox, MSGBOX_TYPE_OK );
-                        *AbortUpdate = TRUE; // Status: Password not updated
-                    }
-                    StringZeroFreeMemory ((VOID **)&Text); // Erase string and free allocated memory
-                }
+        				CallbackShowMessageBox( (UINTN)gInvalidPasswordFailMsgBox, MSGBOX_TYPE_OK );
+        				*AbortUpdate = TRUE; // Status: Password not updated
+        			}
+					StringZeroFreeMemory ((VOID **)&Text); // Erase string and free allocated memory
+    			}
             }
-        }
+		}
 
         MemFreePointer((VOID **) &ideSecConfig); // Free setup data memory
-        return EFI_SUCCESS;
-    }
-    return EFI_UNSUPPORTED;
+		return EFI_SUCCESS;
+	}
+	return EFI_UNSUPPORTED;
 }
 
-/**
-    Function to report status of HDD password
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:	PopupPwdUpdateIDEPwd
+//
+// Description:	function to update the setup config page after IDE password update
+//
+// Input:		None
+//
+// Output:		None
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
-    @param POPUP_PASSWORD_DATA *popuppassword,
-
-    @retval EFI_STATUS
-
-**/
-EFI_STATUS
-CheckForIDEPasswordInstalled (
-    POPUP_PASSWORD_DATA *popuppassword
-)
+VOID PopupPwdUpdateIDEPwd (VOID)
 {
-    UINT8 HardDiskNumber = 0xFF;
-    VOID *data = popuppassword->ControlData.ControlPtr;
-    
-    // Check whether selected password control is a HDD Password control
-    if(popuppassword->ControlData.ControlVariable == VARIABLE_ID_IDE_SECURITY )
-    {
-        BOOLEAN bCheckUser = FALSE;
-        BOOLEAN EnabledBit = FALSE;
-        UINTN size = 0;
-        IDE_SECURITY_CONFIG *ideSecConfig;
+    UINTN size = 0;
+    IDE_SECURITY_CONFIG *ideSecConfig;
+	UINT8 HardDiskNumber = 0xFF;
 
-        ideSecConfig = VarGetVariable( VARIABLE_ID_IDE_SECURITY, &size ); // Get the data from setup page
-        if (NULL == ideSecConfig) {
-            return EFI_NOT_FOUND;
-        }
-    // find index of currently selected HDD and type of password(user/master) to authenticate
-        SearchTseHardDiskField( &bCheckUser, &EnabledBit, &HardDiskNumber, data );
-        // Check if password has been set for selected HDD
-        if(  ( HardDiskNumber != 0xFF )  && ideSecConfig->Enabled[HardDiskNumber] )
-        {
-                EnabledBit = TRUE;
-        }
-
-        // If password has been set then proceed
-        if(EnabledBit)
-        {
-            if( bCheckUser || ideSecConfig->MasterPasswordStatus[HardDiskNumber] )
-            {
-        	    MemFreePointer((VOID **) &ideSecConfig); // Free setup data memory
-        	    return EFI_SUCCESS;
-            }
-        }
-
-        MemFreePointer((VOID **) &ideSecConfig); // Free setup data memory
-       
-    }
-    
-    return EFI_UNSUPPORTED;
-}
-
-/**
-    function to update the setup configure page after HDD password update
-
-    @param VOID
-
-    @retval VOID
-
-**/
-
-VOID
-PopupPwdUpdateIDEPwd (
-    VOID
-)
-{
-    UINTN               size = 0;
-    IDE_SECURITY_CONFIG *HddSecurityConfig;
-    UINT8               HardDiskNumber = 0xFF;
-
-    // Get the old setup configure data
-    HddSecurityConfig = VarGetVariable( VARIABLE_ID_IDE_SECURITY, &size );
-    if (NULL == HddSecurityConfig) {
+    // Get the old setup config data
+    ideSecConfig = VarGetVariable( VARIABLE_ID_IDE_SECURITY, &size );
+    if (NULL == ideSecConfig) {
         return;
     }
     // Update setup data for all HDDs
-    for( HardDiskNumber = 0 ; HardDiskNumber < HddSecurityConfig->Count ; HardDiskNumber++ )
-    {
-        IDEUpdateConfig( (VOID*)HddSecurityConfig, HardDiskNumber );
-    }
-    // Set the new setup configure data
-    VarSetValue (VARIABLE_ID_IDE_SECURITY, 0, size, HddSecurityConfig);
-    if (gApp != NULL)
-    gApp->CompleteRedraw = TRUE; // redraw setup configure page to reflect updated configuration
-    MemFreePointer((VOID **)&HddSecurityConfig);
+    for( HardDiskNumber = 0 ; HardDiskNumber < ideSecConfig->Count ; HardDiskNumber++ )
+	{
+		IDEUpdateConfig( (VOID*)ideSecConfig, HardDiskNumber );
+	}
+    // Set the new setup config data
+    VarSetValue (VARIABLE_ID_IDE_SECURITY, 0, size, ideSecConfig);
+	if (gApp != NULL)
+		gApp->CompleteRedraw = TRUE; // redraw setup config page to reflect updated configuration
+    MemFreePointer((VOID **)&ideSecConfig);		
 }
 
-/**
-    function to search TSE hard disk field.
-
-    @param pbCheckUser : Password type - User/Master,
-    @param pEnabledBit : Password is set / not,
-    @param pHardDiskNumber : HDD index,
-    @param data
-
-    @retval VOID
-
-**/
-VOID
-SearchTseHardDiskField (
-    IN  OUT BOOLEAN *pbCheckUser,
-    IN  OUT BOOLEAN *pEnabledBit,
-    IN  OUT UINT8   *pHardDiskNumber,
-    IN  VOID        *data
-)
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:	SearchTseHardDiskField
+//
+// Description:	function to search TSE hard disk field.
+//
+// Input:      IN OUT BOOLEAN *pbCheckUser : Password type - User/Master, 
+//             IN OUT BOOLEAN *pEnabledBit : Password is set / not, 
+//             IN OUT UINT8 *pHardDiskNumber : HDD index, 
+//             IN VOID *data 
+//
+// Output:     None
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
+VOID SearchTseHardDiskField ( 
+	IN OUT BOOLEAN *pbCheckUser, IN OUT BOOLEAN *pEnabledBit, 
+	IN OUT UINT8 *pHardDiskNumber, IN VOID *data 
+  )
 {
-    UINTN   size = 0;
-    IDE_SECURITY_CONFIG *HddSecurityConfig;
+	UINTN	size = 0;
+	IDE_SECURITY_CONFIG *ideSecConfig;
 
-    HddSecurityConfig = VarGetVariable( VARIABLE_ID_IDE_SECURITY, &size );
+	ideSecConfig = VarGetVariable( VARIABLE_ID_IDE_SECURITY, &size );
 
-    // Check if User password field is selected, if yes then set HDD index
-    if( UefiGetQuestionOffset(data) /*data->QuestionId*/
-            == STRUCT_OFFSET(IDE_SECURITY_CONFIG,IDEUserPassword) )
-    {
-        *pHardDiskNumber = 0;
-        *pbCheckUser = TRUE;
-    }
-    else if( UefiGetQuestionOffset(data) /*data->QuestionId*/
-            == STRUCT_OFFSET(IDE_SECURITY_CONFIG,IDEUserPassword_HDD2) )
-    {
-        *pHardDiskNumber = 1;
-        *pbCheckUser = TRUE;
-    }
-    else if( UefiGetQuestionOffset(data) /*data->QuestionId*/
-    == STRUCT_OFFSET(IDE_SECURITY_CONFIG,IDEUserPassword_HDD3) )
-    {
-        *pHardDiskNumber = 2;
-        *pbCheckUser = TRUE;
-    }
-    else if( UefiGetQuestionOffset(data) /*data->QuestionId*/
-    == STRUCT_OFFSET(IDE_SECURITY_CONFIG,IDEUserPassword_HDD4) )
-    {
-        *pHardDiskNumber = 3;
-        *pbCheckUser = TRUE;
-    }
-    else if( UefiGetQuestionOffset(data) /*data->QuestionId*/
-    == STRUCT_OFFSET(IDE_SECURITY_CONFIG,IDEUserPassword_HDD5) )
-    {
-    *pHardDiskNumber = 4;
-    *pbCheckUser = TRUE;
-    }
-    else if( UefiGetQuestionOffset(data) /*data->QuestionId*/
-    == STRUCT_OFFSET(IDE_SECURITY_CONFIG,IDEUserPassword_HDD6) )
-    {
-    *pHardDiskNumber = 5;
-    *pbCheckUser = TRUE;
-    }
-    //
-    // Check if Master password field is selected, if yes then set HDD index
-    //
-    else if( UefiGetQuestionOffset(data) /*data->QuestionId*/
-            == STRUCT_OFFSET(IDE_SECURITY_CONFIG,IDEMasterPassword) )
-    {
-        *pHardDiskNumber = 0;
-        *pbCheckUser = FALSE;
-    }
-    else if( UefiGetQuestionOffset(data) /*data->QuestionId*/
-            == STRUCT_OFFSET(IDE_SECURITY_CONFIG,IDEMasterPassword_HDD2) )
-    {
-        *pHardDiskNumber = 1;
-        *pbCheckUser = FALSE;
-    }
-    else if( UefiGetQuestionOffset(data) /*data->QuestionId*/
-            == STRUCT_OFFSET(IDE_SECURITY_CONFIG,IDEMasterPassword_HDD3) )
-    {
-        *pHardDiskNumber = 2;
-        *pbCheckUser = FALSE;
-    }
-    else if( UefiGetQuestionOffset(data) /*data->QuestionId*/
-            == STRUCT_OFFSET(IDE_SECURITY_CONFIG,IDEMasterPassword_HDD4) )
-    {
-        *pHardDiskNumber = 3;
-        *pbCheckUser = FALSE;
-    }
-    else if( UefiGetQuestionOffset(data) /*data->QuestionId*/
-    == STRUCT_OFFSET(IDE_SECURITY_CONFIG,IDEMasterPassword_HDD5) )
-    {
-        *pHardDiskNumber = 4;
-        *pbCheckUser = FALSE;
-    }
-    else if( UefiGetQuestionOffset(data) /*data->QuestionId*/
-            == STRUCT_OFFSET(IDE_SECURITY_CONFIG,IDEMasterPassword_HDD6) )
-    {
-    *pHardDiskNumber = 5;
-    *pbCheckUser = FALSE;
-    }
-    else // Question offset is not from any of the password fields
-    {
-        *pHardDiskNumber = 0xFF; // No HDD selected
-        if( pEnabledBit != NULL )
-        {
-                *pEnabledBit = FALSE; // No HDD ie no password is set
-        }
-    }
+	//
+	// Check if User password field is selected, if yes then set HDD index
+	//
+	if( UefiGetQuestionOffset(data) /*data->QuestionId*/
+		== STRUCT_OFFSET(IDE_SECURITY_CONFIG,IDEUserPassword) )
+	{
+		*pHardDiskNumber = 0;
+		*pbCheckUser = TRUE;
+	}
+	else if( UefiGetQuestionOffset(data) /*data->QuestionId*/
+		== STRUCT_OFFSET(IDE_SECURITY_CONFIG,IDEUserPassword_HDD2) )
+	{
+		*pHardDiskNumber = 1;
+		*pbCheckUser = TRUE;
+	}
+	else if( UefiGetQuestionOffset(data) /*data->QuestionId*/
+		== STRUCT_OFFSET(IDE_SECURITY_CONFIG,IDEUserPassword_HDD3) )
+	{
+		*pHardDiskNumber = 2;
+		*pbCheckUser = TRUE;
+	}
+	else if( UefiGetQuestionOffset(data) /*data->QuestionId*/
+		== STRUCT_OFFSET(IDE_SECURITY_CONFIG,IDEUserPassword_HDD4) )
+	{
+		*pHardDiskNumber = 3;
+		*pbCheckUser = TRUE;
+	}
+	else if( UefiGetQuestionOffset(data) /*data->QuestionId*/
+		== STRUCT_OFFSET(IDE_SECURITY_CONFIG,IDEUserPassword_HDD5) )
+	{
+		*pHardDiskNumber = 4;
+		*pbCheckUser = TRUE;
+	}
+	else if( UefiGetQuestionOffset(data) /*data->QuestionId*/
+		== STRUCT_OFFSET(IDE_SECURITY_CONFIG,IDEUserPassword_HDD6) )
+	{
+		*pHardDiskNumber = 5;
+		*pbCheckUser = TRUE;
+	}
+	//
+	// Check if Master password field is selected, if yes then set HDD index
+	//
+	else if( UefiGetQuestionOffset(data) /*data->QuestionId*/
+		== STRUCT_OFFSET(IDE_SECURITY_CONFIG,IDEMasterPassword) )
+	{
+		*pHardDiskNumber = 0;
+		*pbCheckUser = FALSE;
+	}
+	else if( UefiGetQuestionOffset(data) /*data->QuestionId*/
+		== STRUCT_OFFSET(IDE_SECURITY_CONFIG,IDEMasterPassword_HDD2) )
+	{
+		*pHardDiskNumber = 1;
+		*pbCheckUser = FALSE;
+	}
+	else if( UefiGetQuestionOffset(data) /*data->QuestionId*/
+		== STRUCT_OFFSET(IDE_SECURITY_CONFIG,IDEMasterPassword_HDD3) )
+	{
+		*pHardDiskNumber = 2;
+		*pbCheckUser = FALSE;
+	}
+	else if( UefiGetQuestionOffset(data) /*data->QuestionId*/
+		== STRUCT_OFFSET(IDE_SECURITY_CONFIG,IDEMasterPassword_HDD4) )
+	{
+		*pHardDiskNumber = 3;
+		*pbCheckUser = FALSE;
+	}
+	else if( UefiGetQuestionOffset(data) /*data->QuestionId*/
+		== STRUCT_OFFSET(IDE_SECURITY_CONFIG,IDEMasterPassword_HDD5) )
+	{
+		*pHardDiskNumber = 4;
+		*pbCheckUser = FALSE;
+	}
+	else if( UefiGetQuestionOffset(data) /*data->QuestionId*/
+		== STRUCT_OFFSET(IDE_SECURITY_CONFIG,IDEMasterPassword_HDD6) )
+	{
+		*pHardDiskNumber = 5;
+		*pbCheckUser = FALSE;
+	}
+	else // Question offset is not from any of the password fields
+	{
+		*pHardDiskNumber = 0xFF; // No HDD selected
+		if( pEnabledBit != NULL )
+		{
+			*pEnabledBit = FALSE; // No HDD ie no password is set
+		}
+	}
     // if HDD index is invalid, set it to 0xFF
-    if( *pHardDiskNumber >= HddSecurityConfig->Count )
-    {
-        *pHardDiskNumber = 0xFF;
-    }
+	if( *pHardDiskNumber >= ideSecConfig->Count )
+	{
+		*pHardDiskNumber = 0xFF;
+	}
 
-    MemFreePointer( (VOID **) &HddSecurityConfig );
-    return;
-}
-#endif
-#endif
-/**
-    Returns EFI_SUCCESS and sets *bHddStatus = TRUE if number of
-    attempt to unlock HDD has reached MAXIMUM_HDD_UNLOCK_ATTEMPTS.
-
-    @param VOID *DataPtr
-
-    @retval BOOLEAN *bHddStatus
-
-**/
-
-EFI_STATUS
-HDDStatus (
-    VOID    *DataPtr,
-    BOOLEAN *bHddStatus
-)
-{
-    EFI_STATUS                   Status = 0;
-    UINT16                       SecurityStatus = 0;
-    HDD_SECURITY_INTERNAL_DATA   *Ptr = (HDD_SECURITY_INTERNAL_DATA *)DataPtr;
-
-    *bHddStatus = FALSE;
-
-    TRACE((-1,"\n HDDStatus ..."));
-    
-    Status = Ptr->HddSecurityProtocol->ReturnSecurityStatus( Ptr->HddSecurityProtocol, &SecurityStatus );
-    if ( EFI_ERROR( Status ))
-        return Status;
-
-    if (SecurityStatus & 0x10) {
-        *bHddStatus = TRUE;
-    }
-
-    return EFI_SUCCESS;
-}
-
-#if !defined(SETUP_IDE_SECURITY_SUPPORT) || SETUP_IDE_SECURITY_SUPPORT == 0
-extern BOOLEAN gBrowserCallbackEnabled;
-EFI_GUID       gHddSecurityLoadSetupDefaultsGuid = AMI_HDD_SECURITY_LOAD_SETUP_DEFAULTS_GUID;
-EFI_EVENT      gHddSecurityLoadSetupDefaultsEvent = NULL;
-
-VOID
-EFIAPI
-HddSecurityLoadSetupDefaultsFunc (
-        IN EFI_EVENT Event,
-        IN VOID *Context
-)
-{
-    //pBS->CloseEvent(Event);
-}
-
-VOID
-HddSecurityLoadSetupDefaults (
-        VOID *defaults,
-        UINTN data 
-)
-{
-    EFI_STATUS          Status;
-    if(gHddSecurityLoadSetupDefaultsEvent == NULL) {
-        Status = pBS->CreateEventEx(
-                     EVT_NOTIFY_SIGNAL,
-                     TPL_CALLBACK,
-                     HddSecurityLoadSetupDefaultsFunc,
-                     NULL,
-                     &gHddSecurityLoadSetupDefaultsGuid,
-                     &gHddSecurityLoadSetupDefaultsEvent);
-        ASSERT_EFI_ERROR(Status);
-    }
-    gBrowserCallbackEnabled = TRUE;
-    pBS->SignalEvent(gHddSecurityLoadSetupDefaultsEvent);
-    gBrowserCallbackEnabled = FALSE;
+	MemFreePointer( (VOID **) &ideSecConfig );
+	return;
 }
 
 #endif
 
-//***********************************************************************
-//***********************************************************************
-//**                                                                   **
-//**        (C)Copyright 1985-2016, American Megatrends, Inc.          **
-//**                                                                   **
-//**                       All Rights Reserved.                        **
-//**                                                                   **
-//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093         **
-//**                                                                   **
-//**                       Phone: (770)-246-8600                       **
-//**                                                                   **
-//***********************************************************************
-//***********************************************************************
+//****************************************************************************
+//****************************************************************************
+//**                                                                        **
+//**             (C)Copyright 1985-2013, American Megatrends, Inc.          **
+//**                                                                        **
+//**                          All Rights Reserved.                          **
+//**                                                                        **
+//**                 5555 Oakbrook Pkwy, Norcross, GA 30093                 **
+//**                                                                        **
+//**                          Phone (770)-246-8600                          **
+//**                                                                        **
+//****************************************************************************
+//****************************************************************************

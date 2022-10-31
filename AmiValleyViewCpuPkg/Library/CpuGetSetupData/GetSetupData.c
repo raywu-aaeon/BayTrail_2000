@@ -26,10 +26,15 @@
 // 
 //*************************************************************************
 
-/** @file GetSetupData.c
-    Custom CPU setup data behavior implementation
-
-**/
+//<AMI_FHDR_START>
+//----------------------------------------------------------------------
+//
+// Name:        GetSetupData.c
+//
+// Description: Custom CPU setup data behavior implementation
+//
+//----------------------------------------------------------------------
+//<AMI_FHDR_END>
 
 #include <Setup.h>
 #include <PiPei.h>
@@ -75,20 +80,24 @@ CopyMem (
 
 //---------------------------------------------------------------------------
 
-/**
-    This function initilize Intel Cpu Policty related setup data 
-    from system SetupData variable 
-
-    @param *Services    - Pointer to PeiServices or RuntimeServices
-        structure  
-    @param *CpuSetupData - Pointer to custom setup data to return
-
-    @param Pei          - Pei flag. If TRUE we are in PEI phase
-
-    @retval VOID
-
-    @note  PORTING REQUIRED
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   CpuPolicyInitEntryPoint
+//
+// Description: This function initilize Intel Cpu Policty related setup data 
+//              from system SetupData variable 
+//
+// Input:       *Services    - Pointer to PeiServices or RuntimeServices
+//                             structure  
+//              *CpuSetupData - Pointer to custom setup data to return
+//
+//              Pei          - Pei flag. If TRUE we are in PEI phase
+//
+// Output:      None
+//
+// Notes:       PORTING REQUIRED
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 VOID GetCpuSetupData (
     IN VOID                 *Services,

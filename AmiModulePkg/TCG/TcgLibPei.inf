@@ -1,0 +1,58 @@
+#**********************************************************************
+#**********************************************************************
+#**                                                                  **
+#**        (C)Copyright 1985-2012, American Megatrends, Inc.         **
+#**                                                                  **
+#**                       All Rights Reserved.                       **
+#**                                                                  **
+#**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093        **
+#**                                                                  **
+#**                       Phone: (770)-246-8600                      **
+#**                                                                  **
+#**********************************************************************
+#**********************************************************************
+## @file
+#   This driver creates the TCG library
+##
+#*************************************************************************
+#**                                                                     **
+#**        (C)Copyright 1985-2012, American Megatrends, Inc.            **
+#**                                                                     **
+#**                       All Rights Reserved.                          **
+#**                                                                     **
+#**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093           **
+#**                                                                     **
+#**                       Phone: (770)-246-8600                         **
+#**                                                                     **
+#*************************************************************************
+#*************************************************************************
+
+
+[Defines]
+INF_VERSION = 0x00010005
+VERSION_STRING = 1.0
+BASE_NAME = TcgLibPei
+MODULE_TYPE = PEIM
+LIBRARY_CLASS = BaseTcgLib
+FILE_GUID = 98904C98-FCE0-49eb-9DAA-0E26159FF46B
+
+
+[Sources]
+TpmLib.c
+sha1.c
+TcgCommon.c
+Sha1transform32.asm
+Sha1transform_ia32.inc
+TcgPrivate.c
+
+[LibraryClasses]
+AmiPeiLib
+AmiCspLib
+BaseAmiTcmlib
+
+[Packages]
+AmiCompatibilityPkg\AmiCompatibilityPkg.dec
+MdePkg\MdePkg.dec
+IntelFrameworkPkg\IntelFrameworkPkg.dec
+AmiModulePkg\AmiModulePkg.dec
+

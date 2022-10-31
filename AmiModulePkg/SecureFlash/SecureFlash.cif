@@ -11,8 +11,7 @@
 "SecureFlash.mak"
 "SecureFlash.sd"
 "SecureFlash.uni"
-"SecureFlash.c"
-"SecureFlash.h"
+"FdfRules.txt"
 [parts]
 "SecFlashUpd"
 "SecSMIFlash"

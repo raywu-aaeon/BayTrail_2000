@@ -14,7 +14,6 @@
 "fitcbuildNotebook8MB_TXE1.5MB.bat"		
 "fitcbuildNotebook8MB_TXE3MB.bat"	
 "BYT-I_DUAL_BOOT_TXE_KIT_RELEASE_1.1.0.1089.bat"    
-"BYT-I_DUAL_BOOT_TXE_KIT_RELEASE_1.1.5.1162.bat"   
 "BYT-I_FEAT_TXE_KIT_RELEASE_1.0.2.1060v5.bat"   
 "BYT-I_SLIM_TXE_KIT_RELEASE_1.0.2.1067.bat" 
 "fitc.exe"	
@@ -30,7 +29,6 @@
 "BayTrail_Notebook_8MB_TXE_1.5MB.xml"	
 "BayTrail_Notebook_8MB_TXE_3MB.xml"	
 "BYT-I_DUAL_BOOT_TXE_KIT_RELEASE_1.1.0.1089.xml"    
-"BYT-I_DUAL_BOOT_TXE_KIT_RELEASE_1.1.5.1162.xml"   
 "BYT-I_FEAT_TXE_KIT_RELEASE_1.0.2.1060v5.xml"   
 "BYT-I_SLIM_TXE_KIT_RELEASE_1.0.2.1067.xml" 
 "fitc.ini"	
@@ -41,7 +39,6 @@
 "TXE_Region_3MB.bin"
 "BYT-I_FEAT_TXE_KIT_RELEASE_1.0.2.1060v5.bin"   
 "BYT-I_DUAL_BOOT_TXE_KIT_RELEASE_1.1.0.1089.bin"    
-"BYT-I_DUAL_BOOT_TXE_KIT_RELEASE_1.1.5.1162.bin"    
 "BYT-I_SLIM_TXE_KIT_RELEASE_1.0.2.1067.bin" 
 "RomImageReleaseNotes.chm"
 <endComponent>

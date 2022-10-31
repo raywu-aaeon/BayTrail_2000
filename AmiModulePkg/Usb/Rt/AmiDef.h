@@ -1,21 +1,35 @@
+//****************************************************************************
+//****************************************************************************
+//**                                                                        **
+//**             (C)Copyright 1985-2013, American Megatrends, Inc.          **
+//**                                                                        **
+//**                          All Rights Reserved.                          **
+//**                                                                        **
+//**                 5555 Oakbrook Pkwy, Norcross, GA 30093                 **
+//**                                                                        **
+//**                          Phone (770)-246-8600                          **
+//**                                                                        **
+//****************************************************************************
+//****************************************************************************
+
 //**********************************************************************
-//**********************************************************************
-//**                                                                  **
-//**        (C)Copyright 1985-2016, American Megatrends, Inc.         **
-//**                                                                  **
-//**                       All Rights Reserved.                       **
-//**                                                                  **
-//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093        **
-//**                                                                  **
-//**                       Phone: (770)-246-8600                      **
-//**                                                                  **
-//**********************************************************************
+// $Header: /Alaska/SOURCE/Modules/USB/ALASKA/rt/amidef.h 37    5/22/12 10:03a Ryanchou $
+//
+// $Revision: 37 $
+//
+// $Date: 5/22/12 10:03a $
+//
 //**********************************************************************
 
-/** @file AmiDef.h
-    AMI USB driver definitions, framework specific
-
-**/
+//<AMI_FHDR_START>
+//----------------------------------------------------------------------------
+//
+//  Name:           AmiDef.h
+//
+//  Description:    AMI USB driver definitions, framework specific
+//
+//----------------------------------------------------------------------------
+//<AMI_FHDR_END>
 
 // Avoid including multiple instance of this file
 
@@ -24,11 +38,9 @@
 
 #include    <Token.h>
 
-#define USB_DRIVER_VERSION  USB_DRIVER_MAJOR_VER
+#define USB_DRIVER_VERSION  (USB_DRIVER_MAJOR_VER << 4) + USB_DRIVER_MINOR_VER
 
-#include <Library/DebugLib.h>
 #include <AmiDxeLib.h>
-
 #define _FAR_
 
 //  Basic type definitions of various size
@@ -177,26 +189,16 @@ typedef INT16           RETCODE;
 // Loop forever macro
 #define LOOP_FOREVER    while(1)
 
-#if defined(USB_DEBUG_MESSAGES) && (USB_DEBUG_MESSAGES != 0)
-//#define EfiDebugVPrint(EFI_D_ERROR, Message, ArgList) PrintDebugMessageVaList(-1, Message, ArgList)
-//extern  RETCODE         PrintDebugMsg (int, int, char *, ...);
-//#define USB_DEBUG       PrintDebugMsg
-#if USB_DEBUG_MESSAGES == 1
-#define USB_DEBUG(EdkErrorLevel, UsbErrorLevel, ...) \
-    if ((UsbErrorLevel == 0) || ((UsbErrorLevel <= TopDebugLevel) && \
-    (UsbErrorLevel >= BottomDebugLevel))) \
-        DEBUG((-1, __VA_ARGS__))
-#else if USB_DEBUG_MESSAGES == 2
-#define USB_DEBUG(EdkErrorLevel, UsbErrorLevel, ...) \
-    if ((UsbErrorLevel == 0) || ((UsbErrorLevel <= TopDebugLevel) && \
-    (UsbErrorLevel >= BottomDebugLevel))) \
-        DEBUG((EdkErrorLevel, __VA_ARGS__))
-#endif
+#if defined(USB_DEBUG_MESSAGES) && (USB_DEBUG_MESSAGES == 1)
+#define EfiDebugVPrint(EFI_D_ERROR, Message, ArgList) PrintDebugMessageVaList(-1, Message, ArgList)
+
+extern  RETCODE         PrintDebugMsg (int, char *, ...);
+#define USB_DEBUG       PrintDebugMsg
 #define USB_DEBUG_LEVEL DEBUG_LEVEL_3
 void DEBUG_DELAY();
 #else
-//extern  RETCODE         PrintDebugMsg (int, int, char *, ...);
-#define USB_DEBUG
+extern  RETCODE         PrintDebugMsg (int, char *, ...);
+#define USB_DEBUG       1?0:PrintDebugMsg
 #define DEBUG_DELAY
 #endif
 
@@ -291,6 +293,8 @@ void DEBUG_DELAY();
 
 void cp( UINT8 code);
 
+#define EfiCreateEventLegacyBoot CreateLegacyBootEvent
+
 VOID    USB_SmiQueuePut(VOID*);
 
 EFI_STATUS  USBSB_InstallSmiEventHandlers(VOID);
@@ -300,16 +304,16 @@ EFI_STATUS	USBSB_UninstallTimerHandlers(VOID);
 
 #endif      // __AMI_H
 
-//**********************************************************************
-//**********************************************************************
-//**                                                                  **
-//**        (C)Copyright 1985-2016, American Megatrends, Inc.         **
-//**                                                                  **
-//**                       All Rights Reserved.                       **
-//**                                                                  **
-//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093        **
-//**                                                                  **
-//**                       Phone: (770)-246-8600                      **
-//**                                                                  **
-//**********************************************************************
-//**********************************************************************
+//****************************************************************************
+//****************************************************************************
+//**                                                                        **
+//**             (C)Copyright 1985-2013, American Megatrends, Inc.          **
+//**                                                                        **
+//**                          All Rights Reserved.                          **
+//**                                                                        **
+//**                 5555 Oakbrook Pkwy, Norcross, GA 30093                 **
+//**                                                                        **
+//**                          Phone (770)-246-8600                          **
+//**                                                                        **
+//****************************************************************************
+//****************************************************************************

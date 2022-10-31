@@ -43,7 +43,7 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 // AMI PORTING START.
 //
 #include <Library/UefiRuntimeServicesTableLib.h>
-#include <NetworkStackSetup.h>
+#include <Protocol/NetworkStackSetup.h>
 //
 // AMI PORTING END.
 //

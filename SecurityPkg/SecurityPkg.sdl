@@ -16,23 +16,19 @@ TOKEN
     TargetH = Yes
 End
 
-#AMI_OVERRIDE_TXE0000_START : Support FTPM
-#Use AMI TCG2's drivers
-#INFComponent
-#    Name  = "TrEEPei"
-#    File  = "Tcg/TrEEPei/TrEEPei.inf"
-#    Package  = "SecurityPkg"
-#    ModuleTypes  = "PEIM"
-#End
+INFComponent
+    Name  = "TrEEPei"
+    File  = "Tcg/TrEEPei/TrEEPei.inf"
+    Package  = "SecurityPkg"
+    ModuleTypes  = "PEIM"
+End
 
-#INFComponent
-#    Name  = "TrEEDxe"
-#    File  = "Tcg/TrEEDxe/TrEEDxe.inf"
-#    Package  = "SecurityPkg"
-#    ModuleTypes  = "DXE_DRIVER"
-#End
-#AMI_OVERRIDE_TXE0000_END
-
+INFComponent
+    Name  = "TrEEDxe"
+    File  = "Tcg/TrEEDxe/TrEEDxe.inf"
+    Package  = "SecurityPkg"
+    ModuleTypes  = "DXE_DRIVER"
+End
 #EIP139219 EIP139833 >>
 INFComponent
     Name  = "TcgMor"
@@ -97,13 +93,11 @@ INFComponent
     Disable = Yes    
 End
 
-#EIP211523
-#Use AMI TCG2's drivers
-#INFComponent
-#    Name  = "DxeTpm2MeasureBootLib"
-#    File  = "LibraryInstances/DxeTpm2MeasureBootLib/DxeTpm2MeasureBootLib.inf"
-#    Package  = "SecurityPkg"
-#End
+INFComponent
+    Name  = "DxeTpm2MeasureBootLib"
+    File  = "LibraryInstances/DxeTpm2MeasureBootLib/DxeTpm2MeasureBootLib.inf"
+    Package  = "SecurityPkg"
+End
 
 INFComponent
     Name  = "TpmMeasurementLib"
@@ -111,15 +105,15 @@ INFComponent
     Package  = "SecurityPkg"
 End
 
-#PcdMapping
-#    Name  = "PcdTpmInstanceGuid"
-#    GuidSpace  = "gEfiSecurityPkgTokenSpaceGuid"
-#    PcdType  = "PcdsDynamicDefault"
-#    Value  = "{0x7b, 0x3a, 0xcd, 0x72, 0xA5, 0xFE, 0x5e, 0x4f, 0x91, 0x65, 0x4d, 0xd1, 0x21, 0x87, 0xbb, 0x13}"
-#    Offset  = 00h
-#    Length  = 00h
-#    TargetDSC = Yes
-#End
+PcdMapping
+    Name  = "PcdTpmInstanceGuid"
+    GuidSpace  = "gEfiSecurityPkgTokenSpaceGuid"
+    PcdType  = "PcdsDynamicDefault"
+    Value  = "{0x7b, 0x3a, 0xcd, 0x72, 0xA5, 0xFE, 0x5e, 0x4f, 0x91, 0x65, 0x4d, 0xd1, 0x21, 0x87, 0xbb, 0x13}"
+    Offset  = 00h
+    Length  = 00h
+    TargetDSC = Yes
+End
 
 LibraryMapping
     Class  = "Tpm2CommandLib"
@@ -144,30 +138,29 @@ LibraryMapping
     ModuleTypes  = "DXE_DRIVER DXE_RUNTIME_DRIVER DXE_SMM_DRIVER"
 End
 
-#AMI_OVERRIDE_TXE0000_START : Support FTPM
-#LibraryMapping
-#    Class  = "NULL"
-#    Instance  = "SecurityPkg.HashInstanceLibSha1"
-#    Override  = "SecurityPkg.TrEEPei"
-#End
+LibraryMapping
+    Class  = "NULL"
+    Instance  = "SecurityPkg.HashInstanceLibSha1"
+    Override  = "SecurityPkg.TrEEPei"
+End
 
-#LibraryMapping
-#    Class  = "NULL"
-#    Instance  = "SecurityPkg.HashInstanceLibSha256"
-#    Override  = "SecurityPkg.TrEEPei"
-#End
+LibraryMapping
+    Class  = "NULL"
+    Instance  = "SecurityPkg.HashInstanceLibSha256"
+    Override  = "SecurityPkg.TrEEPei"
+End
 
-#LibraryMapping
-#    Class  = "NULL"
-#    Instance  = "SecurityPkg.HashInstanceLibSha1Dxe"
-#    Override  = "SecurityPkg.TrEEDxe"
-#End
+LibraryMapping
+    Class  = "NULL"
+    Instance  = "SecurityPkg.HashInstanceLibSha1Dxe"
+    Override  = "SecurityPkg.TrEEDxe"
+End
 
-#LibraryMapping
-#    Class  = "NULL"
-#    Instance  = "SecurityPkg.HashInstanceLibSha256Dxe"
-#    Override  = "SecurityPkg.TrEEDxe"
-#End
+LibraryMapping
+    Class  = "NULL"
+    Instance  = "SecurityPkg.HashInstanceLibSha256Dxe"
+    Override  = "SecurityPkg.TrEEDxe"
+End
 
 LibraryMapping
     Class  = "NULL"
@@ -176,15 +169,14 @@ LibraryMapping
     Disable = Yes
 End
 
-#LibraryMapping
-#    Class  = "NULL"
-#    Instance  = "SecurityPkg.DxeTpm2MeasureBootLib"
-#    Override  = "MdeModulePkg.SecurityStubDxe"
-#End
+LibraryMapping
+    Class  = "NULL"
+    Instance  = "SecurityPkg.DxeTpm2MeasureBootLib"
+    Override  = "MdeModulePkg.SecurityStubDxe"
+End
 
 LibraryMapping
     Class  = "TpmMeasurementLib"
     Instance  = "SecurityPkg.TpmMeasurementLib"
     ModuleTypes  = "DXE_DRIVER DXE_RUNTIME_DRIVER DXE_SMM_DRIVER"
 End
-#AMI_OVERRIDE_TXE0000_END

@@ -1,7 +1,7 @@
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2016, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2013, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **
@@ -168,7 +168,7 @@ int Pkcs7_parse_IssuerSerial_sequence(struct pkcs7_signer_info_st *cert, u8 **bu
         return err;
     }
     x509_name_string(&cert->issuer, sbuf, sizeof(sbuf));
-    wpa_printf(MSG_MSGDUMP, "PKCS7: issuer %a", sbuf);
+    wpa_printf(MSG_MSGDUMP, "PKCS7: issuer %s", sbuf);
 
     /* serialNumber CertificateSerialNumber ::= INTEGER */
     if (asn1_get_next(pos, end - pos, &hdr) < 0 || 
@@ -268,7 +268,7 @@ struct pkcs7_signer_info_st * Pkcs7_signer_info_common_hdr_parse(u8 **buf, size_
     }
     if (hdr.length != 1) {
         wpa_printf(MSG_DEBUG, "PKCS7: Unexpected version field "
-               "length %lx (expected 1)", hdr.length);
+               "length %u (expected 1)", hdr.length);
         
         return cert;
     }
@@ -385,7 +385,7 @@ struct pkcs7_signer_info_st * Pkcs7_signer_info_common_hdr_parse(u8 **buf, size_
             pos = hdr.payload;
             end = pos + hdr.length;
             asn1_oid_to_str(&oid, sbuf, sizeof(sbuf));
-            wpa_printf(MSG_DEBUG, "PKCS7: Found OID=%a", sbuf);
+            wpa_printf(MSG_DEBUG, "PKCS7: Found OID=%s", sbuf);
 
         //    CounterType
         //        data
@@ -409,7 +409,7 @@ struct pkcs7_signer_info_st * Pkcs7_signer_info_common_hdr_parse(u8 **buf, size_
                     return cert;
                 }
                 asn1_oid_to_str(&oid, sbuf, sizeof(sbuf));
-                 wpa_printf(MSG_DEBUG, "PKCS7: Data OID=%a", sbuf);
+                 wpa_printf(MSG_DEBUG, "PKCS7: Data OID=%s", sbuf);
             // possible contentInfo types:
             // spcIndirectDataContext   1 3 6 1 4 1 311 2 1 4
             // Data                        1 2 840 113549 1 7 1
@@ -599,7 +599,7 @@ struct pkcs7_signer_info_st * Pkcs7_signer_info_common_hdr_parse(u8 **buf, size_
         } // end while
 
         if(!cert->authAttr.messageDigest) {
-            wpa_printf(MSG_DEBUG, "PKCS7: Missing required messageDigest entry in authenticatedAttrib collection");
+            wpa_printf(MSG_DEBUG, "PKCS7: Missing required entries in authenticatedAttrib collection");
             
             return cert;
         }
@@ -651,8 +651,8 @@ int Pkcs7_RFC6131_TimeStampToken_parse( const u8 *buf, size_t len,
 /*
     add tSTInfo struct to Pkcs7_struct
     parse Pkcs#7
-    get Content_start, len
-    parse Content_start.TimeStamp
+    get contentInfo_start, len
+    parse contentInfo_start.TimeStamp
     fill in TimeStamp fields
 */
     wpa_printf(MSG_DEBUG, "PKCS7: Found RFC6131 TimeStamp, len=%x",len);
@@ -744,7 +744,7 @@ int Pkcs7_TimeStamp_parse(const u8 *buf, size_t len,
 
     asn1_get_oid(pos, end-pos, &oid, &pos);
     asn1_oid_to_str(&oid, sbuf, sizeof(sbuf));
-    wpa_printf(MSG_DEBUG, "PKCS7: Found OID=%a", sbuf);
+    wpa_printf(MSG_DEBUG, "PKCS7: Found OID=%s", sbuf);
     if (Pkcs7_Microsoft_oid(&oid) &&
         oid.len == 10 && 
         oid.oid[6] == 311 && oid.oid[7] == 3 && oid.oid[8] == 3 && oid.oid[9] == 1 ) 
@@ -855,8 +855,8 @@ int Pkcs7_parse_Authenticode_contentInfo(const u8 *buf, size_t len, struct pkcs7
     pos = hdr.payload;
     end = hdr.payload + hdr.length;
 
-    SignedData->Content_start = (u8*)hdr.payload; // ContentInfo OCTET STRING
-    SignedData->Content_len = hdr.length;
+    SignedData->contentInfo_start = (u8*)hdr.payload; // ContentInfo OCTET STRING
+    SignedData->contentInfo_len = hdr.length;
 
     if (asn1_get_next(pos, end - seq_pos, &hdr) < 0 ||
         hdr.class != ASN1_CLASS_UNIVERSAL ||
@@ -994,7 +994,7 @@ int Pkcs7_parse_contentInfo_tstInfo(const u8 *buf, size_t len, struct pkcs7_sign
 {
     struct asn1_hdr hdr;
     const u8 *pos, *end;
-    const u8 *seq_end;
+    const u8 *seq_pos, *seq_end;
     size_t left;
     unsigned long value;
     struct asn1_oid oid;
@@ -1005,7 +1005,7 @@ int Pkcs7_parse_contentInfo_tstInfo(const u8 *buf, size_t len, struct pkcs7_sign
     int    err = -1;
     struct pkcs7_signer_info_st *cert;
 
-    wpa_printf(MSG_DEBUG, "PKCS7: Parse ContentInfo.tstInfo");
+    wpa_printf(MSG_DEBUG, "PKCS7: Parse ScontentInfo.tstInfo");
 
     if(len < 256) { // can be smaller if GeneralName is short....
         return err;
@@ -1039,7 +1039,7 @@ TSTInfo ::= SEQUENCE  {
    extensions                   [1] IMPLICIT Extensions   OPTIONAL  }
 */
 
-    pos = buf;
+    pos = seq_pos = buf;
     end = seq_end = buf + len;
 
     // [0] TAG
@@ -1123,7 +1123,7 @@ TSTInfo ::= SEQUENCE  {
     }
     if (hdr.length != 1) {
         wpa_printf(MSG_DEBUG, "PKCS7: Unexpected version field "
-               "length %lx (expected 1)", hdr.length);
+               "length %u (expected 1)", hdr.length);
         
         return err;
     }
@@ -1156,7 +1156,7 @@ TSTInfo ::= SEQUENCE  {
         return err;
     }
     asn1_oid_to_str(&oid, sbuf, sizeof(sbuf));
-     wpa_printf(MSG_DEBUG, "PKCS7: TSAPolicyOID =%a", sbuf);
+     wpa_printf(MSG_DEBUG, "PKCS7: TSAPolicyOID =%s", sbuf);
 
     if (!Pkcs7_Microsoft_oid(&oid) ||
     oid.len != 10 || 
@@ -1318,11 +1318,11 @@ TSTInfo ::= SEQUENCE  {
     if (x509_parse_name(pos, seq_end - pos, &cert->issuer, &pos))
         return err;
     x509_name_string(&cert->issuer, sbuf, sizeof(sbuf));
-    wpa_printf(MSG_MSGDUMP, "PKCS7: issuer %a", sbuf);
+    wpa_printf(MSG_MSGDUMP, "PKCS7: issuer %s", sbuf);
 
     SignedData->tstInfo = cert;
-    SignedData->Content_start = cert->authAttr.auth_attrib_start;
-    SignedData->Content_len = cert->authAttr.auth_attrib_len;
+    SignedData->contentInfo_start = cert->authAttr.auth_attrib_start;
+    SignedData->contentInfo_len = cert->authAttr.auth_attrib_len;
 
     return 0;
 }
@@ -1545,7 +1545,7 @@ Digest
         return NULL;
     }
     asn1_oid_to_str(&SignedData->Digest_alg.oid, sbuf, sizeof(sbuf));
-     wpa_printf(MSG_DEBUG, "PKCS7: Found OID=%a", sbuf);
+     wpa_printf(MSG_DEBUG, "PKCS7: Found OID=%s", sbuf);
     if (!x509_sha1_oid(&SignedData->Digest_alg.oid) &&
          !x509_sha256_oid(&SignedData->Digest_alg.oid)
     ){
@@ -1590,7 +1590,7 @@ Digest
         return NULL;
     }
     asn1_oid_to_str(&oid, sbuf, sizeof(sbuf));
-    wpa_printf(MSG_DEBUG, "PKCS7: ContentInfo.contentType OID=%a", sbuf);
+    wpa_printf(MSG_DEBUG, "PKCS7: ContentInfo.contentType OID=%s", sbuf);
 
     seq_pos = pos;
 //////////////////////////////////////////////////////////////////////////////////
@@ -1611,7 +1611,7 @@ Digest
         wpa_printf(MSG_DEBUG, "PKCS7: OID = Data");
 
         if (value != 1) {
-            wpa_printf(MSG_DEBUG, "PKCS7: Unsupported signedData version %d != 1",
+            wpa_printf(MSG_DEBUG, "PKCS7: Unsupported Authenticode signedData version %d != 1",
                    value);
             // pkcs7_signed_data_free(SignedData);
             return NULL;
@@ -1619,8 +1619,8 @@ Digest
 
         if(!x509_sha256_oid(&SignedData->Digest_alg.oid)) { 
             asn1_oid_to_str(&SignedData->Digest_alg.oid, sbuf, sizeof(sbuf));
-            wpa_printf(MSG_DEBUG, "Warning: UEFI AuthVariable SignedData: only SHA256 digestAlgorithm is accepted"
-            "OID=%a", sbuf);
+            wpa_printf(MSG_DEBUG, "UEFI 2.3.1 AuthVariable SignedData: Only SHA256 digestAlgorithm supported"
+            "OID=%s", sbuf);
 // Msft AuthVAr BUG: UEFI 2.3.1 page223 : Only a digest algorithm of SHA-256 is accepted.
 //             // pkcs7_signed_data_free(SignedData);
 //          return NULL;
@@ -1737,10 +1737,8 @@ Digest
 
         if(cert_first == NULL)
             cert_first = cert;
-        else {
-            if(cert_priv) // dummy test to avoid CPP check error
-                cert_priv->next = cert;
-        }
+        else
+            cert_priv->next = cert;
 
         cert_priv = cert;
 
@@ -1786,21 +1784,17 @@ struct x509_certificate * Pkcs7_return_signing_cerificate(struct pkcs7_signed_da
 #endif
     struct pkcs7_signer_info_st *SignerInfo;
 
-    if(SignedData==NULL) {
-        return NULL;
-    }
-
     SignerInfo = SignedData->SignerInfo;
     x509_name_string(&SignerInfo->issuer, buf,
          sizeof(buf)); 
     wpa_printf(MSG_DEBUG, "PKCS7: Looking for the Signing certificate...");
-    wpa_printf(MSG_DEBUG, "PKCS7: Issuer: %a", buf);
+    wpa_printf(MSG_DEBUG, "PKCS7: Issuer: %s", buf);
 
     cert = SignedData->CertStore;
     
     for (idx = 0; cert; cert = cert->next, idx++) {
         x509_name_string(&cert->issuer, buf, sizeof(buf)); 
-         wpa_printf(MSG_DEBUG, "PKCS7: %x: %a", idx, buf);
+         wpa_printf(MSG_DEBUG, "PKCS7: %x: %s", idx, buf);
 
 // Compare Name and Serial Number
         if (x509_name_compare(&cert->issuer,
@@ -1925,36 +1919,59 @@ int Pkcs7_x509_certificate_chain_validate_with_timestamp(
         // locate chained certs w matching Subject name
         for (cert = SignedData->CertStore, idx = 0; !chain_trusted && cert; cert = cert->next, idx++) {
             x509_name_string(&cert->subject, buf, sizeof(buf)); 
-            wpa_printf(MSG_DEBUG, "PKCS7: %x:  Chain Cert (%x) Subject name: %a", idx, cert->cert_start, buf);
+            wpa_printf(MSG_DEBUG, "PKCS7: %x:  Chain Cert (%x) Subject name: %s", idx, cert->cert_start, buf);
  
             //
             // Verify if cur cert is chained to Signer
             // Test Cert Expiration
-            if ((long) now.sec <
-                (long) cert->not_before ||
-                (long) now.sec >
-                (long) cert->not_after) {
+            if ((unsigned long) now.sec <
+                (unsigned long) cert->not_before ||
+                (unsigned long) now.sec >
+                (unsigned long) cert->not_after) {
                   wpa_printf(MSG_INFO, "PKCS7: Cert Timestamp Expired: "
-                                "Time now=%X not_before=%X not_after=%X",
+                                "Time now=%lx not_before=%lx not_after=%lx",
                               now.sec, cert->not_before, cert->not_after);
                 //
                 // w/a ignore time stamp checking
                 //
-#ifndef    CONFIG_IGNORE_X509_CERTIFICATE_EXPIRATION
-                           *reason = X509_VALIDATE_CERTIFICATE_EXPIRED;
-                            return err;
-#endif                            
+                //            *result = X509_VALIDATE_CERTIFICATE_EXPIRED;
+                //            return err;
                 //
                 //            continue; // skip to next cert
             }
 
-            // we match any cert in the Signer cert chain
+            if(revokeInfo) {
+                wpa_printf(MSG_DEBUG, "PKCS7: Enter revokeInfo branch...");
+                // check all certs even if not in Signer's chain.
+                // based on hashAlgo get hash of Trust Cert (trust->sign_value, trust->sign_value_len)
+                //trust->signature_alg.
+                if(revokeInfo->ToBeSignedHashLen == 32) {
+                    sha256_vector(1, &cert->tbs_cert_start, &cert->tbs_cert_len, hash);
+                } // SHA256
+                else
+                // other Hash formats are not yet supported
+                    return err;
+
+            // hash mismatch keep looking for cert in a chain
+                wpa_printf(MSG_DEBUG, "PKCS7: Find match with revoked Certificate Hash==>");
+                if(os_memcmp(revokeInfo->ToBeSignedHash, hash, revokeInfo->ToBeSignedHashLen))
+                    continue;    
+    
+            // TimeOfRevocation !=0 && TimeOfSigning >= TimeOfRevocation
+                wpa_printf(MSG_DEBUG, "==>BINGO!");
+
+                chain_trusted = 1;
+                break;
+            }
+            // should we detect any leaf certs in the cert store if REVOKED flag is set
+            // or only those Signer cert is chained to?
+            //...compare the issuer of image signer with subject name of a key signer candidate
+    
             chain_valid = 0;
             if(  signer != cert &&
                 // dbx may contain any cert in a cert store - even if not chained to a signer !?
                 *reason != X509_VALIDATE_CERTIFICATE_REVOKED)
             {
-                //...compare the issuer of image signer with subject name of a key signer candidate
                  if (x509_name_compare(&signer->issuer,
                                   &cert->subject) != 0) 
                  {
@@ -1963,7 +1980,7 @@ int Pkcs7_x509_certificate_chain_validate_with_timestamp(
 //                    x509_name_string(&signer->issuer, buf,
 //                             sizeof(buf));
 //                    wpa_printf(MSG_DEBUG, "PKCS7: Signer "
-//                           "Issuer: %a", buf);
+//                           "Issuer: %s", buf);
                         // give a chance to test a leaf cert against trusted
                                continue;
                  }
@@ -1974,7 +1991,7 @@ int Pkcs7_x509_certificate_chain_validate_with_timestamp(
                  }
 
 //    redundant if we do not go down the chain - only match one cert
-//    note: may need to un-comment if we do go down the cert chain
+//    todo: may need to uncomment if we do go down the cert chain
 //            if ((cert->extensions_present &
 //                 X509_EXT_PATH_LEN_CONSTRAINT) &&
 //                idx > signer->path_len_constraint) {
@@ -2000,44 +2017,10 @@ int Pkcs7_x509_certificate_chain_validate_with_timestamp(
                  chain_valid = 1;
             }
 
-            // note: Revocation rule for Hashed certs only apply to a Signer chained certificates
-            if(revokeInfo) {
-                wpa_printf(MSG_DEBUG, "PKCS7: Enter revokeInfo branch...");
-                // based on a hashAlgo get hash of Trust Cert (trust->sign_value, trust->sign_value_len)
-                //trust->signature_alg.
-                if(revokeInfo->ToBeSignedHashLen == 32) {
-                    sha256_vector(1, &cert->tbs_cert_start, &cert->tbs_cert_len, hash);
-                } // SHA256
-                else
-                    if(revokeInfo->ToBeSignedHashLen == 48) {
-                        sha384_vector(1, &cert->tbs_cert_start, &cert->tbs_cert_len, hash);
-                    } // SHA384
-                    else
-                        if(revokeInfo->ToBeSignedHashLen == 64) {
-                            sha512_vector(1, &cert->tbs_cert_start, &cert->tbs_cert_len, hash);
-                        } // SHA512
-                        else
-                       // other Hash formats are not yet supported
-                            return err;
-
-            // hash mismatch keep looking for cert in a chain
-                wpa_printf(MSG_DEBUG, "PKCS7: Find match with revoked Certificate Hash==>");
-                wpa_hexdump(MSG_MSGDUMP, "Trust Cert", revokeInfo->ToBeSignedHash, 32);
-                wpa_hexdump(MSG_MSGDUMP, "Chain Cert", hash, 32);
-                if(os_memcmp(revokeInfo->ToBeSignedHash, hash, revokeInfo->ToBeSignedHashLen))
-                    continue;    
-
-            // TimeOfRevocation !=0 && TimeOfSigning >= TimeOfRevocation
-                wpa_printf(MSG_DEBUG, "==>BINGO!");
-
-                chain_trusted = 1;
-                break;
-            }
-
             leaf = NULL;
             for (trust = trusted; trust; trust = trust->next) {
                 x509_name_string(&trust->subject, buf, sizeof(buf)); 
-                wpa_printf(MSG_DEBUG, "PKCS7:  Trust Cert (%x) Subject name: %a", trust->cert_start, buf);
+                wpa_printf(MSG_DEBUG, "PKCS7:  Trust Cert (%x) Subject name: %s", trust->cert_start, buf);
 
                 // leaf cert may be used as trusted Root. Cert chain is already tested 
                 if (chain_valid && x509_name_compare(&cert->subject, &trust->subject) == 0) {
@@ -2068,8 +2051,7 @@ int Pkcs7_x509_certificate_chain_validate_with_timestamp(
                 // skip leaf check for self-signed certificates - Trust & Cert have same address 
                 if(leaf && 
                     leaf->cert_start != trust->cert_start &&
-//                    !os_memcmp(leaf->cert_start, trust->cert_start, trust->cert_len))
-                    !os_memcmp(signer->tbs_cert_start, trust->tbs_cert_start, trust->tbs_cert_len))
+                    !os_memcmp(leaf->cert_start, trust->cert_start, trust->cert_len))
                 {
                     wpa_printf(MSG_DEBUG, "PKCS7: Found trusted certificate match to a leaf cert");
                     //
@@ -2102,13 +2084,10 @@ int Pkcs7_x509_certificate_chain_validate_with_timestamp(
                 chain_trusted = 1;
                 break;
             }
+            
             // valid chain found, if no match to trusted cert found - continue from the current cert
-            if(chain_valid) {
-            // NEW: track if the cert is in chain to a signer
-                signer->chain = cert;
-
+            if(chain_valid)
                 signer = cert;
-            }
             
         } // for(cert
         
@@ -2285,10 +2264,10 @@ int Pkcs7_decrypt_validate_digest(const u8* enc_digest,
     /* AMI FIX for Bleichenbacher's RSA signature vulnerability*/
     /* Hash field must be at the right of the decoded Sig data*/
     if((hdr.payload + hdr.length) < end){
-        wpa_printf(MSG_DEBUG, "PKCS7: Pkcs#1v1.5 Signature invalid");
+    	wpa_printf(MSG_DEBUG, "PKCS7: Pkcs#1v1.5 Signature invalid");
         return err;
     }
-    /* AMI FIX */        
+    /* AMI FIX */		
     if (hdr.length > hashLen)
     {
         wpa_printf(MSG_DEBUG, "PKCS7: digest len does not match testHash %d > %d",
@@ -2297,7 +2276,7 @@ int Pkcs7_decrypt_validate_digest(const u8* enc_digest,
 //        os_free(data);
         return err;
     }
-    wpa_hexdump(MSG_MSGDUMP, "PKCS7: Calculated hash ",
+    wpa_hexdump(MSG_MSGDUMP, "PKCS7: calculated hash",
             testHash, hdr.length);
 
     if (os_memcmp(hdr.payload, (void*)testHash, hdr.length) != 0) {
@@ -2383,82 +2362,54 @@ int Pkcs7_certificate_validate_digest(
         else
                Error. No digests to verify
 */
-// UEFI: AuthVariable Signed Data Certificate must NOT have SignerInfo.authAttributes nor ContentInfo.Content
-    if(SignedData->Content_start)
+// NEW: AuthVariable Cert: may have authAttributes but not ContentInfo
+    if(SignedData->contentInfo_start/* && SignedData->Digest*/)
     {
-        if(SignedData->Digest && fileHash && fileHash_len)
+        if(SignedData->Digest &&
+            fileHash && fileHash_len)
         {
             if(fileHash_len == SignedData->Digest_len) {
                 if (os_memcmp(fileHash, SignedData->Digest, fileHash_len) != 0) {
-                    wpa_hexdump(MSG_MSGDUMP, "PKCS7: contentInfo.Digest", SignedData->Digest, SignedData->Digest_len);
-                    wpa_hexdump(MSG_MSGDUMP, "PKCS7: Input block       ", fileHash, fileHash_len);
                     wpa_printf(MSG_DEBUG, "PKCS7: contentInfo.Digest does not match "
                            "with calculated message hash");
+                    wpa_hexdump(MSG_MSGDUMP, "PKCS7: contentInfo.Digest", SignedData->Digest, SignedData->Digest_len);
+                    wpa_hexdump(MSG_MSGDUMP, "PKCS7: File Hash         ", fileHash, fileHash_len);
                     return err;
                 }
             } else
-                if(fileHash_len == SignedData->Content_len) {
-                    if (os_memcmp(fileHash, SignedData->Content_start, fileHash_len) != 0) {
-                        wpa_hexdump(MSG_MSGDUMP, "PKCS7: SpcIndirectData", SignedData->Content_start, SignedData->Content_len);
-                        wpa_hexdump(MSG_MSGDUMP, "PKCS7: Input block    ", fileHash, fileHash_len);
-                        wpa_printf(MSG_DEBUG, "PKCS7: SpcIndirectData does not match "
-                               "with input data");
-                        return err;
-                    }
-                }
-                else {
-                    wpa_printf(MSG_DEBUG, "PKCS7: SpcIndirectData size not matching the size of input block");
+            if(fileHash_len == SignedData->contentInfo_len) {
+                if (os_memcmp(fileHash, SignedData->contentInfo_start, fileHash_len) != 0) {
+                    wpa_printf(MSG_DEBUG, "PKCS7: SpcIndirectData does not match "
+                           "with input data");
+                    wpa_hexdump(MSG_MSGDUMP, "PKCS7: SpcIndirectData", SignedData->contentInfo_start, SignedData->contentInfo_len);
+                    wpa_hexdump(MSG_MSGDUMP, "PKCS7: Input block    ", fileHash, fileHash_len);
                     return err;
                 }
-        }
-        // 1st check passed --> calculated File hash matching the one in the Certificate
-        if(bSha1) sha1_vector(1, &SignedData->Content_start, &SignedData->Content_len, pHash);
-        else    sha256_vector(1, &SignedData->Content_start, &SignedData->Content_len, pHash);
-    }
-    if(SignedData->SignerInfo->authAttr.auth_attrib_start)
-    {
-        if(!SignedData->SignerInfo->authAttr.messageDigest)
-        {
-            wpa_printf(MSG_DEBUG, "PKCS7: SignerInfo.authAttributes.messageDigest must be present in "
-                   "SignerInfo.authAttributes block");
-            return err;
-        }
-        // verify the input value (hash of it) against the digest values stored within ContentInfo or signedAttributes 
-        if(SignedData->Content_start)
-        {
-            if (os_memcmp(pHash, SignedData->SignerInfo->authAttr.messageDigest, hashLen) != 0) {
-                wpa_hexdump(MSG_MSGDUMP, "PKCS7: AuthAttrib.messageDigest ", SignedData->SignerInfo->authAttr.messageDigest, SignedData->SignerInfo->authAttr.messageDigest_len);
-                wpa_hexdump(MSG_MSGDUMP, "PKCS7: ContentInfo digest\t", pHash, hashLen);
-                wpa_printf(MSG_DEBUG, "PKCS7: SignerInfo.authAttributes.messageDigest does not match "
-                       "with contentInfo digest");
+            }
+            else {
+                wpa_printf(MSG_DEBUG, "PKCS7: SpcIndirectData size not matching the size of input block");
                 return err;
             }
-        } else
-            if(fileHash && (fileHash_len == hashLen)) {
-                if (os_memcmp(fileHash, SignedData->SignerInfo->authAttr.messageDigest, fileHash_len) != 0) {
-                    wpa_hexdump(MSG_MSGDUMP, "PKCS7: AuthAttrib.messageDigest ", SignedData->SignerInfo->authAttr.messageDigest, SignedData->SignerInfo->authAttr.messageDigest_len);
-                    wpa_hexdump(MSG_MSGDUMP, "PKCS7: Input block\t\t", fileHash, fileHash_len);
-                    wpa_printf(MSG_DEBUG, "PKCS7: SignerInfo.authAttributes.messageDigest does not match "
-                           "with input data");
-                    return err;
-                }
-            }
-        // If signedAttributes are present --> calculated the digest of the SignedAttrs fields
-        if(bSha1) sha1_vector(1, &SignedData->SignerInfo->authAttr.auth_attrib_start, &SignedData->SignerInfo->authAttr.auth_attrib_len, pHash);
-        else    sha256_vector(1, &SignedData->SignerInfo->authAttr.auth_attrib_start, &SignedData->SignerInfo->authAttr.auth_attrib_len, pHash);
-    }
-    // expected format of Signed Data for Authenticated Variables 
-    if(!SignedData->Content_start && !SignedData->SignerInfo->authAttr.auth_attrib_start)
-    {
+        }
+        // 1st check passed --> calculated File hash matching the one in the Certificate
+        if(SignedData->SignerInfo->authAttr.auth_attrib_start)
+        {
+             if(bSha1)    sha1_vector(1, &SignedData->SignerInfo->authAttr.auth_attrib_start, &SignedData->SignerInfo->authAttr.auth_attrib_len, pHash);
+             else        sha256_vector(1, &SignedData->SignerInfo->authAttr.auth_attrib_start, &SignedData->SignerInfo->authAttr.auth_attrib_len, pHash);
+        } else {
+             if(bSha1)    sha1_vector(1, &SignedData->contentInfo_start, &SignedData->contentInfo_len, pHash);
+              else        sha256_vector(1, &SignedData->contentInfo_start, &SignedData->contentInfo_len, pHash);
+        }
+    } else
         if(fileHash && (fileHash_len == hashLen)) {
             pHash = fileHash;
-        } else {
-            wpa_printf(MSG_DEBUG, "PKCS7: Missing the Digest source");
-            return err;
+         } else {
+             wpa_printf(MSG_DEBUG, "PKCS7: Missing the Digest source");
+             return err;
         }
-    }
+
     return Pkcs7_decrypt_validate_digest(
-            SignedData->SignerInfo->enc_digest, SignedData->SignerInfo->enc_digest_len,
+            SignedData->SignerInfo->enc_digest,    SignedData->SignerInfo->enc_digest_len,
             SignCert->public_key, SignCert->public_key_len, 
             &SignedData->SignerInfo->digest_alg.oid,
             pHash, hashLen);
@@ -2629,10 +2580,7 @@ int Pkcs7_return_cerificate_ptr(struct pkcs7_signed_data_st *SignedData,
 {
     int res=0, reason=0;
 
-    if(SignedData == NULL)
-        return -1;
-    
-    // First time run - Pkcs7cert has empty ptrs
+// First time run - Pkcs7cert has empty ptrs
     if(SignedData->CAcert_start == NULL) {
         // run validate chain with NULL in Trust field
         res = Pkcs7_x509_certificate_chain_validate(SignedData, NULL, &reason);
@@ -2669,185 +2617,19 @@ int Pkcs7_return_digestAlgorithm(struct pkcs7_signed_data_st *PKCS7cert, u8* Has
         if (x509_sha256_oid(oid)) {
             *HashType = SHA256;
         }
-        else
-            if (x509_sha384_oid(oid)) {
-                *HashType = SHA384;
-            }
-            else
-                if (x509_sha512_oid(oid)) {
-                    *HashType = SHA512;
-                }
-                else if (!x509_digest_oid(oid)) {
-                    wpa_printf(MSG_DEBUG, "PKCS7: Unrecognized digestAlgorithm");
-                    return -1;
-                }
+        else if (!x509_digest_oid(oid)) {
+            wpa_printf(MSG_DEBUG, "PKCS7: Unrecognized digestAlgorithm");
+            return -1;
+        }
 
     return 0;
 }
 
-/**
- *  Produces a Null-terminated ASCII string in an output buffer based on a Null-terminated
- *  ASCII format string from a Subject name structure of a CommonName.
- * Returns: 0 if operation is success, -1 if not
- */
-int Pkcs7_x509_return_SubjectNameStr(u8 *pCert, size_t cert_len, 
-                                     u8 *buf, size_t len)
-{
-    int res=0;
-    struct x509_name *name;
-    struct x509_certificate *x509Cert;
-
-    if(pCert==NULL || !cert_len || buf==NULL || !len)
-        return -1;
-
-    x509Cert = x509_certificate_parse(pCert, cert_len);
-
-    if(x509Cert==NULL )
-        return -1;
-
-    name = (struct x509_name *)&x509Cert->subject;
-    
-#ifndef CONFIG_NO_STDOUT_DEBUG
-    x509_name_string(name, (char *)buf, len);
-#else
-    if (name->cn == NULL)
-        return -1;
-    res = os_snprintf((char *)buf, len, "%s", name->cn);
-    if (res < 0 || res >= (int)len) {
-         return -1;
-    }
-#endif
-    return 0;
-}
-
-/**
-  Retrieves all embedded certificates from PKCS#7 signed data as described in "PKCS #7:
-  Cryptographic Message Syntax Standard", and outputs two certificate lists chained or
-  unchained to the signer's certificates.
-
-  @param[in]  P7Data            Pointer to the PKCS#7 message.
-  @param[in]  P7Length          Length of the PKCS#7 message in bytes.
-  @param[in]  bChain            Which type of a certificate list to return . 1 - Signer chained, 0 - un-chained
-  @param[out] CertList          Pointer to the certificates list chained to signer's/un-chained
-                                certificate. It's caller's responsibility to free the buffer.
-  @param[out] ListLength        Length of the linked certificates list buffer in bytes.
-
-  @retval  0         The operation is finished successfully.
-  @retval  -1        Error occurs during the operation.
-
-**/
-int Pkcs7_x509_get_certificates_List(struct pkcs7_signed_data_st *SignedData, BOOLEAN bChained,
-    u8** CertList, size_t* ListLength)
-{
-    int res=0, reason=0;
-    long unsigned idx;
-    struct x509_certificate *cert;
-#ifndef CONFIG_NO_STDOUT_DEBUG
-    char buf[128];
-#endif
-    u8              *CertBuf;
-    u8              *NewCert;
-    u8              *OldBuf;
-    unsigned int     BufferSize;
-    unsigned int     OldSize;
-
-  //
-  // Parameter Checking
-  //
-    if ((SignedData == NULL) || (CertList == NULL) || (ListLength == NULL) ){
-        return -1;
-    }
-  // run validate chain with NULL in Trust field
-    res = Pkcs7_x509_certificate_chain_validate(SignedData, NULL, &reason);
-    if(res == -1)
-        return res;
-    //
-    // Converts Chained and Untrusted Certificate to Certificate Buffer in following format:
-    //      UINT8  CertNumber;
-    //      UINT32 Cert1Length;
-    //      UINTN  Cert1Ptr;
-    //      UINT32 Cert2Length;
-    //      UINTN  Cert2Ptr;
-    //      ...
-    //      UINT32 CertnLength;
-    //      UINTN  CertnPtr;
-
-    CertBuf    = NULL;
-    OldBuf     = NULL;
-
-    cert = SignedData->CertStore;
-    
-    BufferSize = sizeof (UINT8);
-    OldSize    = BufferSize;
-
-    res = -1;
-    for (idx = 1; cert; cert = cert->next) {
-        x509_name_string(&cert->issuer, buf, sizeof(buf)); 
-        wpa_printf(MSG_DEBUG, "PKCS7: %x: chain=%d: %a", idx, cert->chain, buf);
-        // Chained
-         if(bChained && (cert->chain == NULL))
-             continue;
-        // un-chained
-         if(!bChained && cert->chain)
-             continue;
-/*
-        OldSize    = BufferSize;
-        OldBuf     = CertBuf;
-        BufferSize = OldSize + cert->cert_len + sizeof (UINT32);
-        CertBuf    = os_malloc (BufferSize);
-        if (CertBuf == NULL) {
-          goto _Exit;
-        }
-        if (OldBuf != NULL) {
-          CopyMem (CertBuf, OldBuf, OldSize);
-          free (OldBuf);
-          OldBuf = NULL;
-        }
-        WriteUnaligned32 ((UINT32 *) (CertBuf + OldSize), (UINT32)cert->cert_len);
-        CopyMem (CertBuf + OldSize + sizeof (UINT32), cert->cert_start, cert->cert_len);
-*/
-         OldSize    = BufferSize;
-         OldBuf     = CertBuf;
-         BufferSize = OldSize + sizeof (UINTN) + sizeof (UINT32);
-         CertBuf    = os_malloc (BufferSize);
-         if (CertBuf == NULL) {
-           goto _Exit;
-         }
-         if (OldBuf != NULL) {
-           CopyMem (CertBuf, OldBuf, OldSize);
-           free (OldBuf);
-           OldBuf = NULL;
-         }
-         NewCert = CertBuf + (UINT32)OldSize;
-         // Update CertLen
-         *(UINT32*)NewCert = (UINT32)cert->cert_len;
-         NewCert = CertBuf + (UINTN)OldSize + sizeof (UINT32);
-         // Update CertPtr
-         *(UINTN*)NewCert = (UINTN)cert->cert_start;
-        // Update CertNumber
-        CertBuf[0] = (UINT8)idx++;
-    }
-    if (CertBuf != NULL) {
-        *CertList = CertBuf;
-        *ListLength = (size_t)BufferSize;
-        res = 0;
-    }
-
-_Exit:
-    //
-    // Release Resources
-    //
-    if (OldBuf != NULL) {
-        free (OldBuf);
-    }
- 
-    return res;
-}
 #endif /* CONFIG_INTERNAL_X509 */
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2016, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2013, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **

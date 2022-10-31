@@ -1,43 +1,51 @@
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2016, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2013, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **
-//**         5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093     **
+//**         5555 Oakbrook Pkwy, Suite 200, Norcross, GA 30093        **
 //**                                                                  **
 //**                       Phone: (770)-246-8600                      **
 //**                                                                  **
 //**********************************************************************
 //**********************************************************************
+// $Header: /Alaska/SOURCE/Modules/SdioDriver/SdioSmm.h 13    3/08/12 5:01a Rajeshms $
+//
+// $Revision: 13 $
+//
+// $Date: 3/08/12 5:01a $
+//**********************************************************************
 
-/** @file SdioSmm.h
-    Header file for the SdioSmm
-
-**/
+//<AMI_FHDR_START>
+//--------------------------------------------------------------------------
+//
+// Name: SdioSmm.h
+//
+// Description:  Header file for the SdioSmm
+//
+//--------------------------------------------------------------------------
+//<AMI_FHDR_END>
 
 #ifndef _EFI_SDIO_SMM_DRIVER_H_
 #define _EFI_SDIO_SMM_DRIVER_H_
-
-//----------------------------------------------------------------------
 
 #include <Efi.h>
 #include <Token.h>
 #include <Dxe.h>
 #include <AmiDxeLib.h>
 #if PI_SPECIFICATION_VERSION >= 0x1000A
-#include <Protocol/SmmBase2.h>
-#include <Protocol/SmmSwDispatch2.h>
+#include <Protocol\SmmBase2.h>
+#include <Protocol\SmmSwDispatch2.h>
 #define RETURN(status) {return status;}
 #else
-#include <Protocol/SmmBase.h>
-#include <Protocol/SmmSwDispatch.h>
+#include <Protocol\SmmBase.h>
+#include <Protocol\SmmSwDispatch.h>
 #define RETURN(status) {return ;}
 #endif
 #include "SdioDef.h"
 
-//----------------------------------------------------------------------
 
 //-----------------------------------------------
 //      ERROR CODE REPORTED TO CALLER
@@ -54,56 +62,108 @@
 #define SDIO_BAD_SECTOR_ERR             0x00A   // Bad sector error
 #define SDIO_GENERAL_FAILURE            0x020   // Controller general failure
 
-#define MAX_NUMBLOCK_16BIT              0xFFFF
+//
+//SDIO Setup fields
+//
+
+typedef struct {
+    UINT8   SdioMode;
+    UINT8   SdioEmu1;
+    UINT8   SdioEmu2;
+    UINT8   SdioEmu3;
+    UINT8   SdioEmu4;
+    UINT8   SdioEmu5;
+    UINT8   SdioEmu6;
+    UINT8   SdioEmu7;
+    UINT8   SdioEmu8;
+	UINT8	SdioMassDevNum;
+} SDIO_DEV_CONFIGURATION;
+
+
+
+
+
+
+EFI_STATUS
+NotInSmmFunction(
+    EFI_HANDLE                  ImageHandle,
+    EFI_SYSTEM_TABLE            *SystemTable
+);
+
+EFI_STATUS
+SdioInSmmFunction(
+    EFI_HANDLE                  ImageHandle,
+    EFI_SYSTEM_TABLE            *SystemTable
+);
 
 
 #if PI_SPECIFICATION_VERSION >= 0x1000A
 EFI_STATUS
-EFIAPI
 SdioSWSMIHandler (
-    EFI_HANDLE      DispatchHandle,
-    IN  CONST VOID  *DispatchContext OPTIONAL,
-    IN  OUT VOID    *CommBuffer      OPTIONAL,
-    IN  OUT UINTN   *CommBufferSize  OPTIONAL
+    EFI_HANDLE                  DispatchHandle,
+    EFI_SMM_SW_REGISTER_CONTEXT *DispatchContext,
+    IN OUT EFI_SMM_SW_CONTEXT   *SwContext,
+    IN OUT UINTN                *CommBufferSize
 );
 #else
 VOID
-EFIAPI
 SdioSWSMIHandler (
     EFI_HANDLE                  DispatchHandle,
     EFI_SMM_SW_DISPATCH_CONTEXT *DispatchContext
 );
 #endif
 
+#if !SDIO_SMM_SUPPORT
+VOID
+SdioAPIHandler (
+    IN    SDIO_STRUC   *SdioURP
+);
+#endif
 
 VOID
-SdMmcAPIRead (
-    SDIO_STRUC  *SdioURP
+SdioPassControllerInformation (
+    SDIO_STRUC                  *SdioURP
 );
 
 VOID
-SdMmcAPIWrite (
-    SDIO_STRUC  *SdioURP
-);
-
-UINT8
-GetDevEntry (
-    IN  UINT8  DeviceAddress
+SdioAPIGetMassDeviceInformation (
+    SDIO_STRUC                  *SdioURP
 );
 
 VOID
-SdMmcApiReset (
-    SDIO_STRUC  *SdioURP
+SdioAPIRead (
+    SDIO_STRUC                  *SdioURP
 );
 
 VOID
-SdMmcApiDeviceGeometry (
-    SDIO_STRUC  *SdioURP
+SdioAPIWrite (
+    SDIO_STRUC                  *SdioURP
+);
+
+VOID SdioAPICheckDevicePresence(
+    SDIO_STRUC *SdioURP
+);
+
+VOID SdioApiConfigureDevice(
+   SDIO_STRUC *SdioURP
 );
 
 VOID
-SdMmcNotSupported (
-    SDIO_STRUC  *SdioURP
+ZeroMemorySmm (
+    VOID                            *Buffer,
+    UINTN                           Size
+ );
+
+UINT8 GetDevEntry (
+    IN  UINT8                       DeviceAddress
+);
+
+VOID SioApiReset (
+    SDIO_STRUC                      *SdioURP
+);
+
+VOID SdioApiDeviceGeometry (
+    SDIO_STRUC                      *SdioURP
 );
 
 #endif
@@ -111,11 +171,11 @@ SdMmcNotSupported (
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2016, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2013, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **
-//**         5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093     **
+//**         5555 Oakbrook Pkwy, Suite 200, Norcross, GA 30093        **
 //**                                                                  **
 //**                       Phone: (770)-246-8600                      **
 //**                                                                  **

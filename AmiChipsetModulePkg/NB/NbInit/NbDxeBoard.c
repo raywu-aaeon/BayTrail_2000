@@ -470,11 +470,7 @@ NbGetDimmTCK (
 UINT16 NbSmbiosType17Speed (
   IN UINT8                    DimmNumber,
 //EIP159928 >>
-#if defined(AMI_SMBIOS_MODULE_VERSION) && (AMI_SMBIOS_MODULE_VERSION >= 0x6c)
-  IN EFI_SMBUS_DEVICE_ADDRESS     SpdSmBusAddr,
-#else
   IN SMBUS_DEVICE_ADDRESS     SpdSmBusAddr,
-#endif
   IN OUT MEMORY_DEVICE        *TypeBuffer
 //EIP159928 <<  
   ) 
@@ -622,11 +618,7 @@ VOID CreateMemoryDataForSMBios(
     UINT8                           PMAIndex, MemDevIndex, Channel_local; //EIP126797
     UINT32                          Type16StartingAddr = 0;
     UINT32                          Type20StartingAddr = 0;
-#if defined(AMI_SMBIOS_MODULE_VERSION) && (AMI_SMBIOS_MODULE_VERSION >= 0x6c)    
-    EFI_SMBUS_DEVICE_ADDRESS			SlvAddrReg[]= SALVE_ADDRESS; //EIP130719
-#else
     SMBUS_DEVICE_ADDRESS			SlvAddrReg[]= SALVE_ADDRESS; //EIP130719
-#endif
     MEMORY_DEVICE                   *TypeBuffer; //EIP159928 >>
 // Parse Hobs to get SmbiosMemConfig Hob.
 
@@ -652,16 +644,11 @@ VOID CreateMemoryDataForSMBios(
 
 //EIP126797 >>
         Type20StartingAddr = Type16StartingAddr;
-
-        Memory.PhysicalMemArray[PMAIndex].MemArrayMapAddr.PartitionWidth = 0;       // [ EIP335724 ]
-        
         for(Channel_local = 0; Channel_local < MEM_CHANNEL_NUM; Channel_local++) {
           for(MemDevIndex = 0; MemDevIndex < DIMM_SLOT_NUM; MemDevIndex++) { //P20130624 
             // Type 17
             TRACE((TRACE_ALWAYS, "MemInfoHob->Channel[%X].SlotMem[%X]: %X\n",Channel_local,MemDevIndex,MemInfoHob->Channel[Channel_local].SlotMem[MemDevIndex]));
             if(MemInfoHob->Channel[Channel_local].DimmPresent[MemDevIndex]) {
-                
-                Memory.PhysicalMemArray[PMAIndex].MemArrayMapAddr.PartitionWidth++; // [ EIP335724 ]
             	
              	Memory.PhysicalMemArray[PMAIndex].SpdSmBusAddr[Channel_local*DIMM_SLOT_NUM+MemDevIndex] = SlvAddrReg[Channel_local*DIMM_SLOT_NUM+MemDevIndex]; //EIP130719
             	
@@ -805,7 +792,7 @@ VOID CreateMemoryDataForSMBios(
             Type16StartingAddr = Type20StartingAddr;
             Memory.PhysicalMemArray[PMAIndex].MemArrayMapAddr.EndingAddress = Type16StartingAddr - 1;
         }
-//        Memory.PhysicalMemArray[PMAIndex].MemArrayMapAddr.PartitionWidth = 2;     // [ EIP335724 ]
+        Memory.PhysicalMemArray[PMAIndex].MemArrayMapAddr.PartitionWidth = 2;
 
         //EIP142202 >>
         if (((Type16StartingAddr - 1)/1024) >= 0xFFFFFFFF)

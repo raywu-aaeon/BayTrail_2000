@@ -26,10 +26,14 @@
 //
 //**********************************************************************
 
-/** @file CpuCspLib.h
-    Header file for Cpu Csp Lib.
-
-**/
+//<AMI_FHDR_START>
+//---------------------------------------------------------------------------
+// Name:        CpuCspLib.h
+//
+// Description: Header file for Cpu Csp Lib.
+//
+//---------------------------------------------------------------------------
+//<AMI_FHDR_END>
 
 #ifndef __CPULIB_H__
 #define __CPULIB_H__

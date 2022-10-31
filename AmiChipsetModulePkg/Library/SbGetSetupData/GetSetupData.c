@@ -1,7 +1,7 @@
 //*************************************************************************
 //*************************************************************************
 //**                                                                     **
-//**        (C)Copyright 1985-2017, American Megatrends, Inc.            **
+//**        (C)Copyright 1985-2012, American Megatrends, Inc.            **
 //**                                                                     **
 //**                       All Rights Reserved.                          **
 //**                                                                     **
@@ -42,7 +42,7 @@
 #include <Guid/HobList.h>
 #include <Library/DebugLib.h>
 #include <Guid\MemoryTypeInformation.h> //EIP131494
-//#include <Ppi/Capsule.h> //CSP20140829 EIP200855
+
 //---------------------------------------------------------------------------
 // Constant, Macro and Type Definition(s)
 //---------------------------------------------------------------------------
@@ -147,7 +147,9 @@ VOID GetSbSetupData (
 )
 {
     EFI_STATUS                      Status;
+#if XHCI_WAKE_WORKAROUND
     EFI_STATUS                      Status2;
+#endif    
     SETUP_DATA                      SetupData;
     EFI_PEI_SERVICES                **PeiServices;
     EFI_RUNTIME_SERVICES            *RunServices = NULL; //EIP164253 
@@ -167,9 +169,7 @@ VOID GetSbSetupData (
     UINT16                          UsbPortLength[PCH_USB_MAX_PHYSICAL_PORTS] = {USB_PORTS_LENGTH};
     UINT8                           UsbOverCurrentMapping[PCH_USB_MAX_PHYSICAL_PORTS] = {USB_OVER_CURRENT_MAPPING_SETTINGS};
     UINT8                           Usb30OverCurrentMapping[PCH_XHCI_MAX_USB3_PORTS] = {USB30_OVER_CURRENT_MAPPING_SETTINGS};
-    //EFI_BOOT_MODE                   BootMode;//CSP20140829 EIP200855
-    //PEI_CAPSULE_PPI                 *Capsule;//CSP20140829 EIP200855
-    
+
     if(Pei)
       PeiServices = (EFI_PEI_SERVICES **)Services;
     else
@@ -203,14 +203,6 @@ VOID GetSbSetupData (
       if (GuidHob.Raw != NULL) {
         SbVarInfoHob = GET_GUID_HOB_DATA (GuidHob.Guid);
         CopyMem(SbSetupData, SbVarInfoHob, sizeof(SB_SETUP_DATA));
-/* EIP200855>>  
-//CSP20140829 >>   
-        BootMode = GetBootModeHob ();
-        if (BootMode == BOOT_IN_RECOVERY_MODE)
-           SbSetupData->BiosWpd = 0;
-//CSP20140829 <<  
- * EIP200855 <<
- */
         Status = RunServices->SetVariable( SbPlatformInfoVar, \
                                            &gAmiSbPlatformInfoHobGuid, \
                                            EFI_VARIABLE_BOOTSERVICE_ACCESS, \
@@ -335,9 +327,6 @@ VOID GetSbSetupData (
       SbSetupData->PcieRootPortSNE[0]     = 0;
       SbSetupData->PcieRootPortSCE[0]     = 0;
       SbSetupData->PcieRootPortSpeed[0]   = 0;
-#if defined(PCIE_ROOT_PORT_DETECT_NON_COMPLAINT) && (PCIE_ROOT_PORT_DETECT_NON_COMPLAINT != 0)
-      SbSetupData->PcieRPDetectNonComplaint[0] = 0;  //EIP191291
-#endif
       //PCIe Config Root 1
       SbSetupData->PcieRootPortEn[1]      = 1;
       SbSetupData->PcieRootPortAspm[1]    = 0;
@@ -352,9 +341,6 @@ VOID GetSbSetupData (
       SbSetupData->PcieRootPortSNE[1]     = 0;
       SbSetupData->PcieRootPortSCE[1]     = 0;
       SbSetupData->PcieRootPortSpeed[1]   = 0;
-#if defined(PCIE_ROOT_PORT_DETECT_NON_COMPLAINT) && (PCIE_ROOT_PORT_DETECT_NON_COMPLAINT != 0)
-      SbSetupData->PcieRPDetectNonComplaint[1] = 0;  //EIP191291
-#endif
       //PCIe Config Root 2
       SbSetupData->PcieRootPortEn[2]      = 1;
       SbSetupData->PcieRootPortAspm[2]    = 0;
@@ -369,9 +355,6 @@ VOID GetSbSetupData (
       SbSetupData->PcieRootPortSNE[2]     = 0;
       SbSetupData->PcieRootPortSCE[2]     = 0;
       SbSetupData->PcieRootPortSpeed[2]   = 0;
-#if defined(PCIE_ROOT_PORT_DETECT_NON_COMPLAINT) && (PCIE_ROOT_PORT_DETECT_NON_COMPLAINT != 0)
-      SbSetupData->PcieRPDetectNonComplaint[2] = 0;  //EIP191291
-#endif
       //PCIe Config Root 3
       SbSetupData->PcieRootPortEn[3]      = 1;
       SbSetupData->PcieRootPortAspm[3]    = 0;
@@ -386,9 +369,6 @@ VOID GetSbSetupData (
       SbSetupData->PcieRootPortSNE[3]     = 0;
       SbSetupData->PcieRootPortSCE[3]     = 0;
       SbSetupData->PcieRootPortSpeed[3]   = 0;
-#if defined(PCIE_ROOT_PORT_DETECT_NON_COMPLAINT) && (PCIE_ROOT_PORT_DETECT_NON_COMPLAINT != 0)
-      SbSetupData->PcieRPDetectNonComplaint[3] = 0;  //EIP191291
-#endif
 
       //
       // SATA configuration
@@ -480,11 +460,7 @@ VOID GetSbSetupData (
       SbSetupData->MeHrstWarmSts          = 1;
 
       // Enable / disable serial IRQ according to setup value.
-#if defined(LPC_WA_DISABLE_SERIRQ) && LPC_WA_DISABLE_SERIRQ
-      SbSetupData->SirqEnable             = 0;
-#else
       SbSetupData->SirqEnable             = 1;
-#endif
 
       // Set Serial IRQ Mode Select according to setup value.
       SbSetupData->SirqMode               = DEFAULT_SIRQ_MODE; //EIP133059
@@ -613,16 +589,6 @@ VOID GetSbSetupData (
       SbSetupData->PchUsbPanel[2]     = 0;
       SbSetupData->PchUsbPanel[3]     = 0;
 
-//EIP180393 >>
-#if defined(AMIDEBUG_RX_SUPPORT) && AMIDEBUG_RX_SUPPORT
-      SbSetupData->PchUsb30Streams    = 0;
-      SbSetupData->PchUsb30Mode       = 0;
-      SbSetupData->PchUsbPreBootSupport = 0;
-      SbSetupData->UsbXhciLpmSupport  = 0;
-      SbSetupData->PchUsb20           = 1;
-#endif
-//EIP180393 <<
-
       // USB 3.0 OverCurrentPins
       SbSetupData->Usb30OverCurrentPins[0]     = Usb30OverCurrentMapping[0];
 //EIP154014 >>
@@ -659,9 +625,6 @@ VOID GetSbSetupData (
 				SbSetupData->PcieRootPortSNE[Index]     = SetupData.PcieRootPortSNE[Index];
 				SbSetupData->PcieRootPortSCE[Index]     = SetupData.PcieRootPortSCE[Index];
 				SbSetupData->PcieRootPortSpeed[Index]   = SetupData.PcieRootPortSpeed[Index];
-#if defined(PCIE_ROOT_PORT_DETECT_NON_COMPLAINT) && (PCIE_ROOT_PORT_DETECT_NON_COMPLAINT != 0)
-				SbSetupData->PcieRPDetectNonComplaint[Index] = SetupData.PcieRPDetectNonComplaint[Index];  //EIP191291
-#endif
       }
 
       //
@@ -750,11 +713,7 @@ VOID GetSbSetupData (
       SbSetupData->MeHrstWarmSts          = 1;
 
       // Enable / disable serial IRQ according to setup value.
-#if defined(LPC_WA_DISABLE_SERIRQ) && LPC_WA_DISABLE_SERIRQ
-      SbSetupData->SirqEnable             = 0;
-#else
       SbSetupData->SirqEnable             = 1;
-#endif
 
       // Set Serial IRQ Mode Select according to setup value.
       SbSetupData->SirqMode               = SetupData.SirqMode; //EIP133059
@@ -783,26 +742,6 @@ VOID GetSbSetupData (
 
       SbSetupData->GlobalSmi = SetupData.GlobalSmi; //EIP144291
       SbSetupData->BiosWpd = SetupData.BiosWpd; //EIP130725
-/* 
- * EIP200855 >>      
-//CSP20140829 >>   
-      if (Pei){
-          Status2 = (*PeiServices)->GetBootMode (PeiServices, &BootMode);
-              if (Status2 == EFI_SUCCESS) {
-                  Status2 = (*PeiServices)->LocatePpi (PeiServices,
-                                                      &gPeiCapsulePpiGuid,
-                                                      0,
-                                                      NULL,
-                                                      (VOID **)&Capsule);
-                      if (Status2 == EFI_SUCCESS) {
-                              if (Capsule->CheckCapsuleUpdate ((EFI_PEI_SERVICES**)PeiServices) == EFI_SUCCESS || BootMode == BOOT_IN_RECOVERY_MODE )
-                                      SbSetupData->BiosWpd = 0;
-                      }
-              }
-      }
-//CSP20140829 <<
-* EIP200855 <<
-*/
       SbSetupData->PcieDynamicGating = SetupData.PcieDynamicGating; //CSP20131018
       SbSetupData->LpssSdCardSDR25Enabled      = SetupData.LpssSdCardSDR25Enabled; //EIP144689
       SbSetupData->LpssSdCardDDR50Enabled     = SetupData.LpssSdCardDDR50Enabled; //EIP144689         
@@ -844,7 +783,7 @@ VOID GetSbSetupData (
 //*************************************************************************
 //*************************************************************************
 //**                                                                     **
-//**        (C)Copyright 1985-2017, American Megatrends, Inc.            **
+//**        (C)Copyright 1985-2012, American Megatrends, Inc.            **
 //**                                                                     **
 //**                       All Rights Reserved.                          **
 //**                                                                     **

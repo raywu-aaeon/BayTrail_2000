@@ -16,27 +16,7 @@ TOKEN
     TargetEQU = Yes
     TargetMAK = Yes
     TargetH = Yes
-    Token = "AHCI_SUPPORT" "=" "1"
-End
-
-TOKEN
-    Name  = "SECURITY_SUPPORT"
-    Value  = "1"
-    Help  = "Main switch to enable IdeSecurity support in Project"
-    TokenType = Boolean
-    TargetEQU = Yes
-    TargetMAK = Yes
-    TargetH = Yes
-    Token = "IdeBusSrc_SUPPORT" "=" "1"
-End
-
-TOKEN
-    Name  = "SELECT_SAT3_OPAL_SECURITY_PROTOCOL"
-    Value  = "1"
-    Help  = "If device supports both SAT3 and TCG Security protocol, Enable this token to use SAT and Disable to use TCG protocol[handled by TcgStorageSecurity driver]"
-    TokenType = Boolean
-    TargetH = Yes
-    Token = "NVME_DRIVER_VERSION" ">" "11"
+    Token = "HDD_SECURITY_SUPPORT" "=" "1"
 End
 
 TOKEN
@@ -136,16 +116,8 @@ End
 
 TOKEN
     Name  = "FORCE_HDD_PASSWORD_PROMPT"
-    Value  = "1"
-    Help  = "Set to 1 to always prompt for HDD password (in AHCI mode)."
-    TokenType = Boolean
-    TargetH = Yes
-End
-
-TOKEN
-    Name  = "PORTRESET_ON_HDD_PWD_VERIFICATION"
     Value  = "0"
-    Help  = "Set to 1 to issue Port reset for Password Verification instead of Disable Password cmd, to avoid Password lost due to power failure after Disable PWD command"
+    Help  = "Set to 1 to always prompt for HDD password (in AHCI mode)."
     TokenType = Boolean
     TargetH = Yes
 End
@@ -168,14 +140,6 @@ TOKEN
 End
 
 TOKEN
-    Name  = "SAVE_PCI_ROOTBRIDGE_REGS"
-    Value  = "1"
-    Help = "If this token value is 1, then the PCI configuration space of PCI Root Bridge will be saved. This is for restoring the Nvme controller registers on S3 resume to unlock the Nvme devices"
-    TokenType = Boolean
-    TargetH = Yes
-End
-
-TOKEN
     Name  = "FHPP"
     Value  = "$(FORCE_HDD_PASSWORD_PROMPT)"
     Help  = "It is for ASL usage related to FORCE_HDD_PASSWORD_PROMPT "
@@ -184,47 +148,10 @@ TOKEN
 End
 
 TOKEN
-    Name  = "HDD_SECURITY_PLUG_IN"
-    Value  = "0"
-    Help  = "If this token value is 1, OEM .sd file will be added. Default value should be 0"
-    TokenType = Boolean
-    TargetH = Yes
-    TargetMAK = Yes
-End
-
-TOKEN
-    Name  = "HDD_SECURITY_PASSWORD_NON_CASE_SENSITIVE"
+    Name  = "HddSecurity_SUPPORT"
     Value  = "1"
-    Help  = "Allow to use of case sensitive password."
+    Help  = "Main switch to enable HddSecurity support in Project"
     TokenType = Boolean
-    TargetH = Yes
-    TargetMAK = Yes
-    Token = "SETUP_IDE_SECURITY_SUPPORT" "=" "0"
-End
-
-TOKEN
-    Name  = "HDD_SECURITY_PASSWORD_NON_CASE_SENSITIVE"
-    Value  = "$(SETUP_PASSWORD_NON_CASE_SENSITIVE)"
-    Help  = "Allow to use of case sensitive password. DO NOT MODIFY THIS TOKEN."
-    TokenType = Boolean
-    TargetH = Yes
-    TargetMAK = Yes
-    Token = "SETUP_IDE_SECURITY_SUPPORT" "=" "1"
-    Token = "TSE_BUILD" ">" "0x1206"
-End
-
-ELINK
-    Name  = "HDDSECURITY_PLUG_IN_SD"
-    Help  = "List of SD files of the IdeSecurity plug-ins"
-    InvokeOrder = ReplaceParent
-End
-
-ELINK
-    Name  = "$(IDESECURITY_PLUG_IN_SD)"
-    Parent  = "SETUP_DEFINITIONS"
-    Token = "SECURITY_SUPPORT" "=" "1"
-    Token = "HDD_SECURITY_PLUG_IN" "=" "1"
-    InvokeOrder = AfterParent
 End
 
 PATH
@@ -232,9 +159,36 @@ PATH
 End
 
 ELINK
-    Name  = "IdeConnectControllerAfterConnectEverthing,"
-    Parent  = "InitConVars,"
-    Token = "SECURITY_SUPPORT" "=" "1"
+    Name  = "$(HDDSECURITY_DIR)/HddSecuritySetup.c"
+    Parent  = "SetupCallbackFiles"
+    InvokeOrder = AfterParent
+End
+
+ELINK
+    Name  = "InitHddSecurityStrings,"
+    Parent  = "SetupStringInit"
+    InvokeOrder = AfterParent
+End
+
+ELINK
+    Name  = "$(HDDSECURITY_DIR)\HddSecurity.sd"
+    Parent  = "SETUP_DEFINITIONS"
+    Token = "HDD_SECURITY_SUPPORT" "=" "1"
+    Token = "SECURITY_SETUP_ON_SAME_PAGE" "=" "0"
+    InvokeOrder = AfterParent
+End
+
+ELINK
+    Name  = "$(HDDSECURITY_DIR)\HddSecurityCommon.sd"
+    Parent  = "SETUP_DEFINITIONS"
+    Token = "HDD_SECURITY_SUPPORT" "=" "1"
+    Token = "SECURITY_SETUP_ON_SAME_PAGE" "=" "1"
+    InvokeOrder = AfterParent
+End
+
+ELINK
+    Name  = "$(HDDSECURITY_DIR)/HddSecurity.uni"
+    Parent  = "SetupStringFiles"
     InvokeOrder = AfterParent
 End
 
@@ -243,20 +197,5 @@ INFComponent
     File  = "HddSecurity.inf"
     Package  = "AmiModulePkg"
     ModuleTypes  = "DXE_DRIVER"
-    Token = "SECURITY_SUPPORT" "=" "1"
 End
 
-INFComponent
-    Name  = "HddSecurityBdsCallLib"
-    File  = "HddSecurityBdsCall.inf"
-    Package  = "AmiModulePkg"
-    Path  = "HDDSECURITY_DIR"
-    Token = "SECURITY_SUPPORT" "=" "1"
-End
-
-LibraryMapping
-    Class  = "NULL"
-    Instance  = "AmiModulePkg.HddSecurityBdsCallLib"
-    Override  = "AmiModulePkg.Bds"
-    Token = "SECURITY_SUPPORT" "=" "1"
-End

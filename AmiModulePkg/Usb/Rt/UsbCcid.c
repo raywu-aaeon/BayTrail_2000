@@ -1,36 +1,42 @@
-//**********************************************************************
-//**********************************************************************
-//**                                                                  **
-//**        (C)Copyright 1985-2016, American Megatrends, Inc.         **
-//**                                                                  **
-//**                       All Rights Reserved.                       **
-//**                                                                  **
-//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093        **
-//**                                                                  **
-//**                       Phone: (770)-246-8600                      **
-//**                                                                  **
-//**********************************************************************
-//**********************************************************************
+//****************************************************************************
+//****************************************************************************
+//**                                                                        **
+//**             (C)Copyright 1985-2013, American Megatrends, Inc.          **
+//**                                                                        **
+//**                          All Rights Reserved.                          **
+//**                                                                        **
+//**                 5555 Oakbrook Pkwy, Norcross, GA 30093                 **
+//**                                                                        **
+//**                          Phone (770)-246-8600                          **
+//**                                                                        **
+//****************************************************************************
+//****************************************************************************
 
-/** @file UsbCcid.c
-    AMI USB CCID Device class support driver
+//****************************************************************************
+// $Header: /Alaska/SOURCE/Modules/USB/ALASKA/RT/usbCCID.c 3     5/02/12 1:55a Rajeshms $
+//
+// $Revision: 3 $
+//
+// $Date: 5/02/12 1:55a $
+//****************************************************************************
 
-**/
+//<AMI_FHDR_START>
+//-----------------------------------------------------------------------------
+//
+//  Name:           UsbCCID.c
+//
+//  Description:    AMI USB CCID Device class support driver
+//
+//-----------------------------------------------------------------------------
+//<AMI_FHDR_END>
 
 #include "AmiDef.h"
 #include "UsbDef.h"
 #include "AmiUsb.h"
 #include "AmiUsbRtCcid.h"
-#include "Protocol/AmiUsbCcid.h"
-#include <Library/BaseMemoryLib.h>
-#if !USB_RT_DXE_DRIVER
-#include <Library/AmiBufferValidationLib.h>
-#endif
 
-#if USB_DEV_CCID
-
-extern  USB_GLOBAL_DATA *gUsbData;
-extern  BOOLEAN gCheckUsbApiParameter;
+extern      USB_GLOBAL_DATA *gUsbData;
+UINT8       gSequence = 0;
 
 extern  UINT8   USB_InstallCallBackFunction (CALLBACK_FUNC  pfnCallBackFunction);
 
@@ -53,12 +59,16 @@ UINT16 FiFmaxDi[] = {   372,   4, 0,
                         0,     0,  0
                         };
 
-/**
- Type:        Function Dispatch Table
-
-    This is the table of functions used by USB CCID API
-
-**/
+//<AMI_THDR_START>
+//----------------------------------------------------------------------------
+// Name:        USBCCIDAPITable - USB CCID API Function Dispatch Table
+//
+// Type:        Function Dispatch Table
+//
+// Description: This is the table of functions used by USB CCID API
+//
+//----------------------------------------------------------------------------
+//<AMI_THDR_END>
 
 API_FUNC aUsbCCIDApiTable[] = {
 
@@ -70,26 +80,24 @@ API_FUNC aUsbCCIDApiTable[] = {
     USBCCIDAPIXfrBlockSMM,              // USB Mass API Sub-Func 05h
     USBCCIDAPIGetParametersSMM,         // USB Mass API Sub-Func 06h
 
-    USBSCardReaderAPIConnectSMM,        // USB Mass API Sub-Func 07h
-    USBSCardReaderAPIDisConnectSMM,     // USB Mass API Sub-Func 08h
-    USBSCardReaderAPIStatusSMM,         // USB Mass API Sub-Func 09h
-    USBSCardReaderAPITransmitSMM,       // USB Mass API Sub-Func 0Ah
-    USBSCardReaderAPIControlSMM,        // USB Mass API Sub-Func 0Bh
-    USBSCardReaderAPIGetAttribSMM,      // USB Mass API Sub-Func 0Ch
 };
  
-/**
-    This function fills DEV_DRIVER structure
-
-    @param 
-        fpDevDriver    Pointer to the DEV driver 
-
-          
-    @retval VOID
-
- 
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   USBCCIDFillDriverEntries
+//
+// Description: This function fills DEV_DRIVER structure
+//
+// Input:   
+//              fpDevDriver    Pointer to the DEV driver 
+//
+// Output: 
+//              None
+//
+// 
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID
 USBCCIDFillDriverEntries (
     IN OUT DEV_DRIVER    *fpDevDriver
@@ -109,147 +117,103 @@ USBCCIDFillDriverEntries (
     return;
 }
 
-/**
-    This function is part of the USB BIOS MASS API inside SMM
-
-    @param 
-        fpURPPointer    Pointer to the URP structure
-
-    @retval 
-        fpURPPointer    Pointer to the URP structure
-        fpURP->bRetValue USB_SUCESS if data is returned
-
-    @note  This API returns 36h bytes of SMART Class Descriptor to the caller. 
-              Input Buffer of 36h bytes long is provided by the caller. Caller is 
-              USBCCIDAPISmartClassDescriptor in EfiUsbCCID.C
- 
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   USBCCIDAPISmartClassDescriptorSMM
+//
+// Description: This function is part of the USB BIOS MASS API inside SMM
+//
+// Input:   
+//              fpURPPointer    Pointer to the URP structure
+//
+// Output: 
+//              fpURPPointer    Pointer to the URP structure
+//              fpURP->bRetValue USB_SUCESS if data is returned
+//
+// Notes:       This API returns 36h bytes of SMART Class Descriptor to the caller. 
+//              Input Buffer of 36h bytes long is provided by the caller. Caller is 
+//              USBCCIDAPISmartClassDescriptor in EfiUsbCCID.C
+// 
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID
-USBCCIDAPISmartClassDescriptorSMM(
-    IN OUT URP_STRUC *Urp
+USBCCIDAPISmartClassDescriptorSMM (
+    IN OUT URP_STRUC *fpURP
 )
 {
    
-    DEV_INFO    *DevInfo;
-    EFI_STATUS  EfiStatus = EFI_SUCCESS;
-    UINT8       *MemBlockEnd = gUsbData->fpMemBlockStart + (gUsbData->MemPages << 12);
+    DEV_INFO               *fpDevInfo;
 
-#if !USB_RT_DXE_DRIVER
-    if (gCheckUsbApiParameter) {
-        EfiStatus = AmiValidateMemoryBuffer((VOID*)(Urp->ApiData.CCIDSmartClassDescriptor.fpResponseBuffer), 
-                        (UINT32)sizeof(SMARTCLASS_DESC));
-        if (EFI_ERROR(EfiStatus)) {
-            USB_DEBUG(DEBUG_ERROR, 3, "UsbCcid Invalid Pointer, Buffer is in SMRAM.\n");
-            Urp->bRetValue = USB_ERROR;
-            return;
-        }
-        gCheckUsbApiParameter = FALSE;
-    }
-#endif
-
-    DevInfo = (DEV_INFO *) (Urp->ApiData.CCIDSmartClassDescriptor.fpDevInfo);
+    fpDevInfo = (DEV_INFO *) (fpURP->ApiData.CCIDSmartClassDescriptor.fpDevInfo);
 
     // Check whether it is a valid CCID Device
-    if (!DevInfo || !DevInfo->pCCIDDescriptor) {
-        Urp->bRetValue = USB_ERROR;
+    if (!fpDevInfo || !fpDevInfo->pCCIDDescriptor) {
+
+        fpURP->bRetValue    = USB_ERROR;
         return;
+
     }
 
-    EfiStatus = UsbDevInfoValidation(DevInfo);
+    MemCopy((UINT8 *)fpDevInfo->pCCIDDescriptor, 
+            (UINT8 *)(fpURP->ApiData.CCIDSmartClassDescriptor.fpResponseBuffer), 
+            (UINT32)sizeof(SMARTCLASS_DESC)
+            );
 
-    if (EFI_ERROR(EfiStatus)) {
-        Urp->bRetValue = USB_PARAMETER_ERROR;
-        return;
-    }
-
-    if (((UINT8*)DevInfo->pCCIDDescriptor < gUsbData->fpMemBlockStart) ||
-        ((UINT8*)DevInfo->pCCIDDescriptor > MemBlockEnd)) {
-        Urp->bRetValue = USB_ERROR;
-        return;
-    }
-    
-    CopyMem((UINT8 *)(Urp->ApiData.CCIDSmartClassDescriptor.fpResponseBuffer),
-            (UINT8 *)DevInfo->pCCIDDescriptor, (UINT32)sizeof(SMARTCLASS_DESC));
-
-    Urp->bRetValue = USB_SUCCESS;
+    fpURP->bRetValue    = USB_SUCCESS;
 
     return;
 
 }
 
-/**
-    This function is part of the USB BIOS MASS API inside SMM
-
-    @param fpURPPointer    Pointer to the URP structure, it contains the following:
-
-    @retval fpURPPointer Pointer to the URP structure
-        fpURP->bRetValue : USB_SUCESS if data is returned
-
-    @note  This API returns ATR data if present
- 
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   USBCCIDAPIAtrSMM
+//
+// Description: This function is part of the USB BIOS MASS API inside SMM
+//
+// Input:   fpURPPointer    Pointer to the URP structure, it contains the following:
+//
+// Output: fpURPPointer Pointer to the URP structure
+//         fpURP->bRetValue : USB_SUCESS if data is returned
+//
+// Notes:   This API returns ATR data if present
+// 
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID
-USBCCIDAPIAtrSMM(
-    IN OUT URP_STRUC *Urp
+USBCCIDAPIAtrSMM (
+    IN OUT URP_STRUC *fpURP
 
 )
 {
 
-    DEV_INFO            *DevInfo;
-    ICC_DEVICE          *IccDevice;
-    EFI_STATUS          EfiStatus = EFI_SUCCESS;
-    UINT8               *MemBlockEnd = gUsbData->fpMemBlockStart + (gUsbData->MemPages << 12);
+    DEV_INFO            *fpDevInfo;
+    ICC_DEVICE          *fpICCDevice;
 
-#if !USB_RT_DXE_DRIVER
-    if (gCheckUsbApiParameter) {
-        EfiStatus = AmiValidateMemoryBuffer((VOID*)(Urp->ApiData.CCIDAtr.ATRData),
-                    MAX_ATR_LENGTH);
-        if (EFI_ERROR(EfiStatus)) {
-            USB_DEBUG(DEBUG_ERROR, 3, "UsbCcid Invalid Pointer, Buffer is in SMRAM.\n");
-            Urp->bRetValue = USB_ERROR;
-            return;
-        }
-        gCheckUsbApiParameter = FALSE;
-    }
-#endif
-
-    DevInfo = (DEV_INFO *)(Urp->ApiData.CCIDAtr.fpDevInfo);
+    fpDevInfo = (DEV_INFO *) (fpURP->ApiData.CCIDAtr.fpDevInfo);
     //
     // Check whether it is a valid CCID Device
     //
-    if (!DevInfo || !DevInfo->pCCIDDescriptor) {
-        Urp->bRetValue = USB_ERROR;
+    if (!fpDevInfo || !fpDevInfo->pCCIDDescriptor) {
+
+        fpURP->bRetValue = USB_ERROR;
         return;
 
     }
 
-    EfiStatus = UsbDevInfoValidation(DevInfo);
-
-    if (EFI_ERROR(EfiStatus)) {
-        Urp->bRetValue = USB_PARAMETER_ERROR;
-        return;
-    }
-
-    if (((UINT8*)DevInfo->pCCIDDescriptor < gUsbData->fpMemBlockStart) ||
-        ((UINT8*)DevInfo->pCCIDDescriptor > MemBlockEnd)) {
-        Urp->bRetValue = USB_ERROR;
-        return;
-    }
-
-    Urp->bRetValue = USB_ERROR;
+    fpURP->bRetValue = USB_ERROR;
 
     //
     // Locate the ICCDevice 
     //
-    IccDevice = GetICCDevice(DevInfo, Urp->ApiData.CCIDAtr.Slot);
+    fpICCDevice = GetICCDevice(fpDevInfo, fpURP->ApiData.CCIDAtr.Slot);
 
-    if (IccDevice) {
-        if (IccDevice->ConfiguredStatus & ATRDATAPRESENT) {
-            CopyMem((UINT8 *)(Urp->ApiData.CCIDAtr.ATRData),
-                    (UINT8 *)IccDevice->RawATRData, MAX_ATR_LENGTH);
-            Urp->bRetValue = USB_SUCCESS;
+    if (fpICCDevice) {
+        if (fpICCDevice->ConfiguredStatus & ATRDATAPRESENT) {
+            MemCopy((UINT8 *)fpICCDevice->RawATRData, (UINT8 *)(fpURP->ApiData.CCIDAtr.ATRData), MAX_ATR_LENGTH);
+            fpURP->bRetValue = USB_SUCCESS;
         }
     }
 
@@ -257,110 +221,88 @@ USBCCIDAPIAtrSMM(
 
 }
 
-/**
-    This function is part of the USB BIOS MASS API inside SMM
-
-    @param 
-        fpURPPointer    Pointer to the URP structure
-
-    @retval 
-        fpURPPointer Pointer to the URP structure
-        fpURP->bRetValue : USB_SUCESS if data is returned
-
-    @note  This API powers up the particular slot in CCID and returns ATR data if successful
- 
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   USBCCIDAPIPowerupSlotSMM
+//
+// Description: This function is part of the USB BIOS MASS API inside SMM
+//
+// Input:       
+//              fpURPPointer    Pointer to the URP structure
+//
+// Output:      
+//              fpURPPointer Pointer to the URP structure
+//              fpURP->bRetValue : USB_SUCESS if data is returned
+//
+// Notes:       This API powers up the particular slot in CCID and returns ATR data if successful
+// 
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID
 USBCCIDAPIPowerupSlotSMM (
-    IN OUT URP_STRUC *Urp
+    IN OUT URP_STRUC *fpURP
 
 )
 {
 
-    EFI_STATUS  Status;    
-    DEV_INFO    *DevInfo;
-    ICC_DEVICE  *IccDevice;
-    UINT8       *MemBlockEnd = gUsbData->fpMemBlockStart + (gUsbData->MemPages << 12);
+    EFI_STATUS          Status;    
+    DEV_INFO               *fpDevInfo;
+    ICC_DEVICE            *fpICCDevice;
 
-#if !USB_RT_DXE_DRIVER
-    if (gCheckUsbApiParameter) {
-        Status = AmiValidateMemoryBuffer((VOID*)(Urp->ApiData.CCIDPowerupSlot.ATRData),
-                    MAX_ATR_LENGTH);
-        if (EFI_ERROR(Status)) {
-            USB_DEBUG(DEBUG_ERROR, 3, "UsbCcid Invalid Pointer, Buffer is in SMRAM.\n");
-            Urp->bRetValue = USB_ERROR;
-            return;
-        }
-        gCheckUsbApiParameter = FALSE;
-    }
-#endif
-
-    DevInfo = (DEV_INFO *) (Urp->ApiData.CCIDPowerupSlot.fpDevInfo);
+    fpDevInfo = (DEV_INFO *) (fpURP->ApiData.CCIDPowerupSlot.fpDevInfo);
 
     //
     // Check whether it is a valid CCID Device
     //
-    if (!DevInfo || !DevInfo->pCCIDDescriptor) {
-        Urp->bRetValue    = USB_ERROR;
+    if (!fpDevInfo || !fpDevInfo->pCCIDDescriptor) {
+
+        fpURP->bRetValue    = USB_ERROR;
         return;
+
     }
 
-    Status = UsbDevInfoValidation(DevInfo);
-
-    if (EFI_ERROR(Status)) {
-        Urp->bRetValue = USB_PARAMETER_ERROR;
-        return;
-    }
-
-    if (((UINT8*)DevInfo->pCCIDDescriptor < gUsbData->fpMemBlockStart) ||
-        ((UINT8*)DevInfo->pCCIDDescriptor > MemBlockEnd)) {
-        Urp->bRetValue = USB_ERROR;
-        return;
-    }
-    
     //
     // Locate the ICCDevice 
     //
-    IccDevice = GetICCDevice(DevInfo, Urp->ApiData.CCIDPowerupSlot.Slot);
+    fpICCDevice = GetICCDevice(fpDevInfo, fpURP->ApiData.CCIDPowerupSlot.Slot);
 
-    if (IccDevice) {
+    if (fpICCDevice) {
         //
         // The slot has been already discovered. Check the status.
         //
-        if (IccDevice->ConfiguredStatus & VOLTAGEAPPLIED) {
+        if (fpICCDevice->ConfiguredStatus & VOLTAGEAPPLIED) {
             //
             // Power down the device
             //
-            PCtoRDRIccPowerOff (DevInfo, IccDevice);
-            RDRToPCSlotStatus(DevInfo, IccDevice);
+            PCtoRDRIccPowerOff (fpDevInfo,  fpICCDevice);
+            RDRToPCSlotStatus(fpDevInfo, fpICCDevice);
         }
     }
 
-    Status = ICCInsertEvent(DevInfo, Urp->ApiData.CCIDPowerupSlot.Slot);
+    Status = ICCInsertEvent (fpDevInfo, fpURP->ApiData.CCIDPowerupSlot.Slot);
 
     //
     // If the card has been successfully poweredup copy ATR data
     //
-    if (!IccDevice) {
-        IccDevice = GetICCDevice(DevInfo, Urp->ApiData.CCIDPowerupSlot.Slot);
-        if (!IccDevice) {
-            Urp->bRetValue = USB_ERROR;
+    if (!fpICCDevice) {
+        fpICCDevice = GetICCDevice(fpDevInfo, fpURP->ApiData.CCIDPowerupSlot.Slot);
+        if (!fpICCDevice) {
+            fpURP->bRetValue = USB_ERROR;
             return;
         }
     }
-    Urp->ApiData.CCIDPowerupSlot.bStatus = IccDevice->bStatus;
-    Urp->ApiData.CCIDPowerupSlot.bError = IccDevice->bError;
+    fpURP->ApiData.CCIDPowerupSlot.bStatus = fpICCDevice->bStatus;
+    fpURP->ApiData.CCIDPowerupSlot.bError = fpICCDevice->bError;
 
-    if (IccDevice->ConfiguredStatus & ATRDATAPRESENT) {
-        CopyMem((UINT8 *)(Urp->ApiData.CCIDPowerupSlot.ATRData),
-                (UINT8 *)IccDevice->RawATRData, MAX_ATR_LENGTH);      
+    if (fpICCDevice->ConfiguredStatus & ATRDATAPRESENT) {
+        MemCopy((UINT8 *)fpICCDevice->RawATRData, (UINT8 *)(fpURP->ApiData.CCIDPowerupSlot.ATRData), MAX_ATR_LENGTH);        
     }
 
-    Urp->bRetValue = USB_SUCCESS;
+    fpURP->bRetValue    = USB_SUCCESS;
 
     if (Status == EFI_DEVICE_ERROR){
-        Urp->bRetValue = USB_ERROR;
+        fpURP->bRetValue    = USB_ERROR;
     }
 
     return;
@@ -368,175 +310,163 @@ USBCCIDAPIPowerupSlotSMM (
 }
 
 
-/**
-    This function is part of the USB BIOS MASS API inside SMM
-
-    @param 
-        fpURPPointer    Pointer to the URP structure, it contains the following:
-
-    @retval 
-        fpURPPointer Pointer to the URP structure
-        fpURP->bRetValue : USB_SUCESS if data is returned
-
-    @note  This API powers down the particular slot.
- 
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   USBCCIDAPIPowerDownSlotSMM
+//
+// Description: This function is part of the USB BIOS MASS API inside SMM
+//
+// Input:   
+//              fpURPPointer    Pointer to the URP structure, it contains the following:
+//
+// Output: 
+//              fpURPPointer Pointer to the URP structure
+//              fpURP->bRetValue : USB_SUCESS if data is returned
+//
+// Notes:       This API powers down the particular slot.
+// 
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID
-USBCCIDAPIPowerDownSlotSMM(
-    IN OUT URP_STRUC *Urp
+USBCCIDAPIPowerDownSlotSMM (
+    IN OUT URP_STRUC *fpURP
+
 )
 {
     
-    EFI_STATUS  Status = EFI_SUCCESS;
-    DEV_INFO    *DevInfo;
-    ICC_DEVICE  *IccDevice;
-    UINT8       *MemBlockEnd = gUsbData->fpMemBlockStart + (gUsbData->MemPages << 12);
+    EFI_STATUS          Status = EFI_SUCCESS;
+    DEV_INFO               *fpDevInfo;
+    ICC_DEVICE            *fpICCDevice;
 
-    DevInfo = (DEV_INFO *)(Urp->ApiData.CCIDPowerdownSlot.fpDevInfo);
+    fpDevInfo = (DEV_INFO *) (fpURP->ApiData.CCIDPowerdownSlot.fpDevInfo);
 
-    Urp->bRetValue = USB_ERROR;
+    fpURP->bRetValue    = USB_ERROR;
 
     //
     // Check whether it is a valid CCID Device
     //
-    if (!DevInfo || !DevInfo->pCCIDDescriptor) {
-        return;
-    }
+    if (!fpDevInfo || !fpDevInfo->pCCIDDescriptor) {
 
-    Status = UsbDevInfoValidation(DevInfo);
-
-    if (EFI_ERROR(Status)) {
-        Urp->bRetValue = USB_PARAMETER_ERROR;
         return;
-    }
 
-    if (((UINT8*)DevInfo->pCCIDDescriptor < gUsbData->fpMemBlockStart) ||
-        ((UINT8*)DevInfo->pCCIDDescriptor > MemBlockEnd)) {
-        Urp->bRetValue = USB_ERROR;
-        return;
     }
 
     //
     // Locate the ICCDevice 
     //
-    IccDevice = GetICCDevice(DevInfo, Urp->ApiData.CCIDPowerdownSlot.Slot);
+    fpICCDevice = GetICCDevice(fpDevInfo, fpURP->ApiData.CCIDPowerdownSlot.Slot);
 
-    if (IccDevice) {
+    if (fpICCDevice) {
         //
         // The slot has been already discovered. Check the status.
         //
-        if (IccDevice->ConfiguredStatus & ICCPRESENT) {
+        if (fpICCDevice->ConfiguredStatus & ICCPRESENT) {
+        
             //
             // Power down the device
             //
-            Status = PCtoRDRIccPowerOff (DevInfo, IccDevice);
-            RDRToPCSlotStatus(DevInfo, IccDevice);
+            Status = PCtoRDRIccPowerOff (fpDevInfo,  fpICCDevice);
+            RDRToPCSlotStatus(fpDevInfo, fpICCDevice);
 
-            IccDevice->ConfiguredStatus &= (~VOLTAGEAPPLIED);
+            fpICCDevice->ConfiguredStatus &= (~VOLTAGEAPPLIED);
 
-            Urp->ApiData.CCIDPowerdownSlot.bStatus = IccDevice->bStatus;
-            Urp->ApiData.CCIDPowerdownSlot.bError = IccDevice->bError;
+            fpURP->ApiData.CCIDPowerdownSlot.bStatus = fpICCDevice->bStatus;
+            fpURP->ApiData.CCIDPowerdownSlot.bError = fpICCDevice->bError;
 
         }
     }
 
-    Urp->bRetValue = USB_SUCCESS;
+    fpURP->bRetValue    = USB_SUCCESS;
 
-    if (Status == EFI_DEVICE_ERROR) {
-        Urp->bRetValue = USB_ERROR;
+    if (Status == EFI_DEVICE_ERROR){
+        fpURP->bRetValue    = USB_ERROR;
     }
 
     return;
 
 }
 
-/**
-    This function is part of the USB BIOS MASS API inside SMM
-
-    @param 
-        fpURPPointer    Pointer to the URP structure, it contains the following:
-        UINT8           *bStatus;
-        UINT8           *bError;
-
-    @retval 
-        fpURPPointer    Pointer to the URP structure
-        bRetValue       Return value
-        bClockStatus    Return Value
-
-    @note  This API returns information from RDR_to_PC_SlotStatus. 
-              Caller is USBCCIDAPIGetSlotStatus in EfiUsbCCID.C
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   USBCCIDAPIGetSlotStatusSMM
+//
+// Description: This function is part of the USB BIOS MASS API inside SMM
+//
+// Input:   
+//              fpURPPointer    Pointer to the URP structure, it contains the following:
+//              UINT8           *bStatus;
+//              UINT8           *bError;
+//
+// Output: 
+//              fpURPPointer    Pointer to the URP structure
+//              bRetValue       Return value
+//              bClockStatus    Return Value
+//
+// Notes:       This API returns information from RDR_to_PC_SlotStatus. 
+//              Caller is USBCCIDAPIGetSlotStatus in EfiUsbCCID.C
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 VOID
 USBCCIDAPIGetSlotStatusSMM (
-    IN OUT URP_STRUC *Urp
+    IN OUT URP_STRUC *fpURP
 )
 {
     
-    EFI_STATUS  Status;
-    DEV_INFO    *DevInfo;
-    ICC_DEVICE  *IccDevice;
-    UINT8       *MemBlockEnd = gUsbData->fpMemBlockStart + (gUsbData->MemPages << 12);
+    EFI_STATUS              Status;
+    DEV_INFO                *fpDevInfo;
+    ICC_DEVICE              *fpICCDevice;
 
-    DevInfo = (DEV_INFO *) (Urp->ApiData.CCIDGetSlotStatus.fpDevInfo);
+    fpDevInfo = (DEV_INFO *) (fpURP->ApiData.CCIDGetSlotStatus.fpDevInfo);
 
     //
     // Check whether it is a valid CCID Device
     //
-    if (!DevInfo || !DevInfo->pCCIDDescriptor) {
-        Urp->bRetValue = USB_ERROR;
-        return;
-    }
+    if (!fpDevInfo || !fpDevInfo->pCCIDDescriptor) {
 
-    Status = UsbDevInfoValidation(DevInfo);
-
-    if (EFI_ERROR(Status)) {
-        Urp->bRetValue = USB_PARAMETER_ERROR;
+        fpURP->bRetValue    = USB_ERROR;
         return;
-    }
 
-    if (((UINT8*)DevInfo->pCCIDDescriptor < gUsbData->fpMemBlockStart) ||
-        ((UINT8*)DevInfo->pCCIDDescriptor > MemBlockEnd)) {
-        Urp->bRetValue = USB_ERROR;
-        return;
     }
 
     //
     // Locate the ICCDevice 
     //
-    IccDevice = GetICCDevice(DevInfo, Urp->ApiData.CCIDGetSlotStatus.Slot);
-    if (!IccDevice || !(IccDevice->ConfiguredStatus & ICCPRESENT)) {
-        Urp->ApiData.CCIDGetSlotStatus.bStatus = 0x42; 
-        Urp->ApiData.CCIDGetSlotStatus.bError = 0xFE;
-        Urp->bRetValue = USB_ERROR;
+    fpICCDevice = GetICCDevice(fpDevInfo, fpURP->ApiData.CCIDGetSlotStatus.Slot);
+    if (!fpICCDevice ||  !(fpICCDevice->ConfiguredStatus & ICCPRESENT)) {
+
+        fpURP->ApiData.CCIDGetSlotStatus.bStatus = 0x42; 
+        fpURP->ApiData.CCIDGetSlotStatus.bError = 0xFE;
+        fpURP->bRetValue    = USB_ERROR;
         return;
+
     }
     
     //
     // Issue the cmd
     //
-    Status = PCToRDRGetSlotStatus(DevInfo, IccDevice);
-    
-    if (EFI_ERROR(Status)) {
-        Urp->bRetValue = USB_ERROR;
+    Status = PCToRDRGetSlotStatus(fpDevInfo, fpICCDevice);
+
+    if (EFI_ERROR(Status)){
+        fpURP->bRetValue    = USB_ERROR;
         return;        
     }
 
     //
     // Get the response
     //
-    Status = RDRToPCSlotStatus(DevInfo, IccDevice);
+    Status = RDRToPCSlotStatus(fpDevInfo, fpICCDevice);
 
-    Urp->ApiData.CCIDGetSlotStatus.bStatus = IccDevice->bStatus;
-    Urp->ApiData.CCIDGetSlotStatus.bError = IccDevice->bError;
-    Urp->ApiData.CCIDGetSlotStatus.bClockStatus = IccDevice->bClockStatus;
+    fpURP->ApiData.CCIDGetSlotStatus.bStatus = fpICCDevice->bStatus;
+    fpURP->ApiData.CCIDGetSlotStatus.bError = fpICCDevice->bError;
+    fpURP->ApiData.CCIDGetSlotStatus.bClockStatus = fpICCDevice->bClockStatus;
 
-    Urp->bRetValue = USB_SUCCESS;
+    fpURP->bRetValue    = USB_SUCCESS;
 
-    if (Status == EFI_DEVICE_ERROR) {
-        Urp->bRetValue = USB_ERROR;
+    if (Status == EFI_DEVICE_ERROR){
+        fpURP->bRetValue    = USB_ERROR;
     }
 
     return;
@@ -544,890 +474,296 @@ USBCCIDAPIGetSlotStatusSMM (
 }
 
 
-/**
-    This function is part of the USB BIOS MASS API.
-
-           
-        fpURPPointer    Pointer to the URP structure, it contains the following:
-    @param CmdLength 
-    @param fpCmdBuffer 
-    @param bStatus 
-    @param bError 
-    @param ResponseLength Points to the buffer length of fpResponseBuffer
-    @param fpResponseBuffer 
-
-    @retval 
-        fpURPPointer    Pointer to the URP structure
-        OUT UINT8       bStatus
-        OUT UINT8       bError
-        IN OUT UINTN    ResponseLength - Points to the actual response bytes in fpResponseBuffer on return
-        OUT UINTN       fpResponseBuffer
-
-    @note  This API excutes PC_to_RDR_XfrBlock cmd and returns the response from 
-              RDR_to_PC_DataBlock to the caller.
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   USBCCIDAPIXfrBlockSMM
+//
+// Description: This function is part of the USB BIOS MASS API.
+//
+// Input:   
+//              fpURPPointer    Pointer to the URP structure, it contains the following:
+//              IN UINTN        CmdLength
+//              IN UINTN        fpCmdBuffer
+//              OUT UINT8       bStatus
+//              OUT UINT8       bError
+//              IN OUT UINTN    ResponseLength - Points to the buffer length of fpResponseBuffer
+//              OUT UINTN       fpResponseBuffer
+//
+// Output: 
+//              fpURPPointer    Pointer to the URP structure
+//              OUT UINT8       bStatus
+//              OUT UINT8       bError
+//              IN OUT UINTN    ResponseLength - Points to the actual response bytes in fpResponseBuffer on return
+//              OUT UINTN       fpResponseBuffer
+//
+// Note:        This API excutes PC_to_RDR_XfrBlock cmd and returns the response from 
+//              RDR_to_PC_DataBlock to the caller.
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 VOID
 USBCCIDAPIXfrBlockSMM (
-    IN OUT URP_STRUC *Urp
+    IN OUT URP_STRUC *fpURP
 )
 {
 
-    EFI_STATUS  Status;
-    DEV_INFO    *DevInfo;
-    ICC_DEVICE  *IccDevice;
-    UINT32      CmdLength = (UINT32)Urp->ApiData.CCIDXfrBlock.CmdLength;
-    UINT8       *CmdBuffer = (UINT8 *)Urp->ApiData.CCIDXfrBlock.fpCmdBuffer;
-    UINT8       IsBlock = (BOOLEAN)Urp->ApiData.CCIDXfrBlock.ISBlock;
-    UINT32      *ResponseLength = (UINT32 *)&(Urp->ApiData.CCIDXfrBlock.ResponseLength);
-    UINT8       *ResponseBuffer = (UINT8 *)(Urp->ApiData.CCIDXfrBlock.fpResponseBuffer);
-    UINT8       *MemBlockEnd = gUsbData->fpMemBlockStart + (gUsbData->MemPages << 12);
+    EFI_STATUS          Status;
+    DEV_INFO            *fpDevInfo;
+    ICC_DEVICE          *fpICCDevice;
+    UINT32              CmdLength = (UINT32)fpURP->ApiData.CCIDXfrBlock.CmdLength;
+    UINT8               *CmdBuffer = (UINT8 *)fpURP->ApiData.CCIDXfrBlock.fpCmdBuffer;
+    UINT8               ISBlock = (BOOLEAN)fpURP->ApiData.CCIDXfrBlock.ISBlock;
+    UINT32              *ResponseLength = (UINT32 *)&(fpURP->ApiData.CCIDXfrBlock.ResponseLength);
+    UINT8               *ResponseBuffer = (UINT8 *)(fpURP->ApiData.CCIDXfrBlock.fpResponseBuffer);
 
-#if !USB_RT_DXE_DRIVER
-    if (gCheckUsbApiParameter) {
-        Status = AmiValidateMemoryBuffer((VOID*)(Urp->ApiData.CCIDXfrBlock.fpCmdBuffer),
-                    Urp->ApiData.CCIDXfrBlock.CmdLength);
-        if (EFI_ERROR(Status)) {
-            USB_DEBUG(DEBUG_ERROR, 3, "UsbCcid Invalid Pointer, Buffer is in SMRAM.\n");
-            Urp->bRetValue = USB_ERROR;
-            return;
-        }
-        Status = AmiValidateMemoryBuffer((VOID*)(Urp->ApiData.CCIDXfrBlock.fpResponseBuffer),
-                    Urp->ApiData.CCIDXfrBlock.ResponseLength);
-        if (EFI_ERROR(Status)) {
-            USB_DEBUG(DEBUG_ERROR, 3, "UsbCcid Invalid Pointer, Buffer is in SMRAM.\n");
-            Urp->bRetValue = USB_ERROR;
-            return;
-        }
-        gCheckUsbApiParameter = FALSE;
-    }
-#endif
-
-    DevInfo = (DEV_INFO *)(Urp->ApiData.CCIDXfrBlock.fpDevInfo);
+    fpDevInfo = (DEV_INFO *) (fpURP->ApiData.CCIDXfrBlock.fpDevInfo);
 
     //
     // Check whether it is a valid CCID Device
     //
-    if (!DevInfo || !DevInfo->pCCIDDescriptor) {
-        Urp->bRetValue = USB_ERROR;
-        return;
-    }
+    if (!fpDevInfo || !fpDevInfo->pCCIDDescriptor) {
 
-    Status = UsbDevInfoValidation(DevInfo);
-
-    if (EFI_ERROR(Status)) {
-        Urp->bRetValue = USB_PARAMETER_ERROR;
+        fpURP->bRetValue    = USB_ERROR;
         return;
-    }
 
-    if (((UINT8*)DevInfo->pCCIDDescriptor < gUsbData->fpMemBlockStart) ||
-        ((UINT8*)DevInfo->pCCIDDescriptor > MemBlockEnd)) {
-        Urp->bRetValue = USB_ERROR;
-        return;
     }
 
     //
     // Locate the ICCDevice 
     //
-    IccDevice = GetICCDevice(DevInfo, Urp->ApiData.CCIDXfrBlock.Slot);
+    fpICCDevice = GetICCDevice(fpDevInfo, fpURP->ApiData.CCIDXfrBlock.Slot);
 
-    if (!IccDevice || !(IccDevice->ConfiguredStatus & ICCPRESENT)) {
-        Urp->ApiData.CCIDXfrBlock.bStatus = 0x42; 
-        Urp->ApiData.CCIDXfrBlock.bError = 0xFE;
-        Urp->bRetValue = USB_ERROR;
+    if (!fpICCDevice  ||  !(fpICCDevice->ConfiguredStatus & ICCPRESENT)) {
+
+        fpURP->ApiData.CCIDXfrBlock.bStatus = 0x42; 
+        fpURP->ApiData.CCIDXfrBlock.bError = 0xFE;
+        fpURP->bRetValue    = USB_ERROR;
         return;
+
     }
 
 
     //
     // Only T0/T1 are recognized
     //
-    if (IccDevice->bProtocolNum > 1) {
-        Urp->bRetValue = USB_ERROR;        
+    if (fpICCDevice->bProtocolNum > 1) {
+        fpURP->bRetValue    = USB_ERROR;        
         return;
     } 
 
     //
     // Check for T0/T1
     //
-    if (IccDevice->bProtocolNum) {    
-        switch (((SMARTCLASS_DESC*)DevInfo->pCCIDDescriptor)->dwFeatures & 0x70000) {
+    if (fpICCDevice->bProtocolNum){    
+        switch(((SMARTCLASS_DESC*)fpDevInfo->pCCIDDescriptor)->dwFeatures & 0x70000) {
 
             case TDPU_LEVEL_EXCHANGE:
 
-                Status = TxRxT1TDPUChar (DevInfo, IccDevice, CmdLength, CmdBuffer, IsBlock, ResponseLength, ResponseBuffer);
+                Status = TxRxT1TDPUChar (fpDevInfo, fpICCDevice, CmdLength, CmdBuffer, ISBlock, ResponseLength, ResponseBuffer);
                 break;
 
             case CHARACTER_LEVEL_EXCHANGE:
 
-                Status = TxRxT1TDPUChar (DevInfo, IccDevice, CmdLength, CmdBuffer, IsBlock, ResponseLength, ResponseBuffer);
+                Status = TxRxT1TDPUChar (fpDevInfo, fpICCDevice, CmdLength, CmdBuffer, ISBlock, ResponseLength, ResponseBuffer);
                 break;
 
             case SHORT_ADPU_LEVEL_EXCHANGE:
             case EXT_ADPU_LEVEL_EXCHANGE:
         
-                Status = TxRxT1Adpu(DevInfo, IccDevice, CmdLength, CmdBuffer, ResponseLength, ResponseBuffer);
+                Status = TxRxT1Adpu(fpDevInfo, fpICCDevice, CmdLength, CmdBuffer, ResponseLength, ResponseBuffer);
                 break;
         }
     } else {
         // T0 not supported yet
-        Urp->bRetValue = USB_ERROR;        
+        fpURP->bRetValue    = USB_ERROR;        
         return;
     }
 
-    Urp->ApiData.CCIDXfrBlock.bStatus = IccDevice->bStatus;
-    Urp->ApiData.CCIDXfrBlock.bError = IccDevice->bError;
+    fpURP->ApiData.CCIDXfrBlock.bStatus = fpICCDevice->bStatus;
+    fpURP->ApiData.CCIDXfrBlock.bError = fpICCDevice->bError;
 
-    Urp->bRetValue = USB_SUCCESS;
+    fpURP->bRetValue    = USB_SUCCESS;
 
-    if (Status == EFI_DEVICE_ERROR) {
-        Urp->bRetValue = USB_ERROR;
+    if (Status == EFI_DEVICE_ERROR){
+        fpURP->bRetValue    = USB_ERROR;
     }
 
     return;
 
 }
 
-/**
-    This function is part of the USB BIOS MASS API.
-
-           
-        fpURPPointer    Pointer to the URP structure, it contains the following:
-    @param bStatus ;
-    @param bError ;
-    @param ResponseLength ;
-    @param fpResponseBuffer ;
-    @param Slot ;
-    @param fpDevInfo ;
-
-    @retval 
-        fpURPPointer    Pointer to the URP structure
-        bRetValue       Return value
-
-    @note  This API returns the response to RDR_to_PCParameters cmd
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   USBCCIDAPIGetParametersSMM
+//
+// Description: This function is part of the USB BIOS MASS API.
+//
+// Input:   
+//              fpURPPointer    Pointer to the URP structure, it contains the following:
+//              OUT UINT8       bStatus;
+//              OUT UINT8       bError;
+//              IN OUT UINTN    ResponseLength;
+//              OUT UINTN       fpResponseBuffer;
+//              IN  UINT8       Slot;
+//              OUT UINTN       fpDevInfo;
+//
+// Output: 
+//              fpURPPointer    Pointer to the URP structure
+//              bRetValue       Return value
+//
+// Notes:       This API returns the response to RDR_to_PCParameters cmd
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 VOID
 USBCCIDAPIGetParametersSMM (
-    IN OUT URP_STRUC *Urp
+    IN OUT URP_STRUC *fpURP
 
 )
 {
     
-    EFI_STATUS  Status;
-    DEV_INFO    *DevInfo;
-    ICC_DEVICE  *IccDevice;
-    UINT8       *MemBlockEnd = gUsbData->fpMemBlockStart + (gUsbData->MemPages << 12);
+    EFI_STATUS              Status;
+    DEV_INFO                *fpDevInfo;
+    ICC_DEVICE              *fpICCDevice;
 
-#if !USB_RT_DXE_DRIVER
-    if (gCheckUsbApiParameter) {
-        Status = AmiValidateMemoryBuffer((VOID*)(Urp->ApiData.CCIDGetParameters.fpResponseBuffer),
-                    Urp->ApiData.CCIDGetParameters.ResponseLength);
-        if (EFI_ERROR(Status)) {
-            USB_DEBUG(DEBUG_ERROR, 3, "UsbCcid Invalid Pointer, Buffer is in SMRAM.\n");
-            Urp->bRetValue = USB_ERROR;
-            return;
-        }
-        gCheckUsbApiParameter = FALSE;
-    }
-#endif
-
-    DevInfo = (DEV_INFO *)(Urp->ApiData.CCIDGetParameters.fpDevInfo);
+    fpDevInfo = (DEV_INFO *) (fpURP->ApiData.CCIDGetParameters.fpDevInfo);
 
     //
     // Check whether it is a valid CCID Device
     //
-    if (!DevInfo || !DevInfo->pCCIDDescriptor) {
-        Urp->bRetValue = USB_ERROR;
-        return;
-    }
+    if (!fpDevInfo || !fpDevInfo->pCCIDDescriptor) {
 
-    Status = UsbDevInfoValidation(DevInfo);
-
-    if (EFI_ERROR(Status)) {
-        Urp->bRetValue = USB_PARAMETER_ERROR;
+        fpURP->bRetValue    = USB_ERROR;
         return;
-    }
 
-    if (((UINT8*)DevInfo->pCCIDDescriptor < gUsbData->fpMemBlockStart) ||
-        ((UINT8*)DevInfo->pCCIDDescriptor > MemBlockEnd)) {
-        Urp->bRetValue = USB_ERROR;
-        return;
     }
 
     //
     // Locate the ICCDevice 
     //
-    IccDevice = GetICCDevice(DevInfo, Urp->ApiData.CCIDGetParameters.Slot);
-    if (!IccDevice || !(IccDevice->ConfiguredStatus & ICCPRESENT)) {
-        Urp->ApiData.CCIDGetParameters.bStatus = 0x42; 
-        Urp->ApiData.CCIDGetParameters.bError = 0xFE;
-        Urp->bRetValue = USB_ERROR;
+    fpICCDevice = GetICCDevice(fpDevInfo, fpURP->ApiData.CCIDGetParameters.Slot);
+    if (!fpICCDevice  ||  !(fpICCDevice->ConfiguredStatus & ICCPRESENT)) {
+
+        fpURP->ApiData.CCIDGetParameters.bStatus = 0x42; 
+        fpURP->ApiData.CCIDGetParameters.bError = 0xFE;
+        fpURP->bRetValue    = USB_ERROR;
         return;
+
     }
 
-    // Should we check for device presence in data area. The call will find that out anyways.
+    // Todo Todo Should we check for device presence in data area. The call will find that out anyways.
 
     //    
     // Issue the cmd
     //
-    Status = PCToRDRGetParameters(DevInfo, IccDevice);
-    
-    if (EFI_ERROR(Status)) {
-        Urp->bRetValue = USB_ERROR;
+    Status = PCToRDRGetParameters(fpDevInfo, fpICCDevice);
+
+    if (EFI_ERROR(Status)){
+        fpURP->bRetValue    = USB_ERROR;
         return;        
     }
 
     //
     // Get the response
     //
-    Status = RDRToPCParameters(DevInfo, IccDevice);
+    Status = RDRToPCParameters(fpDevInfo, fpICCDevice);
     if (!EFI_ERROR(Status)) {
-        Urp->ApiData.CCIDGetParameters.ResponseLength = 6;
-        if (IccDevice->bProtocolNum) {
-            Urp->ApiData.CCIDGetParameters.ResponseLength = 8;
+
+        fpURP->ApiData.CCIDGetParameters.ResponseLength = 6;
+        if (fpICCDevice->bProtocolNum){
+            fpURP->ApiData.CCIDGetParameters.ResponseLength = 8;
         }
         //
         // Update the Data
         //
-        CopyMem((UINT8 *)(Urp->ApiData.CCIDGetParameters.fpResponseBuffer),
-                (UINT8 *)&(IccDevice->bProtocolNum),
-                (UINT32)(Urp->ApiData.CCIDGetParameters.ResponseLength));
+        MemCopy((UINT8 *)&(fpICCDevice->bProtocolNum), 
+                (UINT8 *)(fpURP->ApiData.CCIDGetParameters.fpResponseBuffer), 
+                (UINT32)(fpURP->ApiData.CCIDGetParameters.ResponseLength)
+                );
     }
 
-    Urp->ApiData.CCIDGetParameters.bStatus = IccDevice->bStatus;
-    Urp->ApiData.CCIDGetParameters.bError = IccDevice->bError;
+    fpURP->ApiData.CCIDGetParameters.bStatus = fpICCDevice->bStatus;
+    fpURP->ApiData.CCIDGetParameters.bError = fpICCDevice->bError;
 
-    Urp->bRetValue = USB_SUCCESS;
+    fpURP->bRetValue    = USB_SUCCESS;
 
-    if (Status == EFI_DEVICE_ERROR) {
-        Urp->bRetValue = USB_ERROR;
+    if (Status == EFI_DEVICE_ERROR){
+        fpURP->bRetValue    = USB_ERROR;
     }
 
     return;
 
 }
 
-/**
-    This function is part of the USB BIOS MASS API. It refers to 
-    SCardConnect API of EFI SMART CARD READER PROTOCOL.
-
-        fpURP    Pointer to the URP structure, it contains the following:
-    @param Slot
-    @param fpDevInfo
-    @param AccessMode
-    @param CardAction
-    @param PreferredProtocols
-    @param ActiveProtocol
-    @param pReturnStatus
-
-    @retval 
-        None
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   USBAPI_CCIDRequest
+//
+// Description: This routine services the USB API function number 30h.  It
+//              handles all the CCID related calls from the higher
+//              layer. Different sub-functions are invoked depending on
+//              the sub-function number
+//
+// Input:   
+//              fpURPPointer    Pointer to the URP structure
+//              fpURPPointer.bSubFunc   Subfunction number
+//
+// Output:  
+//              URP structure is updated with the relevant information
+//
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 VOID
-USBSCardReaderAPIConnectSMM(
-    IN OUT URP_STRUC *Urp
-) 
-{
-    EFI_STATUS      Status;
-    DEV_INFO        *DevInfo;
-    ICC_DEVICE      *IccDevice;
-    UINT8           Slot;
-    UINT32          AccessMode;
-    UINT32          CardAction;
-    UINT32          PreferredProtocols;
-    UINT32          *ActiveProtocol;
-    EFI_STATUS      *ReturnStatus = &(Urp->ApiData.SmartCardReaderConnect.EfiStatus);
-    UINT8           *MemBlockEnd = gUsbData->fpMemBlockStart + (gUsbData->MemPages << 12);
-
-#if !USB_RT_DXE_DRIVER
-    if (gCheckUsbApiParameter) {
-        Status = AmiValidateMemoryBuffer((VOID*)(Urp->ApiData.SmartCardReaderConnect.ActiveProtocol),
-                    sizeof(UINT32));
-        if (EFI_ERROR(Status)) {
-            USB_DEBUG(DEBUG_ERROR, 3, "UsbCcid Invalid Pointer, Buffer is in SMRAM.\n");
-            *ReturnStatus = EFI_INVALID_PARAMETER;
-            return;
-        }
-        gCheckUsbApiParameter = FALSE;
-    }
-#endif
-
-    // Get the Input Parameter passed to the EFI Smart Card reader Protocol API
-    Slot = Urp->ApiData.SmartCardReaderConnect.Slot;
-    DevInfo = (DEV_INFO *)(Urp->ApiData.SmartCardReaderConnect.fpDevInfo);
-    AccessMode = Urp->ApiData.SmartCardReaderConnect.AccessMode;
-    CardAction = Urp->ApiData.SmartCardReaderConnect.CardAction;
-    PreferredProtocols = Urp->ApiData.SmartCardReaderConnect.PreferredProtocols;
-    ActiveProtocol = (UINT32*)Urp->ApiData.SmartCardReaderConnect.ActiveProtocol;
-
-    *ReturnStatus = EFI_DEVICE_ERROR;
-    
-    Status = UsbDevInfoValidation(DevInfo);
-
-    if (EFI_ERROR(Status)) {
-        *ReturnStatus = EFI_INVALID_PARAMETER;
-        return;
-    }
-    // Get the respective ICC_DEVICE structure for the SCardReader Slot
-    IccDevice = GetICCDevice(DevInfo, Slot);
-
-    if (!IccDevice || !DevInfo->pCCIDDescriptor) {
-        *ReturnStatus = EFI_NOT_FOUND;
-        return;
-    }
-
-    if (((UINT8*)DevInfo->pCCIDDescriptor < gUsbData->fpMemBlockStart) ||
-        ((UINT8*)DevInfo->pCCIDDescriptor > MemBlockEnd)) {
-        *ReturnStatus = EFI_INVALID_PARAMETER;
-        return;
-    }
-
-    // Already card is connected
-    if (IccDevice->SlotConnectStatus) {
-        *ReturnStatus = EFI_ACCESS_DENIED;
-        return;
-    }
-
-    if (AccessMode == SCARD_AM_READER) {
-
-        if (!((IccDevice->ConfiguredStatus & (ICCPRESENT | VOLTAGEAPPLIED | ATRDATAPRESENT))
-                == (ICCPRESENT | VOLTAGEAPPLIED | ATRDATAPRESENT))) {
-            // Call to configure the SMART CARD READER if the slot is not active
-            Status = ConfigureCCID(DevInfo, IccDevice);
-            // Voltage applied but ICC ATR is not retrieved As ICC card is not available
-            // it is not an error for SCARD_AM_READER connect
-            if (Status == EFI_NOT_FOUND) {
-                return;
-            }
-        }
-        *ReturnStatus = EFI_SUCCESS;
-        IccDevice->SlotConnectStatus = SCARD_AM_READER;
-        return;
-    } else {
-
-        Status = EFI_DEVICE_ERROR;
-
-        switch (CardAction) {
-            case SCARD_CA_NORESET:
-                // Check if SMART card reader slot is already configured, If configured already return Active Protocol
-                if (((IccDevice->ConfiguredStatus & (ICCPRESENT | VOLTAGEAPPLIED | ATRDATAPRESENT))
-                        == (ICCPRESENT | VOLTAGEAPPLIED | ATRDATAPRESENT))) {
-                    // Check Preferred Protocol mask contain an Active Protocol, return success if supported
-                    if (((1 << IccDevice->bProtocolNum) & PreferredProtocols) == (1 << IccDevice->bProtocolNum)) {
-                         Status = EFI_SUCCESS;
-                     } else {
-                         Status = EFI_INVALID_PARAMETER;
-                     }
-                } else {
-                    // Power up and Configure Slot 
-                    Status = ConfigureCCID(DevInfo, IccDevice);
-                }
-                break;
-
-            case SCARD_CA_COLDRESET:
-                // Power Off the ICC device if it is already Power on and Active
-                // Cold Reset starts with Power Off, Power On Device at below (SCARD_CA_WARMRESET)
-                Status = PCtoRDRIccPowerOff (DevInfo, IccDevice);
-
-                Status = RDRToPCSlotStatus(DevInfo, IccDevice);
-                if (EFI_ERROR(Status)) {
-                   break;
-                }
-            case SCARD_CA_WARMRESET:
-                // Power on and configure the ICC device
-                Status = ConfigureCCID(DevInfo, IccDevice);
-                break;
-
-            case SCARD_CA_UNPOWER:
-                // Send Power Off command to the ICC device
-                PCtoRDRIccPowerOff (DevInfo, IccDevice);
-                Status = RDRToPCSlotStatus(DevInfo, IccDevice);
-                break;
-            case SCARD_CA_EJECT:
-                Status = EFI_UNSUPPORTED;
-                break;
-            default:
-                Status = EFI_SUCCESS;
-                break;
-        }
-
-        *(UINT32*)Urp->ApiData.SmartCardReaderConnect.ActiveProtocol = (1 << IccDevice->bProtocolNum);
-
-        *ReturnStatus = Status;
-
-        if (!EFI_ERROR(Status)) {
-            IccDevice->SlotConnectStatus = SCARD_AM_CARD;
-        } 
-    }
-    return;
-}
-
-/**
-    This function is part of the USB BIOS MASS API. It refers to 
-    SCardDisConnect API of EFI SMART CARD READER PROTOCOL.
-
-        fpURP    Pointer to the URP structure, it contains the following:
-    @param Slot
-    @param fpDevInfo
-    @param AccessMode
-    @param CardAction
-    @param EfiStatus
-
-    @retval 
-        None
-
-**/
-VOID
-USBSCardReaderAPIDisConnectSMM(
-    IN OUT URP_STRUC *Urp
+USBAPI_CCIDRequest (
+    URP_STRUC *fpURP
 )
 {
-    DEV_INFO        *DevInfo;
-    ICC_DEVICE      *IccDevice;
-    UINT32          CardAction;
-    EFI_STATUS      *ReturnStatus = &(Urp->ApiData.SmartCardReaderDisconnect.EfiStatus);
-    EFI_STATUS      Status = EFI_SUCCESS;
-    UINT8           *MemBlockEnd = gUsbData->fpMemBlockStart + (gUsbData->MemPages << 12);
+    UINT8 bCCIDFuncIndex = fpURP->bSubFunc;
+    UINT8 bNumberOfCCIDFunctions = sizeof aUsbCCIDApiTable / sizeof (API_FUNC *);
 
-    DevInfo = (DEV_INFO *)(Urp->ApiData.SmartCardReaderDisconnect.fpDevInfo);
-    CardAction = Urp->ApiData.SmartCardReaderDisconnect.CardAction;
-    
-    Status = UsbDevInfoValidation(DevInfo);
-
-    if (EFI_ERROR(Status)) {
-        *ReturnStatus = EFI_INVALID_PARAMETER;
+    //
+    // Make sure function number is valid
+    //
+    if (bCCIDFuncIndex >= bNumberOfCCIDFunctions) {
+        fpURP->bRetValue = USBAPI_INVALID_FUNCTION;
         return;
     }
-    
-    // Get the respective ICC_DEVICE structure for the CCID Slot
-    IccDevice = GetICCDevice(DevInfo, 
-                    Urp->ApiData.SmartCardReaderDisconnect.Slot);
+    //
+    // Function number is valid - call it
+    //
+    aUsbCCIDApiTable[bCCIDFuncIndex](fpURP);
 
-    if (!IccDevice || !DevInfo->pCCIDDescriptor) {
-        *ReturnStatus = EFI_INVALID_PARAMETER;
-        return;
-    }
-
-    if (((UINT8*)DevInfo->pCCIDDescriptor < gUsbData->fpMemBlockStart) ||
-        ((UINT8*)DevInfo->pCCIDDescriptor > MemBlockEnd)) {
-        *ReturnStatus = EFI_INVALID_PARAMETER;
-        return;
-    }
-
-    switch (CardAction) {
-        case SCARD_CA_EJECT:
-            if (IccDevice->SlotConnectStatus == SCARD_AM_READER) {
-                // Reader SCardConnect call is made, return Unsupported
-                Status = EFI_UNSUPPORTED;
-                return;
-            }
-            break;
-        case SCARD_CA_COLDRESET:
-        case SCARD_CA_WARMRESET:
-        case SCARD_CA_UNPOWER:
-            Status = PCtoRDRIccPowerOff (DevInfo, IccDevice);
-            Status = RDRToPCSlotStatus(DevInfo, IccDevice);
-            break;
-        case SCARD_CA_NORESET:
-            Status = EFI_SUCCESS;
-            break;
-    }
-
-    IccDevice->SlotConnectStatus = 0;
-    
-    *ReturnStatus = Status;
-    return;
 }
 
-/**
-    This function updates the input parameter(State) with Smart card status
 
-    @param CCIDCommandStatus
-    @param State
-
-    @retval
-        None
-
-**/
-
-void
-UpdateICCState(
-    UINT8  CCIDCommandStatus,
-    UINT32 *State
-)
-{
-    switch (CCIDCommandStatus & 0x07)
-    {
-    case 0: *State = SCARD_ACTIVE;
-            break;
-    case 1: *State = SCARD_INACTIVE;
-            break;
-    case 2: *State = SCARD_ABSENT;
-            break;
-    default:
-        *State = SCARD_UNKNOWN;
-    }
-    return;
-}
-
-/**
-    This function updates Smart card Atr information
-
-    @param fpICCDevice
-    @param Atr
-    @param AtrLength
-
-    @retval
-        EFI_STATUS
-
-**/
-EFI_STATUS
-UpdateSCardReaderAtrData(
-    ICC_DEVICE    *IccDevice,
-    UINT8         *Atr,
-    UINTN         *AtrLength
-)
-{
-    // Return error if input is not valid
-    if (!Atr || !AtrLength) {
-        return EFI_INVALID_PARAMETER;
-    }
-
-    if (*AtrLength < sizeof(ATR_DATA) ) {
-        *AtrLength = sizeof(ATR_DATA);
-        return EFI_BUFFER_TOO_SMALL;
-    }
-
-    if (IccDevice) {
-       if (IccDevice->ConfiguredStatus & ATRDATAPRESENT) {
-           CopyMem(Atr, (UINT8 *)IccDevice->RawATRData, MAX_ATR_LENGTH);
-       } else {
-           return EFI_DEVICE_ERROR;
-       }
-    }
-
-    return EFI_SUCCESS;
-}
-
-/**
-    This function is part of the USB BIOS MASS API. It refers to 
-    SCardStatus API of EFI SMART CARD READER PROTOCOL
-
-        fpURP    Pointer to the URP structure, it contains the following:
-    @param Slot
-    @param fpDevInfo
-    @param ReaderName
-    @param ReaderNameLength
-    @param State
-    @param CardProtocol
-    @param Atr
-    @param AtrLength
-    @param EfiStatus
-
-    @retval
-        None
-
-**/
-
-VOID
-USBSCardReaderAPIStatusSMM(
-   IN OUT URP_STRUC *Urp
-)
-{
-    EFI_STATUS   Status;
-    DEV_INFO     *DevInfo;
-    ICC_DEVICE   *IccDevice;
-    CHAR16       *ReaderName;
-    UINTN        *ReaderNameLength;
-    UINT32       *State;
-    UINT32       *CardProtocol;
-    UINT8        *Atr;
-    UINTN        *AtrLength;
-    EFI_STATUS   *ReturnStatus = &(Urp->ApiData.SmartCardReaderStatus.EfiStatus);
-    UINT16       *SCardReaderString = 0;
-    UINT8        *MemBlockEnd = gUsbData->fpMemBlockStart + (gUsbData->MemPages << 12);
-
-#if !USB_RT_DXE_DRIVER
-    if (gCheckUsbApiParameter) {
-        Status = AmiValidateMemoryBuffer((VOID*)(Urp->ApiData.SmartCardReaderStatus.ReaderNameLength),
-                    sizeof(UINTN));
-        if (EFI_ERROR(Status)) {
-            USB_DEBUG(DEBUG_ERROR, 3, "UsbCcid Invalid Pointer, Buffer is in SMRAM.\n");
-            *ReturnStatus = EFI_INVALID_PARAMETER;
-            return;
-        }
-        Status = AmiValidateMemoryBuffer((VOID*)(Urp->ApiData.SmartCardReaderStatus.ReaderName),
-                    *(UINTN*)Urp->ApiData.SmartCardReaderStatus.ReaderNameLength);
-        if (EFI_ERROR(Status)) {
-            USB_DEBUG(DEBUG_ERROR, 3, "UsbCcid Invalid Pointer, Buffer is in SMRAM.\n");
-            *ReturnStatus = EFI_INVALID_PARAMETER;
-            return;
-        }
-        Status = AmiValidateMemoryBuffer((VOID*)(Urp->ApiData.SmartCardReaderStatus.State),
-                    sizeof(UINT32));
-        if (EFI_ERROR(Status)) {
-            USB_DEBUG(DEBUG_ERROR, 3, "UsbCcid Invalid Pointer, Buffer is in SMRAM.\n");
-            *ReturnStatus = EFI_INVALID_PARAMETER;
-            return;
-        }
-        Status = AmiValidateMemoryBuffer((VOID*)(Urp->ApiData.SmartCardReaderStatus.CardProtocol),
-                    sizeof(UINT32));
-        if (EFI_ERROR(Status)) {
-            USB_DEBUG(DEBUG_ERROR, 3, "UsbCcid Invalid Pointer, Buffer is in SMRAM.\n");
-            *ReturnStatus = EFI_INVALID_PARAMETER;
-            return;
-        }
-        Status = AmiValidateMemoryBuffer((VOID*)(Urp->ApiData.SmartCardReaderStatus.AtrLength),
-                    sizeof(UINTN));
-        if (EFI_ERROR(Status)) {
-            USB_DEBUG(DEBUG_ERROR, 3, "UsbCcid Invalid Pointer, Buffer is in SMRAM.\n");
-            *ReturnStatus = EFI_INVALID_PARAMETER;
-            return;
-        }
-        Status = AmiValidateMemoryBuffer((VOID*)(Urp->ApiData.SmartCardReaderStatus.Atr),
-                    *(UINTN*)(Urp->ApiData.SmartCardReaderStatus.AtrLength));
-        if (EFI_ERROR(Status)) {
-            USB_DEBUG(DEBUG_ERROR, 3, "UsbCcid Invalid Pointer, Buffer is in SMRAM.\n");
-            *ReturnStatus = EFI_INVALID_PARAMETER;
-            return;
-        }
-        gCheckUsbApiParameter = FALSE;
-    }
-#endif
-    
-    DevInfo = (DEV_INFO *)(Urp->ApiData.SmartCardReaderStatus.fpDevInfo);
-    ReaderName = (CHAR16 *)(Urp->ApiData.SmartCardReaderStatus.ReaderName);
-    ReaderNameLength = (UINTN *)(Urp->ApiData.SmartCardReaderStatus.ReaderNameLength);
-    State = (UINT32*)Urp->ApiData.SmartCardReaderStatus.State;
-    CardProtocol = (UINT32*)Urp->ApiData.SmartCardReaderStatus.CardProtocol;
-    Atr = (UINT8*)Urp->ApiData.SmartCardReaderStatus.Atr;
-    AtrLength = (UINTN*)Urp->ApiData.SmartCardReaderStatus.AtrLength;
-
-    Status = UsbDevInfoValidation(DevInfo);
-
-    if (EFI_ERROR(Status)) {
-        *ReturnStatus = EFI_INVALID_PARAMETER;
-        return;
-    }
-
-    // Get ICC device Interface
-    IccDevice = GetICCDevice(DevInfo, Urp->ApiData.SmartCardReaderStatus.Slot);
-
-    if (!IccDevice || !DevInfo->pCCIDDescriptor) {
-        *ReturnStatus = EFI_DEVICE_ERROR;
-        return;
-    }
-
-    if (((UINT8*)DevInfo->pCCIDDescriptor < gUsbData->fpMemBlockStart) ||
-        ((UINT8*)DevInfo->pCCIDDescriptor > MemBlockEnd)) {
-        *ReturnStatus = EFI_INVALID_PARAMETER;
-        return;
-    }
-    
-    if (IccDevice->SlotConnectStatus == 0) {
-       *ReturnStatus = EFI_INVALID_PARAMETER;
-       return;
-    }
-
-    if (State != NULL) {
-         // Send command to get status of the Scard Reader slot
-         PCToRDRGetSlotStatus(DevInfo, IccDevice);
-         Status = RDRToPCSlotStatus(DevInfo, IccDevice);
-         if (EFI_ERROR(Status)) {
-             *ReturnStatus = Status;
-             return;
-         }   
-         UpdateICCState(IccDevice->bStatus, State);
-    }
-
-    if (CardProtocol) {
-        *CardProtocol = (1 << IccDevice->bProtocolNum);
-    }
-
-    Status = UpdateSCardReaderAtrData(IccDevice, Atr, AtrLength);
-
-    *ReturnStatus = Status;
-    
-    return;
-}
-
-/**
-    This function is part of the USB BIOS MASS API. Used to transfer command to smard card.
-
-        fpURP    Pointer to the URP structure, it contains the following:
-    @param Slot
-    @param fpDevInfo
-    @param CAPDU
-    @param CAPDULength
-    @param RAPDU
-    @param RAPDULength
-    @param EfiStatus
-
-    @retval
-        None
-
-**/
-
-VOID
-USBSCardReaderAPITransmitSMM(
-    IN OUT URP_STRUC *Urp
-)
-{
-    ICC_DEVICE   *IccDevice;
-    URP_STRUC    XfrBlockUrp;
-    DEV_INFO*    DevInfo = (DEV_INFO*)Urp->ApiData.SmartCardReaderTransmit.fpDevInfo;
-    EFI_STATUS   *ReturnStatus = &(Urp->ApiData.SmartCardReaderTransmit.EfiStatus);
-    EFI_STATUS   Status = EFI_SUCCESS;
-    UINT8        *MemBlockEnd = gUsbData->fpMemBlockStart + (gUsbData->MemPages << 12);
-
-#if !USB_RT_DXE_DRIVER
-    if (gCheckUsbApiParameter) {
-        Status = AmiValidateMemoryBuffer((VOID*)(Urp->ApiData.SmartCardReaderTransmit.CAPDU),
-                    Urp->ApiData.SmartCardReaderTransmit.CAPDULength);
-        if (EFI_ERROR(Status)) {
-            USB_DEBUG(DEBUG_ERROR, 3, "UsbCcid Invalid Pointer, Buffer is in SMRAM.\n");
-            *ReturnStatus = EFI_INVALID_PARAMETER;
-            return;
-        }
-        Status = AmiValidateMemoryBuffer((VOID*)(Urp->ApiData.SmartCardReaderTransmit.RAPDULength),
-                    sizeof(UINTN));
-        if (EFI_ERROR(Status)) {
-            USB_DEBUG(DEBUG_ERROR, 3, "UsbCcid Invalid Pointer, Buffer is in SMRAM.\n");
-            *ReturnStatus = EFI_INVALID_PARAMETER;
-            return;
-        }
-        Status = AmiValidateMemoryBuffer((VOID*)(Urp->ApiData.SmartCardReaderTransmit.RAPDU),
-                    *(UINTN *)(Urp->ApiData.SmartCardReaderTransmit.RAPDULength));
-        if (EFI_ERROR(Status)) {
-            USB_DEBUG(DEBUG_ERROR, 3, "UsbCcid Invalid Pointer, Buffer is in SMRAM.\n");
-            *ReturnStatus = EFI_INVALID_PARAMETER;
-            return;
-        }
-        gCheckUsbApiParameter = FALSE;
-    }
-#endif
-
-    IccDevice = GetICCDevice(DevInfo, Urp->ApiData.SmartCardReaderTransmit.Slot);
-
-    Status = UsbDevInfoValidation(DevInfo);
-
-    if (EFI_ERROR(Status)) {
-        *ReturnStatus = EFI_INVALID_PARAMETER;
-        return;
-    }
-
-    if (!IccDevice || !DevInfo->pCCIDDescriptor) {
-        *ReturnStatus = EFI_DEVICE_ERROR;
-        return;
-    }
-
-    if (((UINT8*)DevInfo->pCCIDDescriptor < gUsbData->fpMemBlockStart) ||
-        ((UINT8*)DevInfo->pCCIDDescriptor > MemBlockEnd)) {
-        *ReturnStatus = EFI_INVALID_PARAMETER;
-        return;
-    }
-
-    if (IccDevice->SlotConnectStatus == 0) {
-        *ReturnStatus = EFI_INVALID_PARAMETER;
-        return;
-    }
-
-    ZeroMem(&XfrBlockUrp, sizeof (URP_STRUC));
-
-    XfrBlockUrp.ApiData.CCIDXfrBlock.CmdLength = Urp->ApiData.SmartCardReaderTransmit.CAPDULength;
-    XfrBlockUrp.ApiData.CCIDXfrBlock.fpCmdBuffer = (UINTN)Urp->ApiData.SmartCardReaderTransmit.CAPDU;
-    XfrBlockUrp.ApiData.CCIDXfrBlock.ISBlock = I_BLOCK;
-    XfrBlockUrp.ApiData.CCIDXfrBlock.ResponseLength = *(UINTN *)(Urp->ApiData.SmartCardReaderTransmit.RAPDULength);
-    XfrBlockUrp.ApiData.CCIDXfrBlock.fpResponseBuffer = (UINTN)Urp->ApiData.SmartCardReaderTransmit.RAPDU;
-
-    XfrBlockUrp.ApiData.CCIDXfrBlock.fpDevInfo = (UINTN)DevInfo;
-    XfrBlockUrp.ApiData.CCIDXfrBlock.Slot = Urp->ApiData.SmartCardReaderTransmit.Slot;
-
-    USBCCIDAPIXfrBlockSMM(&XfrBlockUrp);
-
-    *(UINTN *)(Urp->ApiData.SmartCardReaderTransmit.RAPDULength) = XfrBlockUrp.ApiData.CCIDXfrBlock.ResponseLength;
-
-    if (Urp->bRetValue) {
-        *ReturnStatus = EFI_DEVICE_ERROR;
-    } else {
-        *ReturnStatus = EFI_SUCCESS;
-    }
-    return;
-}
-
-/**
-    This function is part of the USB BIOS MASS API.
-
-        fpURP    Pointer to the URP structure, it contains the following:
-    @param Slot
-    @param fpDevInfo
-    @param ControlCode
-    @param InBuffer
-    @param InBufferLength
-    @param OutBuffer
-    @param OutBufferLength
-    @param EfiStatus
-
-    @retval
-        None
-
-**/
-
-VOID
-USBSCardReaderAPIControlSMM (
-    IN OUT URP_STRUC *fpURP
-)
-{
-    return;
-}
-
-/**
-    This function is part of the USB BIOS MASS API.
-
-        fpURP    Pointer to the URP structure, it contains the following:
-    @param Slot
-    @param fpDevInfo
-    @param Attrib
-    @param OutBuffer
-    @param OutBufferLength
-    @param EfiStatus
-
-    @retval
-        None
-
-**/
-VOID
-USBSCardReaderAPIGetAttribSMM (
-    IN OUT URP_STRUC *fpURP
-)
-{
-    return;
-}
-
-/**
-    PC_TO_RDR_XFRBLOCK cmd is issued to the device
-
-    Input  
-    IN DEV_INFO             *fpDevInfo,
-    IN ICC_DEVICE           *fpICCDevice,
-    IN UINT32               CmdLength,
-    IN UINT8                *CmdBuffer,
-    IN UINT8                BlockWaitingTime,
-    IN UINT16               LevelParameter
-
-    Output :     
-    EFI_STATUS
-
-    @note  This function sends PC_TO_RDR_XFRBLOCK to the device. 
-              See section 6.1.4 of CCID spec 1.1 for the details.
-              CmdBuffer points to abData.
-          
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:    PCtoRDRIccPowerOn
+//
+// Description:  PC_TO_RDR_XFRBLOCK cmd is issued to the device
+//
+// Input  
+//              IN DEV_INFO             *fpDevInfo,
+//              IN ICC_DEVICE           *fpICCDevice,
+//              IN UINT32               CmdLength,
+//              IN UINT8                *CmdBuffer,
+//              IN UINT8                BlockWaitingTime,
+//              IN UINT16               LevelParameter
+//
+// Output :     
+//              EFI_STATUS
+//
+// Notes:       This function sends PC_TO_RDR_XFRBLOCK to the device. 
+//              See section 6.1.4 of CCID spec 1.1 for the details.
+//              CmdBuffer points to abData.
+//          
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
 PCToRDRXfrBlock (
     IN DEV_INFO             *fpDevInfo,
@@ -1445,14 +781,14 @@ PCToRDRXfrBlock (
     UINT32                          dwData;
     UINT32                          i;  
 
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "PCToRDRXfrBlock ....");
+    USB_DEBUG (DEBUG_LEVEL_3, "PCToRDRXfrBlock ....");
 
     fpCmdBuffer = USB_MemAlloc((UINT8)GET_MEM_BLK_COUNT(sizeof(PC_TO_RDR_XFRBLOCK_STRUC) + CmdLength));
     ASSERT(fpCmdBuffer);
     if (!fpCmdBuffer) {
         return EFI_OUT_OF_RESOURCES;
     }
-    ZeroMem((UINT8 *)fpCmdBuffer, sizeof(PC_TO_RDR_XFRBLOCK_STRUC) + CmdLength);
+    MemSet((UINT8 *)fpCmdBuffer, sizeof(PC_TO_RDR_XFRBLOCK_STRUC) + CmdLength, 0);
 
     //
     // Prepare  the cmd buffer
@@ -1460,7 +796,7 @@ PCToRDRXfrBlock (
     fpCmdBuffer->bMessageType = PC_TO_RDR_XFRBLOCK;
     fpCmdBuffer->dwLength = CmdLength;
     fpCmdBuffer->bSlot = fpICCDevice->Slot;
-    fpCmdBuffer->bSeq = gUsbData->CcidSequence;
+    fpCmdBuffer->bSeq = gSequence;
     fpCmdBuffer->bBWI = BlockWaitingTime;
     fpCmdBuffer->wLevelParameter = LevelParameter;
 
@@ -1468,16 +804,15 @@ PCToRDRXfrBlock (
     // Copy the cmd
     //
     if (CmdLength) {
-        CopyMem((UINT8 *)fpCmdBuffer + sizeof(PC_TO_RDR_XFRBLOCK_STRUC),
-                CmdBuffer, CmdLength);
+        MemCopy(CmdBuffer, (UINT8 *)fpCmdBuffer + sizeof(PC_TO_RDR_XFRBLOCK_STRUC), CmdLength);
     }
 
 
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "\n");
+    USB_DEBUG (DEBUG_LEVEL_3, "\n");
     for (i=0; i< sizeof(PC_TO_RDR_XFRBLOCK_STRUC) + CmdLength; i++) {
-        USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "%02X ", ((UINT8 *)fpCmdBuffer)[i]);
+        USB_DEBUG (DEBUG_LEVEL_3, "%02X ", ((UINT8 *)fpCmdBuffer)[i]);
     }
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "\n");
+    USB_DEBUG (DEBUG_LEVEL_3, "\n");
 
     dwData = USBCCIDIssueBulkTransfer(fpDevInfo, 0, 
                                     (UINT8 *)fpCmdBuffer, 
@@ -1493,26 +828,31 @@ PCToRDRXfrBlock (
 
     USB_MemFree(fpCmdBuffer, (UINT8)GET_MEM_BLK_COUNT(sizeof(PC_TO_RDR_XFRBLOCK_STRUC) + CmdLength));
 
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "%r ....", Status);
+    USB_DEBUG (DEBUG_LEVEL_3, "%r ....", Status);
 
     return Status;
     
 }
 
-/**
-    PC_TO_RDR_ICCPOWERON cmd is issued to the CCID
-
-        
-    @param fpDevInfo 
-    @param fpICCDevice 
-    @param PowerLevel 00:Automatic  Voltage selection, 01:5.0v, 02:3.0v, 03:1.8v
-
-    @retval 
-        EFI_STATUS
-
-    @note  See section 6.1.1 of CCID spec Rev 1.1 for more details
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:   PCtoRDRIccPowerOn
+//
+// Description: PC_TO_RDR_ICCPOWERON cmd is issued to the CCID
+//
+// Input:
+//              IN DEV_INFO     *fpDevInfo,
+//              IN ICC_DEVICE   *fpICCDevice,
+//              IN UINT8        PowerLevel - 00:Automatic  Voltage selection, 01:5.0v, 02:3.0v, 03:1.8v
+//
+// Output: 
+//              EFI_STATUS
+//
+// Notes:       See section 6.1.1 of CCID spec Rev 1.1 for more details
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
 PCtoRDRIccPowerOn(
     IN DEV_INFO         *fpDevInfo,
@@ -1525,14 +865,14 @@ PCtoRDRIccPowerOn(
     PC_TO_RDR_ICCPOWERON_STRUC     *fpCmdBuffer;
     UINT32                        dwData;
 
-    USB_DEBUG (DEBUG_INFO, DEBUG_LEVEL_3, "PCtoRDRIccPowerOn .... PowerLevel : %x...", PowerLevel);
+    USB_DEBUG (DEBUG_LEVEL_3, "PCtoRDRIccPowerOn ....");
 
     fpCmdBuffer = USB_MemAlloc((UINT8)GET_MEM_BLK_COUNT(sizeof(PC_TO_RDR_ICCPOWERON_STRUC)));
     ASSERT(fpCmdBuffer);
     if (!fpCmdBuffer) {
         return EFI_OUT_OF_RESOURCES;
     }
-    ZeroMem((UINT8 *)fpCmdBuffer, sizeof(PC_TO_RDR_ICCPOWERON_STRUC));
+    MemSet((UINT8 *)fpCmdBuffer, sizeof(PC_TO_RDR_ICCPOWERON_STRUC), 0);
 
     //
     // Prepare  the cmd buffer
@@ -1540,7 +880,7 @@ PCtoRDRIccPowerOn(
     fpCmdBuffer->bMessageType = PC_TO_RDR_ICCPOWERON;
     fpCmdBuffer->dwLength = 0;
     fpCmdBuffer->bSlot = fpICCDevice->Slot;
-    fpCmdBuffer->bSeq = gUsbData->CcidSequence;
+    fpCmdBuffer->bSeq = gSequence;
     fpCmdBuffer->bPowerSlot = PowerLevel;
     fpCmdBuffer->abRFU = 0;
 
@@ -1558,26 +898,31 @@ PCtoRDRIccPowerOn(
 
     USB_MemFree(fpCmdBuffer, (UINT8)GET_MEM_BLK_COUNT(sizeof(PC_TO_RDR_ICCPOWERON_STRUC)));
 
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "%r ....", Status);
+    USB_DEBUG (DEBUG_LEVEL_3, "%r ....", Status);
 
     return Status;
 
 }
 
 
-/**
-    PC_TO_RDR_ICCPOWEROFF cmd is issued to the CCID
-
-    Input :
-    IN DEV_INFO           *fpDevInfo,
-    IN ICC_DEVICE        *fpICCDevice
-
-    Output : 
-    EFI_STATUS
-
-    @note  See section 6.1.2 of CCID spec Rev 1.1 for more details
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:   PCtoRDRIccPowerOff
+//
+// Description: PC_TO_RDR_ICCPOWEROFF cmd is issued to the CCID
+//
+// Input :
+//              IN DEV_INFO           *fpDevInfo,
+//              IN ICC_DEVICE        *fpICCDevice
+//
+// Output : 
+//              EFI_STATUS
+//
+// Notes:       See section 6.1.2 of CCID spec Rev 1.1 for more details
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
 PCtoRDRIccPowerOff(
     IN DEV_INFO         *fpDevInfo,
@@ -1589,14 +934,14 @@ PCtoRDRIccPowerOff(
     PC_TO_RDR_ICCPOWEROFF_STRUC *fpCmdBuffer;
     UINT32                      dwData;
 
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "PCtoRDRIccPowerOff ....");
+    USB_DEBUG (DEBUG_LEVEL_3, "PCtoRDRIccPowerOff ....");
 
     fpCmdBuffer = USB_MemAlloc((UINT8)GET_MEM_BLK_COUNT(sizeof(PC_TO_RDR_ICCPOWEROFF_STRUC)));
     ASSERT(fpCmdBuffer);
     if (!fpCmdBuffer) {
         return EFI_OUT_OF_RESOURCES;
     }
-    ZeroMem((UINT8 *)fpCmdBuffer, sizeof(PC_TO_RDR_ICCPOWEROFF_STRUC));
+    MemSet((UINT8 *)fpCmdBuffer, sizeof(PC_TO_RDR_ICCPOWEROFF_STRUC), 0);
 
     //
     // Prepare the buffer
@@ -1604,7 +949,7 @@ PCtoRDRIccPowerOff(
     fpCmdBuffer->bMessageType = PC_TO_RDR_ICCPOWEROFF;
     fpCmdBuffer->dwLength = 0;
     fpCmdBuffer->bSlot = fpICCDevice->Slot;
-    fpCmdBuffer->bSeq = gUsbData->CcidSequence;
+    fpCmdBuffer->bSeq = gSequence;
 
     dwData = USBCCIDIssueBulkTransfer(fpDevInfo, 0, 
                                     (UINT8 *)fpCmdBuffer, 
@@ -1623,25 +968,30 @@ PCtoRDRIccPowerOff(
 
     USB_MemFree(fpCmdBuffer, (UINT8)GET_MEM_BLK_COUNT(sizeof(PC_TO_RDR_ICCPOWEROFF_STRUC)));
 
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "%r ....", Status);
+    USB_DEBUG (DEBUG_LEVEL_3, "%r ....", Status);
 
     return Status;
 
 }
 
-/**
-    PC_TO_RDR_GETSLOTSTATUS cmd is issued to CCID
-
-         
-    @param fpDevInfo 
-    @param fpICCDevice 
-
-    @retval 
-        EFI_STATUS
-
-    @note  See section 6.1.3 of CCID spec Rev 1.1 for more details
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:   PCToRDRGetSlotStatus
+//
+// Description: PC_TO_RDR_GETSLOTSTATUS cmd is issued to CCID
+//
+// Input: 
+//              IN DEV_INFO           *fpDevInfo,
+//              IN ICC_DEVICE        *fpICCDevice
+//
+// Output:
+//              EFI_STATUS
+//
+//Notes:        See section 6.1.3 of CCID spec Rev 1.1 for more details
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
 PCToRDRGetSlotStatus(
     IN DEV_INFO         *fpDevInfo,
@@ -1653,21 +1003,21 @@ PCToRDRGetSlotStatus(
     PC_TO_RDR_GETSLOT_STATUS_STRUC *fpCmdBuffer;
     UINT32                        dwData;
 
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "PCToRDRGetSlotStatus ....");
+    USB_DEBUG (DEBUG_LEVEL_3, "PCToRDRGetSlotStatus ....");
 
     fpCmdBuffer = USB_MemAlloc((UINT8)GET_MEM_BLK_COUNT(sizeof(PC_TO_RDR_GETSLOT_STATUS_STRUC)));
     ASSERT(fpCmdBuffer);
     if (!fpCmdBuffer) {
         return EFI_OUT_OF_RESOURCES;
     }
-    ZeroMem((UINT8 *)fpCmdBuffer, sizeof(PC_TO_RDR_GETPARAMETERS_STRUC));
+    MemSet((UINT8 *)fpCmdBuffer, sizeof(PC_TO_RDR_GETPARAMETERS_STRUC), 0);
     
     //
     // Prepare cmd buffer
     //
     fpCmdBuffer->bMessageType = PC_TO_RDR_GETSLOTSTATUS;
     fpCmdBuffer->bSlot = fpICCDevice->Slot;
-    fpCmdBuffer->bSeq = gUsbData->CcidSequence;
+    fpCmdBuffer->bSeq = gSequence;
 
     dwData = USBCCIDIssueBulkTransfer(fpDevInfo, 0, 
                                     (UINT8 *)fpCmdBuffer, 
@@ -1683,26 +1033,31 @@ PCToRDRGetSlotStatus(
 
     USB_MemFree(fpCmdBuffer, (UINT8)GET_MEM_BLK_COUNT(sizeof(PC_TO_RDR_GETSLOT_STATUS_STRUC)));
 
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "%r ....", Status);
+    USB_DEBUG (DEBUG_LEVEL_3, "%r ....", Status);
 
     return Status;
 
 }
 
 
-/**
-    PC_TO_RDR_GETPARAMETERS cmd is issued to CCID
-
-        
-    @param fpDevInfo 
-    @param fpICCDevice 
-
-    @retval 
-        EFI_STATUS
-
-    @note  See section 6.1.5 of CCID spec Rev 1.1 for more details
-             
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:   PCToRDRGetParameters
+//
+// Description: PC_TO_RDR_GETPARAMETERS cmd is issued to CCID
+//
+// Input:
+//              IN DEV_INFO           *fpDevInfo,
+//              IN ICC_DEVICE        *fpICCDevice
+//
+// Output:
+//              EFI_STATUS
+//
+// Notes:       See section 6.1.5 of CCID spec Rev 1.1 for more details
+//             
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
 PCToRDRGetParameters(
     IN DEV_INFO         *fpDevInfo,
@@ -1714,21 +1069,21 @@ PCToRDRGetParameters(
     PC_TO_RDR_GETPARAMETERS_STRUC *fpCmdBuffer;
     UINT32                        dwData;
 
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "PCToRDRGetParameters ....");
+    USB_DEBUG (DEBUG_LEVEL_3, "PCToRDRGetParameters ....");
 
     fpCmdBuffer = USB_MemAlloc((UINT8)GET_MEM_BLK_COUNT(sizeof(PC_TO_RDR_GETPARAMETERS_STRUC)));
     ASSERT(fpCmdBuffer);
     if (!fpCmdBuffer) {
         return EFI_OUT_OF_RESOURCES;
     }
-    ZeroMem((UINT8 *)fpCmdBuffer, sizeof(PC_TO_RDR_GETPARAMETERS_STRUC));
+    MemSet((UINT8 *)fpCmdBuffer, sizeof(PC_TO_RDR_GETPARAMETERS_STRUC), 0);
 
     //
     // Prepare cmd buffer
     //
     fpCmdBuffer->bMessageType = PC_TO_RDR_GETPARAMETERS;
     fpCmdBuffer->bSlot = fpICCDevice->Slot;
-    fpCmdBuffer->bSeq = gUsbData->CcidSequence;
+    fpCmdBuffer->bSeq = gSequence;
 
     dwData = USBCCIDIssueBulkTransfer(fpDevInfo, 0, 
                                     (UINT8 *)fpCmdBuffer, 
@@ -1744,28 +1099,33 @@ PCToRDRGetParameters(
 
     USB_MemFree(fpCmdBuffer, (UINT8)GET_MEM_BLK_COUNT(sizeof(PC_TO_RDR_GETPARAMETERS_STRUC)));
 
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "%r ....", Status);
+    USB_DEBUG (DEBUG_LEVEL_3, "%r ....", Status);
 
     return Status;
 
 }
 
-/**
-    PC_TO_RDR_SETPARAMETERS cmd is issued to CCID
-
-    Input :
-    IN DEV_INFO     *fpDevInfo
-    IN ICC_DEVICE   *fpICCDevice
-    IN UINT8        ProtocolNum -  0 : T=0, 1 : T=1
-    IN VOID         *Data - Points to data from abProtocolDataStructure 
-    in PC_TO_RDR_SETPARAMETERS
-
-    @retval 
-        EFI_STATUS
-
-    @note  See section 6.1.7 of CCID spec Rev 1.1 for more details
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:   PCToRDRSetParameters
+//
+// Description: PC_TO_RDR_SETPARAMETERS cmd is issued to CCID
+//
+// Input :
+//              IN DEV_INFO     *fpDevInfo
+//              IN ICC_DEVICE   *fpICCDevice
+//              IN UINT8        ProtocolNum -  0 : T=0, 1 : T=1
+//              IN VOID         *Data - Points to data from abProtocolDataStructure 
+//                                      in PC_TO_RDR_SETPARAMETERS
+//
+// Output:
+//              EFI_STATUS
+//
+// Notes:       See section 6.1.7 of CCID spec Rev 1.1 for more details
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
 PCToRDRSetParameters(
     IN DEV_INFO         *fpDevInfo,
@@ -1780,14 +1140,14 @@ PCToRDRSetParameters(
     UINT32                        dwData;
     UINT8                        Length = ProtocolNum == 0 ? sizeof(PROTOCOL_DATA_T0) : sizeof(PROTOCOL_DATA_T1);
 
-    USB_DEBUG (DEBUG_INFO, DEBUG_LEVEL_3, "PCToRDRSetParameters .... ProtocolNum : %x ", ProtocolNum);
+    USB_DEBUG (DEBUG_LEVEL_3, "PCToRDRSetParameters ....");
 
     fpCmdBuffer = USB_MemAlloc((UINT8)GET_MEM_BLK_COUNT(Length + sizeof(RDR_HEADER)));
     ASSERT(fpCmdBuffer);
     if (!fpCmdBuffer) {
         return EFI_OUT_OF_RESOURCES;
     }
-    ZeroMem((UINT8 *)fpCmdBuffer, Length + sizeof(RDR_HEADER));
+    MemSet((UINT8 *)fpCmdBuffer, Length + sizeof(RDR_HEADER), 0);
 
     //
     // Prepare 
@@ -1795,10 +1155,10 @@ PCToRDRSetParameters(
     fpCmdBuffer->bMessageType = PC_TO_RDR_SETPARAMETERS;
     fpCmdBuffer->dwLength = Length;
     fpCmdBuffer->bSlot = fpICCDevice->Slot;
-    fpCmdBuffer->bSeq = gUsbData->CcidSequence;
+    fpCmdBuffer->bSeq = gSequence;
     fpCmdBuffer->bProtocolNum = ProtocolNum;
 
-    CopyMem((UINT8 *)fpCmdBuffer + sizeof(RDR_HEADER), (UINT8 *)Data, Length);
+    MemCopy ((UINT8 *)Data,  (UINT8 *)fpCmdBuffer +sizeof(RDR_HEADER), Length); 
 
     dwData = USBCCIDIssueBulkTransfer(fpDevInfo, 0, 
                                     (UINT8 *)fpCmdBuffer, 
@@ -1814,27 +1174,32 @@ PCToRDRSetParameters(
 
     USB_MemFree(fpCmdBuffer, (UINT8)GET_MEM_BLK_COUNT(Length + sizeof(RDR_HEADER)));
 
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "%r ....", Status);
+    USB_DEBUG (DEBUG_LEVEL_3, "%r ....", Status);
 
     return Status;
 
 }
 
-/**
-    PC_TO_RDR_SETDATARATEANDCLOCK cmd is issued. 
-    Response for this cmd is from RDR_TO_PC_DATARATEANDCLOCK
-
-         
-    @param fpDevInfo 
-    @param fpICCDevice 
-    @param ClockFrequency ICC Clock Frequency in KHz
-    @param DataRate ICC data rate in bpd
-
-    @retval 
-        EFI_STATUS
-
-    @note  See section 6.1.14 of CCID spec Rev 1.1 for more details     
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:   PCToRDRSetDataRateAndClockFrequency
+//
+// Description: PC_TO_RDR_SETDATARATEANDCLOCK cmd is issued. 
+//              Response for this cmd is from RDR_TO_PC_DATARATEANDCLOCK
+//
+// Input: 
+//              IN DEV_INFO         *fpDevInfo
+//              IN ICC_DEVICE       *fpICCDevice
+//              IN UINT32           ClockFrequency  - ICC Clock Frequency in KHz
+//              IN UINT32           DataRate - ICC data rate in bpd
+//
+// Output:
+//              EFI_STATUS
+//
+// Notes:       See section 6.1.14 of CCID spec Rev 1.1 for more details     
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
 PCToRDRSetDataRateAndClockFrequency(
     IN DEV_INFO          *fpDevInfo,
@@ -1848,14 +1213,14 @@ PCToRDRSetDataRateAndClockFrequency(
     PC_TO_RDR_SETDATARATEANDCLOCKFREQUENCY_STRUC *fpCmdBuffer;
     UINT32                        dwData;
 
-    USB_DEBUG (DEBUG_INFO, DEBUG_LEVEL_3, "PCToRDRSetDataRateAndClockFrequency ....");
+    USB_DEBUG (DEBUG_LEVEL_3, "PCToRDRGetParameters ....");
 
     fpCmdBuffer = USB_MemAlloc((UINT8)GET_MEM_BLK_COUNT(sizeof(PC_TO_RDR_SETDATARATEANDCLOCKFREQUENCY_STRUC)));
     ASSERT(fpCmdBuffer);
     if (!fpCmdBuffer) {
         return EFI_OUT_OF_RESOURCES;
     }
-    ZeroMem((UINT8 *)fpCmdBuffer, sizeof(PC_TO_RDR_SETDATARATEANDCLOCKFREQUENCY_STRUC));
+    MemSet((UINT8 *)fpCmdBuffer, sizeof(PC_TO_RDR_SETDATARATEANDCLOCKFREQUENCY_STRUC), 0);
 
     //
     // Prepare cmd buffer
@@ -1863,7 +1228,7 @@ PCToRDRSetDataRateAndClockFrequency(
     fpCmdBuffer->bMessageType = PC_TO_RDR_SETDATARATEANDCLOCK;
     fpCmdBuffer->dwLength = 8;
     fpCmdBuffer->bSlot = fpICCDevice->Slot;
-    fpCmdBuffer->bSeq = gUsbData->CcidSequence;
+    fpCmdBuffer->bSeq = gSequence;
     fpCmdBuffer->dwCloclFrequency = ClockFrequency;
     fpCmdBuffer->dwDataRate = DataRate;
 
@@ -1881,27 +1246,32 @@ PCToRDRSetDataRateAndClockFrequency(
 
     USB_MemFree(fpCmdBuffer, (UINT8)GET_MEM_BLK_COUNT(sizeof(PC_TO_RDR_SETDATARATEANDCLOCKFREQUENCY_STRUC)));
 
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "%r ....", Status);
+    USB_DEBUG (DEBUG_LEVEL_3, "%r ....", Status);
 
     return Status;
 
 }
 
-/**
-    RDR_TO_PC_DATABLOCK cmd is issued to the CCID. 
-    This is on response to PCI_to_RDR_XfrBlock
-
-         
-    @param fpDevInfo 
-    @param fpICCDevice 
-    @param dwLength # of bytes in Buffer
-    @param Buffer Points to abData in RDR_TO_PC_DATABLOCK
-
-    @retval 
-        EFI_STATUS
-
-    @note  See section 6.2.1 of CCID spec Rev 1.1 for more details     
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:   RDRToPCDataBlock
+//
+// Description: RDR_TO_PC_DATABLOCK cmd is issued to the CCID. 
+//              This is on response to PCI_to_RDR_XfrBlock
+//
+// Input: 
+//              IN DEV_INFO        *fpDevInfo
+//              IN ICC_DEVICE      *fpICCDevice
+//              IN OUT UINT32      *dwLength - # of bytes in Buffer
+//              OUT UINT8          *Buffer - Points to abData in RDR_TO_PC_DATABLOCK
+//
+// Output:
+//              EFI_STATUS
+//
+// Notes:       See section 6.2.1 of CCID spec Rev 1.1 for more details     
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
 RDRToPCDataBlock(
     IN DEV_INFO         *fpDevInfo,
@@ -1927,7 +1297,7 @@ RDRToPCDataBlock(
     if (!fpReceiveBuffer) {
         return EFI_OUT_OF_RESOURCES;
     }
-    ZeroMem((UINT8 *)fpReceiveBuffer, sizeof(RDR_TO_PC_DATABLOCK_STRUC) + *dwLength);
+    MemSet((UINT8 *)fpReceiveBuffer, sizeof(RDR_TO_PC_DATABLOCK_STRUC) + *dwLength, 0);
 
     do {
         //
@@ -1936,7 +1306,7 @@ RDRToPCDataBlock(
         fpReceiveBuffer->bMessageType = RDR_TO_PC_DATABLOCK;
         fpReceiveBuffer->dwLength = *dwLength;
         fpReceiveBuffer->bSlot = fpICCDevice->Slot;
-        fpReceiveBuffer->bSeq = gUsbData->CcidSequence;
+        fpReceiveBuffer->bSeq = gSequence;
         fpReceiveBuffer->bStatus = 0;
         fpReceiveBuffer->bError = 0;
         fpReceiveBuffer->bChainParameter = 0;
@@ -1946,13 +1316,13 @@ RDRToPCDataBlock(
                                         sizeof(RDR_TO_PC_DATABLOCK_STRUC) + *dwLength
                                         );
 
-        USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "\n");
+        USB_DEBUG (DEBUG_LEVEL_3, "\n");
 
         for (i=0; i< sizeof(RDR_TO_PC_DATABLOCK_STRUC) + fpReceiveBuffer->dwLength; i++) {
-            USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "%02X ", ((UINT8 *)fpReceiveBuffer)[i]);
+            USB_DEBUG (DEBUG_LEVEL_3, "%02X ", ((UINT8 *)fpReceiveBuffer)[i]);
         }
 
-        USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "\n");
+        USB_DEBUG (DEBUG_LEVEL_3, "\n");
 
         //    
         // Handle Error if any. This error is due to blk transfer
@@ -1974,6 +1344,7 @@ RDRToPCDataBlock(
         Iterations--;
     } while (Iterations);    
 
+    // ToDo ToDo 
     // Should the cmd be aborted if the response isn't received???
 
     //
@@ -1997,9 +1368,10 @@ RDRToPCDataBlock(
         if (fpReceiveBuffer->dwLength && fpReceiveBuffer->dwLength <= *dwLength) {
     
             // Copy data 
-            CopyMem(Buffer,
-                    (UINT8 *)fpReceiveBuffer + sizeof(RDR_TO_PC_DATABLOCK_STRUC),
-                    fpReceiveBuffer->dwLength);
+            MemCopy ((UINT8 *)fpReceiveBuffer + sizeof(RDR_TO_PC_DATABLOCK_STRUC),  
+                    Buffer, 
+                    fpReceiveBuffer->dwLength
+                    ); 
 
         }
 
@@ -2044,32 +1416,37 @@ RDRToPCDataBlock(
 
 exit_RDRToPCDataBlock:
 
-    gUsbData->CcidSequence++;
+    gSequence++;
 
     USB_MemFree(fpReceiveBuffer, 
                 (UINT8)GET_MEM_BLK_COUNT(sizeof(RDR_TO_PC_DATABLOCK_STRUC) + InputLength)
                 );
 
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, " Status : %r bStatus : %02X bError : %02X\n", Status, fpICCDevice->bStatus, fpICCDevice->bError);
+    USB_DEBUG (DEBUG_LEVEL_3, " Status : %r bStatus : %02X bError : %02X\n", Status, fpICCDevice->bStatus, fpICCDevice->bError);
     
     return Status;
 
 }
 
-/**
-    RDR_TO_PC_SLOTSTATUS cmd is issued to CCID.
-
-        
-    @param fpDevInfo 
-    @param fpICCDevice 
-
-    @retval 
-        EFI_STATUS
-
-    @note  bStatus, BError and bClockStatus is updated.  
-              See section 6.2.2 of CCID spec Rev 1.1 for more details.
-    
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:   RDRToPCSlotStatus
+//
+// Description: RDR_TO_PC_SLOTSTATUS cmd is issued to CCID.
+//
+// Input:
+//              IN DEV_INFO         *fpDevInfo,
+//              IN ICC_DEVICE       *fpICCDevice
+//
+// Output:
+//              EFI_STATUS
+//
+// Notes:       bStatus, BError and bClockStatus is updated.  
+//              See section 6.2.2 of CCID spec Rev 1.1 for more details.
+//    
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
 RDRToPCSlotStatus(
     IN DEV_INFO         *fpDevInfo,
@@ -2087,7 +1464,7 @@ RDRToPCSlotStatus(
     if (!fpReceiveBuffer) {
         return EFI_OUT_OF_RESOURCES;
     }
-    ZeroMem((UINT8 *)fpReceiveBuffer, sizeof(RDR_TO_PC_SLOTSTATUS_STRUC));
+    MemSet((UINT8 *)fpReceiveBuffer, sizeof(RDR_TO_PC_SLOTSTATUS_STRUC), 0);
     do {
         //
         // Read the PCSlot Status
@@ -2095,7 +1472,7 @@ RDRToPCSlotStatus(
         fpReceiveBuffer->bMessageType = RDR_TO_PC_SLOTSTATUS;
         fpReceiveBuffer->dwLength = 0;
         fpReceiveBuffer->bSlot = fpICCDevice->Slot;
-        fpReceiveBuffer->bSeq = gUsbData->CcidSequence;
+        fpReceiveBuffer->bSeq = gSequence;
 
         dwData = USBCCIDIssueBulkTransfer(fpDevInfo, BIT7, 
                                         (UINT8 *)fpReceiveBuffer, 
@@ -2150,35 +1527,40 @@ RDRToPCSlotStatus(
 
 exit_RDRToPCSlotStatus:
 
-    gUsbData->CcidSequence++;
+    gSequence++;
 
     USB_MemFree(fpReceiveBuffer, 
                 (UINT8)GET_MEM_BLK_COUNT(sizeof(RDR_TO_PC_SLOTSTATUS_STRUC))
                 );
 
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, " Status :  %r bStatus : %02X bError : %02X\n", Status, fpICCDevice->bStatus, fpICCDevice->bError);
+    USB_DEBUG (DEBUG_LEVEL_3, " Status :  %r bStatus : %02X bError : %02X\n", Status, fpICCDevice->bStatus, fpICCDevice->bError);
 
     return Status;
 }
 
-/**
-    RDR_TO_PC_SLOTSTATUS cmd is issued
-
-         
-    @param fpDevInfo 
-    @param fpICCDevice 
-
-    @retval 
-        EFI_STATUS
-        abProtocolDataStructure is copied
-        
-
-    @note  bStatus, BErroris updated.  See section 6.2.3 of CCID spec 
-              Rev 1.1 for more details. 
-              bProtocolNum and abProtocolDatStructure is captured.
-
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:   RDRToPCParameters
+//
+// Description: RDR_TO_PC_SLOTSTATUS cmd is issued
+//
+// Input: 
+//              IN DEV_INFO         *fpDevInfo,
+//              IN ICC_DEVICE       *fpICCDevice
+//
+// Output:
+//              EFI_STATUS
+//              abProtocolDataStructure is copied
+//        
+//
+// Notes:       bStatus, BErroris updated.  See section 6.2.3 of CCID spec 
+//              Rev 1.1 for more details. 
+//              bProtocolNum and abProtocolDatStructure is captured.
+//
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
 RDRToPCParameters(
     IN DEV_INFO           *fpDevInfo,
@@ -2189,14 +1571,14 @@ RDRToPCParameters(
     EFI_STATUS                    Status = EFI_SUCCESS;
     RDR_TO_PC_PARAMETERS_T1_STRUC *fpReceiveBuffer;
     UINT32                        dwData;
-    UINT8                         Iterations = 3;
+    UINT8                         Iterations = 3;    
 
     fpReceiveBuffer = USB_MemAlloc((UINT8)GET_MEM_BLK_COUNT(sizeof(RDR_TO_PC_PARAMETERS_T1_STRUC)));
     ASSERT(fpReceiveBuffer);
     if (!fpReceiveBuffer) {
         return EFI_OUT_OF_RESOURCES;
     }
-    ZeroMem((UINT8 *)fpReceiveBuffer, sizeof(RDR_TO_PC_PARAMETERS_T1_STRUC));
+    MemSet((UINT8 *)fpReceiveBuffer, sizeof(RDR_TO_PC_PARAMETERS_T1_STRUC), 0);
 
     do {
 
@@ -2206,7 +1588,7 @@ RDRToPCParameters(
         fpReceiveBuffer->Header.bMessageType = RDR_TO_PC_PARAMETERS;
         fpReceiveBuffer->Header.dwLength = 0;
         fpReceiveBuffer->Header.bSlot = fpICCDevice->Slot;
-        fpReceiveBuffer->Header.bSeq = gUsbData->CcidSequence;
+        fpReceiveBuffer->Header.bSeq = gSequence;
 
         dwData = USBCCIDIssueBulkTransfer(fpDevInfo, BIT7, 
                                         (UINT8 *)fpReceiveBuffer, 
@@ -2257,8 +1639,8 @@ RDRToPCParameters(
         //
         // Update the Data
         //
-        CopyMem((UINT8 *)&(fpICCDevice->bProtocolNum),
-                (UINT8 *)&(fpReceiveBuffer->Header.Data),
+        MemCopy((UINT8 *)&(fpReceiveBuffer->Header.Data), 
+                (UINT8 *)&(fpICCDevice->bProtocolNum), 
                 sizeof(RDR_TO_PC_PARAMETERS_T1_STRUC) - 9);
 
     } else {
@@ -2268,13 +1650,17 @@ RDRToPCParameters(
 
 exit_RDRToPCParameters:
 
-    gUsbData->CcidSequence++;
+    gSequence++;
 
     USB_MemFree(fpReceiveBuffer, 
                 (UINT8)GET_MEM_BLK_COUNT(sizeof(RDR_TO_PC_PARAMETERS_T1_STRUC))
                 );
+    //
+    //Fujitsu KBD issue. Always reports as T0. Change it to T1
+    //
+    fpICCDevice->bProtocolNum = 1;
 
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, " Status :  %r bStatus : %02X bError : %02X\n", Status, fpICCDevice->bStatus, fpICCDevice->bError);
+    USB_DEBUG (DEBUG_LEVEL_3, " Status :  %r bStatus : %02X bError : %02X\n", Status, fpICCDevice->bStatus, fpICCDevice->bError);
 
     PrintPCParameters((UINT8 *)&(fpICCDevice->bProtocolNum));
 
@@ -2283,20 +1669,25 @@ exit_RDRToPCParameters:
 }
 
 
-/**
-    RDR_TO_PC_DATARATEANDCLOCK cmd is issued. 
-
-        
-    @param fpDevInfo 
-    @param fpICCDevice 
-
-    @retval 
-        EFI_STATUS
-         
-    @note  Returns dwClockFrequency and dwDataRate. 
-              See section 6.2.5 of CCID spec Rev 1.1 for more details.
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:   RDRToPCDataRateAndClockFrequency
+//
+// Description: RDR_TO_PC_DATARATEANDCLOCK cmd is issued. 
+//
+// Input:
+//              IN DEV_INFO          *fpDevInfo,
+//              IN ICC_DEVICE        *fpICCDevice
+//
+// Output:
+//              EFI_STATUS
+//         
+// Notes:       Returns dwClockFrequency and dwDataRate. 
+//              See section 6.2.5 of CCID spec Rev 1.1 for more details.
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
 RDRToPCDataRateAndClockFrequency(
     IN DEV_INFO          *fpDevInfo,
@@ -2314,7 +1705,7 @@ RDRToPCDataRateAndClockFrequency(
     if (!fpReceiveBuffer) {
         return EFI_OUT_OF_RESOURCES;
     }
-    ZeroMem((UINT8 *)fpReceiveBuffer, sizeof(RDR_TO_PC_DATARATEANDCLOCKFREQUENCY_STRUC));
+    MemSet((UINT8 *)fpReceiveBuffer, sizeof(RDR_TO_PC_DATARATEANDCLOCKFREQUENCY_STRUC), 0);
 
     do {
 
@@ -2324,7 +1715,7 @@ RDRToPCDataRateAndClockFrequency(
         fpReceiveBuffer->bMessageType = RDR_TO_PC_DATARATEANDCLOCK;
         fpReceiveBuffer->dwLength = 8;
         fpReceiveBuffer->bSlot = fpICCDevice->Slot;
-        fpReceiveBuffer->bSeq = gUsbData->CcidSequence;
+        fpReceiveBuffer->bSeq = gSequence;
 
         dwData = USBCCIDIssueBulkTransfer(fpDevInfo, BIT7, 
                                         (UINT8 *)fpReceiveBuffer, 
@@ -2382,37 +1773,44 @@ RDRToPCDataRateAndClockFrequency(
 
 exit_RDRToPCDataRateAndClockFrequency:
 
-    gUsbData->CcidSequence++;
+    gSequence++;
 
     USB_MemFree(fpReceiveBuffer, 
                 (UINT8)GET_MEM_BLK_COUNT(sizeof(RDR_TO_PC_DATARATEANDCLOCKFREQUENCY_STRUC))
                 );
 
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, " Status :  %r bStatus : %02X bError : %02X\n", 
+    USB_DEBUG (DEBUG_LEVEL_3, " Status :  %r bStatus : %02X bError : %02X\n", 
                 Status, fpICCDevice->bStatus, fpICCDevice->bError);
 
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, " dwClockFrequency :  %4x dwDataRate : %4x\n", 
+    USB_DEBUG (DEBUG_LEVEL_3, " dwClockFrequency :  %4x dwDataRate : %4x\n", 
                 fpICCDevice->dwClockFrequency, fpICCDevice->dwDataRate);
 
     return Status;
 
 }
 
-/**
-    Transmit/Receive T1 ADPU
-
-        
-    @param fpDevInfo 
-    @param fpICCDevice 
-    @param CmdLength 
-    @param CmdBuffer 
-    @param BlockWaitingTime 
-    @param LevelParameter 
-
-    @retval 
-
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:   TxRxT1Adpu
+//
+// Description: Transmit/Receive T1 ADPU
+//
+// Input:
+//              IN DEV_INFO         *fpDevInfo,
+//              IN ICC_DEVICE       *fpICCDevice,
+//              IN UINT32           CmdLength,
+//              IN UINT8            *CmdBuffer,
+//              IN UINT8            BlockWaitingTime,
+//              IN UINT16           LevelParameter    
+//
+// Output: 
+//
+//
+// Notes: 
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
 TxRxT1Adpu (
     IN DEV_INFO         *fpDevInfo,
@@ -2443,22 +1841,29 @@ TxRxT1Adpu (
     return Status;
 }
 
-/**
-    Transmit/Receive T1 TDPU/Character 
-
-        
-    @param fpDevInfo 
-    @param fpICCDevice 
-    @param CmdLength 
-    @param CmdBuffer 
-    @param ISBlock 
-    @param ResponseLength 
-    @param ResponseBuffer 
-
-    @retval 
-
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:       TxRxT1TDPUChar
+//
+// Description:     Transmit/Receive T1 TDPU/Character 
+//
+// Input:
+//    IN DEV_INFO         *fpDevInfo,
+//    IN ICC_DEVICE       *fpICCDevice,
+//    IN UINT32           CmdLength,
+//    IN UINT8            *CmdBuffer,
+//    IN UINT8            ISBlock,
+//    OUT UINT32          *ResponseLength,
+//    OUT UINT8           *ResponseBuffer   
+//
+// Output: 
+//
+//
+// Notes: 
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
 TxRxT1TDPUChar (
     IN DEV_INFO         *fpDevInfo,
@@ -2500,14 +1905,8 @@ TxRxT1TDPUChar (
     UINT32      UserBufferLength = *ResponseLength;
     UINT32      lResponseBufferAddDataPtr = 0;
 
-    BOOLEAN T1Char = ((SMARTCLASS_DESC*)fpDevInfo->pCCIDDescriptor)->dwFeatures & TDPU_LEVEL_EXCHANGE ? FALSE : TRUE;
-    UINT8     *MemBlockEnd = gUsbData->fpMemBlockStart + (gUsbData->MemPages << 12);
+    BOOLEAN T1Char = ((SMARTCLASS_DESC*)fpDevInfo->pCCIDDescriptor)->dwFeatures & TDPU_LEVEL_EXCHANGE ? FALSE : TRUE;    
 
-    if (((UINT8*)fpDevInfo->pCCIDDescriptor < gUsbData->fpMemBlockStart) ||
-        ((UINT8*)fpDevInfo->pCCIDDescriptor > MemBlockEnd)) {
-        return EFI_DEVICE_ERROR;
-    }
-    
     // Initialize Chaining is off
     fpICCDevice->Chaining = FALSE;
     *ResponseLength  = 0;
@@ -2541,7 +1940,7 @@ TxRxT1TDPUChar (
     if (!lResponseBuffer) {
         return EFI_OUT_OF_RESOURCES;
     }
-    ZeroMem(lResponseBuffer, lResponseLength);
+    MemSet(lResponseBuffer, lResponseLength, 0);
 
     OrglResponseLength = lResponseLength;
 
@@ -2598,7 +1997,8 @@ TxRxT1TDPUChar (
                     if (lResponseBuffer[2] && ((UserBufferLength - *ResponseLength) < lResponseBuffer[2])) {
                         Status = EFI_BUFFER_TOO_SMALL;        
                     }
-                    CopyMem(ResponseBuffer + *ResponseLength, lResponseBuffer + 3, lResponseBuffer[2]);
+
+                    MemCopy(lResponseBuffer+3, ResponseBuffer + *ResponseLength, lResponseBuffer[2]);
                     *ResponseLength +=  lResponseBuffer[2];
                     lResponseBufferAddDataPtr = 0;          // Reset to use the lResponseBuffer from the beginning
                     
@@ -2733,7 +2133,7 @@ TxRxT1TDPUChar (
     }
 
     if (lResponseBuffer[2] && ((UserBufferLength - *ResponseLength) >= lResponseBuffer[2])) {
-        CopyMem(ResponseBuffer + *ResponseLength, lResponseBuffer + 3, lResponseBuffer[2]);
+        MemCopy(lResponseBuffer+3, ResponseBuffer + *ResponseLength, lResponseBuffer[2]);
         *ResponseLength +=  lResponseBuffer[2];
     }
 
@@ -2761,24 +2161,31 @@ TxRxT1TDPUChar (
 }
 
 
-/**
-    Construct the Block Frame for the CCID
-
-        
-    @param fpDevInfo 
-    @param fpICCDevice 
-    @param Nad 
-        IN UINT8            PCB,
-    @param InfLength 
-    @param InfBuffer 
-    @param wLevelParameter 
-    @param BlockFrameLength 
-    @param BlockFrame 
-
-    @retval 
-        EFI_STATUS      EFI Status
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:   ConstructBlockFrame
+//
+// Description: Construct the Block Frame for the CCID
+//
+// Input:
+//              IN DEV_INFO         *fpDevInfo,
+//              IN ICC_DEVICE       *fpICCDevice,
+//              IN UINT8            Nad,
+//              IN UINT8            PCB,
+//              IN UINT32           InfLength,
+//              IN UINT8            *InfBuffer,
+//              OUT UINT8           *wLevelParameter,
+//              OUT UINT32          *BlockFrameLength,
+//              OUT UINT8           **BlockFrame
+//
+// Output: 
+//              EFI_STATUS      EFI Status
+//
+// Notes: 
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
 ConstructBlockFrame(
     IN DEV_INFO         *fpDevInfo,
@@ -2795,12 +2202,7 @@ ConstructBlockFrame(
 
     UINT32  BufLengthRequired = InfLength + 3 + 
                                 (fpICCDevice->EpilogueFields == 0 ? 1 :  2);
-    UINT8               *MemBlockEnd = gUsbData->fpMemBlockStart + (gUsbData->MemPages << 12);
 
-    if (((UINT8*)fpDevInfo->pCCIDDescriptor < gUsbData->fpMemBlockStart) ||
-        ((UINT8*)fpDevInfo->pCCIDDescriptor > MemBlockEnd)) {
-        return EFI_DEVICE_ERROR;
-    }
     //
     // Check if the input buffer if already allocated is enough for the current case. 
     // If not free it up and allocate again.
@@ -2831,14 +2233,14 @@ ConstructBlockFrame(
         }
     }
 
-    ZeroMem(*BlockFrame, *BlockFrameLength);
+    MemSet(*BlockFrame, *BlockFrameLength, 0);
 
     (*BlockFrame)[0] = Nad;
     (*BlockFrame)[1] = PCB;
     (*BlockFrame)[2] = InfLength;
 
     if (InfLength) {
-        CopyMem((UINT8 *)(*BlockFrame + 3), (UINT8 *)InfBuffer, InfLength);
+        MemCopy((UINT8 *)InfBuffer, (UINT8 *)(*BlockFrame + 3), InfLength);
     }
 
     //
@@ -2863,27 +2265,32 @@ ConstructBlockFrame(
 
 }
 
-/**
-    Process the Recevied data from CCID device
-
-        
-    @param fpDevInfo 
-    @param fpICCDevice 
-    @param OriginalBlockFrameLength 
-    @param OriginalBlockFrame 
-    @param SentBlockFrameLength 
-    @param SentBlockFrame 
-    @param ReceivedBlockFrame 
-
-    @retval 
-
-
-    @note  
-      For Character exchange control will come twice for S(Response), I-Block with M bit set. So while counting
-      number of exchnages this needs to be taken care of.
-      Refer to ISO/IEC 7816-1 First edition 1998-10-15 for different scenarios mentioned in this function.
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:   HandleReceivedBlock
+//
+// Description: Process the Recevied data from CCID device
+//
+// Input:
+//              IN DEV_INFO         *fpDevInfo,
+//              IN ICC_DEVICE       *fpICCDevice,
+//              IN UINT32           OriginalBlockFrameLength,
+//              IN UINT8            *OriginalBlockFrame,
+//              IN UINT32           SentBlockFrameLength,
+//              IN UINT8            *SentBlockFrame,
+//              IN UINT8            *ReceivedBlockFrame
+//
+// Output: 
+//
+//
+// Notes: 
+//      For Character exchange control will come twice for S(Response), I-Block with M bit set. So while counting
+//      number of exchnages this needs to be taken care of.
+//      Refer to ISO/IEC 7816-1 First edition 1998-10-15 for different scenarios mentioned in this function.
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 UINT8   
 HandleReceivedBlock (
     IN DEV_INFO         *fpDevInfo,
@@ -2898,12 +2305,6 @@ HandleReceivedBlock (
 
     UINT8   ReturnParameter = BLOCK_TRANSMISION_SUCCESS;
     BOOLEAN T1Char = ((SMARTCLASS_DESC*)fpDevInfo->pCCIDDescriptor)->dwFeatures & 0x70000 ? FALSE : TRUE;
-    UINT8     *MemBlockEnd = gUsbData->fpMemBlockStart + (gUsbData->MemPages << 12);
-
-    if (((UINT8*)fpDevInfo->pCCIDDescriptor < gUsbData->fpMemBlockStart) ||
-        ((UINT8*)fpDevInfo->pCCIDDescriptor > MemBlockEnd)) {
-        return BLOCK_TRANSMISSION_TERMINATE;
-    }
 
     // It is easy to support T1 TDPU & CHAR as they are almost same except that 
     // prologue and data are received separatly in T1 Char.
@@ -2934,7 +2335,7 @@ HandleReceivedBlock (
     }
 
     // Reset the RBlock Counter if the response we received isn't a R-Block.
-    if ((ReceivedBlockFrame[1] & 0xC0) !=  RBLOCK) {
+    if (!(ReceivedBlockFrame[1] & 0xC0) == 0x80) {
             fpICCDevice->RBlockCounter = 0;
     }
 
@@ -2992,7 +2393,7 @@ HandleReceivedBlock (
     //
     // Is the Block received is a R block?
     //
-    if ((ReceivedBlockFrame[1] & 0xC0) ==  RBLOCK) {
+    if ((ReceivedBlockFrame[1] & 0xC0) == 0x80) {
         
 
         // Is there an error?
@@ -3059,7 +2460,7 @@ HandleReceivedBlock (
         }
 
         // We can try giving S-Synch also if it doesn't respond to R-Block. 
-        // S-Synch can be done only for 2nd Iblock on-wards.
+        // S-Synch can be done only for 2nd Iblock on-wards. Todo later.
     }    
 
     //
@@ -3131,17 +2532,23 @@ HandleReceivedBlock (
 
 }
 
-/**
-    Calculates LRC checksum
-
-    @param 
-        UINT8            *BlockFrame
-        UINT32            BlockFrameLength
-
-    @retval 
-        ICC_DEVICE* or NULL
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:   CalculateLRCChecksum
+//
+// Description: Calculates LRC checksum
+//
+// Input:
+//              UINT8            *BlockFrame
+//              UINT32            BlockFrameLength
+//
+// Output: 
+//              ICC_DEVICE* or NULL
+//
+// Notes: 
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID
 CalculateLRCChecksum (
     UINT8       *BlockFrame, 
@@ -3157,17 +2564,23 @@ CalculateLRCChecksum (
     return;
 }
 
-/**
-    Search the linked list to find the ICC_DEVICE for the given slot #.
-
-    @param 
-        DEV_INFO        *fpDevInfo
-        UINT8            Slot
-
-    @retval 
-        ICC_DEVICE* or NULL
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:   GetICCDevice
+//
+// Description: Search the linked list to find the ICC_DEVICE for the given slot #.
+//
+// Input:
+//              DEV_INFO        *fpDevInfo
+//              UINT8            Slot
+//
+// Output: 
+//              ICC_DEVICE* or NULL
+//
+// Notes: 
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 ICC_DEVICE*
 GetICCDevice(
     DEV_INFO        *fpDevInfo, 
@@ -3176,22 +2589,17 @@ GetICCDevice(
 {
     ICC_DEVICE        *fpICCDevice;
     DLINK           *dlink;
-    UINT8           *MemBlockEnd = gUsbData->fpMemBlockStart + (gUsbData->MemPages << 12);
 
     dlink = fpDevInfo->ICCDeviceList.pHead;
-    
+
     for ( ; dlink; dlink = dlink->pNext) {
 
         fpICCDevice = OUTTER(dlink, ICCDeviceLink, ICC_DEVICE);
-        
+
         //
         // Slot # matches
         //
-        if ((fpICCDevice->Signature == ICC_DEVICE_SIG) && (fpICCDevice->Slot == Slot)) {
-            if (((UINT8*)fpICCDevice < gUsbData->fpMemBlockStart) ||
-                ((UINT8*)((UINTN)fpICCDevice + sizeof(ICC_DEVICE)) > MemBlockEnd)) {
-                return NULL;
-            }
+        if (fpICCDevice->Slot == Slot) {
             return fpICCDevice;
         }      
           
@@ -3200,21 +2608,26 @@ GetICCDevice(
     return NULL;
 }
 
-/**
-    The routine update the Transmision protocol supported and other 
-    timing related data
-
-    @param 
-        DEV_INFO           *fpDevInfo
-        ICC_DEVICE        *fpICCDevice
-
-          
-    @retval VOID
-
-    @note  This function looks into ATR data and updates CLASS A/B/C information, 
-              calculates ETU, WaitTime etc
-        
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:   UpdateATRDataInfo
+//
+// Description: The routine update the Transmision protocol supported and other 
+//              timing related data
+//
+// Input: 
+//              DEV_INFO           *fpDevInfo
+//              ICC_DEVICE        *fpICCDevice
+//
+// Output: 
+//              None
+//
+// Notes:       This function looks into ATR data and updates CLASS A/B/C information, 
+//              calculates ETU, WaitTime etc
+//        
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID
 UpdateATRDataInfo(
     DEV_INFO            *fpDevInfo,
@@ -3242,7 +2655,7 @@ UpdateATRDataInfo(
         //
         // Default value if TA1 is not present
         //
-        fpICCDevice->AtrData.TA1 = 0x11;
+        fpICCDevice->AtrData.TA1 = 0x11;        
     }
 
     bData = fpICCDevice->AtrData.TA1;
@@ -3330,15 +2743,16 @@ UpdateATRDataInfo(
         // Is it T15?
         //
         if ((fpICCDevice->RawATRData[bData] & 0xF) == 0xF){
-            if ((bData + 1) < MAX_ATR_LENGTH) { 
-                fpICCDevice->ClassABC = fpICCDevice->RawATRData[bData + 1] & 0x3F;
-                fpICCDevice->StopClockSupport = fpICCDevice->RawATRData[bData + 1] >> 5;
-                fpICCDevice->AtrData.TD15 = fpICCDevice->RawATRData[bData];
-                fpICCDevice->AtrData.TD15Present = TRUE;
-                fpICCDevice->AtrData.TA15 = fpICCDevice->RawATRData[bData + 1];
-                fpICCDevice->AtrData.TA15Present = TRUE;
-                break;
-            }
+            fpICCDevice->ClassABC = fpICCDevice->RawATRData[bData + 1] & 0x3F;
+            fpICCDevice->StopClockSupport = fpICCDevice->RawATRData[bData + 1] >> 5; 
+
+            fpICCDevice->AtrData.TD15 = fpICCDevice->RawATRData[bData];
+            fpICCDevice->AtrData.TD15Present = TRUE;
+
+            fpICCDevice->AtrData.TA15 = fpICCDevice->RawATRData[bData + 1];
+            fpICCDevice->AtrData.TA15Present = TRUE;
+
+            break;
         } else {
             // We need info on how many Transmission Protocols are supported by the 
             // card and what are those. Use these loop to do that.
@@ -3346,9 +2760,9 @@ UpdateATRDataInfo(
                 i = fpICCDevice->TransmissionProtocolSupported;
                 fpICCDevice->TransmissionProtocolSupported |=  ( 1 << (fpICCDevice->RawATRData[bData] & 0x0F));
                 if (i != fpICCDevice->TransmissionProtocolSupported) { 
-                    fpICCDevice->NumofTransmissionProtocolSupported++;
+                    fpICCDevice->NumofTransmissionProtocolSupported++;          
                 }
-            }
+            }                        
 
             // No more valid TDx?
             if (!(fpICCDevice->RawATRData[bData] & 0x80)) break;
@@ -3359,20 +2773,25 @@ UpdateATRDataInfo(
     return;
 }
 
-/**
-    Find the First offerred Transmission protocol.
-
-    @param 
-        ICC_DEVICE        *fpICCDevice
-
-    @retval 
-        TRANSMISSION_PROTOCOL        
-
-    @note  Section 8.2.3 ISO 7816-3 2006-11-01: TD1 encodes first offered protocol. 
-              If TD1 not present assume T0.
-    
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:   GetDefaultProtocol
+//
+// Description: Find the First offerred Transmission protocol.
+//
+// Input: 
+//              ICC_DEVICE        *fpICCDevice
+//
+// Output:
+//              TRANSMISSION_PROTOCOL        
+//
+// Notes:       Section 8.2.3 ISO 7816-3 2006-11-01: TD1 encodes first offered protocol. 
+//              If TD1 not present assume T0.
+//    
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 TRANSMISSION_PROTOCOL GetDefaultProtocol (
     ICC_DEVICE        *fpICCDevice
 )
@@ -3386,28 +2805,33 @@ TRANSMISSION_PROTOCOL GetDefaultProtocol (
 
 }
 
-/**
-    CCID which doesn't perform "Automatic parameter config. based on ATR
-
-    @param 
-        DEV_INFO           *fpDevInfo
-        ICC_DEVICE        *fpICCDevice
-
-    @retval 
-        UINT8       Best TA1 value
-
-    @note  
-  1. Calculate the Baud rate using TA1 value
-
-  2. If in CCID bNumDataRatesSupported = 0 then any value between dwDatRate 
-     and dwMaxDataRate is supported
-
-  3. Check if ICC baud rate is less tha dwMaxDataRate. If yes use that.
-
-  4. If  bNumDataRatesSupported is not zero get all possible values and try to 
-     match it and use that value.
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:   FindBestTA1Value
+//
+// Description: CCID which doesn't perform "Automatic parameter config. based on ATR
+//
+// Input: 
+//              DEV_INFO           *fpDevInfo
+//              ICC_DEVICE        *fpICCDevice
+//
+// Output:
+//              UINT8       Best TA1 value
+//
+// Notes:
+//  1. Calculate the Baud rate using TA1 value
+//
+//  2. If in CCID bNumDataRatesSupported = 0 then any value between dwDatRate 
+//     and dwMaxDataRate is supported
+//
+//  3. Check if ICC baud rate is less tha dwMaxDataRate. If yes use that.
+//
+//  4. If  bNumDataRatesSupported is not zero get all possible values and try to 
+//     match it and use that value.
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 UINT8 
 FindBestTA1Value (
     DEV_INFO        *fpDevInfo,
@@ -3418,12 +2842,7 @@ FindBestTA1Value (
     UINT32      ICCBaudrate;
     UINT8       Di = fpICCDevice->GlobalDi;
 	SMARTCLASS_DESC	*CCIDDescriptor = (SMARTCLASS_DESC*)fpDevInfo->pCCIDDescriptor;
-    UINT8       *MemBlockEnd = gUsbData->fpMemBlockStart + (gUsbData->MemPages << 12);
 
-    if (((UINT8*)fpDevInfo->pCCIDDescriptor < gUsbData->fpMemBlockStart) ||
-        ((UINT8*)fpDevInfo->pCCIDDescriptor > MemBlockEnd)) {
-        return 0;
-    }
     //
     // If Automatic parameter conf. based on ATR data is 
     //
@@ -3434,7 +2853,7 @@ FindBestTA1Value (
     ICCBaudrate =   (fpICCDevice->GlobalFmax * 1000 * fpICCDevice->GlobalDi)/fpICCDevice->GlobalFi;      
 
     if (fpDevInfo->DataRates && fpDevInfo->ClockFrequencies) {
-        /*
+        /* Todo Todo
         // Find the match
         for (i = fpDevInfo->pCCIDDescriptor->bNumDataRatesSupported; i; --i) {
             // Since the values may not match exactly give some leeway
@@ -3477,18 +2896,25 @@ FindBestTA1Value (
 }
 
 
-/**
-    Based on the agreed upon TA1 value and Transmission protocol 
-    calculate the timing values
-
-    @param 
-        DEV_INFO           *fpDevInfo
-        ICC_DEVICE        *fpICCDevice
-
-         
-    @retval VOID
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:   CalculateTimingValues
+//
+// Description: Based on the agreed upon TA1 value and Transmission protocol 
+//              calculate the timing values
+//
+// Input: 
+//              DEV_INFO           *fpDevInfo
+//              ICC_DEVICE        *fpICCDevice
+//
+// Output:
+//              None
+//
+// Notes:
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID
 CalculateTimingValues (
     DEV_INFO          *fpDevInfo,
@@ -3566,24 +2992,17 @@ CalculateTimingValues (
         if ((fpICCDevice->RawATRData[bData] & 0xF) == 0x1){
 
             if (fpICCDevice->RawATRData[bData] & 0x10) {
-                if ((bData + 1) < MAX_ATR_LENGTH) { 
-                    fpICCDevice->IFSC = fpICCDevice->RawATRData[bData + 1];
-                }
+                fpICCDevice->IFSC = fpICCDevice->RawATRData[bData + 1];
             }
 
             if (fpICCDevice->RawATRData[bData] & 0x20) {
-                if ((bData + 2) < MAX_ATR_LENGTH) { 
-                    fpICCDevice->BWI = (fpICCDevice->RawATRData[bData + 2] & 0xF0) >> 4;
-                    fpICCDevice->CWI = fpICCDevice->RawATRData[bData + 2] & 0xF;
-                }
-                
+                fpICCDevice->BWI = (fpICCDevice->RawATRData[bData + 2] & 0xF0) >> 4;
+                fpICCDevice->CWI = fpICCDevice->RawATRData[bData + 2] & 0xF;
             }
 
             // Section 11.4.4
             if (fpICCDevice->RawATRData[bData] & 0x40) {
-                if ((bData + 3) < MAX_ATR_LENGTH) { 
-                    fpICCDevice->EpilogueFields = (fpICCDevice->RawATRData[bData + 3] & 0x1);
-                }
+                fpICCDevice->EpilogueFields = (fpICCDevice->RawATRData[bData + 3] & 0x1);
             }
 
             break;
@@ -3608,23 +3027,28 @@ CalculateTimingValues (
     return;
 }
 
-/**
-    Issue PPS cmd to select T0/T1
-
-    @param 
-        DEV_INFO        *fpDevInfo
-        ICC_DEVICE      *fpICCDevice
-        UINT8           *Data : Points to the buffer which is sent to CCID. 
-        Refer Section 9.2 of 7816-3 spec for the format
-
-    @retval 
-        EFI_STATUS
-
-    @note  
-              This command is issued to CCID which doesn't support AUTO_PARAMETER_CONFIG 
-              or when default values or not acceptable
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:   IssuePPSCmd
+//
+// Description: Issue PPS cmd to select T0/T1
+//
+// Input: 
+//              DEV_INFO        *fpDevInfo
+//              ICC_DEVICE      *fpICCDevice
+//              UINT8           *Data : Points to the buffer which is sent to CCID. 
+//                                      Refer Section 9.2 of 7816-3 spec for the format
+//
+// Output:
+//              EFI_STATUS
+//
+// Notes:
+//              This command is issued to CCID which doesn't support AUTO_PARAMETER_CONFIG 
+//              or when default values or not acceptable
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
 IssuePPSCmd(
     DEV_INFO            *fpDevInfo,
@@ -3638,12 +3062,6 @@ IssuePPSCmd(
     UINT8        *ResponseBuffer;
     UINT32        ResponseLength = DataLength;
     SMARTCLASS_DESC	*CCIDDescriptor = (SMARTCLASS_DESC*)fpDevInfo->pCCIDDescriptor;
-    UINT8        *MemBlockEnd = gUsbData->fpMemBlockStart + (gUsbData->MemPages << 12);
-
-    if (((UINT8*)fpDevInfo->pCCIDDescriptor < gUsbData->fpMemBlockStart) ||
-        ((UINT8*)fpDevInfo->pCCIDDescriptor > MemBlockEnd)) {
-        return EFI_DEVICE_ERROR;
-    }
 
     //
     // Allocate memory for receiving data
@@ -3653,7 +3071,7 @@ IssuePPSCmd(
     if (!ResponseBuffer) {
         return EFI_OUT_OF_RESOURCES;
     }
-    ZeroMem((UINT8 *)ResponseBuffer, DataLength);
+    MemSet((UINT8 *)ResponseBuffer, DataLength, 0);
 
 
     //
@@ -3691,22 +3109,27 @@ IssuePPSCmd(
 }
 
 
-/**
-    Based on the dwFeatures register setting, power up CCID/ICC
-
-    @param 
-        DEV_INFO           *fpDevInfo,
-        ICC_DEVICE        *fpICCDevice
-
-    @retval 
-        EFI_STATUS   
-
-    @note  Based on dwFeatures value from SMART Class Descriptor either 
-              do an automatic Power-on or go through a manual
-              power up sequence and then callect the ATR data.
-    
-    
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:   VoltageSelection
+//
+// Description: Based on the dwFeatures register setting, power up CCID/ICC
+//
+// Input:
+//              DEV_INFO           *fpDevInfo,
+//              ICC_DEVICE        *fpICCDevice
+//
+// Output:
+//              EFI_STATUS   
+//
+// Notes:       Based on dwFeatures value from SMART Class Descriptor either 
+//              do an automatic Power-on or go through a manual
+//              power up sequence and then callect the ATR data.
+//    
+//    
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
 VoltageSelection(
     DEV_INFO          *fpDevInfo,
@@ -3729,12 +3152,7 @@ VoltageSelection(
     // Successful poweron will result in ATR data
     //
     UINT32       BufferLength = MAX_ATR_LENGTH;                                        
-    UINT8        *MemBlockEnd = gUsbData->fpMemBlockStart + (gUsbData->MemPages << 12);
 
-    if (((UINT8*)fpDevInfo->pCCIDDescriptor < gUsbData->fpMemBlockStart) ||
-        ((UINT8*)fpDevInfo->pCCIDDescriptor > MemBlockEnd)) {
-        return EFI_DEVICE_ERROR;
-    }
     //
     // Make sure the first selection is valid
     //
@@ -3787,7 +3205,7 @@ VoltageSelection(
         //
         if (!EFI_ERROR(Status) && BufferLength) {
 
-            fpICCDevice->ConfiguredStatus = (ICCPRESENT | VOLTAGEAPPLIED | ATRDATAPRESENT);
+            fpICCDevice->ConfiguredStatus |= (ICCPRESENT | VOLTAGEAPPLIED | ATRDATAPRESENT);
 
             PrintATRData(fpICCDevice->RawATRData);
         
@@ -3811,7 +3229,7 @@ VoltageSelection(
         //
         // ICC is present but some error
         //
-        fpICCDevice->ConfiguredStatus = ICCPRESENT;
+        fpICCDevice->ConfiguredStatus |= ICCPRESENT;
 
         //
         // Card present but voltage selection is not OK. Power it off and select next voltage
@@ -3836,21 +3254,26 @@ VoltageSelection(
 
 }
 
-/**
-    Based on the ATR data and the dwFeature register contend 
-    do the Rate and Protocol programming
-
-    @param 
-        DEV_INFO           *fpDevInfo
-        ICC_DEVICE        *fpICCDevice
-
-    @retval 
-        EFI_STATUS
-
-    @note  Based on data received from Power-on sequence (ATR data) and dwFetaures value, 
-              Speed of communicatin is established.
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:   RateAndProtocolManagement
+//
+// Description: Based on the ATR data and the dwFeature register contend 
+//              do the Rate and Protocol programming
+//
+// Input:
+//              DEV_INFO           *fpDevInfo
+//              ICC_DEVICE        *fpICCDevice
+//
+// Output:
+//              EFI_STATUS
+//
+// Notes:       Based on data received from Power-on sequence (ATR data) and dwFetaures value, 
+//              Speed of communicatin is established.
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
 RateAndProtocolManagement(
     DEV_INFO          *fpDevInfo,
@@ -3858,11 +3281,11 @@ RateAndProtocolManagement(
 )
 {
 
-    EFI_STATUS              Status = EFI_SUCCESS;
+    EFI_STATUS              Status = EFI_DEVICE_ERROR;
     PROTOCOL_DATA_T1        Data = {0};
-    UINT8                   PPSData[] = {0xFF, 0x10, 0x11, 0x00};
+    UINT8                   PPSData[] = {0xFF, 0x10, 0x11, 0x00};        
     UINT8                   Counter;
-    SMARTCLASS_DESC         *CCIDDescriptor = (SMARTCLASS_DESC*)fpDevInfo->pCCIDDescriptor;
+	SMARTCLASS_DESC			*CCIDDescriptor = (SMARTCLASS_DESC*)fpDevInfo->pCCIDDescriptor;
     UINT32                  ClockFrequency = CCIDDescriptor->dwMaximumClock;
     UINT32                  DataRate = CCIDDescriptor->dwMaxDataRate;
     BOOLEAN                 FlagToIssueSetParameters = FALSE;
@@ -3872,13 +3295,6 @@ RateAndProtocolManagement(
     UINT32                  ResponseLength;
     UINT8                   ResponseBuffer[20];
     UINT32                  ExchangeLevel = (CCIDDescriptor->dwFeatures & 0x70000);
-    BOOLEAN                 ForceSetParams = FALSE;
-    UINT8                   *MemBlockEnd = gUsbData->fpMemBlockStart + (gUsbData->MemPages << 12);
-
-    if (((UINT8*)fpDevInfo->pCCIDDescriptor < gUsbData->fpMemBlockStart) ||
-        ((UINT8*)fpDevInfo->pCCIDDescriptor > MemBlockEnd)) {
-        return EFI_DEVICE_ERROR;
-    }
     
     FirstOfferredProtocol = GetDefaultProtocol(fpICCDevice);
 
@@ -3887,7 +3303,7 @@ RateAndProtocolManagement(
     //
     // Check whether TA1 value is good enough for the reader. If not get the right value
     //
-    fpICCDevice->AtrData.TA1 = FindBestTA1Value(fpDevInfo, fpICCDevice);
+    fpICCDevice->AtrData.TA1 = FindBestTA1Value(fpDevInfo, fpICCDevice);    
 
 
     //
@@ -3906,9 +3322,6 @@ RateAndProtocolManagement(
             (ExchangeLevel <= 0x10000 ) && !fpICCDevice->AtrData.TA2Present) ||
         ((CCIDDescriptor->dwFeatures & AUTO_PPS_NEGOTIATION_ACTIVE) && !fpICCDevice->AtrData.TA2Present && 
             fpICCDevice->NumofTransmissionProtocolSupported > 1 && FirstOfferredProtocol != USE_T0_T1_PROTOCOL)) {
-
-        USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "IssuePPSCmd ...");
-
         //
         // Update PPS data if in case PPSCmd needs to be issued
         //
@@ -3917,7 +3330,7 @@ RateAndProtocolManagement(
         //
         // Update PPS2
         //
-        PPSData[2] = fpICCDevice->AtrData.TA1;
+        PPSData[2] = fpICCDevice->AtrData.TA1;        
     
         //
         // Update checksum
@@ -3927,16 +3340,8 @@ RateAndProtocolManagement(
         }
     
         Status = IssuePPSCmd(fpDevInfo, fpICCDevice, PPSData, sizeof (PPSData));
-
-        USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "%r\n", Status);
-
-        if (EFI_ERROR(Status)) {
-            return Status;
-        }
     }
-
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "CCIDDescriptor.... dwFeatures: %x \n",CCIDDescriptor->dwFeatures);
-
+          
     if (CCIDDescriptor->dwFeatures & AUTO_PARAMETER_CONFIG) {   
 
         //
@@ -3948,21 +3353,10 @@ RateAndProtocolManagement(
         Status = RDRToPCParameters(fpDevInfo, fpICCDevice);
         if (EFI_ERROR(Status)) return Status;        
 
-        //if returned parameters is all zero, use the default values.
-        // Workaround for Broadcom CCID. GetParametrs always return zero.
-        if (!fpICCDevice->bProtocolNum && !fpICCDevice->bmFindIndex && !fpICCDevice->bmTCCKST && !fpICCDevice->bGuardTime \
-               && !fpICCDevice->bWaitingInteger && !fpICCDevice->bClockStop && !fpICCDevice->bIFSC && !fpICCDevice->bClockStop && !fpICCDevice->nNadValue){
-            USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "Get Parameters is all zero..\n");
-            CalculateTimingValues (fpDevInfo, fpICCDevice);
-            ForceSetParams = TRUE;
-            fpICCDevice->bProtocolNum = FirstOfferredProtocol;
-        }
-        else {
-            fpICCDevice->ExtraGuardTime = fpICCDevice->bGuardTime;
-            fpICCDevice->WTwaittime = fpICCDevice->bWaitingInteger;
-            fpICCDevice->IFSC =  fpICCDevice->bIFSC;
-            fpICCDevice->NAD = fpICCDevice->nNadValue;
-        }
+        fpICCDevice->ExtraGuardTime = fpICCDevice->bGuardTime;
+        fpICCDevice->WTwaittime = fpICCDevice->bWaitingInteger;
+        fpICCDevice->IFSC =  fpICCDevice->bIFSC;
+        fpICCDevice->NAD = fpICCDevice->nNadValue;
 
     } else {
 
@@ -3973,24 +3367,11 @@ RateAndProtocolManagement(
         CalculateTimingValues (fpDevInfo, fpICCDevice);
     }
 
-    // Issue SET Params if below two conditions are satisfied
-    // Condition 1: If CCID get parameters are all Zero (i.e. Workaround for Broadcom devices) OR
-    // Condition 2: Not in specific mode (TA2 is zero) AND
-    //              BIT1 not set OR (BIT1 Set but Getparams return non prefered protocol AND
-    //              if BIT7 is set OR if BIT 6 and 7 are both not set
-    if (
-        ForceSetParams == TRUE || \
-        (!fpICCDevice->AtrData.TA2Present && \
-            (!(CCIDDescriptor->dwFeatures & AUTO_PARAMETER_CONFIG) ||
-                // BIT1 set and Protocol we received in Getparams doesn't match the first offered protocol
-                ((CCIDDescriptor->dwFeatures & AUTO_PARAMETER_CONFIG) && fpICCDevice->bProtocolNum != FirstOfferredProtocol)) && \
-            // If BIT7 is set and not in Specific mode (TA2 non-zero)
-            ((CCIDDescriptor->dwFeatures & AUTO_PPS_NEGOTIATION_ACTIVE ) || \
-            // if BIT 6 & 7 are both zero, also not in Specific mode
-            (!(CCIDDescriptor->dwFeatures & (AUTO_PPS_NEGOTIATION_ACTIVE | AUTO_PPS_NEGOTIATION_CCID) ) ) ) \
-        )){ 
-
-        USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "Set Parameters required..%x\n", fpICCDevice->bProtocolNum);
+    //
+    //If Automatic Parameters config. based on ATR data is not 
+    //supported then issue SetParameters cmd
+    //
+    if (!(CCIDDescriptor->dwFeatures & AUTO_PPS_NEGOTIATION_ACTIVE)){  // 0x80
 
         //
         // Use the superset of the T0/T1 structure (ie T1 structure) even if it is T0. It should work.
@@ -4011,14 +3392,10 @@ RateAndProtocolManagement(
         if (!EFI_ERROR(Status)){
             Status = RDRToPCParameters(fpDevInfo, fpICCDevice);
         } else {
-            return Status; 
-        }
-
-        // Work around for Broadcom CCID
-        if (fpICCDevice->bProtocolNum != FirstOfferredProtocol) {
-            USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "bProtocolNum %x doesn't match with  FirstOfferredProtocol%x\n", fpICCDevice->bProtocolNum, FirstOfferredProtocol);
-            fpICCDevice->bProtocolNum =  FirstOfferredProtocol;
-        }
+            //
+            // ToDo Todo. Handle failure cases. Look at it later.
+            //
+        }     
     }
 
     //
@@ -4031,7 +3408,7 @@ RateAndProtocolManagement(
     }
 
     //
-    // If Automatic ICC Clock Freq AND Automatic Buad Rate selection 
+    // Todo If Automatic ICC Clock Freq AND Automatic Buad Rate selection 
     // isn't supported issue SetDataRateAndClock cmd
     //
     if (!(CCIDDescriptor->dwFeatures & (AUTO_BAUD_RATE_SELECTION |AUTO_ICC_CLOCK_FREQ))){
@@ -4048,10 +3425,7 @@ RateAndProtocolManagement(
                 FixedDelay(10 * 1000);      // 10msec delay. No break. Let the flow continue below.
             case TDPU_LEVEL_EXCHANGE:
               ResponseLength = 1;
-                SetIFS[0] = (UINT8)CCIDDescriptor->dwMaxIFSD;
-
-                USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "SetIFS[0] %x\n", SetIFS[0]);
-
+                SetIFS[0] = (UINT8)CCIDDescriptor->dwMaxIFSD;          
                 Status = TxRxT1TDPUChar (fpDevInfo, fpICCDevice, sizeof (SetIFS), SetIFS, IFS_REQUEST, &ResponseLength, ResponseBuffer);
                 // Update the received IFSD
                 if (!EFI_ERROR(Status) && ResponseLength == 1){
@@ -4066,20 +3440,25 @@ RateAndProtocolManagement(
 
 }
 
-/**
-    This function powers up, sets the clock/rate etc 
-    (configure CCID based on device capability)
-
-    @param 
-        DEV_INFO           *fpDevInfo,
-        ICC_DEVICE        *fpICCDevice
-
-    @retval 
-        EFI_STATUS
-
-    @note  VoltageSelection, RateAndProtocolManagement
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:    ConfigureCCID
+//
+// Description: This function powers up, sets the clock/rate etc 
+//              (configure CCID based on device capability)
+//
+// Input: 
+//              DEV_INFO           *fpDevInfo,
+//              ICC_DEVICE        *fpICCDevice
+//
+// Output:
+//              EFI_STATUS
+//
+// Notes:       VoltageSelection, RateAndProtocolManagement
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
 ConfigureCCID(
     DEV_INFO          *fpDevInfo,
@@ -4127,28 +3506,32 @@ ConfigureCCID(
     return Status;
 }
 
-/**
-    This function executes a bulk transaction on the USB. The
-    transfer may be either DATA_IN or DATA_OUT packets containing
-    data sent from the host to the device or vice-versa. This
-    function wil not return until the request either completes
-    successfully or completes with error (due to time out, etc.)
-    Size of data can be upto 64K
-
-    @param - DeviceInfo structure (if available else 0)
-        - Transfer direction
-        Bit 7   : Data direction
-        0 Host sending data to device
-        1 Device sending data to host
-        Bit 6-0 : Reserved
-        - Buffer containing data to be sent to the device or
-        buffer to be used to receive data. Value in
-        - Length request parameter, number of bytes of data
-        to be transferred in or out of the host controller
-
-    @retval Amount of data transferred
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   USBCCIDIssueBulkTransfer
+//
+// Description: This function executes a bulk transaction on the USB. The
+//              transfer may be either DATA_IN or DATA_OUT packets containing
+//              data sent from the host to the device or vice-versa. This
+//              function wil not return until the request either completes
+//              successfully or completes with error (due to time out, etc.)
+//              Size of data can be upto 64K
+//
+// Input:   - DeviceInfo structure (if available else 0)
+//          - Transfer direction
+//              Bit 7   : Data direction
+//                          0 Host sending data to device
+//                          1 Device sending data to host
+//              Bit 6-0 : Reserved
+//          - Buffer containing data to be sent to the device or
+//            buffer to be used to receive data. Value in
+//          - Length request parameter, number of bytes of data
+//            to be transferred in or out of the host controller
+//
+// Output:  Amount of data transferred
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT32
 USBCCIDIssueBulkTransfer (
@@ -4164,42 +3547,47 @@ USBCCIDIssueBulkTransfer (
                 fpDevInfo, bXferDir,
                 fpCmdBuffer, dSize);
 
+    // Todo Todo 
     // Handle Bulk Transfer error here
 
 }
 
-/**
-    Issues Control Pipe request to default pipe
-
-    @param pDevInfo    DeviceInfo structure (if available else 0)
-        wRequest    Request type (low byte)
-        Bit 7   : Data direction
-        0 = Host sending data to device
-        1 = Device sending data to host
-        Bit 6-5 : Type
-        00 = Standard USB request
-        01 = Class specific
-        10 = Vendor specific
-        11 = Reserved
-        Bit 4-0 : Recipient
-        00000 = Device
-        00001 = Interface
-        00010 = Endpoint
-        00100 - 11111 = Reserved
-        Request code, a one byte code describing
-        the actual device request to be executed
-        (ex: 1 : ABORT, 2 : GET_CLOCK_FREQUENCIES, 3: GET_DATA_RATES)
-        wIndex      wIndex request parameter (meaning varies)
-        wValue      wValue request parameter (meaning varies)
-        fpBuffer    Buffer containing data to be sent to the
-        device or buffer to be used to receive data
-        wLength     wLength request parameter, number of bytes
-        of data to be transferred in or out
-        of the host controller
-
-    @retval Number of bytes actually transferred
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   USBCCIDIssueControlTransfer
+//
+// Description: Issues Control Pipe request to default pipe
+//
+// Parameters:     pDevInfo    DeviceInfo structure (if available else 0)
+//          wRequest    Request type (low byte)
+//              Bit 7   : Data direction
+//                  0 = Host sending data to device
+//                  1 = Device sending data to host
+//              Bit 6-5 : Type
+//                  00 = Standard USB request
+//                  01 = Class specific
+//                  10 = Vendor specific
+//                  11 = Reserved
+//              Bit 4-0 : Recipient
+//                  00000 = Device
+//                  00001 = Interface
+//                  00010 = Endpoint
+//                  00100 - 11111 = Reserved
+//              Request code, a one byte code describing
+//              the actual device request to be executed
+//              (ex: 1 : ABORT, 2 : GET_CLOCK_FREQUENCIES, 3: GET_DATA_RATES)
+//      wIndex      wIndex request parameter (meaning varies)
+//      wValue      wValue request parameter (meaning varies)
+//      fpBuffer    Buffer containing data to be sent to the
+//              device or buffer to be used to receive data
+//      wLength     wLength request parameter, number of bytes
+//              of data to be transferred in or out
+//              of the host controller
+//
+// Output:  Number of bytes actually transferred
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT32
 USBCCIDIssueControlTransfer(
@@ -4227,16 +3615,20 @@ USBCCIDIssueControlTransfer(
 
 }
 
-/**
-    Returns the # of Ts present in TDx
-
-    @param 
-        UINT8    Data
-
-         
-    @retval UINT8 Returns number of TDx present in ATR data
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   FindNumberOfTs
+//
+// Description: Returns the # of Ts present in TDx
+//
+// Input:
+//              UINT8    Data
+//
+// Output:
+//              UINT8 - Returns number of TDx present in ATR data
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 UINT8
 FindNumberOfTs(
     UINT8    Data
@@ -4254,84 +3646,96 @@ FindNumberOfTs(
     return Count;    
 }
 
-/**
-    This function prints the information gathered from GetPCParameters
-
-    @param 
-        UINT8 * Data   
-
-         
-    @retval VOID
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   PrintPCParameters
+//
+// Description: This function prints the information gathered from GetPCParameters
+//
+// Input:
+//              UINT8 * Data   
+//
+// OutPut:
+//              None
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID 
 PrintPCParameters(
     UINT8 * Data
 )
 {
 
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "bProtocolNum     : %02X\n", Data[0]); 
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "bmFindexDIndex   : %02X\n", Data[1]); 
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "bmTCCKST0        : %02X\n", Data[2]); 
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "bGaurdTime       : %02X\n", Data[3]); 
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "bWaitingInterger : %02X\n", Data[4]); 
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "bClockStop       : %02X\n", Data[5]); 
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "bIFSC            : %02X\n", Data[6]); // Valid only for T1    
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "bNadValue        : %02X\n", Data[7]); // Valid only for T1
+    USB_DEBUG (DEBUG_LEVEL_3, "bProtocolNum     : %02X\n", Data[0]); 
+    USB_DEBUG (DEBUG_LEVEL_3, "bmFindexDIndex   : %02X\n", Data[1]); 
+    USB_DEBUG (DEBUG_LEVEL_3, "bmTCCKST0        : %02X\n", Data[2]); 
+    USB_DEBUG (DEBUG_LEVEL_3, "bGaurdTime       : %02X\n", Data[3]); 
+    USB_DEBUG (DEBUG_LEVEL_3, "bWaitingInterger : %02X\n", Data[4]); 
+    USB_DEBUG (DEBUG_LEVEL_3, "bClockStop       : %02X\n", Data[5]); 
+    USB_DEBUG (DEBUG_LEVEL_3, "bIFSC            : %02X\n", Data[6]); // Valid only for T1    
+    USB_DEBUG (DEBUG_LEVEL_3, "bNadValue        : %02X\n", Data[7]); // Valid only for T1
 
     return;
 } 
 
 
-/**
-    This function prints the information gathered from ATR data
-
-    @param 
-        ICC_DEVICE    *fpICCDevice
-
-         
-    @retval VOID
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   PrintTimingInfo
+//
+// Description: This function prints the information gathered from ATR data
+//
+// Input:  
+//              ICC_DEVICE    *fpICCDevice
+//
+// Output:
+//              None
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID
 PrintTimingInfo(
     ICC_DEVICE    *fpICCDevice
 )
 {
 
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "etu              : %02X  \n", fpICCDevice->etu); 
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "GlobalFi         : %04x  \n", fpICCDevice->GlobalFi); 
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "GlobalFmax       : %02X  \n", fpICCDevice->GlobalFmax); 
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "GlobalDi         : %02X  \n", fpICCDevice->GlobalDi); 
+    USB_DEBUG (DEBUG_LEVEL_3, "etu              : %02X  \n", fpICCDevice->etu); 
+    USB_DEBUG (DEBUG_LEVEL_3, "GlobalFi         : %04x  \n", fpICCDevice->GlobalFi); 
+    USB_DEBUG (DEBUG_LEVEL_3, "GlobalFmax       : %02X  \n", fpICCDevice->GlobalFmax); 
+    USB_DEBUG (DEBUG_LEVEL_3, "GlobalDi         : %02X  \n", fpICCDevice->GlobalDi); 
 
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "SpecificMode     : %02X  \n", fpICCDevice->SpecificMode); 
+    USB_DEBUG (DEBUG_LEVEL_3, "SpecificMode     : %02X  \n", fpICCDevice->SpecificMode); 
 
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "ClassABC         : %02X  \n", fpICCDevice->ClassABC); 
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "StopClockSupport : %02X  \n", fpICCDevice->StopClockSupport); 
+    USB_DEBUG (DEBUG_LEVEL_3, "ClassABC         : %02X  \n", fpICCDevice->ClassABC); 
+    USB_DEBUG (DEBUG_LEVEL_3, "StopClockSupport : %02X  \n", fpICCDevice->StopClockSupport); 
 
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "ExtraGuardTime   : %02X  \n", fpICCDevice->ExtraGuardTime); 
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "WTwaittime       : %08x  \n", fpICCDevice->WTwaittime); 
+    USB_DEBUG (DEBUG_LEVEL_3, "ExtraGuardTime   : %02X  \n", fpICCDevice->ExtraGuardTime); 
+    USB_DEBUG (DEBUG_LEVEL_3, "WTwaittime       : %08x  \n", fpICCDevice->WTwaittime); 
 
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "BWI              : %02X  \n", fpICCDevice->BWI); 
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "CWI              : %02X  \n", fpICCDevice->CWI); 
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "IFSC             : %02X  \n", fpICCDevice->IFSC); 
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "NAD              : %02X  \n", fpICCDevice->NAD); 
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "EpilogueFields   : %02X  \n", fpICCDevice->EpilogueFields); 
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "BWT              : %02X  \n", fpICCDevice->BWT); 
+    USB_DEBUG (DEBUG_LEVEL_3, "BWI              : %02X  \n", fpICCDevice->BWI); 
+    USB_DEBUG (DEBUG_LEVEL_3, "CWI              : %02X  \n", fpICCDevice->CWI); 
+    USB_DEBUG (DEBUG_LEVEL_3, "IFSC             : %02X  \n", fpICCDevice->IFSC); 
+    USB_DEBUG (DEBUG_LEVEL_3, "NAD              : %02X  \n", fpICCDevice->NAD); 
+    USB_DEBUG (DEBUG_LEVEL_3, "EpilogueFields   : %02X  \n", fpICCDevice->EpilogueFields); 
+    USB_DEBUG (DEBUG_LEVEL_3, "BWT              : %02X  \n", fpICCDevice->BWT); 
 
     return;
 }
 
-/**
-    This function Prints the RAW ATR Data
-
-    @param 
-        UINT8       *ATRData
-
-         
-    @retval VOID
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   PrintATRData
+//
+// Description: This function Prints the RAW ATR Data
+//
+// Input:
+//              UINT8       *ATRData
+//
+// Output:
+//              None
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID
 PrintATRData(
     UINT8            *ATRData
@@ -4342,85 +3746,89 @@ PrintATRData(
     UINT8        i;
 
 
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "    ATR Data \n");
+    USB_DEBUG (DEBUG_LEVEL_3, "    ATR Data \n");
 
     for (i=0; i< 32; i++) {
-        USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "%02X ", ATRData[i]);
+        USB_DEBUG (DEBUG_LEVEL_3, "%02X ", ATRData[i]);
     }
 
     i = 0;
 
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "\nTS  : %02X  \n", ATRData[i++]); 
+    USB_DEBUG (DEBUG_LEVEL_3, "\nTS  : %02X  \n", ATRData[i++]); 
 
     TDx = ATRData[i];
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "T0  : %02X  \n", ATRData[i++]); 
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "TA1 : %02X  \n", TDx & 0x10 ? ATRData[i++] : 0); 
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "TB1 : %02X  \n", TDx & 0x20 ? ATRData[i++] : 0);
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "TC1 : %02X  \n", TDx & 0x40 ? ATRData[i++] : 0);
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "TD1 : %02X  \n", TDx & 0x80 ? ATRData[i++] : 0);
+    USB_DEBUG (DEBUG_LEVEL_3, "T0  : %02X  \n", ATRData[i++]); 
+    USB_DEBUG (DEBUG_LEVEL_3, "TA1 : %02X  \n", TDx & 0x10 ? ATRData[i++] : 0); 
+    USB_DEBUG (DEBUG_LEVEL_3, "TB1 : %02X  \n", TDx & 0x20 ? ATRData[i++] : 0);
+    USB_DEBUG (DEBUG_LEVEL_3, "TC1 : %02X  \n", TDx & 0x40 ? ATRData[i++] : 0);
+    USB_DEBUG (DEBUG_LEVEL_3, "TD1 : %02X  \n", TDx & 0x80 ? ATRData[i++] : 0);
 
     if (!(TDx & 0x80)) return;
     TDx = ATRData[i-1];
 
  
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "TA2 : %02X \n", TDx & 0x10 ? ATRData[i++] : 0);
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "TB2 : %02X \n", TDx & 0x20 ? ATRData[i++] : 0);
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "TC2 : %02X \n", TDx & 0x40 ? ATRData[i++] : 0);
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "TD2 : %02X \n", TDx & 0x80 ? ATRData[i++] : 0);
+    USB_DEBUG (DEBUG_LEVEL_3, "TA2 : %02X \n", TDx & 0x10 ? ATRData[i++] : 0);
+    USB_DEBUG (DEBUG_LEVEL_3, "TB2 : %02X \n", TDx & 0x20 ? ATRData[i++] : 0);
+    USB_DEBUG (DEBUG_LEVEL_3, "TC2 : %02X \n", TDx & 0x40 ? ATRData[i++] : 0);
+    USB_DEBUG (DEBUG_LEVEL_3, "TD2 : %02X \n", TDx & 0x80 ? ATRData[i++] : 0);
 
     if (!(TDx & 0x80)) return;
     TDx = ATRData[i-1];
 
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "TA3 : %02X \n", TDx & 0x10 ? ATRData[i++] : 0);
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "TB3 : %02X \n", TDx & 0x20 ? ATRData[i++] : 0);
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "TC3 : %02X \n", TDx & 0x40 ? ATRData[i++] : 0);
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "TD3 : %02X \n", TDx & 0x80 ? ATRData[i++] : 0);
+    USB_DEBUG (DEBUG_LEVEL_3, "TA3 : %02X \n", TDx & 0x10 ? ATRData[i++] : 0);
+    USB_DEBUG (DEBUG_LEVEL_3, "TB3 : %02X \n", TDx & 0x20 ? ATRData[i++] : 0);
+    USB_DEBUG (DEBUG_LEVEL_3, "TC3 : %02X \n", TDx & 0x40 ? ATRData[i++] : 0);
+    USB_DEBUG (DEBUG_LEVEL_3, "TD3 : %02X \n", TDx & 0x80 ? ATRData[i++] : 0);
 
     if (!(TDx & 0x80)) return;
     TDx = ATRData[i-1];
 
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "TA4 : %02X \n", TDx & 0x10 ? ATRData[i++] : 0);
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "TB4 : %02X \n", TDx & 0x20 ? ATRData[i++] : 0);
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "TC4 : %02X \n", TDx & 0x40 ? ATRData[i++] : 0);
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "TD4 : %02X \n", TDx & 0x80 ? ATRData[i++] : 0);
+    USB_DEBUG (DEBUG_LEVEL_3, "TA4 : %02X \n", TDx & 0x10 ? ATRData[i++] : 0);
+    USB_DEBUG (DEBUG_LEVEL_3, "TB4 : %02X \n", TDx & 0x20 ? ATRData[i++] : 0);
+    USB_DEBUG (DEBUG_LEVEL_3, "TC4 : %02X \n", TDx & 0x40 ? ATRData[i++] : 0);
+    USB_DEBUG (DEBUG_LEVEL_3, "TD4 : %02X \n", TDx & 0x80 ? ATRData[i++] : 0);
 
     if (!(TDx & 0x80)) return;
     TDx = ATRData[i-1];
 
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "TA5 : %02X \n", TDx & 0x10 ? ATRData[i++] : 0);
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "TB5 : %02X \n", TDx & 0x20 ? ATRData[i++] : 0);
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "TC5 : %02X \n", TDx & 0x40 ? ATRData[i++] : 0);
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "TD5 : %02X \n", TDx & 0x80 ? ATRData[i++] : 0);
+    USB_DEBUG (DEBUG_LEVEL_3, "TA5 : %02X \n", TDx & 0x10 ? ATRData[i++] : 0);
+    USB_DEBUG (DEBUG_LEVEL_3, "TB5 : %02X \n", TDx & 0x20 ? ATRData[i++] : 0);
+    USB_DEBUG (DEBUG_LEVEL_3, "TC5 : %02X \n", TDx & 0x40 ? ATRData[i++] : 0);
+    USB_DEBUG (DEBUG_LEVEL_3, "TD5 : %02X \n", TDx & 0x80 ? ATRData[i++] : 0);
 
     if (!(TDx & 0x80)) return;
     TDx = ATRData[i-1];
 
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "TA6 : %02X \n", TDx & 0x10 ? ATRData[i++] : 0);
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "TB6 : %02X \n", TDx & 0x20 ? ATRData[i++] : 0);
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "TC6 : %02X \n", TDx & 0x40 ? ATRData[i++] : 0);
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "TD6 : %02X \n", TDx & 0x80 ? ATRData[i++] : 0);
+    USB_DEBUG (DEBUG_LEVEL_3, "TA6 : %02X \n", TDx & 0x10 ? ATRData[i++] : 0);
+    USB_DEBUG (DEBUG_LEVEL_3, "TB6 : %02X \n", TDx & 0x20 ? ATRData[i++] : 0);
+    USB_DEBUG (DEBUG_LEVEL_3, "TC6 : %02X \n", TDx & 0x40 ? ATRData[i++] : 0);
+    USB_DEBUG (DEBUG_LEVEL_3, "TD6 : %02X \n", TDx & 0x80 ? ATRData[i++] : 0);
 
     if (!(TDx & 0x80)) return;
     TDx = ATRData[i-1];
 
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "TA7 : %02X \n", TDx & 0x10 ? ATRData[i++] : 0);
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "TB7 : %02X \n", TDx & 0x20 ? ATRData[i++] : 0);
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "TC7 : %02X \n", TDx & 0x40 ? ATRData[i++] : 0);
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "TD7 : %02X \n", TDx & 0x80 ? ATRData[i++] : 0);
+    USB_DEBUG (DEBUG_LEVEL_3, "TA7 : %02X \n", TDx & 0x10 ? ATRData[i++] : 0);
+    USB_DEBUG (DEBUG_LEVEL_3, "TB7 : %02X \n", TDx & 0x20 ? ATRData[i++] : 0);
+    USB_DEBUG (DEBUG_LEVEL_3, "TC7 : %02X \n", TDx & 0x40 ? ATRData[i++] : 0);
+    USB_DEBUG (DEBUG_LEVEL_3, "TD7 : %02X \n", TDx & 0x80 ? ATRData[i++] : 0);
 
     return;
 }
 
-/**
-    Prints SMART class Descriptor data
-
-    @param 
-        SMARTCLASS_DESC *fpCCIDDesc
-
-         
-    @retval VOID
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   PrintDescriptorInformation
+//
+// Description: Prints SMART class Descriptor data
+//
+// Input:
+//              SMARTCLASS_DESC *fpCCIDDesc
+//
+// Output:
+//              None
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID
 PrintDescriptorInformation (
     SMARTCLASS_DESC *fpCCIDDesc
@@ -4430,80 +3838,75 @@ PrintDescriptorInformation (
     CHAR8    *Strings[] = {"CHARACTER", "TDPU", "Short ADPU", "Extended ADPU"};
     UINT8   Exchange = (fpCCIDDesc->dwFeatures & 0x70000) >> 16;
 
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "Sizeof SMART Class Descriptor :  %X\n", sizeof (SMARTCLASS_DESC));
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "bDescLength            :  %04X\n", fpCCIDDesc->bDescLength);
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "bDescType              :  %04X\n", fpCCIDDesc->bDescType);
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "bcdCCID                :  %04X\n", fpCCIDDesc->bcdCCID);
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "bMaxSlotIndex          :  %04X\n", fpCCIDDesc->bMaxSlotIndex);
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "bVoltageSupport        :  %04X\n", fpCCIDDesc->bVoltageSupport);
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "dwProtocols            :  %04X\n", fpCCIDDesc->dwProtocols);
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "dwDefaultClock         :  %04X\n", fpCCIDDesc->dwDefaultClock);
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "dwMaximumClock         :  %04X\n", fpCCIDDesc->dwMaximumClock);
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "bNumClockSupported     :  %04X\n", fpCCIDDesc->bNumClockSupported);
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "dwDataRate             :  %04X\n", fpCCIDDesc->dwDataRate);
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "dwMaxDataRate          :  %04X\n", fpCCIDDesc->dwMaxDataRate);
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "bNumDataRatesSupported :  %04X\n", fpCCIDDesc->bNumDataRatesSupported);
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "dwMaxIFSD              :  %04X\n", fpCCIDDesc->dwMaxIFSD);
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "dwSynchProtocols       :  %04X\n", fpCCIDDesc->dwSynchProtocols);
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "dwMechanical           :  %04X\n", fpCCIDDesc->dwMechanical);
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "dwFeatures             :  %04X\n", fpCCIDDesc->dwFeatures);
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "bClassGetResponse      :  %04X\n", fpCCIDDesc->dwMaxCCIDMessageLength);
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "bClassGetResponse      :  %04X\n", fpCCIDDesc->bClassGetResponse);
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "bClassEnvelope         :  %04X\n", fpCCIDDesc->bClassEnvelope);
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "wLcdLayout             :  %04X\n", fpCCIDDesc->wLcdLayout);
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "bPINSupport            :  %04X\n", fpCCIDDesc->bPINSupport);
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "bMaxCCIDBusySlots      :  %04X\n", fpCCIDDesc->bMaxCCIDBusySlots);
+    USB_DEBUG (DEBUG_LEVEL_3, "Sizeof SMART Class Descriptor :  %X\n", sizeof (SMARTCLASS_DESC));
+    USB_DEBUG (DEBUG_LEVEL_3, "bDescLength            :  %04X\n", fpCCIDDesc->bDescLength);
+    USB_DEBUG (DEBUG_LEVEL_3, "bDescType              :  %04X\n", fpCCIDDesc->bDescType);
+    USB_DEBUG (DEBUG_LEVEL_3, "bcdCCID                :  %04X\n", fpCCIDDesc->bcdCCID);
+    USB_DEBUG (DEBUG_LEVEL_3, "bMaxSlotIndex          :  %04X\n", fpCCIDDesc->bMaxSlotIndex);
+    USB_DEBUG (DEBUG_LEVEL_3, "bVoltageSupport        :  %04X\n", fpCCIDDesc->bVoltageSupport);
+    USB_DEBUG (DEBUG_LEVEL_3, "dwProtocols            :  %04X\n", fpCCIDDesc->dwProtocols);
+    USB_DEBUG (DEBUG_LEVEL_3, "dwDefaultClock         :  %04X\n", fpCCIDDesc->dwDefaultClock);
+    USB_DEBUG (DEBUG_LEVEL_3, "dwMaximumClock         :  %04X\n", fpCCIDDesc->dwMaximumClock);
+    USB_DEBUG (DEBUG_LEVEL_3, "bNumClockSupported     :  %04X\n", fpCCIDDesc->bNumClockSupported);
+    USB_DEBUG (DEBUG_LEVEL_3, "dwDataRate             :  %04X\n", fpCCIDDesc->dwDataRate);
+    USB_DEBUG (DEBUG_LEVEL_3, "dwMaxDataRate          :  %04X\n", fpCCIDDesc->dwMaxDataRate);
+    USB_DEBUG (DEBUG_LEVEL_3, "bNumDataRatesSupported :  %04X\n", fpCCIDDesc->bNumDataRatesSupported);
+    USB_DEBUG (DEBUG_LEVEL_3, "dwMaxIFSD              :  %04X\n", fpCCIDDesc->dwMaxIFSD);
+    USB_DEBUG (DEBUG_LEVEL_3, "dwSynchProtocols       :  %04X\n", fpCCIDDesc->dwSynchProtocols);
+    USB_DEBUG (DEBUG_LEVEL_3, "dwMechanical           :  %04X\n", fpCCIDDesc->dwMechanical);
+    USB_DEBUG (DEBUG_LEVEL_3, "dwFeatures             :  %04X\n", fpCCIDDesc->dwFeatures);
+    USB_DEBUG (DEBUG_LEVEL_3, "bClassGetResponse      :  %04X\n", fpCCIDDesc->dwMaxCCIDMessageLength);
+    USB_DEBUG (DEBUG_LEVEL_3, "bClassGetResponse      :  %04X\n", fpCCIDDesc->bClassGetResponse);
+    USB_DEBUG (DEBUG_LEVEL_3, "bClassEnvelope         :  %04X\n", fpCCIDDesc->bClassEnvelope);
+    USB_DEBUG (DEBUG_LEVEL_3, "wLcdLayout             :  %04X\n", fpCCIDDesc->wLcdLayout);
+    USB_DEBUG (DEBUG_LEVEL_3, "bPINSupport            :  %04X\n", fpCCIDDesc->bPINSupport);
+    USB_DEBUG (DEBUG_LEVEL_3, "bMaxCCIDBusySlots      :  %04X\n", fpCCIDDesc->bMaxCCIDBusySlots);
 
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "*************************************\n"); 
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, " Device is in:"); 
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "%a Exchange mode\n", Strings[Exchange]); 
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "*************************************\n"); 
+    USB_DEBUG (DEBUG_LEVEL_3, "*************************************\n"); 
+    USB_DEBUG (DEBUG_LEVEL_3, " Device is in:"); 
+    USB_DEBUG (DEBUG_LEVEL_3, "%s Exchange mode\n", Strings[Exchange]); 
+    USB_DEBUG (DEBUG_LEVEL_3, "*************************************\n"); 
 
 }
 
-/**
-    This routine is called when InterruptIN messages is generated
-      
-    @param pHCStruc    Pointer to HCStruc
-        pDevInfo    Pointer to device information structure
-        pTD         Pointer to the polling TD
-        pBuffer     Pointer to the data buffer
-
-    @retval 
-        UEB_ERROR/USB_SUCCESS
-
-    @note  When an ICC card is inserted or removed Interrupt message is generated.   
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   USBCCID_ProcessInterruptData
+//
+// Description: This routine is called when InterruptIN messages is generated
+//      
+// Input:       pHCStruc    Pointer to HCStruc
+//              pDevInfo    Pointer to device information structure
+//              pTD         Pointer to the polling TD
+//              pBuffer     Pointer to the data buffer
+//
+// Output:
+//              UEB_ERROR/USB_SUCCESS
+//
+// Notes:       When an ICC card is inserted or removed Interrupt message is generated.   
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT8
 USBCCID_ProcessInterruptData (
-    HC_STRUC    *HcStruc,
-    DEV_INFO    *DevInfo,
-    UINT8       *Td,
-    UINT8       *Buffer,
-    UINT16      DataLength
+    HC_STRUC*   fpHCStruc,
+    DEV_INFO*   fpDevInfo,
+    UINT8*      fpTD,
+    UINT8*      fpBuffer
 )
 {
 
     EFI_STATUS      Status;
-    UINT8           Data;
-    UINT8           Slot = 0;
-    UINT8           bmSlotICCByte = 0;
-    UINT32          SlotICCStatus = *(UINT32 *)(Buffer + 1);
-	SMARTCLASS_DESC	*CCIDDescriptor = (SMARTCLASS_DESC*)DevInfo->pCCIDDescriptor;
-    UINT8           *MemBlockEnd = gUsbData->fpMemBlockStart + (gUsbData->MemPages << 12);
+    UINT8           Data, Slot = 0, bmSlotICCByte = 0;
+    UINT32          SlotICCStatus = *(UINT32 *)(fpBuffer + 1);
+	SMARTCLASS_DESC	*CCIDDescriptor = (SMARTCLASS_DESC*)fpDevInfo->pCCIDDescriptor;
 
-    if (((UINT8*)DevInfo->pCCIDDescriptor < gUsbData->fpMemBlockStart) ||
-        ((UINT8*)DevInfo->pCCIDDescriptor > MemBlockEnd)) {
-        return USB_ERROR;
-    }
-
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "USBCCID_ProcessInterruptData.... %X %X %X %X\n", 
-                *Buffer, *(Buffer +1), *(Buffer + 2), *(Buffer + 3));
+    USB_DEBUG(DEBUG_LEVEL_3, "USBCCID_ProcessInterruptData.... %X %X %X %X\n", 
+                *fpBuffer, *(fpBuffer +1), *(fpBuffer + 2), *(fpBuffer + 3));
 
 
-    switch (*Buffer) {
+    switch (*fpBuffer) {
 
         //
         // ICC Card either inserted or Removed
@@ -4522,15 +3925,15 @@ USBCCID_ProcessInterruptData (
 
             Slot = 0;
             do {
-                Data = (SlotICCStatus >> Slot) & 0x3;
+                Data =     (SlotICCStatus >> Slot) & 0x3;
                 //
                 // Is there a change in status
                 //
                 if ((Data & 0x3) == 3) {                
-                    Status = ICCInsertEvent (DevInfo, Slot);
+                    Status = ICCInsertEvent (fpDevInfo, Slot);
                 }
                 if ((Data & 0x3) == 2) {                
-                    Status = ICCRemovalEvent (DevInfo, Slot);
+                    Status = ICCRemovalEvent (fpDevInfo, Slot);
                 }
                   Slot++;
             } while (Slot < (CCIDDescriptor->bMaxSlotIndex + 1));                        
@@ -4539,8 +3942,8 @@ USBCCID_ProcessInterruptData (
 
         case RDR_TO_PC_HARDWAREERROR:        
 
-            USB_DEBUG(DEBUG_ERROR, DEBUG_LEVEL_3, "RDR To PC Hardware Error Slot %X Sequence %X Error Code %X \n", 
-                            *Buffer, *(Buffer +1), *(Buffer + 2));
+            USB_DEBUG(DEBUG_LEVEL_3, "RDR To PC Hardware Error Slot %X Sequence %X Error Code %X \n", 
+                            *fpBuffer, *(fpBuffer +1), *(fpBuffer + 2));
             break;
 
         default:
@@ -4550,18 +3953,24 @@ USBCCID_ProcessInterruptData (
     return USB_SUCCESS;
 }
 
-/**
-    In response to Device removal, Interrupt-in message is received. 
-    Icc Device is removed from the linked list.
-
-    @param 
-        DEV_INFO    *fpDevInfo,
-        UINT8        Slot
-
-    @retval 
-        EFI_STATUS    
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   ICCRemovalEvent
+//
+// Description: In response to Device removal, Interrupt-in message is received. 
+//              Icc Device is removed from the linked list.
+//
+// Input:
+//    DEV_INFO    *fpDevInfo,
+//    UINT8        Slot
+//
+// Output:
+//    EFI_STATUS    
+//
+// Notes: 
+//    
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
 ICCRemovalEvent(
         DEV_INFO    *fpDevInfo,
@@ -4579,9 +3988,7 @@ ICCRemovalEvent(
         // find whether ICC has been removed or added.
         // Before freeing up, clear the bytes
 
-//      MemFill((UINT8 *)fpICCDevice, sizeof(ICC_DEVICE), 0);
-        ZeroMem((UINT8 *)(fpICCDevice->RawATRData), sizeof(fpICCDevice->RawATRData));
-        ZeroMem((UINT8 *)&(fpICCDevice->AtrData), sizeof(ATR_DATA));
+//        MemFill((UINT8 *)fpICCDevice, sizeof(ICC_DEVICE), 0);
 
         //
         //Free up the memory and remove it from linked list
@@ -4589,8 +3996,8 @@ ICCRemovalEvent(
 //        DListDelete (&(fpDevInfo->ICCDeviceList), &(fpICCDevice->ICCDeviceLink));
 //        USB_MemFree(fpICCDevice, (UINT8)GET_MEM_BLK_COUNT(sizeof(ICC_DEVICE)));
 
-        if (fpICCDevice->ConfiguredStatus & ICCPRESENT) {
-            fpICCDevice->ConfiguredStatus = CARDREMOVED;
+        if (fpICCDevice->ConfiguredStatus) {
+            fpICCDevice->ConfiguredStatus = 0;
         } else {
             //
             // Handle if IccRemovalEven is called multiple times
@@ -4598,33 +4005,37 @@ ICCRemovalEvent(
             return EFI_SUCCESS;
         }
 
-        USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "ICC device removed - Slot : %X\n", Slot);
+        USB_DEBUG(DEBUG_LEVEL_3, "ICC device removed - Slot : %X\n", Slot);
 
         if (gUsbData->dUSBStateFlag & USB_FLAG_RUNNING_UNDER_EFI) {
             ICC_SmiQueuePut((void *)fpICCDevice);
         }
     }
 
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "Removal: fpDevInfo %X fpICCDevice %X\n", fpDevInfo, fpICCDevice);
+    USB_DEBUG(DEBUG_LEVEL_3, "Removal: fpDevInfo %X fpICCDevice %X\n", fpDevInfo, fpICCDevice);
 
     return EFI_SUCCESS;
 }
 
 
-/**
-    In response to Device Insertion, Interrupt-in message is received. 
-    Icc Device is added to the linked list and configured.
-
-    @param 
-        DEV_INFO    *fpDevInfo,
-        UINT8        Slot
-
-    @retval 
-        EFI_STATUS    
-
-    @note  ConfigureCCID, GetICCDevice
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   ICCInsertEvent
+//
+// Description: In response to Device Insertion, Interrupt-in message is received. 
+//              Icc Device is added to the linked list and configured.
+//
+// Input:
+//              DEV_INFO    *fpDevInfo,
+//              UINT8        Slot
+//
+// Output:
+//              EFI_STATUS    
+//
+// Notes:       ConfigureCCID, GetICCDevice
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
 ICCInsertEvent(
     DEV_INFO    *fpDevInfo,
@@ -4636,7 +4047,6 @@ ICCInsertEvent(
     ICC_DEVICE        *fpICCDevice;
     BOOLEAN         NewDeviceAdded = FALSE;
 
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "ICCInsertEvent Slot %X \n", Slot);
     //
     // Check if the device already exist. if so use it.
     //
@@ -4651,27 +4061,11 @@ ICCInsertEvent(
         if (!fpICCDevice) {
             return EFI_OUT_OF_RESOURCES;
         }    
-        ZeroMem((UINT8 *)fpICCDevice, sizeof(ICC_DEVICE));
+        MemSet((UINT8 *)fpICCDevice, sizeof(ICC_DEVICE), 0);
 
         //
         // Add to the slot list
         //
-#if !USB_RT_DXE_DRIVER
-        if (fpDevInfo->ICCDeviceList.pHead != NULL) {
-            Status = AmiValidateMemoryBuffer((VOID*)(fpDevInfo->ICCDeviceList.pHead), 
-                            (UINT32)sizeof(DLINK));
-            if (EFI_ERROR(Status)) {
-                return EFI_DEVICE_ERROR;
-            }
-        }
-        if (fpDevInfo->ICCDeviceList.pTail != NULL) {
-            Status = AmiValidateMemoryBuffer((VOID*)(fpDevInfo->ICCDeviceList.pTail), 
-                            (UINT32)sizeof(DLINK));
-            if (EFI_ERROR(Status)) {
-                return EFI_DEVICE_ERROR;
-            }
-        }
-#endif
         DListAdd(&(fpDevInfo->ICCDeviceList), &(fpICCDevice->ICCDeviceLink)); 
         NewDeviceAdded = TRUE;
 
@@ -4681,8 +4075,7 @@ ICCInsertEvent(
     // Handle Multiple ICCInsertEvent calls. Some cards generate 
     // Interrupt in Interrupt-IN endpoint and some don't.
     // For card which don't generate the intterupt, CCID API should be used to power up the device.
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "fpICCDevice->ConfiguredStatus %X \n", fpICCDevice->ConfiguredStatus);
-    if ((fpICCDevice->ConfiguredStatus != CARDREMOVED) && (fpICCDevice->ConfiguredStatus)) {
+    if (fpICCDevice->ConfiguredStatus) {
 
         if (fpICCDevice->ConfiguredStatus == CONFIGFAILED) {
             return EFI_DEVICE_ERROR;
@@ -4692,10 +4085,9 @@ ICCInsertEvent(
     }
 #endif
     
-    fpICCDevice->Signature = ICC_DEVICE_SIG;
+    fpICCDevice->ChildHandle = 0;
     fpICCDevice->Slot = Slot;
     fpICCDevice->WaitTime = INITWAITTIME;
-    fpICCDevice->ConfiguredStatus = 0;
 
     Status = ConfigureCCID(fpDevInfo, fpICCDevice);
 
@@ -4705,29 +4097,13 @@ ICCInsertEvent(
         //
         //Free up the memory and remove it from linked list
         //
-#if !USB_RT_DXE_DRIVER
-        if (fpDevInfo->ICCDeviceList.pHead != NULL) {
-            Status = AmiValidateMemoryBuffer((VOID*)(fpDevInfo->ICCDeviceList.pHead), 
-                            (UINT32)sizeof(DLINK));
-            if (EFI_ERROR(Status)) {
-                return EFI_DEVICE_ERROR;
-            }
-        }
-        if (fpDevInfo->ICCDeviceList.pTail != NULL) {
-            Status = AmiValidateMemoryBuffer((VOID*)(fpDevInfo->ICCDeviceList.pTail), 
-                            (UINT32)sizeof(DLINK));
-            if (EFI_ERROR(Status)) {
-                return EFI_DEVICE_ERROR;
-            }
-        }
-#endif
         DListDelete (&(fpDevInfo->ICCDeviceList), &(fpICCDevice->ICCDeviceLink));
         USB_MemFree(fpICCDevice, (UINT8)GET_MEM_BLK_COUNT(sizeof(ICC_DEVICE)));
 
     } else {
-        USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "ICC device added - Slot : %X\n", Slot);
+        USB_DEBUG(DEBUG_LEVEL_3, "ICC device added - Slot : %X\n", Slot);
     
-        if (gUsbData->dUSBStateFlag & USB_FLAG_RUNNING_UNDER_EFI && (fpICCDevice->ChildHandle == NULL)) {
+        if (gUsbData->dUSBStateFlag & USB_FLAG_RUNNING_UNDER_EFI) {
             ICC_SmiQueuePut((void *)fpICCDevice);
         }
     }
@@ -4736,30 +4112,35 @@ ICCInsertEvent(
     //
     // Even if configuration failed install the protocol in polling mode.         
     //
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "ICC device added - Slot : %X\n", Slot);
+    USB_DEBUG(DEBUG_LEVEL_3, "ICC device added - Slot : %X\n", Slot);
     
-    if ((gUsbData->dUSBStateFlag & USB_FLAG_RUNNING_UNDER_EFI) && NewDeviceAdded && (fpICCDevice->ChildHandle == NULL)) {
+    if ((gUsbData->dUSBStateFlag & USB_FLAG_RUNNING_UNDER_EFI) && NewDeviceAdded) {
         ICC_SmiQueuePut((void *)fpICCDevice);
     }
 #endif
 
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "Insert : fpDevInfo %X fpICCDevice %X\n", fpDevInfo, fpICCDevice);
+    USB_DEBUG(DEBUG_LEVEL_3, "Insert : fpDevInfo %X fpICCDevice %X\n", fpDevInfo, fpICCDevice);
 
     return Status;
 }
 
-/**
-    Puts the pointer  into the queue for processing.
-    updates queue head and tail. This data is read from EfiUSBCCID.C 
-    which installs AMI_CCID_IO_PROTOCOL
-
-    @param 
-        (void *)fpICCDevice
-
-         
-    @retval VOID
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:   ICC_SmiQueuePut
+//
+// Description: Puts the pointer  into the queue for processing.
+//              updates queue head and tail. This data is read from EfiUSBCCID.C 
+//              which installs AMI_CCID_IO_PROTOCOL
+//
+// Input:
+//              (void *)fpICCDevice
+//
+// Output:
+//              None
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 VOID
 ICC_SmiQueuePut(
@@ -4768,37 +4149,37 @@ ICC_SmiQueuePut(
 {
     QUEUE_T* q = &gUsbData->ICCQueueCnnctDisc;
 
-    while (q->head >= q->maxsize) {
-        q->head -= q->maxsize;
-    }
-
     q->data[q->head++] = d;
-    if (q->head == q->maxsize) {
-        q->head -= q->maxsize;
-    }
-    if (q->head == q->tail) {
+    if(q->head==q->maxsize) q->head -= q->maxsize;
+    if(q->head==q->tail){
+        //
         //Drop data from queue
+        //
         q->tail++;
-        while (q->tail >= q->maxsize) {
-            q->tail -= q->maxsize;
-        }
+        if( q->tail == q->maxsize ) q->tail -= q->maxsize;
     }
     return;
 }
 
-/**
-    Do some USB device info data initialization 
-
-    @param 
-        DEV_INFO    *fpDevInfo
-        UINT8       *fpDesc
-        UINT16      wStart
-        UINT16      wEnd
-
-    @retval 
-        EFI_STATUS
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   DoDevInfoInitialization
+//
+// Description: Do some USB device info data initialization 
+//
+// Input:
+//              DEV_INFO    *fpDevInfo
+//              UINT8       *fpDesc
+//              UINT16      wStart
+//              UINT16      wEnd
+//
+// Output:
+//              EFI_STATUS
+//
+// Notes: 
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
 DoDevInfoInitialization (
     DEV_INFO    *fpDevInfo,
@@ -4836,7 +4217,7 @@ DoDevInfoInitialization (
             break;
         }
         fpIntrfDesc = (INTRF_DESC*) ((UINT8 *)fpIntrfDesc + fpIntrfDesc->bDescLength);
-    } while ((UINT8 *)fpIntrfDesc < fpDesc);
+    }while ((UINT8 *)fpIntrfDesc < fpDesc);
 
     if (!fpCCIDDesc) { 
         return EFI_DEVICE_ERROR;
@@ -4846,8 +4227,8 @@ DoDevInfoInitialization (
     ASSERT(fpDevInfo->pCCIDDescriptor);
     if (!fpDevInfo->pCCIDDescriptor) {
         return EFI_OUT_OF_RESOURCES;
-    }   
-    CopyMem((UINT8 *)(fpDevInfo->pCCIDDescriptor), (UINT8 *)fpCCIDDesc, sizeof(SMARTCLASS_DESC));
+    }      
+    MemCopy((UINT8 *)fpCCIDDesc, (UINT8 *)(fpDevInfo->pCCIDDescriptor), sizeof(SMARTCLASS_DESC));
 	fpCCIDDesc = (SMARTCLASS_DESC*)fpDevInfo->pCCIDDescriptor;
 
     if (fpCCIDDesc->bNumDataRatesSupported) {
@@ -4943,8 +4324,8 @@ DoDevInfoInitialization (
         }
 
 		if (fpEndpDesc->bEndpointAddr & EP_DESC_ADDR_DIR_BIT) {
-			fpDevInfo->IntInEndpoint = fpEndpDesc->bEndpointAddr;
-			fpDevInfo->IntInMaxPkt = fpEndpDesc->wMaxPacketSize;
+			fpDevInfo->bIntEndpoint = fpEndpDesc->bEndpointAddr;
+			fpDevInfo->wIntMaxPkt = fpEndpDesc->wMaxPacketSize;
 			fpDevInfo->bPollInterval = fpEndpDesc->bPollInterval;	
 		}
     }
@@ -4952,39 +4333,46 @@ DoDevInfoInitialization (
     return EFI_SUCCESS;
 }
 
-/**
-    This function initializes CCID device related data
-
-        
-    @param VOID
-
-               
-    @retval VOID
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:   USBCCIDInitialize
+//
+// Description: This function initializes CCID device related data
+//
+// Input:
+//              None
+//
+// Output:      
+//              None 
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 VOID
 USBCCIDInitialize ()
 {
-    gUsbData->CcidSequence = 0;
-    USB_InstallCallBackFunction(USBCCID_ProcessInterruptData);
     return;
 }
 
-/**
-    This routine checks for CCID type device from the
-    interface data provided
-
-    @param 
-        DEV_INFO    *fpDevInfo
-        UINT8       bBaseClass
-        UINT8       bSubClass
-        UINT8       bProtocol
-
-    @retval 
-        BIOS_DEV_TYPE_STORAGE type on success or 0FFH on error
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   USBCCIDCheckForDevice
+//
+// Description: This routine checks for CCID type device from the
+//              interface data provided
+//
+// Input:
+//              DEV_INFO    *fpDevInfo
+//              UINT8       bBaseClass
+//              UINT8       bSubClass
+//              UINT8       bProtocol
+//
+// Output:      
+//              BIOS_DEV_TYPE_STORAGE type on success or 0FFH on error
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT8
 USBCCIDCheckForDevice (
@@ -5002,115 +4390,28 @@ USBCCIDCheckForDevice (
     return USB_ERROR;
 }
 
-/**
-    This routine initializes each slot of Smartcard reader
-
-    @param 
-        DEV_INFO    *fpDevInfo
-
-    @retval 
-        EFI_STATUS
-**/
-EFI_STATUS
-UpdateSCardSlotInfo (
-    DEV_INFO    *fpDevInfo
-)
-{
-    UINT8          i=0;
-    ICC_DEVICE     *fpICCDevice = NULL;    
-    UINT8          *MemBlockEnd = gUsbData->fpMemBlockStart + (gUsbData->MemPages << 12);
-    EFI_STATUS     Status = EFI_SUCCESS;
-
-    if(!fpDevInfo || !((SMARTCLASS_DESC*)(fpDevInfo->pCCIDDescriptor)) ) {
-        return EFI_INVALID_PARAMETER;
-    }
-
-    if (((UINT8*)fpDevInfo->pCCIDDescriptor < gUsbData->fpMemBlockStart) ||
-        ((UINT8*)fpDevInfo->pCCIDDescriptor > MemBlockEnd)) {
-        return EFI_DEVICE_ERROR;
-    }
-
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "((SMARTCLASS_DESC*)(fpDevInfo->pCCIDDescriptor))->bMaxSlotIndex %X \n", ((SMARTCLASS_DESC*)(fpDevInfo->pCCIDDescriptor))->bMaxSlotIndex );
-
-    for( i=0; i<=((SMARTCLASS_DESC*)(fpDevInfo->pCCIDDescriptor))->bMaxSlotIndex ; i++ ) {
-
-        // Code to initialize Each slot of the CCID irrespective of ICC card 
-        // is present in the Slot or not
-        fpICCDevice = NULL;
-        fpICCDevice = GetICCDevice(fpDevInfo, i);
-
-        if (fpICCDevice) {
-            fpICCDevice->ChildHandle = 0;
-            fpICCDevice->SCardChildHandle = 0;
-            fpICCDevice->WaitTime = INITWAITTIME;
-            fpICCDevice->SlotConnectStatus = 0;
-            fpICCDevice->ConfiguredStatus = 0;
-            continue;
-        }
-
-        fpICCDevice = USB_MemAlloc((UINT8)GET_MEM_BLK_COUNT(sizeof(ICC_DEVICE)));
-        ASSERT(fpICCDevice);
-        if (!fpICCDevice) {
-            return EFI_OUT_OF_RESOURCES;
-        }
-        ZeroMem((UINT8 *)fpICCDevice, sizeof(ICC_DEVICE));
-
-        fpICCDevice->Signature = ICC_DEVICE_SIG;
-        fpICCDevice->ChildHandle = 0;
-        fpICCDevice->SCardChildHandle = 0;
-
-        // Slot Number
-        fpICCDevice->Slot = i;
-        fpICCDevice->WaitTime = INITWAITTIME;
-        fpICCDevice->SlotConnectStatus = 0;
-        fpICCDevice->ConfiguredStatus = 0;
-
-#if !USB_RT_DXE_DRIVER
-        if (fpDevInfo->ICCDeviceList.pHead != NULL) {
-            Status = AmiValidateMemoryBuffer((VOID*)(fpDevInfo->ICCDeviceList.pHead), 
-                            (UINT32)sizeof(DLINK));
-            if (EFI_ERROR(Status)) {
-                return EFI_DEVICE_ERROR;
-            }
-        }
-        if (fpDevInfo->ICCDeviceList.pTail != NULL) {
-            Status = AmiValidateMemoryBuffer((VOID*)(fpDevInfo->ICCDeviceList.pTail), 
-                            (UINT32)sizeof(DLINK));
-            if (EFI_ERROR(Status)) {
-                return EFI_DEVICE_ERROR;
-            }
-        }
-#endif
-
-        // Add to the slot list
-        DListAdd(&(fpDevInfo->ICCDeviceList), &(fpICCDevice->ICCDeviceLink));
-        
-        if (gUsbData->dUSBStateFlag & USB_FLAG_RUNNING_UNDER_EFI && (fpICCDevice->ChildHandle == NULL)) {
-            ICC_SmiQueuePut((void *)fpICCDevice);
-        }
-    }
-
-    return EFI_SUCCESS;
-}
-
-/**
-    This function checks an interface descriptor of a device
-    to see if it describes a USB CCID device.  If the device
-    is a CCID device,  then it is configured
-    and initialized.
-
-    @param 
-        pHCStruc    HCStruc pointer
-        pDevInfo    Device information structure pointer
-        pDesc       Pointer to the descriptor structure
-        wEnd        End offset of the device descriptor
-
-    @retval 
-        New device info structure, NULL on error
-
-    @note  DoDevInfoInitialization
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   USBCCIDConfigureDevice
+//
+// Description: This function checks an interface descriptor of a device
+//              to see if it describes a USB CCID device.  If the device
+//              is a CCID device,  then it is configured
+//              and initialized.
+//
+// Input:
+//              pHCStruc    HCStruc pointer
+//              pDevInfo    Device information structure pointer
+//              pDesc       Pointer to the descriptor structure
+//              wEnd        End offset of the device descriptor
+//
+// Output:    
+//              New device info structure, NULL on error
+//
+// Notes:       DoDevInfoInitialization
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 DEV_INFO*
 USBCCIDConfigureDevice (
@@ -5125,7 +4426,7 @@ USBCCIDConfigureDevice (
     EFI_STATUS        Status;
     INTRF_DESC      *fpIntrfDesc = (INTRF_DESC*)(fpDesc + wStart);
 
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "USBCCIDConfigureDevice ....\n");
+    USB_DEBUG (DEBUG_LEVEL_3, "USBCCIDConfigureDevice ....\n");
 
     //
     // Do some house keeping related DEV_INFO structure. No H/W access
@@ -5136,15 +4437,11 @@ USBCCIDConfigureDevice (
         return NULL;
     }
 
-    // Add number if ICC_DEVICE structure(based in the Slot present in the Descriptor) in DEV_INFO structure
-    Status = UpdateSCardSlotInfo(fpDevInfo);
-
 #if CCID_USE_INTERRUPT_INSERTION_REMOVAL
     //
     // if Interrupt EndPoint is supported
     //
     if (fpIntrfDesc->bNumEndpoints == 3) {
-		fpDevInfo->PollingLength = fpDevInfo->IntInMaxPkt;
         (*gUsbData->aHCDriverTable[GET_HCD_INDEX(fpHCStruc->bHCType)].pfnHCDActivatePolling)
                     (fpHCStruc, fpDevInfo);
     }
@@ -5156,7 +4453,7 @@ USBCCIDConfigureDevice (
 #endif
 
     //
-    // Should we support CCID which doesn't support interrupt-IN Message.
+    // Todo Todo Should we support CCID which doesn't support interrupt-IN Message.
     // Maybe not for now.
     //
     return  fpDevInfo;
@@ -5164,19 +4461,23 @@ USBCCIDConfigureDevice (
 }
 
 
-/**
-    This function disconnects the CCID device.
-
-    @param 
-        pDevInfo    Device info structure pointer
-
-         
-    @retval VOID
-
-    @note  Free up all memory allocated to the device. 
-              Remove ICC device from the device list.
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   USBCCIDDisconnectDevice
+//
+// Description: This function disconnects the CCID device.
+//
+// Input:    
+//              pDevInfo    Device info structure pointer
+//
+// Output:
+//              None
+//
+//Notes:        Free up all memory allocated to the device. 
+//              Remove ICC device from the device list.
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT8
 USBCCIDDisconnectDevice (
@@ -5188,28 +4489,11 @@ USBCCIDDisconnectDevice (
     DLINK      *dlink = fpDevInfo->ICCDeviceList.pHead;
 	HC_STRUC   *fpHCStruc = gUsbData->HcTable[fpDevInfo->bHCNumber - 1];
 	SMARTCLASS_DESC *CCIDDescriptor = (SMARTCLASS_DESC*)fpDevInfo->pCCIDDescriptor;
-    UINT8              *MemBlockEnd = gUsbData->fpMemBlockStart + (gUsbData->MemPages << 12);
-    EFI_STATUS  Status = EFI_SUCCESS;
-
-    if (((UINT8*)fpDevInfo->pCCIDDescriptor < gUsbData->fpMemBlockStart) ||
-        ((UINT8*)fpDevInfo->pCCIDDescriptor > MemBlockEnd)) {
-        return USB_ERROR;
-    }
-
-#if !USB_RT_DXE_DRIVER
-    if (dlink != NULL) {
-        Status = AmiValidateMemoryBuffer((VOID*)dlink, 
-                            (UINT32)sizeof(DLINK));
-        if (EFI_ERROR(Status)) {
-            return USB_ERROR;
-        }
-    }
-#endif
 
 #if CCID_USE_INTERRUPT_INSERTION_REMOVAL
 	// Stop polling the endpoint
 	(*gUsbData->aHCDriverTable[GET_HCD_INDEX(fpHCStruc->bHCType)].pfnHCDDeactivatePolling)(fpHCStruc,fpDevInfo);
-	fpDevInfo->IntInEndpoint = 0;
+	fpDevInfo->bIntEndpoint = 0;
 
 #endif
 
@@ -5218,33 +4502,11 @@ USBCCIDDisconnectDevice (
     //
     while (dlink) {
         fpICCDevice = OUTTER(dlink, ICCDeviceLink, ICC_DEVICE);
-        if (((UINT8*)fpICCDevice < gUsbData->fpMemBlockStart) ||
-            ((UINT8*)((UINTN)fpICCDevice + sizeof(ICC_DEVICE)) > MemBlockEnd)) {
-            return USB_ERROR;
-        }
         USB_MemFree(fpICCDevice, (UINT8)GET_MEM_BLK_COUNT(sizeof(ICC_DEVICE)));
-#if !USB_RT_DXE_DRIVER
-        if (fpDevInfo->ICCDeviceList.pHead != NULL) {
-            Status = AmiValidateMemoryBuffer((VOID*)(fpDevInfo->ICCDeviceList.pHead), 
-                            (UINT32)sizeof(DLINK));
-            if (EFI_ERROR(Status)) {
-                return USB_ERROR;
-            }
-        }
-        if (fpDevInfo->ICCDeviceList.pTail != NULL) {
-            Status = AmiValidateMemoryBuffer((VOID*)(fpDevInfo->ICCDeviceList.pTail), 
-                            (UINT32)sizeof(DLINK));
-            if (EFI_ERROR(Status)) {
-                return USB_ERROR;
-            }
-        }
-#endif
         DListDelete (&(fpDevInfo->ICCDeviceList), &(fpICCDevice->ICCDeviceLink));
         if (!dlink->pNext) break;
         dlink = dlink->pNext;       
     }
-
-    DListInit(&(fpDevInfo->ICCDeviceList));
 
     if (fpDevInfo->DataRates) {
         USB_MemFree(fpDevInfo->DataRates, 
@@ -5270,59 +4532,16 @@ USBCCIDDisconnectDevice (
     return USB_SUCCESS;
 }
 
-#endif
-
-/**
-    This routine services the USB API function number 30h.  It
-    handles all the CCID related calls from the higher
-    layer. Different sub-functions are invoked depending on
-    the sub-function number
-
-    @param 
-        fpURPPointer    Pointer to the URP structure
-        fpURPPointer.bSubFunc   Subfunction number
-
-    @retval 
-        URP structure is updated with the relevant information
-
-
-**/
-
-VOID
-USBAPI_CCIDRequest(
-    URP_STRUC *UsbUrp
-)
-{
-#if USB_DEV_CCID
-    
-    UINT8 CcidFuncIndex = UsbUrp->bSubFunc;
-    UINT8 NumberOfCcidFunctions = sizeof(aUsbCCIDApiTable) / sizeof(API_FUNC *);
-
-    //
-    // Make sure function number is valid
-    //
-    if (CcidFuncIndex >= NumberOfCcidFunctions) {
-        //UsbUrp->bRetValue = USBAPI_INVALID_FUNCTION;
-        USB_DEBUG(DEBUG_ERROR, 3, "UsbApi CCIDRequest Invalid function#%x\n", CcidFuncIndex);
-        return;
-    }
-    //
-    // Function number is valid - call it
-    //
-    aUsbCCIDApiTable[CcidFuncIndex](UsbUrp);
-#endif
-
-}
-//**********************************************************************
-//**********************************************************************
-//**                                                                  **
-//**        (C)Copyright 1985-2016, American Megatrends, Inc.         **
-//**                                                                  **
-//**                       All Rights Reserved.                       **
-//**                                                                  **
-//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093        **
-//**                                                                  **
-//**                       Phone: (770)-246-8600                      **
-//**                                                                  **
-//**********************************************************************
-//**********************************************************************
+//****************************************************************************
+//****************************************************************************
+//**                                                                        **
+//**             (C)Copyright 1985-2013, American Megatrends, Inc.          **
+//**                                                                        **
+//**                          All Rights Reserved.                          **
+//**                                                                        **
+//**                 5555 Oakbrook Pkwy, Norcross, GA 30093                 **
+//**                                                                        **
+//**                          Phone (770)-246-8600                          **
+//**                                                                        **
+//****************************************************************************
+//****************************************************************************

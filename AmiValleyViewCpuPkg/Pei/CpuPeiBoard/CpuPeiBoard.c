@@ -1,7 +1,7 @@
 //*************************************************************************
 //*************************************************************************
 //**                                                                     **
-//**        (C)Copyright 1987-2014, American Megatrends, Inc.            **
+//**        (C)Copyright 1987-2012, American Megatrends, Inc.            **
 //**                                                                     **
 //**                       All Rights Reserved.                          **
 //**                                                                     **
@@ -24,14 +24,19 @@
 // $Log: $
 //**********************************************************************
 
-/** @file CpuPeiBoard.c
-    This file is the main CPU PEI component file. This component utilizes
-    CPU I/O & PCI CFG PPI to publish early CPU Init PPI which can be used
-    by NB PEI to load itself.  Also this file contains a CPU init routine
-    to be executed in permanent memory present environment. This is handled
-    by issuing a notifyPPI on permanent memory PPI.
-
-**/
+//<AMI_FHDR_START>
+//---------------------------------------------------------------------------
+// Name:        CpuPeiBoard.c
+//
+// Description:
+//  This file is the main CPU PEI component file. This component utilizes
+//   CPU I/O & PCI CFG PPI to publish early CPU Init PPI which can be used
+//   by NB PEI to load itself.  Also this file contains a CPU init routine
+//   to be executed in permanent memory present environment. This is handled
+//   by issuing a notifyPPI on permanent memory PPI.
+//
+//---------------------------------------------------------------------------
+//<AMI_FHDR_END>
 
 #include "AmiCspLibInc.h"
 #include <Library/CpuCspLib.h>
@@ -50,17 +55,21 @@
 EFI_GUID gAmiCpuinfoHobGuid             = AMI_CPUINFO_HOB_GUID;
 //EFI_GUID gSmmHobGuid                    = SMM_HOB_GUID;
 
-/**
-    Create CPU Hob and fill in default data.
-
-        
-    @param PeiServices 
-    @param NumCpus 
-
-    @retval 
-        CPUINFO_HOB *
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure: CreateCpuHobWithDefaults
+//
+// Description: Create CPU Hob and fill in default data.
+//
+// Input:
+//      IN EFI_PEI_SERVICES **PeiServices
+//      IN UINT8            NumCpus
+//
+// Output:
+//      CPUINFO_HOB *
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 CPUINFO_HOB * CreateCpuHobWithDefaults(EFI_PEI_SERVICES **PeiServices, UINT8 NumCpus)
 {
@@ -103,16 +112,20 @@ CPUINFO_HOB * CreateCpuHobWithDefaults(EFI_PEI_SERVICES **PeiServices, UINT8 Num
     return CpuinfoHob;
 }
 
-/**
-    Finds or Create Cpu Hob and initialize it.
-
-        
-    @param PeiServices 
-
-         
-    @retval VOID
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+// Procedure: UpdateOrCreateCpuHob
+//
+// Description: Finds or Create Cpu Hob and initialize it.
+//
+// Input:
+//      IN EFI_PEI_SERVICES **PeiServices
+//
+// Output:
+//      VOID
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 VOID UpdateOrCreateCpuHob(EFI_PEI_SERVICES **PeiServices) 
 {
@@ -147,17 +160,21 @@ VOID UpdateOrCreateCpuHob(EFI_PEI_SERVICES **PeiServices)
     CpuHob->SizeOfIoSpace = 16; 
 }
 
-/**
-    AMI CPU PEI driver entry
-
-        
-    @param FfsHeader 
-    @param PeiServices 
-
-    @retval 
-        EFI_STATUS
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+// Procedure: CpuPeiEntry
+//
+// Description: AMI CPU PEI driver entry
+//
+// Input:
+//      IN EFI_FFS_FILE_HEADER      *FfsHeader
+//      IN EFI_PEI_SERVICES         **PeiServices
+//
+// Output:
+//      EFI_STATUS
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS CpuPeiInit(
     IN       EFI_PEI_FILE_HANDLE   FileHandle,
     IN CONST EFI_PEI_SERVICES **PeiServices
@@ -185,7 +202,7 @@ EFI_STATUS CpuPeiInit(
     UpdateOrCreateCpuHob(PeiServices);
  
     //After initialized, APs are in holding loop until halted.
-    //NumCpus = 4;//(UINT32)((UINT8)ReadMsr(MSR_CORE_THREAD_COUNT));
+    //NumCpus = 4;////To-Do:(UINT32)((UINT8)ReadMsr(MSR_CORE_THREAD_COUNT));
 	GetCpuSetupData((VOID *)PeiServices, &VlvCpuPolicyData, TRUE);
 	NumCpus = VlvCpuPolicyData.ActiveProcessorCores;
     

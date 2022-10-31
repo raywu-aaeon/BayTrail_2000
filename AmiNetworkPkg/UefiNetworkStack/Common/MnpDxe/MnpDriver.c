@@ -714,6 +714,7 @@ MnpDriverEntryPoint (
   //
   // AMI PORTING START : Check whether Network Stack is enabled in setup or not. If it is disabled return EFI_UNSUPPORTED.
   //
+  EFI_GUID            NetworkStackGuid = NETWORK_STACK_GUID;
   NETWORK_STACK       NetworkStackSetupData;
   UINTN               VarSize;
   EFI_STATUS          Status; 
@@ -721,7 +722,7 @@ MnpDriverEntryPoint (
   VarSize = sizeof (NETWORK_STACK);
 
   Status= gRT->GetVariable(L"NetworkStackVar", 
-                   &gEfiNetworkStackSetupGuid, 
+                   &NetworkStackGuid, 
                    NULL, 
                    &VarSize, 
                    &NetworkStackSetupData);

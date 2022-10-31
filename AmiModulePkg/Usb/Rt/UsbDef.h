@@ -1,21 +1,35 @@
+//****************************************************************************
+//****************************************************************************
+//**                                                                        **
+//**             (C)Copyright 1985-2008, American Megatrends, Inc.          **
+//**                                                                        **
+//**                          All Rights Reserved.                          **
+//**                                                                        **
+//**                 5555 Oakbrook Pkwy, Norcross, GA 30093                 **
+//**                                                                        **
+//**                          Phone (770)-246-8600                          **
+//**                                                                        **
+//****************************************************************************
+//****************************************************************************
+
 //**********************************************************************
-//**********************************************************************
-//**                                                                  **
-//**        (C)Copyright 1985-2016, American Megatrends, Inc.         **
-//**                                                                  **
-//**                       All Rights Reserved.                       **
-//**                                                                  **
-//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093        **
-//**                                                                  **
-//**                       Phone: (770)-246-8600                      **
-//**                                                                  **
-//**********************************************************************
+// $Header: /Alaska/SOURCE/Modules/USB/ALASKA/rt/usbdef.h 105   9/04/12 8:04a Wilsonlee $
+//
+// $Revision: 105 $
+//
+// $Date: 9/04/12 8:04a $
+//
 //**********************************************************************
 
-/** @file UsbDef.h
-    AMI USB driver definitions
-
-**/
+//<AMI_FHDR_START>
+//----------------------------------------------------------------------------
+//
+//  Name:           UsbDef.h
+//
+//  Description:    AMI USB driver definitions
+//
+//----------------------------------------------------------------------------
+//<AMI_FHDR_END>
 
 // AVOID including multiple instance of this file
 #ifndef     __USB_H
@@ -25,11 +39,11 @@
 #include    <AmiDxeLib.h>
 
 #include    <Protocol/UsbHc.h>
-#include    <Protocol/AmiUsbController.h>
 
 #include    "Uhci.h"
 #include    "Ohci.h"
 #include    "Ehci.h"
+#include    "Xhci.h"
 
 #include	<Protocol/PciIo.h>
 #include    <Protocol/DevicePath.h>
@@ -39,6 +53,8 @@
 // USB Module version number
 //
 #define     USB_MAJOR_VER               USB_DRIVER_MAJOR_VER
+#define     USB_MINOR_VER               USB_DRIVER_MINOR_VER
+#define     USB_BUG_RELEASE_VER         USB_DRIVER_BUILD_VER
 #define     USB_ACTIVE                  0xFC
 #define     USB_LEGACY_ENABLE           0x01
 #define     USB_6064_ENABLE             0x02
@@ -58,6 +74,10 @@
 #define BIOS_DEV_TYPE_USBBUS_SHADOW     0x07        // Dummy device type for temp usage
 #define BIOS_DEV_TYPE_CCID              0x08        // CCID device type
 
+#define HID_DEV_TYPE_KEYBOARD          	BIT0        
+#define HID_DEV_TYPE_MOUSE             	BIT1
+#define HID_DEV_TYPE_POINT             	BIT2
+
 #define MAX_DEVICES     (USB_DEV_HID_COUNT+USB_DEV_MASS_COUNT+USB_DEV_HUB_COUNT+USB_DEV_CCID_COUNT+USB_DEV_UNSUPPORTED)
 
 
@@ -66,11 +86,7 @@
 #define     USB_HC_OHCI                 0x20
 #define     USB_HC_EHCI                 0x30
 #define     USB_HC_XHCI                 0x40
-#if !USB_RT_DXE_DRIVER
 #define     GET_HCD_INDEX(bHCType)      (((bHCType) - USB_HC_UHCI) >> 4)
-#else
-#define     GET_HCD_INDEX(bHCType)       ((((bHCType) - USB_HC_UHCI) >> 4) + MAX_HC_TYPES)
-#endif
 #define     USB_INDEX_UHCI              (GET_HCD_INDEX(USB_HC_UHCI))
 #define     USB_INDEX_OHCI              (GET_HCD_INDEX(USB_HC_OHCI))
 #define     USB_INDEX_EHCI              (GET_HCD_INDEX(USB_HC_EHCI))
@@ -93,10 +109,9 @@
 // The following macro returns number of memory blocks needed for the size of data provided
 #define     GET_MEM_BLK_COUNT(Size)             (((Size) + (sizeof(MEM_BLK)-1))/sizeof(MEM_BLK))
 
-#define     MAX_SPLIT_PERIODIC_NUMBER   0x07
 //#define       TEMP_BUFFER_SIZE            0x80    // Size of temp buffer
 //#define       CONTROL_DATA_SIZE           0x100
-#define     MAX_CONTROL_DATA_SIZE       0x800
+#define     MAX_CONTROL_DATA_SIZE       0x200
 #define     MAX_TEMP_BUFFER_SIZE        0x80    // Size of temp buffer
 #define     MAX_CONSUME_BUFFER_SIZE         0x1000  //(EIP59738+)
 // USB state flag equates
@@ -104,7 +119,7 @@
 #define     USB_FLAG_RUNNING_UNDER_EFI      0x0002  // BIT 1
 #define     USB_FLAG_DISABLE_LEGACY_SUPPORT 0x0004  // BIT 2
 #define     USB_FLAG_6064EMULATION_ON       0x0008  // BIT 3
-#define     USB_FLAG_RUNNING_UNDER_OS       0x0010  // BIT 4
+//#define     USB_FLAG_RUNNING_UNDER_OS       0x0010  // BIT 4
 #define     USB_FLAG_DRIVER_CONSISTENT      0x0020  // BIT 5 //AMI Tracker 27603
 #define     USB_FLAG_DRIVER_STARTED         0x0080  // BIT 7
 #define     USB_FLAG_6064EMULATION_IRQ_SUPPORT  0x0100  // BIT 8
@@ -118,7 +133,6 @@
 #define     USB_FLAG_SKIP_CARD_READER_CONNECT_BEEP  0x10000 //BIT16 //(EIP64781+)
 #define     USB_FLAG_MASS_SIZE_EMULATION    0x20000 //BIT17 //(EIP80382+)
 #define     USB_FLAG_MASS_EMULATION_FOR_NO_MEDIA    0x40000 //BIT18	//(EIP86793+)
-#define     USB_FLAG_CSM_ENABLED            0x80000 // BIT19
 
 // PCI related equates
     // Invalid PCI register address bits
@@ -178,14 +192,10 @@
 #define     USB_MASSAPI_CHECK_DEVICE        0x009
 #define     USB_MASSAPI_GET_MEDIA_STATUS    0x00A
 #define     USB_MASSAPI_GET_DEV_PARMS       0x00B
-#define     USB_MASSAPI_EFI_READ_DEVICE     0x00C
-#define     USB_MASSAPI_EFI_WRITE_DEVICE    0x00D
-#define     USB_MASSAPI_EFI_VERIFY_DEVICE   0x00E
 
-#define     USB_MASS_MEDIA_PRESENT              BIT0
-#define     USB_MASS_MEDIA_CHANGED              BIT1
-#define	    USB_MASS_GET_MEDIA_FORMAT	        BIT2		//(EIP13457+)
-#define     USB_MASS_MEDIA_REMOVEABLE           BIT3
+#define     USB_MASS_MEDIA_PRESENT      BIT0
+#define     USB_MASS_MEDIA_CHANGED      BIT1
+#define	    USB_MASS_GET_MEDIA_FORMAT	BIT2		//(EIP13457+)
 
 #define     USB_SECURITY_API_READ_DEVICE    0x000
 #define     USB_SECURITY_API_WRITE_DEVICE   0x001
@@ -258,47 +268,7 @@
 #define DESC_TYPE_HUB           0x29 // Hub Descriptor (Type 29h)
 #define DESC_TYPE_SS_HUB		0x2A
 
-#define DESC_TYPE_SS_EP_COMP        48  //SuperSpeed Endpoint Companion Decsriptor
-
 #define DESC_TYPE_CLASS_HUB     0x2900   // Hub Class Descriptor (Type 0)
-#define DESC_TYPE_IAD           0xB // Interface Association
-
-
-//----------------------------------------------------------------------------
-//          Usb device requests timeout
-//---------------------------------------------------------------------------
-
-#ifndef USB_GET_CONFIG_DESC_TIMEOUT_MS
-#define USB_GET_CONFIG_DESC_TIMEOUT_MS          500
-#endif
-
-#ifndef USB_GET_STRING_DESC_TIMEOUT_MS
-#define USB_GET_STRING_DESC_TIMEOUT_MS          100
-#endif
-
-#ifndef USB_GET_SERIAL_NUMBER_DESC_TIMEOUT_MS
-#define USB_GET_SERIAL_NUMBER_DESC_TIMEOUT_MS   3000
-#endif
-
-#ifndef USB_GET_REPORT_DESC_TIMEOUT_MS
-#define USB_GET_REPORT_DESC_TIMEOUT_MS          500
-#endif
-
-#ifndef USB_SUSPEND_HUB_PORT_TIMEOUT_MS
-#define USB_SUSPEND_HUB_PORT_TIMEOUT_MS			200
-#endif
-
-#ifndef USB_HUB_WARM_RESET_PORT_TIMEOUT_MS
-#define USB_HUB_WARM_RESET_PORT_TIMEOUT_MS		500
-#endif
-
-#ifndef USB_PORT_CONNECT_STABLE_DELAY_MS
-#define USB_PORT_CONNECT_STABLE_DELAY_MS 100
-#endif
-
-#ifndef USB_DEVICE_ENUMERATE_RETRY_COUNT
-#define USB_DEVICE_ENUMERATE_RETRY_COUNT        6
-#endif
 
 //----------------------------------------------------------------------------
 //  USB protocol related routines
@@ -326,7 +296,31 @@ typedef struct {
     UINT16  wHCType;
 } HC_PCI_INFO;
 
+
+typedef union {
+    UHCI_DESC_PTRS  *fpUHCIDescPtrs;
+    OHCI_DESC_PTRS  *fpOHCIDescPtrs;
+    EHCI_DESC_PTRS  *fpEHCIDescPtrs;
+} DESC_PTRS;
+
 #pragma pack(push, 1)
+
+typedef struct {
+    UINT8       bDescLength;
+    UINT8       bDescType;
+    UINT16      wUsbSpecVersion;
+    UINT8       bBaseClass;
+    UINT8       bSubClass;
+    UINT8       bProtocol;
+    UINT8       bEndp0MaxPacket;
+    UINT16      wVendorId;
+    UINT16      wDeviceId;
+    UINT16      wDeviceRev;
+    UINT8       bMfgStr;
+    UINT8       bProductStr;
+    UINT8       bSerialStr;
+    UINT8       bNumConfigs;
+} DEV_DESC;
 
 typedef struct {
     UINT8       bDescLength;
@@ -335,7 +329,7 @@ typedef struct {
     UINT8       bNumInterfaces;
     UINT8       bConfigValue;
     UINT8       bConfigString;
-    UINT8       Attributes;
+    UINT8       bConfigFlags;
     UINT8       bConfigPower;
 } CNFG_DESC;
 
@@ -350,14 +344,6 @@ typedef struct {
     UINT8          bProtocol;
     UINT8          bInterfaceString;
 }INTRF_DESC;
-
-typedef struct {
-    UINT8           DescLength;
-    UINT8           DescType;
-    UINT8           MaxBurst;
-    UINT8           Attributes;
-    UINT16          BytesPerInterval;
-} SS_ENDP_COMP_DESC;
 
 typedef struct {
     UINT8           bDescLength;
@@ -381,13 +367,150 @@ typedef struct {
 
 #pragma pack(pop)
 
+//----------------------------------------------------------------------------
+//	Report descriptor struct define
+//----------------------------------------------------------------------------
+#define HID_BFLAG_DATA_BIT							BIT0		//0:DATA 		1:CONSTANT
+#define HID_BFLAG_ARRAY_BIT							BIT1		//0:ARRAY		1:VARIABLE
+#define HID_BFLAG_RELATIVE_BIT						BIT2		//0:ABSOLUTE	1:RELATIVE
+#define HID_BFLAG_SKIP								BIT3		//1:Skip this data
+#define HID_BFLAG_INPUT 							BIT4 		//0:OUTPUT 	1:INPUT
+#define HID_MAX_USAGE 								0x14						//(EIP96010)
+
+typedef struct {
+	UINT8			bFlag;			
+	UINT8			bReportID;
+	UINT8			bUsagePage;
+	UINT8			bReportCount;
+	UINT8			bReportSize;
+	UINT16			wLogicalMin;
+	UINT16			wLogicalMax;
+    UINT16          PhysicalMax;        //(EIP127014)
+    UINT16          PhysicalMin;        //(EIP127014)
+    UINT8           UnitExponent;       //(EIP127014)
+	UINT8 			bUsageCount;
+	UINT8			bUsage[HID_MAX_USAGE];         //(EIP96010)
+	UINT8			bUsageMaxCount;		//(EIP84455)
+	UINT16			wUsageMax[5];		//(EIP84455)
+	UINT16			wUsageMin[5];		//(EIP84455)
+	UINT8 			bCollection_count;
+}HID_STRUC,*HID_STRUC_PTR;		
+
+#define HID_BTYPE_KEYBOARD							0x1
+#define HID_BTYPE_MOUSE								0x2
+#define HID_BTYPE_POINT		 						0X3 
+
+#define HID_REPORT_BFLAG_REPORT_PROTOCOL			BIT0		//If use report protocol
+#define HID_REPORT_BFLAG_REPORT_ID					BIT1 		//1:REPORT_ID EXIST
+#define HID_REPORT_BFLAG_TOUCH_BUTTON_FLAG			BIT2 		
+#define HID_REPORT_BFLAG_LED_FLAG			        BIT3        //1:LED  		 //EIP65344
+#define HID_REPORT_BFLAG_RELATIVE_DATA			    BIT4
+#define HID_REPORT_BFLAG_ABSOLUTE_DATA			    BIT5
+
+typedef struct {
+	UINT8			bTotalCount;
+	UINT8 			bFlag;
+	UINT16			wAbsMaxX; 			
+	UINT16			wAbsMaxY;
+    UINT16          wReportLength;      //(EIP80948)
+	HID_STRUC		*pReport;           //(EIP80948)
+}HIDReport_STRUC;
 
 //----------------------------------------------------------------------------
-//  Config descriptor bmAttributes define
+//  Report descriptor's hid_item
 //----------------------------------------------------------------------------
-#define CNFG_DESC_ATT_REMOTEWAKEUP              BIT5
-#define CNFG_DESC_ATT_SELFPOWER                 BIT6
+typedef struct {
+	UINT8	bSize;
+	UINT8   bType;
+	UINT8   bTag;
+	union {
+	    UINT8   u8;
+	    UINT16  u16;
+	    UINT32  u32;
+	} data;
+}HID_Item,*HID_ITEM_PTR;
 
+
+//----------------------------------------------------------------------------
+// HID Report define start
+//----------------------------------------------------------------------------
+
+//----------------------------------------------------------------------------
+// HID report item format
+//----------------------------------------------------------------------------
+#define HID_ITEM_FORMAT_SHORT					0
+#define HID_ITEM_FORMAT_LONG					1
+
+//----------------------------------------------------------------------------
+// HID report descriptor item type (prefix bit 2,3)
+//----------------------------------------------------------------------------
+#define HID_ITEM_TYPE_MAIN						0
+#define HID_ITEM_TYPE_GLOBAL					1
+#define HID_ITEM_TYPE_LOCAL						2
+#define HID_ITEM_TYPE_RESERVED					3
+
+//----------------------------------------------------------------------------
+// HID report descriptor main item tags
+//----------------------------------------------------------------------------
+#define HID_MAIN_ITEM_TAG_INPUT					8
+#define HID_MAIN_ITEM_TAG_OUTPUT				9
+//#define HID_MAIN_ITEM_TAG_FEATURE				0xb
+//#define HID_MAIN_ITEM_TAG_BEGIN_COLLECTION		0xa
+//#define HID_MAIN_ITEM_TAG_END_COLLECTION		0xc
+
+//----------------------------------------------------------------------------
+// HID report descriptor main item contents
+//----------------------------------------------------------------------------
+#define HID_MAIN_ITEM_CONSTANT					0x001
+#define HID_MAIN_ITEM_VARIABLE					0x002
+#define HID_MAIN_ITEM_RELATIVE					0x004
+#define HID_MAIN_ITEM_WRAP						0x008
+#define HID_MAIN_ITEM_NONLINEAR					0x010
+#define HID_MAIN_ITEM_NO_PREFERRED				0x020
+#define HID_MAIN_ITEM_NULL_STATE				0x040
+#define HID_MAIN_ITEM_VOLATILE					0x080
+#define HID_MAIN_ITEM_BUFFERED_BYTE				0x100
+
+//----------------------------------------------------------------------------
+// HID report descriptor collection item types
+//----------------------------------------------------------------------------
+#define HID_COLLECTION_PHYSICAL					0
+#define HID_COLLECTION_APPLICATION				1
+#define HID_COLLECTION_LOGICAL					2
+
+//----------------------------------------------------------------------------
+// HID report descriptor global item tags
+//----------------------------------------------------------------------------
+#define HID_GLOBAL_ITEM_TAG_USAGE_PAGE			0
+#define HID_GLOBAL_ITEM_TAG_LOGICAL_MINIMUM		1
+#define HID_GLOBAL_ITEM_TAG_LOGICAL_MAXIMUM		2
+#define HID_GLOBAL_ITEM_TAG_PHYSICAL_MINIMUM	3
+#define HID_GLOBAL_ITEM_TAG_PHYSICAL_MAXIMUM	4
+#define HID_GLOBAL_ITEM_TAG_UNIT_EXPONENT		5
+#define HID_GLOBAL_ITEM_TAG_UNIT				6
+#define HID_GLOBAL_ITEM_TAG_REPORT_SIZE			7
+#define HID_GLOBAL_ITEM_TAG_REPORT_ID			8
+#define HID_GLOBAL_ITEM_TAG_REPORT_COUNT		9
+//#define HID_GLOBAL_ITEM_TAG_PUSH				0x0a
+//#define HID_GLOBAL_ITEM_TAG_POP					0x0b
+
+//----------------------------------------------------------------------------
+// HID report descriptor local item tags
+//----------------------------------------------------------------------------
+#define HID_LOCAL_ITEM_TAG_USAGE				0
+#define HID_LOCAL_ITEM_TAG_USAGE_MINIMUM		1
+#define HID_LOCAL_ITEM_TAG_USAGE_MAXIMUM		2
+#define HID_LOCAL_ITEM_TAG_DESIGNATOR_INDEX		3
+#define HID_LOCAL_ITEM_TAG_DESIGNATOR_MINIMUM	4
+#define HID_LOCAL_ITEM_TAG_DESIGNATOR_MAXIMUM	5
+#define HID_LOCAL_ITEM_TAG_STRING_INDEX			7
+#define HID_LOCAL_ITEM_TAG_STRING_MINIMUM		8
+#define HID_LOCAL_ITEM_TAG_STRING_MAXIMUM		9
+//#define HID_LOCAL_ITEM_TAG_DELIMITER			0x0a
+
+//----------------------------------------------------------------------------
+// HID Report define end
+//----------------------------------------------------------------------------
 										//<(EIP38434+)
 //----------------------------------------------------------------------------
 //      Bit definitions for EndpointDescriptor.EndpointAddr
@@ -419,7 +542,7 @@ typedef struct {
 //      Values for InterfaceDescriptor.SubClass
 //---------------------------------------------------------------------------
 #define SUB_CLASS_BOOT_DEVICE       0x01    // Boot device sub-class
-#define SUB_CLASS_HUB               0x00    //Hub Device Sub Class?
+#define SUB_CLASS_HUB               0x01    //Hub Device Sub Class?
 
 // Mass storage related sub-class equates
 #define SUB_CLASS_RBC                   0x01    // RBC T10 project,1240-D, e.g. Flash
@@ -445,9 +568,6 @@ typedef struct {
 #define PROTOCOL_KEYBOARD       0x01    // Keyboard device protocol
 #define PROTOCOL_MOUSE          0x02    // Mouse device protocol?
 
-#define PROTOCOL_HUB_SINGLE_TT              0x00    // Hub single TT protocol
-#define PROTOCOL_HUB_MULTIPLE_TTS           0x02    // Hub multiple TTs protocol
-
 // Mass storage related protocol equates
 #define PROTOCOL_CBI            0x00    // Mass Storage Control/Bulk/Interrupt
                                         // with command completion interrupt
@@ -456,11 +576,6 @@ typedef struct {
 #define PROTOCOL_BOT            0x50    // Mass Storage Bulk-Only Transport
 #define PROTOCOL_VENDOR         0xFF    // Vendor specific mass protocol
 //---------------------------------------------------------------------------
-
-// Definitions for Interface Association Descriptor
-#define DEV_BASE_CLASS_MISC         0xEF
-#define DEV_SUB_CLASS_COMMON        0x02
-#define DEV_PROTOCOL_IAD            0x01
 
 // Definition of CCID class
 #define BASE_CLASS_CCID_STORAGE     0x0B        // SMART device class
@@ -479,29 +594,38 @@ typedef struct {
 
 #pragma pack(pop)
 
-/**
-    USB Host Controller Driver function list structure.
+typedef struct _HC_STRUC HC_STRUC;
+typedef struct _DEV_INFO DEV_INFO;
+typedef struct _DEV_DRIVER DEV_DRIVER;
+typedef struct _URP_STRUC URP_STRUC;
 
- Fields:   Name       Type    Description
-      ------------------------------------------------------------
-    bFlag UINT8 Driver Header Status
-    pfnHCDStart UINT8 Driver Start
-    pfnHCDStop UINT8 Driver Stop
-    pfnHCDEnumeratePorts UINT8 Enumerate Root Ports
-    pfnHCDDisableInterrupts UINT8 Disable Interrupts
-    pfnHCDEnableInterrupts UINT8 Enable Interrupts
-    pfnHCDProcessInterrupt UINT8 Process Interrupt
-    pfnHCDGetRootHubStatus UINT8 Get Root Hub Ports Status
-    pfnHCDDisableRootHub UINT8 Disable Root Hub 
-    pfnHCDEnableRootHub UINT8 Enable Root Hub
-    pfnHCDControlTransfer UINT16 Perform Control Transfer
-    pfnHCDBulkTransfer UINT32 Perform Bulk Transfer
-    pfnHCDInterruptTransfer UINT8 Perform Interrupt Transfer
-    pfnHCDDeactivatePolling UINT8  Deactivate Polling
-    pfnHCDActivatePolling UINT8 Activate Polling
-    pfnHCDDisableKeyRepeat UINT8 Disable Key Repead
-    pfnHCDEnableKeyRepeat UINT8 Enable Key Repeat
-**/
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name:        HCD_HEADER
+//
+// Description: USB Host Controller Driver function list structure.
+//
+// Fields:   Name       Type    Description
+//      ------------------------------------------------------------
+//    bFlag UINT8 Driver Header Status
+//    pfnHCDStart UINT8 Driver Start
+//    pfnHCDStop UINT8 Driver Stop
+//    pfnHCDEnumeratePorts UINT8 Enumerate Root Ports
+//    pfnHCDDisableInterrupts UINT8 Disable Interrupts
+//    pfnHCDEnableInterrupts UINT8 Enable Interrupts
+//    pfnHCDProcessInterrupt UINT8 Process Interrupt
+//    pfnHCDGetRootHubStatus UINT8 Get Root Hub Ports Status
+//    pfnHCDDisableRootHub UINT8 Disable Root Hub 
+//    pfnHCDEnableRootHub UINT8 Enable Root Hub
+//    pfnHCDControlTransfer UINT16 Perform Control Transfer
+//    pfnHCDBulkTransfer UINT32 Perform Bulk Transfer
+//    pfnHCDInterruptTransfer UINT8 Perform Interrupt Transfer
+//    pfnHCDDeactivatePolling UINT8  Deactivate Polling
+//    pfnHCDActivatePolling UINT8 Activate Polling
+//    pfnHCDDisableKeyRepeat UINT8 Disable Key Repead
+//    pfnHCDEnableKeyRepeat UINT8 Enable Key Repeat
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
 //!!!!
 //!!!! If you change this structure, please, check UN_HCD_HEADER also.
 //!!!!
@@ -513,24 +637,22 @@ typedef struct {
     UINT8       (*pfnHCDDisableInterrupts) (HC_STRUC*);
     UINT8       (*pfnHCDEnableInterrupts) (HC_STRUC*);
     UINT8       (*pfnHCDProcessInterrupt) (HC_STRUC*);
-    UINT32      (*pfnHCDGetRootHubStatus) (HC_STRUC*, UINT8, BOOLEAN);
+    UINT8       (*pfnHCDGetRootHubStatus) (HC_STRUC*,UINT8);
     UINT8       (*pfnHCDDisableRootHub) (HC_STRUC*,UINT8);
     UINT8       (*pfnHCDEnableRootHub) (HC_STRUC*,UINT8);
     UINT16      (*pfnHCDControlTransfer) (HC_STRUC*,DEV_INFO*,UINT16,UINT16,UINT16,UINT8*,UINT16);
     UINT32      (*pfnHCDBulkTransfer) (HC_STRUC*,DEV_INFO*,UINT8,UINT8*,UINT32);
-    UINT32      (*pfnHCDIsocTransfer) (HC_STRUC*,DEV_INFO*,UINT8,UINT8*,UINT32,UINT8*);
-    UINT16      (*pfnHCDInterruptTransfer) (HC_STRUC*, DEV_INFO*, UINT8, UINT16, UINT8*, UINT16);
+    UINT16      (*pfnHCDInterruptTransfer) (HC_STRUC*,DEV_INFO*,UINT8*,UINT16);
     UINT8       (*pfnHCDDeactivatePolling) (HC_STRUC*,DEV_INFO*);
     UINT8       (*pfnHCDActivatePolling) (HC_STRUC*,DEV_INFO*);
-    UINT8       (*pfnHCDEnableEndpoints) (HC_STRUC*,DEV_INFO*,UINT8*);    
     UINT8       (*pfnHCDDisableKeyRepeat) (HC_STRUC*);
     UINT8       (*pfnHCDEnableKeyRepeat) (HC_STRUC*);
-    UINT8       (*pfnHCDInitDeviceData) (HC_STRUC*, DEV_INFO*, UINT32, UINT8**);
+    UINT8       (*pfnHCDEnableEndpoints) (HC_STRUC*,DEV_INFO*,UINT8*);
+    UINT8       (*pfnHCDInitDeviceData) (HC_STRUC*,DEV_INFO*,UINT8,UINT8**);
     UINT8       (*pfnHCDDeinitDeviceData) (HC_STRUC*,DEV_INFO*);
 	UINT8       (*pfnHCDResetRootHub) (HC_STRUC*,UINT8);
 	UINT8		(*pfnHCDClearEndpointState) (HC_STRUC*,DEV_INFO*,UINT8);	//(EIP54283+)
 	UINT8       (*pfnHCDGlobalSuspend) (HC_STRUC*);		//(EIP54018+)
-	UINT8       (*pfnHCDSmiControl) (HC_STRUC*, BOOLEAN);
 } HCD_HEADER;
 
 typedef union {
@@ -541,15 +663,252 @@ typedef union {
     } asArray;
 } UN_HCD_HEADER;
 
+
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name:        HC_STRUC
+//
+// Description: USB Host Controller structure
+//
+// Fields:   Name       Type    Description
+//      ------------------------------------------------------------
+//      bHCNumber   UINT8   Host Controller number, 1-based
+//      bHCType     UINT8   Host Controller Type, U/O/E HCI
+//      fpFrameList UINT32* Host Controller Frame List Address
+//      BaseAddress UINTN   Host Controller Base Address, memory (EHCI,OHCI) or IO (UHCI)
+//      bNumPorts   UINT8   Number of root ports, 1-based
+//      wBusDevFuncNum UINT16   PCI location, bus (Bits8..15), device (Bits3..7), function(bits0..2)
+//      fpIRQInfo   IRQ_INFO IRQ information
+//      stDescPtrs  DESC_PTRS   Commonly used descriptor pointers, see definition of DESC_PTRS
+//      wAsyncListSize  UINT16  Async. list size
+//      bOpRegOffset UINT8  Operation region offset
+//      dMaxBulkDataSize    UINT32 Maximum Bulk Transfer data size
+//      dHCFlag     UINT32  Host Controller flag
+//      bExtCapPtr  UINT8   EHCI Extended Capabilities Pointer
+//      bRegOfs     UINT8   EHCI Capabilities PCI register Offset
+//      DebugPort   UINT8   Port number of EHCI debug port
+//      usbbus_data VOID*   USB Bus data specific to this Host Controller
+//      Controller  EFI_HANDLE  EFI Handle of this controller
+//      pHCdp   EFI_DEVICE_PATH_PROTOCOL* Pointer to this controller's device path
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
+
+struct _HC_STRUC {
+    UINT8           bHCNumber;
+    UINT8           bHCType;
+    UINT32          *fpFrameList;
+    UINTN           BaseAddress;
+    UINT8           bNumPorts;
+    UINT16          wBusDevFuncNum;
+    UINT8           Irq;
+    DESC_PTRS       stDescPtrs;
+    UINT16          wAsyncListSize;
+    UINT8           bOpRegOffset;
+    UINT32          dMaxBulkDataSize;
+	UINT32			dHCSParams;
+	UINT32			dHCCParams;
+    UINT32          dHCFlag;
+    UINT8           bExtCapPtr; // EHCI Extended Capabilities Pointer
+    UINT8           DebugPort;
+    VOID*           usbbus_data;
+    EFI_HANDLE      Controller;
+    EFI_DEVICE_PATH_PROTOCOL    *pHCdp;
+    UINT8           PwrCapPtr;	//(EIP54018+)
+    EFI_PCI_IO_PROTOCOL	*PciIo;
+    UINT16          Vid;
+    UINT16          Did;
+    EFI_HANDLE      HwSmiHandle;
+#if !USB_RUNTIME_DRIVER_IN_SMM
+	UINT32			MemPoolPages;
+	UINT8			*MemPool;
+	UINT32			MemBlkStsBytes;
+	UINT32			*MemBlkSts;
+#endif
+};
+
 // Equates related to host controller state
 #define HC_STATE_RUNNING						BIT0
 #define HC_STATE_SUSPEND						BIT1
 #define HC_STATE_USED							BIT2
 #define HC_STATE_INITIALIZED					BIT3
 #define HC_STATE_EXTERNAL						BIT4
-#define HC_STATE_OWNERSHIP_CHANGE_IN_PROGRESS	BIT5
-#define HC_STATE_CONTROLLER_WITH_RMH        	BIT6
-#define HC_STATE_IRQ                            BIT7
+#define	HC_STATE_OWNERSHIP_CHANGE_IN_PROGRESS	BIT5
+#define	HC_STATE_CONTROLLER_WITH_RMH        	BIT6
+
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name:        DEV_INFO
+//
+// Description: USB Device Information Structure
+//
+// Fields:   Name       Type    Description
+//      ------------------------------------------------------------
+//  bFlag       UINT8   Device Information flags
+//  bDeviceType UINT8   Device Type
+//  wVendorId   UINT16  Device VID
+//  wDeviceId   UINT16  Device DID
+//  bDeviceAddress  UINT8   Device USB Address
+//  bHCNumber   UINT8   Host Controller Number this device is attached to
+//  bHubDeviceNumber    UINT8   USB Hub Device Number this device is attached to
+//  bHubPortNumber  UINT8   USB Hub Port Number this device is attached to
+//  bEndpointNum    UINT8   Endpoint number
+//  bEndpointSpeed  UINT8   Endpoint speed
+//  bLUN        UINT8   Device Logical Unit number
+//  wEndp0MaxPacket UINT16  Endpoint0 max packet size, in Bytes
+//  bNumConfigs UINT8   Number of configurations
+//  bConfigNum  UINT8   Active configuration number (0-based)
+//  bInterfaceNum   UINT8   Active interface number
+//  bAltSettingNum  UINT8   Alternate setting number (0-based)
+//  bCallBackIndex  UINT8   Callback function index
+//  fpPollTDPtr     UINT8*  Polling TD pointer
+//  fpPollTEPtr     UINT8*  Polling ED pointer
+//  bHubNumPorts    UINT8   Hub # of ports (USB hubs only)
+//  bHubPowerOnDelay    UINT8 Hub power-on delay (USB hubs only)
+//  fpLUN0DevInfoPtr    DEV_INFO* Pointer to Lun0 device (for multiple-LUN devices)
+//  wDataIn/OutSync   UINT16   toggle tracking information
+//  bStorageType    UINT8   USB_MASS_DEV_ARMD, USB_MASS_DEV_HDD, etc.
+//  wIntMaxPkt  UINT16  Interrupt Max Packet size, in Bytes
+//  bPresent    UINT8   Device presence indicator
+//  bIntEndpoint    UINT8   Interrupt endpoint number
+//  bBulkInEndpoint UINT8   Bulk-In endpoint number
+//  bBulkOutEndpoint    UINT8   Bulk-Out endpoint number
+//  bProtocol   UINT8   Protocol
+//  wEmulationOption    UINT16  USB Mass Storage Drive Emulation Option, from Setup
+//  bHiddenSectors  UINT8   Number of hidden sectors, for USB mass storage devices only
+//  bSubClass   UINT8   Device sub-class
+//  wBlockSize  UINT16  USB Mass Storage Device block size, in Bytes
+//  dMaxLba     UINT32  USB Mass Storage Device Maximum LBA number
+//  bHeads      UINT8   USB Mass Storage Device # of heads
+//  bSectors    UINT8   USB Mass Storage Device # of sectors
+//  wCylinders  UINT16  USB Mass Storage Device # of cylinders
+//  bNonLBAHeads UINT8   USB Mass Storage Device # of heads reported in Non-LBA (CHS) functions
+//  bNonLBASectors  UINT8   USB Mass Storage Device # of sectors reported in Non-LBA (CHS) functions
+//  wNonLBACylinders    UINT16  USB Mass Storage Device # of cylinders reported in Non-LBA (CHS) functions
+//  bEmuType    UINT8   USB Mass Storage Device emulation type
+//  bPhyDevType UINT8   USB Mass Storage Device physical type
+//  bMediaType  UINT8   USB Mass Storage Device media type
+//  bDriveNumber    UINT8   USB Mass Storage Device INT13 drive number
+//  wBulkInMaxPkt   UINT16  USB Mass Storage Device Bulk-In max packet size, in Bytes
+//  wBulkOutMaxPkt  UINT16  USB Mass Storage Device Bulk-Out max packet size, in Bytes
+//  wIncompatFlags  UINT16  USB Mass Storage Device Incompatibility flags
+//  MassDev     VOID*   USB Mass Storage Device EFI handle
+//  fpDeviceDriver  DEV_DRIVER*   Device driver pointer
+//  bLastStatus UINT8   Last transaction status
+//  pExtra      UINT8*  Pointer to extra device specific data
+//  UINT32      UINT8   USB Mass Storage Device # of heads
+//  Handle      UINT32[2]   USB Device Handle
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
+struct _DEV_INFO {
+    UINT8       bFlag;          //00
+    UINT8       bDeviceType;    //01
+    UINT16      wVendorId;      //02
+    UINT16      wDeviceId;      //04
+    UINT8       bDeviceAddress; //06
+
+    UINT8       bHCNumber;      //07
+    UINT8       bHubDeviceNumber;   //08
+    UINT8       bHubPortNumber; //09
+//    UINT8       bEndpointNum;   //0A //(EIP70933-)
+    UINT8       bEndpointSpeed; //0B
+    UINT8       bLUN;           //0C
+    UINT16      wEndp0MaxPacket;//0D
+    UINT8       bNumConfigs;    //0F
+    UINT8       bConfigNum;     //10
+    UINT8       bInterfaceNum;  //11
+    UINT8       bAltSettingNum; //12
+
+    UINT8       bCallBackIndex; //13
+    UINT8       *fpPollTDPtr;   //14
+    UINT8       *fpPollEDPtr;   //18
+
+    UINT8       bHubNumPorts;   //1C
+    UINT8       bHubPowerOnDelay;//1D
+
+    struct _DEV_INFO *fpLUN0DevInfoPtr; //1E
+//    UINT8       bDataSync;      //22
+
+    UINT16      wDataInSync;    // 22
+    UINT16      wDataOutSync;   // 24
+    UINT8       bStorageType;   // 26, USB_MASS_DEV_ARMD, USB_MASS_DEV_HDD, etc.
+    UINT16      wIntMaxPkt;     //27
+    UINT8       bIntEndpoint;   //2A
+    UINT8       bBulkInEndpoint;    //2B
+    UINT8       bBulkOutEndpoint;   //2C
+
+    UINT8       bBaseClass;     // BASE_CLASS_HID, BASE_CLASS_MASS_STORAGE or BASE_CLASS_HUB
+    UINT8       bSubClass;
+    UINT8       bProtocol;          //
+    UINT16      wEmulationOption;   //
+    UINT8       bHiddenSectors;     //
+
+    UINT16      wBlockSize;         //
+    UINT32      dMaxLba;            //
+    UINT8       bHeads;             //
+    UINT8       bSectors;           //
+    UINT16      wCylinders;         //
+    UINT8       bNonLBAHeads;       //
+    UINT8       bNonLBASectors;     //
+    UINT16      wNonLBACylinders;   //
+    UINT8       bEmuType;           //
+    UINT8       bPhyDevType;        //
+    UINT8       bMediaType;         //
+    UINT8       bDriveNumber;       //
+    UINT16      wBulkInMaxPkt;      //
+    UINT16      wBulkOutMaxPkt;     //
+    UINT16      wIncompatFlags;     //
+    VOID        *MassDev;           //
+    DEV_DRIVER  *fpDeviceDriver;    //
+    UINT8       bLastStatus;        //
+    UINT8       *pExtra;            //
+    UINT32      Handle[2];
+    UINT8       DevNameString[64];
+    VOID        *DevMiscInfo;
+    UINT8        HubDepth;
+    UINT8         *fpPollDataBuffer;        //Polling Data Buffer    //(EIP54782+)
+    VOID		*pCCIDDescriptor; // Ptr to CCID descriptor
+    UINT32      *DataRates;           // List of DataRates supported by CCID  
+    UINT32      *ClockFrequencies;    // List of Frequencies suported by CCID
+    DLIST        ICCDeviceList;        // Linked list of ICC devices. :Linked to "ICCDeviceLink"
+	HIDReport_STRUC	Hidreport;			//(EIP38434+)
+	UINT8 		HidDevType;
+	UINT8       bPollInterval;          //(EIP84455+)
+	UINT16      HubPortConnectMap;
+    UINT8       BpbMediaDesc;
+	VOID		*KeyCodeBuffer;
+	VOID		*UsbKeyBuffer;
+};
+
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name:        DEV_DRIVER
+//
+// Description: USB Device Driver Structure
+//
+// Fields:   Name       Type    Description
+//      ------------------------------------------------------------
+//  bDevType    UINT8   Device Type
+//  bBaseClass  UINT8   Device Base Type
+//  bSubClass   UINT8   Device Subclass
+//  bProtocol   UINT8   Device Protocol
+//  pfnDeviceInit   VOID    Device Initialization Function
+//  pfnCheckDeviceType  UINT8   Check Device Type Function
+//  pfnConfigureDevice  DEV_INFO*   Configure Device Function
+//  pfnDisconnectDevice UINT8   Disconnect Device Function
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
+
+struct _DEV_DRIVER {
+    UINT8           bDevType;
+    UINT8           bBaseClass;
+    UINT8           bSubClass;
+    UINT8           bProtocol;
+    VOID            (*pfnDeviceInit)(VOID);
+    UINT8           (*pfnCheckDeviceType)(DEV_INFO*, UINT8, UINT8, UINT8);
+    DEV_INFO*       (*pfnConfigureDevice)(HC_STRUC*, DEV_INFO*, UINT8*, UINT16, UINT16);
+    UINT8           (*pfnDisconnectDevice)(DEV_INFO*);
+    VOID            (*pfnDriverRequest)(DEV_INFO*, URP_STRUC*);
+};
 
 #pragma pack(push, 1)
 
@@ -579,43 +938,669 @@ typedef struct {
 #define DEV_INFO_DEV_DUMMY              BIT5
 #define DEV_INFO_DEV_BUS                BIT6    // Device info is locked by the bus
 #define DEV_INFO_DEV_DISCONNECTING      BIT7	//(EIP60460+)
-#define DEV_INFO_IN_QUEUE               BIT8
-#define DEV_INFO_ALT_SETTING_IF         BIT9    // Indicates that the device
-                                                // has alternate setting for the 
-                                                // interface
-#define DEV_INFO_DEV_UNSUPPORTED        BIT10
 
 
 #define DEV_INFO_VALIDPRESENT  (DEV_INFO_VALID_STRUC | DEV_INFO_DEV_PRESENT)
 // Call back routine type definition
-typedef UINT8       (*CALLBACK_FUNC) (HC_STRUC*, DEV_INFO*, UINT8*, UINT8*, UINT16);
-
+typedef UINT8       (*CALLBACK_FUNC) (HC_STRUC*, DEV_INFO*, UINT8*, UINT8*);
 
 #define MAX_CALLBACK_FUNCTION           50
-
-#if !USB_RT_DXE_DRIVER
-#define     CALLBACK_FUNCTION_START        0
-#else
-#define     CALLBACK_FUNCTION_START MAX_CALLBACK_FUNCTION
-#endif
 
 #define MAX_USB_ERRORS_NUM              0x30    // 48 errors max
 
 #pragma pack(push, 1)
 
-/**
-    This is a Mass URP (Mass USB Request Packet) structure for
-    the BIOS API call USBMass_HotPlugDeviceSupport
-    (API #27h, SubFunc 09h)
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name:        CK_PRESENCE
+//
+// Description: This is a URP (USB Request Packet) structure for the BIOS
+//      API call CheckPresence (API #0)
+//
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
 
- Fields:   Name       Type    Description
-      ------------------------------------------------------------
-      bDevAddr    BYTE    USB device address of the device
-      bNumUSBFDD  BYTE    Number of USB FDD's installed
-      bNumUSBCDROM    BYTE    Number of USB CDROM's installed
-      bDeviceFlag BYTE    Flag indicating what hot plug devices to be added
+typedef struct {
+    UINT16      wBiosRev;       // USB BIOS Revision
+    UINT8       bBiosActive;    // USB BIOS active/inactive
+    UINT8       bNumBootDev;    // # of USB boot device
+    UINT16      wUsbDataArea;   // USB Data area
+    UINT8       bNumKeyboards;  // Number of USB keyboards present
+    UINT8       bNumMice;       // Number of USB mice present
+    UINT8       bNumPoint;      // Number of USB point present				//<(EIP38434+)
+    UINT8       bNumHubs;       // Number of USB hubs present
+    UINT8       bNumStorage;    // Number of USB storage devices present
+///////// DO NOT ADD ANY FIELD HERE. IF IT IS NECESSARY PLEASE UPDATE THE CODE
+///////// IN THE FUNCTION USBWrap_GetDeviceCount in the file USBWRAP.ASM
+    UINT8       bNumHarddisk;   // Number of hard disk emulated USB devices
+    UINT8       bNumCDROM;      // Number of CDROM emulated USB devices
+    UINT8       bNumFloppy;     // Number of floppy emulated USB devices
+} CK_PRESENCE;
 
-**/
+
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name:        START_HC
+//
+// Description: This is a URP (USB Request Packet) structure for the BIOS
+//      API call StartHC and MoveDataArea (API #20 & #24)
+//
+// Fields:   Name       Type        Description
+//      ------------------------------------------------------------
+//      wDataAreaFlag   UINT16  Indicates which data area to use
+//
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
+
+typedef struct {
+    UINT16  wDataAreaFlag;      // Data area to use
+} START_HC;
+
+
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name:        GET_DEV_INFO
+//
+// Description: This is a URP (USB Request Packet) structure for the BIOS
+//      API call GetDeviceInfo (API #25)
+//
+// Fields:   Name       Type        Description
+//      ------------------------------------------------------------
+//      bDevNumber  UINT8   Device # whose info is requested
+//      bHCNumber   UINT8   HC # to which this device is connected (0 if no such device found)
+//      bDevType    UINT8   Device type (0 if no such device found)
+//
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
+
+typedef struct {
+    UINT8   bDevNumber;
+    UINT8   bHCNumber;
+    UINT8   bDevType;
+} GET_DEV_INFO;
+
+
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name:        CHK_DEV_PRSNC
+//
+// Description: This is a URP (USB Request Packet) structure for the BIOS
+//      API call CheckDevicePresence (API #26)
+//
+// Fields:   Name       Type        Description
+//      ------------------------------------------------------------
+//      bDevType    UINT8           Type of device to look for
+//      fpHCStruc   FPHC_STRUC      Pointer to HC being checked for device connection
+//      bNumber     UINT8           Number of devices connected
+//
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
+
+typedef struct {
+    UINT8       bDevType;
+    HC_STRUC    *fpHCStruc;
+    UINT8       bNumber;
+} CHK_DEV_PRSNC;
+
+
+typedef struct {
+    UINT8   ScrLock:    1;
+    UINT8   NumLock:    1;
+    UINT8   CapsLock:   1;
+    UINT8   Resrvd:     5;
+} LED_MAP;
+
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name:        KB_LEDS_DATA
+//
+// Description: This is a URP (USB Request Packet) structure for the BIOS
+//              API call LightenKeyboardLeds(API #2B)
+//
+// Fields:   Name       Type        Description
+//      ------------------------------------------------------------
+//      LedMapPtr    	UINT32		32-bit Pointer to LED_MAP structure
+//		DevInfoPtr    	UINT32   	32-bit Pointer to DEV_INFO structure
+//
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
+
+typedef struct {
+	UINT32	LedMapPtr;
+	UINT32  DevInfoPtr;
+} KB_LEDS_DATA;
+
+
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name:         SECURITY_IF
+//
+// Description:  This is a URP (USB Request Packet) structure for the BIOS
+//               API call SecurityInterface (API #2Ah)
+//
+// Fields:        Name           Type            Description
+//               ------------------------------------------------------------
+//               fpBuffer        FAR     Buffer pointer to read/write data
+//               dLength         UINT32   Length of the buffer
+//               dWaitTime       UINT32   Wait time for the transaction in msec
+//
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
+
+typedef struct {
+        UINT32  fpBuffer;
+        UINT32  dLength;
+        UINT32  dWaitTime;
+} SECURITY_IF;
+
+
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name:        MASS_GET_DEV_INFO
+//
+// Description: This is a Mass URP (Mass USB Request Packet) structure for
+//      the BIOS API call MassGetDeviceInfo (API #27h, SubFunc 00h)
+//
+// Fields:   Name       Type        Description
+//      ------------------------------------------------------------
+//      bDevAddr    UINT8   USB device address of the device
+//      dSenseData  UINT32  Sense data of the last command
+//      bDevType    UINT8   Device type byte (HDD, CD, Removable)
+//      bEmuType    UINT8   Emulation type used
+//      fpDevId     UINT32  Far pointer to the device ID
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
+
+typedef struct {
+    UINT8       bDevAddr;       // (Return value)
+    UINT32      dSenseData;     // USB Sense data
+    UINT8       bDevType;       // Device type
+    UINT8       bEmuType;       // Emulation type
+//  UINT8       bPhyDevType;    // Physical device type
+    UINT32      fpDevId;        // Far ptr to the device id
+// DO NOT ADD OR DELETE ANY FIELD ABOVE - This should match the MASS_INQUIRY
+// structure for proper working
+    UINT8       bTotalMassDev;  // TotalNumber of devices
+    UINT8       bReserved;
+    UINT16      wPciInfo;       // PCI Bus/Dev/Func number of HC the device is connected to
+    UINT32      Handle[2];      // Device handle
+} MASS_GET_DEV_INFO;
+
+
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name:        MASS_GET_DEV_STATUS
+//
+// Description: This is a Mass URP (Mass USB Request Packet) structure for
+//      the BIOS API call MASS_GET_DEV_STATUS (API #27h, SubFunc XXh)
+//
+// Fields:   Name       Type        Description
+//      ------------------------------------------------------------
+//      bDevAddr    UINT8   USB device address of the device
+//      bDeviceStatus   UINT8   Connection status of the Mass device
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
+
+typedef struct {
+    UINT8       bDevAddr;
+    UINT8       bDeviceStatus;
+} MASS_GET_DEV_STATUS;
+
+
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name:        MASS_GET_DEV_GEO
+//
+// Description: This is a Mass URP (Mass USB Request Packet) structure for
+//      the BIOS API call MassGetDeviceGeometry (API #27h,
+//      SubFunc 01h)
+//
+// Fields:   Name       Type        Description
+//      ------------------------------------------------------------
+//      bDevAddr    UINT8   USB device address of the device
+//      dSenseData  UINT32  Sense data of the last command
+//      bNumHeads   UINT8   Number of heads
+//      wNumCylinders   UINT16  Number of cylinders
+//      bNumSectors UINT8   Number of sectors
+//      bLBANumHeads    UINT8   Number of heads (for INT13h function 48h)
+//      wLBANumCyls UINT16  Number of cylinders (for INT13h function 48h)
+//      bLBANumSectors  UINT8   Number of sectors (for INT13h function 48h)
+//      wUINT8sPerSector    UINT16  Number of bytes per sector
+//      bMediaType  UINT8   Media type
+//      dLastLBA    UINT32  Last LBA address
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
+
+typedef struct {
+    UINT8           bDevAddr;   // (Return value)
+    UINT32          dSenseData; // USB Sense data
+    UINT8           bNumHeads;
+    UINT16          wNumCylinders;
+    UINT8           bNumSectors;
+    UINT8           bLBANumHeads;
+    UINT16          wLBANumCyls;
+    UINT8           bLBANumSectors;
+    UINT16          wBytesPerSector;
+    UINT8           bMediaType;
+    UINT32          dLastLBA;
+    UINT8	        bInt13FuncNum;	//(EIP13457+)
+    UINT8           BpbMediaDesc;
+} MASS_GET_DEV_GEO;
+
+
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name:        MASS_RESET
+//
+// Description: This is a Mass URP (Mass USB Request Packet) structure for
+//      the BIOS API call MassResetDevice (API #27h, SubFunc 02h)
+//
+// Fields:   Name       Type        Description
+//      ------------------------------------------------------------
+//      bDevAddr    UINT8   USB device address of the device
+//      dSenseData  UINT32  Sense data of the last command
+//
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
+
+typedef struct {
+    UINT8       bDevAddr;       // USB Device Address
+    UINT32      dSenseData;     // USB Sense data
+} MASS_RESET;
+
+
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name:        MASS_ASSIGN_DRIVE_NUM
+//
+// Description: This is a Mass URP (Mass USB Request Packet) structure for
+//      the BIOS API call USBMass_AssignDriveNumber
+//      (API #27h, SubFunc 0Eh)
+//
+// Fields:   Name       Type    Description
+//      ------------------------------------------------------------
+//      bDevAddr    UINT8   USB device address of the device
+//      bLogDevNum  UINT8   Logical Drive Number to assign to the device
+//      bHeads      UINT8   Number of heads
+//      bSectors    UINT8   Number of sectors/track
+//      wCylinders  UINT16  Number of cylinders
+//      wBlockSize  UINT16  Sector size in bytes
+//      bLUN        UINT8   Maximum LUNs in the system
+//      bSpeed      UINT8   <>0 if the device is hi-speed device
+//
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
+
+typedef struct {
+    UINT8       bDevAddr;   // USB Device Address
+    UINT8       bLogDevNum; // Logical Drive Number to assign to the device
+    UINT8       bHeads;
+    UINT8       bSectors;
+    UINT16      wCylinders;
+    UINT16      wBlockSize;
+    UINT8       bLUN;
+    UINT8       bSpeed;
+} MASS_ASSIGN_DRIVE_NUM;
+
+
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name:        MASS_READ
+//
+// Description: This is a Mass URP (Mass USB Request Packet) structure for
+//      the BIOS API call MassReadDevice (API #27h, SubFunc 03h)
+//
+// Fields:   Name       Type        Description
+//      ------------------------------------------------------------
+//      bDevAddr    UINT8   USB device address of the device
+//      dSenseData  UINT32  Sense data of the last command
+//      dStartLBA   UINT32  Starting LBA address
+//      wNumBlks    UINT16  Number of blocks to read
+//      wPreSkipSize    UINT16  Number of bytes to skip before
+//      wPostSkipSize   UINT16  Number of bytes to skip after
+//      fpBufferPtr UINT32  Far buffer pointer
+//
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
+
+typedef struct {
+    UINT8       bDevAddr;       // USB Device Address
+    UINT32      dSenseData;     // USB Sense data
+    UINT32      dStartLBA;      // Starting LBA address
+    UINT16      wNumBlks;       // Number of blocks to read
+    UINT16      wPreSkipSize;   // Number of bytes to skip before
+    UINT16      wPostSkipSize;  // Number of bytes to skip after
+    UINT32      fpBufferPtr;    // Far buffer pointer
+} MASS_READ;
+
+
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name:        MASS_WRITE
+//
+// Description: This is a Mass URP (Mass USB Request Packet) structure for
+//      the BIOS API call MassWriteDevice (API #27h, SubFunc 04h)
+//
+// Fields:   Name       Type        Description
+//      ------------------------------------------------------------
+//      bDevAddr    UINT8   USB device address of the device
+//      dSenseData  UINT32  Sense data of the last command
+//      dStartLBA   UINT32  Starting LBA address
+//      wNumBlks    UINT16  Number of blocks to write
+//      wPreSkipSize    UINT16  Number of bytes to skip before
+//      wPostSkipSize   UINT16  Number of bytes to skip after
+//      fpBufferPtr UINT32  Far buffer pointer
+//
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
+
+typedef struct {
+    UINT8       bDevAddr;       // USB Device Address
+    UINT32      dSenseData;     // USB Sense data
+    UINT32      dStartLBA;      // Starting LBA address
+    UINT16      wNumBlks;       // Number of blocks to write
+    UINT16      wPreSkipSize;   // Number of bytes to skip before
+    UINT16      wPostSkipSize;  // Number of bytes to skip after
+    UINT32      fpBufferPtr;    // Far buffer pointer
+} MASS_WRITE;
+
+
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name:        MASS_VERIFY
+//
+// Description: This is a Mass URP (Mass USB Request Packet) structure for
+//      the BIOS API call MassVerifyDevice (API #27h, SubFunc 05h)
+//
+// Fields:   Name       Type        Description
+//      ------------------------------------------------------------
+//      bDevAddr    UINT8   USB device address of the device
+//      dSenseData  UINT32  Sense data of the last command
+//      dStartLBA   UINT32  Starting LBA address
+//      wNumBlks    UINT16  Number of blocks to verify
+//      wPreSkipSize    UINT16  Number of bytes to skip before
+//      wPostSkipSize   UINT16  Number of bytes to skip after
+//      fpBufferPtr UINT32  Far buffer pointer
+//
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
+
+typedef struct {
+    UINT8       bDevAddr;       // USB Device Address
+    UINT32      dSenseData;     // USB Sense data
+    UINT32      dStartLBA;      // Starting LBA address
+    UINT16      wNumBlks;       // Number of blocks to verify
+    UINT16      wPreSkipSize;   // Number of bytes to skip before
+    UINT16      wPostSkipSize;  // Number of bytes to skip after
+    UINT32      fpBufferPtr;    // Far buffer pointer
+} MASS_VERIFY;
+
+
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name:        MASS_FORMAT
+//
+// Description: This is a Mass URP (Mass USB Request Packet) structure for
+//      the BIOS API call MassFormatDevice (API #27h, SubFunc 06h)
+//
+// Fields:   Name       Type        Description
+//      ------------------------------------------------------------
+//      bDevAddr    UINT8   USB device address of the device
+//      dSenseData  UINT32  Sense data of the last command
+//      bHeadNumber UINT8   Head number to format
+//      bTrackNumber    UINT8   Track number to format
+//
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
+
+typedef struct {
+    UINT8       bDevAddr;       // USB Device Address
+    UINT32      dSenseData;     // USB Sense data
+    UINT8       bHeadNumber;    // Head number to format
+    UINT8       bTrackNumber;   // Track number to format
+} MASS_FORMAT;
+
+
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name:        MASS_REQ_SENSE
+//
+// Description: This is a Mass URP (Mass USB Request Packet) structure for
+//      the BIOS API call MassRequestSense (API #27h, SubFunc 07h)
+//
+// Fields:   Name       Type        Description
+//      ------------------------------------------------------------
+//      bDevAddr    UINT8   USB device address of the device
+//      dSenseData  UINT32  Sense data of the last command
+//
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
+
+typedef struct {
+    UINT8       bDevAddr;       // USB Device Address
+    UINT32      dSenseData;     // USB Sense data
+} MASS_REQ_SENSE;
+
+
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name:        MASS_TEST_UNIT_RDY
+//
+// Description: This is a Mass URP (Mass USB Request Packet) structure for
+//      the BIOS API call MassTestUnitReady (API #27h, SubFunc 08h)
+//
+// Fields:   Name       Type        Description
+//      ------------------------------------------------------------
+//      bDevAddr    UINT8   USB device address of the device
+//      dSenseData  UINT32  Sense data of the last command
+//
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
+
+typedef struct {
+    UINT8       bDevAddr;       // USB Device Address
+    UINT32      dSenseData;     // USB Sense data
+} MASS_TEST_UNIT_RDY;
+
+
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name:        MASS_START_STOP_UNIT
+//
+// Description: This is a Mass URP (Mass USB Request Packet) structure for
+//      the BIOS API call MassStartStopUnit (API #27h, SubFunc 09h)
+//
+// Fields:   Name       Type        Description
+//      ------------------------------------------------------------
+//      bDevAddr    UINT8   USB device address of the device
+//      dSenseData  UINT32  Sense data of the last command
+//      bCommand    UINT8   0 - Stop, 1 - Start
+//
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
+
+typedef struct {
+    UINT8       bDevAddr;       // USB Device Address
+    UINT32      dSenseData;     // USB Sense data
+    UINT8       bCommand;       // 0 - Stop, 1 - Start
+} MASS_START_STOP_UNIT;
+
+
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name:        MASS_READ_CAPACITY
+//
+// Description: This is a Mass URP (Mass USB Request Packet) structure for
+//      the BIOS API call MassReadCapacity (API #27h, SubFunc 0Ah)
+//
+// Fields:   Name       Type        Description
+//      ------------------------------------------------------------
+//      bDevAddr    UINT8   USB device address of the device
+//      dSenseData  UINT32  Sense data of the last command
+//      dMaxLBA     UINT32  Maximum LBA address
+//      dBlockSize  UINT32  Block size
+//
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
+
+typedef struct {
+    UINT8       bDevAddr;       // USB Device Address
+    UINT32      dSenseData;     // USB Sense data
+    UINT32      dMaxLBA;        // Max LBA address
+    UINT32      dBlockSize;     // Block size
+} MASS_READ_CAPACITY;
+
+
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name:        MASS_MODE_SENSE
+//
+// Description: This is a Mass URP (Mass USB Request Packet) structure for
+//      the BIOS API call MassModeSense (API #27h, SubFunc 0Bh)
+//
+// Fields:   Name       Type        Description
+//      ------------------------------------------------------------
+//      bDevAddr    UINT8   USB device address of the device
+//      dSenseData  UINT32  Sense data of the last command
+//      bNumHeads   UINT8   Number of heads
+//      wNumCylinders   UINT16  Number of cylinders
+//      bNumSectors UINT8   Number of sectors
+//      wBytesPerSector UINT16  Number of bytes per sector
+//      bMediaType  UINT8   Media type
+//
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
+
+typedef struct {
+    UINT8       bDevAddr;       // USB Device Address
+    UINT32      dSenseData;     // USB Sense data
+    UINT8       bNumHeads;      // Number of heads
+    UINT16      wNumCylinders;  // Number of cylinders
+    UINT8       bNumSectors;    // Number of sectors
+    UINT16      wBytesPerSector;// Number of bytes per sector
+    UINT8       bMediaType;     // Media type
+} MASS_MODE_SENSE;
+
+
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name:        MASS_INQUIRY
+//
+// Description: This is a Mass URP (Mass USB Request Packet) structure for
+//      the BIOS API call MassInquiry (API #27h, SubFunc 0Ch)
+//
+// Fields:   Name       Type        Description
+//      ------------------------------------------------------------
+//      bDevAddr    UINT8   USB device address of the device
+//      dSenseData  UINT32  Sense data of the last command
+//      bDevType    UINT8   Device type byte (HDD, CD, Removable)
+//      bEmuType    BYTE    Emulation type used
+//      fpDevId     UINT32  Far pointer to the device ID
+//
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
+
+typedef struct {
+    UINT8       bDevAddr;       // USB Device Address
+    UINT32      dSenseData;     // USB Sense data
+    UINT8       bDevType;       // Device type
+    UINT8       bEmuType;       // Emulation type
+    UINT32      fpDevId;        // Far ptr to the device id
+// DO NOT ADD OR DELETE ANY FIELD ABOVE - This should match the
+// MASS_GET_DEV_INFO structure for proper working
+} MASS_INQUIRY;
+
+typedef struct {
+    DEV_INFO        *fpDevInfo;
+    MASS_INQUIRY    *fpInqData;
+} MASS_GET_DEV_PARMS;
+
+typedef struct {
+    DEV_INFO*   fpDevInfo;
+} MASS_CHK_DEV_READY;
+
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name:        MASS_CMD_PASS_THRU
+//
+// Description: This is a Mass URP (Mass USB Request Packet) structure for
+//      the BIOS API call MassCmdPassThru command (API #27h,
+//      SubFunc 0Dh)
+//
+// Fields:   Name       Type        Description
+//      ------------------------------------------------------------
+//      bDevAddr    BYTE    USB device address of the device
+//      dSenseData  UINT32  Sense data of the last command
+//      fpCmdBuffer UINT32  Far pointer to the command buffer
+//      wCmdLength  UINT16  Command length
+//      fpDataBuffer    UINT32  Far pointer for data buffer
+//      wDataLength UINT16  Data length
+//      bXferDir    BYTE    Data transfer direction
+//
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
+
+typedef struct {
+    UINT8       bDevAddr;
+    UINT32      dSenseData;
+    UINT32      fpCmdBuffer;
+    UINT16      wCmdLength;
+    UINT32      fpDataBuffer;
+    UINT16      wDataLength;
+    UINT8       bXferDir;
+} MASS_CMD_PASS_THRU;
+
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name:        HCPROC_PARAM
+//
+// Description: N/A
+//
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
+
+typedef struct _HCPROC_PARAM{
+    VOID*       paramBuffer; //parameters as they should apear in stack of
+                            // of the corresponding function invocation
+    unsigned    bHCType;
+    unsigned    paramSize;
+    UINTN       retVal;
+} HCPROC_PARAM;
+
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name:        COREPROC_PARAM
+//
+// Description: This is a Core Procedure URP  structure for
+//      the BIOS API call core command (API #2eh )
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
+
+typedef struct _COREPROC_PARAM{
+    VOID*       paramBuffer; //parameters as they should apear in stack of
+                            // of the corresponding function invocation
+    unsigned    paramSize;
+    UINTN       retVal;
+} COREPROC_PARAM, * FPCOREPROC_PARAM;
+
+
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name:        MASS_HOTPLUG
+//
+// Description: This is a Mass URP (Mass USB Request Packet) structure for
+//      the BIOS API call USBMass_HotPlugDeviceSupport
+//      (API #27h, SubFunc 09h)
+//
+// Fields:   Name       Type    Description
+//      ------------------------------------------------------------
+//      bDevAddr    BYTE    USB device address of the device
+//      bNumUSBFDD  BYTE    Number of USB FDD's installed
+//      bNumUSBCDROM    BYTE    Number of USB CDROM's installed
+//      bDeviceFlag BYTE    Flag indicating what hot plug devices to be added
+//
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
 
 typedef struct _MASS_HOTPLUG {
     UINT8   bDevAddr;       // USB Device Address
@@ -630,23 +1615,243 @@ typedef struct _MASS_HOTPLUG {
 #define USB_HOTPLUG_FDD_ADDRESS     0x7E
 #define USB_HOTPLUG_CDROM_ADDRESS   0x7F
 
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name:        GET_DEV_ADDR
+//
+// Description: This is a URP structure for the BIOS API(API #32h)
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
+
+typedef struct {
+    UINT16	Vid;		// Vendor Id
+	UINT16	Did;		// Device Id
+    UINT8   DevAddr;	// USB Device Address
+} GET_DEV_ADDR;
+
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name:        HC_START_STOP
+//
+// Description: This is a URP structure for the BIOS API(API #36)
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
+
+typedef struct {
+	BOOLEAN 	Start;
+	HC_STRUC    *HcStruc;
+} HC_START_STOP;
+
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name:        CCID_GETSMARTCLASSDESCRIPTOR
+//
+// Description: This is a Core Procedure URP  structure for
+//      the BIOS API call USB_API_CCID_DEVICE_REQUEST command (API #2Fh )
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
+typedef struct _CCID_GETSMARTCLASSDESCRIPTOR{
+    OUT UINTN            fpResponseBuffer;
+    IN  UINT8            Slot;
+    OUT UINTN            fpDevInfo;            
+} CCID_GETSMARTCLASSDESCRIPTOR, * FPCCID_GETSMARTCLASSDESCRIPTOR;
+
+
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name:        CCID_ATR
+//
+// Description: This is a Core Procedure URP  structure for
+//      the BIOS API call USB_API_CCID_DEVICE_REQUEST command (API #2Fh )
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
+typedef struct _CCID_ATR{
+    IN UINT8            Slot;
+    IN OUT UINTN        ATRData;
+    OUT UINTN           fpDevInfo;
+} CCID_ATR, * FPCCID_ATR;
+
+
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name:        CCID_POWERUP_SLOT
+//
+// Description: This is a Core Procedure URP  structure for
+//      the BIOS API call USB_API_CCID_DEVICE_REQUEST command (API #2Fh )
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
+typedef struct _CCID_POWERUP_SLOT{
+    IN UINT8            Slot;
+    OUT UINT8            bStatus;
+    OUT UINT8            bError;
+    IN OUT UINTN        ATRData;
+    OUT UINTN            fpDevInfo;                        
+} CCID_POWERUP_SLOT, * FPCCID_POWERUP_SLOT;
+
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name:        CCID_POWERDOWN_SLOT
+//
+// Description: This is a Core Procedure URP  structure for
+//      the BIOS API call USB_API_CCID_DEVICE_REQUEST command (API #2Fh )
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
+typedef struct _CCID_POWERDOWN_SLOT{
+    IN  UINT8            Slot;
+    OUT UINT8            bStatus;
+    OUT UINT8            bError;
+    OUT UINTN            fpDevInfo;            
+} CCID_POWERDOWN_SLOT, * FPCCID_POWERDOWN_SLOT;
+
+
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name:        CCID_GETSLOT_STATUS
+//
+// Description: This is a Core Procedure URP  structure for
+//      the BIOS API call USB_API_CCID_DEVICE_REQUEST command (API #2Fh )
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
+typedef struct _CCID_GETSLOT_STATUS{
+    OUT UINT8            bStatus;
+    OUT UINT8            bError;
+    OUT UINT8            bClockStatus;    
+    IN  UINT8            Slot;
+    OUT UINTN            fpDevInfo;            
+} CCID_GETSLOT_STATUS, * FPCCID_GETSLOT_STATUS;
+
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name:        CCID_XFRBLOCK
+//
+// Description: This is a Core Procedure URP  structure for
+//      the BIOS API call USB_API_CCID_DEVICE_REQUEST command (API #2Fh )
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
+typedef struct _CCID_CCID_XFRBLOCK{
+    IN UINTN            CmdLength;
+    IN UINTN            fpCmdBuffer;
+    IN UINT8            ISBlock;
+    OUT UINT8            bStatus;
+    OUT UINT8            bError;
+    IN OUT UINTN        ResponseLength;
+    OUT UINTN            fpResponseBuffer;
+    IN  UINT8            Slot;
+    OUT UINTN            fpDevInfo;
+} CCID_XFRBLOCK, * FPCCID_XFRBLOCK;
+
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name:        CCID_GET_PARAMS
+//
+// Description: This is a Core Procedure URP  structure for
+//      the BIOS API call USB_API_CCID_DEVICE_REQUEST command (API #2Fh )
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
+typedef struct _CCID_GET_PARAMS{
+    OUT UINT8            bStatus;
+    OUT UINT8            bError;
+    IN OUT UINTN        ResponseLength;
+    OUT UINTN            fpResponseBuffer;
+    IN  UINT8            Slot;
+    OUT UINTN            fpDevInfo;
+} CCID_GET_PARAMS, * FPCCID_GET_PARAMS;
+
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name:        API_DATA
+//
+// Description: This is a union data type of all the API related data
+//
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
+
+typedef union {
+    CK_PRESENCE             CkPresence;
+    START_HC                StartHc;
+    GET_DEV_INFO            GetDevInfo;
+    CHK_DEV_PRSNC           ChkDevPrsnc;
+    SECURITY_IF             SecurityIf;
+    MASS_GET_DEV_INFO       MassGetDevInfo;
+    MASS_GET_DEV_STATUS     MassGetDevSts;
+    MASS_GET_DEV_GEO        MassGetDevGeo;
+    MASS_RESET              MassReset;
+    MASS_READ               MassRead;
+    MASS_WRITE              MassWrite;
+    MASS_VERIFY             MassVerify;
+    MASS_FORMAT             MassFormat;
+    MASS_REQ_SENSE          MassReqSense;
+    MASS_TEST_UNIT_RDY      MassTstUnitRdy;
+    MASS_START_STOP_UNIT    MassStartStop;
+    MASS_READ_CAPACITY      MassReadCap;
+    MASS_MODE_SENSE         MassModeSense;
+    MASS_INQUIRY            MassInquiry;
+    MASS_CMD_PASS_THRU      MassCmdPassThru;
+    MASS_ASSIGN_DRIVE_NUM   MassAssignNum;
+    MASS_CHK_DEV_READY      MassChkDevReady;
+    MASS_GET_DEV_PARMS      MassGetDevParms;
+    KB_LEDS_DATA            KbLedsData;
+    UINT8                   Owner;
+    HCPROC_PARAM            HcProc;
+    COREPROC_PARAM          CoreProc;
+    UINT8                   KbcControlCode;            //(EIP29733+)
+    GET_DEV_ADDR            GetDevAddr;
+    UINT8                   DevAddr;
+    //    CCID APIs
+    CCID_GETSMARTCLASSDESCRIPTOR CCIDSmartClassDescriptor;
+    CCID_ATR                    CCIDAtr;
+    CCID_POWERUP_SLOT           CCIDPowerupSlot;
+    CCID_POWERDOWN_SLOT         CCIDPowerdownSlot;
+    CCID_GETSLOT_STATUS         CCIDGetSlotStatus;
+    CCID_XFRBLOCK               CCIDXfrBlock;
+    CCID_GET_PARAMS             CCIDGetParameters;
+	UINT16					HcBusDevFuncNum;    //(EIP74876+)
+	HC_START_STOP			HcStartStop;
+} U_API_DATA;
+
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name:        URP_STRUC
+//
+// Description: This structure is the URP structure
+//
+// Fields:   Name       Type        Description
+//      ------------------------------------------------------------
+//      bFuncNumber UINT8       Function number of the URP
+//      bSubFunc    UINT8       Sub-func number of the URP
+//      bRetValue   UINT8       Return value
+//      ApiData     API_DATA    Refer structure definition
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
+
+struct _URP_STRUC {
+    UINT8       bFuncNumber;
+    UINT8       bSubFunc;
+    UINT8       bRetValue;
+    U_API_DATA  ApiData;
+};
+
 #pragma pack(pop)
 
-/**
-    This structure holds the information needed for the mass
-    transaction (for CBI or BULK)
-
- Fields:   Name       Type        Description
-      ------------------------------------------------------------
-      pCmdBuffer  UINT16  Pointer to the mass transaction command buffer
-      bCmdSize    UINT8   Size of the command buffer
-      bXferDir    UINT8   Transfer direction (BIT7)
-      fpBuffer    UINT32  Far pointer of the data buffer (IN/OUT)
-      dwLength    UINT32  Length of the data buffer
-      wPreSkip    UINT16  Number of bytes to skip before getting actual data
-      wPostSkip   UINT16  Number of bytes to skip after getting actual data
-      wMiscFlag   UINT16  Flag for special cases refer USBM_XACT_FLAG_XXX
-**/
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name:        MASS_XACT_STRUC
+//
+// Description: This structure holds the information needed for the mass
+//      transaction (for CBI or BULK)
+//
+// Fields:   Name       Type        Description
+//      ------------------------------------------------------------
+//      pCmdBuffer  UINT16  Pointer to the mass transaction command buffer
+//      bCmdSize    UINT8   Size of the command buffer
+//      bXferDir    UINT8   Transfer direction (BIT7)
+//      fpBuffer    UINT32  Far pointer of the data buffer (IN/OUT)
+//      dwLength    UINT32  Length of the data buffer
+//      wPreSkip    UINT16  Number of bytes to skip before getting actual data
+//      wPostSkip   UINT16  Number of bytes to skip after getting actual data
+//      wMiscFlag   UINT16  Flag for special cases refer USBM_XACT_FLAG_XXX
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
 
 typedef struct {
     UINT8       *fpCmdBuffer;
@@ -667,7 +1872,17 @@ typedef struct _QUEUE_T{
     volatile int head;
     volatile int tail;
 } QUEUE_T;
-
+										//(EIP38434+)>
+typedef struct _ABS_MOUSE{
+    UINT8   ReportID;
+    UINT8   ButtonStauts;
+    UINT16  Xcoordinate;
+    UINT16  Ycoordinate;
+    UINT16  Pressure;
+	UINT16	Max_X;
+	UINT16  Max_Y;
+} ABS_MOUSE;
+										//<(EIP38434+)
 typedef struct MOUSE_DATA{
     UINT8   ButtonStatus;
     INT32   MouseX;
@@ -678,19 +1893,24 @@ typedef struct MOUSE_DATA{
 
 #define MAX_NOTIFICATIONS_COUNT 100
 
-/**
-    USB Global Data Area structure
-
-**/
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name:        USB_GLOBAL_DATA
+//
+// Description: USB Global Data Area structure
+//
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
 
 typedef struct {
+    UINT32          dUSBSignature;
     USB_VERSION     stUSBVersion;
     UINT32          dUSBStateFlag;
     UINT16          aErrorLogBuffer[MAX_USB_ERRORS_NUM];
     UINT8           bErrorLogIndex;
-    HCD_HEADER      aHCDriverTable[MAX_HC_TYPES * 2];           // For 4 type of HC
-    DEV_DRIVER      aDevDriverTable[MAX_DEVICE_TYPES * 2];      // For 5 types of devices
-    DEV_DRIVER      aDelayedDrivers[MAX_DEVICE_TYPES * 2];      // For 5 types of devices
+    HCD_HEADER      aHCDriverTable[MAX_HC_TYPES];           // For 4 type of HC
+    DEV_DRIVER      aDevDriverTable[MAX_DEVICE_TYPES];      // For 5 types of devices
+    DEV_DRIVER      aDelayedDrivers[MAX_DEVICE_TYPES];      // For 5 types of devices
     DEV_INFO        aDevInfoTable[MAX_DEVICES];
     HC_STRUC        **HcTable;
     UINT8           HcTableCount;
@@ -699,7 +1919,7 @@ typedef struct {
     DEV_INFO        HddHotplugDev;
     DEV_INFO        CdromHotplugDev;
     UINT8           bCallBackFunctionIndex;
-    CALLBACK_FUNC   aCallBackFunctionTable[MAX_CALLBACK_FUNCTION * 2];
+    CALLBACK_FUNC   aCallBackFunctionTable[MAX_CALLBACK_FUNCTION];
     UINT64          DeviceAddressMap;
     UINT8           bEnumFlag;
 	UINT32			MemPages;
@@ -722,7 +1942,6 @@ typedef struct {
     UINT8           bCurrentUSBKeyCode;
     UINT8           bUSBKBShiftKeyStatus;
     UINT8           bNonUSBKBShiftKeyStatus;
-    UINT8           KbShiftKeyStatusUnderOs;
     UINT8           bUSBKBC_ExtStatusFlag;
     UINT8           bUSBDeviceList;
     UINT8           bSet2ScanCode;          // Temporary storage for the scan code set 2 scan code
@@ -739,13 +1958,16 @@ typedef struct {
     UINT8           bKbdDataReady;
     UINT8           aKBInputBuffer[16];     // Keyboard expanded input buffer pointer (null-terminated)
     UINT8           bCCB;
+    VOID            *EfiKeyboardBuffer;
     UINT8           RepeatKey;
+    HC_STRUC        *fpSavedHCStruc;      // Temporary location to store the HCStruc pointer
     HC_STRUC        *fpKeyRepeatHCStruc;
     DEV_INFO        *fpKeyRepeatDevInfo;
     DEV_INFO        *aUSBKBDeviceTable[USB_DEV_HID_COUNT];
 // Added by mouse driver
     MOUSE_DATA      MouseData;				
-    UINT8           aMouseInputBuffer[12];
+    UINT8           aMouseInputBuffer[15];
+    ABS_MOUSE       AbsMouseData[10];			//(EIP38434+)
 // Mouse input buffer head and tail pointers
     UINT8           *fpMouseInputBufferHeadPtr;
     UINT8           *fpMouseInputBufferTailPtr;
@@ -764,6 +1986,7 @@ typedef struct {
     //UINT16          wMassTempData;
     UINT8           bUSBStorageDeviceDelayCount;
     UINT16          wBulkDataXferDelay;
+    MASS_XACT_STRUC stMassXactStruc;
 // Flag that allows mass storage device to handle special conditions. The
 // bit pattern is defined by the USBMASS_MISC_FLAG_XXX equates in USB.EQU
     UINT16          wMassStorageMiscFlag;
@@ -783,9 +2006,10 @@ typedef struct {
     UINT8           bLastCommandStatus;
     UINT32          dLastCommandStatusExtended;
 // Added by EHCI driver
-//    EHCI_QH         *fpQHAsyncXfer;
+    //UINT8           aControlSetupData[8];
+    EHCI_QH         *fpQHAsyncXfer;
     UINT8           bIgnoreConnectStsChng;
-    UINT8           ProcessingPeriodicList;
+    UINT8           bProcessingPeriodicList;
     UINT8           bHandOverInProgress;
     HC_STRUC		*RootHubHcStruc;
 
@@ -812,19 +2036,7 @@ typedef struct {
     UINT8			UsbHiSpeedSupport;
     USB_TIMING_POLICY   UsbTimingPolicy;
     USB_SUPPORT_SETUP   UsbSetupData;	//(EIP99882+)
-    UINTN           PciExpressBaseAddress;
-    BOOLEAN         EfiMakeCodeGenerated;
-    BOOLEAN         LegacyMakeCodeGenerated;
-    UINT8           IsKbcAccessBlocked;
-    UINT8           MsOrgButtonStatus;
-    UINT8           CcidSequence;
-    DLIST           DevConfigInfoList; 
 } USB_GLOBAL_DATA;
-
-typedef struct{
-    USB_DEV_CONFIG_INFO DevConfigInfo;
-    DLINK   Link;
-} USB_DEV_CONFIG_LINK;
 
 // Note: If additional space is needed in USB data segment,
 // MAX_BULK_DATA_SIZE can be changed to 200h without significant
@@ -865,26 +2077,16 @@ typedef struct{
 #define USB_PORT_STAT_DEV_FULLSPEED                 BIT2
 #define USB_PORT_STAT_DEV_HISPEED                   0//(BIT1 + BIT2)
 #define USB_PORT_STAT_DEV_SUPERSPEED                BIT3
-#define USB_PORT_STAT_DEV_SPEED_MASK                (BIT1 + BIT2 + BIT3 + BIT7)
+#define USB_PORT_STAT_DEV_SPEED_MASK                (BIT1 + BIT2 + BIT3)
 #define USB_PORT_STAT_DEV_SPEED_MASK_SHIFT          0x1
 #define USB_PORT_STAT_DEV_CONNECT_CHANGED           BIT4
 #define USB_PORT_STAT_DEV_ENABLED					BIT5
 #define USB_PORT_STAT_DEV_OWNER                     BIT6
-#define USB_PORT_STAT_DEV_SUPERSPEED_PLUS           BIT7
-#define USB_PORT_STAT_DEV_SUSPEND                   BIT8
-#define USB_PORT_STAT_DEV_OVERCURRENT               BIT9
-#define USB_PORT_STAT_DEV_RESET                     BIT10
-#define USB_PORT_STAT_DEV_POWER                     BIT11
-#define USB_PORT_STAT_DEV_ENABLE_CHANGED            BIT12
-#define USB_PORT_STAT_DEV_SUSPEND_CHANGED           BIT13
-#define USB_PORT_STAT_DEV_OVERCURRENT_CHANGED       BIT14
-#define USB_PORT_STAT_DEV_RESET_CHANGED             BIT15
 
 #define USB_DEV_SPEED_LOW	(USB_PORT_STAT_DEV_LOWSPEED >> USB_PORT_STAT_DEV_SPEED_MASK_SHIFT)
 #define USB_DEV_SPEED_FULL	(USB_PORT_STAT_DEV_FULLSPEED >> USB_PORT_STAT_DEV_SPEED_MASK_SHIFT)
 #define USB_DEV_SPEED_HIGH	(USB_PORT_STAT_DEV_HISPEED >> USB_PORT_STAT_DEV_SPEED_MASK_SHIFT)
 #define USB_DEV_SPEED_SUPER	(USB_PORT_STAT_DEV_SUPERSPEED >> USB_PORT_STAT_DEV_SPEED_MASK_SHIFT)
-#define USB_DEV_SPEED_SUPER_PLUS	(USB_PORT_STAT_DEV_SUPERSPEED_PLUS >> USB_PORT_STAT_DEV_SPEED_MASK_SHIFT)
 
 //---------------------------------------------------------------------------
 
@@ -1205,19 +2407,23 @@ typedef struct {
 #define INTR_CNTRLR_SLAVE_PORT      0x0A0
 #define READ_IN_SERVICE_REGISTER    0x00B
 
-/**
-    This structure is used to define a non-compliant USB device
-
- Fields:   Name       Type        Description
-      ------------------------------------------------------------
-      wVID        WORD        Vendor ID of the device
-      wDID        WORD        Device ID of the device
-      bBaseClass  BYTE        Base class of the device
-      bSubClass   BYTE        Sub class of the device
-      bProtocol   BYTE        Protocol used by the device
-      wFlags      INCMPT_FLAGS    Incompatibility flags
-
-**/
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name:        USB_BADDEV_STRUC
+//
+// Description: This structure is used to define a non-compliant USB device
+//
+// Fields:   Name       Type        Description
+//      ------------------------------------------------------------
+//      wVID        WORD        Vendor ID of the device
+//      wDID        WORD        Device ID of the device
+//      bBaseClass  BYTE        Base class of the device
+//      bSubClass   BYTE        Sub class of the device
+//      bProtocol   BYTE        Protocol used by the device
+//      wFlags      INCMPT_FLAGS    Incompatibility flags
+//
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
 
 typedef struct {
     UINT16  wVID;
@@ -1229,34 +2435,33 @@ typedef struct {
 } USB_BADDEV_STRUC;
 
 
-/**
- Type:        Equates
-
-    This equates are used to describe the incompatible USB devices. 
-    The bits defined are:
-    BIT     Description
-    =============================================================
-    0       1, indicates this device does not support mode sense command
-    1       1, indicates that this is a single LUN device (even though it is reporting as multiple LUN)
-    2       1, indicates that this device should be disabled
-    3       1, indicates this device does not support test unit ready command
-    4       1, indicates this device responds with wrong BOT status value
-    5       1, indicates that this device does not support start unit command
-    6       1, indicates that this device does not support read format capacity command
-    7       1, indicates that this hispeed device has to be in full speed always
-    8       1, indicates that this hispeed device has to be in hispeed always
-    9       1, indicated that device does not support set boot protocol command
-    10      1, indicated that device does not support get max lun command
-    11      1, indicated that device is a Rate Matching Hub(RMH)
-    12      1, indicated that data of this hid device is overflow
-    13      1, indicated that this mouse device only returns report protocol data
-    14      1, indicated that this hid device only supports report protocol
-    15      1, indicated that this hid device only supports boot protocol
-
-    @note  The device is identified by the vendor id and device id
-      associated with the flags above
-
-**/
+//<AMI_GHDR_START>
+//----------------------------------------------------------------------------
+// Name:        INCMPT_FLAGS (Incompatibility attributes)
+//
+// Type:        Equates
+//
+// Description: This equates are used to describe the incompatible USB mass
+//      storage devices. The bits defined are:
+//      BIT     Description
+//      =============================================================
+//      0       1, indicates this device does not support mode sense command
+//      1       1, indicates that this is a single LUN device (even though it is reporting as multiple LUN)
+//      2       1, indicates that this device should be disabled
+//      3       1, indicates this device does not support test unit ready command
+//      4       1, indicates this device responds with wrong BOT status value
+//      5       1, indicates that this device does not support start unit command
+//      6       1, indicates that this device does not support read format capacity command
+//      7       1, indicates that this hispeed device has to be in full speed always
+//      8       1, indicates that this hispeed device has to be in hispeed always
+//
+// Notes:   The device is identified by the vendor id and device id
+//      associated with the flags above
+//
+// Referrals:   USB_BADDEV_STRUC
+//
+//----------------------------------------------------------------------------
+//<AMI_GHDR_END>
 
 #define USB_INCMPT_MODE_SENSE_NOT_SUPPORTED         BIT0
 #define USB_INCMPT_SINGLE_LUN_DEVICE                BIT1
@@ -1272,13 +2477,17 @@ typedef struct {
 #define USB_INCMPT_RMH_DEVICE                       BIT11
 #define USB_INCMPT_HID_DATA_OVERFLOW                BIT12
 #define USB_INCMPT_BOOT_PROTOCOL_IGNORED            BIT13
-#define USB_INCMPT_REPORT_PROTOCOL_ONLY             BIT14
-#define USB_INCMPT_HID_BOOT_PROTOCOL_ONLY           BIT15
+#define USB_INCMPT_REPORT_PROTOCOL_ONLY             BIT14	//(EIP38434+)
 
-/**
-    state information for USB_HC_PROTOCOL implementation
 
-**/
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name:        HcDxeRecord
+//
+// Description: state information for USB_HC_PROTOCOL implementation
+//
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
 
 typedef struct _HC_DXE_RECORD {
     EFI_USB_HC_PROTOCOL hcprotocol;
@@ -1300,34 +2509,21 @@ typedef struct {
     UINT8           Data[1];
 } USBHC_INTERRUPT_DEVNINFO_T;
 
-#define USB_ISOC_XFER_MEM_LENGTH 0xc00
-
-typedef struct {
-    EFI_ASYNC_USB_TRANSFER_CALLBACK  CallbackFunction;
-    VOID*           Context;
-    EFI_EVENT       Event;
-    VOID            *Data;
-    UINTN           DataLength;
-    UINT8           Complete;
-} USBHC_ASYNC_ISOC_CONTEXT;
-
 int VALID_DEVINFO(DEV_INFO* pDevInfo);
-VOID    USB_AbortConnectDev(DEV_INFO*);
-EFI_STATUS  UsbHcStrucValidation(HC_STRUC*);
-EFI_STATUS  UsbDevInfoValidation(DEV_INFO*);
+VOID    USB_AbortConnectDev(DEV_INFO* );
 
 #endif      // __USB_H
 
-//**********************************************************************
-//**********************************************************************
-//**                                                                  **
-//**        (C)Copyright 1985-2016, American Megatrends, Inc.         **
-//**                                                                  **
-//**                       All Rights Reserved.                       **
-//**                                                                  **
-//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093        **
-//**                                                                  **
-//**                       Phone: (770)-246-8600                      **
-//**                                                                  **
-//**********************************************************************
-//**********************************************************************
+//****************************************************************************
+//****************************************************************************
+//**                                                                        **
+//**             (C)Copyright 1985-2008, American Megatrends, Inc.          **
+//**                                                                        **
+//**                          All Rights Reserved.                          **
+//**                                                                        **
+//**                 5555 Oakbrook Pkwy, Norcross, GA 30093                 **
+//**                                                                        **
+//**                          Phone (770)-246-8600                          **
+//**                                                                        **
+//****************************************************************************
+//****************************************************************************

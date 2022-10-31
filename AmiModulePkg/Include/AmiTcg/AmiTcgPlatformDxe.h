@@ -25,14 +25,16 @@
 //
 //<AMI_FHDR_END>
 //*************************************************************************
+#include <EFI.h>
 #include <AmiTcg\TcgPc.h>
-//#include <AmiDxeLib.h>
+#include <AmiLib.h>
+#include <AmiDxeLib.h>
 #include <AmiTcg\TcgCommon.h>
 #include <token.h>
 #include <AmiTcg\tcg.h>
 #if SMBIOS_SUPPORT == 1
-//  #include <Protocol\SmBios.h>
-//  #include <Protocol\AmiSmBios.h>
+  #include <Protocol\SmBios.h>
+  #include <Protocol\AmiSmBios.h>
 #endif
 #include <AmiTcg\TcgMisc.h>
 #include <Protocol\TcgTcmService.h>
@@ -42,10 +44,7 @@
 #include "Protocol/CpuIo.h"
 #include "Protocol/FirmwareVolume.h"
 #include "Protocol/DevicePath.h"
-#include <Library\IoLib.h>
-#include<Library/UefiRuntimeServicesTableLib.h>
-#include <Library/UefiBootServicesTableLib.h>
-#include<Protocol/AmiTpmSupportTypeProtocol.h>
+
 #if ( defined(CSM_SUPPORT) && (CSM_SUPPORT != 0) )
 #include "Protocol/LegacyBios.h"
 #endif
@@ -56,8 +55,7 @@
 #include "Protocol/SimpleTextOut.h"
 #include "Protocol/SimpleTextIn.h"
 //#include "Protocol/UgaDraw.h"
-//#include "Protocol/AMIPostMgr.h"
-/*
+#include "Protocol/AMIPostMgr.h"
 #if EFI_SPECIFICATION_VERSION>0x20000 
     #include "Include\UefiHii.h"
     #include "Protocol/HiiDatabase.h"
@@ -65,14 +63,12 @@
 #else
   #include "Protocol/HII.h"
 #endif
-*/
 #include <Protocol\SmmBase.h>
 #include <Protocol\SmmSwDispatch.h>
-#include <Protocol\Runtime.h>
-//#include <Include\Acpi.h>
-//#include <Include\Acpi11.h>
-//#include "AmiTcgPlatformDxeLib.h"
-//#include <AcpiRes.h>
+#include <Include\Acpi.h>
+#include <Include\Acpi11.h>
+#include "AmiTcgPlatformDxeLib.h"
+#include <AcpiRes.h>
 
 
 

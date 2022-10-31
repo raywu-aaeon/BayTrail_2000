@@ -171,15 +171,11 @@ ScPolicyInitDxe(
 
 **/
 {
-    EFI_HANDLE              Handle;
-    EFI_STATUS              Status;
-    UINT8                   PortIndex;
-//EIP176554 >>
-    SB_HDA_VERB_TABLE       *AzaliaVerbTable;
-    UINT8                   VerbTableNum = 0;
-//EIP176554 <<
+    EFI_HANDLE  Handle;
+    EFI_STATUS  Status;
+    UINT8	PortIndex;
 #if CRB_VERB_TABLE_SUPPORT
-    UINT32                  VerbIndex;
+    UINT32	VerbIndex;
 #endif
 
     ///
@@ -481,33 +477,28 @@ ScPolicyInitDxe(
   mPchPolicyData.DefaultSvidSid->SubSystemVendorId = VLV_DEFAULT_VID;
   mPchPolicyData.DefaultSvidSid->SubSystemId       = VLV_DEFAULT_SID;
 
-//EIP176554 >>
-    Status = SbHdaVerbTableOverride (&AzaliaVerbTable, &VerbTableNum, VERB_TBL_LIB_PEI);
-    if (Status == EFI_SUCCESS) {
-      mAzaliaConfig.AzaliaVerbTableNum  = VerbTableNum;
-      mAzaliaConfig.AzaliaVerbTable     = (PCH_AZALIA_VERB_TABLE *) AzaliaVerbTable;
-      mAzaliaConfig.ResetWaitTimer      = 300;
-      DEBUG((EFI_D_INFO, "mAzaliaConfig.AzaliaVerbTableNum = %x.\n",mAzaliaConfig.AzaliaVerbTableNum));
+  mAzaliaConfig.AzaliaVerbTableNum  = sizeof (mAzaliaVerbTable) / sizeof (PCH_AZALIA_VERB_TABLE) - 1;
+  mAzaliaConfig.AzaliaVerbTable     = mAzaliaVerbTable;
+  mAzaliaConfig.ResetWaitTimer      = 300;
+  DEBUG((EFI_D_INFO, "mAzaliaConfig.AzaliaVerbTableNum = %x.\n",mAzaliaConfig.AzaliaVerbTableNum));
 #if CRB_VERB_TABLE_SUPPORT
-      for (VerbIndex=0; VerbIndex<mAzaliaConfig.AzaliaVerbTableNum ; VerbIndex++){
-        if(mAzaliaConfig.AzaliaVerbTable[VerbIndex].VerbTableHeader.VendorDeviceId == 0x80862882){ //EIP136267
-          DEBUG((EFI_D_INFO, "Find Intel VLV HDMI Verb table.\n"));
+  for (VerbIndex=0; VerbIndex<mAzaliaConfig.AzaliaVerbTableNum ; VerbIndex++){
+    if(mAzaliaVerbTable[VerbIndex].VerbTableHeader.VendorDeviceId == 0x80862882){ //EIP136267
+      DEBUG((EFI_D_INFO, "Find Intel VLV HDMI Verb table.\n"));
   		
-          if (PchPolicyData->HdmiCodecPortB == PCH_DEVICE_DISABLE) {
-            mAzaliaConfig.AzaliaVerbTable[VerbIndex].VerbTableData[3] |= 0x40;
-          }
-          if (PchPolicyData->HdmiCodecPortC == PCH_DEVICE_DISABLE) {
-            mAzaliaConfig.AzaliaVerbTable[VerbIndex].VerbTableData[7] |= 0x40;
-          }
-          if (PchPolicyData->HdmiCodecPortD == PCH_DEVICE_DISABLE) {
-            mAzaliaConfig.AzaliaVerbTable[VerbIndex].VerbTableData[11] |= 0x40;
-          }
-          break;
-        }
+      if (PchPolicyData->HdmiCodecPortB == PCH_DEVICE_DISABLE) {
+        mAzaliaVerbTable[VerbIndex].VerbTableData[3] |= 0x40;
       }
-#endif
+      if (PchPolicyData->HdmiCodecPortC == PCH_DEVICE_DISABLE) {
+        mAzaliaVerbTable[VerbIndex].VerbTableData[7] |= 0x40;
+      }
+      if (PchPolicyData->HdmiCodecPortD == PCH_DEVICE_DISABLE) {
+        mAzaliaVerbTable[VerbIndex].VerbTableData[11] |= 0x40;
+      }
+      break;
     }
-//EIP176554 <<
+  }
+#endif
 
     DEBUG((EFI_D_INFO, "mPchPolicyData.Revision :%x \n",mPchPolicyData.Revision));
     DEBUG((EFI_D_INFO, "mPchPolicyData.BusNumber :%x \n",mPchPolicyData.BusNumber));

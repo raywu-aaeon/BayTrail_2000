@@ -1,7 +1,7 @@
 #//*************************************************************************
 #//*************************************************************************
 #//**                                                                     **
-#//**        (C)Copyright 1985-2013, American Megatrends, Inc.            **
+#//**        (C)Copyright 1985-2012, American Megatrends, Inc.            **
 #//**                                                                     **
 #//**                       All Rights Reserved.                          **
 #//**                                                                     **
@@ -82,7 +82,7 @@
 
 [Guids]
   gEfiEventExitBootServicesGuid                 ## CONSUMES
-  gEfiNetworkStackSetupGuid                     ## CONSUMES             # AMI PORTING.
+
 
 [Protocols]
   gEfiPciIoProtocolGuid                         # PROTOCOL ALWAYS_CONSUMED

@@ -9,7 +9,4 @@
 [files]
 "IdeBusSrc.sdl"	
 "IdeBusSrc.chm"	
-[parts]
-"IdeBusProtocol"
-"IdeBusBoardProtocol"
 <endComponent>

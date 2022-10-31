@@ -1,7 +1,7 @@
 //*************************************************************************
 //*************************************************************************
 //**                                                                     **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.            **
+//**        (C)Copyright 1985-2013, American Megatrends, Inc.            **
 //**                                                                     **
 //**                       All Rights Reserved.                          **
 //**                                                                     **
@@ -13,11 +13,17 @@
 //*************************************************************************
 
 //*****************************************************************************
-/** @file 
-    This file contains the Firmware Version Data Structure definition.  This structure
-    is filled out a build time token definitions that give information about the current 
-    BIOS code.
-*/
+//<AMI_FHDR_START>
+//----------------------------------------------------------------------------
+//
+// Name:        Fid.cbin
+//
+// Description: 
+//  This file the Firmware Version Data Structure definition
+//
+//----------------------------------------------------------------------------
+//<AMI_FHDR_END>
+
 
 // Module specific Includes
 #include <Token.h>
@@ -25,10 +31,8 @@
 #include <AmiLib.h>
 #include <Fid.h>
 
-/// macro defined to convert a integer value to a string
 #define THREE_CHAR_ARRAY(x) {(x)/10+'0',(x)%10+'0',0}
 
-/// This data structure is completed at build time and stored in a binary file in the ROM image.
 FW_VERSION  FwVersionData = {
     "$FID",                                     //$FID signature of the FW VERSION STRUCTURE
     0x04,                                       //Version 4
@@ -61,7 +65,7 @@ FW_VERSION  FwVersionData = {
 //*************************************************************************
 //*************************************************************************
 //**                                                                     **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.            **
+//**        (C)Copyright 1985-2013, American Megatrends, Inc.            **
 //**                                                                     **
 //**                       All Rights Reserved.                          **
 //**                                                                     **

@@ -1,7 +1,7 @@
 //*************************************************************************
 //*************************************************************************
 //**                                                                     **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.            **
+//**        (C)Copyright 1985-2012, American Megatrends, Inc.            **
 //**                                                                     **
 //**                       All Rights Reserved.                          **
 //**                                                                     **
@@ -284,7 +284,7 @@ Ip4ConfigConvertIfrNvDataToDeviceConfigData (
     ZeroMem (&Ip4ConfigInstance->Ip4ConfigCallbackInfo.Gateway, sizeof (EFI_IPv4_ADDRESS));
   }
 
-  NicInfo->Permanent = TRUE;
+  NicInfo->Perment = TRUE;
   CopyMem (&NicInfo->NicAddr, &Ip4ConfigInstance->NicAddr, sizeof (NIC_ADDR));
 
   return EfiNicIp4ConfigSetInfo (Ip4ConfigInstance, NicInfo, TRUE);

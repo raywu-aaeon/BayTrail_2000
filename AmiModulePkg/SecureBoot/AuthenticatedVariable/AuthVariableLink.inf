@@ -13,8 +13,14 @@ AuthVariableLink.c
   MdePkg/MdePkg.dec
   AmiCompatibilityPkg/AmiCompatibilityPkg.dec
   AmiModulePkg/AmiModulePkg.dec
-  AmiCryptoPkg/AmiCryptoPkg.dec 
+  IntelFrameworkPkg\IntelFrameworkPkg.dec
+  #Build/Platform.dec
+
+[LibraryClasses]
+#  AmiDxeLib
+#  UefiDriverEntryPoint
 
 [Guids]
 gEfiGlobalVariableGuid
 
+[Protocols]

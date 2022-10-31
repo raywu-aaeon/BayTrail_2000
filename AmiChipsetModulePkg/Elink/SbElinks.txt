@@ -1,1 +1,0 @@
-#define SB_RESET_CALLBACK_LIST @Elink(SbResetCallbackList, "@Child", " ", "%n")

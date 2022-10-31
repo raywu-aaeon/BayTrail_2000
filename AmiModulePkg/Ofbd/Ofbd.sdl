@@ -25,16 +25,6 @@ TOKEN
 	TargetH = Yes
 End
 
-TOKEN
-	Name  = "OFBD_FOR_ARM_SUPPORT"
-	Value  = "0"
-	Help  = "Switch for Enabling OFBD for ARM support in the project"
-	TokenType = Boolean
-	TargetEQU = Yes
-	TargetMAK = Yes
-	TargetH = Yes
-End
-
 PATH
 	Name  = "OFBD_DIR"
 	Help  = "AMI OFBD files source directory"
@@ -47,40 +37,18 @@ MODULE
 End
 
 ELINK
-	Name  = "$(OFBD_DIR)/Ofbd.h"
-	Parent  = "OFBD_FUNC_INCLUDE_FILES"
-	InvokeOrder = BeforeParent
-End
-
-ELINK
 	Name  = "OFBD_INIT_FUNC_LIST"
 	InvokeOrder = ReplaceParent
 End
 
 ELINK
 	Name  = "OFBD_IN_SMM_FUNC_LIST"
-	Token = "OFBD_FOR_ARM_SUPPORT" "=" "0"
 	InvokeOrder = ReplaceParent
 End
 
 ELINK
-	Name  = "OFBD_NOT_SMM_FUNC_LIST"
-	Token = "OFBD_FOR_ARM_SUPPORT" "=" "0"
-	InvokeOrder = ReplaceParent
-End
-
-ELINK
-	Name  = "AmiBufferValidationLib"
-	Parent  = "AMI_OFBD_LIBRARIES"
-	Token = "OFBD_FOR_ARM_SUPPORT" "=" "0"
-	InvokeOrder = AfterParent
-End
-
-ELINK
-	Name  = "gEfiEventVirtualAddressChangeGuid"
-	Parent  = "AMI_OFBD_GUIDS"
-	Token = "OFBD_FOR_ARM_SUPPORT" "=" "1"
-	InvokeOrder = AfterParent
+    Name  = "OFBD_NOT_SMM_FUNC_LIST"
+    InvokeOrder = ReplaceParent
 End
 
 ELINK
@@ -91,6 +59,12 @@ End
 ELINK
 	Name  = "OFBD_FUNC_SOURCES_FILES"
 	InvokeOrder = ReplaceParent
+End
+
+ELINK
+	Name  = "$(OFBD_DIR)/Ofbd.h"
+	Parent  = "OFBD_FUNC_INCLUDE_FILES"
+	InvokeOrder = BeforeParent
 End
 
 ELINK

@@ -8,7 +8,7 @@
 --*/
 /*++
 
-Copyright (c) 2004 - 2015 Intel Corporation. All rights reserved
+Copyright (c) 2004 - 2010 Intel Corporation. All rights reserved
 This software and associated documentation (if any) is furnished
 under a license and may only be used or copied in accordance
 with the terms of the license. Except as permitted by such
@@ -30,7 +30,6 @@ Abstract:
 #ifdef ECP_FLAG
 EFI_GUID gEfiBootScriptSaveProtocolGuid = EFI_BOOT_SCRIPT_SAVE_PROTOCOL_GUID;
 EFI_GUID gEfiSpiProtocolGuid = EFI_SPI_PROTOCOL_GUID;
-EFI_GUID gEfiSpiDataProtocolGuid = EFI_SPI_DATA_PROTOCOL_GUID;
 #else
 #include <Guid/EventGroup.h>
 #include <TianoApi.h>
@@ -50,7 +49,6 @@ EFI_GUID gEfiSpiDataProtocolGuid = EFI_SPI_DATA_PROTOCOL_GUID;
 // Global variables
 //
 SPI_INSTANCE  *mSpiInstance;
-EFI_SPI_DATA_PROTOCOL mSpiDataInfoProtocol;
 EFI_EVENT     mVirtualAddressChangeEvent = NULL;
 static CONST UINT32 mSpiRegister[] = {
   R_PCH_SPI_SSFCS,
@@ -164,7 +162,7 @@ Returns:
   // It will assert if SPI memory space is not allocated
   // The caller is responsible for the existence and allocation of the SPI memory spaces
   //
-  BaseAddress = (UINTN) (mSpiInstance->SpiBase);
+  BaseAddress = (EFI_PHYSICAL_ADDRESS) (mSpiInstance->SpiBase);
   Length      = 0x1000;
 
   Status      = gDS->GetMemorySpaceDescriptor (BaseAddress, &GcdMemorySpaceDescriptor);
@@ -182,7 +180,7 @@ Returns:
   //
   //  LPC memory space
   //
-  BaseAddress = (UINTN) PcdGet64 (PcdPciExpressBaseAddress) + (EFI_PHYSICAL_ADDRESS) PCI_LIB_ADDRESS (
+  BaseAddress = (EFI_PHYSICAL_ADDRESS) PcdGet64 (PcdPciExpressBaseAddress) + (EFI_PHYSICAL_ADDRESS) PCI_LIB_ADDRESS (
                                                                                                       DEFAULT_PCI_BUS_NUMBER_PCH,
                                                                                                       PCI_DEVICE_NUMBER_PCH_LPC,
                                                                                                       PCI_FUNCTION_NUMBER_PCH_LPC,
@@ -330,23 +328,4 @@ Returns:
   } else {
     ASSERT_EFI_ERROR (Status);
   }
-  
-  ///
-  /// Initialize and Install the SPI Data protocol
-  ///
-  mSpiDataInfoProtocol.BiosSize = mSpiInstance->SpiInitTable.BiosSize;
-  mSpiDataInfoProtocol.BiosStartMemoryAddress = 0xFFFFFFFF - mSpiDataInfoProtocol.BiosSize + 1;
-  DEBUG ((EFI_D_INFO, "SPI : BiosStartMemoryAddress: %x, BiosSize: %x\n", mSpiDataInfoProtocol.BiosStartMemoryAddress, mSpiDataInfoProtocol.BiosSize));
-  Status = gBS->InstallMultipleProtocolInterfaces (
-                  &(mSpiInstance->Handle),
-                  &gEfiSpiDataProtocolGuid,
-                  &mSpiDataInfoProtocol,
-                  NULL
-                  );
-  if (EFI_ERROR(Status))
-  {
-    ASSERT(FALSE);
-  }
-
-  return;
 }

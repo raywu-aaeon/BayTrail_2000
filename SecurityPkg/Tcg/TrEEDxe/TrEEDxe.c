@@ -1620,9 +1620,7 @@ DriverEntry (
   )
 {
   EFI_STATUS                        Status;
-#if 0 //EIP173375 
   EFI_EVENT                         Event;
-#endif //EIP173375
   VOID                              *Registration;
   UINT32                            MaxCommandSize;
   UINT32                            MaxResponseSize;
@@ -1732,7 +1730,7 @@ DriverEntry (
     // Install ACPI Table
     //
     EfiCreateProtocolNotifyEvent (&gEfiAcpiTableProtocolGuid, TPL_CALLBACK, InstallAcpiTable, NULL, &Registration);
-#if 0 //EIP173375
+
     //
     // Measure handoff tables, Boot#### variables etc.
     //
@@ -1774,7 +1772,6 @@ DriverEntry (
       MyEvent = EfiCreateProtocolNotifyEvent (&gEfiVariableWriteArchProtocolGuid, TPL_CALLBACK, MeasureSecureBootPolicy, NULL, &Registration);
       DEBUG ((EFI_D_ERROR, "EfiCreateProtocolNotifyEvent - %x\n", MyEvent));
     }
-#endif //EIP173375
   }
 
   //

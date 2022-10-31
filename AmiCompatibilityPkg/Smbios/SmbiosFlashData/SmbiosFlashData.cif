@@ -5,7 +5,6 @@
 	RefName = "SmbiosFlashData"
 [INF]
 "SmbiosFlashData.inf"
-"SmbiosFlashDataDt.inf"
 [files]
 "SmbiosFlashData.sdl"
 <endComponent>

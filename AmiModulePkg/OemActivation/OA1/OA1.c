@@ -1,7 +1,7 @@
 //****************************************************************************
 //****************************************************************************
 //**                                                                        **
-//**             (C)Copyright 1985-2015, American Megatrends, Inc.          **
+//**             (C)Copyright 1985-2013, American Megatrends, Inc.          **
 //**                                                                        **
 //**                          All Rights Reserved.                          **
 //**                                                                        **
@@ -19,10 +19,13 @@
 //
 // $Date: $
 //*****************************************************************************
-/** @file OA1.c
-    Microsoft OEM Activation 1.0
-
-**/
+//<AMI_FHDR_START>
+//
+// Name: OA1.c
+//
+// Description: Microsoft OEM Activation 1.0
+//
+//<AMI_FHDR_END>
 //*****************************************************************************
 
 
@@ -31,17 +34,22 @@
 #include "OA1.h"
 
 
-/**
-    This function locate resource binary by GUID. 
-
-        
-    @param ResourceGuid pointer to resource GUID
-    @param ResourceSectionGuid pointer to resource section GUID
-    @param Address pointer to returning address of the resource
-
-    @retval EFI_STATUS
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:   LocateSectionResource
+//
+// Description: This function locate resource binary by GUID. 
+//
+// Input:
+//  IN  EFI_GUID *ResourceGuid          - pointer to resource GUID
+//  IN  EFI_GUID *ResourceSectionGuid   - pointer to resource section GUID
+//  OUT UINT8 **Address                 - pointer to returning address of the resource
+//
+// Output:  EFI_STATUS
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 static EFI_STATUS LocateSectionResource(
     IN  EFI_GUID *ResourceFileGuid,
@@ -110,16 +118,21 @@ LocateSectionResource_exit:
 }
 
 
-/**
-    This function is the entry point of the OA1 eModule.
-               
-    @param 
-        ImageHandle - Image handle for this driver image.
-        SystemTable - Pointer to the EFI system table.
-
-    @retval EFI_STATUS
- 
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:    OA1_EntryPoint
+// 
+// Description:  This function is the entry point of the OA1 eModule.
+//               
+// Parameter:    
+//  ImageHandle - Image handle for this driver image.
+//  SystemTable - Pointer to the EFI system table.
+//
+// Return value: EFI_STATUS
+// 
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 EFI_STATUS OA1_EntryPoint(
     IN EFI_HANDLE ImageHandle,
@@ -173,7 +186,7 @@ EFI_STATUS OA1_EntryPoint(
 //****************************************************************************
 //****************************************************************************
 //**                                                                        **
-//**             (C)Copyright 1985-2015, American Megatrends, Inc.          **
+//**             (C)Copyright 1985-2013, American Megatrends, Inc.          **
 //**                                                                        **
 //**                          All Rights Reserved.                          **
 //**                                                                        **

@@ -1,7 +1,7 @@
 //****************************************************************************
 //****************************************************************************
 //**                                                                        **
-//**             (C)Copyright 1985-2015, American Megatrends, Inc.          **
+//**             (C)Copyright 1985-2012, American Megatrends, Inc.          **
 //**                                                                        **
 //**                          All Rights Reserved.                          **
 //**                                                                        **
@@ -19,10 +19,13 @@
 //
 // $Date: $
 //*****************************************************************************
-/** @file OA3.h
-    Header file for OA3 module.
-
-**/
+//<AMI_FHDR_START>
+//
+// Name: OA3.h
+//
+// Description: Header file for OA3 module.
+//
+//<AMI_FHDR_END>
 //*****************************************************************************
 
 #ifndef __MS_OA3_H
@@ -74,21 +77,26 @@
 
 #pragma pack (1)
 
-/**
-    This structure comes out of the document "M$ Digital Marker Pilot"
-
- Fields:   
-  Name            Length      Description
-  ------------------------------------------------------------------
-  Header          -           Standard ACPI header
-  Version         4           0x1
-  Reserved        4           0x0
-  DataType        4           0x1
-  DataReserved    4           0x0
-  DataLength      4           0x1D
-  Data            29          5x5 Product Key, including "-" (BH3RN-B7FDM-C7WGT-4CR4X-6CKHM) 
-
-**/
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+//
+// Name: MSDM_STRUCTURE
+//
+// Description: This structure comes out of the document "M$ Digital Marker Pilot"
+//
+// Fields:   
+//  Name            Length      Description
+//  ------------------------------------------------------------------
+//  Header          -           Standard ACPI header
+//  Version         4           0x1
+//  Reserved        4           0x0
+//  DataType        4           0x1
+//  DataReserved    4           0x0
+//  DataLength      4           0x1D
+//  Data            29          5x5 Product Key, including "-" (BH3RN-B7FDM-C7WGT-4CR4X-6CKHM) 
+//
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
 
 typedef struct _EFI_ACPI_MSDM_TABLE {
     ACPI_HDR    Header;
@@ -118,7 +126,7 @@ typedef struct _EFI_OA3_MSDM_STRUCTURE {
 //****************************************************************************
 //****************************************************************************
 //**                                                                        **
-//**             (C)Copyright 1985-2015, American Megatrends, Inc.          **
+//**             (C)Copyright 1985-2012, American Megatrends, Inc.          **
 //**                                                                        **
 //**                          All Rights Reserved.                          **
 //**                                                                        **

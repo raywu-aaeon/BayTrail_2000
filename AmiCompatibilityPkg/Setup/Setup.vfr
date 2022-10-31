@@ -1,7 +1,7 @@
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2009, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **
@@ -12,9 +12,25 @@
 //**********************************************************************
 //**********************************************************************
 
-/** @file
- *   Defines a formset, containing all the traditional forms from Aptio 4.x
- */
+//**********************************************************************
+// $Header: $
+//
+// $Revision: $
+//
+// $Date: $
+//**********************************************************************
+
+//<AMI_FHDR_START>
+//**********************************************************************
+//
+// Name:        Setup.vfr
+//
+// Description: 
+//  Defines a formset, containing all the traditional forms from Aptio 4.x
+//
+//**********************************************************************
+//<AMI_FHDR_END>
+#define MANUFACTURING 0
 
 #include "SetupPrivate.h"
 #define MAIN_FORM_SET
@@ -55,7 +71,6 @@ formset guid  = SETUP_FORM_SET_GUID,
     LEGACY_DEV_ORDER_VARSTORE
     BOOT_NOW_COUNT_VARSTORE
     EFI_SHELL_VARSTORE
-    defaultstore AmiMfgDefault, prompt = STRING_TOKEN(STR_EMPTY), attribute = 0x01;
     
 	#define MAIN_FORM_SET
 	#define ADVANCED_FORM_SET
@@ -72,71 +87,34 @@ formset guid  = SETUP_FORM_SET_GUID,
 	#undef CHIPSET_FORM_SET
 	#undef ADVANCED_FORM_SET
 	#undef MAIN_FORM_SET
-
-#define TOP_LEVEL_FORM_SET
-    form formid = AUTO_ID(SETUP_MAIN),
+    
+    form formid = AUTO_ID(SETUP_MAIN), // MAIN
         title = STRING_TOKEN(STR_SETUP);
         
         goto MAIN_MAIN, 
             prompt = STRING_TOKEN(STR_MAIN),
             help = STRING_TOKEN(STR_EMPTY);
-
-    // suppressif statements are added to hide the goto statements
-    // in the case that the AMITSE_HIDE_ROOT_PAGE token is disabled
-    #if defined(SHOW_ADVANCED_FORMSET)&&(SHOW_ADVANCED_FORMSET==0)
-        suppressif TRUE;
-    #endif
+            
         goto ADVANCED_MAIN, 
             prompt = STRING_TOKEN(STR_ADVANCED),
             help = STRING_TOKEN(STR_EMPTY);
-    #if defined(SHOW_ADVANCED_FORMSET)&&(SHOW_ADVANCED_FORMSET==0)
-        endif;
-    #endif
-
-    // suppressif statements are added to hide the goto statements
-    // in the case that the AMITSE_HIDE_ROOT_PAGE token is disabled
-    #if defined(SHOW_CHIPSET_FORMSET)&&(SHOW_CHIPSET_FORMSET==0)
-        suppressif TRUE;
-    #endif
+    
         goto CHIPSET_MAIN, 
             prompt = STRING_TOKEN(STR_CHIPSET),
             help = STRING_TOKEN(STR_EMPTY);
-    #if defined(SHOW_CHIPSET_FORMSET)&&(SHOW_CHIPSET_FORMSET==0)
-        endif;
-    #endif
-
-    // suppressif statements are added to hide the goto statements
-    // in the case that the AMITSE_HIDE_ROOT_PAGE token is disabled
-    #if defined(SHOW_SECURITY_FORMSET)&&(SHOW_SECURITY_FORMSET==0)
-        suppressif TRUE;
-    #endif
+    
         goto SECURITY_MAIN, 
             prompt = STRING_TOKEN(STR_SECURITY),
             help = STRING_TOKEN(STR_EMPTY);
-    #if defined(SHOW_SECURITY_FORMSET)&&(SHOW_SECURITY_FORMSET==0)
-        endif;
-    #endif
     
         goto BOOT_MAIN, 
             prompt = STRING_TOKEN(STR_BOOT),
             help = STRING_TOKEN(STR_EMPTY);
-            
-        #define FORM_SET_GOTO
-        #include <SetupDefinitions.h>
-        #undef FORM_SET_GOTO
-
         goto EXIT_MAIN, 
             prompt = STRING_TOKEN(STR_EXIT),
             help = STRING_TOKEN(STR_EMPTY);
-
+        
     endform;
-    
-    #define FORM_SET_FORM
-    #include <SetupDefinitions.h>
-    #undef FORM_SET_FORM
-
-#undef TOP_LEVEL_FORM_SET
-
     
 #define MAIN_FORM_SET
     form formid = AUTO_ID(MAIN_MAIN), // MAIN
@@ -148,6 +126,7 @@ formset guid  = SETUP_FORM_SET_GUID,
         INVENTORY(STRING_TOKEN(STR_BIOS_COMPLIANCY_NAME),STRING_TOKEN(STR_BIOS_COMPLIANCY_VALUE))
         INVENTORY(STRING_TOKEN(STR_BIOS_VERSION_NAME),STRING_TOKEN(STR_BIOS_VERSION_VALUE))
         INVENTORY(STRING_TOKEN(STR_BIOS_DATE_NAME),STRING_TOKEN(STR_BIOS_DATE_VALUE))
+
 
         #define FORM_SET_ITEM
         #include <SetupDefinitions.h>
@@ -161,11 +140,14 @@ formset guid  = SETUP_FORM_SET_GUID,
             oneof varid   = LANGUAGE.Value,
                 prompt    = STRING_TOKEN(STR_LANGUAGE_PROMPT),
                 help      = STRING_TOKEN(STR_LANGUAGE_HELP),
-                flags = 0, 
-                option text  = STRING_TOKEN(STR_EMPTY), value = 0, flags = 0;
-                option text  = STRING_TOKEN(STR_EMPTY), value = 1, flags = 0;
-                default = 0,
-                default = 0, defaultstore = AmiMfgDefault,
+                option
+                    text  = STRING_TOKEN(STR_EMPTY),
+                    value = 0,
+                    flags = DEFAULT;
+                option
+                    text  = STRING_TOKEN(STR_EMPTY),
+                    value = 1,
+                    flags = 0;
             endoneof;
         endif;
 
@@ -177,7 +159,7 @@ formset guid  = SETUP_FORM_SET_GUID,
                 minimum = 2005,
                 maximum = 2099,
                 step    = 1,
-                default = 2014,
+                default = 2005,
             month varid = Date.Month,
                 prompt  = STRING_TOKEN(STR_DATE),
                 help    = STRING_TOKEN(STR_DATE_HELP),
@@ -192,7 +174,6 @@ formset guid  = SETUP_FORM_SET_GUID,
                 maximum = 31,
                 step    = 1,
                 default = 1,
-           flags = STORAGE_TIME,
         enddate;
 
         time
@@ -201,8 +182,7 @@ formset guid  = SETUP_FORM_SET_GUID,
                 help    = STRING_TOKEN(STR_TIME_HELP),
                 minimum = 0,
                 maximum = 23,
-                step    = 1, 
-                default = 0,
+                step    = 1, default = 0,
             minute varid = Time.Minutes,
                 prompt  = STRING_TOKEN(STR_TIME),
                 help    = STRING_TOKEN(STR_TIME_HELP),
@@ -217,7 +197,6 @@ formset guid  = SETUP_FORM_SET_GUID,
                 maximum = 59,
                 step    = 1,
                 default = 0,
-            flags = STORAGE_TIME,
         endtime;
 
         SEPARATOR
@@ -238,11 +217,23 @@ formset guid  = SETUP_FORM_SET_GUID,
                 key    = 0;
         endif;
 
+        // "suppress if TRUE" is not supported by the Framework VFR Compiler
+        suppressif NOT ideqval SYSTEM_ACCESS.Access == 0x55;
+            goto MAIN_HIDDEN, 
+                prompt = STRING_TOKEN(STR_EMPTY),
+                help = STRING_TOKEN(STR_EMPTY);
+        endif;
     endform;
     #define FORM_SET_FORM
     #include <SetupDefinitions.h>
     #undef FORM_SET_FORM
 
+    form formid = AUTO_ID(MAIN_HIDDEN), // MAIN
+        title = STRING_TOKEN(STR_EMPTY);
+    #define CONTROLS_WITH_DEFAULTS
+    #include <SetupDefinitions.h>
+    #undef CONTROLS_WITH_DEFAULTS
+    endform;
 #undef MAIN_FORM_SET
 
 #define ADVANCED_FORM_SET
@@ -359,7 +350,7 @@ formset guid  = SETUP_FORM_SET_GUID,
         SEPARATOR
         SEPARATOR
 
-        grayoutif ideqval SYSTEM_ACCESS.Access == SYSTEM_PASSWORD_USER;
+        grayoutif  ideqval SYSTEM_ACCESS.Access == SYSTEM_PASSWORD_USER;
             password varid = AMITSESETUP.AdminPassword,
                 prompt = STRING_TOKEN(STR_ADMIN_PASSWORD),
                 help = STRING_TOKEN(STR_ADMIN_PASSWORD_HELP),
@@ -401,7 +392,6 @@ formset guid  = SETUP_FORM_SET_GUID,
         numeric varid = TIMEOUT.Value,
             prompt = STRING_TOKEN(STR_BOOT_TIMEOUT),
             help = STRING_TOKEN(STR_BOOT_TIMEOUT_HELP),
-            flags = 0,
 #if SUPPORT_ZERO_BOOT_TIMEOUT
             minimum = 0x0,
 #else
@@ -410,27 +400,20 @@ formset guid  = SETUP_FORM_SET_GUID,
             maximum = 0xffff,
             step = 1,
             default = DEFAULT_BOOT_TIMEOUT,
-            default = DEFAULT_BOOT_TIMEOUT, defaultstore = AmiMfgDefault,
         endnumeric;
 
         oneof varid = SETUP_DATA.Numlock,
             prompt = STRING_TOKEN(STR_CSM_BOOTUP_NUMLOCK),
             help = STRING_TOKEN(STR_CSM_BOOTUP_NUMLOCK_HELP),
-            flags = RESET_REQUIRED,
-            option text = STRING_TOKEN(STR_CSM_BOOTUP_NUMLOCK_ON), value = 1, flags = 0;
+            option text = STRING_TOKEN(STR_CSM_BOOTUP_NUMLOCK_ON), value = 1, flags = DEFAULT | RESET_REQUIRED;
             option text = STRING_TOKEN(STR_CSM_BOOTUP_NUMLOCK_OFF), value = 0, flags = 0;
-            default = 1,
-            default = 1, defaultstore = AmiMfgDefault,
         endoneof;
 
         SEPARATOR
         checkbox varid = AMITSESETUP.AMISilentBoot,
             prompt = STRING_TOKEN(STR_QUIET_BOOT),
             help = STRING_TOKEN(STR_QUIET_BOOT_HELP),
-            flags = 0,
-            key = 0,
             default = DEFAULT_QUIET_BOOT,
-            default = DEFAULT_QUIET_BOOT, defaultstore = AmiMfgDefault,
         endcheckbox;
 
         #define FORM_SET_ITEM
@@ -443,11 +426,14 @@ formset guid  = SETUP_FORM_SET_GUID,
             oneof varid = BOOT_ORDER.Value,
                 prompt = STRING_TOKEN(STR_BOOT_ORDER_X),
                 help = STRING_TOKEN(STR_BOOT_ORDER_HELP),
-                flags = 0,
-                option text = STRING_TOKEN(STR_EMPTY), value = 0, flags = 0;
-                option text = STRING_TOKEN(STR_EMPTY), value = 1, flags = 0;
-                default = 0,
-                default = 0, defaultstore = AmiMfgDefault,
+                option
+                    text = STRING_TOKEN(STR_EMPTY),
+                    value = 0,
+                    flags = DEFAULT;
+                option
+                    text = STRING_TOKEN(STR_EMPTY),
+                    value = 1,
+                    flags = 0;
             endoneof;
         endif;
 
@@ -455,8 +441,8 @@ formset guid  = SETUP_FORM_SET_GUID,
         SEPARATOR
         suppressif ideqvallist LEGACY_DEV_INFO.GroupCount == 0xFFFF;
             goto BBS_ORDER_FORM,
-                prompt = STRING_TOKEN(STR_EMPTY),
-                help = STRING_TOKEN(STR_BBS_ORDER_HELP);
+            prompt = STRING_TOKEN(STR_EMPTY),
+            help = STRING_TOKEN(STR_BBS_ORDER_HELP);
         endif;
 #endif
         #define FORM_SET_GOTO
@@ -469,14 +455,18 @@ formset guid  = SETUP_FORM_SET_GUID,
         title = STRING_TOKEN(STR_BOOT);
 
         suppressif ideqvallist LEGACY_GROUP_INFO.DeviceCount == 0xFFFF;
-            oneof varid = LEGACY_DEV_ORDER.Value,
+            oneof
+                varid = LEGACY_DEV_ORDER.Value,
                 prompt = STRING_TOKEN(STR_BOOT_ORDER_X),
                 help = STRING_TOKEN(STR_BOOT_ORDER_HELP),
-                flags = 0, 
-                option text = STRING_TOKEN(STR_EMPTY), value = 0, flags = 0;
-                option text = STRING_TOKEN(STR_EMPTY), value = 1, flags = 0;
-                default = 0,
-                default = 0, defaultstore = AmiMfgDefault,
+                option
+                    text = STRING_TOKEN(STR_EMPTY),
+                    value = 0,
+                    flags = DEFAULT;
+                option
+                    text = STRING_TOKEN(STR_EMPTY),
+                    value = 1,
+                    flags = 0;
             endoneof;
         endif;
     endform;
@@ -553,7 +543,7 @@ formset guid  = SETUP_FORM_SET_GUID,
     suppressif ideqvallist BOOT_NOW_COUNT.BootCount == 0xFFFF;
 #else
     suppressif ideqvallist BOOT_MANAGER.BootCount == 0xFFFF;
-#endif
+#endif.
         goto EXIT_MAIN,
             prompt = STRING_TOKEN(STR_EMPTY),
             help = STRING_TOKEN(STR_EMPTY);
@@ -588,16 +578,3 @@ formset guid  = SETUP_FORM_SET_GUID,
 #undef EXIT_FORM_SET
 
 endformset;
-//**********************************************************************
-//**********************************************************************
-//**                                                                  **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
-//**                                                                  **
-//**                       All Rights Reserved.                       **
-//**                                                                  **
-//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093        **
-//**                                                                  **
-//**                       Phone: (770)-246-8600                      **
-//**                                                                  **
-//**********************************************************************
-//**********************************************************************

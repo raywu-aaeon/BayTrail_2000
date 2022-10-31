@@ -45,6 +45,7 @@ EFI_MANAGED_NETWORK_CONFIG_DATA mMnpDefaultConfigData = {
   FALSE
 };
 
+
 /**
   Add Count of net buffers to MnpDeviceData->FreeNbufQue. The length of the net
   buffer is specified by MnpDeviceData->BufferLength.

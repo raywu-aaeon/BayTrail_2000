@@ -1,21 +1,37 @@
-//**********************************************************************
-//**********************************************************************
-//**                                                                  **
-//**        (C)Copyright 1985-2016, American Megatrends, Inc.         **
-//**                                                                  **
-//**                       All Rights Reserved.                       **
-//**                                                                  **
-//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093        **
-//**                                                                  **
-//**                       Phone: (770)-246-8600                      **
-//**                                                                  **
-//**********************************************************************
-//**********************************************************************
+//****************************************************************************
+//****************************************************************************
+//**                                                                        **
+//**             (C)Copyright 1985-2010, American Megatrends, Inc.          **
+//**                                                                        **
+//**                          All Rights Reserved.                          **
+//**                                                                        **
+//**             5555 Oakbrook Pkwy, Suite 200, Norcross, GA 30093          **
+//**                                                                        **
+//**                          Phone (770)-246-8600                          **
+//**                                                                        **
+//****************************************************************************
+//****************************************************************************
 
-/** @file UsbSb.c
-    USB South Bridge Porting Hooks
+//****************************************************************************
+// $Header: /Alaska/SOURCE/Modules/USB/ALASKA/usbsb.c 30    5/22/12 10:02a Ryanchou $
+//
+// $Revision: 30 $
+//
+// $Date: 5/22/12 10:02a $
+//
+//****************************************************************************
+//
+//<AMI_FHDR_START>
+//-----------------------------------------------------------------------------
+//
+//  Name:   USBSB.C
+//
+//  Description:    USB South Bridge Porting Hooks
+//
+//-----------------------------------------------------------------------------
+//<AMI_FHDR_END>
 
-**/
+//****************************************************************************
 
 #include <Token.h>
 #include <Efi.h>
@@ -24,15 +40,11 @@
 #include "AmiUsb.h"
 #include "UsbKbd.h"
 #if USB_ACPI_ENABLE_WORKAROUND
-#include <Protocol/AcpiModeEnable.h>
+#include "AcpiModeEnable.h"
 #endif
 
 #include <Protocol/SmmPeriodicTimerDispatch2.h>
 #include <Protocol/SmmGpiDispatch2.h>
-#include <Protocol/UsbPolicy.h>
-#include <Protocol/AmiUsbHid.h>
-#include <Library/AmiBufferValidationLib.h>
-#include <Library/AmiUsbSmmGlobalDataValidationLib.h>
 
 EFI_SMM_PERIODIC_TIMER_DISPATCH2_PROTOCOL *gPeriodicTimerDispatch = NULL;
 
@@ -42,119 +54,89 @@ BOOLEAN InstallXhciHwSmiHandler = FALSE;
 BOOLEAN InstallUsbIntTimerHandler = FALSE;
 
 extern  USB_GLOBAL_DATA     *gUsbData;
-extern  EFI_GUID gEfiUsbPolicyProtocolGuid;
-extern  BOOLEAN gLockSmiHandler;
-extern  BOOLEAN gLockHwSmiHandler;
 
 UINT8   ByteReadIO (UINT16);
 VOID    ByteWriteIO (UINT16, UINT8);
 UINT32  ReadPCIConfig(UINT16, UINT8);
 VOID    WordWritePCIConfig(UINT16, UINT8, UINT16);
+VOID    DwordWritePCIConfig(UINT16, UINT8, UINT32);
 
+#define R_PCH_EHCI_EHCSUSCFG                0x7C  // EHC Suspend Well Configuration
+#define R_PCH_ACPI_PM1_EN                   0x02  // Power Management 1 Enables
+#define R_PCH_ACPI_GPE0a_STS                0x20  // General Purpose Event 0a Status
+#define R_PCH_ACPI_GPE0a_EN                 0x28  // General Purpose Event 0a Enables
 
-/**
-    This function is registers periodic timer callbacks.
-
-    @param 
-        Pointer to the EFI System Table
-
-    @retval 
-        - EFI_SUCCESS if timers are initialized or function is not implemented
-        - timer initialization error
-
-    @note  
-  If function is not implemented (timers are not needed for this chipset),
-  function must return EFI_SUCCESS
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Function:    USBSB_PeriodicTimerCallBack
+//
+// Description:
+//  This function is registers periodic timer callbacks.
+//
+// Input:
+//  Pointer to the EFI System Table
+//
+// Output:
+//  - EFI_SUCCESS if timers are initialized or function is not implemented
+//  - timer initialization error
+//
+// Note:
+//  If function is not implemented (timers are not needed for this chipset),
+//  function must return EFI_SUCCESS
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
-EFIAPI
-USBSB_PeriodicTimerCallBack(
+USBSB_PeriodicTimerCallBack (
 	EFI_HANDLE  DispatchHandle,
 	CONST VOID  *Context,
 	VOID    	*CommBuffer,
 	UINTN   	*CommBufferSize
 ) 
 {
-	HC_STRUC*       HcStruc;
-	UINT8		    i;
-    DEV_INFO        *DevInfo = NULL;
-    DEV_INFO        *Dev = gUsbData->aDevInfoTable;
-    EFI_STATUS      Status;
+/*
+    DEV_INFO*       fpDevInfo;
+    int i;
+    DEV_INFO* pDev = gUsbData->aDevInfoTable;
 
-    if ((USB_RUNTIME_DRIVER_IN_SMM == 2) && 
-        (gUsbData->dUSBStateFlag & USB_FLAG_RUNNING_UNDER_EFI)) {
-        return EFI_SUCCESS;
-    }
-
-    if (gLockSmiHandler == TRUE) {
-        return EFI_SUCCESS;
-    }
-
-    Status = AmiUsbSmmGlobalDataValidation(gUsbData);
-
-    ASSERT_EFI_ERROR(Status);
-    
-    if (EFI_ERROR(Status)) {
-        gLockHwSmiHandler = TRUE;
-        gLockSmiHandler = TRUE;
-        return EFI_SUCCESS;
-    }
-
-    for (i = 0; i < gUsbData->HcTableCount; i++) {
-	    HcStruc = gUsbData->HcTable[i];
-        if (HcStruc == NULL) {
-            continue;
-        }
-        if (HcStruc->HwSmiHandle != NULL) {
-            continue;
-        }
-        if (HcStruc->dHCFlag & HC_STATE_RUNNING) {
-	        (*gUsbData->aHCDriverTable[
-				GET_HCD_INDEX(HcStruc->bHCType)].pfnHCDProcessInterrupt)(HcStruc);
-	    }
+	for (i = 0; i < USB_DEV_HID_COUNT; i++) {
+		fpDevInfo = gUsbData->aUSBKBDeviceTable[i];
+		if (fpDevInfo != NULL) break;
 	}
-
-#if USB_HID_KEYREPEAT_USE_SETIDLE == 0
-
-    if (gUsbData->fpKeyRepeatHCStruc != NULL) {
-        return EFI_SUCCESS;
-    }
-
-    for (i = 0; i < USB_DEV_HID_COUNT; i++) {
-        DevInfo = gUsbData->aUSBKBDeviceTable[i];
-        if (DevInfo != NULL) {
-            break;
-        }
-	}
-    if (DevInfo == NULL) {
-        for (i = 1; i < MAX_DEVICES;  ++i, ++Dev ) {
-            if ( (Dev->Flag & DEV_INFO_VALID_STRUC) != 0 && 
-                Dev->bDeviceType == BIOS_DEV_TYPE_HID &&
-                (Dev->HidDevType & HID_DEV_TYPE_MOUSE) ) {
-                DevInfo= Dev;    
+    if(fpDevInfo == NULL){
+        for (i = 1; i < MAX_DEVICES;  ++i, ++pDev ){
+            if ( (pDev->bFlag & DEV_INFO_VALID_STRUC) != 0 && 
+            	pDev->bDeviceType == BIOS_DEV_TYPE_HID &&
+                (pDev->HidDevType & HID_DEV_TYPE_MOUSE) ) {
+                fpDevInfo= pDev;    
                 break; 
             }
         }
     }
 
-    if (DevInfo != NULL) {
-        USBKBDPeriodicInterruptHandler(gUsbData->HcTable[DevInfo->bHCNumber - 1]);
+    if (fpDevInfo != NULL){
+        USBKBDPeriodicInterruptHandler(gUsbData->HcTable[fpDevInfo->bHCNumber - 1]);
     }
-    
-#endif
+*/
     return EFI_SUCCESS;
 }
 
-/**
-    This function registers XHCI hardware SMI callback function.
-
-    @note  
-  Currently EHCI, UHCI and OHCI drivers install their SMI handlers in the
-  corresponding Start functions. In the future all code related to SMI
-  registration can be moved here.
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        USBSB_InstallXhciHwSmiHandler
+//
+// Description:
+//  This function registers XHCI hardware SMI callback function.
+//
+// Note:
+//  Currently EHCI, UHCI and OHCI drivers install their SMI handlers in the
+//  corresponding Start functions. In the future all code related to SMI
+//  registration can be moved here.
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 EFI_STATUS
 USBSB_InstallXhciHwSmiHandler()
@@ -203,17 +185,80 @@ USBSB_InstallXhciHwSmiHandler()
 	return Status;
 }
 
-/**
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        UsbIntTimerCallBack
+//
+// Description:
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
+EFI_STATUS
+UsbIntTimerCallBack (
+	EFI_HANDLE  DispatchHandle,
+	CONST VOID  *Context,
+	VOID    	*CommBuffer,
+	UINTN   	*CommBufferSize
+)
+{
+	HC_STRUC*   HcStruc;
+	UINT8		i;
+	DEV_INFO    *fpDevInfo; //EIP128872
+	DEV_INFO    *pDev = &gUsbData->aDevInfoTable[1]; //EIP128872
 
-**/
+    for (i = 0; i < gUsbData->HcTableCount; i++) {
+	    HcStruc = gUsbData->HcTable[i];
+        if (HcStruc == NULL) {
+            continue;
+        }
+	    if(HcStruc->dHCFlag & HC_STATE_RUNNING) { //EIP128872 
+	        (*gUsbData->aHCDriverTable[
+				GET_HCD_INDEX(HcStruc->bHCType)].pfnHCDProcessInterrupt)(HcStruc);
+	    }
+	}
+    
+//EIP128872 >>	
+    // Added for USB keyrepeat
+    for (i = 0; i < USB_DEV_HID_COUNT; i++) {
+        fpDevInfo = gUsbData->aUSBKBDeviceTable[i];
+        if (fpDevInfo != NULL) break;
+    }
+    if(fpDevInfo == NULL){
+    for (i = 1; i < MAX_DEVICES; ++i, ++pDev ){
+        if ( (pDev->bFlag & DEV_INFO_VALID_STRUC) != 0 && 
+            pDev->bDeviceType == BIOS_DEV_TYPE_HID &&
+            (pDev->HidDevType & HID_DEV_TYPE_MOUSE) ) { 
+                fpDevInfo= pDev; 
+            break; 
+         }
+       }
+    }
+    
+    if(fpDevInfo != NULL){
+        USBKBDPeriodicInterruptHandler((HC_STRUC*)&gUsbData->aHCDriverTable[fpDevInfo->bHCNumber-1]);
+    }
+//EIP128872 <<
+
+    return EFI_SUCCESS;
+}
+
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        USBSB_InstallUsbIntTimerHandler
+//
+// Description:
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 EFI_STATUS
 USBSB_InstallUsbIntTimerHandler()
 {
-#if (XHCI_TIMER_EVENT_SMI == 0) && (USB_RUNTIME_DRIVER_IN_SMM == 1) //EIP128872    
+#if (XHCI_TIMER_EVENT_SMI == 0) && (USB_RUNTIME_DRIVER_IN_SMM == 1) //EIP128872
 	EFI_STATUS  Status;
 	EFI_SMM_PERIODIC_TIMER_REGISTER_CONTEXT  TimerContext;
-    UINT64      *SmiTickInterval;
 
 	if (InstallUsbIntTimerHandler) {
 		return EFI_SUCCESS;
@@ -230,27 +275,10 @@ USBSB_InstallUsbIntTimerHandler()
 	if (!EFI_ERROR(Status)) {
 		TimerContext.Period = 160000;	//16Ms 
 		TimerContext.SmiTickInterval = 160000; 
-        SmiTickInterval = NULL;
-        //Check SmiTickInterval that are supported by the chipset.
-		do {
-            Status = gPeriodicTimerDispatch->GetNextShorterInterval(
-                                           gPeriodicTimerDispatch,
-                                           &SmiTickInterval
-                                           );
-            if (EFI_ERROR(Status)) {
-                break;
-            }
-            if (SmiTickInterval != NULL) {
-                if (*SmiTickInterval <= TimerContext.SmiTickInterval) {
-                    TimerContext.SmiTickInterval = *SmiTickInterval; 
-                    break;
-                }
-            }
-        } while (SmiTickInterval != NULL);
-			 
-		Status = gPeriodicTimerDispatch->Register(
+
+		Status = gPeriodicTimerDispatch->Register (
 						gPeriodicTimerDispatch, 
-						USBSB_PeriodicTimerCallBack, 
+						UsbIntTimerCallBack, 
 						&TimerContext,
 						&gUsbIntTimerHandle);
 		ASSERT_EFI_ERROR(Status);
@@ -259,15 +287,20 @@ USBSB_InstallUsbIntTimerHandler()
 	return Status;
 //EIP128872 >>
 #else
-    return EFI_SUCCESS;
+	return EFI_SUCCESS;
 #endif
 //EIP128872 <<
 }
 
-/**
-    This function unregisters all the periodic timer handles.
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        USBSB_UninstallTimerHandlers
+//
+// Description: This function unregisters all the periodic timer handles.
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 EFI_STATUS
 USBSB_UninstallTimerHandlers()
@@ -300,31 +333,38 @@ USBSB_UninstallTimerHandlers()
 }
 
 #if USB_ACPI_ENABLE_WORKAROUND
-/**
-    This is ACPI mode enable callback function. It is a workaround for non 
-    XHCI/EHCI aware OSes.
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        AcpiEnableCallBack
+//
+// Description:
+//  This is ACPI mode enable callback function. It is a workaround for non 
+//	XHCI/EHCI aware OSes.
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 VOID
-EFIAPI
 AcpiEnableCallBack(
 	IN EFI_HANDLE   DispatchHandle
 )
 {
 	USB_StopUnsupportedHc();
-    gUsbData->dUSBStateFlag |= USB_FLAG_RUNNING_UNDER_OS;
-    gLockSmiHandler = TRUE;
-    gUsbData->KbShiftKeyStatusUnderOs = gUsbData->bUSBKBShiftKeyStatus;
 }
 
-/**
-    This function registers ACPI enable callback function.
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        RegisterAcpiEnableCallBack
+//
+// Description:
+//  This function registers ACPI enable callback function.
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 EFI_STATUS
-EFIAPI
 RegisterAcpiEnableCallBack(
     IN EFI_ACPI_DISPATCH_PROTOCOL   *This,
     IN EFI_ACPI_DISPATCH            Function,
@@ -347,120 +387,54 @@ RegisterAcpiEnableCallBack(
 }
 #endif
 
-/**
-    This function is called from USBRT entry point inside SMM. Any SMI handlers
-    registration related to USB driver can be done here.
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        USBSB_InstallSmiEventHandlers
+//
+// Description:
+//  This function is called from USBRT entry point inside SMM. Any SMI handlers
+//  registration related to USB driver can be done here.
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 EFI_STATUS
 USBSB_InstallSmiEventHandlers()
 {
     EFI_STATUS  Status = EFI_SUCCESS;
-	EFI_SMM_USB_REGISTER_CONTEXT                    UsbContext;
-    EFI_SMM_USB_DISPATCH2_PROTOCOL                  *UsbDispatch;
-    EFI_SMM_HANDLER_ENTRY_POINT2	                UsbCallback;
-    EFI_HANDLE                                      Handle = NULL;
-    EFI_USB_POLICY_PROTOCOL                         *EfiUsbPolicyProtocol;	
-    UINT8		i;
-    AMI_USB_HW_SMI_HC_CONTEXT                       *HcContext;
-    
-#if EXTERNAL_USB_CONTROLLER_SUPPORT
-#if USB_REGISTER_PERIODIC_TIMER_IN_DXE
-    USBSB_InstallUsbIntTimerHandler();
-#endif
-#endif
 
-    Status = pSmst->SmmLocateProtocol(
-            &gEfiSmmUsbDispatch2ProtocolGuid,
-            NULL,
-            &UsbDispatch);
+/*  The following block is needed to implement non-USB periodic SMI where
+    UHCI or OHCI controllers are not present
+
+#if USB_HID_KEYREPEAT_USE_SETIDLE == 0
+	EFI_SMM_PERIODIC_TIMER_REGISTER_CONTEXT	 PeriodicTimerContext;
+
+	Status = pSmst->SmmLocateProtocol (
+			&gEfiSmmPeriodicTimerDispatch2ProtocolGuid, 
+			NULL, 
+			&gPeriodicTimerDispatch);
+
+    ASSERT_EFI_ERROR(Status);   // driver dependencies?
 
     if (!EFI_ERROR(Status)) {
-    
-        Status = pBS->LocateProtocol(
-                    &gEfiUsbPolicyProtocolGuid,
-                    NULL,
-                    &EfiUsbPolicyProtocol);
+        PeriodicTimerContext.Period = 160000;   //16Ms 
+    	PeriodicTimerContext.SmiTickInterval = 160000; 
 
-        if (!EFI_ERROR(Status)) {
+		//PeriodicTimerContext.TimerEnabled = FALSE;
 
-            for (i = 0; i < EfiUsbPolicyProtocol->AmiUsbHwSmiHcTable.HcCount; i++) {
-
-                HcContext = EfiUsbPolicyProtocol->AmiUsbHwSmiHcTable.HcContext[i];
-           
-            	switch (HcContext->Type) {
-            		case USB_HC_UHCI:
-            			UsbCallback = UhciHWSMIHandler;
-            			break;
-
-            		case USB_HC_OHCI:
-            			UsbCallback = OhciHWSMIHandler;
-            			break;
-
-            		case USB_HC_EHCI:
-            			UsbCallback = EhciHWSMIHandler;
-            			break;
-
-            		case USB_HC_XHCI:
-            			UsbCallback = XhciHwSmiHandler;
-            			break;
-            		default:
-            			UsbCallback = NULL;
-                        break;
-            	}
-
-                if (UsbCallback == NULL) {
-                    continue;
-                }
-
-                UsbContext.Type = UsbLegacy;
-                UsbContext.Device = HcContext->Device;
-
-                Status = UsbDispatch->Register(
-                            UsbDispatch,
-                            UsbCallback,
-                            &UsbContext,
-                            &Handle);
-
-                USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "AMIUSB HC type %x HW SMI registation status:: %r\n", 
-                            HcContext->Type, Status);
-                if (!EFI_ERROR(Status)) {
-                    HcContext->HwSmiHandle = Handle;
-                }
-            }
-
-        }
+    	Status = gPeriodicTimerDispatch->Register (
+        	            gPeriodicTimerDispatch, 
+            	        USBSB_PeriodicTimerCallBack, 
+        				&PeriodicTimerContext,
+                  		&gPeriodicTimerHandle);
+    	ASSERT_EFI_ERROR(Status);
     }
-#if XHCI_SUPPORT
-#if XHCI_EVENT_SERVICE_MODE != 0
-    {
-        //GPI service
-    	EFI_SMM_GPI_DISPATCH2_PROTOCOL          *GpiDispatch = NULL;
-    	EFI_SMM_GPI_REGISTER_CONTEXT            Context;
-    	UINT8		HwSmiPinTable[] = {USB_XHCI_EXT_HW_SMI_PINS};
-
-    	Status = pSmst->SmmLocateProtocol(&gEfiSmmGpiDispatch2ProtocolGuid, NULL, &GpiDispatch);
-    	ASSERT_EFI_ERROR(Status);	// driver dependencies?
-
-        if (!EFI_ERROR(Status)) {
-            for (i = 0; i < sizeof(HwSmiPinTable) / sizeof(UINT8); i++) {
-                if (HwSmiPinTable[i] == 0xFF) {
-                    continue;
-                }
-                                        //(EIP61556)>
-#if defined(GPI_DISPATCH_BY_BITMAP) && (GPI_DISPATCH_BY_BITMAP == 0)
-                Context.GpiNum = HwSmiPinTable[i];
-#else
-			    Context.GpiNum = (UINTN)1 << HwSmiPinTable[i];
-#endif
-                                            //<(EIP61556)
-    			GpiDispatch->Register(GpiDispatch, XhciHwSmiHandler, &Context, &Handle);
-    		}
-    	}
+    if (EFI_ERROR(Status)) {
+        gPeriodicTimerDispatch = NULL;
     }
 #endif
-#endif
+*/
 #if USB_ACPI_ENABLE_WORKAROUND
 	{
 		EFI_ACPI_DISPATCH_PROTOCOL	*AcpiEnDispatch;
@@ -480,17 +454,55 @@ USBSB_InstallSmiEventHandlers()
 #endif
     return Status;
 }
+                                        //(EIP54018+)>
+#if USB_S5_WAKEUP_SUPPORT
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Name:        UsbSbEnablePme
+//
+// Description: 
+//  The funciton enable usb PME
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
-//**********************************************************************
-//**********************************************************************
-//**                                                                  **
-//**        (C)Copyright 1985-2016, American Megatrends, Inc.         **
-//**                                                                  **
-//**                       All Rights Reserved.                       **
-//**                                                                  **
-//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093        **
-//**                                                                  **
-//**                       Phone: (770)-246-8600                      **
-//**                                                                  **
-//**********************************************************************
-//**********************************************************************
+VOID
+UsbSbEnablePme(VOID)
+{
+	UINT16	BusDevFuncNum;
+	UINT32	EhcSusWellConfig;
+	
+	BusDevFuncNum = (UINT16)((0 << 8) | (0x1d << 3) | 0);
+	
+    // Disable USB Wake on Device Connect/Disconnect
+	EhcSusWellConfig = ReadPCIConfig(BusDevFuncNum, R_PCH_EHCI_EHCSUSCFG);
+	EhcSusWellConfig |= (BIT16 | BIT17);
+	DwordWritePCIConfig(BusDevFuncNum, R_PCH_EHCI_EHCSUSCFG, EhcSusWellConfig);
+
+    // Clear PM1_STS
+    IoWrite16(PM_BASE_ADDRESS, IoRead16(PM_BASE_ADDRESS));
+    // Clear GPE0_STS
+    IoWrite32(PM_BASE_ADDRESS + R_PCH_ACPI_GPE0a_STS, 0xFFFFFFFF);
+    // Set PME_B0_EN
+    IoWrite16(PM_BASE_ADDRESS + R_PCH_ACPI_GPE0a_EN, BIT13);
+    // Clear PCI Express Wake Disable    
+    IoWrite16(PM_BASE_ADDRESS + R_PCH_ACPI_PM1_EN,
+              IoRead16(PM_BASE_ADDRESS + R_PCH_ACPI_PM1_EN & ~BIT14));
+}
+
+#endif
+                                        //<(EIP54018+)
+//****************************************************************************
+//****************************************************************************
+//**                                                                        **
+//**             (C)Copyright 1985-2010, American Megatrends, Inc.          **
+//**                                                                        **
+//**                          All Rights Reserved.                          **
+//**                                                                        **
+//**             5555 Oakbrook Pkwy, Suite 200, Norcross, GA 30093          **
+//**                                                                        **
+//**                          Phone (770)-246-8600                          **
+//**                                                                        **
+//****************************************************************************
+//****************************************************************************

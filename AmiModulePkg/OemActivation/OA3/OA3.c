@@ -1,7 +1,7 @@
 //****************************************************************************
 //****************************************************************************
 //**                                                                        **
-//**             (C)Copyright 1985-2015, American Megatrends, Inc.          **
+//**             (C)Copyright 1985-2012, American Megatrends, Inc.          **
 //**                                                                        **
 //**                          All Rights Reserved.                          **
 //**                                                                        **
@@ -19,10 +19,13 @@
 //
 // $Date: $
 //*****************************************************************************
-/** @file OA3.c
-    Microsoft OEM Activation 3.0
-
-**/
+//<AMI_FHDR_START>
+//
+// Name: OA3.c
+//
+// Description: Microsoft OEM Activation 3.0
+//
+//<AMI_FHDR_END>
 //*****************************************************************************
 
 
@@ -37,17 +40,22 @@
 
 
 
-/**
-    This function locate resource binary by GUID. 
-
-    @param 
-        pResourceGuid        - pointer to recourse GUID
-        pResourceSectionGuid - pointer to recourse section GUID
-        Address              - pointer to returning address of the resource
-
-    @retval EFI_STATUS
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:   LocateSectionResource
+//
+// Description: This function locate resource binary by GUID. 
+//
+// Input:
+//  pResourceGuid        - pointer to recourse GUID
+//  pResourceSectionGuid - pointer to recourse section GUID
+//  Address              - pointer to returning address of the resource
+//
+// Output:  EFI_STATUS
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 EFI_STATUS LocateSectionResource(
     IN  EFI_GUID *pResourceGuid,
@@ -116,14 +124,19 @@ LocateSectionResource_exit:
 }
 
 #if OEM_ACTIVATION_TABLE_LOCATION == 0
-/**
-    This function locates the Product Key. 
-
-    @param Address - pointer to returning address of the Product Key structure.
-
-    @retval EFI_STATUS
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:   GetProductKey
+//
+// Description: This function locates the Product Key. 
+//
+// Input:   Address - pointer to returning address of the Product Key structure.
+//
+// Output:  EFI_STATUS
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 EFI_STATUS GetProductKey( 
     IN EFI_PHYSICAL_ADDRESS StartAddr, 
@@ -158,14 +171,19 @@ EFI_STATUS GetProductKey(
 }
 #endif
 
-/**
-    This function preserves the Product Key.
-
-    @param VOID
-
-    @retval EFI_STATUS
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:   PreserveProductKey
+//
+// Description: This function preserves the Product Key.
+//
+// Input:       VOID
+//
+// Output:      EFI_STATUS
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 EFI_STATUS PreserveProductKey(VOID)
 {
@@ -215,16 +233,21 @@ EFI_STATUS PreserveProductKey(VOID)
 }
 
 
-/**
-    This function is the entry point of the eModule.
-
-    @param 
-        ImageHandle  - Image handle
-        *SystemTable - Pointer to the system table
-
-    @retval EFI_STATUS
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:   OA3_EntryPoint
+//
+// Description: This function is the entry point of the eModule.
+//
+// Input:       
+//  ImageHandle  - Image handle
+//  *SystemTable - Pointer to the system table
+//
+// Output:      EFI_STATUS
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 EFI_STATUS EFIAPI OA3_EntryPoint(
     IN EFI_HANDLE        ImageHandle,
@@ -361,7 +384,7 @@ EFI_STATUS EFIAPI OA3_EntryPoint(
 //****************************************************************************
 //****************************************************************************
 //**                                                                        **
-//**             (C)Copyright 1985-2015, American Megatrends, Inc.          **
+//**             (C)Copyright 1985-2012, American Megatrends, Inc.          **
 //**                                                                        **
 //**                          All Rights Reserved.                          **
 //**                                                                        **

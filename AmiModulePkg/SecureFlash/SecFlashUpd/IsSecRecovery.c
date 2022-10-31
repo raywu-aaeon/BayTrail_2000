@@ -24,12 +24,10 @@
 // Module specific Includes
 #include "Efi.h"
 #include "Pei.h"
-#include "Token.h"
+#include "token.h"
 #include <AmiPeiLib.h>
 #include <Hob.h>
-//#include <Ppi/ReadOnlyVariable.h>
-#include <Ppi/ReadOnlyVariable2.h>
-
+#include <Ppi/ReadOnlyVariable.h>
 #include <FlashUpd.h>
 
 #include <Capsule.h>
@@ -55,7 +53,7 @@ static EFI_GUID W8FwUpdateImageCapsuleGuid = W8_FW_UPDATE_IMAGE_CAPSULE_GUID;
 #endif
 static EFI_GUID gFlashUpdGuid            = FLASH_UPDATE_GUID;
 extern EFI_GUID gFlashUpdBootModePpiGuid;
-extern EFI_GUID gEfiPeiReadOnlyVariable2PpiGuid;//gPeiReadOnlyVariablePpiGuid;
+extern EFI_GUID gPeiReadOnlyVariablePpiGuid;
 extern EFI_GUID gAmiGlobalVariableGuid;
 
 //------------------------------------------------------------------------
@@ -134,7 +132,7 @@ GetFlashUpdateVar (
 ){
     EFI_STATUS      Status;
     UINTN           Size;
-    EFI_PEI_READ_ONLY_VARIABLE2_PPI  *ReadOnlyVariable;
+    EFI_PEI_READ_ONLY_VARIABLE_PPI  *ReadOnlyVariable;
 //(EIP144785+) >>
 #if  WIN8_FIRMWARE_UPDATE_SUPPORT == 1
     EFI_PHYSICAL_ADDRESS          IoData;
@@ -144,7 +142,7 @@ GetFlashUpdateVar (
 // Detect if we are in Flash Update mode and set some recovery global variables
 // Read "FlashOp" Variable to update global RecoveryFileName, Size
     Status = (*PeiServices)->LocatePpi( PeiServices,
-                                &gEfiPeiReadOnlyVariable2PpiGuid,//gPeiReadOnlyVariablePpiGuid,
+                                &gPeiReadOnlyVariablePpiGuid,
                                 0,
                                 NULL,
                                 &ReadOnlyVariable );
@@ -152,7 +150,7 @@ GetFlashUpdateVar (
         return FALSE;
 
     Size = sizeof(AMI_FLASH_UPDATE_BLOCK);
-    Status = ReadOnlyVariable->GetVariable( ReadOnlyVariable,
+    Status = ReadOnlyVariable->PeiGetVariable( PeiServices,
                                     FLASH_UPDATE_VAR,
                                     &gFlashUpdGuid,
                                     NULL,
@@ -161,13 +159,13 @@ GetFlashUpdateVar (
     if (!EFI_ERROR(Status)) 
     {
         Size = sizeof(UINT32);
-        Status = ReadOnlyVariable->GetVariable(ReadOnlyVariable,
+        Status = ReadOnlyVariable->PeiGetVariable(PeiServices,
                                         L"MonotonicCounter", 
                                         &gAmiGlobalVariableGuid,
                                         NULL, 
                                         &Size,
                                         CounterHi);
-        if (EFI_ERROR(Status) || FlashUpdDesc->MonotonicCounter == 0xffffffff)
+        if (EFI_ERROR(Status)) 
             *CounterHi = 0xffffffff;
         
         return TRUE;
@@ -175,9 +173,9 @@ GetFlashUpdateVar (
 #if  WIN8_FIRMWARE_UPDATE_SUPPORT == 1
     } else {
         Size=sizeof(EFI_PHYSICAL_ADDRESS);
-        Status = ReadOnlyVariable->GetVariable(ReadOnlyVariable,
+        Status = ReadOnlyVariable->PeiGetVariable( PeiServices,
         		                L"CapsuleUpdateData",
-        		                &gEfiCapsuleVendorGuid,
+        		                &gEfiCapsuleVendorGuid, 
                                         NULL,
                                         &Size,
                                         &IoData );
@@ -218,12 +216,8 @@ IsFlashUpdate(
     EFI_PEI_SERVICES    **PeiServices,
     EFI_BOOT_MODE       *BootMode
 ){
-    UINT32                  CounterHi;
+    UINT32                  CounterHi = 0;
     AMI_FLASH_UPDATE_BLOCK FlashUpdDesc;
-
-    CounterHi = 0;
-    FlashUpdDesc.MonotonicCounter = CounterHi;
-    FlashUpdDesc.FlashOpType = FlDisabled;
 
 //SetMode should have set FlashUpd var even if no MC var detected.
 // MC check should fail Recovery
@@ -335,21 +329,14 @@ EFI_STATUS ChangeBootModeAfterEndofMrc (
 //<AMI_PHDR_END>
 EFI_STATUS
 IsSecRecoveryPeimEntry (
-  IN       EFI_PEI_FILE_HANDLE  FileHandle,
-  IN CONST EFI_PEI_SERVICES     **PeiServices
+    IN    EFI_FFS_FILE_HEADER        *FfsHeader,
+    IN    EFI_PEI_SERVICES        **PeiServices
 )
 {
-    EFI_PEI_NOTIFY_DESCRIPTOR *NotifyDescriptor = NULL;
-    VOID *InvokePpi = NULL;	
-	
 #if  FWCAPSULE_RECOVERY_SUPPORT == 1
     (*PeiServices)->NotifyPpi( PeiServices, EndOfMrcNotifyList);
 #endif
-    
-    ChangeBootMode (PeiServices, NotifyDescriptor, InvokePpi);
-    
-    return EFI_SUCCESS;
- //   return (*PeiServices)->NotifyPpi( PeiServices, mBootModePpi);
+    return (*PeiServices)->NotifyPpi( PeiServices, mBootModePpi);
 }
 
 //**********************************************************************

@@ -21,7 +21,7 @@
 //**********************************************************************//
 #ifndef _AMI_TCG_PLATFORM_PPI_H_
 #define _AMI_TCG_PLATFORM_PPI_H_
-#include <UEFI.h>
+#include <PEI.h>
 
 
 #ifdef __cplusplus
@@ -46,12 +46,10 @@ struct _AMI_TCG_PLATFORM_PPI {
     GET_TCG_SUPPORT_TYPE                GetPlatformSecurityType;
 };
 
-typedef struct _AMI_TPM20SUPPORTTYPE_PPI AMI_TPM20SUPPORTTYPE_PPI;
+extern EFI_GUID gAmiPlatformSecurityChipGuid;
+extern  EFI_GUID gAmiTcgPlatformPpiBeforeMem;
+extern  EFI_GUID gAmiTcgPlatformPpiAfterMem;
 
-// for now all it does is return the platform security support type
-struct _AMI_TPM20SUPPORTTYPE_PPI {
-    GET_TCG_SUPPORT_TYPE                Tpm20SupportType;
-};
 
 #ifdef __cplusplus
 }

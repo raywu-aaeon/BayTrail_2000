@@ -1,0 +1,8 @@
+<component>
+	name = "DxeTpmMeasureBootLib"
+	category = ModulePart
+	LocalRoot = "AmiModulePkg\TCG\DxeTpmMeasureBootLib\"
+	RefName = "DxeTpmMeasureBootLib"
+[INF]
+"DxeTpmMeasureBootLib.inf"
+<endComponent>

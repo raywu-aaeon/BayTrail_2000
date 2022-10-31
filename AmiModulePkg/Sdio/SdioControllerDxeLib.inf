@@ -1,7 +1,7 @@
 #*************************************************************************
 #*************************************************************************
 #**                                                                     **
-#**        (C)Copyright 1985-2014, American Megatrends, Inc.            **
+#**        (C)Copyright 1985-2013, American Megatrends, Inc.            **
 #**                                                                     **
 #**                       All Rights Reserved.                          **
 #**                                                                     **
@@ -12,7 +12,7 @@
 #*************************************************************************
 #*************************************************************************
 
-## @file SdioControllerDxeLib.inf
+## @file
 #   This is SDIO Controller Dxe Lib
 ##
 
@@ -32,24 +32,19 @@
 
 [Sources]
   SdioController.c
-  SdMemoryCard.c
-  MmcCard.c
 
 [Packages]
+  AmiModulePkg/AmiModulePkg.dec
   AmiCompatibilityPkg/AmiCompatibilityPkg.dec 
   MdePkg/MdePkg.dec
       
 [LibraryClasses]
   AmiDxeLib
-  TimerLib
-  BaseMemoryLib
-
-[Pcd]
- gEfiMdePkgTokenSpaceGuid.PcdDebugPrintErrorLevel
+  
 #*************************************************************************
 #*************************************************************************
 #**                                                                     **
-#**        (C)Copyright 1985-2014, American Megatrends, Inc.            **
+#**        (C)Copyright 1985-2013, American Megatrends, Inc.            **
 #**                                                                     **
 #**                       All Rights Reserved.                          **
 #**                                                                     **

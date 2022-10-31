@@ -643,7 +643,7 @@ CoreConnectSingleController (
 
 //*** AMI PORTING BEGIN ***//
 //Print Name of the driver to be started
-		  DEBUG((EFI_D_LOAD, "%a.Start(%p)=", GetDriverName(DriverBinding), DriverBinding->Start));
+		  DEBUG((EFI_D_LOAD, "%a.Start(%X)=", GetDriverName(DriverBinding), DriverBinding->Start));
 //*** AMI PORTING END *****//
 
           //

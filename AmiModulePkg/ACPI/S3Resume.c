@@ -12,10 +12,23 @@
 //**********************************************************************
 //**********************************************************************
 
-/** @file S3Resume.c
-    Restore configuration state from S3 resume.
+//**********************************************************************
+// $Header: /Alaska/BIN/Modules/ACPI/Template/S3Support/S3Restore/S3Resume.c 1     2/03/11 4:09p Oleksiyy $
+//
+// $Revision: 1 $
+//
+// $Date: 2/03/11 4:09p $
+//**********************************************************************
 
-**/
+//<AMI_FHDR_START>
+//----------------------------------------------------------------------------
+//
+// Name:	S3Resume.c
+//
+// Description: Restore configuration state from S3 resume.
+//
+//----------------------------------------------------------------------------
+//<AMI_FHDR_END>
 
 #include <Pei.h>
 #include <Ppi/S3Resume.h>
@@ -112,14 +125,18 @@ VOID InitLongModeExt(
     IN UINT8 NumMemBits
 );
 
-/**
-    Restore configuration state from S3 resume.
-
-    @param PeiServices double pointer to Pei Services 
-
-    @retval EFI_STATUS, based on a result
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:	S3RestoreConfig
+//
+// Description:	Restore configuration state from S3 resume.
+//
+// Input:		EFI_PEI_SERVICES **PeiServices
+//
+// Output:		EFI_STATUS
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS S3RestoreConfig(
 	IN EFI_PEI_SERVICES **PeiServices
 )
@@ -272,7 +289,7 @@ EFI_STATUS S3RestoreConfig(
         MemCpy((VOID*)(ACPI_THUNK_REAL_MODE_SEGMENT * 16), RealModeThunkSave, ACPI_THUNK_STACK_TOP);    //Restore region.
     }
 #endif
-
+    
     (*PeiServices)->InstallPpi(PeiServices, gEndOfPpiList);
     
 	//EIP149462 >>
@@ -290,12 +307,13 @@ EFI_STATUS S3RestoreConfig(
 	}
 
 	PEI_PERF_END(PeiServices,S3RESUME_TOK,NULL,0);
+    PEI_PERF_SAVE_S3_DATA(PeiServices);
 
     //Time  = GetCpuTimer();
     
     Status = PeiGetVariable(
         PeiServices,
-        L"FPDT_Variable_NV", &gAmiGlobalVariableGuid,
+		EFI_FPDT_VARIABLE, &gAmiGlobalVariableGuid,
 		NULL, &VarSize, &FpdtVar
 
     );
@@ -366,14 +384,18 @@ EFI_STATUS S3RestoreConfig(
 
 	return EFI_UNSUPPORTED;
 }
-/**
-    Restore configuration state from S3 resume.
-
-    @param  This pointer to EFI_PEI_S3_RESUME2_PPI
-
-    @retval EFI_STATUS, based on result.
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:	S3RestoreConfig2
+//
+// Description:	Restore configuration state from S3 resume.
+//
+// Input:		EFI_PEI_S3_RESUME2_PPI *This
+//
+// Output:		EFI_STATUS
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS S3RestoreConfig2(
 	IN EFI_PEI_S3_RESUME2_PPI *This
 )

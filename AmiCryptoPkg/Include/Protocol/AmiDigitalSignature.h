@@ -1,7 +1,7 @@
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2015, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2013, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **
@@ -12,22 +12,42 @@
 //**********************************************************************
 //**********************************************************************
 
-/** @file
- AmiDigitalSignature.h
- AMI Digital Signature Protocol Definition
-**/
-
+//**********************************************************************
+//<AMI_FHDR_START>
+//
+// Name:  AmiDigitalSignature.h
+//
+// Description:	AMI Digital Signature Protocol Definition
+//
+//<AMI_FHDR_END>
+//**********************************************************************
 #ifndef __AMI_DIGITAL_SIGNATURE_DXE__H__
 #define __AMI_DIGITAL_SIGNATURE_DXE__H__
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#include <Library/CryptLib.h>
 // All are EDKII defined headers
 #include <Protocol/Hash.h>
 //#include "ImageAuthentication.h"
 #include <Guid/ImageAuthentication.h>
+
+
+// Flags to define type of signature to process
+#define EFI_CRYPT_RSASSA_PKCS1V15     1
+#define EFI_CRYPT_RSASSA_PSS          2
+
+///
+/// SHA-1 digest size in bytes.
+///
+#define SHA1_DIGEST_SIZE    20
+///
+/// SHA-256 digest size in bytes
+///
+#define SHA256_DIGEST_SIZE  32
+
+#define DEFAULT_RSA_KEY_MODULUS_LEN 256 // 2048 bits
+#define DEFAULT_RSA_SIG_LEN DEFAULT_RSA_KEY_MODULUS_LEN // This is true as long as > data
 
 #define AMI_DIGITAL_SIGNATURE_PROTOCOL_GUID  \
     { 0x5f87ba17, 0x957d, 0x433d, 0x9e, 0x15, 0xc0, 0xe7, 0xc8, 0x79, 0x88, 0x99 }
@@ -38,12 +58,10 @@ extern "C" {
 GUID_VARIABLE_DECLARATION(gAmiDigitalSignatureProtocolGuid, AMI_DIGITAL_SIGNATURE_PROTOCOL_GUID);
 GUID_VARIABLE_DECLARATION(gAmiSmmDigitalSignatureProtocolGuid, AMI_SMM_DIGITAL_SIGNATURE_PROTOCOL_GUID);
 
-///
-/// Common Crypt construction type: ASN1 PubKey, Hash sha256, etc.
-///
+// Common Crypt construction type: ASN1 PubKey, Hash sha256, etc.
 typedef struct{
     EFI_GUID AlgGuid;
-    UINT32  BlobSize;
+    UINT32 BlobSize;
     UINT8 *Blob;
 } CRYPT_HANDLE;
 
@@ -74,10 +92,6 @@ typedef struct{
 //    Pkcs7GetCAKey                        14 Return ptr in *Data to n-modulus of a Root CA Key
 //    Pkcs7GetSignerKey                    15 Return ptr in *Data to n-modulus of a Signer Key
 //    Pkcs7TimeStampCertValidateGet        16 Validate TimeStamp certificate chain in Pkcs7 Certificate. Return TimeOfSigning
-//    Pkcs7GetChainedCertificates          17 Retrieves all embedded certificates from PKCS#7 signed data, and outputs certificate lists chained to the signer's certificates.
-//    Pkcs7GetUnChainedCertificates        18 Retrieves all embedded certificates from PKCS#7 signed data, and outputs certificate lists un-chained to the signer's certificates.
-//    x509GetSubjectsCommonNameStr         19 Return null-terminated ASCII string of Subject's CommonName. Caller is responsible for allocating a buffer
-//
 //<AMI_THDR_END>
 //**********************************************************************
 typedef enum {
@@ -97,16 +111,10 @@ typedef enum {
     Pkcs7CertValidateGetCAKey,
     Pkcs7GetCAKey,
     Pkcs7GetSignerKey,
-    Pkcs7TimeStampCertValidateGet,
-    Pkcs7GetChainedCertificates,
-    Pkcs7GetUnChainedCertificates,
-    x509GetSubjectsCommonNameStr
+    Pkcs7TimeStampCertValidateGet
 } PKCS7_OP;
 
-///
-/// Hash Algorithm types
-///
-//typedef enum { SHA1, SHA256, SHA384, SHA512} HASH_ALG;
+typedef enum { SHA1, SHA256, SHA384, SHA512} HASH_ALG;
 
 typedef struct _AMI_DIGITAL_SIGNATURE_PROTOCOL AMI_DIGITAL_SIGNATURE_PROTOCOL;
 
@@ -185,7 +193,7 @@ CHECK:
 */
 typedef enum { RESET, LOCK, RELEASE, KEEP} RESET_MMGR;
 
-struct _AMI_DIGITAL_SIGNATURE_PROTOCOL {
+typedef struct _AMI_DIGITAL_SIGNATURE_PROTOCOL  {
   AMI_DIGITAL_SIGNATURE_PKCS1_VERIFY Pkcs1Verify;
   AMI_DIGITAL_SIGNATURE_PKCS7_VERIFY Pkcs7Verify;
   AMI_DIGITAL_SIGNATURE_HASH Hash;
@@ -251,7 +259,7 @@ typedef struct _EFI_CERT_X509_SHA512 {
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2015, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2013, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **

@@ -12,10 +12,21 @@
 //**********************************************************************
 //**********************************************************************
 
-/** @file
-  This file contains Reflash driver structures definitions
-
-**/
+//**********************************************************************
+// $Header: /Alaska/BIN/Core/Modules/Recovery/ReFlash.h 12    7/20/12 10:20a Artems $
+//
+// $Revision: 12 $
+//
+// $Date: 7/20/12 10:20a $
+//**********************************************************************
+//<AMI_FHDR_START>
+//
+// Name:    ReFlash.h
+//
+// Description: Header file for component
+//
+//<AMI_FHDR_END>
+//**********************************************************************
 #ifndef __REFLASH__H__
 #define __REFLASH__H__
 #ifdef __cplusplus
@@ -36,23 +47,24 @@ extern "C"
 #if REFLASH_INTERACTIVE
 #define RECOVERY_MAIN 1
 #define RECOVERY_FLASH 2
-#define RECOVERY_USER 3
 #else
 #define RECOVERY_FLASH 1
 #endif
 
 #define FLASH_PROGRESS_KEY 100
 #define FLASH_START_KEY 101
-#define FLASH_ENABLE_KEY 102
 
 #pragma pack(push, 1)
 typedef struct {
-        UINT8 UserOverride;                 //!< User override flag
-        UINT8 VerificationStatus;           //!< Recovery capsule verification status
-        UINT8 VerificationError;            //!< Recovery capsule verification error flag
-        UINT8 UpdateNv;                     //!< Update NVRAM flag
-        UINT8 UpdateBb;                     //!< Update boot block flag
-        UINT8 UpdateMain;                   //!< Update main block flag
+        UINT8 FailedRecovery; // EFI_STATUS error code
+        UINT8 UpdateNv;
+        UINT8 UpdateBb;
+        UINT8 UpdateMain;
+
+#define REFLASH_DATA_DEFINITION
+#include <ReflashDefinitions.h>
+#undef REFLASH_DATA_DEFINITION
+
 } AUTOFLASH;
 #pragma pack(pop)
     
@@ -79,21 +91,20 @@ typedef EFI_STATUS (REFLASH_FUNCTION_EX)(
 
 struct _FLASH_AREA_EX
 {
-    UINT8 *BlockAddress;                //!< Address of the area in flash
-    UINT8 *BackUpAddress;               //!< Backup address of the area in flash
-    UINT32 RomFileOffset;               //!< Offset of the area in ROM file
-    UINTN Size;                         //!< Size of the area
-    UINT32 BlockSize;                   //!< Size of the area block
-    FLASH_FV_TYPE Type;                 //!< Type of the area
-    BOOLEAN Update;                     //!< Update area flag
-    BOOLEAN TopSwapTrigger;             //!< TOP_SWAP trigger flag
-    REFLASH_FUNCTION_EX *BackUp;        //!< Area backup function
-    REFLASH_FUNCTION_EX *Program;       //!< Area flash programm function
-    EFI_STRING_ID BackUpStringId;       //!< Area backup message ID
-    EFI_STRING_ID ProgramStringId;      //!< Area flash message ID
+    UINT8 *BlockAddress;
+    UINT8 *BackUpAddress;
+    UINTN Size;
+    UINT32 BlockSize;
+    FLASH_FV_TYPE Type;
+    BOOLEAN Update;
+    BOOLEAN TopSwapTrigger;
+    REFLASH_FUNCTION_EX *BackUp;
+    REFLASH_FUNCTION_EX *Program;
+    EFI_STRING_ID BackUpString;
+    EFI_STRING_ID ProgramString;
 };
 
-extern FLASH_AREA_EX *BlocksToUpdate;
+extern FLASH_AREA_EX BlocksToUpdate[];
 extern FLASH_PROTOCOL *Flash;
 extern EFI_HII_HANDLE ReflashHiiHandle;
 extern UINT8 *RecoveryBuffer;
@@ -101,8 +112,8 @@ extern UINT8 *RecoveryBuffer;
 EFI_STATUS GetHiiString(
     IN     EFI_HII_HANDLE HiiHandle,
     IN     STRING_REF Token,
-    IN OUT UINTN *DataSize, 
-    OUT    EFI_STRING *Data
+    IN OUT UINTN *pDataSize, 
+    OUT    EFI_STRING *ppData
 );
 
 EFI_STATUS AmiFlashBackUp(
@@ -110,10 +121,6 @@ EFI_STATUS AmiFlashBackUp(
     IN UINTN BlockNumber
 );
 EFI_STATUS AmiFlashProgram(
-    IN FLASH_AREA_EX *Block,
-    IN UINTN BlockNumber
-);
-EFI_STATUS AmiFlashProgramTopSwap(
     IN FLASH_AREA_EX *Block,
     IN UINTN BlockNumber
 );
@@ -152,19 +159,10 @@ EFI_STATUS Epilogue(
 );
 
 EFI_STATUS Prologue(
-    IN BOOLEAN Interactive,
-    IN BOOLEAN Win8StyleUpdate
+    IN BOOLEAN Interactive
 );
 
 EFI_STATUS InstallEsrtTable(
-    VOID
-);
-
-EFI_STATUS CreateFlashUpdateArea(
-    VOID
-);
-
-EFI_STATUS FtControlFlow(
     VOID
 );
 

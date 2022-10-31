@@ -24,8 +24,6 @@
   be modified by the user, subject to additional terms of the
   license agreement
 --*/
-
-#ifdef WIN8_SUPPORT     
 Device (PEPD)
 {
   Name (_HID, "INT3396")
@@ -36,151 +34,79 @@ Device (PEPD)
   Name(PEPP, Zero)
 
   // Devices score-boarded by the PEP, Rev0 format
-  Name (DEVS, Package()
-  {
-  	1,
-	Package() {"\\_SB.PCI0.GFX0"}
-  })
+  Name (DEVS, Package() {0})
 
   // Devices score-boarded by the PEP, Rev1 format
   Name(DEVX, Package()
   {
-    Package () {"\\_SB.PCI0.XHC1", 0xffffffff},
-    Package () {"\\_SB.PCI0.EHC1", 0xffffffff},
-    Package () {"\\_SB.PCI0.GFX0", 0xffffffff},
-    Package () {"\\_SB.PCI0.GFX0.ISP0", 0xffffffff},
-    Package () {"\\_SB.PCI0.SEC0", 0xffffffff},
-    Package () {"\\_SB.I2C1", 0xffffffff},
-    Package () {"\\_SB.I2C2", 0xffffffff},
-    Package () {"\\_SB.I2C3", 0xffffffff},
-    Package () {"\\_SB.I2C4", 0xffffffff},
-    Package () {"\\_SB.I2C5", 0xffffffff},
-    Package () {"\\_SB.I2C6", 0xffffffff},
-    Package () {"\\_SB.I2C7", 0xffffffff},
-    Package () {"\\_SB.SDHA", 0xffffffff},
-    Package () {"\\_SB.SDHB", 0xffffffff},
-    Package () {"\\_SB.SDHC", 0xffffffff},
-    Package () {"\\_SB.SPI1", 0xffffffff},
-    Package () {"\\_SB.URT1", 0xffffffff},
-    Package () {"\\_SB.URT2", 0xffffffff},
+    Package () {"\\_SB.PCI0.XHC1", 0x1},
+    Package () {"\\_SB.PCI0.EHC1", 0x1},
+    Package () {"\\_SB.PCI0.GFX0", 0x1},
+    Package () {"\\_SB.PCI0.GFX0.ISP0", 0x1},
+    Package () {"\\_SB.PCI0.SEC0", 0x1},
+    Package () {"\\_SB.I2C1", 0x1},
+    Package () {"\\_SB.I2C2", 0x1},
+    Package () {"\\_SB.I2C3", 0x1},
+    Package () {"\\_SB.I2C4", 0x1},
+    Package () {"\\_SB.I2C5", 0x1},
+    Package () {"\\_SB.I2C6", 0x1},
+    Package () {"\\_SB.I2C7", 0x1},
+    Package () {"\\_SB.SDHA", 0x1},
+    Package () {"\\_SB.SDHB", 0x1},
+    Package () {"\\_SB.SDHC", 0x1},
+    Package () {"\\_SB.SPI1", 0x1},
+    Package () {"\\_SB.URT1", 0x1},
+    Package () {"\\_SB.URT2", 0x1},
   })
   // Crashdump device package
   Name(CDMP, Package(2) {})
   // Device dependency for uPEP
   Name(DEVY, Package()
   {
-      //
-      // 1: ACPI Device Descriptor: Fully Qualified namestring
-      // 2: Enabled/Disabled Field 
-      //      0 = This device is disabled and applies no constraints
-      //     >0 = This device is enabled and applies constraints
-      // 3: Constraint Package: entry per LPI state in LPIT
-      //     a. Associated LPI State UID 
-      //         ID == 0xFF: same constraints apply to all states in LPIT
-      //     b: minimum Dx state as pre-condition
-      //     c: (optional) OEM specific OEM may provide an additional encoding
-      //         which further defines the D-state Constraint   
-      //            0x0-0x7F - Reserved
-      //            0x80-0xFF - OEM defined
-      //    
-    Package() {"\\_PR.CPU0", 0x1, Package() {0, Package() {0xFF, 0}}},
-    Package() {"\\_PR.CPU1", 0x1, Package() {0, Package() {0xFF, 0}}},
-    Package() {"\\_PR.CPU2", 0x1, Package() {0, Package() {0xFF, 0}}},
-    Package() {"\\_PR.CPU3", 0x1, Package() {0, Package() {0xFF, 0}}},
-    Package() {"\\_SB.I2C1", 0x1, Package() {0, Package() {0xFF, 3}}},
-    Package() {"\\_SB.I2C2", 0x1, Package() {0, Package() {0xFF, 3}}},
-    Package() {"\\_SB.I2C3", 0x1, Package() {0, Package() {0xFF, 3}}},
-    Package() {"\\_SB.I2C4", 0x1, Package() {0, Package() {0xFF, 3}}},
-    Package() {"\\_SB.I2C5", 0x1, Package() {0, Package() {0xFF, 3}}},
-    Package() {"\\_SB.I2C6", 0x1, Package() {0, Package() {0xFF, 3}}},
-    Package() {"\\_SB.I2C7", 0x1, Package() {0, Package() {0xFF, 3}}},
-    Package() {"\\_SB.PCI0.SATA", 0x1, Package() {0, Package(){0xFF, 3}}},
-    Package() {"\\_SB.PCI0.SATA.PRT0", 0x1, Package() {0, Package(){0xFF, 0, 0x81}}},
-    Package() {"\\_SB.PCI0.SATA.PRT1", 0x1, Package() {0, Package(){0xFF, 0, 0x81}}},
-    Package() {"\\_SB.PCI0.GFX0", 0x1, Package() {0, Package() {0xFF, 3}}},
-    Package() {"\\_SB.PCI0.SEC0", 0x1, Package() {0, Package() {0xFF, 3}}},
-    Package() {"\\_SB.PCI0.XHC1", 0x1, Package() {0, Package() {0xFF, 3}}},
-    Package() {"\\_SB.PCI0.GFX0.ISP0", 0x1, Package() {0, Package() {0xFF, 3}}},
-    Package() {"\\_SB.LPEA", 0x1, Package() {0, Package() {0x0, 3}, Package() {0x1, 0}, Package() {0x2, 3}, Package() {0x3, 3}}},
-    Package() {"\\_SB.SDHA", 0x1, Package() {0, Package() {0xFF, 3}}},
-    Package() {"\\_SB.SDHB", 0x1, Package() {0, Package() {0xFF, 3}}},
-    Package() {"\\_SB.SDHC", 0x1, Package() {0, Package() {0xFF, 3}}},
-    Package() {"\\_SB.SPI1", 0x1, Package() {0, Package() {0xFF, 3}}},
-    Package() {"\\_SB.URT1", 0x1, Package() {0, Package() {0xFF, 3}}},
-    Package() {"\\_SB.URT2", 0x1, Package() {0, Package() {0xFF, 3}}}
+    Package() {"\\_PR.CPU0", 0x1, Package() {Package() {0xFF, 0}}},
+    Package() {"\\_PR.CPU1", 0x1, Package() {Package() {0xFF, 0}}},
+    Package() {"\\_PR.CPU2", 0x1, Package() {Package() {0xFF, 0}}},
+    Package() {"\\_PR.CPU3", 0x1, Package() {Package() {0xFF, 0}}},
+    Package() {"\\_SB.I2C1", 0x1, Package() {Package() {0xFF,3}}},
+    Package() {"\\_SB.I2C2", 0x1, Package() {Package() {0xFF,3}}},
+    Package() {"\\_SB.I2C3", 0x1, Package() {Package() {0xFF,3}}},
+    Package() {"\\_SB.I2C4", 0x1, Package() {Package() {0xFF,3}}},
+    Package() {"\\_SB.I2C5", 0x1, Package() {Package() {0xFF,3}}},
+    Package() {"\\_SB.I2C6", 0x1, Package() {Package() {0xFF,3}}},
+    Package() {"\\_SB.I2C7", 0x1, Package() {Package() {0xFF,3}}},
+    Package() {"\\_SB.PCI0.GFX0", 0x1, Package() {Package() {0xFF,3}}},
+    Package() {"\\_SB.PCI0.SEC0", 0x1, Package() {Package() {0xFF,3}}},
+    Package() {"\\_SB.PCI0.XHC1", 0x1, Package() {Package() {0xFF,3}}},
+    Package() {"\\_SB.PCI0.GFX0.ISP0", 0x1, Package() {Package() {0xFF,3}}},
+    Package() {"\\_SB.LPEA", 0x1, Package() {Package() {0x0,3}, Package() {0x1,0}, Package() {0x2,3}, Package() {0x3,3}}},
+    Package() {"\\_SB.SDHA", 0x1, Package() {Package() {0xFF,3}}},
+    Package() {"\\_SB.SDHB", 0x1, Package() {Package() {0xFF,3}}},
+    Package() {"\\_SB.SDHC", 0x1, Package() {Package() {0xFF,3}}},
+    Package() {"\\_SB.SPI1", 0x1, Package() {Package() {0xFF,3}}},
+    Package() {"\\_SB.URT1", 0x1, Package() {Package() {0xFF,3}}},
+    Package() {"\\_SB.URT2", 0x1, Package() {Package() {0xFF,3}}}
   })
   // BCCD crashdump information
   Name(BCCD, Package()
   {
-      //
-      // 1: ACPI Device Descriptor: Fully Qualified name string
-      // 2: Package of packages: 1 or more specific commands to power up critical device
-      //  2a: Package: GAS-structure describing location of PEP accessible power control
-      //    Refer to ACPI 5.0 spec section 5.2.3.1 for details
-      //    a: Address Space ID (0 = System Memory)
-      //       NOTE: A GAS Address Space of 0x7F (FFH) indicates remaining package
-      //             elements are Intel defined
-      //    b: Register bit width (32 = DWORD)
-      //    c: Register bit offset
-      //    d: Access size (3 = DWORD Access)
-      //    e: Address (for System Memory = 64-bit physical address)
-      //  2b: Package containing:
-      //    a: AND mask !V not applicable for all Trigger Types
-      //    b: Value (bits required to power up the critical device)
-      //    c: Trigger Type:
-      //         0 = Read
-      //         1 = Write
-      //         2 = Write followed by Read
-      //         3 = Read Modify Write
-      //         4 = Read Modify Write followed by Read
-      //  2c: Power up delay: Time delay before next operation in uSec
-      //
-     Package() {"\\_SB.PCI0.SATA", Package(){
-       Package() {Package() {1, 8, 0, 1, 0xB2}, // GAS Structure 8-bit IO Port
-                  Package() {0x0, 0xCD, 0x1},   // Write 0xCD
-                  16000}                        // Power up delay = 16ms
-       }
-     },
-     Package() {"\\_SB.PCI0.SAT0.PRT0", Package(){
-       Package() {Package() {1, 8, 0, 1, 0xB2}, // GAS Structure 8-bit IO Port
-                  Package() {0x0, 0xCD, 0x1},   // Write 0xCD
-                  16000}                        // Power up delay = 16ms
-       }
-     },
-     Package() {"\\_SB.PCI0.SAT0.PRT1", Package(){
-       Package() {Package() {1, 8, 0, 1, 0xB2}, // GAS Structure 8-bit IO Port
-                  Package() {0x0, 0xCD, 0x1},   // Write 0xCD
-                  16000}                        // Power up delay = 16ms
-       }
-     },
-     Package() {"\\_SB.SDHA", Package(){
-       Package() {Package() {0, 32, 0,  3, 0xFFFFFFFFFFFFFFFF},
-                  Package() {0xFFFFFFFC, 0x0, 0x4}, 
-                  0}
-       }
-     }
+    Package()
+    {
+      "\\_SB.SDHA",
+      Package()
+      {
+        Package() { Package() {0, 32, 0,  3, 0xFFFFFFFFFFFFFFFF}, Package() {0xFFFFFFFC, 0x0, 0x4}, 0}
+      }
+    }
   })
 
   Method(_STA, 0x0, NotSerialized)
   {
-     //Check if OS is post-Win8.1, the actual OS identifier may be different
-      If(LGreaterEqual(OSYS,2015))  
-      {
-          Return(0xf)
-      }	
-      If(LGreaterEqual(OSYS,2012))
-      {
-         If(LEqual(S0IX, 1)) {
-           Return(0xf)
-        }
-      }
-
-      Return (0x0)
+    Return(0xf)
   }
 
-  Method(_DSM, 0x4, Serialized)
+  Method(_DSM, 0x4, NotSerialized)
   {
-    If(LEqual(Arg0,ToUUID("B8FEBFE0-BAF8-454b-AECD-49FB91137B21"))) //PEP driver should use same UUID
+    If(LEqual(Arg0,ToUUID("B8FEBFE0-BAF8-454b-AECD-49FB91137B21")))
     {
 
       // Number of fn IDs supported
@@ -188,7 +114,7 @@ Device (PEPD)
       {
         Return(Buffer(One)
         {
-          0x7
+          0xf
         })
       }
 
@@ -225,30 +151,19 @@ Device (PEPD)
     // New UUID for built-in uPEP
     If(LEqual(Arg0,ToUUID("C4EB40A0-6CD2-11E2-BCFD-0800200C9A66")))
     {
-      // Number of Functions (including this one)
+
+      // Number of fn IDs supported
       If(LEqual(Arg2, Zero))
       {
-        Return(Buffer(One){0x7f})
+        Return(Buffer(One)
+        {
+          0x7
+        })
       }
-      // Device Constraints Enumeration
+      // LPI device dependencies
       If(LEqual(Arg2, 0x1))
       {
-          // Update uPEP device list based on PEPC (Low Power S0 Constraint)
-          // Bit[1:0] - SATA (0:None, 1:SATA Ports[all], 2:SATA Controller)
-          //      [2] - En/Dis UART 0
-          //      [3] -        UART 1
-          //      [4] -        SDIO
-          //      [5] -        I2C 0
-          //      [6] -        I2C 1
-          //      [7] -        XHCI
-          //      [8] -        Azalia
-          //      [9] -        ADSP
-          //     [10] -        Not Used (previously PCIe SATA Controller)
-          //     [11] -        Not Used (Previously PCIe SATA Port)
-          //     [12] -        CPU
-          //     [13] -        GFX
-          //
-		  Return(DEVY)
+        Return(DEVY)
       }
       // Crashdump device data
       If(LEqual(Arg2, 0x2))
@@ -258,47 +173,11 @@ Device (PEPD)
         Store(Local0, Index(DerefOf(Index(DerefOf(Index(DerefOf(Index(DerefOf(Index(BCCD, Zero, )), One, )), Zero, )), Zero, )), 0x4, ))
         Return(BCCD)
       }
-      // Screen off notification
-      If(LEqual(Arg2, 0x3))
-      {
-        If(LEqual(S0IX, 1)) { //S0ID: >=1: CS 0: non-CS 
-          // GUAM - Global User Absent Mode Notification Method
-          //  \GUAM(One) // 0x01 - Power State Standby (CS Entry)    
-        }  Else {
-          // call method specific to non-CS platforms
-        }
-      }
-      // Screen on notification
-      If(LEqual(Arg2, 0x4))
-      {
-        If(LEqual(S0IX, 1)) { //S0ID: >=1: CS 0: non-CS 
-          // GUAM - Global User Absent Mode Notification Method
-          //\GUAM(ZERO) // 0x00 - Power State On (CS Exit)    
-        }  
-      }  Else {
-         // call method specific to non-CS platforms
-      }
-      // resiliency phase entry (deep standby entry)
-      If(LEqual(Arg2, 0x5))
-      {
-        If(LEqual(S0IX, 1)) { //S0ID: >=1: CS 0: non-CS 
-        // call method specific to CS platforms when the system is in a
-        // standby state with very limited SW activities   
-        }
-      }
-      // resiliency phase exit (deep standby exit)
-      If(LEqual(Arg2, 0x6))
-      {
-        If(LEqual(S0IX, 1)) { //S0ID: >=1: CS 0: non-CS 
-          // call method specific to CS platforms when the system is in a
-          // standby state with very limited SW activities   
-        }
-      }
-      Return(One)
     }
+
+    Return(One)
   }
 }
-#endif
 
 //
 // eMMC 4.41
@@ -310,15 +189,10 @@ Device(SDHA)
   Name (_CID, "PNP0D40")
   Name (_DDN, "Intel(R) eMMC Controller - 80860F14")
   Name (_UID, 1)
-#ifdef WIN8_SUPPORT     
-    Method(_DEP){
-    	if (LAnd(LGreaterEqual(OSYS, 2013), LEqual(S0IX, 1))) {
-			Return(Package() {\_SB.PEPD})
-		}Else{
-			Return(Package(){})
-		}
-	}
-#endif
+  Name(_DEP, Package(0x1)
+  {
+    PEPD
+  })
 
   Name (RBF1, ResourceTemplate ()
   {
@@ -410,15 +284,10 @@ Device(SDHD)
   Name (_CID, "PNP0D40")
   Name (_DDN, "Intel(R) eMMC Controller - 80860F14")
   Name (_UID, 1)
-#ifdef WIN8_SUPPORT     
-    Method(_DEP){
-    	if (LAnd(LGreaterEqual(OSYS, 2013), LEqual(S0IX, 1))) {
-			Return(Package() {\_SB.PEPD})
-		}Else{
-			Return(Package(){})
-		}
-	}
-#endif
+  Name(_DEP, Package(0x1)
+  {
+    PEPD
+  })
 
   Name (RBF1, ResourceTemplate ()
   {
@@ -510,17 +379,11 @@ Device(SDHB)
   Name (_DDN, "Intel(R) SDIO Controller - 80860F15")
   Name (_UID, 2)
   Name (_HRV, 2)
-
-#ifdef WIN8_SUPPORT     
-    Method(_DEP){
-    	if (LAnd(LGreaterEqual(OSYS, 2013), LEqual(S0IX, 1))) {
-			Return(Package() {\_SB.PEPD})
-		}Else{
-			Return(Package(){})
-		}
-	}
-#endif
-
+  Name(_DEP, Package()
+  {
+    PEPD,
+    GPO2
+  })
   Name (PSTS, 0x0)
 
   Name (RBUF, ResourceTemplate ()
@@ -608,16 +471,7 @@ Device(SDHB)
          Device (BRCM)
   {
     Name (_ADR, 0x01)                 //SlotNumber + Function
-
-#ifdef WIN8_SUPPORT     
-    Method(_DEP){
-    	if (LAnd(LGreaterEqual(OSYS, 2013), LEqual(S0IX, 1))) {
-			Return(Package() {\_SB.PEPD})
-		}Else{
-			Return(Package(){})
-		}
-	}
-#endif    
+    Name (_DEP, Package() {\_SB.GPO2})
 
     Method (_RMV, 0, NotSerialized)
     {
@@ -707,17 +561,7 @@ Device(SDHB)
   Device (BRC3)
   {
     Name (_ADR, 0x01)
-
-#ifdef WIN8_SUPPORT     
-    Method(_DEP){
-    	if (LAnd(LGreaterEqual(OSYS, 2013), LEqual(S0IX, 1))) {
-			Return(Package() {\_SB.PEPD})
-		}Else{
-			Return(Package(){})
-		}
-	}
-#endif    
-
+    Name (_DEP, Package() {\_SB.GPO2})
     Name (_HID, "BCM4321")
     Name (_CID, "BCM43241")
     Name (GMOD, ResourceTemplate ()
@@ -794,17 +638,11 @@ Device(SDHC)
   //Name (_CLS, Package (3) {0x08, 0x05, 0x01})
   Name (_DDN, "Intel(R) SD Card Controller - 80860F16")
   Name (_UID, 3)
-
-#ifdef WIN8_SUPPORT     
-    Method(_DEP){
-    	if (LAnd(LGreaterEqual(OSYS, 2013), LEqual(S0IX, 1))) {
-			Return(Package() {\_SB.PEPD})
-		}Else{
-			Return(Package(){})
-		}
-	}
-#endif    
-
+  Name(_DEP, Package()
+  {
+    PEPD,
+    GPO0
+  })
   Name (RBUF, ResourceTemplate ()
   {
     Memory32Fixed (ReadWrite, 0x00000000, 0x00001000, BAR0)
@@ -824,7 +662,6 @@ Device(SDHC)
     //CreateDwordField(^RBUF, BAR1._LEN, B1LN)
     //Store(SD1A, B1BA)
     //Store(SD1L, B1LN)
-	
     Return (RBUF)
   }
   Method (_STA, 0x0, NotSerialized)
@@ -853,4 +690,43 @@ Device(SDHC)
            PSAT,   32
   }
 }
-
+  //
+  // MIPI-HSI
+  //
+  /*
+  Device(MHSI) {
+    Name (_ADR, 0)
+    Name (_HID, "80860F50")
+    Name (_CID, "80860F50")
+    //Name (_CLS, Package (3) {0x0C, 0x80, 0x00})
+    Name (_DDN, "Intel(R) HSI Controller - 80860F50")
+    //Name (_UID, 1)
+    
+    Name (RBUF, ResourceTemplate ()
+    {
+      Memory32Fixed (ReadWrite, 0x00000000, 0x00001000, BAR0)  
+      //Memory32Fixed (ReadWrite, 0x00000000, 0x00001000, BAR1)
+      Interrupt (ResourceConsumer, Level, ActiveLow, Exclusive, , , ) {44}  // MIPI-HSI IRQ
+    })
+    Method (_CRS, 0x0, NotSerialized) 
+    {
+       CreateDwordField(^RBUF, ^BAR0._BAS, B0BA)
+       CreateDwordField(^RBUF, ^BAR0._LEN, B0LN)
+       Store(MH0A, B0BA)
+       Store(MH0L, B0LN)
+       //CreateDwordField(^RBUF, BAR1._BAS, B1BA)
+       //CreateDwordField(^RBUF, BAR1._LEN, B1LN)
+       //Store(MH1A, B1BA)
+       //Store(MH1L, B1LN)
+       Return (RBUF)    
+    }
+    Method (_STA, 0x0, NotSerialized)
+    {
+      If (LOr(LEqual(MH0A, 0), LEqual(HSID, 1)))
+      {
+        Return (0x0)  
+      }
+      Return (0xF)  
+    }
+  }
+*/

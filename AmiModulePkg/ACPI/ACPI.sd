@@ -53,7 +53,7 @@
 				checkbox varid = SETUP_DATA.AcpiAuto,\
 					prompt = STRING_TOKEN(STR_ACPI_AUTO_PROMPT),\
 					help = STRING_TOKEN(STR_ACPI_AUTO_HELP),\
-					flags = CHECKBOX_DEFAULT_MFG ,\
+					flags = MANUFACTURING,\
 					default = DEFAULT_AUTO_ACPI,\
 				endcheckbox;
         #define ACPI_CHECKBOX_ACPIHIBERNATE\
@@ -75,7 +75,7 @@
 				checkbox varid = SETUP_DATA.AcpiLockLegacyRes,\
 					prompt = STRING_TOKEN(STR_ACPI_LOCK_LEGACY_DEV_PROMPT),\
 					help = STRING_TOKEN(STR_ACPI_LOCK_LEGACY_DEV_HELP),\
-					flags = CHECKBOX_DEFAULT_MFG | RESET_REQUIRED,\
+					flags = MANUFACTURING | RESET_REQUIRED,\
 					default = DEFAULT_ACPI_LOCK_LEGACY_DEV,\
 				endcheckbox;
     #if S3_VIDEO_REPOST_SUPPORT == 1

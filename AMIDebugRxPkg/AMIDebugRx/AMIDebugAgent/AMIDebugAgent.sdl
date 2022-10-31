@@ -71,7 +71,6 @@ INFComponent
     Package  = "AMIDebugRx"
     Arch  = "common Ia32 X64"
     Path  = "SmmAMIDebugAgentLib_DIR"
-    Token = "SMM_DEBUG_SUPPORT" "=" "1"
 End
 
 LibraryMapping
@@ -95,7 +94,6 @@ LibraryMapping
     Class  = "DebugAgentLib"
     Instance  = "AMIDebugRx.SmmAMIDebugAgentLib"
     ModuleTypes  = "DXE_SMM_DRIVER"
-    Token = "SMM_DEBUG_SUPPORT" "=" "1"    
 End
 
 

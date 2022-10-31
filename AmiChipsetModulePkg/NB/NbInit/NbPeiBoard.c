@@ -45,7 +45,6 @@
 #include <Library/CpuConfigLib.h>
 #include <CpuRegs.h>
 #include <PPI/ReadOnlyVariable2.h>
-#include <Guid/AmiGlobalVariable.h>
 #include <Guid/MemoryTypeInformation.h>
 #include <Library/HobLib.h>
 #include <Library/PeiServicesLib.h>
@@ -149,8 +148,8 @@ SetPeiCacheMode(
     UINT64                  MaxHighMemoryLength;
     UINT64                  MemoryLengthUc;
     UINT32                  MemOverflow;
-//    UINT32      			TsegTop = 0, TsegBase = NBGetTsegBase(); //CSP20140329_22  //EIP177805
-	UINT32      			Register, RoundUpSize;     //EIP177805              
+    UINT32      			TsegTop = 0, TsegBase = NBGetTsegBase(); //CSP20140329_22
+
     EFI_BOOT_MODE           BootMode;
 
     Status = (*PeiServices)->GetBootMode(PeiServices, &BootMode);
@@ -179,28 +178,9 @@ SetPeiCacheMode(
     //
     // Round up to nearest 256MB
     //
-
-//EIP177805 >>
-    Register = MmioRead32 (MmPciAddress ( 0, 0, 0x2, 0, 0x50));
-    Register = (Register >> 3) & 0x1F;
-
-    if (Register == 13) {// GFX == 416MB    
-      RoundUpSize = 0x03ffffff;  //64mb
-    }
-    else if (Register == 14) {// GFX ==448MB    
-      RoundUpSize = 0x01ffffff;  //32mb
-    }	
-    else if (Register > 6) {// GFX > 192MB
-      RoundUpSize = 0x07ffffff;  //128mb
-    }
-    else { 
-      RoundUpSize = 0x0fffffff;  //256mb
-    }
-
-	MemOverflow = (UINT32)LowMemoryLength & RoundUpSize;
-
+    MemOverflow = (UINT32)LowMemoryLength & 0x0fffffff;
     if(MemOverflow) {
-	        MaxLowMemoryLength = LowMemoryLength + (RoundUpSize + 1 - MemOverflow);
+        MaxLowMemoryLength = LowMemoryLength + (0x10000000 - MemOverflow);
     }
 
     //
@@ -216,9 +196,8 @@ SetPeiCacheMode(
         //
         MemoryLengthUc = (MaxLowMemoryLength - LowMemoryLength);
     } else {
-		MemoryLengthUc = (RoundUpSize + 1 - MemOverflow);
+        MemoryLengthUc = (0x10000000 - MemOverflow);
     }
-//EIP177805 <<
 
     //
     // Load Cache PPI
@@ -276,15 +255,24 @@ SetPeiCacheMode(
             //
             // Uncache Graphics and TSEG here
             //
-//EIP177805 >>
-            CachePpi->SetCache(
-                (EFI_PEI_SERVICES**)PeiServices,
-                CachePpi,
-                LowMemoryLength,
-                MemoryLengthUc,
-                EFI_CACHE_UNCACHEABLE
-            );
-//EIP177805 <<
+			if ( (UINT32)LowMemoryLength == TsegBase) { // If Tseg is aligned with LowMemoryLength
+			  CachePpi->SetCache(					  // then ignore the Tseg, Tseg would be covered by SMRR
+				  (EFI_PEI_SERVICES**)PeiServices,	  // Uncache Graphics here
+				  CachePpi,
+				  LowMemoryLength + TSEG_SIZE,
+				  MemoryLengthUc - TSEG_SIZE,
+				  EFI_CACHE_UNCACHEABLE
+			  );
+			} else {
+			  CachePpi->SetCache(	 // Uncache Graphics and TSEG here
+				  (EFI_PEI_SERVICES**)PeiServices,
+				  CachePpi,
+				  LowMemoryLength,
+				  MemoryLengthUc,
+				  EFI_CACHE_UNCACHEABLE
+			  );
+			}
+
 
             //
             // WORKAROUND: Due to we don't have enough MTRR, in order to let recovery run fast with 4GB memory
@@ -357,7 +345,7 @@ PublishMemoryTypeInfo(
         //
         // Build the default GUID'd HOB for DXE
         //
-        BuildGuidDataHob(&gAmiGlobalVariableGuid, mDefaultMemoryTypeInformation, sizeof(mDefaultMemoryTypeInformation));
+        BuildGuidDataHob(&gEfiMemoryTypeInformationGuid, mDefaultMemoryTypeInformation, sizeof(mDefaultMemoryTypeInformation));
 
         return Status;
     }
@@ -368,7 +356,7 @@ PublishMemoryTypeInfo(
     Status = Variable->GetVariable(
                  Variable,
                  EFI_MEMORY_TYPE_INFORMATION_VARIABLE_NAME,
-                 &gAmiGlobalVariableGuid,
+                 &gEfiMemoryTypeInformationGuid,
                  NULL,
                  &DataSize,
                  &MemoryData
@@ -376,12 +364,12 @@ PublishMemoryTypeInfo(
     if(EFI_ERROR(Status)) {
         //build default
         PEI_TRACE((-1,PeiServices,  "Build Hob from default\n"));
-        BuildGuidDataHob(&gAmiGlobalVariableGuid, mDefaultMemoryTypeInformation, sizeof(mDefaultMemoryTypeInformation));
+        BuildGuidDataHob(&gEfiMemoryTypeInformationGuid, mDefaultMemoryTypeInformation, sizeof(mDefaultMemoryTypeInformation));
 
     } else {
         // Build the GUID'd HOB for DXE from variable
         PEI_TRACE((-1,PeiServices,  "Build Hob from variable \n"));
-        BuildGuidDataHob(&gAmiGlobalVariableGuid, MemoryData, DataSize);
+        BuildGuidDataHob(&gEfiMemoryTypeInformationGuid, MemoryData, DataSize);
     }
 
     return Status;

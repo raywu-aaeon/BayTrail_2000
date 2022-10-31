@@ -1,7 +1,7 @@
 //****************************************************************************
 //****************************************************************************
 //**                                                                        **
-//**             (C)Copyright 1985-2014, American Megatrends, Inc.          **
+//**             (C)Copyright 1985-2013, American Megatrends, Inc.          **
 //**                                                                        **
 //**                          All Rights Reserved.                          **
 //**                                                                        **
@@ -15,17 +15,20 @@
 //**********************************************************************
 //<AMI_FHDR_START>
 //
-// Name:        TerminalSetup.c
+// Name: TerminalSetup.c
 //
-// Description: This file contains Porting functions and setup values for the 
-//              Terminal and SerialIo protocol 
+// Description: This file contains functions used by 
+//              Terminal.lib/Terminalx64.lib to get Terminal/Serial 
+//              related setup values.  
 //
 //<AMI_FHDR_END>
 //**********************************************************************
 
-#include <Token.h>              
-#include <AmiDxeLib.h>          
+
+#include <Token.h>              //for sdl tokens
+#include <AmiDxeLib.h>          //for pRS
 #include "TerminalBoard.h"
+
 #include <Protocol/SerialIo.h>
 #include <Setup.h>
 #include "TerminalSetupVar.h"
@@ -458,7 +461,7 @@ VOID InitSerialPortsEnabledVar(VOID)
 {
     UINTN DebuggerSerialPortsEnabledVarSize = sizeof(DEBUGGER_SERIAL_PORTS_ENABLED_VAR); 
     DEBUGGER_SERIAL_PORTS_ENABLED_VAR DebuggerSerialPortsEnabledVar; 
-    EFI_STATUS Status;
+    EFI_STATUS Status = EFI_SUCCESS;
 
 #if (TOTAL_SERIAL_PORTS > 0)
 
@@ -481,7 +484,8 @@ VOID InitSerialPortsEnabledVar(VOID)
                 0);
     Status = pRS->SetVariable(SERIAL_PORTS_ENABLED_VAR_C_NAME, 
                                 &gTerminalVarGuid, 
-                                EFI_VARIABLE_BOOTSERVICE_ACCESS,
+                                (EFI_VARIABLE_BOOTSERVICE_ACCESS |
+                                            EFI_VARIABLE_RUNTIME_ACCESS),
                                 SerialPortsEnabledVarSize,
                                 &SerialPortsEnabledVar); 
     ASSERT_EFI_ERROR(Status);
@@ -499,6 +503,7 @@ VOID InitSerialPortsEnabledVar(VOID)
         Status = pRS->SetVariable(SIO_SERIAL_PORTS_LOCATION_VAR_C_NAME, 
                                     &gTerminalVarGuid, 
                                     (EFI_VARIABLE_BOOTSERVICE_ACCESS | 
+                                            EFI_VARIABLE_RUNTIME_ACCESS |
                                             EFI_VARIABLE_NON_VOLATILE),
                                     SioSerialPortsLocationVarSize, 
                                     &SioSerialPortsLocationVar); 
@@ -520,6 +525,7 @@ VOID InitSerialPortsEnabledVar(VOID)
         Status = pRS->SetVariable(PCI_SERIAL_PORTS_LOCATION_VAR_C_NAME, 
                                     &gTerminalVarGuid, 
                                     (EFI_VARIABLE_BOOTSERVICE_ACCESS | 
+                                            EFI_VARIABLE_RUNTIME_ACCESS |
                                             EFI_VARIABLE_NON_VOLATILE),
                                     PciSerialPortsLocationVarSize, 
                                     &PciSerialPortsLocationVar); 
@@ -536,10 +542,9 @@ VOID InitSerialPortsEnabledVar(VOID)
                 0);
     Status = pRS->SetVariable(DEBUGGER_SERIAL_PORTS_ENABLED_VAR_C_NAME, 
                                 &gDebuggerTerminalVarGuid, 
-                                EFI_VARIABLE_BOOTSERVICE_ACCESS,
+                                (EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS),
                                 DebuggerSerialPortsEnabledVarSize,
                                 &DebuggerSerialPortsEnabledVar); 
-    ASSERT_EFI_ERROR(Status);
 }
 
 //**********************************************************************
@@ -581,7 +586,8 @@ UINT8 SetSerialPortsEnabledVar_Sio(IN UINT8 Uid)
 
         Status = pRS->SetVariable(DEBUGGER_SERIAL_PORTS_ENABLED_VAR_C_NAME, 
                                 &gDebuggerTerminalVarGuid, 
-                                EFI_VARIABLE_BOOTSERVICE_ACCESS,
+                                (EFI_VARIABLE_BOOTSERVICE_ACCESS | 
+                                            EFI_VARIABLE_RUNTIME_ACCESS),
                                 DebuggerSerialPortsEnabledVarSize,
                                 &DebuggerSerialPortsEnabledVar);
 	ASSERT_EFI_ERROR(Status);
@@ -653,6 +659,7 @@ UINT8 SetSerialPortsEnabledVar_Sio(IN UINT8 Uid)
                                     SIO_SERIAL_PORTS_LOCATION_VAR_C_NAME,
                                     &gTerminalVarGuid, 
                                     (EFI_VARIABLE_BOOTSERVICE_ACCESS |
+                                            EFI_VARIABLE_RUNTIME_ACCESS |
                                             EFI_VARIABLE_NON_VOLATILE),
                                     SioSerialPortsLocationVarSize, 
                                     &SioSerialPortsLocationVar); 
@@ -665,7 +672,8 @@ UINT8 SetSerialPortsEnabledVar_Sio(IN UINT8 Uid)
 
     Status = pRS->SetVariable(SERIAL_PORTS_ENABLED_VAR_C_NAME, 
                                 &gTerminalVarGuid, 
-                                EFI_VARIABLE_BOOTSERVICE_ACCESS,
+                                (EFI_VARIABLE_BOOTSERVICE_ACCESS | 
+                                            EFI_VARIABLE_RUNTIME_ACCESS),
                                 SerialPortsEnabledVarSize,
                                 &SerialPortsEnabledVar); 
     ASSERT_EFI_ERROR(Status);
@@ -701,7 +709,7 @@ UINT8 SetSerialPortsEnabledVar_Sio(IN UINT8 Uid)
 //********************************************************************** 
 EFI_STATUS ValidatePciSerialNvram(
     IN SERIAL_PORTS_ENABLED_VAR SerialPortsEnabledVar,
-    IN EFI_DEVICE_PATH_PROTOCOL *DevicePath)
+	IN EFI_DEVICE_PATH_PROTOCOL *DevicePath)
 {
     UINT64      PciAddress;
     UINT8       RevisionId[4];
@@ -713,7 +721,7 @@ EFI_STATUS ValidatePciSerialNvram(
     UINT32 PciSerialPortsLocationVarAttributes=0;
     PCI_SERIAL_PORTS_LOCATION_VAR PciSerialPortsLocationVar;
     
-    UINTN PciSerialPortDevicePathVarSize = 0;
+	UINTN PciSerialPortDevicePathVarSize = 0;
     UINT32 PciSerialPortDevicePathVarAttributes = 0;
     EFI_DEVICE_PATH_PROTOCOL *PciSerialPortDevicePathVar = NULL;
 
@@ -725,7 +733,7 @@ EFI_STATUS ValidatePciSerialNvram(
 
     Status = pBS->LocateProtocol( &gEfiPciRootBridgeIoProtocolGuid,
                                   NULL,
-                                  (VOID**)&gPciRootBridgeIo );
+                                  &gPciRootBridgeIo );
 
     ASSERT_EFI_ERROR(Status);
     if (EFI_ERROR(Status)) { 
@@ -793,6 +801,7 @@ EFI_STATUS ValidatePciSerialNvram(
             Status = pRS->SetVariable(gPciSerialPortsDevicePathVarName[i],
                                       &gTerminalVarGuid,
                                       (EFI_VARIABLE_BOOTSERVICE_ACCESS |
+                                      EFI_VARIABLE_RUNTIME_ACCESS |
                                       EFI_VARIABLE_NON_VOLATILE), 
                                        0,
                                        NULL);
@@ -809,6 +818,7 @@ EFI_STATUS ValidatePciSerialNvram(
         Status = pRS->SetVariable(PCI_SERIAL_PORTS_LOCATION_VAR_C_NAME,
                                   &gTerminalVarGuid, 
                                   (EFI_VARIABLE_BOOTSERVICE_ACCESS |
+                                      EFI_VARIABLE_RUNTIME_ACCESS |
                                       EFI_VARIABLE_NON_VOLATILE), 
                                   PciSerialPortsLocationVarSize, 
                                   &PciSerialPortsLocationVar);
@@ -948,6 +958,7 @@ UINT8 SetSerialPortsEnabledVar_Pci(
                                         gPciSerialPortsDevicePathVarName[i],
                                         &gTerminalVarGuid,
                                         (EFI_VARIABLE_BOOTSERVICE_ACCESS |
+                                            EFI_VARIABLE_RUNTIME_ACCESS |
                                             EFI_VARIABLE_NON_VOLATILE), 
                                         PciSerialPortDevicePathVarSize, 
                                         DevicePath);
@@ -965,6 +976,7 @@ UINT8 SetSerialPortsEnabledVar_Pci(
                                     PCI_SERIAL_PORTS_LOCATION_VAR_C_NAME,
                                     &gTerminalVarGuid, 
                                     (EFI_VARIABLE_BOOTSERVICE_ACCESS |
+                                            EFI_VARIABLE_RUNTIME_ACCESS |
                                             EFI_VARIABLE_NON_VOLATILE),
                                     PciSerialPortsLocationVarSize, 
                                     &PciSerialPortsLocationVar); 
@@ -978,7 +990,8 @@ UINT8 SetSerialPortsEnabledVar_Pci(
 
     Status = pRS->SetVariable(SERIAL_PORTS_ENABLED_VAR_C_NAME,
                                 &gTerminalVarGuid,
-                                EFI_VARIABLE_BOOTSERVICE_ACCESS,
+                                (EFI_VARIABLE_BOOTSERVICE_ACCESS | 
+                                        EFI_VARIABLE_RUNTIME_ACCESS),
                                 SerialPortsEnabledVarSize, 
                                 &SerialPortsEnabledVar); 
     ASSERT_EFI_ERROR(Status);
@@ -1011,8 +1024,11 @@ VOID GetSetupValuesForSerialIoMode(
     IN UINT8 Port, 
     IN OUT SERIAL_IO_MODE *SerialIoMode)
 {
+    UINT32 SetupDataAttributes = 0;
+    UINTN SetupDataVarSize = sizeof(SETUP_DATA); 
 
     UINT8 FlowControl = 0;
+    EFI_STATUS Status = EFI_SUCCESS;
 
 #if (TOTAL_SERIAL_PORTS == 0)
 
@@ -1025,10 +1041,6 @@ VOID GetSetupValuesForSerialIoMode(
 
 #else
 
-    UINT32 SetupDataAttributes = 0;
-    UINTN SetupDataVarSize = sizeof(SETUP_DATA); 
-    EFI_STATUS Status;
-    
     Status = pRS->GetVariable(L"Setup", &gSetupGuid, &SetupDataAttributes,
                                 &SetupDataVarSize, &gSetupData);
 
@@ -1185,7 +1197,7 @@ VOID GetSetupValuesForTerminal(
     UINT32 SetupDataAttributes = 0;
     UINTN SetupDataSize = sizeof(SETUP_DATA);     
 
-    EFI_STATUS Status;
+    EFI_STATUS Status = EFI_SUCCESS;
 
     *Disable_Terminal_For_SCT_Test = DISABLE_TERMINAL_FOR_SCT_TEST;
 
@@ -1306,6 +1318,10 @@ VOID GetAcpiSpcrTableValues(
     IN OUT UINT8 *AcpiSpcrTableBaudRate, 
     IN OUT UINT8 *AcpiSpcrTableFlowControl)
 {
+    UINT32 SetupDataAttributes = 0;
+    UINTN SetupDataSize = sizeof(SETUP_DATA); 
+
+    EFI_STATUS Status = EFI_SUCCESS;
 
 #if (TOTAL_SERIAL_PORTS == 0)
 
@@ -1318,10 +1334,6 @@ VOID GetAcpiSpcrTableValues(
 
 #else
 
-    UINT32 SetupDataAttributes = 0;
-    UINTN SetupDataSize = sizeof(SETUP_DATA); 
-    EFI_STATUS Status;
-    
     Status = pRS->GetVariable(L"Setup", &gSetupGuid, &SetupDataAttributes,
                                 &SetupDataSize, &gSetupData);
 
@@ -1371,7 +1383,7 @@ CHAR8 SupportedLanguages[] = LANGUAGE_CODE_ENGLISH;
 //****************************************************************************
 //****************************************************************************
 //**                                                                        **
-//**             (C)Copyright 1985-2014, American Megatrends, Inc.          **
+//**             (C)Copyright 1985-2013, American Megatrends, Inc.          **
 //**                                                                        **
 //**                          All Rights Reserved.                          **
 //**                                                                        **

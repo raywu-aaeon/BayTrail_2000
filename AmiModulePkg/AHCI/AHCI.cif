@@ -6,12 +6,11 @@
 [INF]
 "Ahci.inf"
 [files]
-"Ahci.sdl"	
-"Ahci.chm"	
+"Ahci.sdl"
+"Ahci.Chm"	
 [parts]
 "AhciSmm"
 "Aint13"
 "ACSP"
 "AhciIncludes"
-"AhciBusProtocol"
 <endComponent>

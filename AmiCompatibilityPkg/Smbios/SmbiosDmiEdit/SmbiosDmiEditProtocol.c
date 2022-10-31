@@ -1,7 +1,7 @@
 //**********************************************************************//
 //**********************************************************************//
 //**                                                                  **//
-//**        (C)Copyright 1985-2015, American Megatrends, Inc.         **//
+//**        (C)Copyright 1985-2013, American Megatrends, Inc.         **//
 //**                                                                  **//
 //**                       All Rights Reserved.                       **//
 //**                                                                  **//
@@ -12,16 +12,32 @@
 //**********************************************************************//
 //**********************************************************************//
 
-/** @file SmbiosDmiEditProtocol.c
-    This file provides DmiEdit Protocols
+//**********************************************************************//
+// $Header: $
+//
+// $Revision: $
+//
+// $Date: $
+//**********************************************************************//
+//**********************************************************************//
 
-**/
-
-#include <Token.h>
 #include <AmiDxeLib.h>
-#include <FlashPart.h>
-#include <Protocol/AmiSmbios.h>
+#include <Token.h>
+#include <Protocol\AmiSmbios.h>
 #include "SmbiosDmiEdit.h"
+
+typedef enum {
+	AmiSmbiosFlashDataProtocolCallback,
+	FlashProtocolCallback
+} PROTOCOL_CALLBACK_TYPE;
+
+#if !defined(SMBIOS_DMIEDIT_DATA_LOC) || (SMBIOS_DMIEDIT_DATA_LOC != 2)
+#include <Protocol\SmbiosGetFlashDataProtocol.h>
+#include <Protocol\FlashProtocol.h>
+
+FLASH_PROTOCOL					*FlashProtocol;
+PROTOCOL_CALLBACK_TYPE			ProtocolCallbackType;
+#endif                                  // SMBIOS_DMIEDIT_DATA_LOC
 
 EFI_HANDLE           			gImageHandle;
 EFI_GUID    					gEfiAmiDmieditSmbiosProtocolGuid = AMI_DMIEDIT_SMBIOS_GUID;
@@ -31,12 +47,7 @@ EFI_SMBIOS_DMIEDIT_PROTOCOL     SmbiosDmieditProtocol = {DmiEditNonSmiHandler};
 //----------------------------------------------------------------------------
 //  External Variables
 //----------------------------------------------------------------------------
-#if (SMBIOS_2X_SUPPORT == 1)
 extern SMBIOS_TABLE_ENTRY_POINT	*SmbiosTableEntryPoint;
-#endif                                          // SMBIOS_2X_SUPPORT
-#if (SMBIOS_3X_SUPPORT == 1)
-extern SMBIOS_3X_TABLE_ENTRY_POINT *SmbiosV3TableEntryPoint;
-#endif                                          // SMBIOS_3X_SUPPORT
 extern UINT8                    *ScratchBufferPtr;
 extern UINT16					MaximumBufferSize;
 
@@ -45,63 +56,53 @@ extern UINT16					MaximumBufferSize;
 //----------------------------------------------------------------------------
 extern VOID EnableShadowWrite();
 extern VOID DisableShadowWrite();
+extern VOID GetSmbiosTableF000 (VOID);
 
-// For Smbios version 2.x
-#if (SMBIOS_2X_SUPPORT == 1)
-extern UINT16 GetSmbiosV2Info(
-    IN OUT  GET_SMBIOS_INFO		*p
+extern UINT16 GetSmbiosInfo(
+    IN OUT  GET_SMBIOS_INFO   *p
 );
 
-extern UINT16 GetSmbiosV2Structure(
+extern UINT16 GetSmbiosStructure(
     IN OUT  GET_SMBIOS_STRUCTURE    *p
 );
 
-extern UINT16 SetSmbiosV2Structure(
-    IN SET_SMBIOS_STRUCTURE		*p
-);
-#endif                                          // SMBIOS_2X_SUPPORT
-
-// For Smbios version 3.x
-#if (SMBIOS_3X_SUPPORT == 1)
-extern UINT16 GetSmbiosV3Info(
-    IN OUT  GET_SMBIOS_V3_INFO	*p
+extern UINT16 SetSmbiosStructure(
+    IN SET_SMBIOS_STRUCTURE    *p
 );
 
-extern UINT16 GetSmbiosV3Structure(
-    IN OUT  GET_SMBIOS_V3_STRUCTURE    *p
+#if !defined(SMBIOS_DMIEDIT_DATA_LOC) || (SMBIOS_DMIEDIT_DATA_LOC != 2)
+extern FLASH_DATA_INFO GetFlashDataInfo(
+    IN TABLE_INFO   *RecordInfo
 );
-
-extern UINT16 SetSmbiosV3Structure(
-    IN SET_SMBIOS_V3_STRUCTURE	*p
-);
-#endif                                          // SMBIOS_3X_SUPPORT
+#endif
 
 //----------------------------------------------------------------------------
 //  Function Declaration
 //----------------------------------------------------------------------------
-EFI_STATUS
-GetFlashDataLocation (VOID);
+VOID
+SmbiosDmiEditCallbackHandler(
+	IN EFI_EVENT	Event,
+	IN VOID			*Context
+);
 
+//<AMI_PHDR_START>
 //----------------------------------------------------------------------------
-//  Global Variables
+// Procedure:   SmbiosDmiEditProtocolEntryPoint
+//
+// Description: SmbiosDmiEditProtocol driver entry point
+//
+// Input:       IN EFI_HANDLE           ImageHandle,
+//              IN EFI_SYSTEM_TABLE     *SystemTable
+//
+// Output:      EFI_STATUS
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
 //----------------------------------------------------------------------------
-UINT8       Buffer[2 * FLASH_BLOCK_SIZE];
-UINT8       *gBufferPtr = Buffer;
-UINT8       *gFlashBlockPtr;
-UINTN       gDmiEditTableSize;
-UINTN       gDmiEditTableOffset;            // Offset from start of flash block
-UINTN       gCurrentDmiEditOffset;          // Offset from start of flash block
-BOOLEAN     DmiEditTableIn2Blocks = FALSE;
-
-/**
-    SmbiosDmiEditProtocol driver entry point
-
-    @param ImageHandle
-    @param SystemTable
-
-    @return EFI_STATUS
-
-**/
+//<AMI_PHDR_END>
 EFI_STATUS
 SmbiosDmiEditProtocolEntryPoint(
     IN EFI_HANDLE           ImageHandle,
@@ -114,373 +115,311 @@ SmbiosDmiEditProtocolEntryPoint(
 	InitAmiLib(ImageHandle, SystemTable);
 	gImageHandle = ImageHandle;
 
-	TRACE((-1, "=====  In SmbiosDmiEditProtocolEntryPoint  =====\n"));
-    Status = pBS->LocateProtocol (&gAmiSmbiosProtocolGuid, NULL, (void**)&AmiSmbiosProtocol);
+    Status = pBS->LocateProtocol (&gAmiSmbiosProtocolGuid, NULL, &AmiSmbiosProtocol);
     ASSERT_EFI_ERROR(Status);
     if (EFI_ERROR(Status)) {
         return Status;
     }
 
-#if (SMBIOS_2X_SUPPORT == 1)
-    SmbiosTableEntryPoint = AmiSmbiosProtocol->SmbiosGetTableEntryPoint(2);
-#endif                                          // SMBIOS_2X_SUPPORT
-#if (SMBIOS_3X_SUPPORT == 1)
-    SmbiosV3TableEntryPoint = AmiSmbiosProtocol->SmbiosGetTableEntryPoint(3);
-#endif                                          // SMBIOS_3X_SUPPORT
+    SmbiosTableEntryPoint = AmiSmbiosProtocol->SmbiosGetTableEntryPoint();
     ScratchBufferPtr = AmiSmbiosProtocol->SmbiosGetScratchBufferPtr();
 	MaximumBufferSize = AmiSmbiosProtocol->SmbiosGetBufferMaxSize();
 
 #if !defined(SMBIOS_DMIEDIT_DATA_LOC) || SMBIOS_DMIEDIT_DATA_LOC != 2
-    TRACE((-1, "Calling GetFlashDataLocation\n"));
-    Status = GetFlashDataLocation();
-#endif                                  // SMBIOS_DMIEDIT_DATA_LOC
+{
+	EFI_EVENT   			ProtocolEvent;
+	VOID        			*Registration;
 
-    if (Status == EFI_SUCCESS) {
-        pBS->InstallMultipleProtocolInterfaces(
-                                 &gImageHandle,
-                                 &gEfiAmiDmieditSmbiosProtocolGuid,
-                                 &SmbiosDmieditProtocol,
-                                 NULL
-                                 );
-        TRACE((-1, "AmiDmieditSmbiosProtocol installed\n"));
+	//
+    // Register callback to install DmieditSmbiosProtocol
+	// in case DmiEdit Data is in BootBlock
+    //
+
+	//
+    // Register SmbiosGetFlashDataProtocol Callback
+    //
+	ProtocolCallbackType = AmiSmbiosFlashDataProtocolCallback;
+    Status = RegisterProtocolCallback(
+                            &gAmiSmbiosFlashDataProtocolGuid,
+                            SmbiosDmiEditCallbackHandler,
+                            &ProtocolCallbackType,
+                            &ProtocolEvent,
+                            &Registration
+                        );
+    if (EFI_ERROR(Status)) {
+        return Status;
     }
 
-    TRACE((-1, "=====  Exiting SmbiosDmiEditProtocolEntryPoint  =====\n"));
+    pBS->SignalEvent(ProtocolEvent);	// Check if AmiSmbiosFlashDataProtocol already started
+
+    //
+    // Register FlashProtocol Callback
+    //
+	ProtocolCallbackType = FlashProtocolCallback;
+    Status = RegisterProtocolCallback(
+                            &gFlashProtocolGuid,
+                            SmbiosDmiEditCallbackHandler,
+                            &ProtocolCallbackType,
+                            &ProtocolEvent,
+                            &Registration
+                        );
+
+    pBS->SignalEvent(ProtocolEvent);	// Check if FlashProtocol already started
+}
+#else
+    //
+    // Install DmieditSmbiosProtocol here in case DmiEdit Data is in Nvram
+    //
+	pBS->InstallMultipleProtocolInterfaces(
+								 &gImageHandle,
+								 &gEfiAmiDmieditSmbiosProtocolGuid,
+								 &SmbiosDmieditProtocol,
+								 NULL
+								 );
+	TRACE((-1, "AmiDmieditSmbiosProtocol installed\n"));
+#endif                                  // SMBIOS_DMIEDIT_DATA_LOC
 
     return Status;
 }
 
-/**
-    Get pointers to Smbios Entry Point
-
-    @param  None
-
-    @return None
-
-**/
-VOID
-GetSmbiosPointers (VOID)
-{
-    UINTN                   Size;
-
-#if (SMBIOS_2X_SUPPORT == 1)
-    Size = sizeof(SMBIOS_TABLE_ENTRY_POINT*);
-    pRS->GetVariable(L"SmbiosEntryPointTable",
-                            &gAmiSmbiosNvramGuid,
-                            NULL,
-                            &Size,
-                            &SmbiosTableEntryPoint);
-#endif                                          // SMBIOS_2X_SUPPORT
-
-#if (SMBIOS_3X_SUPPORT == 1)
-    Size = sizeof(SMBIOS_3X_TABLE_ENTRY_POINT*);
-    pRS->GetVariable(L"SmbiosV3EntryPointTable",
-                            &gAmiSmbiosNvramGuid,
-                            NULL,
-                            &Size,
-                            &SmbiosV3TableEntryPoint);
-#endif                                          // SMBIOS_3X_SUPPORT
-
-    Size = sizeof(UINT8*);
-    pRS->GetVariable(L"SmbiosScratchBuffer",
-                            &gAmiSmbiosNvramGuid,
-                            NULL,
-                            &Size,
-                            &ScratchBufferPtr);
-
-    Size = sizeof(UINT16);
-    pRS->GetVariable(L"MaximumTableSize",
-                            &gAmiSmbiosNvramGuid,
-                            NULL,
-                            &Size,
-                            &MaximumBufferSize);
-}
-
-/**
-    Handler for SmbiosDmiEditProtocol
-
-    @param Data
-    @param pCommBuff
-
-    @return UINT32 Protocol status
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   DmiEditNonSmiHandler
+//
+// Description: Handler for SmbiosDmiEditProtocol
+//
+// Input:       IN UINT8    Data
+//              IN UINT64   pCommBuff
+//
+// Output:      None
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 UINT32
 DmiEditNonSmiHandler(
     IN UINT8    Data,
     IN UINT64   pCommBuff
 )
 {
-    UINT32          eax;
-    static BOOLEAN  ValidPointers = FALSE;
+    UINT32      eax;
+    VOID        *pInterface;
 
-    TRACE((-1, "Non-SMI SMBIOSHandler Data: 0x%X \n",Data));
+	TRACE((-1, "SMISMBIOSHandler Data: 0x%X \n",Data));
+	pInterface = (void*)pCommBuff;
 
-    if (!ValidPointers) {
-        GetSmbiosPointers();
-        ValidPointers = TRUE;
-    }
+	GetSmbiosTableF000();
 
     switch(Data) {
-#if (SMBIOS_2X_SUPPORT == 1) || (SMBIOS_3X_SUPPORT == 1)
-    VOID    *pInterface;
-
-    pInterface = (void*)pCommBuff;
-#endif
-#if (SMBIOS_2X_SUPPORT == 1)
-        case 0x50:  eax = GetSmbiosV2Info(pInterface);
+        case 0x50:
+                    eax = GetSmbiosInfo(pInterface);
+	TRACE((-1, "eax : 0x%X \n",eax));
                     break;
-        case 0x51:  eax = GetSmbiosV2Structure(pInterface);
+        case 0x51:
+                    eax = GetSmbiosStructure(pInterface);
+	TRACE((-1, "eax : 0x%X \n",eax));
                     break;
-        case 0x52:  EnableShadowWrite();
-                    eax = SetSmbiosV2Structure(pInterface);
+        case 0x52:
+                    EnableShadowWrite();
+                    eax = SetSmbiosStructure(pInterface);
                     DisableShadowWrite();
-                    break;
-#endif                                          // SMBIOS_2X_SUPPORT
-#if (SMBIOS_3X_SUPPORT == 1)
-        case 0x58:  eax = GetSmbiosV3Info(pInterface);
-                    break;
-        case 0x59:  eax = GetSmbiosV3Structure(pInterface);
-                    break;
-        case 0x5a:  EnableShadowWrite();
-                    eax = SetSmbiosV3Structure(pInterface);
-                    DisableShadowWrite();
-                    break;
-#endif                                          // SMBIOS_3X_SUPPORT
-        default:    eax = DMI_FUNCTION_NOT_SUPPORTED;
+	TRACE((-1, "eax : 0x%X \n",eax));
     }
-
     return eax;
 }
 
 #if !defined(SMBIOS_DMIEDIT_DATA_LOC) || SMBIOS_DMIEDIT_DATA_LOC != 2
-/**
-    Find the Flash Data file in the FV
-
-    @param None
-
-    @return UINT32 Protocol status
-
-**/
-EFI_STATUS
-GetFlashDataLocation (VOID)
-{
-    EFI_STATUS      Status;
-    UINTN           i;
-    UINTN           index;
-    UINT32          *BufferPtr;
-    BOOLEAN         DmiEditDataFound = FALSE;
-
-    TRACE((-1, "=====  In GetFlashDataLocation  =====\n"));
-    for (i = 0; i < FV_BB_BLOCKS; i++) {
-        gFlashBlockPtr = FLASHPART_BASE_ADDR + (UINT8*)(i * FLASH_BLOCK_SIZE);
-        TRACE((-1, "gFlashBlockPtr = %x\n", gFlashBlockPtr));
-        FlashRead(gFlashBlockPtr, Buffer, 2*FLASH_BLOCK_SIZE);
-
-        for (index = 0; index < FLASH_BLOCK_SIZE; index += 4) {
-            BufferPtr = (UINT32*)&Buffer[index];
-            if (*BufferPtr == 0x5f415342) {     // "_ASB"
-                gDmiEditTableSize = *(UINT16*)&Buffer[index + 4];
-                gDmiEditTableOffset = index + 8;
-                TRACE((-1, "Flash Data found at %x, offset = %x, size = %x\n", gFlashBlockPtr, gDmiEditTableOffset, gDmiEditTableSize));
-
-                // if DmiEdit data table spans across block boundary, read next block also
-                if ((gDmiEditTableOffset + gDmiEditTableSize) > FLASH_BLOCK_SIZE) {
-                    DmiEditTableIn2Blocks = TRUE;
-                    FlashRead(gFlashBlockPtr + FLASH_BLOCK_SIZE, &Buffer[FLASH_BLOCK_SIZE], FLASH_BLOCK_SIZE);
-                }
-
-                DmiEditDataFound = TRUE;
-                break;
-            }
-        }
-
-        if (DmiEditDataFound) {
-            Status = EFI_SUCCESS;
-            break;
-        }
-
-        Status = EFI_NOT_FOUND;
-    }
-
-    TRACE((-1, "=====  Exiting GetFlashDataLocation  =====\n"));
-    return Status;
-}
-
-/**
-    Write to the flash part starting at "Address" for a length of "Size"
-
-    @param *FlashBlockAddress
-    @param *Data
-
-    @return UINT32 Protocol status
-
-**/
-EFI_STATUS
-BlockWriteToFlash(
-    IN VOID    *FlashBlockAddress,
-    IN VOID    *Data
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   SmbiosDmiEditCallbackHandler
+//
+// Description: Install SmbiosDmieditProtocol when both FlashProtocol
+//				and AmiSmbiosFlashDataProtocol are installed
+//
+// Input:       IN EFI_EVENT	Event,
+//              IN VOID     	*Context
+//
+// Output:      EFI_STATUS
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
+VOID
+SmbiosDmiEditCallbackHandler(
+	IN EFI_EVENT	Event,
+	IN VOID			*Context
 )
 {
-    EFI_STATUS  Status;
+	EFI_STATUS						Status;
+    EFI_SMBIOS_FLASH_DATA_PROTOCOL  *SmbiosFlashDataProtocol;
+    static BOOLEAN					AmiSmbiosFlashDataProtocolInstalled = FALSE;
+    static BOOLEAN					FlashProtocolInstalled = FALSE;
 
-    FlashDeviceWriteEnable();
-    FlashBlockWriteEnable(gFlashBlockPtr);
-
-    FlashEraseBlock(gFlashBlockPtr);
-
-    if (FlashProgram(gFlashBlockPtr, Data, FLASH_BLOCK_SIZE)) {
-        Status = EFI_SUCCESS;
+    if (*(PROTOCOL_CALLBACK_TYPE*)Context == AmiSmbiosFlashDataProtocolCallback) {
+    	TRACE((-1, "AmiSmbiosFlashDataProtocol installed\n"));
+		Status = pBS->LocateProtocol (&gAmiSmbiosFlashDataProtocolGuid, NULL, &SmbiosFlashDataProtocol);
+		ASSERT_EFI_ERROR(Status);
+		if (Status == EFI_SUCCESS) {
+			SmbiosFlashDataProtocol->GetFlashTableInfo(SmbiosFlashDataProtocol, &gFlashData, &gFlashDataSize);
+			AmiSmbiosFlashDataProtocolInstalled = TRUE;
+		}
+		else return;
     }
-    else {
-        Status = EFI_INVALID_PARAMETER;
+
+    if (*(PROTOCOL_CALLBACK_TYPE*)Context == FlashProtocolCallback) {
+    	TRACE((-1, "FlashProtocol installed\n"));
+		Status = pBS->LocateProtocol (&gFlashProtocolGuid, NULL, &FlashProtocol);
+		ASSERT_EFI_ERROR(Status);
+		if (Status == EFI_SUCCESS) {
+			FlashProtocolInstalled = TRUE;
+		}
+		else return;
     }
 
-    FlashBlockWriteDisable(gFlashBlockPtr);
-    FlashDeviceWriteDisable();
+    if (AmiSmbiosFlashDataProtocolInstalled && FlashProtocolInstalled) {
+		pBS->InstallMultipleProtocolInterfaces(
+									 &gImageHandle,
+									 &gEfiAmiDmieditSmbiosProtocolGuid,
+									 &SmbiosDmieditProtocol,
+									 NULL
+									 );
+    	TRACE((-1, "AmiDmieditSmbiosProtocol installed\n"));
+    }
 
-    return Status;
+	pBS->CloseEvent(Event);
 }
 
-/**
-    Searches the Flash Data Table for a record of Type and
-    Offset. If found, the existing data will be replaced with
-    the new data, else the data will be added as a new record.
-
-    @param TABLE_INFO
-
-    @return FLASH_DATA_INFO
-
-**/
-FLASH_DATA_INFO
-GetFlashData(
-    IN TABLE_INFO   *RecordInfo
-)
-{
-
-    TABLE_INFO          *FlashDataPtr;
-    FLASH_DATA_INFO     FlashDataInfo = {0, 0, 0};
-
-    FlashDataPtr = (TABLE_INFO*)&Buffer[gDmiEditTableOffset];
-    gCurrentDmiEditOffset = 0;
-
-    while (FlashDataPtr->Handle != 0xffff) {
-        if (FlashDataPtr->Type == RecordInfo->Type &&
-            FlashDataPtr->Handle == RecordInfo->Handle &&
-            FlashDataPtr->Offset == RecordInfo->Offset &&
-            FlashDataPtr->Flags == RecordInfo->Flags) {
-            FlashDataInfo.Location = (UINT8*)FlashDataPtr;
-            FlashDataInfo.Size = FlashDataPtr->Size;
-            gCurrentDmiEditOffset = (UINT8*)FlashDataPtr - Buffer;
-        }
-
-        FlashDataPtr = (TABLE_INFO*)((UINT8*)(FlashDataPtr + 1) + FlashDataPtr->Size);
-    }
-
-    FlashDataInfo.EndOfData = (UINT8*)FlashDataPtr;
-    if (gCurrentDmiEditOffset == 0) {
-        gCurrentDmiEditOffset = (UINT8*)FlashDataPtr - Buffer;
-    }
-
-    return FlashDataInfo;
-}
-
-/**
-    Searches the Flash Data Table for a record of Type and
-    Offset. If found, the existing data will be replaced with
-    the new data, else the data will be added as a new record.
-
-    @param *TableInfo
-    @param *Data
-
-    @retval UINT16 Status
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   UpdateSmbiosTable
+//
+// Description: Searches the Flash Data Table for a record of Type and
+//              Offset. If found, the existing data will be replaced with
+//              the new data, else the data will be added as a new record.
+//
+// Input:       IN TABLE_INFO  TableInfo,
+//              IN UINT8       *Data
+//
+// Output:      EFI_STATUS
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 UINT16
 UpdateSmbiosTable(
     IN TABLE_INFO  *TableInfo,
     IN UINT8       *Data
 )
 {
-    EFI_STATUS          Status;
-    FLASH_DATA_INFO     FlashDataInfo;
-    UINTN               SpaceAvailable;
-    UINT8               *BufferPtr = NULL;
-    UINTN               i;
-    UINTN               j;
-    UINTN               LastDataIndex;
-    UINT8               InputDataBuffer[0x80];
+    UINT16              	i;
+    UINT8                   *BufferPtr = NULL;
+    UINT32              	SpaceAvailable;
+    FLASH_DATA_INFO     	FlashDataInfo;
+    EFI_PHYSICAL_ADDRESS    FlashDataBlock;
+    UINT8                   BlockCount;
+    UINT8                   *DataBuffer;
+    UINTN                   RemainingSize;
 
-    TRACE((-1, "===  In UpdateSmbiosTable  ===\n"));
-
-    FlashDataInfo = GetFlashData(TableInfo);
-    TRACE((-1, "FlashDataInfo.Location = 0x%016lx\n", FlashDataInfo.Location));
-    TRACE((-1, "FlashDataInfo.Size = 0x%016lx\n", FlashDataInfo.Size));
-    TRACE((-1, "FlashDataInfo.EndOfData = 0x%016lx\n", FlashDataInfo.EndOfData));
+    FlashDataInfo = GetFlashDataInfo(TableInfo);
 
     // Check Size
-    SpaceAvailable = gDmiEditTableSize - (FlashDataInfo.EndOfData - Buffer);
+    SpaceAvailable = (UINT32)((UINT8*)gFlashData + gFlashDataSize - FlashDataInfo.EndOfData);
     if (FlashDataInfo.Location) SpaceAvailable += FlashDataInfo.Size + sizeof(TABLE_INFO);
+
     if (sizeof(TABLE_INFO) + TableInfo->Size > SpaceAvailable) {
         return DMI_ADD_STRUCTURE_FAILED;
     }
 
-    TRACE((-1, "Copying TableInfo header into input buffer\n"));
-    // Copy TableInfo header into input Buffer
-    BufferPtr = InputDataBuffer;
+    // Determine the base block that contains the DmiEdit data
+    FlashDataBlock = (UINTN)gFlashData & (0xFFFFFFFF - FLASH_BLOCK_SIZE + 1);
+
+    // Check to see if it spans more than one block
+    if (((UINTN)gFlashData + FLASHDATA_SIZE) > (FlashDataBlock + FLASH_BLOCK_SIZE)) {
+        BlockCount = 2;
+    }
+    else {
+        BlockCount = 1;
+    }
+
+    // Allocate Flash Data buffer and get the data
+    // Note: additional 4K reserved for data manipulation
+    pBS->AllocatePool(EfiBootServicesData, BlockCount * FLASH_BLOCK_SIZE, &DataBuffer);
+    FlashProtocol->Read((UINT8*)FlashDataBlock, BlockCount * FLASH_BLOCK_SIZE, DataBuffer);
+
+    if (FlashDataInfo.Location) {
+        // Some data is already present for input type
+        // Determine location of existing data
+        BufferPtr = DataBuffer + \
+                    (UINTN)gFlashData - FlashDataBlock + \
+                    (UINTN)FlashDataInfo.Location - (UINTN)gFlashData;      // Existing DmiEdit data location
+
+        // Calculate remaining size from the existing data location
+        // to end of DmiEdit data storage block
+        RemainingSize = (UINTN)FlashDataInfo.EndOfData - \
+                        (UINTN)FlashDataInfo.Location - \
+                        (sizeof(TABLE_INFO) + ((TABLE_INFO*)BufferPtr)->Size);
+
+        // Copy the remaining data (without the existing data) to location
+        // after input data entry insertion
+        MemCpy(BufferPtr + sizeof(TABLE_INFO) + TableInfo->Size,
+                BufferPtr + sizeof(TABLE_INFO) + ((TABLE_INFO*)BufferPtr)->Size,
+                RemainingSize);
+
+        // In case new data size is smaller than existing one, clear old data
+        // from (EndOfData - size difference) to EndOfData to 0xff
+        if (((TABLE_INFO*)BufferPtr)->Size > TableInfo->Size) {
+            UINT8       *DataEndPtr;
+
+            RemainingSize = ((TABLE_INFO*)BufferPtr)->Size - TableInfo->Size;
+            DataEndPtr = DataBuffer + \
+                        ((UINTN)FlashDataInfo.EndOfData - FlashDataBlock) - \
+                        RemainingSize;
+
+            for (i = 0; i < RemainingSize; ++i) {
+                *DataEndPtr++ = 0xff;
+            }
+        }
+    }
+    else {
+        // Determine the end location of current DmiEdit data
+        BufferPtr = DataBuffer + \
+                    (UINTN)gFlashData - FlashDataBlock + \
+                    (UINTN)FlashDataInfo.EndOfData - (UINTN)gFlashData;     // End of DmiEdit data
+    }
+
+    // Insert data
     *(TABLE_INFO *)BufferPtr = *TableInfo;
     BufferPtr += sizeof(TABLE_INFO);
 
-    TRACE((-1, "Adding data to input buffer\n"));
-    // Add data to input buffer
-    for (i = 0; i < TableInfo->Size; ++i) {
+    for(i = 0; i < TableInfo->Size; ++i) {
         *BufferPtr++ = Data[i];
     }
 
-    TRACE((-1, "Copy input data to current location\n"));
-    // Copy input data to current location
-    for (i = 0, j = gCurrentDmiEditOffset; i < TableInfo->Size + sizeof(TABLE_INFO); i++, j++) {
-        Buffer[j] = InputDataBuffer[i];
-    }
-    LastDataIndex = j;
+    // Update DmiEdit data block
+    FlashProtocol->Update((UINT8*)FlashDataBlock, BlockCount * FLASH_BLOCK_SIZE, DataBuffer);
 
-    TRACE((-1, "Clear the rest of DmiEdit data in scratch buffer to 0xFF\n"));
-    // Clear the rest of DmiEdit data in scratch buffer to 0xFF
-    for (i = gDmiEditTableOffset + gDmiEditTableSize - j; i < 0; i--, j++) {
-        Buffer[j] = 0xff;
-    }
+    pBS->FreePool(DataBuffer);
 
-    if (FlashDataInfo.Location) {
-        // Skip over old data
-        BufferPtr = FlashDataInfo.Location;
-        BufferPtr += ((TABLE_INFO*)BufferPtr)->Size + sizeof(TABLE_INFO);
-        while (BufferPtr < FlashDataInfo.EndOfData) {
-            Buffer[LastDataIndex++] = *BufferPtr++;
-        }
-    }
-
-    TRACE((-1, "Writing to flash - 1st block\n"));
-    Status = BlockWriteToFlash(gFlashBlockPtr, gBufferPtr);
-
-    // if DmiEdit data table spans across block boundary, flash the next block
-    if ((Status == EFI_SUCCESS) && DmiEditTableIn2Blocks) {
-        TRACE((-1, "Writing to flash - 2nd block\n"));
-        Status = BlockWriteToFlash(gFlashBlockPtr + FLASH_BLOCK_SIZE, gBufferPtr + FLASH_BLOCK_SIZE);
-    }
-
-    if (EFI_ERROR(Status)) {
-        return DMI_BAD_PARAMETER;
-    }
-    else {
-        return DMI_SUCCESS;
-    }
+    return 0;
 }
 #endif							// SMBIOS_DMIEDIT_DATA_LOC
 
 //**********************************************************************//
 //**********************************************************************//
 //**                                                                  **//
-//**        (C)Copyright 1985-2015, American Megatrends, Inc.         **//
+//**        (C)Copyright 1985-2013, American Megatrends, Inc.         **//
 //**                                                                  **//
 //**                       All Rights Reserved.                       **//
 //**                                                                  **//

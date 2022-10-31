@@ -5,7 +5,6 @@
 	RefName = "AmiCryptoUtils"
 [files]
 "CryptoUtils.sdl"	
-"CryptoCon.exe"	
-"keygen.exe"	
-"CryptoCon"	
+"CryptoCon.exe"
+"keygen.exe"
 <endComponent>

@@ -2,7 +2,7 @@
 //*****************************************************************//
 //*****************************************************************//
 //**                                                             **//
-//**         (C)Copyright 2014, American Megatrends, Inc.        **//
+//**         (C)Copyright 2011, American Megatrends, Inc.        **//
 //**                                                             **//
 //**                     All Rights Reserved.                    **//
 //**                                                             **//
@@ -24,10 +24,15 @@
 //*****************************************************************//
 //*****************************************************************//
 //*****************************************************************//
-/** @file commonoem.h
-    header of commonoem.h
-
-**/
+//<AMI_FHDR_START>
+//----------------------------------------------------------------------------
+//
+// Name:		commonoem.h
+//
+// Description:	header of commonoem.h
+//
+//----------------------------------------------------------------------------
+//<AMI_FHDR_END>
 
 #ifndef _COMMONOEM_H_
 #define _COMMONOEM_H_
@@ -106,13 +111,15 @@ typedef struct _MOUSE_INFO
 #include <Protocol/AmiKeycode.h> 
 
 
-
+//Start EIP #23127 Item #8
+//EIP 60128 Ctrl+Alt+F6 also working as Ctrl+F6 or Alt+F6
 BOOLEAN CheckAdvShiftState (UINT32 AmiKeyShiftState, UINT32 CondShiftState);
 #define TSE_CHECK_SHIFTSTATE  CheckAdvShiftState
  
 /*( (!(AmiKeyShiftSate &(~SHIFT_STATE_VALID)) && (!CondShiftState)) || \
 (((AmiKeyShiftSate &(~SHIFT_STATE_VALID)) & CondShiftState) == (CondShiftState & (~SHIFT_STATE_VALID))) || \
 ((AmiKeyShiftSate == SHIFT_STATE_VALID) && (CondShiftState == SHIFT_STATE_VALID)) )*/
+//End EIP #23127 Item #8
 
 #else
 #ifndef _AMI_EFI_KEY_DATA_
@@ -157,9 +164,9 @@ VOID ProcessProceedToBootNow(VOID);
 VOID ProcessConOutAvailable(VOID);
 VOID ProcessUIInitHook(VOID);
 VOID AfterInitPostScreen(VOID);
-VOID SwitchToPostScreen(VOID);
-BOOLEAN DefaultEntryStatus();
-EFI_STATUS BootFlowExitHook(VOID);
+VOID SwitchToPostScreen(VOID);//EIP-111415 SwitchToPostScreenHook
+
+
 
 #define MODIFIER_DUAL_KEYS 			0x000000FF          //For handling any oTf the two dual(ctrl, alt, shift and logo) keys pressed
 #define RIGHT_LEFT_SHIFT_PRESSED	0x00000003
@@ -194,28 +201,16 @@ HOTCLICK_TEMPLATE;
 
 extern HOTKEY_TEMPLATE gHotKeyInfo[];
 extern UINT32 gHotKeyCount;
-extern UINT32 gHotClickCount;
-extern HOTCLICK_TEMPLATE gHotClickInfo[];
+extern UINT32 gHotClickCount;//EIP:47086 - Right clicking from the Main page is not exiting from BIOS setup.
+extern HOTCLICK_TEMPLATE gHotClickInfo[];//EIP:47086 - Right clicking from the Main page is not exiting from BIOS setup.
 
-typedef struct
-{
-	EFI_GUID			VariableGuid;
-	CHAR8				VariableName [50];
-}VAR_DYNAMICPARSING_HANDLESUPPRESS;
-
-BOOLEAN IsTseBuild();
-
-#define EFI_OS_INDICATIONS_BOOT_TO_FW_UI	0x0000000000000001
-#define EFI_OS_INDICATIONS_START_OS_RECOVERY 0x0000000000000020
-#define EFI_OS_INDICATIONS_START_PLATFORM_RECOVERY  0x0000000000000040
-VOID SaveGraphicsScreen(VOID);
 #endif
 
 //*****************************************************************//
 //*****************************************************************//
 //*****************************************************************//
 //**                                                             **//
-//**         (C)Copyright 2014, American Megatrends, Inc.        **//
+//**         (C)Copyright 2011, American Megatrends, Inc.        **//
 //**                                                             **//
 //**                     All Rights Reserved.                    **//
 //**                                                             **//

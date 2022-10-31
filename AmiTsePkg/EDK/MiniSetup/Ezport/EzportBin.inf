@@ -11,8 +11,6 @@ LIBRARY_CLASS = EzportBin
 LIB | TseStyle.lib
 [binaries.X64]
 LIB | TseStylex64.lib
-[binaries.AARCH64]
-LIB | TseStyleAarch64.lib
 
 [Sources]
 
@@ -52,7 +50,7 @@ LIB | TseStyleAarch64.lib
   DebugLib
   UefiLib
   PrintLib
-#  UefiDriverEntryPoint
+  UefiDriverEntryPoint
 #  AmiIntrinsicLib
   ReportStatusCodeLib
   

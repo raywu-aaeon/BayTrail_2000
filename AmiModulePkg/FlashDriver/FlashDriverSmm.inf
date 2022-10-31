@@ -1,7 +1,7 @@
 #**********************************************************************
 #**********************************************************************
 #**                                                                  **
-#**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+#**        (C)Copyright 1985-2012, American Megatrends, Inc.         **
 #**                                                                  **
 #**                       All Rights Reserved.                       **
 #**                                                                  **
@@ -22,26 +22,36 @@
   FILE_GUID                      = 0C375A90-4C4C-4428-8EA0-531BE8959BF7
   MODULE_TYPE                    = DXE_SMM_DRIVER
   PI_SPECIFICATION_VERSION       = 0x0001000A
+  VERSION_STRING                 = 1.0
   ENTRY_POINT                    = FlashDriverEntry
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64
+#
+#  
+
 
 [Sources]  
   Flash.c
 
 [Packages]
   MdePkg/MdePkg.dec   
-  AmiCompatibilityPkg/AmiCompatibilityPkg.dec
+  IntelFrameworkPkg/IntelFrameworkPkg.dec
+  AmiCompatibilityPkg/AmiCompatibilityPkg.dec 
   AmiModulePkg/AmiModulePkg.dec
   
 [LibraryClasses]
   AmiDxeLib
+  AmiCspLib
   FlashLib
   UefiDriverEntryPoint
   UefiBootServicesTableLib
-  AmiCriticalSectionLib
 	
 [Protocols]
-  gFlashProtocolGuid             #CONSUMES, AmiCompatibilityPkg.dec
-  gFlashSmmProtocolGuid          #PRODUCES, AmiCompatibilityPkg.dec
+	gFlashProtocolGuid                    #PRODUCES, AmiCompatibilityPkg.dec
+	gFlashSmmProtocolGuid          #PRODUCES, AmiCompatibilityPkg.dec
 
 [Depex]
   TRUE
@@ -49,7 +59,7 @@
 #**********************************************************************
 #**********************************************************************
 #**                                                                  **
-#**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+#**        (C)Copyright 1985-2012, American Megatrends, Inc.         **
 #**                                                                  **
 #**                       All Rights Reserved.                       **
 #**                                                                  **

@@ -5,7 +5,6 @@ TOKEN
 	TokenType = Boolean
 	Master = Yes
 	Token = "SmbiosDMIEdit_SUPPORT" "=" "1"
-    Token = "SMBIOS_DMIEDIT_DATA_LOC" "!=" "2"
 End
 
 TOKEN
@@ -13,14 +12,6 @@ TOKEN
     Value  = "$(X64_SUPPORT)"
     TokenType = Boolean
     TargetH = Yes
-End
-
-TOKEN
-    Name  = "SMBIOS_X64_BUILD"
-    Value  = "1"
-    TokenType = Boolean
-    TargetH = Yes
-    Token = "INTEL_ARCHITECTURE_SUPPORT" "=" "0"
 End
 
 PATH

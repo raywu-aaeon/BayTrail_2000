@@ -5,7 +5,7 @@
 #  PPI to discover and dispatch the DXE Foundation and components that are
 #  needed to run the DXE Foundation.
 #
-#  Copyright (c) 2006 - 2013, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2006 - 2011, Intel Corporation. All rights reserved.<BR>
 #  This program and the accompanying materials
 #  are licensed and made available under the terms and conditions of the BSD License
 #  which accompanies this distribution.  The full text of the license may be found at
@@ -34,9 +34,6 @@
 [Sources]
   DxeIpl.h
   DxeLoad.c
-#*** AMI PORTING BEGIN ***#  
-  AmiDxeIpl.c
-#*** AMI PORTING END *****#
 
 [Sources.Ia32]
   X64/VirtualMemory.h  ||||gEfiMdeModulePkgTokenSpaceGuid.PcdDxeIplSwitchToLongMode
@@ -85,6 +82,7 @@
 #*** AMI PORTING BEGIN ***#
   PerformanceLib
   AmiPeiLib
+  ReportFVLib
 #*** AMI PORTING END *****#
 
 [Ppis]
@@ -95,10 +93,8 @@
   gEfiPeiLoadFilePpiGuid            ## CONSUMES
   gEfiPeiS3Resume2PpiGuid           ## SOMETIMES_CONSUMES(Consumed on S3 boot path)
   gEfiPeiRecoveryModulePpiGuid      ## SOMETIMES_CONSUMES(Consumed on recovery boot path)
-  gEfiVectorHandoffInfoPpiGuid      ## SOMETIMES_CONSUMES
 #*** AMI PORTING BEGIN ***#
   gEfiPeiLoadedImagePpiGuid         ## SOMETIMES_PRODUCES(Not produced on S3 or recovery boot path)
-  gAmiReadyToLoadDxeCorePpiGuid     ## PRODUCES
 #*** AMI PORTING END *****#
 
 [Guids]
@@ -106,7 +102,6 @@
   gEfiMemoryTypeInformationGuid     ## SOMETIMES_PRODUCES ## HOB
 #*** AMI PORTING BEGIN ***#
   gAmiRecoveryImageHobGuid
-  gAmiGlobalVariableGuid
 #*** AMI PORTING END *****#
 
 [FeaturePcd.IA32]
@@ -124,7 +119,6 @@
 #*** AMI PORTING BEGIN ***#
 [Pcd]
   gAmiModulePkgTokenSpaceGuid.PcdUseNewImageOnFlashUpdate
-  gAmiModulePkgTokenSpaceGuid.PcdForceSetupOnFailedRecovery
 #*** AMI PORTING END *****#
   
 [Depex]

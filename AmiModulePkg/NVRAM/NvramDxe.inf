@@ -57,9 +57,6 @@
   gFlashProtocolGuid
   gFlashSmmProtocolGuid
   gEfiSmmVariableProtocolGuid #CSP20131017 - WHCK test TPM ISSUE
-    
-[Guids] 
-  gEfiGlobalVariableGuid
   
 [Depex]
   gFlashProtocolGuid

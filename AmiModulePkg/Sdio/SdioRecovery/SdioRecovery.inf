@@ -1,0 +1,71 @@
+#**********************************************************************
+#**********************************************************************
+#**                                                                  **
+#**        (C)Copyright 1985-2013, American Megatrends, Inc.         **
+#**                                                                  **
+#**                       All Rights Reserved.                       **
+#**                                                                  **
+#**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093        **
+#**                                                                  **
+#**                       Phone: (770)-246-8600                      **
+#**                                                                  **
+#**********************************************************************
+#**********************************************************************
+
+## @file
+#  Component description file for SdioInt13 module.
+#  This component supports SdioDriver in Legacy mode.
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010015
+  VERSION_STRING                 = 1.0
+  BASE_NAME                      = SdioRecovery
+  MODULE_TYPE                    = PEIM
+  FILE_GUID                      = 89F06049-F297-4436-8540-E0BF9E92B56B
+
+  ENTRY_POINT                    = SdioRecoveryEntryPoint
+  
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64
+#
+
+[Sources]
+  SdioRecovery.c
+  SdioRecovery.h
+  SdioFindRecoveryDevice.c
+  
+[LibraryClasses]
+  PeimEntryPoint
+  AmiPeiLib
+  SdioControllerPeiLib
+
+[Ppis]
+  gEfiPeiStallPpiGuid
+  gEfiPeiVirtualBlockIoPpiGuid
+  gEfiEndOfPeiSignalPpiGuid
+  
+[Packages]
+  MdePkg/MdePkg.dec
+  AmiModulePkg/AmiModulePkg.dec
+  AmiCompatibilityPkg/AmiCompatibilityPkg.dec 
+
+[Depex]
+  gEfiPeiBootInRecoveryModePpiGuid AND
+  gEfiPeiMemoryDiscoveredPpiGuid
+
+#**********************************************************************
+#**********************************************************************
+#**                                                                  **
+#**        (C)Copyright 1985-2013, American Megatrends, Inc.         **
+#**                                                                  **
+#**                       All Rights Reserved.                       **
+#**                                                                  **
+#**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093        **
+#**                                                                  **
+#**                       Phone: (770)-246-8600                      **
+#**                                                                  **
+#**********************************************************************
+#**********************************************************************

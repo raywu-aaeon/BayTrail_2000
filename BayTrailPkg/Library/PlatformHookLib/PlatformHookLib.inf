@@ -57,8 +57,7 @@
   
 [FixedPcd.common]
   gEfiSerialPortTokenSpaceGuid.PcdSerialBoudRate
-  gEfiMdeModulePkgTokenSpaceGuid.PcdSerialRegisterBase
-  #gEfiSerialPortTokenSpaceGuid.PcdSerialRegisterBase
+  gEfiSerialPortTokenSpaceGuid.PcdSerialRegisterBase
 
 [FeaturePcd]
   gEfiSerialPortTokenSpaceGuid.PcdStatusCodeUseIsaSerial

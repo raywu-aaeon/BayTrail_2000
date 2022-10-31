@@ -821,20 +821,6 @@ DxeTpm2MeasureBootLibConstructor (
   IN EFI_SYSTEM_TABLE  *SystemTable
   )
 {
-//EIP173375 >>
-#if 1 
-    {
-        EFI_STATUS      Status;
-        GUID gEfiTcgPlatformProtocolGuid = { 0x8c4c9a41, 0xbf56, 0x4627, { 0x9e, 0xa, 0xc8, 0x38, 0x6d, 0x66, 0x11, 0x5c }};
-        VOID*           TcgPlatform;
-        
-        Status = gBS->LocateProtocol (&gEfiTcgPlatformProtocolGuid, NULL, (VOID **) &TcgPlatform);
-        if (!EFI_ERROR (Status)) {
-          return EFI_SUCCESS;
-        }
-    }
-#endif
-//EIP173375 <<
   return RegisterSecurity2Handler (
           DxeTpm2MeasureBootHandler,
           EFI_AUTH_OPERATION_MEASURE_IMAGE | EFI_AUTH_OPERATION_IMAGE_REQUIRED

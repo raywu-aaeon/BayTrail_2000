@@ -25,9 +25,13 @@
 // 
 // 
 //**********************************************************************
-/** @file Meud.h
-
-**/
+//<AMI_FHDR_START>
+//
+// Name:	Meud..h
+//
+// Description:
+//
+//<AMI_FHDR_END>
 //**********************************************************************
 #ifndef _EFI_MEUD_H_
 #define _EFI_MEUD_H_
@@ -62,40 +66,19 @@ GetRegionOffset(
 
 typedef enum
 {
-    //Old definition
-    FDT_BLK,    //Region0 - Descriptor
-    PDR_BLK,    //Region4 - Platform Data
-    GBE_BLK,    //Region3 - GbE
-    ME_BLK,     //Region2 - ME
-    ME_OPR_BLK,
-    BIOS_BLK,   //Region1 - Bios
-    DER_BLK,    //Region5 - DeviceExpansion1
-    //Programming guide definition
-    REG7_BLK,
-    REG8_BLK,   //Region8 - BMC, EC
-    REG9_BLK,   //Region9 - DeviceExpansion2
-    REGA_BLK,   //Region10 - IE
-    REGB_BLK,   //Region11 - 10 GbE
-    REGC_BLK,   //Region12 - Oprom
-    REGD_BLK,
-    REGE_BLK,
-    REGF_BLK,
-    //Confilict with old definition
-    BIOS_2ND_BLK,    //Region6 - 2nd BIOS, conflict with DER_BLK
-    MAX_BLK
+   FDT_BLK,
+   PDR_BLK,
+   GBE_BLK,
+   ME_BLK,
+   ME_OPR_BLK,
+   MAX_BLK
 }ME_BLOCK_TYPE;
 
 #pragma pack(1)
 typedef struct
 {
-    UINT8   FlashRegion;
-    UINT8   Command[5];
-}FLASH_REGIONS_DESCRIPTOR;
-
-typedef struct
-{
-    CHAR8   Command[4];
-    CHAR8   Description[64];
+    CHAR8       Command[4];
+    CHAR8       Description[64];
     UINT32	StartAddress;
     UINT32	BlockSize;
     UINT8	Type;

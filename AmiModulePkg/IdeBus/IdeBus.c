@@ -1,51 +1,56 @@
-//***********************************************************************
-//***********************************************************************
-//**                                                                   **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.          **
-//**                                                                   **
-//**                       All Rights Reserved.                        **
-//**                                                                   **
-//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093         **
-//**                                                                   **
-//**                       Phone: (770)-246-8600                       **
-//**                                                                   **
-//***********************************************************************
-//***********************************************************************
+//**********************************************************************
+//**********************************************************************
+//**                                                                  **
+//**        (C)Copyright 1985-2012, American Megatrends, Inc.         **
+//**                                                                  **
+//**                       All Rights Reserved.                       **
+//**                                                                  **
+//**         5555 Oakbrook Pkwy, Suite 200, Norcross, GA 30093        **
+//**                                                                  **
+//**                       Phone: (770)-246-8600                      **
+//**                                                                  **
+//**********************************************************************
+//**********************************************************************
+// $Header: /Alaska/SOURCE/Core/Modules/IdeBus/IdeBus.c 65    8/16/12 3:01a Rajeshms $
+//
+// $Revision: 65 $
+//
+// $Date: 8/16/12 3:01a $
+//**********************************************************************
+//<AMI_FHDR_START>
+//----------------------------------------------------------------------------
+//
+// Name: IdeBus.c
+//
+// Description:	Provides IDE Block IO protocol
+//
+//----------------------------------------------------------------------------
+//<AMI_FHDR_END>
 
-/** @file IdeBus.c
-    Provides IDE Block IO protocol
-
-**/
-
-//---------------------------------------------------------------------------
 
 #include "IdeBus.h"
+#include <Protocol\IdeBusBoard.h>
 
-//---------------------------------------------------------------------------
+static EFI_GUID     gIdeSetupProtocolguid           = IDE_SETUP_PROTOCOL_GUID;
+static EFI_GUID     gOpalSecInitProtocolGuid        = OPAL_SEC_INIT_PROTOCOL_GUID;
+static EFI_GUID     gSMARTProtocolGuid              = IDE_SMART_INTERFACE_GUID;
+static EFI_GUID     gAtaPassThruInitProtocolGuid    = ATA_PASS_THRU_INIT_PROTOCOL_GUID; 
+static EFI_GUID     gScsiPassThruAtapiInitProtocolGuid = SCSI_PASS_THRU_ATAPI_INIT_PROTOCOL_GUID;
 
-#if ( defined(BOOT_SECTOR_WRITE_PROTECT) && (BOOT_SECTOR_WRITE_PROTECT != 0) )
-#include <Protocol/AmiBlockIoWriteProtection.h>
-AMI_BLOCKIO_WRITE_PROTECTION_PROTOCOL   *AmiBlkWriteProtection = NULL;
-#endif
+EFI_GUID            gSecurityModeProtocolGuid       = IDE_SECURITY_INTERFACE_GUID;
+EFI_GUID            gPowerMgmtProtocolGuid          = IDE_POWER_MGMT_INTERFACE_GUID;
+EFI_GUID            gHPAProtocolGuid                = IDE_HPA_INTERFACE_GUID;
 
-#if defined(ACOUSTIC_MANAGEMENT_DRIVER_SUPPORT) && (ACOUSTIC_MANAGEMENT_DRIVER_SUPPORT != 0)
-#include <Protocol/AcousticProtocol.h>
-EFI_GUID gHddAcousticInitProtocolGuid = AMI_HDD_ACOUSTIC_INIT_PROTOCOL_GUID;
-AMI_HDD_ACOUSTIC_INIT_PROTOCOL *gHddAcousticInitProtocol = NULL;
-#endif
+EFI_EVENT                          gIDEBusEvtBootScript      = NULL;
+EFI_EVENT                          gIDEBusEvtMiscSmmFeatures = NULL;
 
-static EFI_GUID    gIdeSetupProtocolguid           = IDE_SETUP_PROTOCOL_GUID;
-
-
-EFI_EVENT                               gIDEBusEvtBootScript      = NULL;
-EFI_EVENT                               gIDEBusEvtMiscSmmFeatures = NULL;
-AMI_SCSI_PASS_THRU_INIT_PROTOCOL        *gScsiPassThruInitProtocol; 
-AMI_ATA_PASS_THRU_INIT_PROTOCOL         *AtaPassThruInitProtocol;  
-AMI_HDD_OPAL_SEC_INIT_PROTOCOL          *OpalSecInitProtocol = NULL;
-AMI_HDD_SECURITY_INIT_PROTOCOL          *HddSecurityInitProtocol = NULL;
-AMI_HDD_SMART_INIT_PROTOCOL             *HddSmartInitProtocol = NULL;
-AMI_IDE_SETUP_PROTOCOL                  *gIdeSetupProtocol;
-PLATFORM_IDE_PROTOCOL                   *gPlatformIdeProtocol;
+SCSI_PASS_THRU_ATAPI_INIT_PROTOCOL   *gScsiPassThruAtapiInitProtocol; 
+ATA_PASS_THRU_INIT_PROTOCOL        *AtaPassThruInitProtocol;  
+OPAL_SECURITY_INIT_PROTOCOL        *OpalSecInitProtocol;
+HDD_SECURITY_INIT_PROTOCOL         *HddSecurityInitProtocol;
+HDD_SMART_INIT_PROTOCOL            *HddSmartInitProtocol;
+IDE_SETUP_PROTOCOL		           *gIdeSetupProtocol;
+PLATFORM_IDE_PROTOCOL              *gPlatformIdeProtocol;
 
 extern EFI_COMPONENT_NAME_PROTOCOL gIdeBusControllerDriverName;
 
@@ -97,49 +102,165 @@ EFI_DRIVER_BINDING_PROTOCOL        gIdeBusDriverBinding = {
 // Global Buffer pointer used for Bus Mastering
 VOID                               *gDescriptorBuffer = NULL;
 
-VOID
-InitMiscConfig (
-    IN  AMI_IDE_BUS_PROTOCOL        *IdeBusInterface
+VOID InitMiscConfig (
+    IN IDE_BUS_PROTOCOL    *IdeBusInterface
 );
 
-VOID
-SetIdePortSpeed (
-    IN  AMI_IDE_BUS_PROTOCOL        *IdeBusInterface
-);
+EFI_STATUS SetIdePortSpeed (
+  IN IDE_BUS_PROTOCOL    *IdeBusInterface );
 
-/**
-    Installs gIdeBusDriverBinding protocol
-
-        
-    @param ImageHandle 
-    @param SystemTable 
-
-    @retval EFI_STATUS
-
-    @note  
-      Here is the control flow of this function:
-      1. Initialize Ami Lib.
-      2. Install Driver Binding Protocol
-      3. Return EFI_SUCCESS.
-**/
-EFI_STATUS
-IdeBusEntryPoint (
-    IN  EFI_HANDLE          ImageHandle,
-    IN  EFI_SYSTEM_TABLE    *SystemTable
-)
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:	IdeBusExitBootServices
+//
+// Description:	  Enables IDE controller interrupt on ExitBootServices
+//
+// Input:
+//      Event   - The Event that is being processed
+//      Context - Event Context
+//
+// Output: None
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
+VOID EFIAPI IdeBusExitBootServices(
+    IN EFI_EVENT Event,
+    IN VOID      *Context )
 {
-    EFI_STATUS  Status;
+    EFI_STATUS            Status;
+    UINTN                 Count;
+    EFI_HANDLE            Buffer[0x100];
+    UINTN                 BufferSize = sizeof(Buffer);
+    UINT8                 i;
+    UINT8                 j;
+    UINT8                 k;
+    IDE_BUS_INIT_PROTOCOL *IdeBusInitProtocol;
+    IDE_BUS_PROTOCOL      *pIdeBusProtocol;
+    UINT64                IdeDevControlReg;
+    UINT64                IdeDevReg;
+    UINT8                 Data8 = 0;
+
+    Status = pBS->LocateHandle(
+        ByProtocol,
+        &gEfiIdeBusInitProtocolGuid,
+        NULL,
+        &BufferSize,
+        Buffer
+        );
+
+    if ( !EFI_ERROR( Status )) {
+        Count = BufferSize / sizeof(EFI_HANDLE);
+
+        for ( i = 0; i < Count; i++ )
+        {
+            Status = pBS->HandleProtocol( Buffer[i], &gEfiIdeBusInitProtocolGuid, &IdeBusInitProtocol );
+
+            if ( !Status ) {
+                for ( j = 0; j < 2; j++ )
+                {
+                    for ( k = 0; k < 2; k++ )
+                    {
+                        if ( IdeBusInitProtocol->pIdeBusProtocol[j][k] ) {
+                            if ( IdeBusInitProtocol->IdeBusInitData[j][k] == DEVICE_CONFIGURED_SUCCESSFULLY ) {
+                                pIdeBusProtocol = IdeBusInitProtocol->pIdeBusProtocol[j][k];
+
+                                //
+                                //Dev select
+                                //  
+                                Data8     = pIdeBusProtocol->IdeDevice.Device << 4;
+                                IdeDevReg = (UINT64)pIdeBusProtocol->IdeDevice.Regs.CommandBlock.DeviceReg;
+                                pIdeBusProtocol->PciIO->Io.Write(
+                                    pIdeBusProtocol->PciIO,
+                                    EfiPciIoWidthUint8,
+                                    EFI_PCI_IO_PASS_THROUGH_BAR,
+                                    IdeDevReg,
+                                    1,
+                                    &Data8
+                                    );
+
+
+                                Data8 = 0;
+                                //  
+                                //Enable IDE Controller interrupt
+                                //
+                                IdeDevControlReg = (UINT64)pIdeBusProtocol->IdeDevice.Regs.ControlBlock.AlternateStatusReg;
+                                pIdeBusProtocol->PciIO->Io.Write(
+                                    pIdeBusProtocol->PciIO,
+                                    EfiPciIoWidthUint8,
+                                    EFI_PCI_IO_PASS_THROUGH_BAR,
+                                    IdeDevControlReg,
+                                    1,
+                                    &Data8
+                                    );
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:	IdeBusEntryPoint
+//
+// Description:	Installs gIdeBusDriverBinding protocol
+//
+// Input:
+//	IN EFI_HANDLE        ImageHandle,
+//	IN EFI_SYSTEM_TABLE  *SystemTable
+//
+// Output:
+//	EFI_STATUS
+//
+// Modified:
+//
+// Referrals: InitAmiLib InstallMultipleProtocolInterfaces
+//
+// Notes:
+//  Here is the control flow of this function:
+//  1. Initialize Ami Lib.
+//	2. Install Driver Binding Protocol
+//  3. Return EFI_SUCCESS.
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
+EFI_STATUS IdeBusEntryPoint(
+    IN EFI_HANDLE       ImageHandle,
+    IN EFI_SYSTEM_TABLE *SystemTable )
+{
+    EFI_STATUS Status;
+    EFI_EVENT  ExitBootServicesNotifyEvent;
 
     gIdeBusDriverBinding.DriverBindingHandle = NULL;
     gIdeBusDriverBinding.ImageHandle         = ImageHandle;
 
     InitAmiLib( ImageHandle, SystemTable );
-   
+    //
+    //Register our ExitBootServices () callback function
+    //  
+    Status = pBS->CreateEvent(
+        EFI_EVENT_SIGNAL_EXIT_BOOT_SERVICES,
+        TPL_CALLBACK,
+        IdeBusExitBootServices,
+        NULL,
+        &ExitBootServicesNotifyEvent
+        );
+    ASSERT_EFI_ERROR( Status );
+
     Status = pBS->LocateProtocol(
-                                &gAmiPlatformIdeProtocolGuid,
-                                NULL,
-                                (void**)&gPlatformIdeProtocol
-                                );
+                    &gPlatformIdeProtocolGuid,
+                    NULL,
+                    &gPlatformIdeProtocol
+                    );
     if (EFI_ERROR (Status)) {
         //
         // if EFI_ERROR then Assign Default values Instance to gPlatformIdeProtocol.
@@ -149,7 +270,7 @@ IdeBusEntryPoint (
     //
     // Assert when PLATFORM_IDE_PROTOCOL's revision is not supported 
     //
-    ASSERT(!(gPlatformIdeProtocol->Revision > PLATFORM_IDE_PROTOCOL_SUPPORTED_REVISION));
+    ASSERT(!(gPlatformIdeProtocol->Revision > PLATFORM_IDE_PROTOCOL_SUPPORTED_REVISION))
 
     Status = pBS->InstallMultipleProtocolInterfaces(
         &gIdeBusDriverBinding.DriverBindingHandle,
@@ -158,50 +279,58 @@ IdeBusEntryPoint (
         NULL
         );
 
-#if IDEBUS_DEBUG_PRINT == 1
-    TRACE(( -1, "IdeBusEntryPoint Exit Status %x\n", Status ));
+#ifdef Debug_Level_1
+    EfiDebugPrint( -1, "IdeBusEntryPoint Exit Status %x\n", Status );
 #endif
 
     return Status;
 }
 
-/**
-    Checks whether IDE_PROTOCOL_INTERFACE is installed on the controller.
-    If 'yes', return SUCCESS else ERROR
-
-        
-    @param This 
-    @param Controller 
-    @param RemainingDevicePath 
-
-    @retval EFI_STATUS
-
-    @note  
-     Here is the control flow of this function:
-     1. If Devicepath is NULL, check "gEfiIdeControllerProtocolGuid" is installed by IdeController device driver,
-     if yes, it is the IDE controller that this Bus will manage. Then return Success.
-     2. If Devicepath is valid, check if "gAmiIdeBusInitProtocolGuid" is already installed by this BUS driver,
-     if yes, check whether it is OK to configure this device. if not installed goto step 1.
-
-**/
-EFI_STATUS
-IdeBusSupported (
-    IN  EFI_DRIVER_BINDING_PROTOCOL *This,
-    IN  EFI_HANDLE                  Controller,
-    IN  EFI_DEVICE_PATH_PROTOCOL    *RemainingDevicePath
-)
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:	IdeBusSupported
+//
+// Description:	Checks whether IDE_PROTOCOL_INTERFACE is installed on the controller.
+//				If 'yes', return SUCCESS else ERROR
+//
+// Input:
+//	IN EFI_DRIVER_BINDING_PROTOCOL    *This,
+//	IN EFI_HANDLE                     Controller,
+//	IN EFI_DEVICE_PATH_PROTOCOL       *RemainingDevicePath
+//
+// Output:
+//	EFI_STATUS
+//
+// Modified:
+//
+// Referrals: OpenProtocol CloseProtocol
+//
+// Notes:
+//  Here is the control flow of this function:
+// 1. If Devicepath is NULL, check "gEfiIdeControllerProtocolGuid" is installed by IdeController device driver,
+// if yes, it is the IDE controller that this Bus will manage. Then return Success.
+// 2. If Devicepath is valid, check if "gEfiIdeBusInitProtocolGuid" is already installed by this BUS driver,
+// if yes, check whether it is OK to configure this device. if not installed goto step 1.
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
+EFI_STATUS IdeBusSupported(
+    IN EFI_DRIVER_BINDING_PROTOCOL *This,
+    IN EFI_HANDLE                  Controller,
+    IN EFI_DEVICE_PATH_PROTOCOL    *RemainingDevicePath )
 {
-    EFI_STATUS                      Status;
-    VOID                            *IdeControllerInterface = NULL ;
-    ATAPI_DEVICE_PATH               *AtapiRemainingDevicePath = (ATAPI_DEVICE_PATH*) RemainingDevicePath;
-    AMI_IDE_BUS_INIT_PROTOCOL       *IdeBusInitInterface;
-    EFI_PCI_IO_PROTOCOL             *PciIO;
+    EFI_STATUS                       Status;
+
+    VOID                             *IdeControllerInterface = NULL ;
+    ATAPI_DEVICE_PATH                *AtapiRemainingDevicePath = (ATAPI_DEVICE_PATH*) RemainingDevicePath;
+    IDE_BUS_INIT_PROTOCOL            *IdeBusInitInterface;
+    EFI_PCI_IO_PROTOCOL              *PciIO;
     UINT8 PciConfig[256];
 
-#if IDEBUS_DEBUG_PRINT == 1
-    TRACE(( -1, "IdeBusSupported Entry\n" ));
+#ifdef Debug_Level_1
+    EfiDebugPrint( -1, "IdeBusSupported Entry\n" );
 #endif
-
 
     //
     //Check for Valid ATAPI Device Path. If no return UNSUPPORTED
@@ -220,8 +349,8 @@ IdeBusSupported (
         if ( AtapiRemainingDevicePath->Header.Type != MESSAGING_DEVICE_PATH
              || AtapiRemainingDevicePath->Header.SubType != MSG_ATAPI_DP
              && NODE_LENGTH( &AtapiRemainingDevicePath->Header ) != ATAPI_DEVICE_PATH_LENGTH ) {
-#if IDEBUS_DEBUG_PRINT == 1
-            TRACE(( -1, "AtapiRemainingDevicePath not Valid\n" ));
+#ifdef Debug_Level_3
+            EfiDebugPrint( -1, "AtapiRemainingDevicePath not Valid\n" );
 #endif
             return EFI_UNSUPPORTED;
         }
@@ -230,7 +359,7 @@ IdeBusSupported (
         //Now check whether it is OK to enumerate the specified device.
         //
         Status = pBS->OpenProtocol( Controller,
-                                    &gAmiIdeBusInitProtocolGuid,
+                                    &gEfiIdeBusInitProtocolGuid,
                                     (VOID**)&IdeBusInitInterface,
                                     This->DriverBindingHandle,
                                     Controller,
@@ -238,11 +367,11 @@ IdeBusSupported (
 
         if ( Status == EFI_SUCCESS || Status == EFI_ALREADY_STARTED ) {
             pBS->CloseProtocol(
-                                Controller,
-                                &gAmiIdeBusInitProtocolGuid,
-                                This->DriverBindingHandle,
-                                Controller
-                                );
+                Controller,
+                &gEfiIdeBusInitProtocolGuid,
+                This->DriverBindingHandle,
+                Controller
+                );
 
             if ( AtapiRemainingDevicePath->PrimarySecondary == PRIMARY_CHANNEL && AtapiRemainingDevicePath->SlaveMaster == MASTER_DRIVE ) {
                 if ( IdeBusInitInterface->IdeBusInitData[PRIMARY_CHANNEL][MASTER_DRIVE] >= DEVICE_DETECTION_FAILED ) {
@@ -280,11 +409,13 @@ IdeBusSupported (
                                 Controller,
                                 EFI_OPEN_PROTOCOL_BY_DRIVER );
 
-#if IDEBUS_DEBUG_PRINT == 1
+#ifdef Debug_Level_3
 
     if ( EFI_ERROR( Status )) {
         if ( gPlatformIdeProtocol->EfiIdeProtocol )
-            TRACE(( -1, "Error opening gEfiIdeControllerInitProtocolGuid\n" ));
+            EfiDebugPrint( -1, "Error opening gEfiIdeControllerInitProtocolGuid\n" );
+        else
+            EfiDebugPrint( -1, "Error opening gEfiIdeControllerProtocolGuid\n" );
     }
 #endif
 
@@ -299,14 +430,14 @@ IdeBusSupported (
     //Close IDE_CONTROLLER_PROTOCOL
     //
     pBS->CloseProtocol(
-                        Controller,
-                        &(gPlatformIdeProtocol->gIdeControllerProtocolGuid),
-                        This->DriverBindingHandle,
-                        Controller
-                        );
+        Controller,
+        &(gPlatformIdeProtocol->gIdeControllerProtocolGuid),
+        This->DriverBindingHandle,
+        Controller
+        );
 
-#if IDEBUS_DEBUG_PRINT == 1
-    TRACE(( -1, "IdeBusSupported Exit Success\n" ));
+#ifdef Debug_Level_1
+    EfiDebugPrint( -1, "IdeBusSupported Exit Success\n" );
 #endif
     //
     // Check if Controller is in AHCI mode or not?
@@ -328,8 +459,8 @@ IdeBusSupported (
                               sizeof (PciConfig),
                               PciConfig
                               );
-                              
-    ASSERT_EFI_ERROR(Status);
+							  
+	ASSERT_EFI_ERROR(Status);
 
     if ((PciConfig [IDE_SUB_CLASS_CODE] == SCC_AHCI_CONTROLLER) || (PciConfig [IDE_SUB_CLASS_CODE] == SCC_RAID_CONTROLLER)) {
         if ( !(gPlatformIdeProtocol->AhciCompatibleMode) )
@@ -339,78 +470,75 @@ IdeBusSupported (
     return EFI_SUCCESS;
 }
 
-/**
-    Installs IDE Block IO Protocol
-
-        
-    @param This 
-    @param Controller 
-    @param RemainingDevicePath 
-
-    @retval EFI_STATUS
-
-    @note  
-      Here is the control flow of this function:
-     1.  Check if "gAmiIdeBusInitProtocolGuid" is already installed. If not, install it "InstallBusInitProtocol".
-     2.  If Devicepath is valid, initialize so that only particular device will be detected and
-         Configured, else all devices will be detected and configured.
-     3.  check whether the device has not been already detected. If yes, skip it and go for next device
-     4.  IdeBusInterface is initialized for this device. Update Base address.
-     5.  Do the detection "DetectIdeDevice". Update the status in "IdeBusInitProtocol". If failure undo the process "IdeBusInterface".
-     6.  Repeat for all devices from step 3.
-     7.  Start the configuration process for devices which are detected successfully "DEVICE_DETECTED_SUCCESSFULLY".
-     8.  "ConfigureIdeDeviceAndController" will do the configuration.
-     9.  If above step is success, build Devicepath "CreateIdeDevicePath"
-     10. Create the Block_io_Protocol"InitIdeBlockIO". Install it only if Device is not Password protected.
-     11. Create the DISK_INFO_PROTOCOL "InitIdeDiskInfo". Install it only if Device is not Password protected.
-     12. Install a child device with the above three protocols.
-     13. Open "gEfiIdeControllerProtocolGuid" with the child handle.
-     14. Repeat from step 8 for the remaining devices.
-
-**/
-EFI_STATUS
-IdeBusStart (
-    IN  EFI_DRIVER_BINDING_PROTOCOL *This,
-    IN  EFI_HANDLE                  Controller,
-    IN  EFI_DEVICE_PATH_PROTOCOL    *RemainingDevicePath
-)
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:	IdeBusStart
+//
+// Description:	Installs IDE Block IO Protocol
+//
+// Input:
+//	IN EFI_DRIVER_BINDING_PROTOCOL    *This,
+//	IN EFI_HANDLE                     Controller,
+//	IN EFI_DEVICE_PATH_PROTOCOL       *RemainingDevicePath
+//
+// Output:
+//	EFI_STATUS
+//
+// Modified:
+//
+// Referrals: OpenProtocol CloseProtocol InstallProtocolInterface AllocatePool
+//
+// Notes:
+//  Here is the control flow of this function:
+// 1.  Check if "gEfiIdeBusInitProtocolGuid" is already installed. If not, install it "InstallBusInitProtocol".
+// 2.  If Devicepath is valid, initialize so that only particular device will be detected and
+//	   confgiured, else all devices will be detected and configured.
+// 3.  check whether the device has not been already detected. If yes, skip it and go for next device
+// 4.  IdeBusInterface is initialized for this device. Update Base address.
+// 5.  Do the detection "DetectIdeDevice". Update the status in "IdeBusInitProtocol". If failure undo the process "IdeBusInterface".
+// 6.  Repeat for all devices from step 3.
+// 7.  Start the configuration process for devices which are detected successfully "DEVICE_DETECTED_SUCCESSFULLY".
+// 8.  "ConfigureIdeDeviceAndController" will do the configuration.
+// 9.  If above step is success, build Devicepath "CreateIdeDevicePath"
+// 10. Create the Block_io_Protocol"InitIdeBlockIO". Install it only if Device is not Password protected.
+// 11. Create the DISK_INFO_PROTOCOL "InitIdeDiskInfo". Install it only if Device is not Password protected.
+// 12. Install a child device with the above three protocols.
+// 13. Open "gEfiIdeControllerProtocolGuid" with the child handle.
+// 14. Repeat from step 8 for the remaining devices.
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
+EFI_STATUS IdeBusStart(
+    IN EFI_DRIVER_BINDING_PROTOCOL *This,
+    IN EFI_HANDLE                  Controller,
+    IN EFI_DEVICE_PATH_PROTOCOL    *RemainingDevicePath )
 {
     EFI_STATUS                       Status;
     EFI_PCI_IO_PROTOCOL              *PciIO;
 
-    VOID                            *IdeControllerInterface = NULL ;
-    AMI_IDE_BUS_INIT_PROTOCOL       *IdeBusInitInterface;
-    AMI_IDE_BUS_PROTOCOL            *IdeBusInterface;
-    VOID                            *TempProtocolPtr;
-    UINT8                           Enumeration_Process = ENUMERATE_ALL;
-    ATAPI_DEVICE_PATH               *AtapiRemainingDevicePath = (ATAPI_DEVICE_PATH*)RemainingDevicePath;
+    IDE_BLK_IO_DEV                   *IdeBlockIoDev = NULL;
+    VOID                             *IdeControllerInterface = NULL ;
+    IDE_BUS_INIT_PROTOCOL            *IdeBusInitInterface;
+    IDE_BUS_PROTOCOL                 *IdeBusInterface;
+    UINT8 Enumeration_Process = ENUMERATE_ALL;
+    ATAPI_DEVICE_PATH                *AtapiRemainingDevicePath = (ATAPI_DEVICE_PATH*)RemainingDevicePath;
 
-    UINT8                           Start_Channel = PRIMARY_CHANNEL;
-    UINT8                           End_Channel   = SECONDARY_CHANNEL;
-    UINT8                           Start_Device  = MASTER_DRIVE;
-    UINT8                           End_Device    = SLAVE_DRIVE;
-    INT8                            TotalDevice = 0;
-    UINT8                           Current_Channel;
-    UINT8                           Current_Device;
+    UINT8 Start_Channel = PRIMARY_CHANNEL;
+    UINT8 End_Channel   = SECONDARY_CHANNEL;
+    UINT8 Start_Device  = MASTER_DRIVE;
+    UINT8 End_Device    = SLAVE_DRIVE;
+
+    INT8 TotalDevice = 0;
+    INT8 Current_Channel;
+    INT8 Current_Device;
     
 
-#if IDEBUS_DEBUG_PRINT == 1
-    TRACE(( -1, "IdeBusStart Entry\n" ));
+#ifdef Debug_Level_1
+    EfiDebugPrint( -1, "IdeBusStart Entry\n" );
 #endif
-
 
     PROGRESS_CODE( DXE_IDE_BEGIN );
-    
-#if ( defined(BOOT_SECTOR_WRITE_PROTECT) && (BOOT_SECTOR_WRITE_PROTECT != 0) )
-    if(AmiBlkWriteProtection == NULL) {
-        Status = pBS->LocateProtocol( &gAmiBlockIoWriteProtectionProtocolGuid, 
-                                      NULL, 
-                                      &AmiBlkWriteProtection ); 
-        if(EFI_ERROR(Status)) {
-            AmiBlkWriteProtection = NULL;
-        }
-    }
-#endif
 
     //
     //Open IDE_CONTROLLER_PROTOCOL. If success or Already opened, It is OK to proceed.
@@ -438,10 +566,10 @@ IdeBusStart (
 
     ASSERT_EFI_ERROR(Status);
     //
-    //Check if AMI_IDE_BUS_INIT_PROTOCOL installed.
+    //Check if IDE_BUS_INIT_PROTOCOL installed.
     //
     Status = pBS->OpenProtocol( Controller,
-                                &gAmiIdeBusInitProtocolGuid,
+                                &gEfiIdeBusInitProtocolGuid,
                                 (VOID**)&IdeBusInitInterface,
                                 This->DriverBindingHandle,
                                 Controller,
@@ -450,7 +578,7 @@ IdeBusStart (
 
     if  ( !(Status == EFI_SUCCESS || Status == EFI_ALREADY_STARTED)) {
         Status = pBS->AllocatePool( EfiBootServicesData,
-                                    sizeof(AMI_IDE_BUS_INIT_PROTOCOL),
+                                    sizeof(IDE_BUS_INIT_PROTOCOL),
                                     (VOID**)&IdeBusInitInterface
                                     );
 
@@ -488,8 +616,8 @@ IdeBusStart (
         if ( AtapiRemainingDevicePath->Header.Type != MESSAGING_DEVICE_PATH
              || AtapiRemainingDevicePath->Header.SubType != MSG_ATAPI_DP
              && NODE_LENGTH( &AtapiRemainingDevicePath->Header ) != ATAPI_DEVICE_PATH_LENGTH ) {
-#if IDEBUS_DEBUG_PRINT == 1
-            TRACE(( -1, "AtapiRemainingDevicePath not Valid\n" ));
+#ifdef Debug_Level_3
+            EfiDebugPrint( -1, "AtapiRemainingDevicePath not Valid\n" );
 #endif
             return EFI_DEVICE_ERROR;
         }
@@ -546,10 +674,9 @@ IdeBusStart (
     }
 
 
-#if IDEBUS_DEBUG_PRINT == 1
-            TRACE(( -1, "Enumerate = %x\n", Enumeration_Process ));
+#ifdef Debug_Level_3
+            EfiDebugPrint( -1, "Enumerate = %x\n", Enumeration_Process );
 #endif
-
 
     //---------------------------------------------------------------------------------------------------------
     //	Device Detection Begins
@@ -594,13 +721,22 @@ IdeBusStart (
             }
 
             //
-            // Allocate memory for AMI_IDE_BUS_PROTOCOL
+            // Allocate memory for IDE_BUS_PROTOCOL
             //
+            if ( gPlatformIdeProtocol->EfiIdeProtocol ) {
+                IdeBlockIoDev = MallocZ( sizeof(IDE_BLK_IO_DEV));
 
-            IdeBusInterface = MallocZ( sizeof(AMI_IDE_BUS_PROTOCOL));
+                if ( !IdeBlockIoDev ) {
+                    return EFI_OUT_OF_RESOURCES;
+                }
+                IdeBlockIoDev->Signature = IDE_BLK_IO_DEV_SIGNATURE;
+                IdeBusInterface          = (IDE_BUS_PROTOCOL*)&(IdeBlockIoDev->BlkIo);
+            } else {
+                IdeBusInterface = MallocZ( sizeof(IDE_BUS_PROTOCOL));
 
-            if ( !IdeBusInterface ) {
-                return EFI_OUT_OF_RESOURCES;
+                if ( !IdeBusInterface ) {
+                    return EFI_OUT_OF_RESOURCES;
+                }
             }
 
             //
@@ -610,26 +746,26 @@ IdeBusStart (
             if ( gPlatformIdeProtocol->EfiIdeProtocol ) { 
                 IdeBusInterface->EfiIdeControllerInterface =(EFI_IDE_CONTROLLER_INIT_PROTOCOL*) IdeControllerInterface;
                 IdeBusInterface->IdeControllerInterfaceHandle = Controller;
+            } else {
+                IdeBusInterface->IdeControllerInterface =(IDE_CONTROLLER_PROTOCOL*) IdeControllerInterface;
             }
-
-            IdeBusInterface->IdeBusInitInterface    = IdeBusInitInterface;
-            IdeBusInterface->PciIO                  = PciIO;
-            IdeBusInterface->IdeDevice.PciIO        = PciIO;
-            IdeBusInterface->IdeDevice.Channel      = Current_Channel;
-            IdeBusInterface->IdeDevice.Device       = Current_Device;
-            IdeBusInterface->IdeSoftReset           = IdeSoftReset;
-            IdeBusInterface->AtaReadWritePio        = AtaReadWritePio;
-            IdeBusInterface->AtaPioDataIn           = AtaPioDataIn;
-            IdeBusInterface->AtaPioDataOut          = AtaPioDataOut;
-            IdeBusInterface->AtaAtapiDmaDataCommand = AtaAtapiDmaDataCommand;
-            IdeBusInterface->IdeNonDataCommand      = IdeNonDataCommandExp;
-            IdeBusInterface->WaitForCmdCompletion   = WaitForCmdCompletion;
+            IdeBusInterface->IdeBusInitInterface  = IdeBusInitInterface;
+            IdeBusInterface->PciIO                = PciIO;
+            IdeBusInterface->IdeDevice.PciIO      = PciIO;
+            IdeBusInterface->IdeDevice.Channel    = Current_Channel;
+            IdeBusInterface->IdeDevice.Device     = Current_Device;
+            IdeBusInterface->AtaReadWritePio      = AtaReadWritePio;
+            IdeBusInterface->AtaPioDataIn         = AtaPioDataIn;
+            IdeBusInterface->AtaPioDataOut        = AtaPioDataOut;
+            IdeBusInterface->IdeNonDataCommand    = IdeNonDataCommandExp;
+            IdeBusInterface->WaitForCmdCompletion = WaitForCmdCompletion;
             IdeBusInterface->GeneralAtapiCommandAndData = GeneralAtapiCommandAndData;
+            Status = UpdateBaseAddress( IdeBusInterface );
 
-            SetIdePortSpeed(IdeBusInterface);   
-            
-            Status = UpdateBaseAddress( IdeBusInterface );                   
-             if ( Status == EFI_SUCCESS ) {
+ 
+            Status = SetIdePortSpeed(IdeBusInterface);          
+ 
+            if ( Status == EFI_SUCCESS ) {
                 Status = DetectIdeDevice( IdeBusInterface );
             }
 
@@ -638,7 +774,10 @@ IdeBusStart (
                 // Update IdeBusInitInterface
                 //
                 IdeBusInitInterface->IdeBusInitData[Current_Channel][Current_Device] = DEVICE_DETECTION_FAILED;
-                pBS->FreePool( IdeBusInterface );
+                if ( gPlatformIdeProtocol->EfiIdeProtocol )
+                    pBS->FreePool( IdeBlockIoDev );
+                else
+                    pBS->FreePool( IdeBusInterface );
  
                 if ( gPlatformIdeProtocol->MasterSlaveEnumeration ) {
                     Current_Device++;
@@ -684,7 +823,10 @@ IdeBusStart (
                 if ( EFI_ERROR( Status )) {
                     ERROR_CODE( DXE_IDE_DEVICE_FAILURE, EFI_ERROR_MAJOR );
 
-                    pBS->FreePool( IdeBusInterface );
+                    if ( gPlatformIdeProtocol->EfiIdeProtocol )
+                        pBS->FreePool( IdeBlockIoDev );
+                    else
+                        pBS->FreePool( IdeBusInterface );
 
                     IdeBusInitInterface->pIdeBusProtocol[Current_Channel][Current_Device] = NULL;
                     continue;
@@ -700,7 +842,10 @@ IdeBusStart (
                 Status = CreateIdeDevicePath( This, Controller, IdeBusInitInterface, IdeBusInterface, RemainingDevicePath, Current_Channel, Current_Device );
 
                 if ( EFI_ERROR( Status )) {
-                    pBS->FreePool( IdeBusInterface );
+                    if ( gPlatformIdeProtocol->EfiIdeProtocol )
+                        pBS->FreePool( IdeBlockIoDev );
+                    else
+                        pBS->FreePool( IdeBusInterface );
                     continue;
                 }
 
@@ -710,7 +855,10 @@ IdeBusStart (
                 Status = InitIdeBlockIO( IdeBusInterface );
 
                 if ( EFI_ERROR( Status )) {
-                    pBS->FreePool( IdeBusInterface );
+                    if ( gPlatformIdeProtocol->EfiIdeProtocol )
+                        pBS->FreePool( IdeBlockIoDev );
+                    else
+                        pBS->FreePool( IdeBusInterface );
                     continue;
                 }
 
@@ -720,7 +868,10 @@ IdeBusStart (
                 Status = InitIdeDiskInfo( IdeBusInterface );
 
                 if ( EFI_ERROR( Status )) {
-                    pBS->FreePool( IdeBusInterface );
+                    if ( gPlatformIdeProtocol->EfiIdeProtocol )
+                        pBS->FreePool( IdeBlockIoDev );
+                    else
+                        pBS->FreePool( IdeBusInterface );
                     continue;
                 }
 
@@ -734,7 +885,10 @@ IdeBusStart (
 
                 if ( EFI_ERROR( Status )) {
                     IdeBusInitInterface->IdeBusInitData[Current_Channel][Current_Device] = DEVICE_DETECTION_FAILED;
-                    pBS->FreePool( IdeBusInterface );
+                    if ( gPlatformIdeProtocol->EfiIdeProtocol )
+                        pBS->FreePool( IdeBlockIoDev );
+                    else
+                        pBS->FreePool( IdeBusInterface );
                     continue;
                 }
 
@@ -748,20 +902,93 @@ IdeBusStart (
                                             IdeBusInterface->IdeDeviceHandle,
                                             EFI_OPEN_PROTOCOL_BY_CHILD_CONTROLLER );
 
-                ASSERT_EFI_ERROR(Status);
+				ASSERT_EFI_ERROR(Status);
+                //
+                //Install other optional Protocols - Hdd Security
+                //
+                Status = pBS->LocateProtocol(
+                                &gHddSecurityInitProtocolGuid,
+                                 NULL,
+                                 &HddSecurityInitProtocol
+                                );
+
+                if ( !EFI_ERROR( Status )) {
+                    if ( HddSecurityInitProtocol != NULL ) {
+                        HddSecurityInitProtocol->InstallSecurityInterface( IdeBusInterface, FALSE );
+                    }
+                } else {
+                    //
+                    // If Security Feature support is not enabled, always freeze lock the security feature
+                    //
+                    if ( IdeBusInterface->IdeDevice.IdentifyData.Command_Set_Supported_82 & 0x2 ) {
+                        Status = IdeNonDataCommand( IdeBusInterface, 0, 0,
+                                                    0, 0, 0,
+                                                    IdeBusInterface->IdeDevice.Device << 4,
+                                                    SECURITY_FREEZE_LOCK );
+                        //
+                        // if Device Configuration Overlay feature set supported then issue the
+                        // Dev config Free lock command.
+                        //
+                        if ( IdeBusInterface->IdeDevice.IdentifyData.Command_Set_Supported_83 & 0x800 ) {
+                            Status = IdeNonDataCommand( IdeBusInterface, DEV_CONFIG_FREEZE_LOCK_FEATURES, 0,
+                                                        0, 0, 0,
+                                                        IdeBusInterface->IdeDevice.Device << 4,
+                                                        DEV_CONFIG_FREEZE_LOCK );
+                        }
+                        // Update the Identify device buffer
+                        GetIdentifyData( IdeBusInterface, &(IdeBusInterface->IdeDevice));
+                    }
+                }
+
+                //
+                // Install other optional Protocols - OpalSecurity
+                //
+
+                Status = pBS->LocateProtocol (
+                                    &gOpalSecInitProtocolGuid,
+                                    NULL,
+                                    &OpalSecInitProtocol
+                                );
+
+                if(!EFI_ERROR(Status)) {
+                    if(OpalSecInitProtocol != NULL) {
+                        OpalSecInitProtocol->InstallOpalSecurityInterface(IdeBusInterface, FALSE);
+                    }
+                }
+
+                //
+                //Install other optional Protocols - SMART
+                //
+                Status = pBS->LocateProtocol(
+                                    &gHddSmartInitProtocolGuid,
+                                    NULL,
+                                    &HddSmartInitProtocol
+                                    );
+
+                if ( !EFI_ERROR( Status )) {
+                    if ( HddSmartInitProtocol != NULL ) {
+                        HddSmartInitProtocol->InitSMARTSupport( IdeBusInterface, FALSE );
+                        //
+                        //Get the updated IdentifyData
+                        //
+                        GetIdentifyData( IdeBusInterface, &(IdeBusInterface->IdeDevice));
+                        if ( HddSmartInitProtocol->SmartDiagonasticFlag ) {
+                            HddSmartInitProtocol->InstallSMARTInterface( IdeBusInterface, FALSE );
+                        }
+                    }
+                }
 
                 if ( gPlatformIdeProtocol->IdePwrManagementInterfaceSupport ) {
                     InstallIDEPowerMgmtInterface( IdeBusInterface );
                 }
 
                 if ( gPlatformIdeProtocol->HostProtectedAreaSupport ) {
-                    InstallHpaInterface( IdeBusInterface );
+                    InstallHPAInterface( IdeBusInterface );
                 }
 
-#if IDEBUS_DEBUG_PRINT == 1
+#ifdef Debug_Level_3
                 PrintIdeDeviceInfo( IdeBusInterface );
 #endif
-
             }                                               // DEVICE_CONFIGURED_SUCCESSFULLY
 
             //Before installing BlockIO and DiskInfo protocol, check whether the device has been
@@ -797,11 +1024,33 @@ IdeBusStart (
     //	Configuration Ends
     //---------------------------------------------------------------------------------------------------------
 
+    // Check HP Support and Ide Controller protocol to create an HP event
+    if ( gPlatformIdeProtocol->IdeHPSupport == 1 && gPlatformIdeProtocol->EfiIdeProtocol == 0 ) {
+
+        // 
+        // Check whether already HP Event has been created and also HP is supported
+        //  
+        if ( IdeBusInitInterface->HPEvent == NULL && IdeBusInitInterface->HPMask ) {
+            //
+            // Create and Event
+            //
+            Status = pBS->CreateEvent( EFI_EVENT_TIMER | EFI_EVENT_NOTIFY_SIGNAL,
+                                   TPL_CALLBACK,
+                                   IdeHPTimer,
+                                   IdeBusInitInterface,
+                                   &(IdeBusInitInterface->HPEvent));
+
+            if ( Status == EFI_SUCCESS ) {
+                pBS->SetTimer( IdeBusInitInterface->HPEvent, TimerPeriodic, 20000000 ); // 2sec
+            }
+        }
+    }
+
     Status = pBS->LocateProtocol (
-                                &gAmiAtaPassThruInitProtocolGuid,
+                                &gAtaPassThruInitProtocolGuid,
                                 NULL,
-                                (VOID **) &AtaPassThruInitProtocol
-                                );
+                                &AtaPassThruInitProtocol
+                        );
 
     if(!EFI_ERROR(Status)) {
         if(AtaPassThruInitProtocol != NULL) {
@@ -811,199 +1060,88 @@ IdeBusStart (
 
     // SCSIPassThruAtapi install
     Status = pBS->LocateProtocol (
-                                &gAmiScsiPassThruInitProtocolGuid,
+                                &gScsiPassThruAtapiInitProtocolGuid,
                                 NULL,
-                                (VOID **) &gScsiPassThruInitProtocol
-                                );
+                                &gScsiPassThruAtapiInitProtocol
+                        );
 
     if(!EFI_ERROR(Status)) {
-        if(gScsiPassThruInitProtocol != NULL) {
-            gScsiPassThruInitProtocol->InstallScsiPassThruAtapi(Controller, FALSE);
+        if(gScsiPassThruAtapiInitProtocol != NULL) {
+            gScsiPassThruAtapiInitProtocol->InstallScsiPassThruAtapi(Controller, FALSE);
         }
     }
 
-    //Install other optional Protocols - HDD Security, Opal Security, HDD Smart etc.
+    //
+    // This will notify AMITSE to invoke the HDD password Screen
+    //
+    Status = pBS->InstallProtocolInterface(
+        &Controller,
+        &gHddSecurityEndProtocolGuid, EFI_NATIVE_INTERFACE, NULL
+        );
+		
+//	ASSERT_EFI_ERROR(Status);//Debug Mode Issue //CSP20140330_22
 
-    if ( HddSecurityInitProtocol == NULL) {
-        pBS->LocateProtocol( &gAmiHddSecurityInitProtocolGuid,
-                             NULL,
-                             (VOID **) &HddSecurityInitProtocol);
-    }
-
-#if defined(ACOUSTIC_MANAGEMENT_DRIVER_SUPPORT) && (ACOUSTIC_MANAGEMENT_DRIVER_SUPPORT != 0)
-    if ( gHddAcousticInitProtocol == NULL) {
-        pBS->LocateProtocol( &gHddAcousticInitProtocolGuid,
-                             NULL,
-                             (VOID **) &gHddAcousticInitProtocol);
-    }
-#endif
-
-    if(OpalSecInitProtocol == NULL) {
-        pBS->LocateProtocol ( &gAmiHddOpalSecInitProtocolGuid,
-                              NULL,
-                              (VOID **)  &OpalSecInitProtocol);
-    }
-
-    if ( HddSmartInitProtocol == NULL ) {
-        pBS->LocateProtocol( &gAmiHddSmartInitProtocolGuid,
-                             NULL,
-                             (VOID **) &HddSmartInitProtocol);
-    }
-
-    for ( Current_Channel = Start_Channel; Current_Channel <= End_Channel; Current_Channel++ ) {
-
-        for ( Current_Device = Start_Device; Current_Device <= End_Device; Current_Device++ ) {
-
-            if ( IdeBusInitInterface->IdeBusInitData[Current_Channel][Current_Device] == DEVICE_CONFIGURED_SUCCESSFULLY ) {
-                IdeBusInterface = IdeBusInitInterface->pIdeBusProtocol[Current_Channel][Current_Device];
-
-                if(IdeBusInterface->IsDeviceFeatureDone) {
-                    continue;
-                }
-                IdeBusInterface->IsDeviceFeatureDone = TRUE;
-
-                if ( HddSecurityInitProtocol != NULL) {
-                    HddSecurityInitProtocol->InstallSecurityInterface( IdeBusInterface, FALSE );
-                } else {
-                    // If Security Feature support is not enabled, always freeze lock the security feature
-                    if ( IdeBusInterface->IdeDevice.IdentifyData.Command_Set_Supported_82 & 0x2 ) {
-                        Status = IdeNonDataCommand( IdeBusInterface, 0, 0,
-                                                    0, 0, 0,
-                                                    IdeBusInterface->IdeDevice.Device << 4,
-                                                    SECURITY_FREEZE_LOCK );
-                        // if Device Configuration Overlay feature set supported then issue the
-                        // Dev configure Free lock command.
-                        if ( IdeBusInterface->IdeDevice.IdentifyData.Command_Set_Supported_83 & 0x800 ) {
-                            Status = IdeNonDataCommand( IdeBusInterface, DEV_CONFIG_FREEZE_LOCK_FEATURES, 0,
-                                                        0, 0, 0,
-                                                        IdeBusInterface->IdeDevice.Device << 4,
-                                                        DEV_CONFIG_FREEZE_LOCK );
-                        }
-                        // Update the Identify device buffer
-                        GetIdentifyData( IdeBusInterface, &(IdeBusInterface->IdeDevice));
-                    }
-                }
-
-#if defined(ACOUSTIC_MANAGEMENT_DRIVER_SUPPORT) && (ACOUSTIC_MANAGEMENT_DRIVER_SUPPORT != 0)
-                if(gHddAcousticInitProtocol != NULL) {
-                    gHddAcousticInitProtocol->InitHddAcoustic(IdeBusInterface, FALSE);
-                }
-#endif
-                
-                if(OpalSecInitProtocol != NULL) {
-                    OpalSecInitProtocol->InstallOpalSecurityInterface(IdeBusInterface, FALSE);
-                }
-
-                if ( HddSmartInitProtocol != NULL ) {
-
-                    HddSmartInitProtocol->InitSmartSupport( IdeBusInterface, FALSE );
-
-                    //Get the updated IdentifyData
-                    GetIdentifyData( IdeBusInterface, &(IdeBusInterface->IdeDevice));
-
-                    if ( HddSmartInitProtocol->SmartDiagonasticFlag ) {
-                        HddSmartInitProtocol->InstallSmartInterface( IdeBusInterface, FALSE );
-                    }
-                }
-
-            } // end of if DEVICE_CONFIGURED_SUCCESSFULLY
-        } // Loop for Master/Slave
-    } // Loop for Primary/Secondary
-
-    // Handle the OnBoard Raid controller Password Verification
-
-    Status = pBS->HandleProtocol(Controller, 
-                                 &gAmiHddSecurityEndProtocolGuid, 
-                                 & TempProtocolPtr
-                                 );
-
-    if(Status == EFI_SUCCESS) {
-    	//
-        // Protocol already installed on the Controller handle.
-        // UnInstall and Install back the protocol interface to Notify the Password verification 
-        //
-        Status = pBS->UninstallProtocolInterface(
-                                Controller, 
-                                &gAmiHddSecurityEndProtocolGuid, 
-                                NULL
-                                );
-        
-        //	ASSERT_EFI_ERROR(Status);//Debug Mode Issue //CSP20140330_22
-        
-        Status = pBS->InstallProtocolInterface(
-                                &Controller, 
-                                &gAmiHddSecurityEndProtocolGuid, 
-                                EFI_NATIVE_INTERFACE,
-                                NULL
-                                );
-        
-        //	ASSERT_EFI_ERROR(Status);//Debug Mode Issue //CSP20140330_22
-    } else {
-        //
-        // This will notify AMITSE to invoke the HDD password Screen
-        //
-        Status = pBS->InstallProtocolInterface(
-                                &Controller, 
-                                &gAmiHddSecurityEndProtocolGuid, 
-                                EFI_NATIVE_INTERFACE,
-                                NULL
-                                );
-        
-        //	ASSERT_EFI_ERROR(Status);//Debug Mode Issue //CSP20140330_22
-    }
-
-
-#if IDEBUS_DEBUG_PRINT == 1
-    TRACE(( -1, "IdeBusStart Exit Success\n" ));
+#ifdef Debug_Level_1
+    EfiDebugPrint( -1, "IdeBusStart Exit Success\n" );
 #endif
 
     return EFI_SUCCESS;
 }
 
-/**
-    Uninstall all devices installed in start procedure.
-
-        
-    @param This 
-    @param Controller 
-    @param RemainingDevicePath 
-
-    @retval 
-        EFI_STATUS
-
-    @note  
-     Here is the control flow of this function:
-    1.  Check whether "gAmiIdeBusInitProtocolGuid" is installed on this controller. If not exit with error.
-    2.  If "NumberOfChildren" is zero, check weather all child devices have been stopped. If not exit with error.
-        if all child devices have been stopped, then close "gEfiIdeControllerProtocolGuid" and "gAmiIdeBusInitProtocolGuid",
-        uninstall "gAmiIdeBusInitProtocolGuid" and then exit with success.
-    3.  If "NumberOfChildren" is non-zero,	close "gEfiIdeControllerProtocolGuid" opened by the child device in start function.
-        uninstall all protocols installed on this child device in start function,
-        free up all resources allocated in start function. Repeat step	3 for all child devices and	return success at the end.
-**/
-EFI_STATUS
-IdeBusStop (
-    IN  EFI_DRIVER_BINDING_PROTOCOL *This,
-    IN  EFI_HANDLE                  Controller,
-    IN  UINTN                       NumberOfChildren,
-    IN  EFI_HANDLE                  *ChildHandleBuffer
-)
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:	IdeBusStop
+//
+// Description:	Uninstall all devices installed in start procedure.
+//
+// Input:
+//	IN EFI_DRIVER_BINDING_PROTOCOL    *This,
+//	IN EFI_HANDLE                     Controller,
+//	IN EFI_DEVICE_PATH_PROTOCOL       *RemainingDevicePath
+//
+// Output:
+//	EFI_STATUS
+//
+// Modified:
+//
+// Referrals: OpenProtocol CloseProtocol
+//
+// Notes:
+//  Here is the control flow of this function:
+// 1.  Check whether "gEfiIdeBusInitProtocolGuid" is installed on this controller. If not exit with error.
+// 2.  If "NumberOfChildren" is zero, check wether all child devices have been stopped. If not exit with error.
+//                      if all child devices have been stopped, then close "gEfiIdeControllerProtocolGuid" and "gEfiIdeBusInitProtocolGuid",
+//		        uninstall "gEfiIdeBusInitProtocolGuid" and then exit with success.
+// 3.  If "NumberOfChildren" is non-zero,	close "gEfiIdeControllerProtocolGuid" opened by the child device in start function.
+//			uninstall all protocols installed on this child device in start function,
+//			free up all resources allocated in start function. Repeat step	3 for all child devices and	return success at the end.
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
+EFI_STATUS IdeBusStop(
+    IN EFI_DRIVER_BINDING_PROTOCOL *This,
+    IN EFI_HANDLE                  Controller,
+    IN UINTN                       NumberOfChildren,
+    IN EFI_HANDLE                  *ChildHandleBuffer )
 {
-    AMI_IDE_BUS_INIT_PROTOCOL       *IdeBusInitInterface;
-    AMI_IDE_BUS_PROTOCOL            *IdeBusInterface = NULL;
-    EFI_STATUS                      Status;
-    VOID                            *IdeControllerInterface = NULL ;
-    UINT8                           Current_Channel = 0xff;
-    UINT8                           Current_Device  = 0xff;
-    UINT8                           Index   = 0;
-    BOOLEAN                         Flag = TRUE;
-    EFI_DEVICE_PATH_PROTOCOL        *DevicePath;
+    IDE_BUS_INIT_PROTOCOL            *IdeBusInitInterface;
+    IDE_BUS_PROTOCOL                 *IdeBusInterface = NULL;
+    EFI_STATUS                       Status;
+    IDE_BLK_IO_DEV                   *IdeBlockIoDev = NULL;
+    VOID                             *IdeControllerInterface = NULL ;
+ 
+    UINT8 Current_Channel                 = 0xff;
+    UINT8 Current_Device                  = 0xff;
+    UINT8 Index                           = 0;
+    BOOLEAN                          Flag = TRUE;
+    EFI_DEVICE_PATH_PROTOCOL         *DevicePath;
 
     //
-    //Check if AMI_IDE_BUS_INIT_PROTOCOL is installed on the Controller.
+    //Check if IDE_BUS_INIT_PROTOCOL is installed on the Controller.
     //
     Status = pBS->OpenProtocol( Controller,
-                                &gAmiIdeBusInitProtocolGuid,
+                                &gEfiIdeBusInitProtocolGuid,
                                 (VOID**)&IdeBusInitInterface,
                                 This->DriverBindingHandle,
                                 Controller,
@@ -1045,7 +1183,7 @@ IdeBusStop (
             }
 
             //
-            //Get the pointer to AMI_IDE_BUS_PROTOCOL
+            //Get the pointer to IDE_BUS_PROTOCOL
             //
             IdeBusInterface = IdeBusInitInterface->pIdeBusProtocol[Current_Channel][Current_Device];
 
@@ -1058,7 +1196,7 @@ IdeBusStop (
                         This->DriverBindingHandle,
                         ChildHandleBuffer[Index] );
 
-            //Before uninstall BLOCKIO check whether it is installed or not
+            //Before uninstalling BLOCKIO check whether it is installed or not
             Status = pBS->OpenProtocol( ChildHandleBuffer[Index],
                                         &gEfiBlockIoProtocolGuid,
                                         NULL,
@@ -1099,7 +1237,7 @@ IdeBusStop (
                 }
 
                 //
-                //Free up resources allocated for component names
+                //Freeup resources allocated for component names
                 //
                 if ( IdeBusInterface->IdeDevice.UDeviceName != NULL ) {
                     pBS->FreePool( IdeBusInterface->IdeDevice.UDeviceName->Language );
@@ -1110,11 +1248,11 @@ IdeBusStop (
                 // Uninstall optional protocols
 
                 //
-                //Before uninstall HDD security check whether it is installed or not
+                //Before uninstalling HDD security check whether it is installed or not
                 //
                 Status = pBS->OpenProtocol( ChildHandleBuffer[Index],
-                                            &gAmiHddSecurityProtocolGuid,
-                                            NULL,
+                                            &gHddSecurityInitProtocolGuid,
+                                            (VOID**)&HddSecurityInitProtocol,
                                             This->DriverBindingHandle,
                                             ChildHandleBuffer[Index],
                                             EFI_OPEN_PROTOCOL_TEST_PROTOCOL );
@@ -1126,11 +1264,11 @@ IdeBusStop (
                 }
 
                 //
-                //Before uninstall Hdd Smart check whether it is installed or not
+                //Before uninstalling Hdd Smart check whether it is installed or not
                 //
                 Status = pBS->OpenProtocol( ChildHandleBuffer[Index],
-                                            &gAmiHddSmartProtocolGuid,
-                                            NULL,
+                                            &gHddSmartInitProtocolGuid,
+                                            (VOID**)&HddSmartInitProtocol,
                                             This->DriverBindingHandle,
                                             ChildHandleBuffer[Index],
                                             EFI_OPEN_PROTOCOL_TEST_PROTOCOL );
@@ -1138,17 +1276,17 @@ IdeBusStop (
                 if ( !EFI_ERROR( Status )) {
                     if ( HddSmartInitProtocol != NULL ) {
                         if ( HddSmartInitProtocol->SmartDiagonasticFlag ) {
-                            HddSmartInitProtocol->UnInstallSmartInterface( IdeBusInterface, FALSE );
+                            HddSmartInitProtocol->UnInstallSMARTInterface( IdeBusInterface, FALSE );
                         }
                     }
                 }
 
                 //
-                //Before uninstall OPAL security Interface check whether it is installed or not.
+                //Before uninstalling OPAL security Interface check whether it is installed or not.
                 //
                 Status = pBS->OpenProtocol( ChildHandleBuffer[Index],
-                                            &gEfiStorageSecurityCommandProtocolGuid,
-                                            NULL,
+                                            &gOpalSecInitProtocolGuid,
+                                            (VOID**)&OpalSecInitProtocol,
                                             This->DriverBindingHandle,
                                             ChildHandleBuffer[Index],
                                             EFI_OPEN_PROTOCOL_TEST_PROTOCOL );
@@ -1159,14 +1297,17 @@ IdeBusStop (
                     }
                 }
 
-                if ( gPlatformIdeProtocol->IdePwrManagementInterfaceSupport ) {
-                    StopIDEPowerMgmtInterface( IdeBusInterface );
-                }
+	            if ( gPlatformIdeProtocol->IdePwrManagementInterfaceSupport ) {
+	                StopIDEPowerMgmtInterface( IdeBusInterface );
+	            }
 
-                if ( gPlatformIdeProtocol->HostProtectedAreaSupport ) {
-	                StopHpaInterface( IdeBusInterface );
-                }
+	            if ( gPlatformIdeProtocol->HostProtectedAreaSupport ) {
+	                StopHPAInterface( IdeBusInterface );
+	            }
 
+	            if ( gPlatformIdeProtocol->EfiIdeProtocol ) {
+	                IdeBlockIoDev = IDE_BLOCK_IO_DEV_FROM_THIS( &(IdeBusInterface->IdeBlkIo));
+                }
                 pBS->FreePool( IdeBusInterface->IdeBlkIo->BlkIo.Media );
                 pBS->FreePool( IdeBusInterface->IdeBlkIo );
                 pBS->FreePool( IdeBusInterface->IdeDiskInfo );
@@ -1174,7 +1315,11 @@ IdeBusStop (
                 Current_Device  = IdeBusInterface->IdeDevice.Device;
                 IdeBusInitInterface->IdeBusInitData[Current_Channel][Current_Device] = DEVICE_IN_RESET_STATE;
                 pBS->FreePool( IdeBusInterface->DevicePathProtocol );
-                pBS->FreePool( IdeBusInterface );
+
+	            if ( gPlatformIdeProtocol->EfiIdeProtocol )
+	                pBS->FreePool( IdeBlockIoDev );
+	            else
+	                pBS->FreePool( IdeBusInterface );
             }
             NumberOfChildren--;
             Index++;
@@ -1183,7 +1328,7 @@ IdeBusStop (
         return EFI_SUCCESS;
     } else {
         //   
-        //Check if AMI_IDE_BUS_INIT_PROTOCOL can be removed
+        //Check if IDE_BUS_INIT_PROTOCOL can be removed
         //
         for ( Current_Channel = PRIMARY_CHANNEL; Current_Channel <= SECONDARY_CHANNEL; Current_Channel++ )
         {
@@ -1196,16 +1341,16 @@ IdeBusStop (
         }
 
         //
-        // Can't uninstall AMI_IDE_BUS_INIT_PROTOCOL if any one of the IDE devices are in "CONFIGURED" state.
+        // Can't uninstall IDE_BUS_INIT_PROTOCOL if any one of the IDE devices are in "CONFIGURED" state.
         //
         if ( Flag == TRUE ) {
             if ( gPlatformIdeProtocol->IdeHPSupport ) {
 
-                //
-                // Check whether already HP Event has been created and also HP is supported
-                //    
-                if ( IdeBusInitInterface->HPEvent != NULL ) {
-                    pBS->CloseEvent( IdeBusInitInterface->HPEvent );
+	            //
+	            // Check whether already HP Event has been created and also HP is supported
+	            //    
+	            if ( IdeBusInitInterface->HPEvent != NULL ) {
+	                pBS->CloseEvent( IdeBusInitInterface->HPEvent );
                 }
             }
             //    
@@ -1214,15 +1359,15 @@ IdeBusStop (
             Status = pBS->CloseProtocol( Controller,
                                          &(gPlatformIdeProtocol->gIdeControllerProtocolGuid),
                                          This->DriverBindingHandle,
-                                         Controller );
-            ASSERT_EFI_ERROR(Status);
+                                         Controller );						 
+			ASSERT_EFI_ERROR(Status);										 
             //
             // AtaPass Thru uninstall
             //
             Status = pBS->LocateProtocol (
-                                &gAmiAtaPassThruInitProtocolGuid,
+                                &gAtaPassThruInitProtocolGuid,
                                 NULL,
-                                (VOID**)&AtaPassThruInitProtocol
+                                &AtaPassThruInitProtocol
                         );
 
             if(!EFI_ERROR(Status)) {
@@ -1234,35 +1379,35 @@ IdeBusStop (
             // ScsiPassThruAtapi uninstall
             //
             Status = pBS->LocateProtocol (
-                                &gAmiScsiPassThruInitProtocolGuid,
+                                &gScsiPassThruAtapiInitProtocolGuid,
                                 NULL,
-                                (VOID**)&gScsiPassThruInitProtocol);
+                                &gScsiPassThruAtapiInitProtocol);
 
              if(!EFI_ERROR(Status)) {
-                 if(gScsiPassThruInitProtocol != NULL) {
-                     gScsiPassThruInitProtocol->StopScsiPassThruAtapiSupport(Controller, FALSE);
+                 if(gScsiPassThruAtapiInitProtocol != NULL) {
+                     gScsiPassThruAtapiInitProtocol->StopScsiPassThruAtapiSupport(Controller, FALSE);
                  }
              }
 
 
             Status = pBS->CloseProtocol( Controller,
-                                         &gAmiIdeBusInitProtocolGuid,
+                                         &gEfiIdeBusInitProtocolGuid,
                                          This->DriverBindingHandle,
                                          Controller );
             ASSERT_EFI_ERROR(Status);												
 
             Status = pBS->UninstallProtocolInterface( Controller,
-                                                      &gAmiIdeBusInitProtocolGuid,
+                                                      &gEfiIdeBusInitProtocolGuid,
                                                       IdeBusInitInterface );
 
             if ( EFI_ERROR( Status ))  {
                 Status = pBS->OpenProtocol( Controller,
-                                            &gAmiIdeBusInitProtocolGuid,
+                                            &gEfiIdeBusInitProtocolGuid,
                                             (VOID**)&IdeBusInitInterface,
                                             This->DriverBindingHandle,
                                             Controller,
                                             EFI_OPEN_PROTOCOL_BY_DRIVER );
-                ASSERT_EFI_ERROR(Status);
+				ASSERT_EFI_ERROR(Status);
 
                 Status = pBS->OpenProtocol( Controller,
                                             &(gPlatformIdeProtocol->gIdeControllerProtocolGuid),
@@ -1270,12 +1415,15 @@ IdeBusStop (
                                             This->DriverBindingHandle,
                                             Controller,
                                             EFI_OPEN_PROTOCOL_BY_DRIVER );
-                ASSERT_EFI_ERROR(Status);
+				ASSERT_EFI_ERROR(Status);
 
                 return EFI_DEVICE_ERROR;
             }
 
-            pBS->FreePool( IdeBusInterface );
+	        if ( gPlatformIdeProtocol->EfiIdeProtocol )
+	            pBS->FreePool( IdeBlockIoDev );
+	        else
+	            pBS->FreePool( IdeBusInterface );
 
             if ( gDescriptorBuffer != NULL ) {
                 pBS->FreePool( gDescriptorBuffer );
@@ -1288,42 +1436,55 @@ IdeBusStop (
     }
 }
 
-/**
-    Installs BUS Init Protocol on the IDE controller Handle
-
-        
-    @param  Controller 
-    @param  AMI_IDE_BUS_INIT_PROTOCOL   *IdeBusInitInterface;
-    @param  IDE_CONTROLLER_PROTOCOL     *IdeControllerInterface
-
-    @retval EFI_STATUS
-
-    @note  
-    Here is the control flow of this function:
-    1. Call "IdeGetControllerInfo", to get channel information from IdeController driver.
-    2. Install "gAmiIdeBusInitProtocolGuid" on the IDE controller.
-
-**/
-EFI_STATUS
-InstallBusInitProtocol (
-    IN  EFI_HANDLE                       Controller,
-    IN  OUT AMI_IDE_BUS_INIT_PROTOCOL    *IdeBusInitInterface,
-    IN  VOID                             *IdeControllerInterfaceIn
-)
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:	InstallBusInitProtocol
+//
+// Description:	Installs BUS Init Protocol on the IDE controller Handle
+//
+// Input:
+//	IN EFI_HANDLE                     Controller,
+//	IDE_BUS_INIT_PROTOCOL			*IdeBusInitInterface;
+//	IDE_CONTROLLER_PROTOCOL			*IdeControllerInterface
+//
+// Output:
+//	EFI_STATUS
+//
+// Modified:
+//
+// Referrals: AllocatePool, InstallProtocolInterface, IdeGetControllerInfo
+//
+// Notes:
+//  Here is the control flow of this function:
+//	1. Call "IdeGetControllerInfo", to get channel information from IdeController driver.
+//  2. Install "gEfiIdeBusInitProtocolGuid" on the IDE controller.
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
+EFI_STATUS InstallBusInitProtocol(
+    IN EFI_HANDLE                Controller,
+    IN OUT IDE_BUS_INIT_PROTOCOL *IdeBusInitInterface,
+    IN VOID *IdeControllerInterfaceIn
+    )
 {
-    CONTROLLER_INFO                     *ControllerInfo;
+    CONTROLLER_INFO *ControllerInfo;
     EFI_IDE_CONTROLLER_INIT_PROTOCOL    *EfiIdeControllerInterface = NULL ;
-    EFI_STATUS                           Status;
+    IDE_CONTROLLER_PROTOCOL             *IdeControllerInterface = NULL ;
+    EFI_STATUS      Status;
 
     //
     // Initialize IdeControllerInterface
     //
     if ( gPlatformIdeProtocol->EfiIdeProtocol )
         EfiIdeControllerInterface = ( EFI_IDE_CONTROLLER_INIT_PROTOCOL *) IdeControllerInterfaceIn;
+    else
+        IdeControllerInterface = ( IDE_CONTROLLER_PROTOCOL *) IdeControllerInterfaceIn;
+
     //
     //Initialize the default Values
     //
-    ZeroMemory( IdeBusInitInterface, sizeof(AMI_IDE_BUS_INIT_PROTOCOL));
+    ZeroMemory( IdeBusInitInterface, sizeof(IDE_BUS_INIT_PROTOCOL));
 
     Status = pBS->AllocatePool( EfiBootServicesData,
                                 sizeof(CONTROLLER_INFO),
@@ -1340,9 +1501,7 @@ InstallBusInitProtocol (
         ControllerInfo->Flags = 0; // ACOUSTIC_SUPPORT_DISABLE
 
         if ( gPlatformIdeProtocol->SBIdeSupport ) {
-            Status = pBS->LocateProtocol(&gIdeSetupProtocolguid,
-                                         NULL,
-                                         (VOID**)&gIdeSetupProtocol);
+            Status = pBS->LocateProtocol(&gIdeSetupProtocolguid, NULL, &gIdeSetupProtocol);
 
             if ( gPlatformIdeProtocol->AcousticManagementSupport ) {  
 
@@ -1373,7 +1532,8 @@ InstallBusInitProtocol (
         ControllerInfo->BusMasterEnable       = BUSMASTER_ENABLE;
         ControllerInfo->HPMask                = 0;           // Hot Plug Mask
 
-
+    } else {
+		IdeControllerInterface->IdeGetControllerInfo( Controller, ControllerInfo );
     }
 
     if ( ControllerInfo->PrimaryChannel == DEVICE_DISABLED ) {
@@ -1396,7 +1556,8 @@ InstallBusInitProtocol (
     IdeBusInitInterface->HPMask                    = ControllerInfo->HPMask;
     if ( gPlatformIdeProtocol->EfiIdeProtocol )
         IdeBusInitInterface->EfiIdeControllerInterface = EfiIdeControllerInterface;
-
+    else
+        IdeBusInitInterface->IdeControllerInterface   	 = IdeControllerInterface;
 
     IdeBusInitInterface->Flags                     = ControllerInfo->Flags;
     IdeBusInitInterface->Acoustic_Management_Level = ControllerInfo->Acoustic_Management_Level;
@@ -1410,7 +1571,7 @@ InstallBusInitProtocol (
 
     Status = pBS->InstallProtocolInterface(
         &Controller,
-        &gAmiIdeBusInitProtocolGuid,
+        &gEfiIdeBusInitProtocolGuid,
         EFI_NATIVE_INTERFACE,
         IdeBusInitInterface );
 
@@ -1427,49 +1588,61 @@ InstallBusInitProtocol (
         }
     }
 
-#if IDEBUS_DEBUG_PRINT == 1
-    TRACE(( -1, "Installed AMI_IDE_BUS_INIT_PROTOCOL\n" ));
+#ifdef Debug_Level_3
+    EfiDebugPrint( -1, "Installed IDE_BUS_INIT_PROTOCOL\n" );
 #endif
-
 
     return Status;
 }
 
-/**
-    PIO and DMA mode programming both on the Controller as well as on the Device is done
-
-    @param  AMI_IDE_BUS_INIT_PROTOCOL   *IdeBusInitInterface
-    @param  IDE_CONTROLLER_PROTOCOL     *IdeControllerInterface
-    @param  AMI_IDE_BUS_INIT_PROTOCOL   *IdeBusInitInterface
-
-    @retval EFI_STATUS
-
-    @note  
-    Here is the control flow of this function:
-     1. Get the Best PIO and DMA mode supported by the device from Identify Data
-     2. Set the PIO and DMA mode in the IDE controller.
-     3. Configure the IDE device with the PIO and DMA mode.
-     4. Update the Identify Data.
-     5. Based on the IDE device select the proper Read/Write commands.
-     6. Construct a unicode string for the IDE device.
-
-**/
-EFI_STATUS
-ConfigureIdeDeviceAndController (
-    IN  AMI_IDE_BUS_PROTOCOL                *IdeBusInterface,
-    IN  VOID                                *IdeControllerInterfaceIn,
-    IN  AMI_IDE_BUS_INIT_PROTOCOL           *IdeBusInitInterface
-)
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:	ConfigureIdeDeviceAndController
+//
+// Description:	PIO and DMA mode programming both on the Controller as well as on the Device is done
+//
+// Input:
+//	IDE_BUS_INIT_PROTOCOL			*IdeBusInitInterface
+//	IDE_CONTROLLER_PROTOCOL			*IdeControllerInterface
+//	IDE_BUS_INIT_PROTOCOL			*IdeBusInitInterface
+//
+// Output:
+//	EFI_STATUS
+//
+// Modified:
+//
+// Referrals: ConfigureIdeDevice, GetIdentifyData
+//
+// Notes:
+//  Here is the control flow of this function:
+// 1. Get the Best PIO and DMA mode supported by the device from Identify Data
+// 2. Set the PIO and DMA mode in the IDE controller.
+// 3. Configure the IDE device with the PIO and DMA mode.
+// 4. Update the Identify Data.
+// 5. Based on the IDE device select the proper Read/Write commands.
+// 6. Construct a unicode string for the IDE device.
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
+EFI_STATUS ConfigureIdeDeviceAndController(
+    IN IDE_BUS_PROTOCOL                 *IdeBusInterface,
+    IN VOID              *IdeControllerInterfaceIn,
+    IN IDE_BUS_INIT_PROTOCOL            *IdeBusInitInterface )
 {
     EFI_STATUS              Status;
     UINT8                   Current_Channel = IdeBusInterface->IdeDevice.Channel;
     UINT8                   Current_Device  = IdeBusInterface->IdeDevice.Device;
+
     EFI_ATA_COLLECTIVE_MODE *SupportedModes = NULL;
     EFI_IDE_CONTROLLER_INIT_PROTOCOL       *EfiIdeControllerInterface = NULL ;
+    IDE_CONTROLLER_PROTOCOL    *IdeControllerInterface = NULL ;
 
 
     if ( gPlatformIdeProtocol->EfiIdeProtocol )
         EfiIdeControllerInterface = (EFI_IDE_CONTROLLER_INIT_PROTOCOL*) IdeControllerInterfaceIn;
+    else
+        IdeControllerInterface = (IDE_CONTROLLER_PROTOCOL *) IdeControllerInterfaceIn;
 
     if ( gPlatformIdeProtocol->EfiIdeProtocol ) {
         GetIdentifyData( IdeBusInterface, &(IdeBusInterface->IdeDevice));
@@ -1480,24 +1653,24 @@ ConfigureIdeDeviceAndController (
             return Status;
         }
 
-        Status = EfiIdeControllerInterface->CalculateMode( EfiIdeControllerInterface, IdeBusInterface->IdeDevice.Channel,
+	    Status = EfiIdeControllerInterface->CalculateMode( EfiIdeControllerInterface, IdeBusInterface->IdeDevice.Channel,
                                                     IdeBusInterface->IdeDevice.Device, &SupportedModes );
 
     if ( EFI_ERROR( Status )) {
         return Status;
     }
 
-        Status = EfiIdeControllerInterface->SetTiming( EfiIdeControllerInterface, IdeBusInterface->IdeDevice.Channel,
+	    Status = EfiIdeControllerInterface->SetTiming( EfiIdeControllerInterface, IdeBusInterface->IdeDevice.Channel,
                                                 IdeBusInterface->IdeDevice.Device, SupportedModes );
 
         if ( EFI_ERROR( Status )) {
             return Status;
         }
 
-        IdeBusInterface->IdeDevice.PIOMode = 0xff;
-        IdeBusInterface->IdeDevice.SWDma   = 0xff;
-        IdeBusInterface->IdeDevice.MWDma   = 0xff;
-        IdeBusInterface->IdeDevice.UDma    = 0xff;
+	    IdeBusInterface->IdeDevice.PIOMode = 0xff;
+	    IdeBusInterface->IdeDevice.SWDma   = 0xff;
+	    IdeBusInterface->IdeDevice.MWDma   = 0xff;
+	    IdeBusInterface->IdeDevice.UDma    = 0xff;
 
         if ( SupportedModes->PioMode.Valid ) {
             IdeBusInterface->IdeDevice.PIOMode = SupportedModes->PioMode.Mode;
@@ -1515,8 +1688,21 @@ ConfigureIdeDeviceAndController (
             IdeBusInterface->IdeDevice.UDma = SupportedModes->UdmaMode.Mode;
         }
 
-        IdeBusInterface->IdeDevice.IORdy = (UINT8)((((EFI_IDENTIFY_DATA*)&(IdeBusInterface->IdeDevice.IdentifyData))->AtaData.capabilities_49 & BIT11) >> 11);
+	    IdeBusInterface->IdeDevice.IORdy = ((EFI_IDENTIFY_DATA*)&(IdeBusInterface->IdeDevice.IdentifyData))->AtaData.capabilities_49 & 0x800;
 
+    } else {
+        //    
+        // Get the best PIO and DMA mode from the IDE device
+        //    
+	    IdeControllerInterface->GetbestPioDmaMode( &(IdeBusInterface->IdeDevice));
+
+        //
+        // Program PIO mode Timing in the controller
+        //
+	    IdeControllerInterface->IdeSetPioMode( &(IdeBusInterface->IdeDevice));
+
+        // See if Bus Master has been enabled
+	    IdeControllerInterface->IdeSetDmaMode( &(IdeBusInterface->IdeDevice)); 
     }
 
     //	Issue SET feature command to set the PIO and DMA mode
@@ -1540,6 +1726,8 @@ ConfigureIdeDeviceAndController (
                     SupportedModes->UdmaMode.Mode = IdeBusInterface->IdeDevice.UDma;
                     EfiIdeControllerInterface->SetTiming( EfiIdeControllerInterface, IdeBusInterface->IdeDevice.Channel,
                                                              IdeBusInterface->IdeDevice.Device, SupportedModes );
+                } else {
+                    IdeControllerInterface->IdeSetDmaMode( &(IdeBusInterface->IdeDevice));
                 }
             }
         } else {
@@ -1550,6 +1738,8 @@ ConfigureIdeDeviceAndController (
                         SupportedModes->MultiWordDmaMode.Mode = IdeBusInterface->IdeDevice.MWDma;
                         EfiIdeControllerInterface-> SetTiming( EfiIdeControllerInterface, IdeBusInterface->IdeDevice.Channel,
                                                         IdeBusInterface->IdeDevice.Device, SupportedModes );
+                    } else {
+                        IdeControllerInterface->IdeSetDmaMode( &(IdeBusInterface->IdeDevice));
                     } 
                 }
             }
@@ -1590,8 +1780,8 @@ ConfigureIdeDeviceAndController (
                     //
                         IdeBusInterface->IdeDevice.ReadCommand  = READ_DMA_EXT;
                         IdeBusInterface->IdeDevice.WriteCommand = WRITE_DMA_EXT;
-                    }
-                }
+	                }
+ 			    }
             }
         }    
         IdeBusInitInterface->IdeBusInitData[Current_Channel][Current_Device] = DEVICE_CONFIGURED_SUCCESSFULLY;
@@ -1601,39 +1791,49 @@ ConfigureIdeDeviceAndController (
     return EFI_SUCCESS;
 }
 
-/**
-    Initializes IDE Block IO interface
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:	InitIdeBlockIO
+//
+// Description:	Initializes IDE Block IO interface
+//
+// Input:
+//
+//	IDE_BUS_PROTOCOL				*IdeBusInterface,
+//
+// Output:
+//	EFI_STATUS
+//
+// Modified:
+//
+// Referrals: AllocatePool, OpenProtocol, DetectAtapiMedia, AtapiInquiryData
+//
+// Notes:
+//  Here is the control flow of this function:
+//  1. Initialize EFI_BLOCK_IO_PROTOCOL Protocol.
+//	2. In case of Removable devices, detect Media presence.
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
-    @param  AMI_IDE_BUS_PROTOCOL    *IdeBusInterface,
-
-    @retval EFI_STATUS
-
-    @note  
-    Here is the control flow of this function:
-    1. Initialize EFI_BLOCK_IO_PROTOCOL Protocol.
-    2. In case of Removable devices, detect Media presence.
-
-**/
-
-EFI_STATUS
-InitIdeBlockIO( 
-    IN  AMI_IDE_BUS_PROTOCOL    *IdeBusInterface
-)
+EFI_STATUS InitIdeBlockIO(
+    IN IDE_BUS_PROTOCOL *IdeBusInterface )
 {
-    EFI_STATUS              Status;
-    EFI_BLOCK_IO_PROTOCOL   *BlkIo;
-    IDE_BLOCK_IO            *IdeBlkIo;
-    EFI_BLOCK_IO_MEDIA      *BlkMedia;
-    ATAPI_DEVICE            *AtapiDevice;
-    UINT8                   *Data;
-    UINT8                   *InquiryData;
-    UINT16                  InquiryDataSize;
-    UINT8                   Current_Channel;
-    UINT8                   Current_Device;
-    UINT8                   bTemp;
-    UINT16                  OddType = 0;
-    UINT8                   OddLoadingType =0xFF;
-    UINT32                  SectorSize = ATA_SECTOR_BYTES;
+    EFI_STATUS            Status;
+    EFI_BLOCK_IO_PROTOCOL *BlkIo;
+    IDE_BLOCK_IO          *IdeBlkIo;
+    EFI_BLOCK_IO_MEDIA    *BlkMedia;
+    ATAPI_DEVICE          *AtapiDevice;
+    UINT8                 *Data;
+    UINT8                 *InquiryData;
+    UINT16                InquiryDataSize;
+    UINT8                 Current_Channel;
+    UINT8                 Current_Device;
+    UINT8                 bTemp;
+    UINT16                OddType = 0;
+    UINT8                 OddLoadingType =0xFF;
+    UINT32                SectorSize = ATA_SECTOR_BYTES;
 
     Status = pBS->AllocatePool( EfiBootServicesData,
                                 sizeof(IDE_BLOCK_IO),
@@ -1652,7 +1852,7 @@ InitIdeBlockIO(
     }
 
     //
-    //Initialize the IdeBlkIo pointer in AMI_IDE_BUS_PROTOCOL (IdeBusInterface)
+    //Initialize the IdeBlkIo pointer in IDE_BUS_PROTOCOL (IdeBusInterface)
     //
     IdeBusInterface->IdeBlkIo = IdeBlkIo;
 
@@ -1872,18 +2072,29 @@ InitIdeBlockIO(
     return EFI_SUCCESS;
 }
 
-/**
-    Get the Enum value for ODD type found on profile
-
-    @param  UINT16      Oddtype
-
-    @retval DD_TYPE    EnumValue
-
-**/
-ODD_TYPE
-GetEnumOddType (
-    UINT16  OddType
-)
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:	GetEnumOddType
+//
+// Description:	Get the Enum value for ODD type found on profile
+//
+// Input:
+//
+//      UINT16      Oddtype
+// Output:
+//      ODD_TYPE    EnumValue
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
+ODD_TYPE GetEnumOddType(
+    UINT16 OddType )
 {
     switch ( OddType )
     {
@@ -1970,22 +2181,34 @@ GetEnumOddType (
     }
 }
 
-/**
-    Initializes IDE DiskInfo Interface
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:	InitIdeDiskInfo
+//
+// Description:	Initializes IDE DiskInfo Interface
+//
+// Input:
+//
+//	IDE_BUS_PROTOCOL		*IdeBusInterface,
+//
+// Output:
+//	EFI_STATUS
+//
+// Modified:
+//
+// Referrals: AllocatePool OpenProtocol
+//
+// Notes:
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
-    @param  AMI_IDE_BUS_PROTOCOL    *IdeBusInterface,
-
-    @retval EFI_STATUS
-
-**/
-
-EFI_STATUS
-InitIdeDiskInfo (
-    IN  AMI_IDE_BUS_PROTOCOL    *IdeBusInterface
-)
+EFI_STATUS InitIdeDiskInfo(
+    IN IDE_BUS_PROTOCOL *IdeBusInterface )
 {
-    EFI_STATUS      Status;
-    IDE_DISK_INFO   *IdeDiskInfo;
+    EFI_STATUS    Status;
+    IDE_DISK_INFO *IdeDiskInfo;
 
     Status = pBS->AllocatePool( EfiBootServicesData,
                                 sizeof(IDE_DISK_INFO),
@@ -1996,7 +2219,7 @@ InitIdeDiskInfo (
     }
 
     //
-    //Initialize the IdeBlkIo pointer in AMI_IDE_BUS_PROTOCOL (IdeBusInterface)
+    //Initialize the IdeBlkIo pointer in IDE_BUS_PROTOCOL (IdeBusInterface)
     //
     IdeBusInterface->IdeDiskInfo = IdeDiskInfo;
 
@@ -2013,38 +2236,46 @@ InitIdeDiskInfo (
     return EFI_SUCCESS;
 }
 
-/**
-    Creates a IDE device devicepath and adds it to IdeBusInterface
-
-        
-    @param This 
-    @param Controller 
-    @param AMI_IDE_BUS_INIT_PROTOCO *IdeBusInitInterface;
-    @param RemainingDevicePath 
-    @param UINT8    Current_Channel
-    @param UINT8    Current_Device
-
-    @retval EFI_STATUS
-
-    @note  
-    Here is the control flow of this function:
-    1.  If Remaining Devicepath is not NULL, we have already verified that it is a
-        valid Atapi device path in IdeBusStart. So nothing to do. Just exit.
-	2.	Build a Atapi devicepath and a End device path.
-	3.  Get the Devicepath for the IDE controller.
-	3.  Append Atapi devicepath to  IDE controller devicepath.
-
-**/
-EFI_STATUS
-CreateIdeDevicePath (
-    IN  EFI_DRIVER_BINDING_PROTOCOL     *This,
-    IN  EFI_HANDLE                      Controller,
-    AMI_IDE_BUS_INIT_PROTOCOL           *IdeBusInitInterface,
-    AMI_IDE_BUS_PROTOCOL                *IdeBusInterface,
-    IN  OUT EFI_DEVICE_PATH_PROTOCOL    *RemainingDevicePath,
-    IN  UINT8                           Current_Channel,
-    IN  UINT8                           Current_Device
-)
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:	CreateIdeDevicePath
+//
+// Description:	Creates a IDE device devicepath and adds it to IdeBusInterface
+//
+// Input:
+//	IN EFI_DRIVER_BINDING_PROTOCOL  *This,
+//	IN EFI_HANDLE                   Controller,
+//	IDE_BUS_INIT_PROTOCOL			*IdeBusInitInterface;
+//	IN EFI_DEVICE_PATH_PROTOCOL     *RemainingDevicePath
+//	UINT8							Current_Channel
+//	UINT8							Current_Device
+//
+// Output:
+//	EFI_STATUS
+//
+// Modified:
+//
+// Referrals: AllocatePool, OpenProtocol, IdeBusStart
+//
+// Notes:
+//  Here is the control flow of this function:
+//  1.  If Remaining Devicepath is not NULL, we have already verified that it is a
+//			valid Atapi device path in IdeBusStart. So nothing to do. Just exit.
+//	2.	Build a Atapi devicepath and a End devce path.
+//	3.  Get the Devicepath for the IDE controller.
+//	3.  Append Atapi devicepath to  IDE controller devicepath.
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
+EFI_STATUS CreateIdeDevicePath(
+    IN EFI_DRIVER_BINDING_PROTOCOL  *This,
+    IN EFI_HANDLE                   Controller,
+    IDE_BUS_INIT_PROTOCOL           *IdeBusInitInterface,
+    IDE_BUS_PROTOCOL                *IdeBusInterface,
+    IN OUT EFI_DEVICE_PATH_PROTOCOL *RemainingDevicePath,
+    IN UINT8                        Current_Channel,
+    IN UINT8                        Current_Device )
 {
     EFI_STATUS               Status;
     ATAPI_DEVICE_PATH        NewDevicePath;
@@ -2066,25 +2297,35 @@ CreateIdeDevicePath (
                                 This->DriverBindingHandle,
                                 Controller,
                                 EFI_OPEN_PROTOCOL_GET_PROTOCOL );
-    ASSERT_EFI_ERROR(Status);
+	ASSERT_EFI_ERROR(Status);
 
     IdeBusInterface->DevicePathProtocol = DPAddNode( TempDevicePath, &NewDevicePath.Header );
     return EFI_SUCCESS;
 }
 
-/**
-    Generates the ComReset to Port 
-
-    @param AMI_IDE_BUS_PROTOCOL *IdeBusInterface,
-
-    @retval EFI_STATUS
-
-**/
-EFI_STATUS
-GeneratePortReset (
-    IN  AMI_IDE_BUS_PROTOCOL    *IdeBusInterface
-)
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:	GeneratePortReset
+//
+// Description:	Generates the ComReset to Port 
+//
+// Input:
+//		IDE_BUS_PROTOCOL			*IdeBusInterface,
+//
+// Output:
+//	    EFI_STATUS
+//
+// Modified:
+//
+//      None
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
+EFI_STATUS GeneratePortReset(
+    IN IDE_BUS_PROTOCOL      *IdeBusInterface )
 {
+    
+
     UINT16      SIDPBA=0;
     EFI_PCI_IO_PROTOCOL              *PciIO=IdeBusInterface->PciIO;
     UINT32      Data32=0;
@@ -2162,27 +2403,36 @@ GeneratePortReset (
 
 }
 
-/**
-    Issues SET FEATURE Command
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:	ConfigureIdeDevice
+//
+// Description:	Issues SET FEATURE Command
+//
+// Input:
+//		IDE_BUS_PROTOCOL			*IdeBusInterface,
+//		IDE_BUS_INIT_PROTOCOL		*IdeBusInitInterface
+//
+// Output:
+//	EFI_STATUS
+//
+// Modified:
+//
+// Referrals: ConfigureIdeDeviceAndController, IdeSetFeatureCommand
+//
+// Notes:
+//  Here is the control flow of this function:
+//  1. Issue Set feature commend to set PIO mode if needed.
+//	2. Set Multiple Mode command for ATA devices if needed.
+//  3. Issue Set feature commend to set UDMA/MWDMA. If it fails, disable Busmaster support.
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
-    @param  AMI_IDE_BUS_PROTOCOL			*IdeBusInterface,
-    @param  AMI_IDE_BUS_INIT_PROTOCOL		*IdeBusInitInterface
-
-    @retval EFI_STATUS
-
-    @note  
-      Here is the control flow of this function:
-      1. Issue Set feature commend to set PIO mode if needed.
-      2. Set Multiple Mode command for ATA devices if needed.
-      3. Issue Set feature commend to set UDMA/MWDMA. If it fails, disable BusMaster support.
-
-**/
-
-EFI_STATUS
-ConfigureIdeDevice (
-    IN  AMI_IDE_BUS_PROTOCOL        *IdeBusInterface,
-    IN  AMI_IDE_BUS_INIT_PROTOCOL   *IdeBusInitInterface
-)
+EFI_STATUS ConfigureIdeDevice(
+    IN IDE_BUS_PROTOCOL      *IdeBusInterface,
+    IN IDE_BUS_INIT_PROTOCOL *IdeBusInitInterface )
 {
     EFI_STATUS               Status= EFI_SUCCESS;
     UINT8                    DMACapability;
@@ -2201,13 +2451,13 @@ ConfigureIdeDevice (
             && (IdeBusInterface->IdeDevice.IdentifyData.Reserved_76_79[2] & 0x0040)) {
 
             // Disable the Software Preservation
-            IdeSetFeatureCommand( IdeBusInterface, DISABLE_SATA2_SOFTPREV, 6 );
+            Status = IdeSetFeatureCommand( IdeBusInterface, DISABLE_SATA2_SOFTPREV, 6 );
 
             //GeneratePort Reset
             GeneratePortReset(IdeBusInterface);
 
             // Enable the Software Preservation
-            IdeSetFeatureCommand( IdeBusInterface, 0x10, 6 );
+            Status = IdeSetFeatureCommand( IdeBusInterface, 0x10, 6 );
 
             // Get the updated IdentifyData
             GetIdentifyData( IdeBusInterface, &(IdeBusInterface->IdeDevice));
@@ -2227,10 +2477,7 @@ ConfigureIdeDevice (
             //
             //Some HDD may take a long time to spin up. Wait for additional time
             //
-            Status = WaitforBitClear( IdeBusInterface->PciIO, 
-                                    Regs.ControlBlock.AlternateStatusReg, 
-                                    IDE_BSY | IDE_DRQ, 
-                                    gPlatformIdeProtocol->PoweonBusyClearTimeout );
+            Status = WaitforBitClear( IdeBusInterface->PciIO, Regs.ControlBlock.AlternateStatusReg, BSY | DRQ, gPlatformIdeProtocol->PoweonBusyClearTimeout );
         }
         //
         //Get the Identify Command once more
@@ -2296,7 +2543,7 @@ ConfigureIdeDevice (
         }
     }
 
-    //Check if BusMaster Enabled
+    //Check if Busmaster Enabled
     //Status = EFI_NOT_FOUND;
     //Check if  UDMA is supported
     if  ( IdeBusInterface->IdeDevice.UDma != 0xff ) {
@@ -2335,12 +2582,12 @@ ConfigureIdeDevice (
     }
 
     //
-    //Convert the Device string from English to Unicode
+    //Convert the Device string from Engligh to Unicode
     //
     IdeBusInterface->IdeDevice.UDeviceName = NULL;
-    if ( gPlatformIdeProtocol->EfiIdeProtocol ) {
-        IdeBusInterface->ControllerNameTable = IdeBusInterface->IdeDevice.UDeviceName;
-    } 
+	if ( gPlatformIdeProtocol->EfiIdeProtocol ) {
+	    IdeBusInterface->ControllerNameTable = IdeBusInterface->IdeDevice.UDeviceName;
+	} 
 
     for ( Index = 0; Index < 40; Index += 2 ) {
 
@@ -2373,23 +2620,23 @@ ConfigureIdeDevice (
                                 (VOID**)&tempUnicodeTable[0].UnicodeString
                                 );
 
-    ASSERT_EFI_ERROR(Status);
+	ASSERT_EFI_ERROR(Status);
     pBS->CopyMem( tempUnicodeTable[0].Language, &Language,  sizeof(Language));
     pBS->CopyMem( tempUnicodeTable[0].UnicodeString, DeviceName, Index * (sizeof (UINT16)));
     tempUnicodeTable[1].Language           = NULL;
     tempUnicodeTable[1].UnicodeString      = NULL;
     IdeBusInterface->IdeDevice.UDeviceName = tempUnicodeTable;
-    if ( gPlatformIdeProtocol->EfiIdeProtocol ) {
-        IdeBusInterface->ControllerNameTable = IdeBusInterface->IdeDevice.UDeviceName;
-    } 
+	if ( gPlatformIdeProtocol->EfiIdeProtocol ) {
+	    IdeBusInterface->ControllerNameTable = IdeBusInterface->IdeDevice.UDeviceName;
+	} 
     if ( gPlatformIdeProtocol->SBIdeSupport ) {
         InitMiscConfig(IdeBusInterface);
     }
 
-    if ( gPlatformIdeProtocol->IdePowerManagementSupport ) {
-        Status=InitIDEPowerManagement( IdeBusInterface );
-        ASSERT_EFI_ERROR(Status);
-    }
+	if ( gPlatformIdeProtocol->IdePowerManagementSupport ) {
+	    Status=InitIDEPowerManagement( IdeBusInterface );
+		ASSERT_EFI_ERROR(Status);
+	}
 
     if ( gPlatformIdeProtocol->DisableSoftSetPrev ) {
 
@@ -2398,7 +2645,7 @@ ConfigureIdeDevice (
             && (IdeBusInterface->IdeDevice.IdentifyData.Reserved_76_79[2] & 0x0040)) {
 
             // Disable the Software Preservation
-            IdeSetFeatureCommand( IdeBusInterface, DISABLE_SATA2_SOFTPREV, 6 );
+            Status = IdeSetFeatureCommand( IdeBusInterface, DISABLE_SATA2_SOFTPREV, 6 );
 
             // Get the updated IdentifyData
             GetIdentifyData( IdeBusInterface, &(IdeBusInterface->IdeDevice));
@@ -2409,53 +2656,67 @@ ConfigureIdeDevice (
     return EFI_SUCCESS;
 }
 
-/**
-    Initialize misc IDE configurations.
-
-    @param SataDevInterface 
-
-    @retval VOID
-
-**/
-
-VOID
-InitMiscConfig (
-    IN  AMI_IDE_BUS_PROTOCOL        *IdeBusInterface
+//**********************************************************************
+//<AMI_PHDR_START>
+//
+// Procedure:	InitMiscConfig
+//
+// Description:	Initialize misc IDE configurations.
+//
+// Input:
+//	IN SATA_DEVICE_INTERFACE	*SataDevInterface	
+//
+// Output:
+//	None
+//
+//<AMI_PHDR_END>
+//**********************************************************************
+VOID InitMiscConfig (
+    IN IDE_BUS_PROTOCOL    *IdeBusInterface
 )
 {
     if ( gPlatformIdeProtocol->DiPMSupport ) {
 
         if(IdeBusInterface->IdeDevice.IdentifyData.Reserved_76_79[2] & \
-                IDENTIFY_DIPM_SUPPORT) { // DiPM supported?
+                IDENTIFY_DiPM__SUPPORT) { // DiPM supported?
             //
             // Always disable DiPM in IDE mode
             //
-            IdeSetFeatureCommand (IdeBusInterface, DIPM_DISABLE, DIPM_SUB_COMMAND);
+            IdeSetFeatureCommand (IdeBusInterface, DiPM_DISABLE, DiPM_SUB_COMMAND);
         }
     }
     if ( gPlatformIdeProtocol->AcousticManagementSupport ) {
-        InitAcousticSupport (IdeBusInterface);
-    }
+    	InitAcousticSupport (IdeBusInterface);
+	}
 
 }
 
-/**
-    Initializes Acoustic Management Support functionality
-
-    @param AMI_IDE_BUS_PROTOCOL			*IdeBusInterface,
-
-    @retval EFI_STATUS
-
-    @note  
-     1. Check if the device support Acoustic management.
-     2. Check the desired state Vs the current state.
-     3. If both are equal nothing to do exit else program the desired level
-
-**/
-EFI_STATUS
-InitAcousticSupport (
-    IN  AMI_IDE_BUS_PROTOCOL    *IdeBusInterface
-)
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:	InitAcousticSupport
+//
+// Description:	Initializes Acoustic Management Support functionality
+//
+// Input:
+//		IDE_BUS_PROTOCOL			*IdeBusInterface,
+//
+// Output:
+//	EFI_STATUS
+//
+// Modified:
+//
+// Referrals: IdeSetFeatureCommand
+//
+// Notes:
+// 1. Check if the device support Acoustic management.
+// 2. Check the desired state Vs the current state.
+// 3. If both are equal nothing to do exit else program the desired level
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
+EFI_STATUS InitAcousticSupport(
+    IN IDE_BUS_PROTOCOL *IdeBusInterface )
 {
     UINT8 Data8;
 
@@ -2472,44 +2733,53 @@ InitAcousticSupport (
             //
             // Do we need to program the recommended value
             //
-            if ( Data8 == ACOUSTIC_LEVEL_BYPASS ) {
+			if ( Data8 == ACOUSTIC_LEVEL_BYPASS ) {
                 //
-                // Get the recommended value
+                // Get the rcommended value
                 //
-                Data8 = (UINT8)(IdeBusInterface->IdeDevice.IdentifyData.Acoustic_Level_94 >> 8);
-            }
+				Data8 = (UINT8)(IdeBusInterface->IdeDevice.IdentifyData.Acoustic_Level_94 >> 8);
+			}
 
-                IdeSetFeatureCommand (IdeBusInterface, ACOUSTIC_MANAGEMENT_ENABLE, Data8);
-        } else {
+				IdeSetFeatureCommand (IdeBusInterface, ACOUSTIC_MANAGEMENT_ENABLE, Data8);
+		} else {
                 //
                 // If already disabled, nothing to do
                 //
-            if	(IdeBusInterface->IdeDevice.IdentifyData.Command_Set_Enabled_86 & 0x200) 			
-                IdeSetFeatureCommand (IdeBusInterface, ACOUSTIC_MANAGEMENT_DISABLE, 0);
-        }
-    }
-    return EFI_SUCCESS;
+			if	(IdeBusInterface->IdeDevice.IdentifyData.Command_Set_Enabled_86 & 0x200) 			
+				IdeSetFeatureCommand (IdeBusInterface, ACOUSTIC_MANAGEMENT_DISABLE, 0);
+		}
+	}
+	return EFI_SUCCESS;
 }
 
 
-/**
-    Updates Command and Control register address.
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:	UpdateBaseAddress
+//
+// Description:	Updates Command and Control reg address.
+//
+// Input:
+//	IDE_BUS_PROTOCOL			*IdeBusInterface;
+//
+// Output:
+//	EFI_STATUS
+//
+// Modified:
+//
+// Referrals: IdeBusStart
+//
+// Notes:
+//  Here is the control flow of this function:
+//  1. Using PCI_IO_PROTOCOL, update the Command, control and Busmaster reg address.
+//	Make use of Channel number while updating. Also check whether controller is running in Legacy/Native mode
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
-    @param  AMI_IDE_BUS_PROTOCOL			*IdeBusInterface;
-
-    @retval EFI_STATUS
-
-    @note  
-  Here is the control flow of this function:
-  1. Using PCI_IO_PROTOCOL, update the Command, control and BusMaster register address.
-    Make use of Channel number while updating. Also check whether controller is running in Legacy/Native mode
-
-**/
-
-EFI_STATUS
-UpdateBaseAddress (
-    IN  AMI_IDE_BUS_PROTOCOL    *IdeBusInterface
-)
+EFI_STATUS UpdateBaseAddress(
+    IN IDE_BUS_PROTOCOL *IdeBusInterface )
 {
     EFI_PCI_IO_PROTOCOL *PciIO;
     UINT8               PciConfig[0x40];
@@ -2604,18 +2874,29 @@ UpdateBaseAddress (
     return EFI_SUCCESS;
 }
 
-/**
-    Check if DMA is supported
-
-    @param IdeBusInterface 
-
-    @retval TRUE : DMA Capable
-
-**/
-BOOLEAN
-DMACapable (
-    IN  AMI_IDE_BUS_PROTOCOL    *IdeBusInterface
-)
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:	DMACapable
+//
+// Description:	Check if DMA is supported
+//
+// Input:
+//	IN IDE_BUS_PROTOCOL				*IdeBusInterface,
+//
+// Output:
+//		TRUE : DMA Capable
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
+BOOLEAN DMACapable(
+    IN IDE_BUS_PROTOCOL *IdeBusInterface )
 {
     if ( IdeBusInterface->IdeDevice.DeviceType == ATAPI ) {
         //
@@ -2634,29 +2915,38 @@ DMACapable (
     }
 }
 
-/**
-
-    @param This 
-    @param InquiryData 
-    @param InquiryDataSize 
-
-    @retval EFI_STATUS
-
-    @note  
-    1. Check for Atapi Device. If not exit
-    2. COpy the Inquiry Data from AtapiDevice->InquiryData to the input pointer.
-
-**/
-
-EFI_STATUS
-DiskInfoInquiry (
-    IN  EFI_DISK_INFO_PROTOCOL  *This,
-    IN  OUT VOID                *InquiryData,
-    IN  OUT UINT32              *InquiryDataSize
-)
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:	DiskInfoInquiry
+//
+// Description:
+//
+// Input:
+//	IN EFI_DISK_INFO_PROTOCOL	*This,
+//	IN OUT VOID					*InquiryData,
+//	IN OUT UINT32				*InquiryDataSize
+//
+// Output:
+//	EFI_STATUS
+//
+// Modified:
+//
+// Referrals: InitIdeDiskInfo
+//
+// Notes:
+//	1. Check for Atapi Device. If not exit
+//	2. COpy the Inquiry Data from AtapiDevice->InquiryData to the input pointer.
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
+EFI_STATUS DiskInfoInquiry(
+    IN EFI_DISK_INFO_PROTOCOL *This,
+    IN OUT VOID               *InquiryData,
+    IN OUT UINT32             *InquiryDataSize )
 {
-    AMI_IDE_BUS_PROTOCOL *IdeBusInterface = ((IDE_BLOCK_IO*)This)->IdeBusInterface;
-    ATAPI_DEVICE         *AtapiDevice     = IdeBusInterface->IdeDevice.AtapiDevice;
+    IDE_BUS_PROTOCOL *IdeBusInterface = ((IDE_BLOCK_IO*)This)->IdeBusInterface;
+    ATAPI_DEVICE     *AtapiDevice     = IdeBusInterface->IdeDevice.AtapiDevice;
 
 
     //
@@ -2680,38 +2970,46 @@ DiskInfoInquiry (
     }
 }
 
-/**
-    Return Identify Data
-
-        
-    @param EFI_DISK_INFO_PROTOCOL			*This,
-    @param IdentifyData 
-    @param IdentifyDataSize 
-
-    @retval EFI_STATUS
-
-    @note  
-	1. Return the Identify command data.
-
-**/
-EFI_STATUS
-DiskInfoIdentify (
-    EFI_DISK_INFO_PROTOCOL  *This,
-    IN  OUT VOID            *IdentifyData,
-    IN  OUT UINT32          *IdentifyDataSize
-)
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:	DiskInfoIdentify
+//
+// Description:	Return Identify Data
+//
+// Input:
+//	EFI_DISK_INFO_PROTOCOL			*This,
+//	IN OUT VOID						*IdentifyData,
+//	IN OUT UINT32					*IdentifyDataSize
+//
+// Output:
+//	EFI_STATUS
+//
+// Modified:
+//
+// Referrals: InitIdeDiskInfo
+//
+// Notes:
+//	1. Return the Identify command data.
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
+EFI_STATUS DiskInfoIdentify(
+    EFI_DISK_INFO_PROTOCOL *This,
+    IN OUT VOID            *IdentifyData,
+    IN OUT UINT32          *IdentifyDataSize )
 {
-    AMI_IDE_BUS_PROTOCOL *IdeBusInterface = ((IDE_BLOCK_IO*)This)->IdeBusInterface;
+    IDE_BUS_PROTOCOL *IdeBusInterface = ((IDE_BLOCK_IO*)This)->IdeBusInterface;
 
     if ( *IdentifyDataSize < sizeof (IDENTIFY_DATA)) {
         *IdentifyDataSize = sizeof (IDENTIFY_DATA);
         return EFI_BUFFER_TOO_SMALL;
     }
 
-    //
-    // ATA devices identify data might be changed because of the SetFeature command, 
-    // So read the data from the device again by sending identify command.
-    //
+	//
+	// ATA devices identify data might be changed because of the SetFeature command, 
+	// So read the data from the device again by sending identify command.
+	//
     if ( IdeBusInterface->IdeDevice.DeviceType == ATA ) {
         GetIdentifyData(IdeBusInterface, &(IdeBusInterface->IdeDevice.IdentifyData));
     }
@@ -2721,72 +3019,172 @@ DiskInfoIdentify (
     return EFI_SUCCESS;
 }
 
-/**
-    Return InfoSenseData.
-
-    @param  EFI_DISK_INFO_PROTOCOL  *This,
-    @param  VOID                    *SenseData,
-    @param  UINT32                  *SenseDataSize,
-    @param  UINT8                   *SenseDataNumber
-
-    @retval EFI_STATUS
-
-    @note  
-    1. Return the Sense data for the Atapi device.
-
-**/
-EFI_STATUS
-DiskInfoSenseData (
-    IN  EFI_DISK_INFO_PROTOCOL  *This,
-    OUT VOID                    *SenseData,
-    OUT UINT32                  *SenseDataSize,
-    OUT UINT8                   *SenseDataNumber
-)
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:	DiskInfoSenseData
+//
+// Description:	Return InfoSenseData.
+//
+// Input:
+//	EFI_DISK_INFO_PROTOCOL          *This,
+//	VOID						*SenseData,
+//	UINT32						*SenseDataSize,
+//	UINT8						*SenseDataNumber
+//
+// Output:
+//	EFI_STATUS
+//
+// Modified:
+//
+// Referrals: InitIdeDiskInfo
+//
+// Notes:
+//	1. Return the Sense data for the Atapi device.
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
+EFI_STATUS DiskInfoSenseData(
+    IN EFI_DISK_INFO_PROTOCOL *This,
+    OUT VOID                  *SenseData,
+    OUT UINT32                *SenseDataSize,
+    OUT UINT8                 *SenseDataNumber )
 {
     return EFI_NOT_FOUND;
 }
 
-/**
-    Returns whether the device is PM/PS/SM/SS
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:	DiskInfoWhichIDE
+//
+// Description:	Returns whether the device is PM/PS/SM/SS
+//
+// Input:
+//	IN EFI_DISK_INFO_PROTOCOL	*This,
+//	OUT UINT32					*IdeChannel,
+//	OUT UINT32					*IdeDevice
+//
+// Output:
+//	EFI_STATUS
+//
+// Modified:
+//
+// Referrals: InitIdeDiskInfo
+//
+// Notes:
+//	1. Return information about the Primary/Secondary channel and Master/Slave information.
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
-    @param This 
-    @param IdeChannel 
-    @param IdeDevice 
-
-    @retval EFI_STATUS
-
-    @note  
-    1. Return information about the Primary/Secondary channel and Master/Slave information.
-
-**/
-
-EFI_STATUS
-DiskInfoWhichIDE (
-    IN  EFI_DISK_INFO_PROTOCOL  *This,
-    OUT UINT32                  *IdeChannel,
-    OUT UINT32                  *IdeDevice
-)
+EFI_STATUS DiskInfoWhichIDE(
+    IN EFI_DISK_INFO_PROTOCOL *This,
+    OUT UINT32                *IdeChannel,
+    OUT UINT32                *IdeDevice )
 {
-    AMI_IDE_BUS_PROTOCOL *IdeBusInterface = ((IDE_BLOCK_IO*)This)->IdeBusInterface;
+    IDE_BUS_PROTOCOL *IdeBusInterface = ((IDE_BLOCK_IO*)This)->IdeBusInterface;
 
     *IdeChannel = IdeBusInterface->IdeDevice.Channel;
     *IdeDevice  = IdeBusInterface->IdeDevice.Device;
     return EFI_SUCCESS;
 }
 
-/**
-    A quick check to see if ports are still decoded.
 
-    @param IdeBusInterface 
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:	IdeHPTimer
+//
+// Description:	Checks for any HP IDE device
+//
+// Input:
+//	IN EFI_EVENT            Event,
+//	IN VOID                         *Context
+//
+// Output:
+//	EFI_STATUS
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
+VOID IdeHPTimer(
+    IN EFI_EVENT Event,
+    IN VOID      *Context )
+{
+    EFI_STATUS                       Status;
+    UINT8                            DeviceStatus;
+    UINT8                            CurrentState;
+    UINT8                            Current_Channel;
+    UINT8                            Current_Device;
+    IDE_BUS_INIT_PROTOCOL            *IdeBusInitInterface = (IDE_BUS_INIT_PROTOCOL*)Context;
 
-    @retval 
-        EFI_STATUS
+    IDE_BUS_PROTOCOL                 *IdeBusInterface;
+    IN IDE_CONTROLLER_PROTOCOL       *IdeControllerInterface = IdeBusInitInterface->IdeControllerInterface;
 
-**/
-EFI_STATUS
-CheckHPControllerPresence (
-    IN  AMI_IDE_BUS_PROTOCOL    *IdeBusInterface
-)
+    IdeControllerInterface->HPCheckForDeviceChange( IdeControllerInterface->PciIO,
+                                                    IdeBusInitInterface->HPMask,
+                                                    &DeviceStatus );
+
+    for ( Current_Channel = PRIMARY_CHANNEL; Current_Channel <= SECONDARY_CHANNEL; Current_Channel++ )
+    {
+        for ( Current_Device = MASTER_DRIVE; Current_Device <= SLAVE_DRIVE; Current_Device++ )
+        {
+            CurrentState    = IdeBusInitInterface->IdeBusInitData[Current_Channel][Current_Device];
+            IdeBusInterface = IdeBusInitInterface->pIdeBusProtocol[Current_Channel][Current_Device];
+
+            if ((CurrentState == DEVICE_CONFIGURED_SUCCESSFULLY) && ((DeviceStatus & 01) == 0)) {
+                //
+                //Handle Device Removal
+                //
+                    Status = pBS->DisconnectController( IdeControllerInterface->ControllerHandle, NULL, IdeBusInterface->IdeDeviceHandle );
+
+
+                if ( Status == EFI_SUCCESS ) {
+                    IdeBusInitInterface->IdeBusInitData[Current_Channel][Current_Device] = DEVICE_IN_RESET_STATE;
+                }
+            }
+
+            if ((CurrentState != DEVICE_CONFIGURED_SUCCESSFULLY) && ((DeviceStatus & 01) == 1)) {
+                //Handle device insertion
+                //Force IdeBusStart to Enumerate this device.
+                IdeBusInitInterface->IdeBusInitData[Current_Channel][Current_Device] = DEVICE_IN_RESET_STATE;
+             
+                pBS->ConnectController( IdeControllerInterface->ControllerHandle, NULL, NULL, TRUE );
+            }
+            DeviceStatus >>= 1;
+        }
+    }
+}
+
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:	CheckHPControllerPresence
+//
+// Description:	A quick check to see if ports are still decoded.
+//
+// Input:
+//	IN IDE_BUS_PROTOCOL			*IdeBusInterface
+//
+// Output:
+//	EFI_STATUS
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
+EFI_STATUS CheckHPControllerPresence(
+    IN IDE_BUS_PROTOCOL *IdeBusInterface )
 {
     UINT8   Device = IdeBusInterface->IdeDevice.Device;
     IO_REGS Regs   = IdeBusInterface->IdeDevice.Regs;
@@ -2813,54 +3211,78 @@ CheckHPControllerPresence (
     return EFI_SUCCESS;
 }
 
-#if IDEBUS_DEBUG_PRINT == 1
-/**
-    Prints Debug Level 3 Trace Messages
+                         // IDE_HP_SUPPORT
+//---------------------------------------------------------------------------
 
-        
-    @param IdeBusInterface 
-
-    @retval 
-        EFI_STATUS
-
-**/
+#ifdef Debug_Level_3
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:	PrintIdeDeviceInfo
+//
+// Description:	Prints Debug Level 3 Trace Messages
+//
+// Input:
+//	IN IDE_BUS_PROTOCOL			*IdeBusInterface
+//
+// Output:
+//	EFI_STATUS
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 void PrintIdeDeviceInfo(
-    AMI_IDE_BUS_PROTOCOL *IdeBusInterface )
+    IDE_BUS_PROTOCOL *IdeBusInterface )
 {
     UINT16 Data8;
     UINT16 *pIdentifyData;
 
     //		Print the Channel and Device Number
-    TRACE(( -1, "-----------------IDE Device Info Start-----------------\n" ));
-    TRACE(( -1, "Channel   : %x   Device    : %x\n", IdeBusInterface->IdeDevice.Channel, IdeBusInterface->IdeDevice.Device ));
-    TRACE(( -1, "PIOMode   : %x   UDMAMode  : %x\n", IdeBusInterface->IdeDevice.PIOMode, IdeBusInterface->IdeDevice.UDma ));
-    TRACE(( -1, "SWDMAMode : %x   MWDMAMode : %x\n", IdeBusInterface->IdeDevice.SWDma,   IdeBusInterface->IdeDevice.MWDma ));
-    TRACE(( -1, "IORDY		: %x   \n",                  IdeBusInterface->IdeDevice.IORdy ));
+    EfiDebugPrint( -1, "-----------------IDE Device Info Start-----------------\n" );
+    EfiDebugPrint( -1, "Channel   : %x   Device    : %x\n", IdeBusInterface->IdeDevice.Channel, IdeBusInterface->IdeDevice.Device );
+    EfiDebugPrint( -1, "PIOMode   : %x   UDMAMode  : %x\n", IdeBusInterface->IdeDevice.PIOMode, IdeBusInterface->IdeDevice.UDma );
+    EfiDebugPrint( -1, "SWDMAMode : %x   MWDMAMode : %x\n", IdeBusInterface->IdeDevice.SWDma,   IdeBusInterface->IdeDevice.MWDma );
+    EfiDebugPrint( -1, "IORDY		: %x   \n",                  IdeBusInterface->IdeDevice.IORdy );
     pIdentifyData = (UINT16*) &(IdeBusInterface->IdeDevice.IdentifyData);
 
     for ( Data8 = 0; Data8 < 0xff; Data8 += 4 )
     {
-        TRACE(( -1, "%X %X %X %X\n", pIdentifyData[Data8 + 0], pIdentifyData[Data8 + 1], pIdentifyData[Data8 + 2], pIdentifyData[Data8 + 3] ));
+        EfiDebugPrint( -1, "%X %X %X %X\n", pIdentifyData[Data8 + 0], pIdentifyData[Data8 + 1], pIdentifyData[Data8 + 2], pIdentifyData[Data8 + 3] );
     }
-        TRACE(( -1, "-----------------IDE Device Info End-------------------\n" ));
+        EfiDebugPrint( -1, "-----------------IDE Device Info End-------------------\n" );
 }
 
-#endif          /* IDEBUS_DEBUG_PRINT == 1 */
+#endif          /* Debug_Level_3 */
 
-
-/**
-    Checks If the controller is in AHCI MODE.
-
-    @param  AMI_IDE_BUS_PROTOCOL    *IdeBusInterface;
-    @param  BOOLEAN                 TRUE  - AHCI Mode
-
-    @retval FALSE IDE Mode
-
-**/
-BOOLEAN
-CheckAhciMode (
-    IN  AMI_IDE_BUS_PROTOCOL    *IdeBusInterface
-)
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:	CheckAhciMode
+//
+// Description:	Checks If the controller is in AHCI MODE.
+//
+// Input:
+//	IDE_BUS_PROTOCOL			*IdeBusInterface;
+//
+// Output:
+//	BOOLEAN                     TRUE  - AHCI Mode
+//                              FALSE - IDE Mode
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
+BOOLEAN CheckAhciMode(
+    IN IDE_BUS_PROTOCOL *IdeBusInterface )
 {
     EFI_PCI_IO_PROTOCOL *PciIO;
     UINT8               PciConfig[0x40];
@@ -2868,37 +3290,46 @@ CheckAhciMode (
 
     PciIO = IdeBusInterface->PciIO;
     PciIO->Pci.Read(
-                    PciIO,
-                    EfiPciIoWidthUint8,
-                    0,
-                    sizeof (PciConfig),
-                    PciConfig );
+        PciIO,
+        EfiPciIoWidthUint8,
+        0,
+        sizeof (PciConfig),
+        PciConfig );
 
     AhciFlag = (BOOLEAN)((PciConfig [IDE_SUB_CLASS_CODE] & SCC_AHCI_CONTROLLER) ? TRUE : FALSE );
 
     return AhciFlag;
 }
 
-/**
-    Set SATA port under IDE mode.
-
-    @param  AMI_IDE_BUS_PROTOCOL            *IdeBusInterface;
-
-    @retval VOID
-
-    @note  
-      1. Get the Serial ATA Index Data Pair Base Address.
-      2. Select the Port and read the current interface speed.
-      3. Check Device presence and Physical communication established.
-      4. If link established, compare Current Interface Speed and Speed Allowed.
-      5. If CIS is greater than SA generate a COMREST.
-**/
-VOID
-SetIdePortSpeed (
-    IN  AMI_IDE_BUS_PROTOCOL    *IdeBusInterface
-)
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:   SetIdePortSpeed
+//
+// Description: Set SATA port under IDE mode.
+//
+// Input:
+//	IDE_BUS_PROTOCOL            *IdeBusInterface;
+//
+// Output: 
+//        EFI_STATUS
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//  1. Get the Serial ATA Index Data Pair Base Address.
+//  2. Select the Port and read the current interface speed
+//  3. Check Device presence and Phy communication established
+//  4. If link established, compare Current Interface Speed and Speed Allowed
+//  5. If CIS is greater than SA genrate a COMREST
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
+EFI_STATUS SetIdePortSpeed (
+    IN IDE_BUS_PROTOCOL    *IdeBusInterface )
 {
-
+    EFI_STATUS              Status;
     UINT32                  CurrentSpeed;
     UINT32                  MaxDevSpeed;
     UINT32                  DeviceDet;
@@ -2907,22 +3338,22 @@ SetIdePortSpeed (
     UINT8                   PortIndex;
     EFI_PCI_IO_PROTOCOL     *PciIO=IdeBusInterface->PciIO;
 
-    PciIO->Pci.Read( 
+    Status = PciIO->Pci.Read( 
                         PciIO,
                         EfiPciIoWidthUint16,
                         PCI_SIDPBA,
                         sizeof (UINT16),
                         &SIDPBA );
-
+	
     SIDPBA &=0xFFFE;
 
     if (SIDPBA == 0 || SIDPBA == 0xFFFE) {
-        return;
+        return EFI_NOT_FOUND;
     }
 
     PortIndex = (IdeBusInterface->IdeDevice.Channel << 1) | IdeBusInterface->IdeDevice.Device;
     Data32= (UINT32)((PortIndex << 8) | 00 );
-    PciIO->Io.Write(
+    Status = PciIO->Io.Write(
                        PciIO,
                        EfiPciIoWidthFifoUint32,
                        EFI_PCI_IO_PASS_THROUGH_BAR,
@@ -2931,7 +3362,7 @@ SetIdePortSpeed (
                        &Data32 );
 
     //Read the Serial ATA Status Register
-    PciIO->Io.Read ( 
+    Status = PciIO->Io.Read ( 
                        PciIO,
                        EfiPciIoWidthUint16,
                        EFI_PCI_IO_PASS_THROUGH_BAR,
@@ -2944,7 +3375,7 @@ SetIdePortSpeed (
 
     if (DeviceDet == SSTS_DET_PCE ) {
         Data32= (UINT32)((PortIndex << 8) | 01 );
-         PciIO->Io.Write(
+        Status = PciIO->Io.Write(
                            PciIO,
                            EfiPciIoWidthFifoUint32,
                            EFI_PCI_IO_PASS_THROUGH_BAR,
@@ -2954,7 +3385,7 @@ SetIdePortSpeed (
 
         // As the Link is already established, get the negotiated interface
         // communication speed
-        PciIO->Io.Read ( 
+        Status = PciIO->Io.Read ( 
                            PciIO,
                            EfiPciIoWidthUint8,
                            EFI_PCI_IO_PASS_THROUGH_BAR,
@@ -2968,20 +3399,19 @@ SetIdePortSpeed (
             GeneratePortReset(IdeBusInterface);
         }
     }
-    return;
+    return EFI_SUCCESS;
 }
 
-//***********************************************************************
-//***********************************************************************
-//**                                                                   **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.          **
-//**                                                                   **
-//**                       All Rights Reserved.                        **
-//**                                                                   **
-//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093         **
-//**                                                                   **
-//**                       Phone: (770)-246-8600                       **
-//**                                                                   **
-//***********************************************************************
-//***********************************************************************
-
+//**********************************************************************
+//**********************************************************************
+//**                                                                  **
+//**        (C)Copyright 1985-2012, American Megatrends, Inc.         **
+//**                                                                  **
+//**                       All Rights Reserved.                       **
+//**                                                                  **
+//**         5555 Oakbrook Pkwy, Suite 200, Norcross, GA 30093        **
+//**                                                                  **
+//**                       Phone: (770)-246-8600                      **
+//**                                                                  **
+//**********************************************************************
+//**********************************************************************

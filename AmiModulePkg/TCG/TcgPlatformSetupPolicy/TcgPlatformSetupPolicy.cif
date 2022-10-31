@@ -1,0 +1,12 @@
+<component>
+	name = "TcgPlatformSetupPolicy"
+	category = ModulePart
+	LocalRoot = "AmiModulePkg\TCG\TcgPlatformSetupPolicy\"
+	RefName = "TcgPlatformSetupPolicy"
+[INF]
+"TcgPlatformSetupPolicy.inf"
+[files]
+"TcgPlatformSetupPolicy.sdl"	
+[parts]
+"TcgPlatformSetupPolicyProtocol"
+<endComponent>

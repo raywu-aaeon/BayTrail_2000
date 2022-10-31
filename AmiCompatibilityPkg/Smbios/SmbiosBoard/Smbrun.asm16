@@ -79,7 +79,7 @@ RT_DMI_CURENTLY_LOCKED          equ 91h
 RT_DMI_INVALID_LOCK             equ 92h
 
 SMBIOS_PNP_FUNC50_DMIEDIT_STRUC	struc
-  wFunction             DW ?    ; 50h
+  dataIgnoredByDmiFn50  DB 24 DUP (?)
   dDmiBiosRevision      DD ?    ; BYTE
   dDmiNumStructures     DD ?    ; WORD
   dDmiStructureSize     DD ?    ; WORD
@@ -269,79 +269,47 @@ rt_get_smbios_info      PROC NEAR
 
         push    ebx
         push    eax
+        push    si
+        push    edi
+        push    ds
 
-; convert *StructureNum and *DmiStructureBuffer from SEG:OFS format
-; to 32-bit addresses
-;
-        push    [ebp+2]       ; UINT8  *DmiBiosRevision
-        push    [ebp+4]
-        push    [ebp+6]       ; UINT16 *DmiNumStructures
-        push    [ebp+8]
-        push    [ebp+0Ah]     ; UINT16 *DmiStructureSize
-        push    [ebp+0Ch]
-        push    [ebp+0Eh]     ; UINT32 *DmiStorageBase
-        push    [ebp+10h]
-        push    [ebp+12h]     ; UINT16 *DmiStorageSize
-        push    [ebp+14h]
-
-        mov     eax, 0
-
-; prepare EBX with 32-bit addresses of *DmiBiosRevision, *DmiNumStructures,
-; *DmiStructureSize, *DmiStorageBase, and *DmiStorageSize
-        mov     ebx, 0
-        mov     bx, [ebp+4]
-        shl     ebx, 4
-        mov     ax, [ebp+2]
-        add     ebx, eax
-        mov     [ebp+2], ebx
-
-        mov     ebx, 0
-        mov     bx, [ebp+8]
-        shl     ebx, 4
-        mov     ax, [ebp+6]
-        add     ebx, eax
-        mov     [ebp+6], ebx
-
-        mov     ebx, 0
-        mov     bx, [ebp+0Ch]
-        shl     ebx, 4
-        mov     ax, [ebp+0Ah]
-        add     ebx, eax
-        mov     [ebp+0Ah], ebx
-
-        mov     ebx, 0
-        mov     bx, [ebp+10h]
-        shl     ebx, 4
-        mov     ax, [ebp+0Eh]
-        add     ebx, eax
-        mov     [ebp+0Eh], ebx
-
-        mov     ebx, 0
-        mov     bx, [ebp+14h]
-        shl     ebx, 4
-        mov     ax, [ebp+12h]
-        add     ebx, eax
-        mov     [ebp+12h], ebx
-
-; prepare EBX with 32-bit address out of DS:EBP
+        ; EBX = SS<<4+SP-sizeof(SMBIOS_PNP_FUNC50_DMIEDIT_STRUC)
         mov     ebx, 0
         mov     bx, ss
         shl     ebx, 4
-        add     ebx, ebp
+        movzx   edi, sp
+        sub     di, size SMBIOS_PNP_FUNC50_DMIEDIT_STRUC
+        add     ebx, edi
+
+        mov     sp, di
+
         mov     al, 50h
         call    rt_generate_sw_smi
 
-        pop     [ebp+14h]
-        pop     [ebp+12h]
-        pop     [ebp+10h]
-        pop     [ebp+0Eh]
-        pop     [ebp+0Ch]
-        pop     [ebp+0Ah]
-        pop     [ebp+8]
-        pop     [ebp+6]
-        pop     [ebp+4]
-        pop     [ebp+2]
+        lds	si, DWORD PTR [ebp+02h]
+        mov     eax, ss:(SMBIOS_PNP_FUNC50_DMIEDIT_STRUC PTR [di]).dDmiBiosRevision
+        mov     BYTE PTR [si], al
 
+        lds	si, DWORD PTR [ebp+06h]
+        mov     eax, ss:(SMBIOS_PNP_FUNC50_DMIEDIT_STRUC PTR [di]).dDmiNumStructures
+        mov     WORD PTR [si], ax
+
+        lds	si, DWORD PTR [ebp+0Ah]
+        mov     eax, ss:(SMBIOS_PNP_FUNC50_DMIEDIT_STRUC PTR [di]).dDmiStructureSize
+        mov     WORD PTR [si], ax
+
+        lds	si, DWORD PTR [ebp+0Eh]
+        mov     eax, ss:(SMBIOS_PNP_FUNC50_DMIEDIT_STRUC PTR [di]).dDmiStorageBase
+        mov     DWORD PTR [si], eax
+
+        lds	si, DWORD PTR [ebp+12h]
+        mov     eax, ss:(SMBIOS_PNP_FUNC50_DMIEDIT_STRUC PTR [di]).dDmiStorageSize
+        mov     WORD PTR [si], ax
+
+        add     sp, size SMBIOS_PNP_FUNC50_DMIEDIT_STRUC
+        pop     ds
+        pop     edi
+        pop     si
         pop     eax
         mov     ax, bx
         pop     ebx

@@ -38,6 +38,9 @@
 extern "C"
 #endif
 
+#define EXTx  4
+
+
 #pragma pack(push, 1)
 
 
@@ -117,10 +120,6 @@ typedef struct  _VOLUME_SB {
     UINT32 SB_CompFeatMap;      // 0x5C - Compatible feature bitmap
     UINT32 SB_IncompFeatMap;    // 0x60 - Incompatible feature bitmap
     UINT32 SB_ROCompFeatMap;    // 0x64 - Read-only comp. feature bitmap
-                                //        If bit one of this is set, redundant
-                                //        superblocks and group descriptors will
-                                //        only be in groups that are a power of
-                                //        3, 5, or 7.
     EFI_GUID SB_UUID;           // 0x68 - Volume Unique ID
     CHAR8  SB_VolumeName[16];   // 0x78 - Volume name
     CHAR8  SB_LastPath[64];     // 0x88 - Last mount path (normally not used)
@@ -256,7 +255,7 @@ typedef struct _VOLUME_IT {
 #pragma pack(pop)
 
 VOID AmiGetFileListFromExtVolume(
-    IN EFI_PEI_SERVICES 	**PeiServices,
+    IN EFI_PEI_SERVICES **PeiServices,
     IN  UINT8               *Root,
     IN  UINT32              RootSize,
     OUT UINTN               *NumberOfFiles,

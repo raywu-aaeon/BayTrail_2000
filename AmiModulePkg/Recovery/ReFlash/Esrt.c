@@ -1,7 +1,7 @@
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2012, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **
@@ -12,20 +12,30 @@
 //**********************************************************************
 //**********************************************************************
 
-/** @file
-  This file contains Reflash driver ESRT table related code
-
-**/
+//**********************************************************************
+// $Header: /Alaska/BIN/Core/Modules/Recovery/Esrt.c 2     8/02/12 11:59a Artems $
+//
+// $Revision: 2 $
+//
+// $Date: 8/02/12 11:59a $
+//**********************************************************************
+//<AMI_FHDR_START>
+//
+// Name:    Esrt.c
+//
+// Description:
+//
+//<AMI_FHDR_END>
+//**********************************************************************
 
 #include <Token.h>
 #include <AmiHobs.h>
 #include <AmiDxeLib.h>
 #include <Capsule.h>
 #include <Setup.h>
-#include <Ppi/FwVersion.h>
+#include <PPI/FwVersion.h>
 #include <Protocol/AmiReflashProtocol.h>
-#include <Protocol/FirmwareVolume2.h>
-#include "ReFlash.h"
+#include "Reflash.h"
 
 #define MAX_ESRT_ENTRIES 1
 
@@ -52,25 +62,25 @@
 
 #pragma pack(push, 1)
 typedef struct _FIRMWARE_RESOURCE_ENTRY {
-    EFI_GUID    FwClass;                    //!< Firmware class ID
-    UINT32      FwType;                     //!< Firmware type ID
-    UINT32      FwVersion;                  //!< Firmware version
-    UINT32      LowestSupportedFwVersion;   //!< Lowest supported version of firmware
-    UINT32      CapsuleFlags;               //!< Flags to be set in recovery capsule
-    UINT32      LastAttemptVersion;         //!< Version of last used firmware update
-    UINT32      LastAttemptStatus;          //!< Last firmware update status
+    EFI_GUID    FwClass;
+    UINT32      FwType;
+    UINT32      FwVersion;
+    UINT32      LowestSupportedFwVersion;
+    UINT32      CapsuleFlags;
+    UINT32      LastAttemptVersion;
+    UINT32      LastAttemptStatus;
 } FIRMWARE_RESOURCE_ENTRY;
 
 typedef struct _EFI_ESRT_TABLE { 
-    UINT32                  FwResourceCount;            //!< Number of resources in ESRT table
-    UINT32                  FwMaxResources;             //!< Max supported number of resources
-    UINT64                  FwResourceVersion;          //!< Resource version
-    FIRMWARE_RESOURCE_ENTRY Entries[MAX_ESRT_ENTRIES];  //!< Resource description entry
+    UINT32                  FwResourceCount;
+    UINT32                  FwMaxResources;
+    UINT64                  FwResourceVersion;
+    FIRMWARE_RESOURCE_ENTRY Entries[MAX_ESRT_ENTRIES];
 } EFI_ESRT_TABLE;
 
 #pragma pack(pop)
 
-static EFI_GUID SystemFirmwareUpdateClass = W8_FW_UPDATE_IMAGE_CAPSULE_GUID;
+static EFI_GUID SystemFirmwareUpdateClass = W8_FW_UPDATE_IMAGE_CAPSULE_GUID;  //(EIP144785)
 static EFI_GUID SystemResourceTableGuid = EFI_SYSTEM_RESOURCE_TABLE_GUID;
 static EFI_GUID guidHob = HOB_LIST_GUID;
 static W8_IMAGE_CAPSULE *Image;
@@ -94,15 +104,6 @@ EFI_REFLASH_PROTOCOL AmiReflashProtocol = {
     GetDisplayImage
 };
 
-/**
-  This function returns current FID descriptor
-  
-  @param Fid     Pointer where to store FID descriptor
-
-  @retval EFI_SUCCESS Layout returned successfully
-  @retval other       error occured during execution
-
-**/
 EFI_STATUS GetFidFromFv(
     OUT VOID *Fid
 )
@@ -131,9 +132,9 @@ EFI_STATUS GetFidFromFv(
 	    Status = Fv->ReadSection(Fv, &FidFileName, EFI_SECTION_FREEFORM_SUBTYPE_GUID, 0, &Buffer, &BufferSize, &AuthStatus);
         TRACE((-1, "extracted section with guid %g\n", (EFI_GUID *)Buffer));
         if (!EFI_ERROR(Status)) {
-            Buffer = (UINT8 *)Buffer + sizeof(EFI_GUID);
+            (UINT8 *)Buffer += sizeof(EFI_GUID);
             MemCpy(Fid, Buffer, sizeof(FW_VERSION));
-            Buffer = (UINT8 *)Buffer - sizeof(EFI_GUID);
+            (UINT8 *)Buffer -= sizeof(EFI_GUID);
             pBS->FreePool(Buffer);
             return EFI_SUCCESS;
         }
@@ -142,20 +143,12 @@ EFI_STATUS GetFidFromFv(
 	return EFI_NOT_FOUND;
 }
 
-/**
-  This function returns FID descriptor stored in provided buffer
-  
-  @param Fid     Pointer where to store FID descriptor
-  @param Buffer  Pointer to the buffer to be searched
-
-  @retval EFI_SUCCESS       Layout returned successfully
-  @retval EFI_NOT_FOUND     There is no FID descriptor in buffer
-
-**/
+//(EIP144785) <<
 EFI_STATUS GetFidFromBuffer(
-    OUT VOID *Fid,
-    IN VOID *Buffer
+    IN VOID *Buffer,
+    OUT VOID *Fid
 )
+//(EIP144785) <<
 {
     static EFI_GUID FidSectionGuid = FID_FFS_FILE_SECTION_GUID;
     UINT32 Signature;
@@ -167,7 +160,7 @@ EFI_STATUS GetFidFromBuffer(
     do {
         if(*SearchPointer == Signature) {
             if(!guidcmp(&FidSectionGuid, (EFI_GUID *)SearchPointer)) {
-                SearchPointer = (UINT32 *)((UINT8 *)SearchPointer + sizeof(EFI_GUID));
+                (UINT8 *)SearchPointer += sizeof(EFI_GUID);
                 MemCpy(Fid, SearchPointer, sizeof(FW_VERSION));
                 return EFI_SUCCESS;
             }
@@ -177,19 +170,11 @@ EFI_STATUS GetFidFromBuffer(
     return EFI_NOT_FOUND;
 }
 
-/**
-  This function returns firmware version from FID descriptor
-  
-  @param Image   Pointer to the recovery image (or NULL if current
-                 image to be used)
-
-  @return Firmware version
-
-**/
 UINT32 GetVersionFromFid(
     VOID *Image OPTIONAL
 )
 {
+//(EIP144785) >>
     FW_VERSION Fid;
     UINT32 Version;
     EFI_STATUS Status;
@@ -197,7 +182,7 @@ UINT32 GetVersionFromFid(
     if(Image == NULL)
     {
         Status = GetFidFromFv(&Fid);
-        Version = (PROJECT_MAJOR_VERSION << 2) + PROJECT_MINOR_VERSION;
+        Version = (CRB_PROJECT_MAJOR_VERSION << 2) + CRB_PROJECT_MINOR_VERSION;
         TRACE((-1, "Version = %X\n", Version));
     	return Version;
     }
@@ -211,16 +196,9 @@ UINT32 GetVersionFromFid(
     Version <<= 16;
     Version += Fid.ProjectMinorVersion[0] + Fid.ProjectMinorVersion[1] + Fid.ProjectMinorVersion[2];
     return Version;
-   // return 1;
+//(EIP144785) <<
 }
 
-/**
-  This function installs ESRT table
-  
-  @retval EFI_SUCCESS   Table installed successfully
-  @retval other         Some error occured during execution
-
-**/
 EFI_STATUS InstallEsrtTable(
     VOID
 )
@@ -284,22 +262,12 @@ EFI_STATUS InstallEsrtTable(
     return Status;
 }
 
-/**
-  This function checks if we're on Windows 8 firmware update boot path
-  
-  @param RecoveryFailed Firmware update status flag
-  
-  @retval TRUE   We're on Windows 8 firmware update boot path
-  @retval FALSE  We're not on Windows 8 firmware update boot path
-
-**/
 EFI_STATUS IsWin8Update(
     BOOLEAN RecoveryFailed
 )
 {
-//EIP185806 >>
-    EFI_HOB_UEFI_CAPSULE *Hob;
-    EFI_CAPSULE_HEADER *Capsule;
+    AMI_CAPSULE_HOB *Hob;
+    static EFI_GUID AmiCapsuleHobGuid = AMI_CAPSULE_HOB_GUID;
     static EFI_GUID ImageCapsuleGuid = W8_SCREEN_IMAGE_CAPSULE_GUID;
     static EFI_GUID guidBootFlow = BOOT_FLOW_VARIABLE_GUID;
     EFI_HANDLE Handle = NULL;
@@ -311,12 +279,9 @@ EFI_STATUS IsWin8Update(
         return EFI_NOT_FOUND;
 
     do {
-        Status = FindNextHobByType(EFI_HOB_TYPE_UEFI_CAPSULE, &Hob);
-        if(!EFI_ERROR(Status)) { 
-            Capsule = (EFI_CAPSULE_HEADER *)(VOID *)(UINTN)Hob->BaseAddress;
-            if(!guidcmp(&(Capsule->CapsuleGuid), &ImageCapsuleGuid))
+        Status = FindNextHobByGuid(&AmiCapsuleHobGuid, &Hob);
+        if(!EFI_ERROR(Status) && !guidcmp(&(Hob->CapsuleGuid), &ImageCapsuleGuid))
             break;
-        }
     } while(!EFI_ERROR(Status));
 
     if(EFI_ERROR(Status))   //no image hob - we're not on OS FW update path
@@ -328,33 +293,21 @@ EFI_STATUS IsWin8Update(
     }
 
 //save image capsule pointer
-    Image = (W8_IMAGE_CAPSULE *)Capsule;
+    Image = (W8_IMAGE_CAPSULE *)(VOID *)(UINTN)(Hob->CapsuleData);
 //install reflash protocol
-//EIP185806 <<
     Status = pBS->InstallMultipleProtocolInterfaces(
 		                        &Handle,
 		                        &gAmiReflashProtocolGuid, 
                                 &AmiReflashProtocol,
 		                        NULL);
-    if(!EFI_ERROR(Status))
-        //set boot flow
-        pRS->SetVariable(L"BootFlow", &guidBootFlow, EFI_VARIABLE_BOOTSERVICE_ACCESS, sizeof(BootFlow), &BootFlow);
+    if(EFI_ERROR(Status))
+        return Status;
 
+//set boot flow
+    pRS->SetVariable(L"BootFlow", &guidBootFlow, EFI_VARIABLE_BOOTSERVICE_ACCESS, sizeof(BootFlow), &BootFlow);
     return Status;
 }
 
-/**
-  This function returns Windows 8 firmware update image attributes
-  
-  @param This           Pointer to the EFI_REFLASH_PROTOCOL instance
-  @param CoordinateX    Pointer where to store image left corner horisontal coordinate
-  @param CoordinateY    Pointer where to store image left corner vertical coordinate
-  @param ImageAddress   Pointer where to store pointer to image data
-
-  @retval EFI_SUCCESS   Image returned successfully
-  @retval other         There is some error occured during execution
-
-**/
 EFI_STATUS GetDisplayImage(
     IN EFI_REFLASH_PROTOCOL *This,
     OUT UINTN               *CoordinateX,
@@ -373,15 +326,6 @@ EFI_STATUS GetDisplayImage(
     return EFI_SUCCESS;
 }
 
-/**
-  This function performs Windows 8 firmware update
-  
-  @param This           Pointer to the EFI_REFLASH_PROTOCOL instance
-
-  @retval EFI_SUCCESS   Firmware updated successfully
-  @retval other         There is some error occured during execution
-
-**/
 EFI_STATUS FwUpdate(
         IN EFI_REFLASH_PROTOCOL *This
 )
@@ -391,11 +335,11 @@ EFI_STATUS FwUpdate(
 
 /* set version we're upgrading to */
     Version = GetVersionFromFid(RecoveryBuffer);
-    pRS->SetVariable(FW_VERSION_VARIABLE, &gAmiGlobalVariableGuid,
-                     EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS,
-                     sizeof(UINT32), &Version);
+    Status = pRS->SetVariable(FW_VERSION_VARIABLE, &gAmiGlobalVariableGuid,
+                              EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS,
+                              sizeof(UINT32), &Version);
 
-    Status = Prologue(FALSE, TRUE);
+    Status = Prologue(FALSE);
     if(EFI_ERROR(Status))
         pRS->ResetSystem(EfiResetCold, Status, 0, NULL);
 
@@ -410,7 +354,7 @@ EFI_STATUS FwUpdate(
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2012, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **

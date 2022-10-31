@@ -1,21 +1,35 @@
-//**********************************************************************
-//**********************************************************************
-//**                                                                  **
-//**        (C)Copyright 1985-2016, American Megatrends, Inc.         **
-//**                                                                  **
-//**                       All Rights Reserved.                       **
-//**                                                                  **
-//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093        **
-//**                                                                  **
-//**                       Phone: (770)-246-8600                      **
-//**                                                                  **
-//**********************************************************************
-//**********************************************************************
+//****************************************************************************
+//****************************************************************************
+//**                                                                        **
+//**             (C)Copyright 1985-2008, American Megatrends, Inc.          **
+//**                                                                        **
+//**                          All Rights Reserved.                          **
+//**                                                                        **
+//**                 5555 Oakbrook Pkwy, Norcross, GA 30093                 **
+//**                                                                        **
+//**                          Phone (770)-246-8600                          **
+//**                                                                        **
+//****************************************************************************
+//****************************************************************************
 
-/** @file EfiUsbMass.c
-    EFI USB Mass Storage Driver
+//****************************************************************************
+// $Header: /Alaska/SOURCE/Modules/USB/ALASKA/efiusbmass.c 40    9/04/12 8:04a Wilsonlee $
+//
+// $Revision: 40 $
+//
+// $Date: 9/04/12 8:04a $
+//
+//****************************************************************************
 
-**/
+//<AMI_FHDR_START>
+//----------------------------------------------------------------------------
+//
+//  Name:           EFIUSBMASS.C
+//
+//  Description:    EFI USB Mass Storage Driver
+//
+//----------------------------------------------------------------------------
+//<AMI_FHDR_END>
 
 #include "AmiDef.h"
 #include "UsbDef.h"
@@ -25,11 +39,6 @@
 #include <Setup.h>
 #include "UsbMass.h"
 
-#if (defined(BOOT_SECTOR_WRITE_PROTECT) && (BOOT_SECTOR_WRITE_PROTECT != 0))
-#include <Protocol/AmiBlockIoWriteProtection.h>
-AMI_BLOCKIO_WRITE_PROTECTION_PROTOCOL *AmiBlkWriteProtection = NULL;
-#endif
-
 #define USBMASS_DRIVER_VERSION 1
 #define READ 1
 #define WRITE 0
@@ -38,18 +47,22 @@ extern  USB_GLOBAL_DATA     *gUsbData;
 extern  EFI_USB_PROTOCOL    *gAmiUsbController;
 
 
-/**
-    Installs BlkIo protocol on a USB Mass Storage device
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:   InstallUSBMass
+//
+// Description: Installs BlkIo protocol on a USB Mass Storage device
+//
+// Input:       DevInfo - pointer to a USB device structure to install the protocol.
+//
+// Output:      None
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
-    @param DevInfo - pointer to a USB device structure to install the protocol.
-
-    @retval VOID
-
-**/
-
-
-EFI_STATUS
-InstallUsbMass(
+VOID
+InstallUSBMass(
     EFI_HANDLE Controller,
     DEV_INFO* DevInfo
 )
@@ -57,37 +70,16 @@ InstallUsbMass(
     USB_MASS_DEV    *MassDev;
     EFI_STATUS      Status;
     UINT8           LogicalAddress;
-    URP_STRUC       Parameters;
 
-    //Applying check to media not present device only
-    if (!(DevInfo->bLastStatus & USB_MASS_MEDIA_PRESENT)) {
-        if (gUsbData->dUSBStateFlag & USB_FLAG_MASS_MEDIA_CHECK) {
-            if (gUsbData->dUSBStateFlag & USB_FLAG_MASS_SKIP_FDD_MEDIA_CHECK) {
-                if (!(DevInfo->bSubClass == SUB_CLASS_UFI)) {
-                    return EFI_DEVICE_ERROR;
-                }
-            } else {
-                return EFI_DEVICE_ERROR;
+    //applying check to media not present device only
+    if(!(DevInfo->bLastStatus & USB_MASS_MEDIA_PRESENT)) {
+        if(gUsbData->dUSBStateFlag & USB_FLAG_MASS_MEDIA_CHECK) {
+            if(gUsbData->dUSBStateFlag & USB_FLAG_MASS_SKIP_FDD_MEDIA_CHECK) {
+                if(!(DevInfo->bSubClass == SUB_CLASS_UFI)) return;
             }
+            else return;
         }
     }
-
-    for (LogicalAddress=1; LogicalAddress < MAX_DEVICES; LogicalAddress++) {
-        if (&gUsbData->aDevInfoTable[LogicalAddress] == DevInfo) {
-            break;
-        }
-    }
-    ASSERT(LogicalAddress < MAX_DEVICES);
-    
-    if (LogicalAddress >= MAX_DEVICES) {
-        return EFI_DEVICE_ERROR;
-    }
-    
-    Parameters.bFuncNumber = USB_API_MASS_DEVICE_REQUEST;
-    Parameters.bSubFunc = USB_MASSAPI_GET_MEDIA_STATUS;
-    Parameters.ApiData.MassGetDevSts.bDevAddr = LogicalAddress;
-    Parameters.ApiData.MassGetDevSts.bDeviceStatus = 0;
-    InvokeUsbApi(&Parameters);
 
     gBS->AllocatePool(EfiBootServicesData, sizeof(USB_MASS_DEV), &MassDev);
 
@@ -98,7 +90,13 @@ InstallUsbMass(
     DevInfo->MassDev    = (VOID*)&MassDev->BlockIoProtocol;
     MassDev->Handle     = Controller;
     MassDev->DevString  = (UINT8*)&DevInfo->DevNameString;
-    MassDev->StorageType = DevInfo->bStorageType;
+    MassDev->StorageType= DevInfo->bStorageType;
+
+    for (LogicalAddress=1; LogicalAddress < MAX_DEVICES; LogicalAddress++) {
+        if (&gUsbData->aDevInfoTable[LogicalAddress] == DevInfo) break;
+    }
+    ASSERT(LogicalAddress<MAX_DEVICES);
+    if (LogicalAddress >= MAX_DEVICES) return;
 
     //
     // Install BLOCK_IO protocol interface
@@ -106,43 +104,31 @@ InstallUsbMass(
     gBS->AllocatePool(EfiBootServicesData, sizeof(EFI_BLOCK_IO_MEDIA), &MassDev->Media);
 
     MassDev->Media->MediaId             = 0;        // Media change indicator
+    MassDev->Media->RemovableMedia      = TRUE;
+    MassDev->Media->MediaPresent        = TRUE;
     MassDev->Media->LogicalPartition    = FALSE;
     MassDev->Media->ReadOnly            = FALSE;
     MassDev->Media->WriteCaching        = FALSE;
     MassDev->Media->BlockSize           = DevInfo->wBlockSize;
     MassDev->Media->IoAlign             = 0;
+    MassDev->Media->LastBlock           = DevInfo->dMaxLba-1;   // LastBlock is 0-based
 
-    if (DevInfo->bLastStatus & USB_MASS_MEDIA_REMOVEABLE) {
-        MassDev->Media->RemovableMedia = TRUE;
-    } else {
-        MassDev->Media->RemovableMedia = FALSE;
-    }
-    if ((DevInfo->bLastStatus & USB_MASS_MEDIA_PRESENT) && 
-        (DevInfo->MaxLba != 0) && (DevInfo->wBlockSize != 0)) {
-        // For SCSI devices, this is reported in the READ CAPACITY (16) parameter 
-        // data Returned Logical Block Address field (see SBC-3) minus one.
-        MassDev->Media->LastBlock = DevInfo->MaxLba - 1;   // LastBlock is 0-based
-        MassDev->Media->MediaPresent = TRUE;
-    } else {
-        MassDev->Media->LastBlock = 0;
-        MassDev->Media->MediaPresent = FALSE;
-    }
-  
+
     if (pST->Hdr.Revision >= 0x0002001F) {
         MassDev->BlockIoProtocol.Revision    = EFI_BLOCK_IO_PROTOCOL_REVISION3;
         //
         // Default value set to 1 logical blocks per PhysicalBlock
         //
-        MassDev->Media->LogicalBlocksPerPhysicalBlock = 1;
+        MassDev->Media->LogicalBlocksPerPhysicalBlock=1;
 
         //
         // Default value set to 0 for Lowest Aligned LBA
         //
-        MassDev->Media->LowestAlignedLba = 0;
+        MassDev->Media->LowestAlignedLba=0;
 
-        MassDev->Media->OptimalTransferLengthGranularity = MassDev->Media->BlockSize;
+        MassDev->Media->OptimalTransferLengthGranularity=MassDev->Media->BlockSize;
     } else {
-        MassDev->BlockIoProtocol.Revision = 1;
+        MassDev->BlockIoProtocol.Revision    = 1;
     }
 
     MassDev->BlockIoProtocol.Media        = MassDev->Media;
@@ -155,8 +141,11 @@ InstallUsbMass(
 
     MassDev->PciBDF = gUsbData->HcTable[DevInfo->bHCNumber - 1]->wBusDevFuncNum;
 
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "InstallUSBMass(%x): BS %d, MaxLBA %lx, LA: %x %a\n",
-        DevInfo, DevInfo->wBlockSize, DevInfo->MaxLba,
+    // Update NVRAM variable for Setup
+    UpdateMassDevicesForSetup();
+
+    USB_DEBUG(DEBUG_LEVEL_3, "InstallUSBMass(%x): BS %d, MaxLBA %x, LA: %x %s\n",
+        DevInfo, DevInfo->wBlockSize, DevInfo->dMaxLba,
         MassDev->LogicalAddress, &DevInfo->DevNameString);
 
     Status = gBS->InstallProtocolInterface(
@@ -165,20 +154,24 @@ InstallUsbMass(
                     EFI_NATIVE_INTERFACE,
                     &MassDev->BlockIoProtocol
                     );
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "Install BlockIO on %x status = %r\n", Controller, Status);
+    USB_DEBUG(DEBUG_LEVEL_3, "Install BlockIO on %x status = %r\n", Controller, Status);
     ASSERT_EFI_ERROR(Status);
-
-    return Status;
 }
 
-/**
-    Removes BlkIo protocol from USB Mass Storage device
 
-    @param DevInfo - pointer to a USB device structure
-
-    @retval VOID
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:   UninstallUSBMass
+//
+// Description: Removes BlkIo protocol from USB Mass Storage device
+//
+// Input:       DevInfo - pointer to a USB device structure
+//
+// Output:      None
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 EFI_STATUS
 UninstallUSBMass(USB_MASS_DEV *MassDev)
@@ -192,42 +185,51 @@ UninstallUSBMass(USB_MASS_DEV *MassDev)
  	UsbStatus = UsbDevDriverDisconnect(HcData, DevInfo);
 	ASSERT(UsbStatus == USB_SUCCESS);
 
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "Uninstall mass storage device  %x: ", MassDev->Handle);
-    
-    Status = gBS->UninstallMultipleProtocolInterfaces(
+    USB_DEBUG(DEBUG_LEVEL_3, "Uninstall mass storage device  %x: ", MassDev->Handle);
+    Status  = gBS->UninstallMultipleProtocolInterfaces(
                 MassDev->Handle,
                 &gEfiBlockIoProtocolGuid,
                 &MassDev->BlockIoProtocol,
                 NULL);
+    ASSERT_EFI_ERROR(Status);
 
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "%r\n", Status);
-    if (!EFI_ERROR(Status)) {
+    USB_DEBUG(DEBUG_LEVEL_3, "%r\n", Status);
+    if(!EFI_ERROR(Status)){
         gBS->FreePool(MassDev->Media);
         gBS->FreePool(MassDev);
         DevInfo->MassDev = NULL;
     }
 
+    // Update NVRAM variable for Setup
+    UpdateMassDevicesForSetup();
+
     return Status;
 }
 
+
+
 /************ BlockIO Protocol implementation routines******************/
-/**
-    Reset the USB Logic Drive
-
-    @param This: A pointer to the Block I/O protocol interface
-
-              ExtendedVerification: Indicate that the driver may perform
-              an exhaustive verification operation of the device during
-              reset
-
-    @retval EFI_SUCCESS: The USB Logic Drive is reset
-              EFI_DEVICE_ERROR: The Floppy Logic Drive is not functioning
-              correctly and can not be reset
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:   AmiUsbBlkIoReset
+//
+// Description: Reset the USB Logic Drive
+//
+// Input:       This: A pointer to the Block I/O protocol interface
+//
+//              ExtendedVerification: Indicate that the driver may perform
+//              an exhaustive verification operation of the device during
+//              reset
+//
+// Output:      EFI_SUCCESS: The USB Logic Drive is reset
+//              EFI_DEVICE_ERROR: The Floppy Logic Drive is not functioning
+//              correctly and can not be reset
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 EFI_STATUS
-EFIAPI
 AmiUsbBlkIoReset (
   IN  EFI_BLOCK_IO_PROTOCOL  *This,
   IN  BOOLEAN                ExtendedVerification
@@ -238,17 +240,21 @@ AmiUsbBlkIoReset (
 }
 
 
-/**
-    Flush USB Mass Storage Device
-
-    @param This: A pointer to the Block I/O protocol interface
-
-    @retval EFI_SUCCESS: The USB Logic Drive successfully flushed
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:   AmiUsbBlkIoFlushBlocks
+//
+// Description: Flush USB Mass Storage Device
+//
+// Input:       This: A pointer to the Block I/O protocol interface
+//
+// Output:      EFI_SUCCESS: The USB Logic Drive successfully flushed
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 EFI_STATUS
-EFIAPI
 AmiUsbBlkIoFlushBlocks (
   IN  EFI_BLOCK_IO_PROTOCOL  *This
   )
@@ -257,11 +263,16 @@ AmiUsbBlkIoFlushBlocks (
 }
 
 
-/**
-    This routine is invoked from AmiUsbBlkIoReadBlocks and
-    AmiUsbBlkIoWriteBlocks. See these for parameters reference.
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:   AmiUsbBlkIoReadWrite
+//
+// Description: This routine is invoked from AmiUsbBlkIoReadBlocks and
+//              AmiUsbBlkIoWriteBlocks. See these for parameters reference.
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 EFI_STATUS
 AmiUsbBlkIoReadWrite (
@@ -276,15 +287,16 @@ AmiUsbBlkIoReadWrite (
     USB_MASS_DEV            *MassDev;
     URP_STRUC               Parameters;
     EFI_STATUS              Status = EFI_SUCCESS;
-    UINTN                   Buf;
-    UINT32                  BytesToTransfer;
-    UINT32                  BytesRemaining;
+    UINT32                  Buf;
+    UINT32                  BytesToTransfer, BytesRemaining;
+    UINT32                  CurrentLba;
     UINT16                  BlockSize;
     UINTN                   BufferAddress;
 	UINT8					*DataBuffer;
 	UINTN					Pages;
 
     MassDev   = (USB_MASS_DEV*)This;
+    BlockSize = ((DEV_INFO*)(MassDev->DevInfo))->wBlockSize;
 
     //
     // Check if media id matches
@@ -303,12 +315,8 @@ AmiUsbBlkIoReadWrite (
     // with no remainder. 
     // 
     BufferAddress = (UINTN)Buffer;
-    if ((This->Media->IoAlign > 1 ) && (BufferAddress % This->Media->IoAlign)) {
+    if((This->Media->IoAlign > 1 ) && (BufferAddress % This->Media->IoAlign)) {
         return EFI_INVALID_PARAMETER;
-    }
-
-    if (!(((DEV_INFO*)(MassDev->DevInfo))->Flag & DEV_INFO_DEV_PRESENT)) {
-        return EFI_DEVICE_ERROR;
     }
     
 
@@ -324,10 +332,8 @@ AmiUsbBlkIoReadWrite (
 
  	InvokeUsbApi(&Parameters);
 
-    if ((!(Parameters.ApiData.MassGetDevSts.bDeviceStatus & USB_MASS_MEDIA_PRESENT)) 
-        ||(This->Media->LastBlock == 0) || (This->Media->BlockSize == 0)) {
+    if (!(Parameters.ApiData.MassGetDevSts.bDeviceStatus & USB_MASS_MEDIA_PRESENT)) {
         This->Media->MediaPresent = FALSE;
-        This->Media->LastBlock = 0;
         return EFI_NO_MEDIA;
     }
 
@@ -344,8 +350,6 @@ AmiUsbBlkIoReadWrite (
         return EFI_INVALID_PARAMETER;
     }
 
-    BlockSize = ((DEV_INFO*)(MassDev->DevInfo))->wBlockSize;
-
     if ((Lba + (BufferSize / BlockSize) - 1) > This->Media->LastBlock) {
         return EFI_INVALID_PARAMETER;
     }
@@ -355,41 +359,42 @@ AmiUsbBlkIoReadWrite (
     }
 
 	DataBuffer = (UINT8*)(UINTN)Buffer;
-	if (RShiftU64((UINTN)Buffer, 32)) {
+	if (Shr64((UINTN)Buffer, 32)) {
 		Pages = EFI_SIZE_TO_PAGES(BufferSize);
 		DataBuffer = (UINT8*)0xFFFFFFFF;
 		Status = gBS->AllocatePages(AllocateMaxAddress, EfiBootServicesData,
                 		Pages, (EFI_PHYSICAL_ADDRESS*)&DataBuffer);
-		if (!(EFI_ERROR(Status))) {
-    		if (ReadWrite == WRITE) {
-    			gBS->CopyMem(DataBuffer, Buffer, BufferSize);
-    		}
-		}  else {
-		    DataBuffer = (UINT8*)(UINTN)Buffer;
+		ASSERT_EFI_ERROR(Status);
+		if (EFI_ERROR(Status)) {
+			return Status;
+		}
+
+		if (ReadWrite == WRITE) {
+			gBS->CopyMem(DataBuffer, Buffer, BufferSize);
 		}
 	}
 
     BytesRemaining = (UINT32)BufferSize;
-    Buf = (UINTN)DataBuffer;
+    CurrentLba = (UINT32)Lba;
+    Buf = (UINT32)(UINTN)DataBuffer;
     while (BytesRemaining) {
         BytesToTransfer = (BytesRemaining > 0x10000)? 0x10000 : BytesRemaining;
         //
         // Prepare URP_STRUC with USB_MassRead attributes
         //
         Parameters.bFuncNumber = USB_API_MASS_DEVICE_REQUEST;
-        Parameters.bSubFunc = (ReadWrite == READ)? USB_MASSAPI_EFI_READ_DEVICE : USB_MASSAPI_EFI_WRITE_DEVICE;
-        Parameters.ApiData.EfiMassRead.DevAddr = (UINT8)MassDev->LogicalAddress;//MassDev->DevInfo->bDeviceAddress;
-        Parameters.ApiData.EfiMassRead.StartLba = Lba;
-        Parameters.ApiData.EfiMassRead.NumBlks = (UINT16)(BytesToTransfer/((DEV_INFO*)MassDev->DevInfo)->wBlockSize);
-        Parameters.ApiData.EfiMassRead.PreSkipSize = 0;
-        Parameters.ApiData.EfiMassRead.PostSkipSize = 0;
-        Parameters.ApiData.EfiMassRead.BufferPtr = Buf;
-
+        Parameters.bSubFunc = (ReadWrite == READ)? USB_MASSAPI_READ_DEVICE : USB_MASSAPI_WRITE_DEVICE;
+        Parameters.ApiData.MassRead.bDevAddr = (UINT8)MassDev->LogicalAddress;//MassDev->DevInfo->bDeviceAddress;
+        Parameters.ApiData.MassRead.dStartLBA = CurrentLba;
+        Parameters.ApiData.MassRead.wNumBlks = (UINT16)(BytesToTransfer/((DEV_INFO*)MassDev->DevInfo)->wBlockSize);
+        Parameters.ApiData.MassRead.wPreSkipSize = 0;
+        Parameters.ApiData.MassRead.wPostSkipSize = 0;
+        Parameters.ApiData.MassRead.fpBufferPtr = Buf;
         /*
         if (ReadWrite == READ) {
-            USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "Reading...%x bytes, Lba %x ", BytesToTransfer, CurrentLba);
+            USB_DEBUG(DEBUG_LEVEL_3, "Reading...%x bytes, Lba %x ", BytesToTransfer, CurrentLba);
         } else {
-            USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "Writng...%x bytes, Lba %x ", BytesToTransfer, CurrentLba);
+            USB_DEBUG(DEBUG_LEVEL_3, "Writng...%x bytes, Lba %x ", BytesToTransfer, CurrentLba);
         }
         */
 		InvokeUsbApi(&Parameters);
@@ -418,13 +423,11 @@ AmiUsbBlkIoReadWrite (
             default:
                     Status = EFI_SUCCESS;
         }
-        //  USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "Status= %r\n", Status);
-        if (EFI_ERROR(Status)) {
-            break;
-        }
+        //  USB_DEBUG(DEBUG_LEVEL_3, "Status= %r\n", Status);
+        if (EFI_ERROR(Status)) break;
         BytesRemaining = BytesRemaining - BytesToTransfer;
         Buf = Buf + BytesToTransfer;
-        Lba = Lba + (UINT32)BytesToTransfer/((DEV_INFO*)(MassDev->DevInfo))->wBlockSize;
+        CurrentLba = CurrentLba + (UINT32)BytesToTransfer/((DEV_INFO*)(MassDev->DevInfo))->wBlockSize;
     }
 
 	if (DataBuffer != Buffer) {
@@ -439,32 +442,36 @@ AmiUsbBlkIoReadWrite (
 
 
 
-/**
-    Read the requested number of blocks from the device
-
-    @param This EFI_BLOCK_IO *: A pointer to the Block I/O protocol
-        interface
-        MediaId UINT32: The media id that the read request is for
-        LBA EFI_LBA:    The starting logic block address to read from
-        on the device
-        BufferSize UINTN:   The size of the Buffer in bytes
-        Buffer VOID *:  A pointer to the destination buffer for the data
-
-
-    @retval EFI_SUCCESS:     The data was read correctly from the device
-              EFI_DEVICE_ERROR:The device reported an error while attempting
-                                  to perform the read operation
-              EFI_NO_MEDIA:    There is no media in the device
-              EFI_MEDIA_CHANGED:   The MediaId is not for the current media
-              EFI_BAD_BUFFER_SIZE: The BufferSize parameter is not a multiple
-                              of the intrinsic block size of the device
-              EFI_INVALID_PARAMETER:The read request contains LBAs that are
-                          not valid, or the buffer is not on proper alignment
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:   AmiUsbBlkIoReadBlocks
+//
+// Description: Read the requested number of blocks from the device
+//
+// Input:       This EFI_BLOCK_IO *: A pointer to the Block I/O protocol
+//                                   interface
+//              MediaId UINT32: The media id that the read request is for
+//              LBA EFI_LBA:    The starting logic block address to read from
+//                              on the device
+//              BufferSize UINTN:   The size of the Buffer in bytes
+//              Buffer VOID *:  A pointer to the destination buffer for the data
+//
+//
+// Output:      EFI_SUCCESS:     The data was read correctly from the device
+//              EFI_DEVICE_ERROR:The device reported an error while attempting
+//                                  to perform the read operation
+//              EFI_NO_MEDIA:    There is no media in the device
+//              EFI_MEDIA_CHANGED:   The MediaId is not for the current media
+//              EFI_BAD_BUFFER_SIZE: The BufferSize parameter is not a multiple
+//                              of the intrinsic block size of the device
+//              EFI_INVALID_PARAMETER:The read request contains LBAs that are
+//                          not valid, or the buffer is not on proper alignment
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 EFI_STATUS
-EFIAPI
 AmiUsbBlkIoReadBlocks (
   IN  EFI_BLOCK_IO_PROTOCOL  *This,
   IN  UINT32                 MediaId,
@@ -474,45 +481,40 @@ AmiUsbBlkIoReadBlocks (
 )
 
 {
-    EFI_STATUS  Status;
-    EFI_TPL     OldTpl;
-
-    OldTpl = gBS->RaiseTPL(TPL_NOTIFY);
-    
-    Status = AmiUsbBlkIoReadWrite(This, MediaId, Lba, BufferSize, Buffer, READ);
-    
-    gBS->RestoreTPL(OldTpl);
-    
-    return Status;
+    return AmiUsbBlkIoReadWrite(This, MediaId, Lba, BufferSize, Buffer, READ);
 }
 
 
-/**
-    Write a specified number of blocks to the device
-
-    @param This EFI_BLOCK_IO *: A pointer to the Block I/O protocol
-        interface
-        MediaId UINT32: The media id that the write request is for
-        LBA EFI_LBA:    The starting logic block address to written
-        BufferSize UINTN:   The size of the Buffer in bytes
-        Buffer VOID *:  A pointer to the destination buffer for the data
-
-
-    @retval EFI_SUCCESS:     The data were written correctly to the device
-              EFI_WRITE_PROTECTED: The device can not be written to
-              EFI_NO_MEDIA:    There is no media in the device
-              EFI_MEDIA_CHANGED:   The MediaId is not for the current media
-              EFI_DEVICE_ERROR:  The device reported an error while attempting
-                                  to perform the write operation
-              EFI_BAD_BUFFER_SIZE: The BufferSize parameter is not a multiple
-                                  of the intrinsic block size of the device
-              EFI_INVALID_PARAMETER:The read request contains LBAs that are
-                          not valid, or the buffer is not on proper alignment
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:   AmiUsbBlkIoWriteBlocks
+//
+// Description: Write a specified number of blocks to the device
+//
+// Input:       This EFI_BLOCK_IO *: A pointer to the Block I/O protocol
+//              interface
+//              MediaId UINT32: The media id that the write request is for
+//              LBA EFI_LBA:    The starting logic block address to written
+//              BufferSize UINTN:   The size of the Buffer in bytes
+//              Buffer VOID *:  A pointer to the destination buffer for the data
+//
+//
+// Output:      EFI_SUCCESS:     The data were written correctly to the device
+//              EFI_WRITE_PROTECTED: The device can not be written to
+//              EFI_NO_MEDIA:    There is no media in the device
+//              EFI_MEDIA_CHANGED:   The MediaId is not for the current media
+//              EFI_DEVICE_ERROR:  The device reported an error while attempting
+//                                  to perform the write operation
+//              EFI_BAD_BUFFER_SIZE: The BufferSize parameter is not a multiple
+//                                  of the intrinsic block size of the device
+//              EFI_INVALID_PARAMETER:The read request contains LBAs that are
+//                          not valid, or the buffer is not on proper alignment
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 EFI_STATUS
-EFIAPI
 AmiUsbBlkIoWriteBlocks (
   IN EFI_BLOCK_IO_PROTOCOL  *This,
   IN UINT32                 MediaId,
@@ -521,87 +523,57 @@ AmiUsbBlkIoWriteBlocks (
   IN VOID                   *Buffer
   )
 {
-    EFI_STATUS  Status;
-    EFI_TPL     OldTpl;
-    
-#if (defined(BOOT_SECTOR_WRITE_PROTECT) && (BOOT_SECTOR_WRITE_PROTECT != 0))
-    if (AmiBlkWriteProtection != NULL) {
-        // Get user input
-        Status = AmiBlkWriteProtection->BlockIoWriteProtectionCheck( 
-                                                    AmiBlkWriteProtection,
-                                                    This,
-                                                    Lba,
-                                                    BufferSize
-                                                    );
-        // Abort operation if denied
-        if (Status == EFI_ACCESS_DENIED) {
-            return Status;
-        }
-    }
-#endif
-    
-    OldTpl = gBS->RaiseTPL(TPL_NOTIFY);
-    
-    Status = AmiUsbBlkIoReadWrite(This, MediaId, Lba, BufferSize, Buffer, WRITE);
-    
-    gBS->RestoreTPL(OldTpl);
-    
-    return Status;    
+    return AmiUsbBlkIoReadWrite(This, MediaId, Lba, BufferSize, Buffer, WRITE);
 }
 
 
-/**
-    Verifies if usb mouse support can be installed on a device
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        UsbMassSupported
+//
+// Description: Verifies if usb mouse support can be installed on a device
+//
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
-
-**/
-
+static
 EFI_STATUS
-EFIAPI
 UsbMassSupported (
     EFI_DRIVER_BINDING_PROTOCOL *This,
     EFI_HANDLE                  Controller,
     EFI_DEVICE_PATH_PROTOCOL    *Dp)
 {
-    EFI_USB_INTERFACE_DESCRIPTOR        Desc;
-    EFI_STATUS                          Status;
-    EFI_USB_IO_PROTOCOL                 *UsbIo;
-    DEV_INFO                            *DevInfo;
-
+    EFI_USB_INTERFACE_DESCRIPTOR Desc;
+    EFI_STATUS Status;
+    EFI_USB_IO_PROTOCOL *UsbIo;
+										//(EIP99882+)>
     if (!gUsbData->UsbSetupData.UsbMassDriverSupport) {
         return EFI_UNSUPPORTED;
     }
-
-    Status = gBS->OpenProtocol(Controller, &gEfiUsbIoProtocolGuid,
+										//<(EIP99882+)
+    Status = gBS->OpenProtocol ( Controller,  &gEfiUsbIoProtocolGuid,
         &UsbIo, This->DriverBindingHandle,
-        Controller, EFI_OPEN_PROTOCOL_BY_DRIVER);
-    
-    if (EFI_ERROR(Status)) {
+        Controller, EFI_OPEN_PROTOCOL_BY_DRIVER );
+    if( EFI_ERROR(Status))
         return Status;
-    }
 
-    Status = gBS->CloseProtocol(
+    VERIFY_EFI_ERROR(
+        gBS->CloseProtocol (
         Controller, &gEfiUsbIoProtocolGuid,
-        This->DriverBindingHandle, Controller);
-    
-    ASSERT(Status == EFI_SUCCESS);
+        This->DriverBindingHandle, Controller));
 
-    DevInfo = FindDevStruc(Controller);
-
-    if (DevInfo == NULL) {
+    Status = UsbIo->UsbGetInterfaceDescriptor(UsbIo, &Desc  );
+    if(EFI_ERROR(Status))
         return EFI_UNSUPPORTED;
-    }
-
-    Status = UsbIo->UsbGetInterfaceDescriptor(UsbIo, &Desc);
-    if (EFI_ERROR(Status)) {
-        return EFI_UNSUPPORTED;
-    }
 
     if ( Desc.InterfaceClass == BASE_CLASS_MASS_STORAGE &&
         (
         Desc.InterfaceProtocol == PROTOCOL_CBI ||
         Desc.InterfaceProtocol == PROTOCOL_CBI_NO_INT   ||
-        Desc.InterfaceProtocol == PROTOCOL_BOT )) {
+        Desc.InterfaceProtocol == PROTOCOL_BOT ))
+    {
         return EFI_SUCCESS;
     } else {
         return EFI_UNSUPPORTED;
@@ -609,13 +581,18 @@ UsbMassSupported (
 }
 
 
-/**
-    Starts USB mass storage device
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        UsbMassStart
+//
+// Description: Starts USB mass storage device
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
-**/
-
+static
 EFI_STATUS
-EFIAPI
 UsbMassStart(
     EFI_DRIVER_BINDING_PROTOCOL  *This,
     EFI_HANDLE Controller,
@@ -625,79 +602,60 @@ UsbMassStart(
     EFI_STATUS              Status;
     EFI_USB_IO_PROTOCOL     *UsbIo;
     DEV_INFO                *DevInfo;
-    USBDEV_T*               Dev;
-    HC_STRUC*               HcData;
-    UINT8                   UsbStatus;
 
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "USB: UsbMassStart: starting...\n");
+    USB_DEBUG(DEBUG_LEVEL_3,
+        "USB: UsbMassStart: starting...\n");
     //
     // Open Protocols
     //
-    Status = gBS->OpenProtocol(Controller, &gEfiUsbIoProtocolGuid,
-                &UsbIo, This->DriverBindingHandle,
-                Controller, EFI_OPEN_PROTOCOL_BY_DRIVER);
-    
-    if (EFI_ERROR(Status)) {
+    Status = gBS->OpenProtocol ( Controller,  &gEfiUsbIoProtocolGuid,
+        &UsbIo, This->DriverBindingHandle,
+        Controller, EFI_OPEN_PROTOCOL_BY_DRIVER );
+    if( EFI_ERROR(Status))
         return Status;
+
+    {
+        USBDEV_T* Dev = UsbIo2Dev(UsbIo);
+        HC_STRUC* HcData;
+        UINT8 UsbStatus;
+
+        ASSERT(Dev);
+        if (Dev == NULL) return EFI_DEVICE_ERROR;
+
+        DevInfo = Dev->dev_info;
+        if (DevInfo->bLUN) {
+            USB_DEBUG(DEBUG_LEVEL_3, "USB: Skiping LUN %d\n", DevInfo->bLUN);
+        } else  {
+            HcData = gUsbData->HcTable[Dev->dev_info->bHCNumber - 1];
+            UsbStatus = UsbSmiReConfigDevice(HcData, Dev->dev_info);
+            if ((UsbStatus != USB_SUCCESS) || !(DevInfo->bFlag & DEV_INFO_DEV_PRESENT)) {
+                USB_DEBUG(DEBUG_LEVEL_3, 
+                    "USB: UsbMassStart: failed to Reconfigure: %d\n", UsbStatus );
+                gBS->CloseProtocol (
+                    Controller, &gEfiUsbIoProtocolGuid,
+                    This->DriverBindingHandle, Controller);
+                return EFI_DEVICE_ERROR;
+            }
+        } //End Reconfigure
     }
 
-    Dev = UsbIo2Dev(UsbIo);
-
-    if (Dev == NULL) {
-        return EFI_DEVICE_ERROR;
-    }
-
-    DevInfo = Dev->dev_info;
-    
-    if (DevInfo->bLUN) {
-        USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "USB: Skiping LUN %d\n", DevInfo->bLUN);
-    } else {
-        HcData = gUsbData->HcTable[Dev->dev_info->bHCNumber - 1];
-        UsbStatus = UsbSmiReConfigDevice(HcData, Dev->dev_info);
-        if (UsbStatus != USB_SUCCESS) {
-            USB_DEBUG(DEBUG_ERROR, DEBUG_LEVEL_3, 
-                    "USB: UsbMassStart: failed to Reconfigure: %d\n", UsbStatus);
-            gBS->CloseProtocol(Controller, &gEfiUsbIoProtocolGuid,
-                            This->DriverBindingHandle, Controller);
-            return EFI_DEVICE_ERROR;
-        }
-    } //End Reconfigure
-
-    if (!(DevInfo->Flag & DEV_INFO_DEV_PRESENT)) {
-        gBS->CloseProtocol(Controller, &gEfiUsbIoProtocolGuid,
-                        This->DriverBindingHandle, Controller);
-        return EFI_DEVICE_ERROR;
-    }
-
-    Status = InstallUsbMass(Controller, DevInfo);
-    
-    if (EFI_ERROR(Status)) {    
-        gBS->CloseProtocol(Controller, &gEfiUsbIoProtocolGuid,
-                        This->DriverBindingHandle, Controller);
-        return Status;
-    }
-    
-#if (defined(BOOT_SECTOR_WRITE_PROTECT) && (BOOT_SECTOR_WRITE_PROTECT != 0))
-    if(AmiBlkWriteProtection == NULL) {
-        Status = pBS->LocateProtocol(&gAmiBlockIoWriteProtectionProtocolGuid, 
-                                      NULL, 
-                                      &AmiBlkWriteProtection); 
-        if(EFI_ERROR(Status)) {
-            AmiBlkWriteProtection = NULL;
-        }
-    }
-#endif
+    InstallUSBMass(Controller, DevInfo);
 
     return Status;
 }
 
-/**
-    Stops USB mass storage device and removes BlkIo
 
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        UsbMassStop
+//
+// Description: Stops USB mass storage device and removes BlkIo
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 EFI_STATUS
-EFIAPI
 UsbMassStop(
     EFI_DRIVER_BINDING_PROTOCOL *Binding,
     EFI_HANDLE Controller,
@@ -708,23 +666,19 @@ UsbMassStop(
     EFI_STATUS Status;
     EFI_BLOCK_IO_PROTOCOL   *BlockIo;
 
-    Status = gBS->OpenProtocol(Controller, &gEfiBlockIoProtocolGuid,
+    VERIFY_EFI_ERROR(
+        Status = gBS->OpenProtocol ( Controller,  &gEfiBlockIoProtocolGuid,
         &BlockIo, Binding->DriverBindingHandle,
-        Controller, EFI_OPEN_PROTOCOL_GET_PROTOCOL);
-    
-    ASSERT(Status == EFI_SUCCESS);
-    
-    if (EFI_ERROR(Status)) {
+        Controller, EFI_OPEN_PROTOCOL_GET_PROTOCOL ));
+    if (EFI_ERROR(Status))
         return Status;
-    }
 
     Status = UninstallUSBMass((USB_MASS_DEV*)BlockIo);
 
-    Status = gBS->CloseProtocol(
+    VERIFY_EFI_ERROR(
+        gBS->CloseProtocol (
         Controller, &gEfiUsbIoProtocolGuid,
-        Binding->DriverBindingHandle, Controller);
-    
-    ASSERT(Status == EFI_SUCCESS);
+        Binding->DriverBindingHandle, Controller));
 
     return Status;
 }
@@ -740,10 +694,15 @@ UsbMassGetControllerName(
 }
 
 
-/**
-    USB Mass storage driver entry point
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        UsbMassInit
+//
+// Description: USB Mass storage driver entry point
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 EFI_STATUS
 UsbMassInit(
@@ -773,16 +732,16 @@ UsbMassInit(
                                         //<(EIP59272)
 }
 
-//**********************************************************************
-//**********************************************************************
-//**                                                                  **
-//**        (C)Copyright 1985-2016, American Megatrends, Inc.         **
-//**                                                                  **
-//**                       All Rights Reserved.                       **
-//**                                                                  **
-//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093        **
-//**                                                                  **
-//**                       Phone: (770)-246-8600                      **
-//**                                                                  **
-//**********************************************************************
-//**********************************************************************
+//****************************************************************************
+//****************************************************************************
+//**                                                                        **
+//**             (C)Copyright 1985-2008, American Megatrends, Inc.          **
+//**                                                                        **
+//**                          All Rights Reserved.                          **
+//**                                                                        **
+//**                 5555 Oakbrook Pkwy, Norcross, GA 30093                 **
+//**                                                                        **
+//**                          Phone (770)-246-8600                          **
+//**                                                                        **
+//****************************************************************************
+//****************************************************************************

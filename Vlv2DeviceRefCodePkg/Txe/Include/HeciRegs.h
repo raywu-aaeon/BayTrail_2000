@@ -130,7 +130,6 @@ Abstract:
 #define HECI_READ_TIMEOUT_EX 90000000   // 90sec timeout in microseconds
 #define HECI_READ_TIMEOUT    5000000   // 5sec timeout in microseconds
 #define HECI_SEND_TIMEOUT    5000000   // 5sec timeout in microseconds
-#define HECI_RDY_TIMEOUT     8000000   // 8sec timeout in microseconds
 #define HECI_MAX_RETRY       3         // Value based off HECI HPS
 #define HECI_MSG_DELAY       2000000   // show warning msg and stay for 2 seconds.
 #pragma pack(1)

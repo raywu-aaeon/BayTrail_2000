@@ -34,8 +34,7 @@ EFI_GUID gPchPeiInitPpiGuid = PCH_PEI_INIT_PPI_GUID;
 #endif
 
 #define SD_CARD_4684039_WORKAROUND              1
-extern EFI_GUID gEfiSetupVariableGuid;
-#define ANDROID 1
+
 static EFI_PEI_PPI_DESCRIPTOR mPchPeiInitPpi[] = {
   (EFI_PEI_PPI_DESCRIPTOR_PPI | EFI_PEI_PPI_DESCRIPTOR_TERMINATE_LIST),
   &gPchPeiInitPpiGuid,
@@ -1008,17 +1007,7 @@ VOID ProgramGpioSCForSDCardWA(
 {
   EFI_PEI_STALL_PPI *StallPpi;
   EFI_STATUS        Status;
-  UINT32                           VariableSize;
-  SETUP_DATA             SystemConfig;
-  EFI_PEI_READ_ONLY_VARIABLE2_PPI  *Variable;
 
-  VariableSize = sizeof (SETUP_DATA);
-  ZeroMem (&SystemConfig, VariableSize);
-  Status = (*PeiServices)->LocatePpi((CONST EFI_PEI_SERVICES **) PeiServices, &gEfiPeiReadOnlyVariable2PpiGuid, 0, NULL, (VOID **) &Variable);
-  ASSERT_EFI_ERROR (Status);
-  Status = Variable->GetVariable( Variable, L"Setup", &gEfiSetupVariableGuid, NULL, &VariableSize, &SystemConfig );
-
-if (SystemConfig.OsSelect != ANDROID) {
   Status =(**PeiServices).LocatePpi (PeiServices, &gEfiPeiStallPpiGuid, 0, NULL, (VOID **) &StallPpi);
   ASSERT_EFI_ERROR (Status);
   //DEBUG ((EFI_D_ERROR, "ProgramGpioSC() - Start\n"));
@@ -1069,7 +1058,7 @@ if (SystemConfig.OsSelect != ANDROID) {
   MmioWrite32(IO_BASE_ADDRESS+GPIO_SCORE_OFFSET+0x698,MmioRead32(IO_BASE_ADDRESS+GPIO_SCORE_OFFSET+0x698)|BIT1);
   MmioWrite32(IO_BASE_ADDRESS+GPIO_SCORE_OFFSET+0x698,MmioRead32(IO_BASE_ADDRESS+GPIO_SCORE_OFFSET+0x698)& (~BIT2));
   MmioWrite32(IO_BASE_ADDRESS+GPIO_SCORE_OFFSET+0x690,(MmioRead32(IO_BASE_ADDRESS+GPIO_SCORE_OFFSET+0x690)& 0XFFFFFFF8) | BIT0);
-}
+
   return;
 
 }

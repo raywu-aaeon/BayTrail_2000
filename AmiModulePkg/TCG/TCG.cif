@@ -1,0 +1,35 @@
+<component>
+	name = "TCG"
+	category = eModule
+	LocalRoot = "AmiModulePkg\TCG\"
+	RefName = "TCG"
+[INF]
+"TcgLibDxe.inf"
+"TcgLibPei.inf"
+[files]
+"TCG.sdl"	
+"TCG.chm"	
+[parts]
+"AmiTcmlib"
+"AmiTcgOemlib"
+"TcgPei"
+"TcgDxe"
+"TcgPeiplatform"
+"TcgDxeplatform"
+"TcgSetup"
+"TcgLegacy"
+"AmiTcgPlatform"
+"AmiTcgNvflagSample"
+"TCGSmm"
+"TcgService_PPI"
+"TcgService_Protocol"
+"TpmDevice_PPI"
+"TpmDevice_Protocol"
+"AmiTcgPlatformPpi"
+"AmiTcgIncludes"
+"AmiTpmSupportTypeProtocol"
+"AmiTcgBinaries"
+"DxeTpmMeasureBootLib"
+"TcgAsl"
+"TpmClearOnRollback"
+<endComponent>

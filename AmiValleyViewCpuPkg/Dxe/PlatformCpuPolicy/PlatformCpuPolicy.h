@@ -9,13 +9,16 @@ reproduced, stored in a retrieval system, or transmitted in any
 form or by any means without the express written consent of
 Intel Corporation.
 
---*/
 
-/** @file PlatformCpuPolicy.h
-		
-    Header file for common server processor policy driver.
-	
-**/
+Module Name:
+
+  PlatformCpuPolicy.h
+
+Abstract:
+
+  Header file for common server processor policy driver.
+
+--*/
 
 #ifndef _PLATFORM_CPU_POLICY_H_
 #define _PLATFORM_CPU_POLICY_H_

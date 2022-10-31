@@ -132,9 +132,6 @@ ENDIF
 IF MKF_TYPE34_STRUCTURE
         handle = CreateManagementDeviceInfo(handle)
 ENDIF
-IF MKF_TYPE37_STRUCTURE
-        handle = CreateMemoryChannelInfo(handle)
-ENDIF
 IF MKF_TYPE39_STRUCTURE
         handle = CreateSystemPowerSupplyInfo(handle)
 ENDIF

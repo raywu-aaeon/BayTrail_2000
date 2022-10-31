@@ -144,7 +144,6 @@ PrintFramework (
   CHAR16                 *Buffer;
   UINTN                  Row;
   CHAR16                 *TitleStr;
-  UINTN                  TitleColumn;
 
   if (gClassOfVfr != FORMSET_CLASS_PLATFORM_SETUP) {
     //
@@ -191,15 +190,20 @@ PrintFramework (
   //
   // Print Form Title
   //
+  ClearLines (
+    gScreenDimensions.LeftColumn + 1,
+    gScreenDimensions.RightColumn - 1,
+    gScreenDimensions.TopRow + 1,
+    gScreenDimensions.TopRow + 1,
+    TITLE_TEXT | TITLE_BACKGROUND
+    );
+
   TitleStr = LibGetToken (FormData->FormTitle, FormData->HiiHandle);
   ASSERT (TitleStr != NULL);
-  TitleColumn = (gScreenDimensions.RightColumn + gScreenDimensions.LeftColumn - LibGetStringWidth (TitleStr) / 2) / 2;
-  PrintStringAtWithWidth (gScreenDimensions.LeftColumn + 1, gScreenDimensions.TopRow + 1, gLibEmptyString, TitleColumn - gScreenDimensions.LeftColumn - 1);
-  PrintStringAtWithWidth (
-    TitleColumn,
+  PrintStringAt (
+    (gScreenDimensions.RightColumn + gScreenDimensions.LeftColumn - LibGetStringWidth (TitleStr) / 2) / 2,
     gScreenDimensions.TopRow + 1,
-    TitleStr,
-    gScreenDimensions.RightColumn - 1 - TitleColumn
+    TitleStr
     );
   FreePool (TitleStr);
 
@@ -322,9 +326,7 @@ ProcessExternedOpcode (
   )
 {
   LIST_ENTRY                    *Link;
-  LIST_ENTRY                    *NestLink;
   FORM_DISPLAY_ENGINE_STATEMENT *Statement;
-  FORM_DISPLAY_ENGINE_STATEMENT *NestStatement;
 
   Link = GetFirstNode (&FormData->StatementListOSF);
   while (!IsNull (&FormData->StatementListOSF, Link)) {
@@ -340,15 +342,6 @@ ProcessExternedOpcode (
     Link = GetNextNode (&FormData->StatementListHead, Link);
 
     ProcessUserOpcode(Statement->OpCode);
-
-    NestLink = GetFirstNode (&Statement->NestStatementList);
-    while (!IsNull (&Statement->NestStatementList, NestLink)) {
-      NestStatement = FORM_DISPLAY_ENGINE_STATEMENT_FROM_LINK (NestLink);
-      NestLink = GetNextNode (&Statement->NestStatementList, NestLink);
-
-      ProcessUserOpcode(NestStatement->OpCode);
-    }
-
   }
 }
 
@@ -531,32 +524,29 @@ LibGetStringWidth (
   Show all registered HotKey help strings on bottom Rows.
 
   @param FormData          The curent input form data info.
-  @param SetState          Set HotKey or Clear HotKey
 
 **/
 VOID
 PrintHotKeyHelpString (
-  IN FORM_DISPLAY_ENGINE_FORM      *FormData,
-  IN BOOLEAN                       SetState
+  IN FORM_DISPLAY_ENGINE_FORM      *FormData
   )
 {
   UINTN                  CurrentCol;
   UINTN                  CurrentRow;
   UINTN                  BottomRowOfHotKeyHelp;
-  UINTN                  ColumnIndexWidth;
   UINTN                  ColumnWidth;
-  UINTN                  ColumnIndex;
   UINTN                  Index;
   EFI_SCREEN_DESCRIPTOR  LocalScreen;
   LIST_ENTRY             *Link;
   BROWSER_HOT_KEY        *HotKey;
-  CHAR16                 BakChar;
-  CHAR16                 *ColumnStr;
+
+  if (IsListEmpty (&FormData->HotKeyListHead)) {
+    return;
+  }
 
   CopyMem (&LocalScreen, &gScreenDimensions, sizeof (EFI_SCREEN_DESCRIPTOR));
   ColumnWidth            = (LocalScreen.RightColumn - LocalScreen.LeftColumn) / 3;
   BottomRowOfHotKeyHelp  = LocalScreen.BottomRow - STATUS_BAR_HEIGHT - 3;
-  ColumnStr              = gLibEmptyString;
 
   //
   // Calculate total number of Register HotKeys. 
@@ -566,65 +556,30 @@ PrintHotKeyHelpString (
   while (!IsNull (&FormData->HotKeyListHead, Link)) {
     HotKey = BROWSER_HOT_KEY_FROM_LINK (Link);
     //
-    // Calculate help information Column and Row.
-    //
-    ColumnIndex = Index % 3;
-    if (ColumnIndex == 0) {
-      CurrentCol       = LocalScreen.LeftColumn + 2 * ColumnWidth;
-      ColumnIndexWidth = ColumnWidth - 1;
-    } else if (ColumnIndex == 1) {
-      CurrentCol       = LocalScreen.LeftColumn + ColumnWidth;
-      ColumnIndexWidth = ColumnWidth;
-    } else {
-      CurrentCol       = LocalScreen.LeftColumn + 2;
-      ColumnIndexWidth = ColumnWidth - 2;
-    }
-    CurrentRow = BottomRowOfHotKeyHelp - Index / 3;
-
-    //
     // Help string can't exceed ColumnWidth. One Row will show three Help information. 
     //
-    BakChar = L'\0';
-    if (StrLen (HotKey->HelpString) > ColumnIndexWidth) {
-      BakChar = HotKey->HelpString[ColumnIndexWidth];
-      HotKey->HelpString[ColumnIndexWidth] = L'\0';
+    if (StrLen (HotKey->HelpString) > ColumnWidth) {
+      HotKey->HelpString[ColumnWidth] = L'\0';
     }
-
+    //
+    // Calculate help information Column and Row.
+    //
+    if ((Index % 3) != 2) {
+      CurrentCol = LocalScreen.LeftColumn + (2 - Index % 3) * ColumnWidth;
+    } else {
+      CurrentCol = LocalScreen.LeftColumn + 2;
+    }
+    CurrentRow = BottomRowOfHotKeyHelp - Index / 3;
     //
     // Print HotKey help string on bottom Row.
     //
-    if (SetState) {
-      ColumnStr = HotKey->HelpString;
-    }
-    PrintStringAtWithWidth (CurrentCol, CurrentRow, ColumnStr, ColumnIndexWidth);
+    PrintStringAt (CurrentCol, CurrentRow, HotKey->HelpString);
 
-    if (BakChar != L'\0') {
-      HotKey->HelpString[ColumnIndexWidth] = BakChar;
-    }
     //
     // Get Next Hot Key.
     //
     Link = GetNextNode (&FormData->HotKeyListHead, Link);
     Index ++;
-  }
-  
-  if (SetState) {
-    //
-    // Clear KeyHelp
-    //
-    CurrentRow  = BottomRowOfHotKeyHelp - Index / 3;
-    ColumnIndex = Index % 3;
-    if (ColumnIndex == 0) {
-      CurrentCol       = LocalScreen.LeftColumn + 2 * ColumnWidth;
-      ColumnIndexWidth = ColumnWidth - 1;
-      ColumnIndex ++;
-      PrintStringAtWithWidth (CurrentCol, CurrentRow, gLibEmptyString, ColumnIndexWidth);
-    }
-    if (ColumnIndex == 1) {
-      CurrentCol       = LocalScreen.LeftColumn + ColumnWidth;
-      ColumnIndexWidth = ColumnWidth;
-      PrintStringAtWithWidth (CurrentCol, CurrentRow, gLibEmptyString, ColumnIndexWidth);
-    }
   }
   
   return;
@@ -833,7 +788,6 @@ PrintInternal (
   UINTN   Index;
   UINTN   PreviousIndex;
   UINTN   Count;
-  UINTN   TotalCount;
   UINTN   PrintWidth;
   UINTN   CharWidth;
 
@@ -858,7 +812,6 @@ PrintInternal (
   Index         = 0;
   PreviousIndex = 0;
   Count         = 0;
-  TotalCount    = 0;
   PrintWidth    = 0;
   CharWidth     = 1;
 
@@ -870,14 +823,17 @@ PrintInternal (
     if (Buffer[Index] == 0) {
       break;
     }
+    //
+    // Null-terminate the temporary string
+    //
+    BackupBuffer[Index] = 0;
 
     //
     // Print this out, we are about to switch widths
     //
     Out->OutputString (Out, &BackupBuffer[PreviousIndex]);
-    Count = StrLen (&BackupBuffer[PreviousIndex]);
+    Count += StrLen (&BackupBuffer[PreviousIndex]);
     PrintWidth += Count * CharWidth;
-    TotalCount += Count;
 
     //
     // Preserve the current index + 1, since this is where we will start printing from next
@@ -911,9 +867,8 @@ PrintInternal (
   // We hit the end of the string - print it
   //
   Out->OutputString (Out, &BackupBuffer[PreviousIndex]);
-  Count = StrLen (&BackupBuffer[PreviousIndex]);
+  Count += StrLen (&BackupBuffer[PreviousIndex]);
   PrintWidth += Count * CharWidth;
-  TotalCount += Count;
   if (PrintWidth < Width) {
     Out->Mode->Attribute = Out->Mode->Attribute & 0x7f;
     Out->SetAttribute (Out, Out->Mode->Attribute);
@@ -922,7 +877,7 @@ PrintInternal (
 
   FreePool (Buffer);
   FreePool (BackupBuffer);
-  return TotalCount;
+  return Count;
 }
 
 /**

@@ -1,21 +1,35 @@
-//**********************************************************************
-//**********************************************************************
-//**                                                                  **
-//**        (C)Copyright 1985-2016, American Megatrends, Inc.         **
-//**                                                                  **
-//**                       All Rights Reserved.                       **
-//**                                                                  **
-//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093        **
-//**                                                                  **
-//**                       Phone: (770)-246-8600                      **
-//**                                                                  **
-//**********************************************************************
-//**********************************************************************
+//****************************************************************************
+//****************************************************************************
+//**                                                                        **
+//**             (C)Copyright 1985-2009, American Megatrends, Inc.          **
+//**                                                                        **
+//**                          All Rights Reserved.                          **
+//**                                                                        **
+//**                 5555 Oakbrook Pkwy, Norcross, GA 30093                 **
+//**                                                                        **
+//**                          Phone (770)-246-8600                          **
+//**                                                                        **
+//****************************************************************************
+//****************************************************************************
 
-/** @file Uhcd.h
-    AMI USB Host Controller Driver header file
+//****************************************************************************
+// $Header: /Alaska/SOURCE/Modules/USB/ALASKA/uhcd.h 41    8/29/12 8:40a Ryanchou $
+//
+// $Revision: 41 $
+//
+// $Date: 8/29/12 8:40a $
+//
+//****************************************************************************
 
-**/
+//<AMI_FHDR_START>
+//----------------------------------------------------------------------------
+//
+//  Name:           Uhcd.h
+//
+//  Description:    AMI USB Host Controller Driver header file
+//
+//----------------------------------------------------------------------------
+//<AMI_FHDR_END>
 
 #ifndef _AMIUSB_H
 #define _AMIUSB_H
@@ -30,6 +44,9 @@
 #include <Protocol/DriverBinding.h>
 #include <Protocol/SimpleTextIn.h>
 #include <Protocol/UsbIo.h>
+#include "AmiDef.h"
+#include "UsbDef.h"
+
 
 /* PCI Configuration Registers for USB */
 // Class Code Register offset
@@ -87,33 +104,38 @@ EFI_STATUS usbhc_init(EFI_HANDLE  ImageHandle,EFI_HANDLE  ServiceHandle);
         gBS->RestoreTPL(savetpl);   \
 }\
 
+//#define CRITICAL_CODE(level, a) {\
+//      EFI_TPL savetpl = gBS->RaiseTPL (level);\
+//      {a;}\
+//      gBS->RestoreTPL(savetpl);   \
+//}\
+
+extern EFI_GUID gEfiDriverBindingProtocolGuid;
+extern EFI_GUID gEfiComponentName2ProtocolGuid; //(EIP59272)
+
 EFI_STATUS  UsbMsInit(EFI_HANDLE  ImageHandle, EFI_HANDLE  ServiceHandle);
 EFI_STATUS  UsbMassInit(EFI_HANDLE ImageHandle, EFI_HANDLE  ServiceHandle);
 EFI_STATUS  UsbCCIDInit(EFI_HANDLE ImageHandle, EFI_HANDLE  ServiceHandle);
 HC_STRUC*   FindHcStruc(EFI_HANDLE Controller);
 
 EFI_STATUS
-EFIAPI
 AmiUsbDriverEntryPoint(
     IN EFI_HANDLE       ImageHandle,
     IN EFI_SYSTEM_TABLE *SystemTable );
 
 EFI_STATUS
-EFIAPI
 AmiUsbDriverBindingSupported (
     IN EFI_DRIVER_BINDING_PROTOCOL  *This,
     IN EFI_HANDLE                   Controller,
     IN EFI_DEVICE_PATH_PROTOCOL     *RemainingDevicePath );
 
 EFI_STATUS
-EFIAPI
 AmiUsbDriverBindingStart (
     IN EFI_DRIVER_BINDING_PROTOCOL  *This,
     IN EFI_HANDLE                   Controller,
     IN EFI_DEVICE_PATH_PROTOCOL     *RemainingDevicePath );
 
 EFI_STATUS
-EFIAPI
 AmiUsbDriverBindingStop (
     IN EFI_DRIVER_BINDING_PROTOCOL  *This,
     IN EFI_HANDLE                   Controller,
@@ -140,40 +162,39 @@ LocateEhciController(
 );
 
 VOID
-EFIAPI
-OnLegacyBoot(
+OnLegacyBoot (
     EFI_EVENT   Event,
-    VOID        *Context
-);
-
-VOID
-EFIAPI
-ReadyToBootNotify(
-    EFI_EVENT   Event, 
-    VOID        *Context
-);
+    VOID        *Context );
 
 EFI_STATUS
-EFIAPI
-GetRuntimeRegion(
+GetRuntimeRegion (
     EFI_PHYSICAL_ADDRESS *Start,
     EFI_PHYSICAL_ADDRESS *End
 );
 
-EFI_STATUS  EFIAPI Dummy1(USB_MASS_DEV*   Device);
-EFI_STATUS  EFIAPI Dummy2(VOID);
+EFI_STATUS  Dummy1(USB_MASS_DEV*   Device);
+EFI_STATUS  Dummy2(VOID);
 
-VOID        EFIAPI ReportDevices(CONNECTED_USB_DEVICES_NUM*);
-UINT8       EFIAPI GetNextMassDeviceName(UINT8*, UINT8, UINT8);
-VOID        EFIAPI UsbChangeEfiToLegacy(UINT8);
+VOID        ReportDevices(CONNECTED_USB_DEVICES_NUM*);
+UINT8       GetNextMassDeviceName(UINT8*, UINT8, UINT8);
+VOID        UsbChangeEfiToLegacy (UINT8);
 VOID*       AllocAlignedMemory(UINT32, UINT16);
-VOID        USBGenerateSWSMI(UINT8);
+VOID        USBGenerateSWSMI (UINT8);
 VOID        UsbPrepareForLegacyOS();
 EFI_STATUS  UpdateHcPciInfo();
-EFI_STATUS  EFIAPI OemGetAssignUsbBootPort(UINT8*, UINT8*);
-VOID  		EFIAPI UsbGetSkipList(USB_SKIP_LIST*, UINT8);	//(EIP51653+) 
+EFI_STATUS  OemGetAssignUsbBootPort (UINT8*, UINT8*);
+VOID  		UsbGetSkipList(USB_SKIP_LIST*, UINT8);	//(EIP51653+) 
 VOID		FreeMemory(UINT32);
 VOID		InvokeUsbApi(URP_STRUC*);
+
+
+// USB HC binding protocol functions
+EFI_STATUS
+UsbHcSupported (
+    EFI_DRIVER_BINDING_PROTOCOL *pThis,
+    EFI_HANDLE  Controller,
+    EFI_DEVICE_PATH_PROTOCOL *DevicePath
+);
 
 EFI_STATUS
 InstallHcProtocols(
@@ -184,19 +205,15 @@ InstallHcProtocols(
 );
 
 EFI_STATUS
-EFIAPI
-AmiUsb2HcGetState(
-  IN  EFI_USB2_HC_PROTOCOL    *This,
-  OUT EFI_USB_HC_STATE        *State);
+UsbHcStop (
+   EFI_DRIVER_BINDING_PROTOCOL      *This,
+   EFI_HANDLE                       Controller,
+   UINTN                            NumberOfChildren,
+   EFI_HANDLE                       *Children 
+);
 
-EFI_STATUS
-EFIAPI
-AmiUsb2HcSetState(
-  IN EFI_USB2_HC_PROTOCOL    *This,
-  IN EFI_USB_HC_STATE        State);
 
-EFI_STATUS
-EFIAPI
+EFI_STATUS EFIAPI
 AmiUsb2HcSyncInterruptTransfer(
   IN EFI_USB2_HC_PROTOCOL    *hc_protocol,
   IN     UINT8                      deviceaddress,
@@ -210,9 +227,7 @@ AmiUsb2HcSyncInterruptTransfer(
   IN     EFI_USB2_HC_TRANSACTION_TRANSLATOR *Translator,
   OUT    UINT32                     *transferresult  );
 
-EFI_STATUS
-EFIAPI
-AmiUsb2HcControlTransfer(
+EFI_STATUS EFIAPI AmiUsb2HcTransfer(
   IN EFI_USB2_HC_PROTOCOL           *hc_protocol,
   IN     UINT8                      deviceaddress,
   IN     UINT8                      DeviceSpeed,
@@ -223,12 +238,9 @@ AmiUsb2HcControlTransfer(
   IN OUT UINTN                      *datalength,
   IN     UINTN                      timeout,
   IN     EFI_USB2_HC_TRANSACTION_TRANSLATOR *Translator,
-  OUT    UINT32                     *transferresult
-);
+  OUT    UINT32                     *transferresult );
 
-EFI_STATUS 
-EFIAPI 
-AmiUsb2HcBulkTransfer(
+EFI_STATUS EFIAPI AmiUsb2HcBulkTransfer(
   IN EFI_USB2_HC_PROTOCOL   *hc_protocol,
   IN  UINT8                 deviceaddress,
   IN  UINT8                 endpointaddress,
@@ -242,9 +254,7 @@ AmiUsb2HcBulkTransfer(
   IN EFI_USB2_HC_TRANSACTION_TRANSLATOR *Translator,
   OUT UINT32                *transferresult );
 
-EFI_STATUS
-EFIAPI
-AmiUsb2HcAsyncInterruptTransfer(
+EFI_STATUS EFIAPI AmiUsb2HcAsyncInterruptTransfer(
     IN EFI_USB2_HC_PROTOCOL                             *hc_protocol,
     IN UINT8                            deviceaddress,
     IN UINT8                            endpointaddress,
@@ -259,20 +269,17 @@ AmiUsb2HcAsyncInterruptTransfer(
     IN VOID                             *context);
 
 EFI_STATUS
-EFIAPI
 AmiUsbBlkIoReset (
   IN  EFI_BLOCK_IO_PROTOCOL  *This,
   IN  BOOLEAN                ExtendedVerification
 );
 
 EFI_STATUS
-EFIAPI
 AmiUsbBlkIoFlushBlocks (
   IN  EFI_BLOCK_IO_PROTOCOL  *This
 );
 
 EFI_STATUS
-EFIAPI
 AmiUsbBlkIoReadBlocks (
   IN  EFI_BLOCK_IO_PROTOCOL  *This,
   IN  UINT32                 MediaId,
@@ -282,7 +289,6 @@ AmiUsbBlkIoReadBlocks (
 );
 
 EFI_STATUS
-EFIAPI
 AmiUsbBlkIoWriteBlocks (
   IN EFI_BLOCK_IO_PROTOCOL  *This,
   IN UINT32                 MediaId,
@@ -291,12 +297,17 @@ AmiUsbBlkIoWriteBlocks (
   IN VOID                   *Buffer
 );
 
+VOID
+ReportDevices(
+    IN OUT CONNECTED_USB_DEVICES_NUM    *devs
+);
+
 EFI_STATUS UpdateMassDevicesForSetup();
 
 UINT32 CalculateMemorySize(VOID);
 
-VOID EFIAPI OnExitBootServices(EFI_EVENT, VOID*);
-EFI_STATUS InitUsbSetupVars(USB_GLOBAL_DATA*);
+VOID OnExitBootServices(EFI_EVENT, VOID*);
+EFI_STATUS InitUsbSetupVars (USB_GLOBAL_DATA*, EFI_BOOT_SERVICES*, EFI_RUNTIME_SERVICES*);
 UINT8 UsbSetupGetLegacySupport();
 
 typedef EFI_STATUS (*USB_HC_PREINIT_FUNC) (
@@ -329,53 +340,41 @@ enum {
     opHC_EnableRootHub,
     opHC_ControlTransfer,
     opHC_BulkTransfer,
-    opHC_IsocTransfer,
     opHC_InterruptTransfer,
     opHC_DeactivatePolling,
     opHC_ActivatePolling,
-    opHC_EnableEndpoints,
     opHC_DisableKeyRepeat,
     opHC_EnableKeyRepeat,
-    opHC_InitDeviceData,
-    opHC_DeinitDeviceData,
-    opHC_ResetRootHub,
-    opHC_ClearEndpointState,
-    opHC_GlobalSuspend,
-    opHC_SmiControl,
 };
 
 EFI_STATUS  DummyHcFunc(EFI_HANDLE, HC_STRUC*);
 EFI_STATUS  PreInitXhci(EFI_HANDLE, HC_STRUC*);
 EFI_STATUS  PostStopXhci(EFI_HANDLE, HC_STRUC*);
-EFI_STATUS  PreInitEhci(EFI_HANDLE, HC_STRUC*);
-EFI_STATUS  PostStopEhci(EFI_HANDLE, HC_STRUC*);
-EFI_STATUS  Usb3OemGetMaxDeviceSlots(HC_STRUC*, UINT8*);
+EFI_STATUS  Usb3OemGetMaxDeviceSlots(UINT8*);
 VOID        *AllocateHcMemory (IN EFI_PCI_IO_PROTOCOL*, UINTN, UINTN);
 VOID		FreeHcMemory(IN EFI_PCI_IO_PROTOCOL*, IN UINTN, IN VOID*);
-EFI_STATUS  ReallocateMemory(UINTN, UINTN, VOID**);
+VOID        *ReallocateMemory(UINTN, UINTN, VOID*);
 VOID        UsbSmiPeriodicEvent(VOID);
-VOID        EFIAPI UhcdPciIoNotifyCallback(EFI_EVENT, VOID*);
-VOID        EFIAPI UhcdPciIrqPgmNotifyCallback(EFI_EVENT, VOID*);
-VOID        EFIAPI LegacyBiosProtocolNotifyCallback(EFI_EVENT, VOID*);
+VOID        UhcdPciIoNotifyCallback (EFI_EVENT, VOID*);
+VOID        UhcdPciIrqPgmNotifyCallback (EFI_EVENT, VOID*);
 UINTN       UsbSmiHc(UINT8,UINT8, ...);
 EFI_STATUS  USBPort_InstallEventHandler(HC_STRUC*);
-VOID        EFIAPI Emul6064NotifyCallback(EFI_EVENT, VOID*);
-VOID        EFIAPI UsbRtShutDownLegacy(VOID);
-VOID        EFIAPI UsbRtStopController(UINT16);
-VOID        EFIAPI UsbHcOnTimer(EFI_EVENT, VOID*);
-UINT8       UsbSmiEnableEndpoints(HC_STRUC*, DEV_INFO*, UINT8*);
+VOID        Emul6064NotifyCallback(EFI_EVENT, VOID*);
+EFI_STATUS  USBPort_XhciCapabilityOverride(    USB3_HOST_CONTROLLER *Usb3Hc);
+VOID    UsbRtShutDownLegacy(VOID); 					//<(EIP52339+)
+VOID        UsbRtStopController(UINT16);	//(EIP74876+)
 #endif
 
-//**********************************************************************
-//**********************************************************************
-//**                                                                  **
-//**        (C)Copyright 1985-2016, American Megatrends, Inc.         **
-//**                                                                  **
-//**                       All Rights Reserved.                       **
-//**                                                                  **
-//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093        **
-//**                                                                  **
-//**                       Phone: (770)-246-8600                      **
-//**                                                                  **
-//**********************************************************************
-//**********************************************************************
+//****************************************************************************
+//****************************************************************************
+//**                                                                        **
+//**             (C)Copyright 1985-2009, American Megatrends, Inc.          **
+//**                                                                        **
+//**                          All Rights Reserved.                          **
+//**                                                                        **
+//**                 5555 Oakbrook Pkwy, Norcross, GA 30093                 **
+//**                                                                        **
+//**                          Phone (770)-246-8600                          **
+//**                                                                        **
+//****************************************************************************
+//****************************************************************************

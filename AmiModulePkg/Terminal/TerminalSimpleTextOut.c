@@ -1066,7 +1066,7 @@ EFI_STATUS TerminalClearScreen(
     IN EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL  *This
 )
 {
-  EFI_STATUS Status;
+  EFI_STATUS Status = EFI_SUCCESS;
   UINT8       i,j;
   UINT8       MaxColumns = MODE_0_MAX_COLUMNS;
   UINT8       MaxRows = MODE_0_MAX_ROWS;

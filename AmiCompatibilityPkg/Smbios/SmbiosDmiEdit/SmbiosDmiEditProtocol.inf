@@ -1,7 +1,7 @@
 #*************************************************************************
 #*************************************************************************
 #**                                                                     **
-#**        (C)Copyright 1985-2015, American Megatrends, Inc.            **
+#**        (C)Copyright 1985-2012, American Megatrends, Inc.            **
 #**                                                                     **
 #**                       All Rights Reserved.                          **
 #**                                                                     **
@@ -18,14 +18,13 @@
   INF_VERSION                    = 0x00010005
   BASE_NAME                      = SmbiosDmiEditProtocol
   FILE_GUID                      = 1F3CDFBE-F7AE-4453-8C48-C1AD35A4FD98
-  MODULE_TYPE                    = DXE_RUNTIME_DRIVER
+  MODULE_TYPE                    = DXE_DRIVER
   VERSION_STRING                 = 1.0
   ENTRY_POINT                    = SmbiosDmiEditProtocolEntryPoint
 
 [Sources]  
   SmbiosDmiEditProtocol.c
   SmbiosDmiEditFunc.c
-  SmbiosDmiEdit.h
 
 [Packages]
   MdePkg/MdePkg.dec
@@ -35,13 +34,14 @@
   AmiDxeLib
   UefiDriverEntryPoint
   SmbiosDmiEditBoardLib
-  FlashLib
 
 [Guids]
   gAmiSmbiosNvramGuid
   
 [Protocols]
+  gFlashProtocolGuid
   gAmiSmbiosProtocolGuid
+  gAmiSmbiosFlashDataProtocolGuid
   
 [Depex]
   gAmiSmbiosProtocolGuid
@@ -49,7 +49,7 @@
 #*************************************************************************
 #*************************************************************************
 #**                                                                     **
-#**        (C)Copyright 1985-2015, American Megatrends, Inc.            **
+#**        (C)Copyright 1985-2012, American Megatrends, Inc.            **
 #**                                                                     **
 #**                       All Rights Reserved.                          **
 #**                                                                     **

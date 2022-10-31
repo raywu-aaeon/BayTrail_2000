@@ -6,7 +6,13 @@
 #include <Protocol/BlockIo.h>
 #include <Protocol/FirmwareVolume.h>
 #include <Protocol/DevicePath.h>
+#ifdef CSM_SUPPORT
 #include <Protocol/LegacyBios.h>
+#endif
+
+#ifndef CSM_SUPPORT
+typedef VOID BBS_TABLE;
+#endif
 
 typedef struct{
 	DLINK Link;
@@ -181,6 +187,7 @@ extern BOOLEAN NormalizeBootOptionDevicePath;
 extern DLIST *BootOptionList;
 extern DLIST *BootDeviceList;
 
+#ifdef CSM_SUPPORT
 #define	LEGACY_DEV_ORDER_GUID	\
 	{ 0xA56074DB, 0x65FE, 0x45F7, 0xBD, 0x21, 0x2D, 0x2B, 0xDD, 0x8E, 0x96, 0x52 }
 
@@ -191,6 +198,7 @@ typedef struct{
 } LEGACY_DEVICE_ORDER;
 
 extern EFI_GUID LegacyDevOrderGuid;
+#endif
 
 //defined in BootOptions.c
 VOID SortList(DLIST *List, COMPARE_FUNCTION Compare);
@@ -216,22 +224,26 @@ BOOLEAN LocateDevicePathTest(
 BOOLEAN PartitionDevicePathTest(
 	EFI_DEVICE_PATH_PROTOCOL *OptionDevicePath, BOOT_DEVICE *Device
 );
+#ifdef CSM_SUPPORT
 BOOLEAN BbsDevicePathTest(
 	EFI_DEVICE_PATH_PROTOCOL *OptionDevicePath, BOOT_DEVICE *Device
 );
 BOOLEAN AmiBbsDevicePathTest(
 	EFI_DEVICE_PATH_PROTOCOL *OptionDevicePath, BOOT_DEVICE *Device
 );
+#endif
 
 UINTN ConstructBootOptionNameByHandle(
     BOOT_OPTION *Option, CHAR16 *Name, UINTN NameSize
 );
+#ifdef CSM_SUPPORT
 UINTN ConstructBootOptionNameByBbsDescription(
     BOOT_OPTION *Option, CHAR16 *Name, UINTN NameSize
 );
 VOID BuildLegacyDevOrderBuffer(
     LEGACY_DEVICE_ORDER **DevOrderBuffer, UINTN *BufferSize
 );
+#endif
 UINTN ConstructBootOptionNameByHandleDevicePath(
     BOOT_OPTION *Option, CHAR16 *Name, UINTN NameSize
 );

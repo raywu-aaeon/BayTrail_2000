@@ -26,15 +26,6 @@ TOKEN
 End
 
 TOKEN
-	Name  = "SERIAL_CHECKPOINT_ENABLE"
-	Value  = "0"
-	Help  = "Enables/Disables Checkpoints over Serial Port."
-	TokenType = Boolean
-	TargetH = Yes
-	Token = "SERIAL_STATUS_SUPPORT" "=" "1"
-End
-
-TOKEN
 	Name  = "RUNTIME_TRACE_SUPPORT"
 	Value  = "1"
 	Help  = "Enables/Disables support of trace messages in Runtime"
@@ -371,7 +362,8 @@ ELINK
 	Name  = "SerialCheckpoint,"
 	Parent  = "PeiReportCheckpoint"
 	Help  = "Checkpoints over Serial Port"
-	Token = "SERIAL_CHECKPOINT_ENABLE" "=" "1"
+	Token = "SERIAL_STATUS_SUPPORT" "=" "1"
+	Disable = Yes
 	InvokeOrder = AfterParent
 End
 
@@ -379,7 +371,8 @@ ELINK
 	Name  = "SerialCheckpoint,"
 	Parent  = "DxeReportCheckpoint"
 	Help  = "Checkpoints over Serial Port"
-	Token = "SERIAL_CHECKPOINT_ENABLE" "=" "1"
+	Token = "SERIAL_STATUS_SUPPORT" "=" "1"
+	Disable = Yes
 	InvokeOrder = AfterParent
 End
 

@@ -12,5 +12,9 @@
 "db"	
 "dbt"	
 "dbx"	
-"PKfileStatement.txt"
+"PKfileStatement.txt"	
+"KEKfileStatement.txt"	
+"DBfileStatement.txt"	
+"DBTfileStatement.txt"	
+"DBXfileStatement.txt"	
 <endComponent>

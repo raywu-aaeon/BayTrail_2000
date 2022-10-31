@@ -1,6 +1,6 @@
 #*************************************************************************
 #**                                                                     **
-#**        (C)Copyright 1985-2014, American Megatrends, Inc.            **
+#**        (C)Copyright 1985-2012, American Megatrends, Inc.            **
 #**                                                                     **
 #**                       All Rights Reserved.                          **
 #**                                                                     **
@@ -24,9 +24,6 @@
 [Binaries.Ia32]
   BIN | PeiDbgHostStatusLib.lib
   
-[Binaries.X64]
-  BIN | PeiDbgHostStatusLibx64.lib
-  
 [Sources.common]
   
 [Packages]
@@ -35,12 +32,15 @@
   AMIDebugRxPkg/AMIDebugRxPkg.dec
 
 [LibraryClasses]
-  AmiPeiLib
+  BaseLib
+  IoLib
+  DebugLib
+  HobLib
   CommonDebugLib
   
 #*************************************************************************
 #**                                                                     **
-#**        (C)Copyright 1985-2014, American Megatrends, Inc.            **
+#**        (C)Copyright 1985-2012, American Megatrends, Inc.            **
 #**                                                                     **
 #**                       All Rights Reserved.                          **
 #**                                                                     **

@@ -36,14 +36,6 @@ LPSS_DEVICE_INFO  mSccDeviceListA0Stepping[] = {
         1, 0, 0, GLOBAL_NVS_OFFSET(eMMC1Addr), GLOBAL_NVS_OFFSET(eMMC1Len), \
         R_PCH_SCC_EP_PCICFGCTR1, (B_PCH_SCC_EP_PCICFGCTR1_ACPI_INT_EN1 | B_PCH_SCC_EP_PCICFGCTR1_PCI_CFG_DIS1)
     }
-	//EIP143364 >>
-	,{
-        0, DEFAULT_PCI_BUS_NUMBER_PCH, PCI_DEVICE_NUMBER_PCH_SCC_SDIO_2, PCI_FUNCTION_NUMBER_PCH_SCC_SDIO,\
-        0, 0, 0, GLOBAL_NVS_OFFSET(SDCardAddr),  GLOBAL_NVS_OFFSET(SDCardLen), \
-        1, 0, 0, GLOBAL_NVS_OFFSET(SDCard1Addr), GLOBAL_NVS_OFFSET(SDCard1Len), \
-        R_PCH_SCC_EP_PCICFGCTR2, (B_PCH_SCC_EP_PCICFGCTR2_ACPI_INT_EN1 | B_PCH_SCC_EP_PCICFGCTR2_PCI_CFG_DIS1)
-    }  
-	//EIP143364 <<
 
 };
 
@@ -55,14 +47,6 @@ LPSS_DEVICE_INFO  mSccDeviceListB0Stepping[] = {
         1, 0, 0, GLOBAL_NVS_OFFSET(eMMC1Addr), GLOBAL_NVS_OFFSET(eMMC1Len), \
         R_PCH_SCC_EP_PCICFGCTR4, (B_PCH_SCC_EP_PCICFGCTR1_ACPI_INT_EN1 | B_PCH_SCC_EP_PCICFGCTR1_PCI_CFG_DIS1)
     }
-	//EIP143364 >>
-	,{
-        0, DEFAULT_PCI_BUS_NUMBER_PCH, PCI_DEVICE_NUMBER_PCH_SCC_SDIO_2, PCI_FUNCTION_NUMBER_PCH_SCC_SDIO,\
-        0, 0, 0, GLOBAL_NVS_OFFSET(SDCardAddr),  GLOBAL_NVS_OFFSET(SDCardLen), \
-        1, 0, 0, GLOBAL_NVS_OFFSET(SDCard1Addr), GLOBAL_NVS_OFFSET(SDCard1Len), \
-        R_PCH_SCC_EP_PCICFGCTR2, (B_PCH_SCC_EP_PCICFGCTR2_ACPI_INT_EN1 | B_PCH_SCC_EP_PCICFGCTR2_PCI_CFG_DIS1)
-    }
-	//EIP143364 <<
 
 };
 
@@ -78,7 +62,6 @@ LPSS_DEVICE_INFO *mSccDeviceList = mSccDeviceListA0Stepping;
 
 EFI_HANDLE          mImageHandle;
 UINT8               EmmcSwSmi = 0; //EIP132398
-UINT8               SdCardSwSmi = 0; //EIP143364 
 EFI_GLOBAL_NVS_AREA_PROTOCOL  *mGlobalNvsArea; //EIP143364 
 
 extern EFI_GUID gEfiEventExitBootServicesGuid;
@@ -396,20 +379,9 @@ OnExitBootServices4LPSS(
   }
   //EIP132398 <<
 
-  if (SdCardSwSmi != 0) {
-    DEBUG ((EFI_D_ERROR, "Generate Sd Card SW SMI = %x\n", SdCardSwSmi));
-    IoWrite8 (SW_SMI_IO_ADDRESS, SdCardSwSmi);
-  }
-
   // EFI boot stays in ACPI mode
   UpdateLpssSccDeviceInfo(mGlobalNvsArea, 0);
 
-  //
-  // Switch GPIO to F0 for SD card 
-  //
-  if (SdCardSwSmi != 0) {
-    MmioAnd32 (IO_BASE_ADDRESS + 0x03A0, 0xFFFFFFFE);
-  }
 }
 //EIP143364 <<
 
@@ -468,16 +440,6 @@ OnReadyToBoot4LPSS(
                     &gEfiEventExitBootServicesGuid,
                     &EventForExitBootServices
                     );
-
-    if (SdCardSwSmi != 0) {
-      // Enable SD Card controller Memory Decode
-      PchMmPci32Or (0, 0, 
-          PCI_DEVICE_NUMBER_PCH_SCC_SDIO_2,
-          PCI_FUNCTION_NUMBER_PCH_SCC_SDIO,
-          R_PCH_SCC_SDIO_STSCMD,
-          0x06
-          );
-    }
 //EIP143364  <<
 
     return;
@@ -573,21 +535,6 @@ Returns:
           );
     }
 	//EIP132398 <<
-
-	//EIP143364 >>
-    if (DxePlatformPchPolicy->SccConfig->SdcardEnabled) {
-      if (DxePlatformPchPolicy->LpssConfig->LpssPciModeEnabled == 0){
-        DEBUG ((EFI_D_ERROR, "SD Card device is enabled!!!\n"));
-        SdCardSwSmi = SD_CARD_SW_SMI;
-        S3BootScriptSaveIoWrite(
-            EfiBootScriptWidthUint8,
-            (UINTN) R_PCH_APM_CNT,
-            1,
-            &SdCardSwSmi
-            );
-      }
-    }
-	//EIP143364 <<
   }
 
 #if 0  
@@ -622,8 +569,7 @@ Returns:
   //
   if ((DxePlatformPchPolicy->LpssConfig->LpssPciModeEnabled == 0) &&
       ((DxePlatformPchPolicy->SccConfig->eMMCEnabled !=0) || 
-       (DxePlatformPchPolicy->SccConfig->eMMC45Enabled !=0) || 
-       (DxePlatformPchPolicy->SccConfig->SdcardEnabled != 0))) { //EIP143364 
+       (DxePlatformPchPolicy->SccConfig->eMMC45Enabled !=0))) {
     // S4682406 - Also register OnReadyToBoot4LPSS callback for legacy boot 
     Status = EfiCreateEventLegacyBootEx (
                TPL_CALLBACK,

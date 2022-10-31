@@ -25,87 +25,6 @@ Intel Corporation.
 #include <Library/ScPolicyInitPei.h>
 #include <Library/MemoryAllocationLib.h>
 #include <Library/DebugLib.h>
-
-//EIP191291
-#if defined(PCIE_ROOT_PORT_DETECT_NON_COMPLAINT) && (PCIE_ROOT_PORT_DETECT_NON_COMPLAINT != 0)
-#include <Ppi/Stall.h>
-#include <Library/SbPolicy.h>
-#define RETRAIN_DELAY      50
-// AMI_OVERRIDE >>> 
-#define R_PCH_PCIE_BNUM                              	   0x18
-#define R_PCH_PCIE_SLT                                     0x1B
-#define PCI_PBUS                                           0x0018        // Primary Bus Number Register
-#define PCIEBRS_DEV                                        0x1c          // South Bridge PCI Express Bridge 1 // Device Number
-#define PCIEBRS_BUS             		      	           0             // South Bridge PCI Express Bridge 1  // Bus Number
-#define PCI_VID             				               0x0000        // Vendor ID Register
-#define R_PCH_PCIE_LCTL                                    0x50
-#define B_PCH_PCIE_LCTL_LD                                 BIT4
-#define B_PCH_PCIE_LCTL_RL                                 BIT5
-#define R_PCH_PCIE_LCTL2                                   0x70
-
-VOID
-SbPcieDetectNonComplaintPcieDevice (
-  IN CONST EFI_PEI_SERVICES       **PeiServices,
-  IN EFI_PEI_STALL_PPI      *StallPpi,
-  IN UINT8                  Index,
-  IN PCH_PCIE_CONFIG        *PcieConfig,
-  IN SB_SETUP_DATA          *SbSetupData
-)
-{
-  if ((PcieConfig->PcieSpeed[Index] == PchPcieAuto)) {
-     DEBUG ((DEBUG_INFO, "Enhance Detect Non-Compliance PCIE Device @B:0|D:1C|F:%x Start .\n", Index));
-
-     // Assign temp bus
-     //DEBUG ((DEBUG_INFO, "Assign temp bus ...\n"));
-     WRITE_PCI16(PCIEBRS_BUS, PCIEBRS_DEV, Index, R_PCH_PCIE_BNUM+1, 0x0101);
-     
-     // Do a dummy Write
-     WRITE_PCI32(1, 0, 0, PCI_VID, 0x12345678);
-
-     if (READ_PCI16(1, 0, 0, PCI_VID) == 0xFFFF) {
-       //DEBUG ((DEBUG_INFO, "Can't find Device... Retrain device first.\n"));
-       WRITE_PCI8(PCIEBRS_BUS, PCIEBRS_DEV, Index, R_PCH_PCIE_LCTL, B_PCH_PCIE_LCTL_LD);
-
-       StallPpi->Stall( PeiServices, StallPpi, (RETRAIN_DELAY * 10) ); //delay 500us
-
-       WRITE_PCI8(PCIEBRS_BUS, PCIEBRS_DEV, Index, R_PCH_PCIE_LCTL, B_PCH_PCIE_LCTL_RL);
-
-       StallPpi->Stall( PeiServices, StallPpi, (RETRAIN_DELAY * 8000) ); //delay 400ms       
-
-       if (READ_PCI16(1, 0, 0, PCI_VID) == 0xFFFF) {
-         //DEBUG ((DEBUG_INFO, "Still can't find Device in Gen2 Speed... Speed is setted in Gen1 and delay 200 ms.\n"));
-         // Set Speed to Gen1
-         RW_PCI8(PCIEBRS_BUS, PCIEBRS_DEV, Index, R_PCH_PCIE_LCTL2, 0x01, 0x03);
-
-         StallPpi->Stall( PeiServices, StallPpi, (RETRAIN_DELAY * 4000) ); //delay 200ms           
-
-         if (READ_PCI16(1, 0, 0, PCI_VID) == 0xFFFF) {
-           //DEBUG ((DEBUG_INFO, "Still can't find Device in Gen1 Speed... Retrain device again !!!\n"));
-           WRITE_PCI8(PCIEBRS_BUS, PCIEBRS_DEV, Index, R_PCH_PCIE_LCTL, B_PCH_PCIE_LCTL_LD);
-
-           StallPpi->Stall( PeiServices, StallPpi, (RETRAIN_DELAY * 10) ); //delay 500us 
-
-           WRITE_PCI8(PCIEBRS_BUS, PCIEBRS_DEV, Index, R_PCH_PCIE_LCTL, B_PCH_PCIE_LCTL_RL);
-
-           StallPpi->Stall( PeiServices, StallPpi, (RETRAIN_DELAY * 8000) ); //delay 400ms 
-
-           if (READ_PCI16(1, 0, 0, PCI_VID) != 0xFFFF) PcieConfig->PcieSpeed[Index] = PchPcieGen1;
-         } else PcieConfig->PcieSpeed[Index] = PchPcieGen1;
-       }
-     }
-
-     // Remove temp bus
-     //DEBUG ((DEBUG_INFO, "Remove temp bus.\n"));
-     WRITE_PCI32(PCIEBRS_BUS, PCIEBRS_DEV, Index, PCI_PBUS, 0xFF000000);
-
-     DEBUG ((DEBUG_INFO, "Enhance Detect Non-Compliance PCIE Device end.\n"));
-  }
-}
-#endif
-// AMI_OVERRIDE <<< 
-//EIP191291
-
-
 //_ModuleEntryPoint
 EFI_STATUS
 EFIAPI
@@ -136,13 +55,6 @@ ScPolicyInitPei(
     UINT32                        SpiHsfsReg;
     UINT32                        SpiFdodReg;
     UINT8                         Index;
-//EIP191291
-#if defined(PCIE_ROOT_PORT_DETECT_NON_COMPLAINT) && (PCIE_ROOT_PORT_DETECT_NON_COMPLAINT != 0)
-    EFI_PEI_STALL_PPI             *StallPpi;
-    
-    Status = (**PeiServices).LocatePpi (PeiServices, &gEfiPeiStallPpiGuid, 0, NULL, (VOID **) &StallPpi);
-#endif
-//EIP191291
 
     PchPlatformPolicyPpiDesc = (EFI_PEI_PPI_DESCRIPTOR *) AllocateZeroPool(sizeof(EFI_PEI_PPI_DESCRIPTOR));
     ASSERT(PchPlatformPolicyPpiDesc != NULL);
@@ -199,15 +111,6 @@ ScPolicyInitPei(
 
   for (Index = 0; Index < PCH_PCIE_MAX_ROOT_PORTS; Index++) {
     PcieConfig->PcieSpeed[Index] = PchPolicyData->PcieRootPortSpeed[Index];
-//EIP191291
-//Enhance Detect Non-Compliance PCIE Device
-#if defined(PCIE_ROOT_PORT_DETECT_NON_COMPLAINT) && (PCIE_ROOT_PORT_DETECT_NON_COMPLAINT != 0)
-       if(!EFI_ERROR(Status)){
-          if ((PchPolicyData->PcieRPDetectNonComplaint[Index] == 1) && (PchPolicyData->PcieRootPortEn[0] != 0))
-             SbPcieDetectNonComplaintPcieDevice(PeiServices, StallPpi, Index, PcieConfig, PchPolicyData);    
-        }
-#endif
-//EIP191291
   }
 
 

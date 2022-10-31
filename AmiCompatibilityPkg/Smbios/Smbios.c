@@ -1,7 +1,7 @@
 //**********************************************************************//
 //**********************************************************************//
 //**                                                                  **//
-//**        (C)Copyright 1985-2015, American Megatrends, Inc.         **//
+//**        (C)Copyright 1985-2013, American Megatrends, Inc.         **//
 //**                                                                  **//
 //**                       All Rights Reserved.                       **//
 //**                                                                  **//
@@ -12,70 +12,58 @@
 //**********************************************************************//
 //**********************************************************************//
 
-//**********************************************************************
-/** @file Smbios.c
-    Smbios Driver file.
-
-**/
-//**********************************************************************
+//**********************************************************************//
+// $Header: /Alaska/SOURCE/Modules/SMBIOS/SMBios.c 138   9/19/12 1:32p Davidd $
+//
+// $Revision: 138 $
+//
+// $Date: 9/19/12 1:32p $
+//**********************************************************************//
+//**********************************************************************//
 
 #include <AmiDxeLib.h>
 #include <Token.h>
 #include <AmiHobs.h>
-#include <TimeStamp.h>
 #include <Protocol/AmiSmbios.h>
 #include <Protocol/SmbiosDynamicData.h>
 #include <Protocol/FirmwareVolume2.h>
 
 #if ( defined(CSM_SUPPORT) && (CSM_SUPPORT != 0) )
-#include <Protocol/LegacyBios.h>
-#include <Protocol/LegacyBiosExt.h>
-#include <Protocol/LegacyRegion2.h>
+#include <Protocol\LegacyBios.h>
+#include <Protocol\LegacyBiosExt.h>
+#include <Protocol\LegacyRegion2.h>
 EFI_LEGACY_REGION2_PROTOCOL         *LegacyRegionProtocol = NULL;
 EFI_LEGACY_BIOS_PROTOCOL	        *LegacyBiosProtocol = NULL;
 LEGACY16_TO_EFI_DATA_TABLE_STRUC    *Legacy16Data;
 EFI_STATUS Install16bitPnPSmbiosFunctions();
-#endif										// CSM_SUPPORT
+#endif
 
 #if (defined(SmbiosDMIEdit_SUPPORT) && (SmbiosDMIEdit_SUPPORT !=0))
 #include "SmbiosDmiEdit/SmbiosDmiEdit.h"
 #if !defined(SMBIOS_DMIEDIT_DATA_LOC) || SMBIOS_DMIEDIT_DATA_LOC != 2
-#include <Protocol/SmbiosGetFlashDataProtocol.h>
-#endif										// SMBIOS_DMIEDIT_DATA_LOC
-#endif										// SmbiosDMIEdit_SUPPORT
+#include <Protocol\SmbiosGetFlashDataProtocol.h>
+#endif
+#endif
 
 #if defined iAMT_SUPPORT && iAMT_SUPPORT == 1
 #define AMT_SMBIOS_GROUP \
     { 0xed27920d, 0x4422, 0x4b4d, { 0xa4, 0xa3, 0x4d, 0xc2, 0xb3, 0xe5, 0x46, 0x3b } }
-#endif										// iAMT_SUPPORT
+#endif
 
 // Added for TPM
 #define SMBIOS_EFI_TABLE_GROUP \
     { 0xb3dae700, 0x2a77, 0x4ea4, 0xaf, 0x79, 0x32, 0x97, 0xb4, 0x84, 0xbe, 0x61 }
 
-EFI_EVENT   SmbiosPointerEvent;
-EFI_GUID    EfiSmbiosPointerGuid  = AMI_SMBIOS_POINTER_GUID;
-
-#if (SMBIOS_STATIC_DATA_SUPPORT == 0) && (SMBIOS_STATIC_DATA_DT_SUPPORT == 0)
-// Assumptions when (SMBIOS_STATIC_DATA_SUPPORT == 0) && (SMBIOS_STATIC_DATA_DT_SUPPORT == 0)
-#define NUMBER_OF_SYSTEM_CHASSIS    1
-#define	ELEMENT_COUNT_1             0
-#define	ELEMENT_LEN_1               0
-#define NUMBER_OF_BASEBOARDS        1
-#define	NUMBER_OF_SYSTEM_CHASSIS    1
-#define	NUMBER_OF_POWER_SUPPLY      1
-#endif										// SMBIOS_STATIC_DATA_SUPPORT
+#if (SMBIOS_STATIC_DATA_SUPPORT == 0)
+#define ELEMENT_COUNT 0
+#define ELEMENT_LEN 0
+#endif
 
 extern  EFI_BOOT_SERVICES   *pBS;
 
-#if (defined(SB_WAKEUP_TYPE_FN) && (SB_WAKEUP_TYPE_FN == 1))
-extern VOID     NbRuntimeShadowRamWrite(IN BOOLEAN Enable);
-extern UINT8	getWakeupTypeForSmbios(VOID);
-#endif										// SB_WAKEUP_TYPE_FN
-
 #if defined iAMT_SUPPORT && iAMT_SUPPORT == 1
 VOID AmtNotifyEventFunction(IN EFI_EVENT Event, IN VOID *Context) {}
-#endif										// iAMT_SUPPORT
+#endif
 
 // Added for TPM
 VOID NotifyEventFunction(IN EFI_EVENT Event, IN VOID *Context) {}
@@ -83,16 +71,13 @@ VOID NotifyEventFunction(IN EFI_EVENT Event, IN VOID *Context) {}
 UINT8       MemType = 0;              // 0 = Not supported
                                       // 1 = DDR2
                                       // 2 = DDR3
-									  // 3 = DDR4
 BOOLEAN     SmbiosTableAtE000 = FALSE;
-BOOLEAN     VersionUpdated = FALSE;
-BOOLEAN     ReleaseDateUpdated = FALSE;
 
 SMBIOS_NVRAM_TYPE4      NvramType4;
 
 #ifdef FLASH_PART_STRING_LENGTH
 VOID GetFlashPartInfomation(UINT8 *pBlockAddress, UINT8 *Buffer);
-#endif										// FLASH_PART_STRING_LENGTH
+#endif
 
 BOOLEAN
 FindStructureType(
@@ -120,7 +105,6 @@ STRING_TABLE    StringType_1[] =   {{0x04, 1, 1},
                                     {0xff, 0, 0},
                                    };
 
-#if (TYPE2_STRUCTURE == 1)
 STRING_TABLE    StringType_2[] =   {{0x04, 1, 1},
                                     {0x05, 2, 2},
                                     {0x06, 3, 3},
@@ -129,11 +113,7 @@ STRING_TABLE    StringType_2[] =   {{0x04, 1, 1},
                                     {0x0a, 6, 6},
                                     {0xff, 0, 0},
                                    };
-#else
-STRING_TABLE    StringType_2[] =   {{0xff, 0, 0}};
-#endif													// TYPE2_STRUCTURE
 
-#if (TYPE3_STRUCTURE == 1)
 STRING_TABLE    StringType_3[NUMBER_OF_SYSTEM_CHASSIS][6] =
                                   {{{0x04, 1, 1},
                                     {0x06, 2, 2},
@@ -151,7 +131,7 @@ STRING_TABLE    StringType_3[NUMBER_OF_SYSTEM_CHASSIS][6] =
                                     {0x15 + (ELEMENT_COUNT_2 * ELEMENT_LEN_2), 5, 5},
                                     {0xff, 0, 0},
                                    },
-#endif													// NUMBER_OF_SYSTEM_CHASSIS
+#endif
 #if NUMBER_OF_SYSTEM_CHASSIS > 2
                                    {
                                     {0x04, 1, 1},
@@ -161,7 +141,7 @@ STRING_TABLE    StringType_3[NUMBER_OF_SYSTEM_CHASSIS][6] =
                                     {0x15 + (ELEMENT_COUNT_3 * ELEMENT_LEN_3), 5, 5},
                                     {0xff, 0, 0},
                                    },
-#endif													// NUMBER_OF_SYSTEM_CHASSIS
+#endif
 #if NUMBER_OF_SYSTEM_CHASSIS > 3
                                    {
                                     {0x04, 1, 1},
@@ -171,7 +151,7 @@ STRING_TABLE    StringType_3[NUMBER_OF_SYSTEM_CHASSIS][6] =
                                     {0x15 + (ELEMENT_COUNT_4 * ELEMENT_LEN_4), 5, 5},
                                     {0xff, 0, 0},
                                    },
-#endif													// NUMBER_OF_SYSTEM_CHASSIS
+#endif
 #if NUMBER_OF_SYSTEM_CHASSIS > 4
                                    {
                                     {0x04, 1, 1},
@@ -181,11 +161,8 @@ STRING_TABLE    StringType_3[NUMBER_OF_SYSTEM_CHASSIS][6] =
                                     {0x15 + (ELEMENT_COUNT_5 * ELEMENT_LEN_5), 5, 5},
                                     {0xff, 0, 0},
                                    },
-#endif													// NUMBER_OF_SYSTEM_CHASSIS
+#endif
                                   };                    // StringType_3
-#else
-STRING_TABLE    StringType_3[] =   {{0xff, 0, 0}};
-#endif                                                  // TYPE3_STRUCTURE
 
 STRING_TABLE    StringType_4[] =   {{0x04, 1, 1},
                                     {0x07, 2, 2},
@@ -195,60 +172,6 @@ STRING_TABLE    StringType_4[] =   {{0x04, 1, 1},
                                     {0x22, 6, 6},
                                     {0xff, 0, 0},
                                    };
-
-STRING_TABLE    StringType_5[] =   {{0xff, 0, 0}};
-
-STRING_TABLE    StringType_6[] =   {{0x04, 1, 1},
-                                    {0xff, 0, 0},
-                                   };
-
-STRING_TABLE    StringType_7[] =   {{0x04, 1, 1},
-                                    {0xff, 0, 0},
-                                   };
-
-STRING_TABLE    StringType_8[] =   {{0x04, 1, 1},
-                                    {0x06, 2, 2},
-                                    {0xff, 0, 0},
-                                   };
-
-STRING_TABLE    StringType_9[] =   {{0x04, 1, 1},
-                                    {0xff, 0, 0},
-                                   };
-
-STRING_TABLE    StringType_10[] =  {{0xff, 0, 0}};
-
-STRING_TABLE    StringType_11[] =  {{0xff, 0, 0}};
-
-STRING_TABLE    StringType_12[] =  {{0xff, 0, 0}};
-
-STRING_TABLE    StringType_13[] =  {{0x15, 1, 1},
-                                    {0xff, 0, 0},
-                                   };
-
-STRING_TABLE    StringType_14[] =  {{0x04, 1, 1},
-                                    {0xff, 0, 0},
-                                   };
-
-STRING_TABLE    StringType_15[] =  {{0xff, 0, 0}};
-
-STRING_TABLE    StringType_16[] =  {{0xff, 0, 0}};
-
-STRING_TABLE    StringType_17[] =  {{0x10, 1, 1},
-                                    {0x11, 2, 2},
-                                    {0x17, 3, 3},
-                                    {0x18, 4, 4},
-                                    {0x19, 5, 5},
-                                    {0x1a, 6, 6},
-                                    {0xff, 0, 0},
-                                   };
-
-STRING_TABLE    StringType_18[] =  {{0xff, 0, 0}};
-
-STRING_TABLE    StringType_19[] =  {{0xff, 0, 0}};
-
-STRING_TABLE    StringType_20[] =  {{0xff, 0, 0}};
-
-STRING_TABLE    StringType_21[] =  {{0xff, 0, 0}};
 
 STRING_TABLE    StringType_22[] =  {{0x04, 1, 1},
                                     {0x05, 2, 2},
@@ -260,52 +183,6 @@ STRING_TABLE    StringType_22[] =  {{0x04, 1, 1},
                                     {0xff, 0, 0},
                                    };
 
-STRING_TABLE    StringType_23[] =  {{0xff, 0, 0}};
-
-STRING_TABLE    StringType_24[] =  {{0xff, 0, 0}};
-
-STRING_TABLE    StringType_25[] =  {{0xff, 0, 0}};
-
-STRING_TABLE    StringType_26[] =  {{0x04, 1, 1},
-                                    {0xff, 0, 0},
-                                   };
-
-STRING_TABLE    StringType_27[] =  {{0x0e, 1, 1},
-                                    {0xff, 0, 0},
-                                   };
-
-STRING_TABLE    StringType_28[] =  {{0x04, 1, 1},
-                                    {0xff, 0, 0},
-                                   };
-
-STRING_TABLE    StringType_29[] =  {{0x04, 1, 1},
-                                    {0xff, 0, 0},
-                                   };
-
-STRING_TABLE    StringType_30[] =  {{0x04, 1, 1},
-                                    {0xff, 0, 0},
-                                   };
-
-STRING_TABLE    StringType_31[] =  {{0xff, 0, 0}};
-
-STRING_TABLE    StringType_32[] =  {{0xff, 0, 0}};
-
-STRING_TABLE    StringType_33[] =  {{0xff, 0, 0}};
-
-STRING_TABLE    StringType_34[] =  {{0x04, 1, 1},
-                                    {0xff, 0, 0},
-                                   };
-
-STRING_TABLE    StringType_35[] =  {{0x04, 1, 1},
-                                    {0xff, 0, 0},
-                                   };
-
-STRING_TABLE    StringType_36[] =  {{0xff, 0, 0}};
-
-STRING_TABLE    StringType_37[] =  {{0xff, 0, 0}};
-
-STRING_TABLE    StringType_38[] =  {{0xff, 0, 0}};
-
 STRING_TABLE    StringType_39[] =  {{0x05, 1, 1},
                                     {0x06, 2, 2},
                                     {0x07, 3, 3},
@@ -316,14 +193,6 @@ STRING_TABLE    StringType_39[] =  {{0x05, 1, 1},
                                     {0xff, 0, 0},
                                    };
 
-STRING_TABLE    StringType_40[] =  {{0xff, 0, 0}};
-
-STRING_TABLE    StringType_41[] =  {{0x04, 1, 1},
-                                    {0xff, 0, 0},
-                                   };
-
-STRING_TABLE    StringType_42[] =  {{0xff, 0, 0}};
-
 //
 // String table
 //
@@ -332,44 +201,8 @@ VOID*    StringTable[] = {&StringType_0,        // 0
                           &StringType_2,        // 2
                           &StringType_3,        // 3
                           &StringType_4,        // 4
-                          &StringType_5,        // 5
-                          &StringType_6,        // 6
-                          &StringType_7,        // 7
-                          &StringType_8,        // 8
-                          &StringType_9,        // 9
-                          &StringType_10,       // 10
-                          &StringType_11,       // 11
-                          &StringType_12,       // 12
-                          &StringType_13,       // 13
-                          &StringType_14,       // 14
-                          &StringType_15,       // 15
-                          &StringType_16,       // 16
-                          &StringType_17,       // 17
-                          &StringType_18,       // 18
-                          &StringType_19,       // 19
-                          &StringType_20,       // 20
-                          &StringType_21,       // 21
-                          &StringType_22,       // 22
-                          &StringType_23,       // 23
-                          &StringType_24,       // 24
-                          &StringType_25,       // 25
-                          &StringType_26,       // 26
-                          &StringType_27,       // 27
-                          &StringType_28,       // 28
-                          &StringType_29,       // 29
-                          &StringType_30,       // 30
-                          &StringType_31,       // 31
-                          &StringType_32,       // 32
-                          &StringType_33,       // 33
-                          &StringType_34,       // 34
-                          &StringType_35,       // 35
-                          &StringType_36,       // 36
-                          &StringType_37,       // 37
-                          &StringType_38,       // 38
-                          &StringType_39,       // 39
-                          &StringType_40,       // 40
-                          &StringType_41,       // 41
-                          &StringType_42,       // 42
+                          &StringType_22,       // 5
+                          &StringType_39,       // 6
                          };
 
 typedef struct _JEDEC_MF_ID {
@@ -377,37 +210,38 @@ typedef struct _JEDEC_MF_ID {
     CHAR8           *ManufacturerString;
 } JEDEC_MF_ID;
 
-JEDEC_MF_ID Bank0Table [] = {{ 0x01, "AMD" },
-                             { 0x04, "Fujitsu" },
+JEDEC_MF_ID Bank0Table [] = {{ 0x04, "Fujitsu" },
                              { 0x07, "Hitachi" },
                              { 0x89, "Intel" },
                              { 0x10, "NEC" },
-                             { 0x97, "Texas Instrument" },
-                             { 0x98, "Toshiba" },
                              { 0x1c, "Mitsubishi" },
                              { 0x1f, "Atmel" },
-                             { 0x20, "STMicroelectronics" },
+                             { 0x20, "SGS/Thomson" },
                              { 0xa4, "IBM" },
-                             { 0x2c, "Micron Technology" },
-                             { 0xad, "SK Hynix" },
+                             { 0x2c, "Micron" },
+                             { 0xad, "Hynix Semiconductor" },
                              { 0xb0, "Sharp" },
-                             { 0xb3, "IDT" },
-                             { 0x3e, "Oracle" },
                              { 0xbf, "SST" },
-                             { 0x40, "ProMos/Mosel" },
+                             { 0x40, "Mosel Vitelic" },
+                             { 0x3e, "Sun Micro" },
+                             { 0x62, "Sanyo" },
+                             { 0x89, "Intel" },
+                             { 0x97, "Texas Instrume" },
+                             { 0x98, "Toshiba" },
+                             { 0xa4, "IBM" },
+                             { 0xad, "Hyundai" },
+                             { 0xb3, "IDT" },
                              { 0xc1, "Infineon" },
                              { 0xc2, "Macronix" },
                              { 0x45, "SanDisk" },
                              { 0xce, "Samsung" },
                              { 0xda, "Winbond" },
                              { 0xe0, "LG Semi" },
-                             { 0x62, "Sanyo" },
                              { 0xff, "Undefined" }
 };
-JEDEC_MF_ID Bank1Table [] = {{ 0x98, "Kingston" },
-                             { 0xba, "PNY" },
+JEDEC_MF_ID Bank1Table [] = {{ 0x7a, "Apacer" },
                              { 0x4f, "Transcend" },
-                             { 0x7a, "Apacer" },
+                             { 0x98, "Kingston" },
                              { 0xff, "Undefined" }
 };
 JEDEC_MF_ID Bank2Table [] = {{ 0x9e, "Corsair" },
@@ -415,26 +249,17 @@ JEDEC_MF_ID Bank2Table [] = {{ 0x9e, "Corsair" },
                              { 0xff, "Undefined" }
 };
 JEDEC_MF_ID Bank3Table [] = {{ 0x0b, "Nanya" },
-                             { 0x94, "Mushkin" },
                              { 0x25, "Kingmax" },
                              { 0xff, "Undefined" }
 };
-JEDEC_MF_ID Bank4Table [] = {{ 0xb0, "OCZ" },
-                             { 0xcb, "A-DATA" },
-                             { 0xcd, "G Skill" },
-                             { 0xef, "Team" },
+JEDEC_MF_ID Bank4Table [] = {{ 0xcb, "A-DATA" },
                              { 0xff, "Undefined" }
 };
-JEDEC_MF_ID Bank5Table [] = {{ 0x02, "Patriot" },
-                             { 0x9b, "Crucial" },
-                             { 0x51, "Qimonda" },
+JEDEC_MF_ID Bank5Table [] = {{ 0x51, "Qimonda" },
                              { 0x57, "AENEON" },
-                             { 0xf7, "Avant" },
                              { 0xff, "Undefined" }
 };
-JEDEC_MF_ID Bank6Table [] = {{ 0x34, "Super Talent" },
-                             { 0xd3, "Silicon Power" },
-                             { 0xff, "Undefined" }
+JEDEC_MF_ID Bank6Table [] = {{ 0xff, "Undefined" }
 };
 JEDEC_MF_ID Bank7Table [] = {{ 0xff, "Undefined" }
 };
@@ -451,21 +276,12 @@ JEDEC_MF_ID *ManufacturerJedecIdBankTable [] = {
                                                 Bank7Table
 };
 
-typedef struct  {
-	UINT8		NumContCode;
-	UINT8       ModuleManufacturer;
-	UINT8       *Manufacturer;
-} JEDEC_DATA;
-
-JEDEC_DATA	ManufacturerTable[] = MANUFACTURER_ID_CODE;
-
-#if SMBIOS_2X_SUPPORT
 SMBIOS_TABLE_ENTRY_POINT	SmbiosEntryPointTable = {
 			'_', 'S', 'M', '_',
 			0,												// EPS Checksum
 			0x1f,											// Entry Point Length
-			SMBIOS_2X_MAJOR_VERSION,						// SMBIOS Major Version
-			SMBIOS_2X_MINOR_VERSION,						// SMBIOS Minor Version
+			0x02,											// SMBIOS Major Version
+			0x08,											// SMBIOS Minor Version
 			0x100,										    // Maximum Structure Size
 			0,												// Entry Point Revision
 			0, 0, 0, 0, 0,						            // Formatted Area
@@ -474,35 +290,17 @@ SMBIOS_TABLE_ENTRY_POINT	SmbiosEntryPointTable = {
 			0,												// Structure Table Length
 			0,												// Structure Table Address
 			0x10,											// Number of SMBIOS Stuctures
-			(SMBIOS_2X_MAJOR_VERSION << 4)|SMBIOS_2X_MINOR_VERSION  // SMBIOS BCD Revision};
+			0x27                                            // SMBIOS BCD Revision};
             };
 
 SMBIOS_TABLE_ENTRY_POINT    	*pSmbiosTableEntryPoint = &SmbiosEntryPointTable;
-#endif
-
-#if SMBIOS_3X_SUPPORT
-SMBIOS_3X_TABLE_ENTRY_POINT	SmbiosV3EntryPointTable = {
-			'_', 'S', 'M', '3', '_',
-			0,												// EPS Checksum
-			sizeof(SMBIOS_3X_TABLE_ENTRY_POINT),            // Entry Point Length
-			SMBIOS_3X_MAJOR_VERSION,						// SMBIOS Major Version
-			SMBIOS_3X_MINOR_VERSION,						// SMBIOS Minor Version
-			0x00,										    // SMBIOS Docrev
-			0x01,											// Entry Point Revision 3.0
-			0,                                              // Reserved
-			0x00000000,                                     // Structure table maximum size
-			0x0000000000000000,                             // Structure table address
-            };
-
-SMBIOS_3X_TABLE_ENTRY_POINT    	*pSmbiosV3TableEntryPoint = &SmbiosV3EntryPointTable;
-#endif
-
-UINT8                       	*SmbiosDataTable = NULL;
 UINT8                       	*ScratchBufferPtr = NULL;
-UINT16                      	MaximumTableSize = 0x4000;
+UINT8                       	*SmbiosDataTable = NULL;
+UINT16                      	MaximumTableSize;
 UINT16                      	LastHandle;
 EFI_SMBIOS_BOARD_PROTOCOL   	*gSmbiosBoardProtocol = NULL;
 BOOLEAN                         UpdateCpuStructure;
+BOOLEAN							TableRelocated = FALSE;
 
 #if AMI_SMBIOS_PROTOCOL_ENABLE
 AMI_SMBIOS_PROTOCOL   AmiSmbiosProtocol = {
@@ -516,21 +314,29 @@ AMI_SMBIOS_PROTOCOL   AmiSmbiosProtocol = {
                                         ReadStructureByHandle,
                                         ReadStructureByType,
                                         WriteStructureByHandle,
-                                        UpdateSmbiosTableHeader,
-                                        AddStructureByIndex
+                                        UpdateSmbiosTableHeader
                                        };
 #endif                                          // AMI_SMBIOS_PROTOCOL_ENABLE
 
-/**
-    Returns the checksum of "length" bytes starting from the
-    "*ChecksumSrc"
-
-    @param ChecksumSrc  pointer to buffer to be checksumed
-    @param length       size of buffer
-
-    @return Checksum value
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   SmbiosCheckSum
+//
+// Description: Returns the checksum of "length" bytes starting from the
+//              "*ChecksumSrc"
+//
+// Input:       IN UINT8 *ChecksumSrc
+//              IN UINT8 length
+//
+// Output:      UINT8 - Checksum value
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 UINT8
 SmbiosCheckSum(
     IN UINT8    *ChecksumSrc,
@@ -546,15 +352,24 @@ SmbiosCheckSum(
     return (0 - Checksum);
 }
 
-/**
-    Returns the length of the structure pointed by BufferStart
-    in bytes
-
-    @param BufferStart  pointer to buffer
-
-    @return Structure size
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   GetStructureLength
+//
+// Description: Returns the length of the structure pointed by BufferStart
+//              in bytes
+//
+// Input:       IN UINT8 *BufferStart
+//
+// Output:      UINT16 - Structure Size
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 UINT16
 GetStructureLength(
     IN UINT8    *BufferStart
@@ -571,15 +386,24 @@ GetStructureLength(
     return (UINT16)(BufferEnd + 2 - BufferStart);   // +2 for double zero terminator
 }
 
-/**
-    Returns the instance of the input structure type and its handle
-
-    @param Type     structure type
-    @param Handle   structure handle
-
-    @return Instance number (1-based) if found, or 0 if not found
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   GetInstanceByTypeHandle
+//
+// Description: Returns the instance of the input structure type and its handle
+//
+// Input:       IN UINT8    Type
+//              IN UINT16   Handle
+//
+// Output:      Instance number (1-based) if found, or 0 if not found
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 UINT8
 GetInstanceByTypeHandle(
     IN UINT8    Type,
@@ -604,29 +428,38 @@ GetInstanceByTypeHandle(
     return 0;					// Not found
 }
 
-/**
-    Find structure type starting from memory location pointed by
-    Buffer
-
-    @param Buffer
-    @param StructureFoundPtr
-    @param SearchType
-    @param Instance
-
-
-    @retval TRUE Structure found
-    @retval FALSE Structure not found
-
-    @remark
-        @li If SearchType is found:\n
-            UINT8   **Buffer - Points to the next structure\n
-            UINT8   **StructureFoundPtr - Points to the structure that was found\n
-
-        @li If SearchType is not found:\n
-            UINT8   **Buffer - No change\n
-            UINT8   **StructureFoundPtr = NULL
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   FindStructureType
+//
+// Description: Find structure type starting from memory location pointed by
+//              Buffer
+//
+// Input:       IN OUT  UINT8   **Buffer
+//              IN OUT  UINT8   **StructureFoundPtr
+//              IN      UINT8   SearchType
+//              IN      UINT8   Instance
+//
+// Output:
+//              BOOLEAN
+//                  TRUE  - Structure found
+//                  FALSE - Structure not found
+//
+//              If SearchType is found:
+//                UINT8   **Buffer - Points to the next structure
+//                UINT8   **StructureFoundPtr - Points to the structure
+//                                              that was found
+//              If SearchType is not found:
+//                UINT8   **Buffer - No change
+//                UINT8   **StructureFoundPtr = NULL
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 BOOLEAN
 FindStructureType(
     IN OUT UINT8    **Buffer,
@@ -659,22 +492,31 @@ FindStructureType(
     return FindStatus;
 }
 
-/**
-    Find structure handle starting from memory location pointed
-    by Buffer
-
-    @param Buffer
-    @param Handle
-
-
-    @retval TRUE Structure found
-    @retval FALSE Structure not found
-
-    @remark
-        If SearchType is found:\n
-        UINT8   **Buffer - Points to the structure that was found
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   FindStructureHandle
+//
+// Description: Find structure handle starting from memory location pointed
+//              by Buffer
+//
+// Input:       IN OUT  UINT8   **Buffer
+//              IN      UINT16  Handle
+//
+// Output:
+//              BOOLEAN
+//                  TRUE -  Structure found
+//                  FALSE - Structure not found
+//
+//              If SearchType is found:
+//                UINT8   **Buffer - Points to the structure that was found
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 BOOLEAN
 FindStructureHandle(
     IN OUT UINT8    **Buffer,
@@ -690,15 +532,24 @@ FindStructureHandle(
     return TRUE;
 }
 
-/**
-    Updates Structure Type 127 handle and sets global variable
-    LastHandle to the last structure handle.
-
-    @param Buffer
-
-    @return Update global variable LastHandle
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   UpdateType127Handle
+//
+// Description: Updates Structure Type 127 handle and sets global variable
+//              LastHandle to the last structure handle.
+//
+// Input:       IN UINT8   *Buffer
+//
+// Output:      Sets global variable LastHandle
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID
 UpdateType127Handle(
     IN UINT8    *Buffer
@@ -715,359 +566,24 @@ UpdateType127Handle(
     LastHandle = Handle;
 }
 
-/**
-    Fix up links among structures
-
-    @param  *Buffer
-
-    @return None
-
-**/
-VOID
-FixupHandles(
-    IN UINT8    *Buffer
-)
-{
-    UINT8               i;
-    UINT8               *BufferPtr;
-    UINT8               *SrcPtr;
-    UINT8               *DestPtr;
-    UINT8               LastSrcType = 0;
-    UINT8               LastSrcInstance = 0;
-    UINT8               LastDestType = 0;
-    UINT8               LastDestInstance = 0;
-    BOOLEAN             SrcFound;
-    BOOLEAN             DestFound;
-    BOOLEAN             FindStatus;
-    HANDLE_FIXUP_TABLE  *HandleTblPtr;
-    HANDLE_FIXUP_TABLE  HandleFixupTable[] = {
-#if TYPE2_STRUCTURE && TYPE3_STRUCTURE
-                                              {2,  1, 0x0b, 3,  1},
-#endif
-#if TYPE4_STRUCTURE
-                                              {4,  1, 0x1a, 7,  1},
-                                              {4,  1, 0x1c, 7,  2},
-                                              {4,  1, 0x1e, 7,  3},
-#endif
-#if TYPE5_STRUCTURE
-                                              {5,  1, 0x0f, 6,  1},
-#if (NUMBER_OF_MEM_MODULE > 1)
-                                              {5,  1, 0x11, 6,  2},
-#endif
-#if (NUMBER_OF_MEM_MODULE > 2)
-                                              {5,  1, 0x13, 6,  3},
-#endif
-#if (NUMBER_OF_MEM_MODULE > 3)
-                                              {5,  1, 0x15, 6,  4},
-#endif
-#if (NUMBER_OF_MEM_MODULE > 4)
-                                              {5,  1, 0x17, 6,  5},
-#endif
-#if (NUMBER_OF_MEM_MODULE > 5)
-                                              {5,  1, 0x19, 6,  6},
-#endif
-#if (NUMBER_OF_MEM_MODULE > 6)
-                                              {5,  1, 0x1b, 6,  7},
-#endif
-#if (NUMBER_OF_MEM_MODULE > 7)
-                                              {5,  1, 0x1d, 6,  8},
-#endif
-#endif      // TYPE5_STRUCTURE
-#if TYPE16_STRUCTURE
-// ===== TYPE17_STRUCTURE =====
-                                              {17, 1, 0x04, 16, 1},
-#if (A1_MEMORY_SOCKETS > 1)
-                                              {17, 2, 0x04, 16, 1},
-#endif
-#if (A1_MEMORY_SOCKETS > 2)
-                                              {17, 3, 0x04, 16, 1},
-#endif
-#if (A1_MEMORY_SOCKETS > 3)
-                                              {17, 4, 0x04, 16, 1},
-#endif
-#if (A1_MEMORY_SOCKETS > 4)
-                                              {17, 5, 0x04, 16, 1},
-#endif
-#if (A1_MEMORY_SOCKETS > 5)
-                                              {17, 6, 0x04, 16, 1},
-#endif
-#if (A1_MEMORY_SOCKETS > 6)
-                                              {17, 7, 0x04, 16, 1},
-#endif
-#if (A1_MEMORY_SOCKETS > 7)
-                                              {17, 8, 0x04, 16, 1},
-#endif
-// ===== TYPE19_STRUCTURE =====
-                                              {19, 1, 0x0c, 16, 1},
-// ===== TYPE20_STRUCTURE =====
-#if TYPE20_STRUCTURE
-                                              {20, 1, 0x0c, 16, 1},
-                                              {20, 1, 0x0e, 19, 1},
-#if (A1_MEMORY_SOCKETS > 1)
-                                              {20, 2, 0x0e, 19, 1},
-                                              {20, 2, 0x0c, 16, 1},
-#endif
-#if (A1_MEMORY_SOCKETS > 2)
-                                              {20, 3, 0x0c, 16, 1},
-                                              {20, 3, 0x0e, 19, 1},
-#endif
-#if (A1_MEMORY_SOCKETS > 3)
-                                              {20, 4, 0x0e, 19, 1},
-                                              {20, 4, 0x0c, 16, 1},
-#endif
-#if (A1_MEMORY_SOCKETS > 4)
-                                              {20, 5, 0x0c, 16, 1},
-                                              {20, 5, 0x0e, 19, 1},
-#endif
-#if (A1_MEMORY_SOCKETS > 5)
-                                              {20, 6, 0x0e, 19, 1},
-                                              {20, 6, 0x0c, 16, 1},
-#endif
-#if (A1_MEMORY_SOCKETS > 6)
-                                              {20, 7, 0x0c, 16, 1},
-                                              {20, 7, 0x0e, 19, 1},
-#endif
-#if (A1_MEMORY_SOCKETS > 7)
-                                              {20, 8, 0x0e, 19, 1},
-                                              {20, 8, 0x0c, 16, 1},
-#endif
-#endif      // TYPE20_STRUCTURE
-#endif      // TYPE16_STRUCTURE
-// ===== TYPE26_STRUCTURE =====
-#if TYPE26_STRUCTURE
-#if (VOLT_PROBE_MGNT_DEV_1 != 0)
-                                              {35, VOLT_PROBE_MGNT_DEV_1, 0x07, 26, 1},
-#endif      // VOLT_PROBE_MGNT_DEV_1
-#if (VOLT_PROBE_SYS_PWR_SUPPLY_1 != 0)
-                                              {39, VOLT_PROBE_SYS_PWR_SUPPLY_1, 0x10, 26, 1},
-#endif      // VOLT_PROBE_SYS_PWR_SUPPLY_1
-#if (NUMBER_OF_VOLTAGE_PROBE > 1)
-#if (VOLT_PROBE_MGNT_DEV_2 != 0)
-                                              {35, VOLT_PROBE_MGNT_DEV_2, 0x07, 26, 2},
-#endif      // VOLT_PROBE_MGNT_DEV_2
-#if (VOLT_PROBE_SYS_PWR_SUPPLY_2 != 0)
-                                              {39, VOLT_PROBE_SYS_PWR_SUPPLY_2, 0x10, 26, 2},
-#endif      // VOLT_PROBE_SYS_PWR_SUPPLY_2
-#endif      // (NUMBER_OF_VOLTAGE_PROBE > 1)
-#if (NUMBER_OF_VOLTAGE_PROBE > 2)
-#if (VOLT_PROBE_MGNT_DEV_3 != 0)
-                                              {35, VOLT_PROBE_MGNT_DEV_3, 0x07, 26, 3},
-#endif      // VOLT_PROBE_MGNT_DEV_3
-#if (VOLT_PROBE_SYS_PWR_SUPPLY_3 != 0)
-                                              {39, VOLT_PROBE_SYS_PWR_SUPPLY_3, 0x10, 26, 3},
-#endif      // VOLT_PROBE_SYS_PWR_SUPPLY_3
-#endif      // (NUMBER_OF_VOLTAGE_PROBE > 2)
-#if (NUMBER_OF_VOLTAGE_PROBE > 3)
-#if (VOLT_PROBE_MGNT_DEV_4 != 0)
-                                              {35, VOLT_PROBE_MGNT_DEV_4, 0x07, 26, 4},
-#endif      // VOLT_PROBE_MGNT_DEV_4
-#if (VOLT_PROBE_SYS_PWR_SUPPLY_4 != 0)
-                                              {39, VOLT_PROBE_SYS_PWR_SUPPLY_4, 0x10, 26, 4},
-#endif      // VOLT_PROBE_SYS_PWR_SUPPLY_4
-#endif      // (NUMBER_OF_VOLTAGE_PROBE > 3)
-#if (NUMBER_OF_VOLTAGE_PROBE > 4)
-#if (VOLT_PROBE_MGNT_DEV_5 != 0)
-                                              {35, VOLT_PROBE_MGNT_DEV_5, 0x07, 26, 5},
-#endif      // VOLT_PROBE_MGNT_DEV_5
-#if (VOLT_PROBE_SYS_PWR_SUPPLY_5 != 0)
-                                              {39, VOLT_PROBE_SYS_PWR_SUPPLY_5, 0x10, 26, 5},
-#endif      // VOLT_PROBE_SYS_PWR_SUPPLY_4
-#endif      // (NUMBER_OF_VOLTAGE_PROBE > 4)
-#endif      // TYPE26_STRUCTURE
-// ===== TYPE27_STRUCTURE =====
-#if TYPE27_STRUCTURE
-#if (COOLING_MGNT_DEV_1 != 0)
-                                            {35, COOLING_MGNT_DEV_1, 0x07, 27, 1},
-#endif      // COOLING_MGNT_DEV_1
-#if (COOLING_SYS_PWR_SUPPLY_1 != 0)
-                                            {39, COOLING_SYS_PWR_SUPPLY_1, 0x12, 27, 1},
-#endif      // COOLING_SYS_PWR_SUPPLY_1
-#if (NUMBER_OF_COOLING_DEVICE > 1)
-#if (COOLING_MGNT_DEV_2 != 0)
-                                            {35, COOLING_MGNT_DEV_2, 0x07, 27, 2},
-#endif      // COOLING_MGNT_DEV_2
-#if (COOLING_SYS_PWR_SUPPLY_2 != 0)
-                                            {39, COOLING_SYS_PWR_SUPPLY_2, 0x12, 27, 2},
-#endif      // COOLING_SYS_PWR_SUPPLY_2
-#endif      // (NUMBER_OF_COOLING_DEVICE > 1)
-#if (NUMBER_OF_COOLING_DEVICE > 2)
-#if (COOLING_MGNT_DEV_3 != 0)
-                                            {35, COOLING_MGNT_DEV_3, 0x07, 27, 3},
-#endif      // COOLING_MGNT_DEV_3
-#if (COOLING_SYS_PWR_SUPPLY_3 != 0)
-                                            {39, COOLING_SYS_PWR_SUPPLY_3, 0x12, 27, 3},
-#endif      // COOLING_SYS_PWR_SUPPLY_3
-#endif      // (NUMBER_OF_COOLING_DEVICE > 2)
-#if (NUMBER_OF_COOLING_DEVICE > 3)
-#if (COOLING_MGNT_DEV_4 != 0)
-                                            {35, COOLING_MGNT_DEV_4, 0x07, 27, 4},
-#endif      // COOLING_MGNT_DEV_4
-#if (COOLING_SYS_PWR_SUPPLY_4 != 0)
-                                            {39, COOLING_SYS_PWR_SUPPLY_4, 0x12, 27, 4},
-#endif      // COOLING_SYS_PWR_SUPPLY_4
-#endif      // (NUMBER_OF_COOLING_DEVICE > 3)
-#if (NUMBER_OF_COOLING_DEVICE > 4)
-#if (COOLING_MGNT_DEV_5 != 0)
-                                            {35, COOLING_MGNT_DEV_5, 0x07, 27, 5},
-#endif      // COOLING_MGNT_DEV_5
-#if (COOLING_SYS_PWR_SUPPLY_5 != 0)
-                                            {39, COOLING_SYS_PWR_SUPPLY_5, 0x12, 27, 5},
-#endif      // COOLING_SYS_PWR_SUPPLY_5
-#endif      // (NUMBER_OF_COOLING_DEVICE > 4)
-#endif      // TYPE27_STRUCTURE
-// ===== TYPE28_STRUCTURE =====
-#if TYPE28_STRUCTURE
-#if (TEMPERATURE_PROBE_MGNT_DEV_1 != 0)
-                                            {35, TEMPERATURE_PROBE_MGNT_DEV_1, 0x07, 28, 1},
-#endif      // TEMPERATURE_PROBE_MGNT_DEV_1
-#if (NUMBER_OF_TEMPERATURE_PROBES > 1)
-#if (TEMPERATURE_PROBE_MGNT_DEV_2 != 0)
-                                            {35, TEMPERATURE_PROBE_MGNT_DEV_2, 0x07, 28, 2},
-#endif      // TEMPERATURE_PROBE_MGNT_DEV_2
-#endif      // (NUMBER_OF_TEMPERATURE_PROBES > 1)
-#if (NUMBER_OF_TEMPERATURE_PROBES > 2)
-#if (TEMPERATURE_PROBE_MGNT_DEV_3 != 0)
-                                            {35, TEMPERATURE_PROBE_MGNT_DEV_3, 0x07, 28, 3},
-#endif      // TEMPERATURE_PROBE_MGNT_DEV_3
-#endif      // (NUMBER_OF_TEMPERATURE_PROBES > 2)
-#if (NUMBER_OF_TEMPERATURE_PROBES > 3)
-#if (TEMPERATURE_PROBE_MGNT_DEV_4 != 0)
-                                            {35, TEMPERATURE_PROBE_MGNT_DEV_4, 0x07, 28, 4},
-#endif      // TEMPERATURE_PROBE_MGNT_DEV_4
-#endif      // (NUMBER_OF_TEMPERATURE_PROBES > 3)
-#if (NUMBER_OF_TEMPERATURE_PROBES > 4)
-#if (TEMPERATURE_PROBE_MGNT_DEV_5 != 0)
-                                            {35, TEMPERATURE_PROBE_MGNT_DEV_5, 0x07, 28, 5},
-#endif      // TEMPERATURE_PROBE_MGNT_DEV_5
-#endif      // (NUMBER_OF_TEMPERATURE_PROBES > 4)
-#endif      // TYPE28_STRUCTURE
-// ===== TYPE29_STRUCTURE =====
-#if TYPE29_STRUCTURE
-#if (ELECTRICAL_PROBE_MGNT_DEV_1 != 0)
-                                            {35, ELECTRICAL_PROBE_MGNT_DEV_1, 0x07, 29, 1},
-#endif      // ELECTRICAL_PROBE_MGNT_DEV_1
-#if (ELECTRICAL_PROBE_SYS_PWR_SUPPLY_1 != 0)
-                                            {39, ELECTRICAL_PROBE_SYS_PWR_SUPPLY_1, 0x14, 29, 1},
-#endif      // ELECTRICAL_PROBE_SYS_PWR_SUPPLY_1
-#if (NUMBER_OF_ELECTRICAL_PROBES > 1)
-#if (ELECTRICAL_PROBE_MGNT_DEV_2 != 0)
-                                            {35, ELECTRICAL_PROBE_MGNT_DEV_2, 0x07, 29, 2},
-#endif      // ELECTRICAL_PROBE_MGNT_DEV_2
-#if (ELECTRICAL_PROBE_SYS_PWR_SUPPLY_2 != 0)
-                                            {39, ELECTRICAL_PROBE_SYS_PWR_SUPPLY_2, 0x14, 29, 2},
-#endif      // ELECTRICAL_PROBE_SYS_PWR_SUPPLY_2
-#endif      // (NUMBER_OF_ELECTRICAL_PROBES > 1)
-#if (NUMBER_OF_ELECTRICAL_PROBES > 2)
-#if (ELECTRICAL_PROBE_MGNT_DEV_3 != 0)
-                                            {35, ELECTRICAL_PROBE_MGNT_DEV_3, 0x07, 29, 3},
-#endif      // ELECTRICAL_PROBE_MGNT_DEV_3
-#if (ELECTRICAL_PROBE_SYS_PWR_SUPPLY_3 != 0)
-                                            {39, ELECTRICAL_PROBE_SYS_PWR_SUPPLY_3, 0x14, 29, 3},
-#endif      // ELECTRICAL_PROBE_SYS_PWR_SUPPLY_3
-#endif      // (NUMBER_OF_ELECTRICAL_PROBES > 2)
-#if (NUMBER_OF_ELECTRICAL_PROBES > 3)
-#if (ELECTRICAL_PROBE_MGNT_DEV_4 != 0)
-                                            {35, ELECTRICAL_PROBE_MGNT_DEV_4, 0x07, 29, 4},
-#endif      // ELECTRICAL_PROBE_MGNT_DEV_4
-#if (ELECTRICAL_PROBE_SYS_PWR_SUPPLY_4 != 0)
-                                            {39, ELECTRICAL_PROBE_SYS_PWR_SUPPLY_4, 0x14, 29, 4},
-#endif      // ELECTRICAL_PROBE_SYS_PWR_SUPPLY_4
-#endif      // (NUMBER_OF_ELECTRICAL_PROBES > 3)
-#if (NUMBER_OF_ELECTRICAL_PROBES > 4)
-#if (ELECTRICAL_PROBE_MGNT_DEV_5 != 0)
-                                            {35, ELECTRICAL_PROBE_MGNT_DEV_5, 0x07, 29, 5},
-#endif      // ELECTRICAL_PROBE_MGNT_DEV_5
-#if (ELECTRICAL_PROBE_SYS_PWR_SUPPLY_5 != 0)
-                                            {39, ELECTRICAL_PROBE_SYS_PWR_SUPPLY_5, 0x14, 29, 5},
-#endif      // ELECTRICAL_PROBE_SYS_PWR_SUPPLY_5
-#endif      // (NUMBER_OF_ELECTRICAL_PROBES > 4)
-#endif      // TYPE29_STRUCTURE
-// ===== TYPE35_STRUCTURE =====
-#if TYPE35_STRUCTURE
-#if (MGMT_DEV_COMPONENT_MGNT_DEV_1 != 0)
-                                            {35, 1, 0x05, 34, MGMT_DEV_COMPONENT_MGNT_DEV_1},
-#endif      // MGMT_DEV_COMPONENT_MGNT_DEV_1
-#if (NUMBER_OF_MGNT_DEV_COMPONENTS > 1)
-#if (MGMT_DEV_COMPONENT_MGNT_DEV_2 != 0)
-                                            {35, 2, 0x05, 34, MGMT_DEV_COMPONENT_MGNT_DEV_2},
-#endif      // MGMT_DEV_COMPONENT_MGNT_DEV_2
-#endif      // (NUMBER_OF_MGNT_DEV_COMPONENTS > 1)
-#if (NUMBER_OF_MGNT_DEV_COMPONENTS > 2)
-#if (MGMT_DEV_COMPONENT_MGNT_DEV_3 != 0)
-                                            {35, 3, 0x05, 34, MGMT_DEV_COMPONENT_MGNT_DEV_3},
-#endif      // MGMT_DEV_COMPONENT_MGNT_DEV_3
-#endif      // (NUMBER_OF_MGNT_DEV_COMPONENTS > 2)
-#if (NUMBER_OF_MGNT_DEV_COMPONENTS > 3)
-#if (MGMT_DEV_COMPONENT_MGNT_DEV_4 != 0)
-                                            {35, 4, 0x05, 34, MGMT_DEV_COMPONENT_MGNT_DEV_4},
-#endif      // MGMT_DEV_COMPONENT_MGNT_DEV_4
-#endif      // (NUMBER_OF_MGNT_DEV_COMPONENTS > 3)
-#if (NUMBER_OF_MGNT_DEV_COMPONENTS > 4)
-#if (MGMT_DEV_COMPONENT_MGNT_DEV_5 != 0)
-                                            {35, 5, 0x05, 34, MGMT_DEV_COMPONENT_MGNT_DEV_5},
-#endif      // MGMT_DEV_COMPONENT_MGNT_DEV_5
-#endif      // (NUMBER_OF_MGNT_DEV_COMPONENTS > 4)
-#endif      // TYPE35_STRUCTURE
-};
-
-    TRACE((-1, "***  SMBIOS - FixupHandles  ***\n"));
-
-    HandleTblPtr = HandleFixupTable;
-
-    for (i = 0; i < (sizeof(HandleFixupTable)/sizeof(HANDLE_FIXUP_TABLE)); i++, HandleTblPtr++) {
-        if ((HandleTblPtr->SrcStrucType != LastSrcType) || \
-            (HandleTblPtr->SrcInstance != LastSrcInstance)) {
-            SrcFound = FALSE;
-            LastSrcType = HandleTblPtr->SrcStrucType;
-            LastSrcInstance = HandleTblPtr->SrcInstance;
-
-            BufferPtr = Buffer;
-            FindStatus = FindStructureType(&BufferPtr,
-                                           &SrcPtr,
-                                           HandleTblPtr->SrcStrucType,
-                                           HandleTblPtr->SrcInstance
-                                          );
-            if (FindStatus) {
-                SrcFound = TRUE;
-            }
-        }
-
-        if (!SrcFound) continue;
-
-        if ((HandleTblPtr->DestStrucType != LastDestType) || \
-            (HandleTblPtr->DestInstance != LastDestInstance)) {
-            DestFound = FALSE;
-            LastDestType = HandleTblPtr->DestStrucType;
-            LastDestInstance = HandleTblPtr->DestInstance;
-
-            BufferPtr = Buffer;
-            FindStatus = FindStructureType(&BufferPtr,
-                                           &DestPtr,
-                                           HandleTblPtr->DestStrucType,
-                                           HandleTblPtr->DestInstance
-                                          );
-            if (FindStatus) {
-                DestFound = TRUE;
-            }
-        }
-
-        if (!DestFound) continue;
-
-        *(UINT16*)(DestPtr + HandleTblPtr->DestOffset) = ((SMBIOS_STRUCTURE_HEADER*)SrcPtr)->Handle;
-    }
-
-    TRACE((-1, ":::  SMBIOS - Exit FixupHandles  :::\n"));
-}
-
-/**
-    Returns the number of structures starting from Buffer til
-    (and including) type 127 structure.
-
-    @param Buffer
-
-    @return Number of structures
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   GetNumberOfStructures
+//
+// Description: Returns the number of structures starting from Buffer til
+//              (and including) type 127 structure.
+//
+// Input:       IN UINT8   *Buffer
+//
+// Output:      UINT16 - Number of structures
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 UINT16
 GetNumberOfStructures(
     IN UINT8    *Buffer
@@ -1083,14 +599,23 @@ GetNumberOfStructures(
     return SmbiosStrucCount;
 }
 
-/**
-    Returns the largest structure size
-
-    @param Buffer
-
-    @return Largest structure size
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   GetLargestStructureSize
+//
+// Description: Returns the largest structure size
+//
+// Input:       IN UINT8   *Buffer
+//
+// Output:      UINT16 - Largest structure size
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 UINT16
 GetLargestStructureSize(
     IN UINT8    *Buffer
@@ -1120,41 +645,75 @@ GetLargestStructureSize(
     return LargestStructureSize;
 }
 
-/**
-    Return pointer to the input type string table
-
-    @param Structure Type
-
-    @return Pointer to the input type string table\n
-            (or NULL if not found)
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   GetTypeTable
+//
+// Description: Return pointer to the input type string table
+//
+// Input:       IN UINT8      Structure Type
+//
+// Output:      Pointer to the input type string table
+//              (or NULL if not found)
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID*
 GetTypeTable(
-    IN UINT8    StructureType
+    IN UINT8    StructType
 )
 {
-    if (StructureType < 42) {
-        return StringTable[StructureType];
+    UINT8       Index;
+
+    switch (StructType) {
+        case    0:
+        case    1:
+        case    2:
+        case    3:
+        case    4:  Index = StructType;
+                    break;
+        case   22:  Index = 5;
+                    break;
+        case   39:  Index = 6;
+                    break;
+        default:    Index = 0xff;
+    }
+
+    if (Index != 0xff) {
+        return StringTable[Index];
     }
     else {
         return NULL;
     }
 }
 
-/**
-    Return the string index, assuming all strings exist and they
-    sequentially numbered according to Smbios specification for
-    the input type structure
-
-    @param Type     structure type
-    @param Offset   offset from begining of the structure
-    @param Instance 1- based
-
-    @return String index (0-based)\n
-            (or 0xff if not found)
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   GetStrIndex
+//
+// Description: Return the string index, assuming all strings exist and they
+//              sequentially numbered according to Smbios specification for
+//              the input type structure
+//
+// Input:       IN  UINT8       Structure Type
+//              IN  UINT8       Offset,
+//              IN  UINT8       Instance        // 1- based
+//
+// Output:      String index (0-based)
+//              (or 0xff if not found)
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 UINT8
 GetStrIndex(
     IN  UINT8       Type,
@@ -1185,17 +744,26 @@ GetStrIndex(
     return 0xff;
 }
 
-/**
-    Return the string number for a structure "Type" at "Offset"
-
-    @param SmbiosTable  pointer to SmbiosTable or Structure
-    @param Type         structure type
-    @param Offset       offset from begining of the structure
-
-    @return String number (1-based)\n
-            (or 0xff if not found)
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   GetStrNumber
+//
+// Description: Return the string number for a structure "Type" at "Offset"
+//
+// Input:       IN UINT8    Pointer to SmbiosTable or Structure
+//              IN UINT8    Type
+//              IN UINT8    Offset
+//
+// Output:      String number (1-based)
+//              (or 0xff if not found)
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 UINT8
 GetStrNumber(
     IN  UINT8       *SmbiosTable,
@@ -1214,16 +782,25 @@ GetStrNumber(
     }
 }
 
-/**
-    Return the largest string number in a structure
-
-    @param StructPtr
-    @param StrTablePtr
-
-    @return String number (1-based)\n
-            (or 0 if not found)
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   FindLargestStrNumber
+//
+// Description: Return the largest string number in a structure
+//
+// Input:       IN UINT8    *StructPtr
+//              IN UINT8    *StrTablePtr
+//
+// Output:      String number (1-based)
+//              (or 0 if not found)
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 UINT8
 FindLargestStrNumber (
     IN UINT8            *StructPtr,
@@ -1245,19 +822,28 @@ FindLargestStrNumber (
     return StrNumber;       // 1-based, 0 if no string
 }
 
-/**
-    Add new string number for a structure "Type" at "Offset".
-    Return the string index, assuming all strings exist in the
-    structure according to the Smbios specification
-
-    @param SmbiosTable  pointer to SmbiosTable or Structure
-    @param Type         structure type
-    @param Offset       offset from begining of the structure
-
-    @return String index (0-based)\n
-            (0xff if not found)
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   AddStringNumber
+//
+// Description: Add new string number for a structure "Type" at "Offset".
+//              Return the string index, assuming all strings exist in the
+//              structure according to the Smbios specification
+//
+// Input:       IN UINT8    Pointer to SmbiosTable or Structure
+//              IN UINT8    Type
+//              IN UINT8    Offset
+//
+// Output:      String index (0-based)
+//              (0xff if not found)
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 UINT8
 AddStringNumber(
     IN  UINT8       *SmbiosTable,
@@ -1299,15 +885,24 @@ AddStringNumber(
     return 0xff;
 }
 
-/**
-    Zero out the string number in StructPtr
-
-    @param StructurePtr
-    @param StrNumber
-
-    @retval None
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   DeleteStringNumber
+//
+// Description: Zero out the string number in StructPtr
+//
+// Input:       IN  UINT8   *StructurePtr
+//              IN UINT8    StrNumber
+//
+// Output:      None
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID
 DeleteStringNumber (
     IN UINT8    *StructPtr,
@@ -1331,15 +926,24 @@ DeleteStringNumber (
     }
 }
 
-/**
-    Returns the string offset for StringNumber from BufferStart
-
-    @param BufferStart
-    @param StringNumber
-
-    @return offset from BufferStart
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   GetStringOffset
+//
+// Description: Returns the string offset for StringNumber from BufferStart
+//
+// Input:       IN  UINT8   *BufferStart
+//              IN  UINT8   StringNumber
+//
+// Output:      UINT16 - Offset from BufferStart
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 UINT16
 GetStringOffset(
     IN UINT8    *BufferStart,
@@ -1357,46 +961,53 @@ GetStringOffset(
     return (UINT16)(BufferEnd - BufferStart);
 }
 
-/**
-    Returns pointer to the string number in structure BufferPtr
-
-    @param BufferPtr
-    @param StringNumber
-
-    @retval TRUE    *BufferPtr = Pointer to the #StringNumber string
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   FindString
+//
+// Description: Returns pointer to the string number in structure BufferPtr
+//
+// Input:       IN OUT  UINT8    **BufferPtr
+//              IN      UINT8    StringNumber
+//
+// Output:      UINT8   *BufferPtr = Pointer to the #StringNumber string
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 BOOLEAN
 FindString(
     IN OUT UINT8    **BufferPtr,
     IN     UINT8    StringNumber          // 1-based
 )
 {
-    UINT8       *StructurePtr;
-    UINT8       *StructureEnd;
-
-    StructurePtr = *BufferPtr;
-    StructureEnd = StructurePtr + GetStructureLength(StructurePtr);
-    StructurePtr += ((SMBIOS_STRUCTURE_HEADER*)StructurePtr)->Length;
-    StructurePtr += GetStringOffset(StructurePtr, StringNumber);
-    if (StructurePtr >= StructureEnd) {
-        return FALSE;
-    }
-    else {
-        *BufferPtr = StructurePtr;
-        return TRUE;
-    }
+    *BufferPtr += ((SMBIOS_STRUCTURE_HEADER*)*BufferPtr)->Length;
+    *BufferPtr += GetStringOffset(*BufferPtr, StringNumber);
+    return TRUE;
 }
 
-/**
-    Delete string at Offset
-
-    @param StructPtr
-    @param Offset
-
-    @retval None
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   DeleteString
+//
+// Description: Delete string at Offset
+//
+// Input:       IN  UINT8   *StructPtr
+//              IN UINT8    Offset
+//
+// Output:      None
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID
 DeleteString (
     IN UINT8    *StructPtr,
@@ -1411,7 +1022,7 @@ DeleteString (
     DeleteStringNumber(StructPtr, StrNumber);
 
     FindString(&StructPtr, StrNumber);              // StructPtr = StrNumber string
-    TempPtr = StructPtr + Strlen((char*)StructPtr) + 1;    // Move pointer to next string
+    TempPtr = StructPtr + Strlen(StructPtr) + 1;    // Move pointer to next string
 
     // Find end of structure
     StructEndPtr = TempPtr;
@@ -1424,15 +1035,24 @@ DeleteString (
     MemCpy(StructPtr, TempPtr, RemainingSize);
 }
 
-/**
-    Add NULL terminator to the end of the structure
-
-    @param StructPtr
-    @param StrTablePtr
-
-    @retval None
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   AddNullTerminator
+//
+// Description: Add NULL terminator to the end of the structure
+//
+// Input:       IN UINT8   *StructPtr
+//              IN UINT8   *StrTablePtr
+//
+// Output:      None
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID
 AddNullTerminator (
     IN UINT8            *StructPtr,
@@ -1458,17 +1078,25 @@ AddNullTerminator (
     *StructPtr = 0;
 }
 
-/**
-    Copy strings from NvramData to StructPtr
-
-    @param NvramData
-    @param StructPtr
-    @param StrTableInstance // 1-based
-
-    @return None\n
-            Strings updated in StructPtr
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   UpdateStrings
+//
+// Description: Copy strings from NvramData to StructPtr
+//
+// Input:       IN      SMBIOS_NVRAM_TYPE       *NvramData,
+//              IN OUT  UINT8                   *StructPtr
+//				IN      UINT8					StrTableInstance    // 1-based
+//
+// Output:      Updated strings in StructPtr
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID
 UpdateStrings(
     IN     SMBIOS_NVRAM_TYPE    *NvramData,
@@ -1505,7 +1133,7 @@ UpdateStrings(
                             AddStringNumber(StructPtr, Type, StrTablePtr[i].Offset);
                             StrNumber = GetStrNumber(StructPtr, Type, StrTablePtr[i].Offset);
                         }
-                        ReplaceString(StructPtr, StrNumber, (UINT8*)String);    // StrNumber 1-based
+                        ReplaceString(StructPtr, StrNumber, String);    // StrNumber 1-based
                     }
                     else {
                         DeleteString(StructPtr, StrNumber);
@@ -1519,19 +1147,27 @@ UpdateStrings(
     }
 }
 
-/**
-    Copy Type 0 strings to TempBuffer. Strings will be copied
-    from NVRAM if exist, or else from existing strings in ROM image.
-    SrcBuffer and TempBuffer pointers are updated
-
-    @param NvramData
-    @param SrcBuffer
-    @param TempBuffer
-
-    @return None \n
-            Updated SrcBuffer and TempBuffer
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   UpdateStructuresWithNvramType0
+//
+// Description: Copy Type 0 strings to TempBuffer. Strings will be copied
+//              from NVRAM if exist, or else from existing strings in ROM image.
+//              SrcBuffer and TempBuffer pointers are updated
+//
+// Input:       IN      SMBIOS_NVRAM_TYPE0      *NvramData,
+//              IN OUT  UINT8                   *SrcBuffer
+//              IN OUT  UINT8                   *TempBuffer
+//
+// Output:      Updated SrcBuffer and TempBuffer
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID
 UpdateStructuresWithNvramType0(
     IN     SMBIOS_NVRAM_TYPE0   *NvramData,
@@ -1550,19 +1186,27 @@ UpdateStructuresWithNvramType0(
     }
 }
 
-/**
-    Copy Type 1 strings to TempBuffer. Strings will be copied
-    from NVRAM if exist, or else from existing strings in ROM image.
-    SrcBuffer and TempBuffer pointers are updated
-
-    @param NvramData
-    @param SrcBuffer
-    @param TempBuffer
-
-    @return None \n
-            Updated SrcBuffer and TempBuffer
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   UpdateStructuresWithNvramType1
+//
+// Description: Copy Type 1 strings to TempBuffer. Strings will be copied
+//              from NVRAM if exist, or else from existing strings in ROM image.
+//              SrcBuffer and TempBuffer pointers are updated
+//
+// Input:       IN      SMBIOS_NVRAM_TYPE1      *NvramData,
+//              IN OUT  UINT8                   *SrcBuffer
+//              IN OUT  UINT8                   *TempBuffer
+//
+// Output:      Updated SrcBuffer and TempBuffer
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID
 UpdateStructuresWithNvramType1(
     IN     SMBIOS_NVRAM_TYPE1   *NvramData,
@@ -1597,19 +1241,27 @@ UpdateStructuresWithNvramType1(
 }
 
 #if BASE_BOARD_INFO
-/**
-    Copy Type 2 strings to TempBuffer. Strings will be copied
-    from NVRAM if exist, or else from existing strings in ROM image.
-    SrcBuffer and TempBuffer pointers are updated
-
-    @param NvramData
-    @param SrcBuffer
-    @param TempBuffer
-
-    @return None \n
-            Updated SrcBuffer and TempBuffer
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   UpdateStructuresWithNvramType2
+//
+// Description: Copy Type 2 strings to TempBuffer. Strings will be copied
+//              from NVRAM if exist, or else from existing strings in ROM image.
+//              SrcBuffer and TempBuffer pointers are updated
+//
+// Input:       IN      SMBIOS_NVRAM_TYPE2      *NvramData,
+//              IN OUT  UINT8                   *SrcBuffer
+//              IN OUT  UINT8                   *TempBuffer
+//
+// Output:      Updated SrcBuffer and TempBuffer
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID
 UpdateStructuresWithNvramType2(
     IN     SMBIOS_NVRAM_TYPE2   *NvramData,
@@ -1630,20 +1282,28 @@ UpdateStructuresWithNvramType2(
 #endif
 
 #if SYS_CHASSIS_INFO
-/**
-    Copy Type 3 strings to TempBuffer. Strings will be copied
-    from NVRAM if exist, or else from existing strings in ROM image.
-    SrcBuffer and TempBuffer pointers are updated
-
-    @param NvramData
-    @param SrcBuffer
-    @param TempBuffer
-    @param StringTableInstance
-
-    @return None \n
-            Updated SrcBuffer and TempBuffer
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   UpdateStructuresWithNvramType3
+//
+// Description: Copy Type 3 strings to TempBuffer. Strings will be copied
+//              from NVRAM if exist, or else from existing strings in ROM image.
+//              SrcBuffer and TempBuffer pointers are updated
+//
+// Input:       IN      SMBIOS_NVRAM_TYPE3      *NvramData,
+//              IN OUT  UINT8                   *SrcBuffer
+//              IN OUT  UINT8                   *TempBuffer
+//              IN      UINT8                   StringTableInstance
+//
+// Output:      Updated SrcBuffer and TempBuffer
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID
 UpdateStructuresWithNvramType3(
     IN     SMBIOS_NVRAM_TYPE3   *NvramData,
@@ -1674,20 +1334,28 @@ UpdateStructuresWithNvramType3(
 }
 #endif
 
-#if ( defined(PROCESSOR_DMIEDIT_SUPPORT) && (PROCESSOR_DMIEDIT_SUPPORT == 1) )
-/**
-    Copy Type 4 strings to TempBuffer. Strings will be copied
-    from NVRAM if exist, or else from existing strings in ROM image.
-    SrcBuffer and TempBuffer pointers are updated
-
-    @param NvramData
-    @param SrcBuffer
-    @param TempBuffer
-
-    @return None \n
-            Updated SrcBuffer and TempBuffer
-
-**/
+#if PROCESSOR_DMIEDIT_SUPPORT
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   UpdateStructuresWithNvramType4
+//
+// Description: Copy Type 4 strings to TempBuffer. Strings will be copied
+//              from NVRAM if exist, or else from existing strings in ROM image.
+//              SrcBuffer and TempBuffer pointers are updated
+//
+// Input:       IN      SMBIOS_NVRAM_TYPE4      *NvramData,
+//              IN OUT  UINT8                   *SrcBuffer
+//              IN OUT  UINT8                   *TempBuffer
+//
+// Output:      Updated SrcBuffer and TempBuffer
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID
 UpdateStructuresWithNvramType4(
     IN     SMBIOS_NVRAM_TYPE4   *NvramData,
@@ -1708,19 +1376,27 @@ UpdateStructuresWithNvramType4(
 #endif
 
 #if OEM_STRING_INFO
-/**
-    Copy Type 11 strings to TempBuffer. Strings will be copied
-    from NVRAM if exist, or else from existing strings in ROM image.
-    SrcBuffer and TempBuffer pointers are updated
-
-    @param NvramData
-    @param SrcBuffer
-    @param TempBuffer
-
-    @return None \n
-            Updated SrcBuffer and TempBuffer
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   UpdateStructuresWithNvramType11
+//
+// Description: Copy Type 11 strings to TempBuffer. Strings will be copied
+//              from NVRAM if exist, or else from existing strings in ROM image.
+//              SrcBuffer and TempBuffer pointers are updated
+//
+// Input:       IN      SMBIOS_NVRAM_TYPE11     *NvramData,
+//              IN OUT  UINT8                   *SrcBuffer
+//              IN OUT  UINT8                   *TempBuffer
+//
+// Output:      Updated SrcBuffer and TempBuffer
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID
 UpdateStructuresWithNvramType11(
     IN     SMBIOS_NVRAM_TYPE11  *NvramData,
@@ -1752,7 +1428,7 @@ UpdateStructuresWithNvramType11(
 
         // "NUMBER_OF_OEM_STRINGS" string fields
         for (i = 0; i < Count; i++) {
-            StringSize = (UINT16)(Strlen((char*)SrcBuffer) + 1);       // Size including string NULL terminator
+            StringSize = (UINT16)(Strlen(SrcBuffer) + 1);       // Size including string NULL terminator
             TestBit = (1 << i);
             if (NvramData->Flag & TestBit) {
                 NvramStringSize = (UINT16)(Strlen(NvramData->StringSet[i]) + 1);
@@ -1768,24 +1444,34 @@ UpdateStructuresWithNvramType11(
 
         // Add NULL byte for end of string-set
         *TempBuffer = 0;
+        TempBuffer++;
+        SrcBuffer++;
     }
 }
 #endif
 
 #if SYSTEM_CONFIG_OPTION_INFO
-/**
-    Copy Type 12 strings to TempBuffer. Strings will be copied
-    from NVRAM if exist, or else from existing strings in ROM image.
-    SrcBuffer and TempBuffer pointers are updated
-
-    @param NvramData
-    @param SrcBuffer
-    @param TempBuffer
-
-    @return None \n
-            Updated SrcBuffer and TempBuffer
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   UpdateStructuresWithNvramType12
+//
+// Description: Copy Type 12 strings to TempBuffer. Strings will be copied
+//              from NVRAM if exist, or else from existing strings in ROM image.
+//              SrcBuffer and TempBuffer pointers are updated
+//
+// Input:       IN      SMBIOS_NVRAM_TYPE12     *NvramData,
+//              IN OUT  UINT8                   *SrcBuffer
+//              IN OUT  UINT8                   *TempBuffer
+//
+// Output:      Updated SrcBuffer and TempBuffer
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID
 UpdateStructuresWithNvramType12(
     IN     SMBIOS_NVRAM_TYPE12  *NvramData,
@@ -1817,7 +1503,7 @@ UpdateStructuresWithNvramType12(
 
         // "NUMBER_OF_SYSTEM_CONFIG_STRINGS" string fields
         for (i = 0; i < Count; i++) {
-            StringSize = (UINT16)(Strlen((char*)SrcBuffer) + 1);       // Size including string NULL terminator
+            StringSize = (UINT16)(Strlen(SrcBuffer) + 1);       // Size including string NULL terminator
             TestBit = (1 << i);
             if (NvramData->Flag & TestBit) {
                 NvramStringSize = (UINT16)(Strlen(NvramData->StringSet[i]) + 1);
@@ -1833,24 +1519,34 @@ UpdateStructuresWithNvramType12(
 
         // Add NULL byte for end of string-set
         *TempBuffer = 0;
+        TempBuffer++;
+        SrcBuffer++;
     }
 }
 #endif
 
 #if PORTABLE_BATTERY_INFO
-/**
-    Copy Type 22 strings to TempBuffer. Strings will be copied
-    from NVRAM if exist, or else from existing strings in ROM image.
-    SrcBuffer and TempBuffer pointers are updated
-
-    @param NvramData
-    @param SrcBuffer
-    @param TempBuffer
-
-    @return None \n
-            Updated SrcBuffer and TempBuffer
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   UpdateStructuresWithNvramType22
+//
+// Description: Copy Type 22 strings to TempBuffer. Strings will be copied
+//              from NVRAM if exist, or else from existing strings in ROM image.
+//              SrcBuffer and TempBuffer pointers are updated
+//
+// Input:       IN      SMBIOS_NVRAM_TYPE22     *NvramData,
+//              IN OUT  UINT8                   *SrcBuffer
+//              IN OUT  UINT8                   *TempBuffer
+//
+// Output:      Updated SrcBuffer and TempBuffer
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID
 UpdateStructuresWithNvramType22(
     IN     SMBIOS_NVRAM_TYPE22  *NvramData,
@@ -1911,19 +1607,27 @@ UpdateStructuresWithNvramType22(
 #endif
 
 #if SYSTEM_POWER_SUPPLY_INFO
-/**
-    Copy Type 39 strings to TempBuffer. Strings will be copied
-    from NVRAM if exist, or else from existing strings in ROM image.
-    SrcBuffer and TempBuffer pointers are updated
-
-    @param NvramData
-    @param SrcBuffer
-    @param TempBuffer
-
-    @return None \n
-            Updated SrcBuffer and TempBuffer
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   UpdateStructuresWithNvramType39
+//
+// Description: Copy Type 39 strings to TempBuffer. Strings will be copied
+//              from NVRAM if exist, or else from existing strings in ROM image.
+//              SrcBuffer and TempBuffer pointers are updated
+//
+// Input:       IN      SMBIOS_NVRAM_TYPE39     *NvramData,
+//              IN OUT  UINT8                   *SrcBuffer
+//              IN OUT  UINT8                   *TempBuffer
+//
+// Output:      Updated SrcBuffer and TempBuffer
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID
 UpdateStructuresWithNvramType39(
     IN     SMBIOS_NVRAM_TYPE39  *NvramData,
@@ -1973,15 +1677,24 @@ UpdateStructuresWithNvramType39(
 }
 #endif
 
-/**
-    Returns the string index for Type 22 structure from a given
-    Offset.
-
-    @param Offset
-
-    @return Type 22 Structure String index
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   GetType22StringIndex
+//
+// Description: Returns the string index for Type 22 structure from a given
+//              Offset.
+//
+// Input:       IN UINT8   Offset
+//
+// Output:      UINT8 - Type 22 Structure String index
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 UINT8
 GetType22StringIndex(
     IN UINT8       Offset
@@ -1994,15 +1707,24 @@ GetType22StringIndex(
     return (Offset - 4);
 }
 
-/**
-    Returns the string index for Type 39 structure from a given
-    Offset.
-
-    @param Offset
-
-    @return Type 39 Structure String index
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   GetType39StringIndex
+//
+// Description: Returns the string index for Type 39 structure from a given
+//              Offset.
+//
+// Input:       IN UINT8   Offset
+//
+// Output:      UINT8 - Type 39 Structure String index
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 UINT8
 GetType39StringIndex(
     IN UINT8       Offset
@@ -2011,20 +1733,29 @@ GetType39StringIndex(
     return (Offset - 5);
 }
 
-/**
-    Locates the input specified Guid file in the Firmware Volumn
-    and loads it into the input Buffer
-
-    @param Guid File GUID to read
-    @param SectionType
-    @param Buffer
-    @param BufferSize
-
-    @return EFI_STATUS \n
-            **Buffer - Contains content of the Guid file\n
-            *BufferSize - Size of the output buffer
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   LoadRealModeFileSection
+//
+// Description: Locates the input specified Guid file in the Firmware Volumn
+//              and loads it into the input Buffer
+//
+// Input:       IN      EFI_GUID *Guid -    File GUID to read
+//              IN      EFI_SECTION_TYPE    SectionType
+//              IN OUT  VOID                **Buffer
+//              IN OUT  UINTN               *BufferSize
+//
+// Output:      EFI_STATUS
+//              VOID  **Buffer - Contains the content of the Guid file
+//              UINTN *BufferSize - Size of the output buffer
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
 LoadRealModeFileSection(
     IN      EFI_GUID  				*Guid,
@@ -2040,16 +1771,11 @@ LoadRealModeFileSection(
     EFI_HANDLE                    *HandleBuffer;
     UINTN                         i;
 
-    TRACE((-1, "***  SMBIOS - LoadRealModeFileSection  ***\n"));
-
     Status = pBS->LocateHandleBuffer(ByProtocol,&gEfiFirmwareVolume2ProtocolGuid,NULL,&NumHandles,&HandleBuffer);
-    if (EFI_ERROR(Status)) {
-        TRACE((-1, "Smbios Static Table not found!\n"));
-        return Status;
-    }
+    if (EFI_ERROR(Status)) return Status;
 
     for (i = 0; i< NumHandles; ++i) {
-        Status = pBS->HandleProtocol(HandleBuffer[i],&guidFV,(void**)&Fv);
+        Status = pBS->HandleProtocol(HandleBuffer[i],&guidFV,&Fv);
         if (EFI_ERROR(Status)) continue;
 
         Status = Fv->ReadSection(Fv,
@@ -2064,22 +1790,28 @@ LoadRealModeFileSection(
     }
 
     pBS->FreePool(HandleBuffer);
-
-    TRACE((-1, ":::  SMBIOS - Exit LoadRealModeFileSection. Status = %r  :::\n", Status));
-
     return Status;
 }
 
 #if (defined(SmbiosDMIEdit_SUPPORT) && (SmbiosDMIEdit_SUPPORT != 0))
-/**
-    Updates structures in input Buffer with DMI Data in NVRAM
-
-    @param Buffer
-    @param BufferSize
-
-    @return EFI_STATUS
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   UpdateStructuresWithNvramData
+//
+// Description: Updates structures in input Buffer with DMI Data in NVRAM
+//
+// Input:       IN  UINT8   *Buffer
+//              IN  UINT8   BufferSize
+//
+// Output:      EFI_STATUS
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
 UpdateStructuresWithNvramData(
     IN  UINT8     *Buffer,
@@ -2091,17 +1823,13 @@ UpdateStructuresWithNvramData(
     UINT8                   *BufferPtr = Buffer;
     UINT8                   *TempBuffer;
     UINT8                   *TempBufferPtr;
+    UINT8                   StrTableInstance;
     UINTN                   Index;
     UINTN                   i;
     BOOLEAN                 UpdateFlag = FALSE; // Flag indicating if any structure has been updated
 
-#if (TYPE2_STRUCTURE == 1)
     UINT16                  *Type2Handle;
-#endif											// TYPE2_STRUCTURE
-#if (TYPE3_STRUCTURE == 1)
     UINT16                  *Type3Handle;
-    UINT8                   StrTableInstance;
-#endif											// TYPE3_STRUCTURE
     UINT16                  *Type22Handle;
     UINT16                  *Type39Handle;
 
@@ -2127,7 +1855,7 @@ UpdateStructuresWithNvramData(
     UINT8                   *FlashDataEnd;
 #endif                                      // SMBIOS_DMIEDIT_DATA_LOC
 
-    TRACE((-1, "***  SMBIOS - UpdateStructuresWithNvramData  ***\n"));
+    TRACE((-1, "In UpdateStructuresWithNvramData\n"));
 
     // Initialize NVRam variables
     for (i = 0; i < DMI_ARRAY_COUNT; i++) {
@@ -2136,33 +1864,29 @@ UpdateStructuresWithNvramData(
 
     MemSet(&NvramType0, sizeof(SMBIOS_NVRAM_TYPE0), 0);
     MemSet(&NvramType1, sizeof(SMBIOS_NVRAM_TYPE1), 0);
-#if (TYPE2_STRUCTURE == 1)
-    pBS->AllocatePool(EfiBootServicesData, NUMBER_OF_BASEBOARDS * sizeof(UINT16), (void**)&Type2Handle);
-    pBS->AllocatePool(EfiBootServicesData, NUMBER_OF_BASEBOARDS * sizeof(SMBIOS_NVRAM_TYPE2), (void**)&NvramType2);
+    pBS->AllocatePool(EfiBootServicesData, NUMBER_OF_BASEBOARDS * sizeof(UINT16), &Type2Handle);
+    pBS->AllocatePool(EfiBootServicesData, NUMBER_OF_BASEBOARDS * sizeof(SMBIOS_NVRAM_TYPE2), &NvramType2);
     for (i = 0; i < NUMBER_OF_BASEBOARDS; i++) {
         Type2Handle[i] = 0;
         NvramType2[i].Flag = 0;
     }
-#endif										// TYPE2_STRUCTURE
-#if (TYPE3_STRUCTURE == 1)
-    pBS->AllocatePool(EfiBootServicesData, NUMBER_OF_SYSTEM_CHASSIS * sizeof(UINT16), (void**)&Type3Handle);
-    pBS->AllocatePool(EfiBootServicesData, NUMBER_OF_SYSTEM_CHASSIS * sizeof(SMBIOS_NVRAM_TYPE3), (void**)&NvramType3);
+    pBS->AllocatePool(EfiBootServicesData, NUMBER_OF_SYSTEM_CHASSIS * sizeof(UINT16), &Type3Handle);
+    pBS->AllocatePool(EfiBootServicesData, NUMBER_OF_SYSTEM_CHASSIS * sizeof(SMBIOS_NVRAM_TYPE3), &NvramType3);
     for (i = 0; i < NUMBER_OF_SYSTEM_CHASSIS; i++) {
         Type3Handle[i] = 0;
         NvramType3[i].Flag = 0;
     }
-#endif                                      // TYPE3_STRUCTURE
     MemSet(&NvramType4, sizeof(SMBIOS_NVRAM_TYPE4), 0);
     MemSet(&NvramType11, sizeof(SMBIOS_NVRAM_TYPE11), 0);
     MemSet(&NvramType12, sizeof(SMBIOS_NVRAM_TYPE12), 0);
-    pBS->AllocatePool(EfiBootServicesData, gSmbiosBoardProtocol->NumberOfBatteries * sizeof(UINT16), (void**)&Type22Handle);
-    pBS->AllocatePool(EfiBootServicesData, gSmbiosBoardProtocol->NumberOfBatteries * sizeof(SMBIOS_NVRAM_TYPE22), (void**)&NvramType22);
+    pBS->AllocatePool(EfiBootServicesData, gSmbiosBoardProtocol->NumberOfBatteries * sizeof(UINT16), &Type22Handle);
+    pBS->AllocatePool(EfiBootServicesData, gSmbiosBoardProtocol->NumberOfBatteries * sizeof(SMBIOS_NVRAM_TYPE22), &NvramType22);
     for (i = 0; i < gSmbiosBoardProtocol->NumberOfBatteries; i++) {
         Type22Handle[i] = 0;
         NvramType22[i].Flag = 0;
     }
-    pBS->AllocatePool(EfiBootServicesData, NUMBER_OF_POWER_SUPPLY * sizeof(UINT16), (void**)&Type39Handle);
-    pBS->AllocatePool(EfiBootServicesData, NUMBER_OF_POWER_SUPPLY * sizeof(SMBIOS_NVRAM_TYPE39), (void**)&NvramType39);
+    pBS->AllocatePool(EfiBootServicesData, NUMBER_OF_POWER_SUPPLY * sizeof(UINT16), &Type39Handle);
+    pBS->AllocatePool(EfiBootServicesData, NUMBER_OF_POWER_SUPPLY * sizeof(SMBIOS_NVRAM_TYPE39), &NvramType39);
     for (i = 0; i < NUMBER_OF_POWER_SUPPLY; i++) {
         Type39Handle[i] = 0;
         NvramType39[i].Flag = 0;
@@ -2186,7 +1910,7 @@ UpdateStructuresWithNvramData(
             UpdateFlag = TRUE;
         }
         else if (((TABLE_INFO*)FlashDataPtr)->Flags & DMIEDIT_ADD_STRUC) {
-            TRACE((-1, "Add structure by handle. Handle = %x\n", ((TABLE_INFO*)FlashDataPtr)->Handle));
+            TRACE((-1, "Add structure. Handle = %x\n", ((TABLE_INFO*)FlashDataPtr)->Handle));
             TempBufferPtr = FlashDataPtr + sizeof (TABLE_INFO);
             AddStructureByHandle(((TABLE_INFO*)FlashDataPtr)->Handle, TempBufferPtr, ((TABLE_INFO*)FlashDataPtr)->Size);
             UpdateFlag = TRUE;
@@ -2200,7 +1924,7 @@ UpdateStructuresWithNvramData(
             Status = pBS->AllocatePool(
                                 EfiBootServicesData,
                                 DmiDataSize,
-                                (void**)&DmiData);
+                                &DmiData);
             if (Status == EFI_SUCCESS) {
                 MemCpy(DmiData,
                        FlashDataPtr + sizeof(TABLE_INFO),
@@ -2214,12 +1938,6 @@ UpdateStructuresWithNvramData(
                                         NvramType0.StringSet[Index] = (char*)DmiData;
                                         NvramType0.Flag |= (1 << Index);
                                         UpdateFlag = TRUE;
-                                    }
-                                    if (((TABLE_INFO*)FlashDataPtr)->Offset == 5) {
-                                        VersionUpdated = TRUE;
-                                    }
-                                    if (((TABLE_INFO*)FlashDataPtr)->Offset == 8) {
-                                        ReleaseDateUpdated = TRUE;
                                     }
                                     break;
                                 }
@@ -2451,7 +2169,7 @@ UpdateStructuresWithNvramData(
             FlashDataPtr += (sizeof(TABLE_INFO) + ((TABLE_INFO*)FlashDataPtr)->Size);
         }
     }
-#else										// SMBIOS_DMIEDIT_DATA_LOC
+#else
 {
     CHAR16                  *DmiArrayVar = L"DmiArray";
     DMI_VAR                 *DmiArray;
@@ -2463,7 +2181,7 @@ UpdateStructuresWithNvramData(
     UINT8                   Offset;
 	UINT8					Flags;
 
-    pBS->AllocatePool(EfiBootServicesData, DmiArraySize, (void**)&DmiArray);
+    pBS->AllocatePool(EfiBootServicesData, DmiArraySize, &DmiArray);
     Status = pRS->GetVariable(
                         DmiArrayVar,
                         &gAmiSmbiosNvramGuid,
@@ -2507,7 +2225,7 @@ UpdateStructuresWithNvramData(
                 Status = pBS->AllocatePool(
                                     EfiBootServicesData,
                                     DmiDataSize,
-                                    (void**)&NvramDataPtrArray[Index]);
+                                    &NvramDataPtrArray[Index]);
 
                 DmiData = NvramDataPtrArray[Index];
 
@@ -2520,21 +2238,17 @@ UpdateStructuresWithNvramData(
             }
 
 			if (Flags & DMIEDIT_DELETE_STRUC) {
-	            TRACE((-1, "Delete structure. Handle = %x\n", Handle));
 	            DeleteStructureByHandle(Handle);
                 UpdateFlag = TRUE;
 			}
 			else if (Flags & DMIEDIT_ADD_STRUC) {
 	            if (Status == EFI_SUCCESS) {
-	                TRACE((-1, "Add structure by handle. Handle = %x\n", Handle));
 		            AddStructureByHandle(Handle, DmiData, (UINT16)DmiDataSize);
                     UpdateFlag = TRUE;
 				}
 			}
 			else {
 	            if (Status == EFI_SUCCESS) {
-	                TRACE((-1, "Change structure. Type = %x, Handle = %x, Offset = %x\n",\
-                                Type, Handle, Offset));
 	                switch (Type) {
 	                    case 00:
 	                            if (Offset == 0x04) {               // Vendor
@@ -2544,12 +2258,10 @@ UpdateStructuresWithNvramData(
 	                            else if (Offset == 0x05) {          // Version
                                     NvramType0.StringSet[1] = (char*)DmiData;
 	                                NvramType0.Flag |= 0x00000002;
-	                                VersionUpdated = TRUE;
 	                            }
 	                            else if (Offset == 0x08) {          // Release Date
                                     NvramType0.StringSet[2] = (char*)DmiData;
 	                                NvramType0.Flag |= 0x00000004;
-	                                ReleaseDateUpdated = TRUE;
 	                            }
                                 UpdateFlag = TRUE;
 	                            break;
@@ -2643,30 +2355,30 @@ UpdateStructuresWithNvramData(
                                         NvramType3[i].Handle = Handle;
 										TempBuffer = SmbiosDataTable;
 
-                                        if (Offset == 0x04) {               // Manufacturer
+										if (Offset == 0x04) {               // Manufacturer
 											NvramType3[i].StringSet[0] = (char*)DmiData;
 											NvramType3[i].Flag |= 0x00000001;
-                                        }
-                                        else if (Offset == 0x05) {          // Type
+										}
+										else if (Offset == 0x05) {          // Type
 											NvramType3[i].Type = *(UINT8*)DmiData;
 											NvramType3[i].Flag |= 0x00010000;
-                                        }
-                                        else if (Offset == 0x06) {          // Version
+										}
+										else if (Offset == 0x06) {          // Version
 											NvramType3[i].StringSet[1] = (char*)DmiData;
 											NvramType3[i].Flag |= 0x00000002;
-                                        }
-                                        else if (Offset == 0x07) {          // Serial Number
+										}
+										else if (Offset == 0x07) {          // Serial Number
 											NvramType3[i].StringSet[2] = (char*)DmiData;
 											NvramType3[i].Flag |= 0x00000004;
-                                        }
-                                        else if (Offset == 0x08) {          // Asset Tag
+										}
+										else if (Offset == 0x08) {          // Asset Tag
 											NvramType3[i].StringSet[3] = (char*)DmiData;
 											NvramType3[i].Flag |= 0x00000008;
-                                        }
-                                        else if (Offset == 0x0d) {          // OEM-defined
+										}
+										else if (Offset == 0x0d) {          // OEM-defined
 											NvramType3[i].OemDefined = *(UINT32*)DmiData;
 											NvramType3[i].Flag |= 0x00020000;
-                                        }
+										}
 										else if (FindStructureHandle(&TempBuffer, Handle)) {
 										    if (Offset == 0x15 + (((SMBIOS_SYSTEM_ENCLOSURE_INFO*)TempBuffer)->ElementCount * ((SMBIOS_SYSTEM_ENCLOSURE_INFO*)TempBuffer)->ElementRecordLength)) {  // SKU Number
 												NvramType3[i].StringSet[4] = (char*)DmiData;
@@ -2678,7 +2390,7 @@ UpdateStructuresWithNvramData(
                                 UpdateFlag = TRUE;
 	                            break;
 #endif                                      // SYS_CHASSIS_INFO
-#if ( defined(PROCESSOR_DMIEDIT_SUPPORT) && (PROCESSOR_DMIEDIT_SUPPORT == 1) )
+#if PROCESSOR_DMIEDIT_SUPPORT
 	                    case 04:
 	                            if (gSmbiosBoardProtocol->ProcessorDmiEditSupport) {
 	                                if (Offset == 0x20) {               // Serial Number
@@ -2696,7 +2408,7 @@ UpdateStructuresWithNvramData(
 	                            }
                                 UpdateFlag = TRUE;
 	                            break;
-#endif                                      // PROCESSOR_DMIEDIT_SUPPORT
+#endif                                      // SYS_CHASSIS_INFO
 #if OEM_STRING_INFO
 	                    case 11:
 	                            if (gSmbiosBoardProtocol->OemStringInfoSupport) {
@@ -2869,7 +2581,7 @@ UpdateStructuresWithNvramData(
     // Update Smbios table if any structure has been changed
     if (UpdateFlag) {
         TRACE((-1, "Updating structures\n"));
-        pBS->AllocatePool(EfiBootServicesData, BufferSize, (void**)&TempBuffer);
+        pBS->AllocatePool(EfiBootServicesData, BufferSize, &TempBuffer);
         MemSet(TempBuffer, BufferSize, 0);
         TempBufferPtr = TempBuffer;
     	BufferPtr = SmbiosDataTable;
@@ -2904,7 +2616,7 @@ UpdateStructuresWithNvramData(
                                 }
                                 break;
                             }
-                #endif										// BASE_BOARD_INFO
+                #endif
                 #if SYS_CHASSIS_INFO
                 case 3  :   {
                                 TRACE((-1, "Updating Type 3 structure\n"));
@@ -2926,8 +2638,8 @@ UpdateStructuresWithNvramData(
                                 }
                                 break;
                             }
-                #endif										// SYS_CHASSIS_INFO
-                #if ( defined(PROCESSOR_DMIEDIT_SUPPORT) && (PROCESSOR_DMIEDIT_SUPPORT == 1) )
+                #endif
+                #if PROCESSOR_DMIEDIT_SUPPORT
                 case 4  :   {
                                 TRACE((-1, "Updating Type 4 structure\n"));
                                 if (gSmbiosBoardProtocol->ProcessorDmiEditSupport) {
@@ -2935,7 +2647,7 @@ UpdateStructuresWithNvramData(
                                 }
                                 break;
                             }
-                #endif										// PROCESSOR_DMIEDIT_SUPPORT
+                #endif
                 #if OEM_STRING_INFO
                 case 11 :   {
                                 TRACE((-1, "Updating Type 11 structure\n"));
@@ -2944,7 +2656,7 @@ UpdateStructuresWithNvramData(
                                 }
                                 break;
                             }
-                #endif										// OEM_STRING_INFO
+                #endif
                 #if SYSTEM_CONFIG_OPTION_INFO
                 case 12 :   {
                                 TRACE((-1, "Updating Type 12 structure\n"));
@@ -2953,7 +2665,7 @@ UpdateStructuresWithNvramData(
                                 }
                                 break;
                             }
-                #endif										// SYSTEM_CONFIG_OPTION_INFO
+                #endif
                 #if PORTABLE_BATTERY_INFO
                 case 22:    {
                                 TRACE((-1, "Updating Type 22 structure\n"));
@@ -2971,7 +2683,7 @@ UpdateStructuresWithNvramData(
                                 }
                                 break;
                             }
-                #endif										// PORTABLE_BATTERY_INFO
+                #endif
                 #if SYSTEM_POWER_SUPPLY_INFO
                 case 39:    {
                                 TRACE((-1, "Updating Type 39 structure\n"));
@@ -2989,7 +2701,7 @@ UpdateStructuresWithNvramData(
                                 }
                                 break;
                             }
-                #endif										// SYSTEM_POWER_SUPPLY_INFO
+                #endif
                 default :   {
                                 StructureSize = GetStructureLength(BufferPtr);
                                 MemCpy(TempBufferPtr, BufferPtr, StructureSize);
@@ -3012,41 +2724,49 @@ UpdateStructuresWithNvramData(
 
 #if !defined(SMBIOS_DMIEDIT_DATA_LOC) || SMBIOS_DMIEDIT_DATA_LOC != 2
     pBS->FreePool(FlashData);
-#endif										// SMBIOS_DMIEDIT_DATA_LOC
+#else
+    i = 0;
+    while (NvramDataPtrArray[i]) {
+        pBS->FreePool(NvramDataPtrArray[i]);
+        i++;
+    }
+#endif
     Status = EFI_SUCCESS;
 
 #if !defined(SMBIOS_DMIEDIT_DATA_LOC) || SMBIOS_DMIEDIT_DATA_LOC != 2
 Function_Exit:
-#endif										// SMBIOS_DMIEDIT_DATA_LOC
-#if (TYPE2_STRUCTURE == 1)
+#endif
     pBS->FreePool(Type2Handle);
     pBS->FreePool(NvramType2);
-#endif										// TYPE2_STRUCTURE
-#if (TYPE3_STRUCTURE == 1)
     pBS->FreePool(Type3Handle);
     pBS->FreePool(NvramType3);
-#endif										// TYPE3_STRUCTURE
     pBS->FreePool(Type22Handle);
     pBS->FreePool(NvramType22);
     pBS->FreePool(Type39Handle);
     pBS->FreePool(NvramType39);
-
-    TRACE((-1, ":::  SMBIOS - Exit UpdateStructuresWithNvramData. Status = %r  :::\n", Status));
-
     return Status;
 }
-#endif										// SmbiosDMIEdit_SUPPORT
+#endif
 
 #if UPDATE_BASEBOARD_TYPE2
-/**
-    Updates base board structure (Type 2) in input Buffer with
-    dynamically detected data.
-
-    @param Buffer
-
-    @return EFI_STATUS
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   DynamicBaseBoardData
+//
+// Description: Updates base board structure (Type 2) in input Buffer with
+//              dynamically detected data.
+//
+// Input:       UINT8       *Buffer
+//
+// Output:      EFI_STATUS
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
 DynamicUpdateBaseBoardData(
     IN UINT8        *Buffer
@@ -3061,8 +2781,6 @@ DynamicUpdateBaseBoardData(
     UINT16          StructureHandle;
     UINT8           *TempStructure2;
     UINTN           TempStructure2Size;
-
-    TRACE((-1, "***  SMBIOS - DynamicUpdateBaseBoardData  ***\n"));
 
     SmbiosVariableSize = sizeof(BASE_BOARD_DATA);
 
@@ -3079,8 +2797,6 @@ DynamicUpdateBaseBoardData(
                         SmbiosVariableBuffer);
     if (EFI_ERROR(Status) && Status != EFI_NOT_FOUND) {
         pBS->FreePool(SmbiosVariableBuffer);
-
-        TRACE((-1, "Failed to get SmbiosBaseBoardVar\n"));
         return Status;
     }
 
@@ -3105,13 +2821,13 @@ DynamicUpdateBaseBoardData(
             // Update Board Manufacturer Name
             //
             ReplaceString(TempStructure2, 1, (UINT8*)((BASE_BOARD_DATA*)SmbiosVariableBuffer)->BoardManufacturer);
-#endif										// UPDATE_BOARD_MANUFACTURER
+#endif
 #if UPDATE_BOARD_NAME
             //
             // Update Board Name String corresponding to Board ID.
             //
             ReplaceString(TempStructure2, 2, (UINT8*)((BASE_BOARD_DATA*)SmbiosVariableBuffer)->BoardName);
-#endif										// UPDATE_BOARD_NAME
+#endif
             //
             // Add Structure to the table
             //
@@ -3122,23 +2838,29 @@ DynamicUpdateBaseBoardData(
     }
 
     pBS->FreePool(SmbiosVariableBuffer);
-
-    TRACE((-1, ":::  SMBIOS - Exit DynamicUpdateBaseBoardData  :::\n"));
-
     return EFI_SUCCESS;
 }
-#endif										// UPDATE_BASEBOARD_TYPE2
+#endif
 
 #if UPDATE_SYSTEM_CHASSIS_TYPE3
-/**
-    Updates Chassis structure (Type 3) in input Buffer with
-    dynamically detected data.
-
-    @param Buffer
-
-    @return EFI_STATUS
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   DynamicUpdateChassisData
+//
+// Description: Updates Chassis structure (Type 3) in input Buffer with
+//              dynamically detected data.
+//
+// Input:       UINT8       *Buffer
+//
+// Output:      EFI_STATUS
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
 DynamicUpdateChassisData(
     IN UINT8        *Buffer
@@ -3150,8 +2872,6 @@ DynamicUpdateChassisData(
     UINT8           *StructureFoundPtr;
     UINT8           *SmbiosVariableBuffer;
     UINTN           SmbiosVariableSize;
-
-    TRACE((-1, "***  SMBIOS - DynamicUpdateChassisData  ***\n"));
 
     SmbiosVariableSize = sizeof(CHASSIS_DATA);
 
@@ -3168,8 +2888,6 @@ DynamicUpdateChassisData(
                         SmbiosVariableBuffer);
     if (EFI_ERROR(Status) && Status != EFI_NOT_FOUND) {
         pBS->FreePool(SmbiosVariableBuffer);
-
-        TRACE((-1, "Failed to get SmbiosChassisVar\n"));
         return Status;
     }
 
@@ -3181,27 +2899,32 @@ DynamicUpdateChassisData(
     }
 
     pBS->FreePool(SmbiosVariableBuffer);
-
-    TRACE((-1, ":::  SMBIOS - Exit DynamicUpdateChassisData  :::\n"));
-
     return EFI_SUCCESS;
 }
-#endif										// UPDATE_SYSTEM_CHASSIS_TYPE3
+#endif
 
 #if UPDATE_CPU_TYPE4
-/**
-    Updates CPU structures (Type 4 & 7) in input Buffer with
-    dynamically detected data.
-
-    @param Buffer
-
-    @return EFI_STATUS
-
-    @remark If SMBIOS_CPU_INFO_PROTOCOL is not found, this function tries to\n
-            use the "CPU_DATA" variable (backward compatibility). Otherwise\n
-            CPU dynamic information is not available.
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   DynamicUpdateCpuData
+//
+// Description: Updates CPU structures (Type 4 & 7) in input Buffer with
+//              dynamically detected data.
+//
+// Input:       IN UINT8    *Buffer
+//
+// Output:      EFI_STATUS
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:   If SMBIOS_CPU_INFO_PROTOCOL is not found, this function tries to
+//          use the "CPU_DATA" variable (backward compatibility). Otherwise
+//          CPU dynamic information is not available.
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
 DynamicUpdateCpuData(
     IN UINT8        *Buffer
@@ -3221,16 +2944,14 @@ DynamicUpdateCpuData(
     SMBIOS_CACHE_INFO           *CurCache;
     SINGLE_CPU_DATA             *DynamicData;
 
-    TRACE((-1, "***  SMBIOS - DynamicUpdateCpuData  ***\n"));
-
-    Status = pBS->LocateProtocol(&gSmbiosCpuInfoGuid, NULL, (void**)&SmbiosCpuInfo);
+    Status = pBS->LocateProtocol(&gSmbiosCpuInfoGuid, NULL, &SmbiosCpuInfo);
     if (EFI_ERROR(Status)) {
         UseVariable = TRUE,
         Size = sizeof(CPU_DYNAMIC_DATA);
         pBS->AllocatePool(
                 EfiBootServicesData,
                 Size,
-                (void**)&SmbiosVariableBuffer);
+                &SmbiosVariableBuffer);
         Status = pRS->GetVariable(
                             SmbiosCpuVar,
                             &gAmiSmbiosDynamicDataGuid,
@@ -3239,8 +2960,6 @@ DynamicUpdateCpuData(
                             SmbiosVariableBuffer);
         if (EFI_ERROR(Status)) {
             pBS->FreePool(SmbiosVariableBuffer);
-
-            TRACE((-1, "Failed to get SmbiosCpuVar\n"));
             return Status;
         }
     }
@@ -3251,7 +2970,7 @@ DynamicUpdateCpuData(
         Status = pBS->AllocatePool(
                                 EfiBootServicesData,
                                 Size + 1024,            // 1K additional buffer
-                                (void**)&CurCpu);
+                                &CurCpu);
 
         if (Status == EFI_SUCCESS) {
           UINT16    *L3HandlePtr;
@@ -3272,23 +2991,9 @@ DynamicUpdateCpuData(
           CurCpu->CurrentSpeed = DynamicData->CpuData.CurrentSpeed;
           CurCpu->Status = DynamicData->CpuData.Status;
           CurCpu->Upgrade = DynamicData->CpuData.Upgrade;
-          if (DynamicData->CpuData.CoreCount > 255) {
-              CurCpu->CoreCount = 0xff;
-              CurCpu->CoreCount2 = DynamicData->CpuData.CoreCount;
-              CurCpu->CoreEnabled = 0xff;
-              CurCpu->CoreEnabled2 = DynamicData->CpuData.CoreEnabled;
-          }
-          else {
-              CurCpu->CoreCount = (UINT8)DynamicData->CpuData.CoreCount;
-              CurCpu->CoreEnabled = (UINT8)DynamicData->CpuData.CoreEnabled;
-          }
-          if (DynamicData->CpuData.ThreadCount > 255) {
-              CurCpu->ThreadCount = 0xff;
-              CurCpu->ThreadCount2 = DynamicData->CpuData.ThreadCount;
-          }
-          else {
-              CurCpu->ThreadCount = (UINT8)DynamicData->CpuData.ThreadCount;
-          }
+          CurCpu->CoreCount = DynamicData->CpuData.CoreCount;
+          CurCpu->CoreEnabled = DynamicData->CpuData.CoreEnabled;
+          CurCpu->ThreadCount = DynamicData->CpuData.ThreadCount;
           CurCpu->Family2 = DynamicData->CpuData.Family2;
 
           L3HandlePtr = &CurCpu->L3CacheHandle;
@@ -3383,22 +3088,29 @@ DynamicUpdateCpuData(
     if (UseVariable)
         pBS->FreePool(SmbiosVariableBuffer);
 
-    TRACE((-1, ":::  SMBIOS - Exit DynamicUpdateCpuData  :::\n"));
-
     return EFI_SUCCESS;
 }
-#endif										// UPDATE_CPU_TYPE4
+#endif
 
 #if UPDATE_SLOT_TYPE9
-/**
-    Updates System Slot structure (Type 9) in input Buffer with
-    dynamically detected data.
-
-    @param Buffer
-
-    @return EFI_STATUS
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   DynamicUpdateSlotsData
+//
+// Description: Updates System Slot structure (Type 9) in input Buffer with
+//              dynamically detected data.
+//
+// Input:       IN UINT8    *Buffer
+//
+// Output:      EFI_STATUS
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
 DynamicUpdateSlotsData(
     IN UINT8        *Buffer
@@ -3412,16 +3124,12 @@ DynamicUpdateSlotsData(
     UINTN           SmbiosVariableSize;
     UINT8           i;
 
-    TRACE((-1, "***  SMBIOS - DynamicUpdateSlotsData  ***\n"));
-
     SmbiosVariableSize = sizeof(SYSTEM_SLOT_DYNAMIC_DATA);
-    pBS->AllocatePool(EfiBootServicesData, SmbiosVariableSize, (void**)&SmbiosVariableBuffer);
+    pBS->AllocatePool(EfiBootServicesData, SmbiosVariableSize, &SmbiosVariableBuffer);
     Status = pRS->GetVariable(SmbiosSlotsVar, &gAmiSmbiosDynamicDataGuid,
                              &Attributes, &SmbiosVariableSize, SmbiosVariableBuffer);
     if (EFI_ERROR(Status) && Status != EFI_NOT_FOUND) {
         pBS->FreePool(SmbiosVariableBuffer);
-
-        TRACE((-1, "Failed to get SmbiosSlotsVar\n"));
         return Status;
     }
 
@@ -3435,23 +3143,29 @@ DynamicUpdateSlotsData(
         }
     }
     pBS->FreePool(SmbiosVariableBuffer);
-
-    TRACE((-1, ":::  SMBIOS - Exit DynamicUpdateSlotsData  :::\n"));
-
     return EFI_SUCCESS;
 }
-#endif										// UPDATE_SLOT_TYPE9
+#endif
 
 #if UPDATE_ONBOARD_DEV_TYPE10
-/**
-    Updates On Board Devices Information structure (Type 10) in
-    input Buffer with dynamically detected data.
-
-    @param Buffer
-
-    @return EFI_STATUS
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   DynamicUpdateOnboardDevData
+//
+// Description: Updates On Board Devices Information structure (Type 10) in
+//              input Buffer with dynamically detected data.
+//
+// Input:       IN UINT8    *Buffer
+//
+// Output:      EFI_STATUS
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
 DynamicUpdateOnboardDevData(
     IN UINT8        *Buffer
@@ -3465,16 +3179,12 @@ DynamicUpdateOnboardDevData(
     UINTN           SmbiosVariableSize;
     UINT8           i;
 
-    TRACE((-1, "***  SMBIOS - DynamicUpdateOnboardDevData  ***\n"));
-
     SmbiosVariableSize = sizeof(ONBOARD_DEV_DYNAMIC_DATA);
-    pBS->AllocatePool(EfiBootServicesData, SmbiosVariableSize, (void**)&SmbiosVariableBuffer);
+    pBS->AllocatePool(EfiBootServicesData, SmbiosVariableSize, &SmbiosVariableBuffer);
     Status = pRS->GetVariable(SmbiosOnBoardVar, &gAmiSmbiosDynamicDataGuid,
                              &Attributes, &SmbiosVariableSize, SmbiosVariableBuffer);
     if (EFI_ERROR(Status) && Status != EFI_NOT_FOUND) {
         pBS->FreePool(SmbiosVariableBuffer);
-
-        TRACE((-1, "Failed to get SmbiosOnBoardVar\n"));
         return Status;
     }
 
@@ -3492,27 +3202,33 @@ DynamicUpdateOnboardDevData(
     }
 
     pBS->FreePool(SmbiosVariableBuffer);
-
-    TRACE((-1, ":::  SMBIOS - Exit DynamicUpdateOnboardDevData  :::\n"));
-
     return EFI_SUCCESS;
 }
-#endif										// UPDATE_ONBOARD_DEV_TYPE10
+#endif
 
-/**
-    Update Type 17 Serial Number field for the input memory slot
-    with data obtained from the SPD.
-
-    @param StructureBuffer
-    @param SpdSmBusAddr
-
-    @return EFI_STATUS
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   UpdateSerialNumber
+//
+// Description: Update Type 17 Serial Number field for the input memory slot
+//              with data obtained from the SPD.
+//
+// Input:       IN UINT8                    *StructureBuffer
+//              IN SMBUS_DEVICE_ADDRESS     SpdSmBusAddr
+//
+// Output:      EFI_STATUS
+//
+// Modified:    Type 17 Serial Number field
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
 UpdateSerialNumber (
     IN UINT8                    *StructBuffer,
-    IN EFI_SMBUS_DEVICE_ADDRESS SpdSmBusAddr,
+    IN SMBUS_DEVICE_ADDRESS     SpdSmBusAddr,
     IN MEM_SPD_DATA             *SpdData
 )
 {
@@ -3528,18 +3244,14 @@ UpdateSerialNumber (
     if (MemType == 0) return EFI_UNSUPPORTED;       // Not supported
     if (MemType == 1) SpdOffset = 0x5f;
     if (MemType == 2) SpdOffset = 122;
-    if (MemType == 3) SpdOffset = 325;
 
     for (i = 0; i < 4; i++) {
         if (SpdData) {
             if (SpdOffset == 95) {                  // 0x5f
                 Data8 = SpdData->Byte95To98[95 + i - 95];
             }
-            else if (SpdOffset == 122){
-                Data8 = SpdData->Byte122To125[122 + i - 122];
-            }
             else {
-                Data8 = SpdData->Byte325To328[325 + i - 325];
+                Data8 = SpdData->Byte122To125[122 + i - 122];
             }
         }
         else {
@@ -3547,11 +3259,11 @@ UpdateSerialNumber (
             if (EFI_ERROR(Status)) return Status;
         }
 
-        if (*StructBuffer == 0) return EFI_BUFFER_TOO_SMALL;    // Truncate if string is too long
+        if (*StructBuffer == 0) return EFI_BUFFER_TOO_SMALL;
         Ascii = (Data8 >> 4);
         if (Ascii > 9) *StructBuffer++ = Ascii - 10 + 0x41;
         else *StructBuffer++ = Ascii + 0x30;
-        if (*StructBuffer == 0) return EFI_BUFFER_TOO_SMALL;    // Truncate if string is too long
+        if (*StructBuffer == 0) return EFI_BUFFER_TOO_SMALL;
         Ascii = Data8 & 15;
         if (Ascii > 9) *StructBuffer++ = Ascii - 10 + 0x41;
         else *StructBuffer++ = Ascii + 0x30;
@@ -3562,16 +3274,25 @@ UpdateSerialNumber (
     return EFI_SUCCESS;
 }
 
-/**
-    If input character is in the range of 0x20 to 0x7e (readable
-    character), returns the input character value unchanged.
-    Otherwise returns single space character.
-
-    @param _char
-
-    @return Input character or space
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   FilterCharacter
+//
+// Description: If input character is in the range of 0x20 to 0x7e (readable
+//              character), returns the input character value unchanged.
+//              Otherwise returns single space character.
+//
+// Input:       IN CHAR8    _char
+//
+// Output:      CHAR8
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 CHAR8
 FilterCharacter (
     IN CHAR8    _char
@@ -3584,20 +3305,29 @@ FilterCharacter (
     return ' ';
 }
 
-/**
-    Update Type 17 Part Number field for the input memory slot
-    with data obtained from the SPD.
-
-    @param StructBuffer
-    @param SpdSmBusAddr
-
-    @return EFI_STATUS
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   UpdatePartNumber
+//
+// Description: Update Type 17 Part Number field for the input memory slot
+//              with data obtained from the SPD.
+//
+// Input:       IN UINT8                    *StructBuffer
+//              IN SMBUS_DEVICE_ADDRESS     SpdSmBusAddr
+//
+// Output:      EFI_STATUS
+//
+// Modified:    Type 17 Part Number field
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
 UpdatePartNumber (
     IN UINT8                    *StructBuffer,
-    IN EFI_SMBUS_DEVICE_ADDRESS SpdSmBusAddr,
+    IN SMBUS_DEVICE_ADDRESS     SpdSmBusAddr,
     IN MEM_SPD_DATA             *SpdData
 )
 {
@@ -3612,25 +3342,21 @@ UpdatePartNumber (
     if (MemType == 0) return EFI_UNSUPPORTED;       // Not supported
     if (MemType == 1) SpdOffset = 0x49;
     if (MemType == 2) SpdOffset = 128;
-    if (MemType == 3) SpdOffset = 329;
 
     for (i = 0; i < 18; i++) {
         if (SpdData) {
             if (SpdOffset == 73) {                  // 0x49
                 Data8 = SpdData->Byte73To90[73 + i - 73];
             }
-            else if (SpdOffset == 128){
-                Data8 = SpdData->Byte128To145[128 + i - 128];
-            }
             else {
-                Data8 = SpdData->Byte329To348[329 + i - 329];
+                Data8 = SpdData->Byte128To145[128 + i - 128];
             }
         }
         else {
             Status = gSmbiosBoardProtocol->GetSpdByte(SpdSmBusAddr, SpdOffset + i, &Data8);
             if (EFI_ERROR(Status)) return Status;
         }
-        if (*StructBuffer == 0) return EFI_BUFFER_TOO_SMALL;    // Truncate if string is too long
+        if (*StructBuffer == 0) return EFI_BUFFER_TOO_SMALL;
         if (Data8 == 0) Data8 = 0x20;
         *StructBuffer++ = FilterCharacter(Data8);
     }
@@ -3640,52 +3366,26 @@ UpdatePartNumber (
     return EFI_SUCCESS;
 }
 
-/**
-    Validate StringNum for input structure type
-
-    @param StructureType
-    @param StringNum String number (1 based)
-
-    @return BOOLEAN
-
-**/
-BOOLEAN
-ValidateStringNumber(
-    IN UINT8    *StructurePtr,
-    IN UINT8    StructureType,
-    IN UINTN    StringNumber
-)
-{
-    if (StructureType == 11 || StructureType == 12) {
-        return (*(StructurePtr + sizeof(SMBIOS_STRUCTURE_HEADER)) >= StringNumber);
-    }
-    else {
-        STRING_TABLE    *StringTablePtr;
-
-        StringTablePtr = (STRING_TABLE*)GetTypeTable(StructureType);
-
-        if (StringTablePtr) {
-            while ((StringTablePtr->Offset != 0xff) && --StringNumber) ++StringTablePtr;
-
-            return (StringTablePtr->Offset != 0xff);
-        }
-        else {
-            return FALSE;
-        }
-    }
-}
-
-/**
-    Replace the #StringNum in the input buffer *DestStructPtr
-    with StringData
-
-    @param DestStructPtr Pointer to structure to be updated
-    @param StringNum String number (1 based)
-    @param StringData String with NULL terminated character
-
-    @return EFI_STATUS
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   ReplaceString
+//
+// Description: Replace the #StringNum in the input buffer *DestStructPtr
+//              with StringData
+//
+// Input:       IN UINT8       *DestStructPtr  Pointer to structure to be updated
+//              IN UINT8       StringNum       String number (1 based)
+//              IN UINT8       *StringData     String with NULL terminated character
+//
+// Output:      EFI_STATUS
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
 ReplaceString(
     IN UINT8    *DestStructPtr,
@@ -3694,153 +3394,149 @@ ReplaceString(
 )
 {
     UINT8       StringSize = 0;
+    UINT8       *TempPtr;
+    UINT8       *NextStrPtr;
     UINT8       *StructEndPtr;
     UINTN       RemainingSize;
 
-    if (FindString(&DestStructPtr, StringNum)) {
-        UINT8       *TempPtr;
-        UINT8       *NextStrPtr;
+    FindString(&DestStructPtr, StringNum);
+    NextStrPtr = DestStructPtr;
+    StructEndPtr = DestStructPtr;
 
-        NextStrPtr = DestStructPtr;
-        StructEndPtr = DestStructPtr;
-
-        while(*NextStrPtr != 0) {
-            NextStrPtr++;
-        }
-
-        // NextStrPtr = Pointer to the next string
+    while(*NextStrPtr != 0) {
         NextStrPtr++;
-
-        while(*(UINT16*)StructEndPtr != 0) {
-            StructEndPtr++;
-        }
-
-        RemainingSize = StructEndPtr + 2 - NextStrPtr;  // Including double NULL characters
-
-        TempPtr = StringData;
-        while (*(TempPtr++) != 0) {
-            StringSize++;
-        }
-        StringSize++;                   // Including NULL character
-
-        // Copy remaining strings
-        MemCpy(DestStructPtr + StringSize, NextStrPtr, RemainingSize);
-
-        // Copy the string
-        MemCpy(DestStructPtr, StringData, StringSize);
-
-        return EFI_SUCCESS;
     }
-    else {
-        // String not found
-        return EFI_NOT_FOUND;
+
+    // NextStrPtr = Pointer to the next string
+    NextStrPtr++;
+
+    while(*(UINT16*)StructEndPtr != 0) {
+        StructEndPtr++;
     }
+
+    RemainingSize = StructEndPtr + 2 - NextStrPtr;  // Including double NULL characters
+
+    TempPtr = StringData;
+    while (*(TempPtr++) != 0) {
+        StringSize++;
+    }
+    StringSize++;                   // Including NULL character
+
+    // Copy remaining strings
+    MemCpy(DestStructPtr + StringSize, NextStrPtr, RemainingSize);
+
+    // Copy the string
+    MemCpy(DestStructPtr, StringData, StringSize);
+
+    return EFI_SUCCESS;
 }
 
-/**
-    Update Type 17 Manufacturer field for the input memory slot
-    with data obtained from the SPD.
-
-    @param structBuffer
-    @param SpdSmBusAddr
-
-    @return EFI_STATUS
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   UpdateManufacturer
+//
+// Description: Update Type 17 Manufacturer field for the input memory slot
+//              with data obtained from the SPD.
+//
+// Input:       IN UINT8                    *structBuffer
+//              IN SMBUS_DEVICE_ADDRESS     SpdSmBusAddr
+//
+// Output:      EFI_STATUS
+//
+// Modified:    Type 17 Manufacturer field
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
 UpdateManufacturer(
     IN UINT8                    *StructBuffer,
-    IN EFI_SMBUS_DEVICE_ADDRESS SpdSmBusAddr,
+    IN SMBUS_DEVICE_ADDRESS     SpdSmBusAddr,
     IN MEM_SPD_DATA             *SpdData
 )
 {
     EFI_STATUS      Status;
-    UINTN           i;
+    UINT8           i;
     UINT8           Data8;
-    UINT8           Index;
+    UINTN           SpdOffset;
     JEDEC_MF_ID     *IdTblPtr = NULL;
 
-    switch (MemType) {
-        case 1: for (i = 0; i < 8; i++) {           // DDR2
-                    if (SpdData) {
-                        Data8 = SpdData->Byte64To71[64 + i - 64];
-                    }
-                    else {
-                        Status = gSmbiosBoardProtocol->GetSpdByte(SpdSmBusAddr, 64 + i, &Data8);
-                        if (EFI_ERROR(Status)) return Status;
-                    }
-                    if (Data8 != 0x7f) break;
-                }
-                break;
-        case 2: if (SpdData) {                      // DDR3
-                    i = SpdData->Byte117To118[117 - 117] & 0x7f;    // Remove parity bit
-                    Data8 = SpdData->Byte117To118[118 - 117];
-                }
-                else {
-                    Status = gSmbiosBoardProtocol->GetSpdByte(SpdSmBusAddr, 117, &Data8);
-                    if (EFI_ERROR(Status)) return Status;
-                    i = Data8 & 0x7f;               // Remove parity bit
-                    Status = gSmbiosBoardProtocol->GetSpdByte(SpdSmBusAddr, 118, &Data8);
-                    if (EFI_ERROR(Status)) return Status;
-                }
-                break;
-        case 3: if (SpdData) {                      // DDR4
-                    i = SpdData->Byte320To321[320 - 320] & 0x7f;    // Remove parity bit
-                    Data8 = SpdData->Byte320To321[321 - 320];
-                }
-                else {
-                    Status = gSmbiosBoardProtocol->GetSpdByte(SpdSmBusAddr, 320, &Data8);
-                    if (EFI_ERROR(Status)) return Status;
-                    i = Data8 & 0x7f;               // Remove parity bit
-                    Status = gSmbiosBoardProtocol->GetSpdByte(SpdSmBusAddr, 321, &Data8);
-                    if (EFI_ERROR(Status)) return Status;
-                }
-                break;
-        default: return EFI_UNSUPPORTED;            // Not supported
-    }
+    StructBuffer += ((SMBIOS_STRUCTURE_HEADER*)StructBuffer)->Length;
+    StructBuffer += GetStringOffset(StructBuffer, 3);
 
+    if (MemType == 0) return EFI_UNSUPPORTED;       // Not supported
+    if (MemType == 1) SpdOffset = 64;
+    if (MemType == 2) SpdOffset = 117;
+
+    for (i = 0; i < 8; i++) {
+        if (SpdData) {
+            if (SpdOffset == 64) {
+                Data8 = SpdData->Byte64To71[64 + i - 64];
+            }
+            else {
+                Data8 = SpdData->Byte117To118[117 + i - 117];
+            }
+        }
+        else {
+            Status = gSmbiosBoardProtocol->GetSpdByte(SpdSmBusAddr, SpdOffset + i, &Data8);
+            if (EFI_ERROR(Status)) return Status;
+        }
+        if (Data8 != 0x7f) break;
+    }
+    if (MemType == 2) {
+        i = Data8 & 0x7f;                           // Remove parity bit
+        if (SpdData) {
+            Data8 = SpdData->Byte117To118[118 - 117];
+        }
+        else {
+            Status = gSmbiosBoardProtocol->GetSpdByte(SpdSmBusAddr, 118, &Data8);
+            if (EFI_ERROR(Status)) return Status;
+        }
+    }
     if (i > 7) i = 7;
     IdTblPtr = ManufacturerJedecIdBankTable[i];
 
-    // Search in Manufacturer table
     while ((IdTblPtr->VendorId != Data8) && (IdTblPtr->VendorId != 0xff)) {
         IdTblPtr++;
     }
+    i = 0;
+    do {
+        if (*StructBuffer == 0) return EFI_BUFFER_TOO_SMALL;
+        *StructBuffer++ = FilterCharacter(IdTblPtr->ManufacturerString[i]);
+        i++;
+    } while (IdTblPtr->ManufacturerString[i] != 0);
 
-    if (IdTblPtr->VendorId != 0xff) {
-    	Status = ReplaceString(StructBuffer, 3, IdTblPtr->ManufacturerString);
-    }
-    else {
-    	Index = 0;
-    	Status = EFI_NOT_FOUND;
-		while (Strcmp(ManufacturerTable[Index].Manufacturer, "Undefined")) {
-			if (i == ManufacturerTable[Index].NumContCode && Data8 == ManufacturerTable[Index].ModuleManufacturer) {
-				  Status = ReplaceString(StructBuffer, 3, ManufacturerTable[Index].Manufacturer);
-				  break;
-			}
+    while (*StructBuffer != 0) *StructBuffer++ = 0x20;
 
-			Index++;
-		}
-	}
-
-	return Status;
+    return EFI_SUCCESS;
 }
 
-/**
-    Detect memory device type from SPD data.
-    Only DDR2 and DDR3 are supported
-
-    @param SpdSmBusAddr
-
-    @retval UINT8 Memory Type\n
-                  0 -> Memory type not supported\n
-                  1 -> DDR2\n
-                  2 -> DDR3\n
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   GetMemoryType
+//
+// Description: Detect memory device type from SPD data.
+//              Only DDR2 and DDR3 are supported
+//
+// Input:       IN SMBUS_DEVICE_ADDRESS SpdSmBusAddr
+//
+// Output:      UINT8
+//                  0 -> Memory type not supported
+//                  1 -> DDR2
+//                  2 -> DDR3
+//
+// Modified:    MemType = memory type (Global variable)
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 UINT8
 GetMemoryType(
-    IN EFI_SMBUS_DEVICE_ADDRESS		SpdSmBusAddr
+    IN SMBUS_DEVICE_ADDRESS		SpdSmBusAddr
 )
 {
     EFI_STATUS      Status;
@@ -3852,22 +3548,30 @@ GetMemoryType(
     if (!EFI_ERROR(Status)) {
         if (Data8 == 8) MemType = 1;        // DDR2
         if (Data8 == 11) MemType = 2;       // DDR3
-        if (Data8 == 12) MemType = 3;       // DDR4
     }
 
     return MemType;
 }
 
 #if UPDATE_MEMORY_TYPE16
-/**
-    Updates Memory related structures (Type 16-20) in
-    input Buffer with dynamically detected data.
-
-    @param Buffer
-
-    @return EFI_STATUS
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   DynamicUpdateMemoryData
+//
+// Description: Updates Memory related structures (Type 16-20) in
+//              input Buffer with dynamically detected data.
+//
+// Input:       IN UINT8       *Buffer
+//
+// Output:      EFI_STATUS
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
 DynamicUpdateMemoryData(
     IN UINT8        *Buffer
@@ -3895,27 +3599,15 @@ DynamicUpdateMemoryData(
     PHYSICAL_MEM_ARRAY                *DynArray;
     MEMORY_DEVICE_GROUP               *DynDevice;
     UINT8                             DataWidth[] = {8, 16, 32, 64};
-    EFI_SMBUS_DEVICE_ADDRESS          DummyAddr;
+    SMBUS_DEVICE_ADDRESS              DummyAddr;
 	EFI_GUID                          HobListGuid = HOB_LIST_GUID;
     EFI_GUID                          SpdInfoHobGuid = AMI_SMBIOS_MEMORY_INFO_HOB_GUID;
 	VOID		                      *pHobList;
     MEM_SPD_DATA                      *SpdDataPtr;
-    UINT8                             *SmbMemInfoTemp;  // [ EIP296850 - BIOSBASIC V22 Type 17 : Fail! ]
-
-    TRACE((-1, "***  SMBIOS - DynamicUpdateMemoryData  ***\n"));
 
     pBS->AllocatePool(EfiBootServicesData,
-                        SmbiosVariableSize,
-                        (void**)&SmbiosVariableBuffer);
-
-// [ EIP296850 - BIOSBASIC V22 Type 17 : Fail! ]
-    Status = pBS->AllocatePool(EfiBootServicesData,
-                               (0x200 * gSmbiosBoardProtocol->NumberOfPhysicalMemoryArray), 
-                               (void**)&SmbMemInfoTemp);
-    if (EFI_ERROR(Status))
-        SmbMemInfoTemp = NULL;
-    else
-        MemSet(SmbMemInfoTemp, (0x200 * gSmbiosBoardProtocol->NumberOfPhysicalMemoryArray), 0);
+                    SmbiosVariableSize,
+                    &SmbiosVariableBuffer);
 
     Status = pRS->GetVariable(SmbiosMemVar,
                         &gAmiSmbiosDynamicDataGuid,
@@ -3987,19 +3679,11 @@ DynamicUpdateMemoryData(
                 SmbAmap->ExtendedEndAddr = DynArray->MemArrayMapAddr.ExtendedEndAddr;
             }
 
-            TRACE((-1, "Updating memory slots\n"));
             for (j = 0; j < gSmbiosBoardProtocol->NumberOfMemorySlots[i]; j++)
             {
                 // Update Type 17
-                TRACE((-1, "Searching for slot %x structure\n", j+1));
                 if (FindStructureType(&SrcBuffer, &StructureFoundPtr, 17, 1)){
-                    TRACE((-1, "Found slot %x structure\n", j+1));
-
-// [ EIP296850 - BIOSBASIC V22 Type 17 : Fail! ]
-//                    SmbDevice = (SMBIOS_MEMORY_DEVICE_INFO*)StructureFoundPtr;
-                    MemCpy((SmbMemInfoTemp+ (0x200*j)), StructureFoundPtr, GetStructureLength((UINT8*)StructureFoundPtr));
-                    SmbDevice = (SMBIOS_MEMORY_DEVICE_INFO *)(SmbMemInfoTemp+ (0x200*j));
-                    
+                    SmbDevice = (SMBIOS_MEMORY_DEVICE_INFO*)StructureFoundPtr;
                     DynDevice = &(DynArray->MemoryDeviceData[j]);
 
                     SmbDevice->Size = DynDevice->Type17.Size;
@@ -4011,18 +3695,14 @@ DynamicUpdateMemoryData(
                     SmbDevice->MaximumVoltage = DynDevice->Type17.MaximumVoltage;
                     SmbDevice->ConfiguredVoltage = DynDevice->Type17.ConfiguredVoltage;
                     if (DynDevice->Type17.TypeDetail != 0) {
-// [ EIP296850 - BIOSBASIC V22 Type 17 : Fail! (0x04) ]
-//                        SmbDevice->TypeDetail = DynDevice->Type17.TypeDetail;
-                        SmbDevice->TypeDetail = BIT07;
+                        SmbDevice->TypeDetail = DynDevice->Type17.TypeDetail;
                     }
                     if (SmbDevice->Size == 0) {
-                        TRACE((-1, "Slot %x is empty\n", j+1));
                         SmbDevice->MemoryType = 2;      // Set to Unknown if slot empty
                         SmbDevice->Speed = 0;
                         SmbDevice->Attributes = 0;
                     }
                     else {
-                        TRACE((-1, "Slot %x populated\n", j+1));
                         SmbDevice->MemoryType = DynDevice->Type17.MemoryType;
                         SmbDevice->Speed = DynDevice->Type17.Speed;
 
@@ -4040,7 +3720,7 @@ DynamicUpdateMemoryData(
                                         if (SpdDataPtr->Byte11To14[11 - 11] != 0x02) {
                                             MemErrorCorrection = 0x03;      // No ECC
                                         }
-                                        break;
+                                        goto UpdateManSerPart;
 
                                 case 0x0b:              // DDR3
                                         MemType = 2;
@@ -4053,25 +3733,13 @@ DynamicUpdateMemoryData(
                                         SmbDevice->TotalWidth = SmbDevice->DataWidth + Data8;
                                         Data8 = SpdDataPtr->Byte5To8[7 - 5];
                                         SmbDevice->Attributes = ((Data8 >> 3) & 0x07) + 1;
-                                        break;
 
-                                case 0x0c:              // DDR4
-                                        MemType = 3;
-                                        Data8 = SpdDataPtr->Byte11To14[13 - 11];
-                                        SmbDevice->DataWidth = DataWidth[Data8 & 0x07];
-                                        Data8 = (Data8 & 0x18) ? 8: 0;
-                                        if (Data8 == 0) {
-                                            MemErrorCorrection = 0x03;      // No ECC
-                                        }
-                                        SmbDevice->TotalWidth = SmbDevice->DataWidth + Data8;
-                                        Data8 = SpdDataPtr->Byte11To14[12 - 11];
-                                        SmbDevice->Attributes = ((Data8 >> 3) & 0x07) + 1;
+                                    UpdateManSerPart:
+                                        DummyAddr.SmbusDeviceAddress = 0;
+                                        UpdateManufacturer((UINT8*)SmbDevice, DummyAddr, SpdDataPtr);
+                                        UpdateSerialNumber((UINT8*)SmbDevice, DummyAddr, SpdDataPtr);
+                                        UpdatePartNumber((UINT8*)SmbDevice, DummyAddr, SpdDataPtr);
                             }
-
-                            DummyAddr.SmbusDeviceAddress = 0;
-                            UpdateManufacturer((UINT8*)SmbDevice, DummyAddr, SpdDataPtr);
-                            UpdateSerialNumber((UINT8*)SmbDevice, DummyAddr, SpdDataPtr);
-                            UpdatePartNumber((UINT8*)SmbDevice, DummyAddr, SpdDataPtr);
                         }
                         else {
                             switch (GetMemoryType(DynArray->SpdSmBusAddr[j])) {
@@ -4097,17 +3765,6 @@ DynamicUpdateMemoryData(
                                         }
                                         SmbDevice->TotalWidth = SmbDevice->DataWidth + Data8;
                                         gSmbiosBoardProtocol->GetSpdByte(DynArray->SpdSmBusAddr[j], 7, &Data8);
-                                        SmbDevice->Attributes = ((Data8 >> 3) & 0x07) + 1;
-                                        break;
-
-                                case 3: gSmbiosBoardProtocol->GetSpdByte(DynArray->SpdSmBusAddr[j], 13, &Data8);    // DDR4
-                                        SmbDevice->DataWidth = DataWidth[Data8 & 0x07];
-                                        Data8 = (Data8 & 0x18) ? 8: 0;
-                                        if (Data8 == 0) {
-                                            MemErrorCorrection = 0x03;      // No ECC
-                                        }
-                                        SmbDevice->TotalWidth = SmbDevice->DataWidth + Data8;
-                                        gSmbiosBoardProtocol->GetSpdByte(DynArray->SpdSmBusAddr[j], 12, &Data8);
                                         SmbDevice->Attributes = ((Data8 >> 3) & 0x07) + 1;
                             }
 
@@ -4167,36 +3824,32 @@ DynamicUpdateMemoryData(
 
             SmbArray->MemErrorCorrection = MemErrorCorrection;
         }
-
-// [ EIP296850 - BIOSBASIC V22 Type 17 : Fail! ]
-        for (j = 0; j < gSmbiosBoardProtocol->NumberOfMemorySlots[i]; j++)
-        {
-            SmbDevice = (SMBIOS_MEMORY_DEVICE_INFO *)(SmbMemInfoTemp+ (0x200*j));
-            WriteStructureByHandle(SmbDevice->StructureType.Handle, (UINT8 *)SmbDevice, GetStructureLength((UINT8 *)SmbDevice));
-        }
-    
     }
 
-
-    pBS->FreePool(SmbMemInfoTemp);  // [ EIP296850 - BIOSBASIC V22 Type 17 : Fail! ]
     pBS->FreePool(SmbiosVariableBuffer);
-
-    TRACE((-1, ":::  SMBIOS - Exit DynamicUpdateMemoryData  :::\n"));
-
     return EFI_SUCCESS;
 }
 #endif
 
 #if FLASH_MEMORY_ARRAY_INFO && defined(FLASH_PART_STRING_LENGTH)
-/**
-    Updates Flash Memory related structures (Type 16-20)
-    with dynamically detected data.
-
-    @param None
-
-    @return EFI_STATUS
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   DynamicUpdateFlashMemoryData
+//
+// Description: Updates Flash Memory related structures (Type 16-20)
+//              with dynamically detected data.
+//
+// Input:       None
+//
+// Output:      EFI_STATUS
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
 DynamicUpdateFlashMemoryData(VOID)
 {
@@ -4208,8 +3861,6 @@ DynamicUpdateFlashMemoryData(VOID)
     UINT8                       *FlashMemoryStructurePtr;
     EFI_SMBIOS_HANDLE           SmbiosHandle;
     UINTN                       StringNumber;
-
-    TRACE((-1, "***  SMBIOS - DynamicUpdateFlashMemoryData  ***\n"));
 
     Flash4GBMapStart = 0xFFFFFFFF - FLASH_BLOCK_SIZE;
     Flash4GBMapStart ++;
@@ -4241,26 +3892,32 @@ DynamicUpdateFlashMemoryData(VOID)
         SmbiosPiUpdateString(NULL, &SmbiosHandle, &StringNumber, Manufacturer);
         StringNumber = 6;
         SmbiosPiUpdateString(NULL, &SmbiosHandle, &StringNumber, PartNumber);
-
-        TRACE((-1, ":::  SMBIOS - Exit DynamicUpdateFlashMemoryData  :::\n"));
         return EFI_SUCCESS;
     }
 
-    TRACE((-1, "Flash Memory Structure not found\n"));
     return EFI_NOT_FOUND;
 }
 #endif
 
 #if UPDATE_BATTERY_TYPE22
-/**
-    Updates Portable Battery structures (Type 22) in
-    input Buffer with dynamically detected data.
-
-    @param Buffer
-
-    @return EFI_STATUS
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   DynamicUpdateBatteryData
+//
+// Description: Updates Portable Battery structures (Type 22) in
+//              input Buffer with dynamically detected data.
+//
+// Input:       IN UINT8       *Buffer
+//
+// Output:      EFI_STATUS
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
 DynamicUpdateBatteryData(
   	IN UINT8        *Buffer
@@ -4277,8 +3934,6 @@ DynamicUpdateBatteryData(
   	UINT8           *SmbiosVariableBuffer;
   	UINTN           SmbiosVariableSize;
 
-    TRACE((-1, "***  SMBIOS - DynamicUpdateBatteryData  ***\n"));
-
     SmbiosVariableSize = sizeof(BATTERY_DYNAMIC_DATA);
   	pBS->AllocatePool(EfiBootServicesData,
                     SmbiosVariableSize,
@@ -4292,8 +3947,6 @@ DynamicUpdateBatteryData(
 
   	if (EFI_ERROR(Status) && Status != EFI_NOT_FOUND) {
     	pBS->FreePool(SmbiosVariableBuffer);
-
-    	TRACE((-1, "Failed to get SmbiosBatteryVar\n"));
     	return Status;
   	}
 
@@ -4343,23 +3996,29 @@ DynamicUpdateBatteryData(
     }
 
     pBS->FreePool(SmbiosVariableBuffer);
-
-    TRACE((-1, ":::  SMBIOS - Exit DynamicUpdateBatteryData  :::\n"));
-
     return EFI_SUCCESS;
 }
 #endif
 
 #if UPDATE_ADDITIONAL_INFO_TYPE40
-/**
-    Updates Additional Information structures (Type 40) in
-    input Buffer - Referenced Handle field.
-
-    @param Buffer
-
-    @return EFI_STATUS
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   DynamicUpdateAdditionalInfoData
+//
+// Description: Updates Additional Information structures (Type 40) in
+//              input Buffer - Referenced Handle field.
+//
+// Input:       IN UINT8       *Buffer
+//
+// Output:      EFI_STATUS
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
 DynamicUpdateAdditionalInfoData(
   	IN UINT8        *Buffer
@@ -4372,8 +4031,6 @@ DynamicUpdateAdditionalInfoData(
     UINT8           StructureType;
     UINT8           Instance;
     UINT8           i;
-
-    TRACE((-1, "***  SMBIOS - DynamicUpdateAdditionalInfoData  ***\n"));
 
     SrcBuffer = Buffer;
     if (FindStructureType(&SrcBuffer, &AdditionalInfoPtr, 40, 1))
@@ -4392,22 +4049,29 @@ DynamicUpdateAdditionalInfoData(
         }
     }
 
-    TRACE((-1, ":::  SMBIOS - Exit DynamicUpdateAdditionalInfoData  :::\n"));
-
     return EFI_SUCCESS;
 }
 #endif
 
 #if UPDATE_DEVICE_EXT_TYPE41
-/**
-    Updates On Board Devices Extended Information structure (Type 41)
-    in input Buffer with dynamically detected data.
-
-    @param Buffer
-
-    @return EFI_STATUS
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   DynamicUpdateOnboardDevExt
+//
+// Description: Updates On Board Devices Extended Information structure (Type 41)
+//              in input Buffer with dynamically detected data.
+//
+// Input:       IN UINT8       *Buffer
+//
+// Output:      EFI_STATUS
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
 DynamicUpdateOnboardDevExt(
     IN UINT8        *Buffer
@@ -4421,16 +4085,12 @@ DynamicUpdateOnboardDevExt(
     UINTN           SmbiosVariableSize;
     UINT8           i;
 
-    TRACE((-1, "***  SMBIOS - DynamicUpdateOnboardDevExt  ***\n"));
-
     SmbiosVariableSize = sizeof(ONBOARD_DEV_EXT_DYNAMIC_DATA);
-    pBS->AllocatePool(EfiBootServicesData, SmbiosVariableSize, (void**)&SmbiosVariableBuffer);
+    pBS->AllocatePool(EfiBootServicesData, SmbiosVariableSize, &SmbiosVariableBuffer);
     Status = pRS->GetVariable(SmbiosOnBoardExtVar, &gAmiSmbiosDynamicDataGuid,
                              &Attributes, &SmbiosVariableSize, SmbiosVariableBuffer);
     if (EFI_ERROR(Status) && Status != EFI_NOT_FOUND) {
         pBS->FreePool(SmbiosVariableBuffer);
-
-        TRACE((-1, "Failed to get SmbiosOnBoardExtVar\n"));
         return Status;
     }
 
@@ -4445,146 +4105,28 @@ DynamicUpdateOnboardDevExt(
         }
     }
     pBS->FreePool(SmbiosVariableBuffer);
-
-    TRACE((-1, ":::  SMBIOS - Exit DynamicUpdateOnboardDevExt  :::\n"));
     return EFI_SUCCESS;
 }
 #endif
 
-#if (SMBIOS_TABLES_BUILD_TYPE == 1)
-#if UPDATE_BIOS_RELEASE_DATE
-/**
-    Update Bios Release Date data field in Type 0 structure
-    with today's date
-
-    @param      *Buffer
-
-    @return     EFI_STATUS
-
-**/
-EFI_STATUS
-UpdateBiosReleaseDate(
-    IN UINT8        *Buffer
-)
-{
-    UINT8           *StructureFoundPtr;
-
-    if (FindStructureType(&Buffer, &StructureFoundPtr, 0, 1)) {
-        ReplaceString(StructureFoundPtr, 3, (UINT8*)TODAY);
-        return EFI_SUCCESS;
-    }
-
-    return EFI_NOT_FOUND;
-}
-#endif						// UPDATE_BIOS_RELEASE_DATE
-
-/**
-    Search for structure "Type" and replace its "StringNum" string
-    with input StringData
-
-    @param Type Structure type to search for
-    @param InstanceNum Instance number of structure to search for (1 based)
-    @param StringNum String number (1 based)
-    @param StringData String with NULL terminated character
-
-    @return EFI_STATUS
-
-**/
-EFI_STATUS
-ReplaceStructureString(
-    IN UINT8    Type,
-    IN UINT8	InstanceNum,
-    IN UINT8    StringNumber,
-    IN UINT8    *StringData
-)
-{
-	EFI_STATUS		Status;
-	UINT16			Handle;
-    UINT16			Size;
-    UINT8			*StructurePtr;
-    UINT8			*TempBuffer;
-
-    pBS->AllocatePool(
-				EfiBootServicesData,
-				0x1000,
-				(void**)&TempBuffer);
-
-	if (FindStructureType(&SmbiosDataTable, &StructurePtr, Type, InstanceNum)) {
-		Size = GetStructureLength(StructurePtr);
-		MemCpy(TempBuffer, StructurePtr, Size);
-		ReplaceString(TempBuffer, StringNumber, (UINT8*)StringData);
-		Handle = ((SMBIOS_STRUCTURE_HEADER*)TempBuffer)->Handle;
-		Status = WriteStructureByHandle(Handle, TempBuffer, GetStructureLength(TempBuffer));
-    }
-	else {
-		Status = EFI_NOT_FOUND;
-	}
-
-	pBS->FreePool(TempBuffer);
-	return Status;
-}
-
-/**
-    Update Bios Version data field in Type 0 structure
-    with CORE_MAJOR_VERSION and CORE_BUILD_NUMBER SDL
-    token values
-
-    @param      *Buffer
-
-    @return     EFI_STATUS
-
-**/
-EFI_STATUS
-UpdateBiosVersion(
-    IN UINT8        *Buffer
-)
-{
-    CHAR8           MajorVersionStr[] = "                    ";
-    CHAR8           BuildNumberStr[]  = "                    ";
-    CHAR8           BiosVersionStr[]  = "                    ";
-
-	Sprintf(BiosVersionStr,
-			"%s.%s",
-			Itoa(CORE_MAJOR_VERSION, MajorVersionStr, 10),
-			Itoa(CORE_BUILD_NUMBER, BuildNumberStr, 10)
-		   );
-
-    return ReplaceStructureString(0, 1, 2, BiosVersionStr);
-}
-
-/**
-    Update Bios ROM size data field in Type 0 structure
-
-    @param      *Buffer
-
-    @return     EFI_STATUS
-
-**/
-EFI_STATUS
-UpdateBiosRomSize(
-    IN UINT8    *Buffer
-)
-{
-    UINT8       *StructPtr;
-
-    if (FindStructureType(&Buffer, &StructPtr, 0, 1)) {
-        ((SMBIOS_BIOS_INFO*)StructPtr)->BiosRomSize = (BIOS_SIZE >> 16);
-        return EFI_SUCCESS;
-    }
-
-    return EFI_NOT_FOUND;
-}
-#endif						// (SMBIOS_TABLES_BUILD_TYPE == 1)
-
-/**
-    Updates CPU, System Slot, On Board Devices, Memory structures
-    input Buffer with dynamically detected data.
-
-    @param Buffer
-
-    @return EFI_STATUS
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   DynamicUpdateStructures
+//
+// Description: Updates CPU, System Slot, On Board Devices, Memory structures
+//              input Buffer with dynamically detected data.
+//
+// Input:       IN UINT8                       *Buffer
+//
+// Output:      EFI_STATUS
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
 DynamicUpdateStructures(
     IN  UINT8                       *Buffer
@@ -4592,44 +4134,31 @@ DynamicUpdateStructures(
 {
     static BOOLEAN FirstRun = TRUE;
 
-    TRACE((-1, "***  SMBIOS - DynamicUpdateStructures  ***\n"));
-
     if (FirstRun && (gSmbiosBoardProtocol != NULL)) {
-		#if ((SMBIOS_TABLES_BUILD_TYPE == 1) && UPDATE_BIOS_VERSION)
-            if (!VersionUpdated) {
-                UpdateBiosVersion(SmbiosDataTable);
-            }
-            if (!ReleaseDateUpdated) {
-                UpdateBiosRomSize(SmbiosDataTable);
-            }
-		#endif
-        #if ((SMBIOS_TABLES_BUILD_TYPE == 1) && UPDATE_BIOS_RELEASE_DATE)
-            UpdateBiosReleaseDate(SmbiosDataTable);
-        #endif
-        #if (TYPE2_STRUCTURE && UPDATE_BASEBOARD_TYPE2)
+        #if UPDATE_BASEBOARD_TYPE2
             if (gSmbiosBoardProtocol->BaseBoardInfoSupport) {
                 DynamicUpdateBaseBoardData(SmbiosDataTable);
             }
         #endif
-        #if (TYPE3_STRUCTURE && UPDATE_SYSTEM_CHASSIS_TYPE3)
+        #if UPDATE_SYSTEM_CHASSIS_TYPE3
             if (gSmbiosBoardProtocol->SysChassisInfoSupport) {
                 DynamicUpdateChassisData(SmbiosDataTable);
             }
         #endif
-        #if (TYPE4_STRUCTURE && UPDATE_CPU_TYPE4)
+        #if UPDATE_CPU_TYPE4
         if (UpdateCpuStructure) {
             DynamicUpdateCpuData(SmbiosDataTable);
         }
         #endif
-        #if (TYPE9_STRUCTURE && UPDATE_SLOT_TYPE9)
+        #if UPDATE_SLOT_TYPE9
             DynamicUpdateSlotsData(SmbiosDataTable);
         #endif
-        #if (TYPE10_STRUCTURE && UPDATE_ONBOARD_DEV_TYPE10)
+        #if UPDATE_ONBOARD_DEV_TYPE10
             if (gSmbiosBoardProtocol->OnboardDeviceInfoSupport) {
                 DynamicUpdateOnboardDevData(SmbiosDataTable);
             }
         #endif
-        #if (TYPE16_STRUCTURE && UPDATE_MEMORY_TYPE16)
+        #if UPDATE_MEMORY_TYPE16
             gSmbiosBoardProtocol->EnableSmbusController();
             DynamicUpdateMemoryData(SmbiosDataTable);
             gSmbiosBoardProtocol->RestoreSmbusController();
@@ -4637,17 +4166,17 @@ DynamicUpdateStructures(
         #if FLASH_MEMORY_ARRAY_INFO && defined(FLASH_PART_STRING_LENGTH)
             DynamicUpdateFlashMemoryData();
         #endif
-        #if (TYPE22_STRUCTURE && UPDATE_BATTERY_TYPE22)
+        #if UPDATE_BATTERY_TYPE22
             if (gSmbiosBoardProtocol->PortableBatteryInfoSupport) {
                 DynamicUpdateBatteryData(SmbiosDataTable);
             }
         #endif
-        #if (TYPE40_STRUCTURE && UPDATE_ADDITIONAL_INFO_TYPE40)
+        #if UPDATE_ADDITIONAL_INFO_TYPE40
             if (gSmbiosBoardProtocol->AdditionalInfoSupport) {
                 DynamicUpdateAdditionalInfoData(SmbiosDataTable);
             }
         #endif
-        #if (TYPE41_STRUCTURE && UPDATE_DEVICE_EXT_TYPE41)
+        #if UPDATE_DEVICE_EXT_TYPE41
             if (gSmbiosBoardProtocol->OnboardDeviceExtInfoSupport) {
                 DynamicUpdateOnboardDevExt(SmbiosDataTable);
             }
@@ -4655,74 +4184,51 @@ DynamicUpdateStructures(
 
         FirstRun = FALSE;
     }
-
-    TRACE((-1, ":::  SMBIOS - Exit DynamicUpdateStructures  :::\n"));
     return EFI_SUCCESS;
 }
 
-/**
-    SMBIOS protocol - Returns the pointer to the SmbiosTableEntryPoint
-
-    @param None
-
-    @return Pointer to the SmbiosTableEntryPoint
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   GetSmbiosTableEntryPoint
+//
+// Description: SMBIOS protocol - Returns the pointer to the SmbiosTableEntryPoint
+//
+// Input:       None
+//
+// Output:      VOID* - Pointer to the SmbiosTableEntryPoint
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID*
 GetSmbiosTableEntryPoint(
 )
 {
-#if SMBIOS_2X_SUPPORT
     return pSmbiosTableEntryPoint;
-#endif
-#if SMBIOS_3X_SUPPORT
-    return pSmbiosV3TableEntryPoint;
-#endif
-    return 0;
 }
 
-/**
-    SMBIOS protocol - Returns the pointer to input version of the
-    SmbiosTableEntryPoint
-
-    @param      SmbiosVersion
-
-    @return     VOID* - Pointer to the input version of SmbiosTableEntryPoint
-
-**/
-VOID*
-GetSmbiosVerTableEntryPoint(
-    IN UINT8    SmbiosMajorVersion
-)
-{
-    if (SmbiosMajorVersion == 2) {
-#if SMBIOS_2X_SUPPORT
-        return pSmbiosTableEntryPoint;
-#else
-        return 0;
-#endif                                          // SMBIOS_2X_SUPPORT
-    }
-
-    if (SmbiosMajorVersion == 3) {
-#if SMBIOS_3X_SUPPORT
-        return pSmbiosV3TableEntryPoint;
-#else
-        return 0;
-#endif                                          // SMBIOS_3X_SUPPORT
-    }
-
-    return 0;
-}
-
-/**
-    SMBIOS protocol - Returns the pointer to the Scratch buffer
-    equal the SMBIOS data structure in size.
-
-    @param None
-
-    @return Pointer to the Scratch buffer
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   GetScratchBufferPtr
+//
+// Description: SMBIOS protocol - Returns the pointer to the Scratch buffer
+//              equal the SMBIOS data structure in size.
+//
+// Input:       None
+//
+// Output:      VOID* - Pointer to the Scratch buffer
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID*
 GetScratchBufferPtr(
 )
@@ -4730,58 +4236,80 @@ GetScratchBufferPtr(
     return ScratchBufferPtr;
 }
 
-/**
-    SMBIOS protocol - Returns the maximum size for the SMBIOS
-    data structure table.
-
-    @param None
-
-    @return Maximum SMBIOS data table size
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   GetBufferMaxSize
+//
+// Description: SMBIOS protocol - Returns the maximum size for the SMBIOS
+//              data structure table.
+//
+// Input:       None
+//
+// Output:      UINT16 - Maximum SMBIOS data table size
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 UINT16
 GetBufferMaxSize(VOID)
 {
     return MaximumTableSize;
 }
 
-/**
-    Checks for structure validity
-
-    @param Buffer
-    @param Size
-
-    @return EFI_STATUS
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   CheckForValidStructure
+//
+// Description: Checks for structure validity
+//
+// Input:       IN UINT8   *Buffer
+//              IN UINT16  Size
+//
+// Output:      EFI_STATUS
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
 CheckForValidStructure(
     IN  UINT8   *Buffer,
     IN  UINT16  Size
 )
 {
-    // Check for valid terminator
     if (*(UINT16*)(Buffer + Size - 2) != 0) {
-        TRACE((-1, "Invalid structure terminator\n"));
         return DMI_BAD_PARAMETER;
     }
-
-    // Check for valid size
     if (Size < (((SMBIOS_STRUCTURE_HEADER*)Buffer)->Length + 2)) {
-        TRACE((-1, "Invalid structure size\n"));
         return DMI_BAD_PARAMETER;
     }
     return DMI_SUCCESS;
 }
 
-/**
-    Returns the total structure size
-
-    @param Buffer
-
-    @return Total structure size
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   GetTotalStructureSize
+//
+// Description: Returns the total structure size
+//
+// Input:       IN UINT8   *Buffer
+//
+// Output:      UINT16 - Total structure size
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 UINT16
 GetTotalStructureSize(
     IN UINT8  *Buffer
@@ -4799,15 +4327,24 @@ GetTotalStructureSize(
     return Length;
 }
 
-/**
-    Return the size from the Pointer Buffer to the last
-    structure 127.
-
-    @param Buffer
-
-    @return Size of remaining structure
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   GetRemainingStructuresSize
+//
+// Description: Return the size from the Pointer Buffer to the last
+//              structure 127.
+//
+// Input:       IN UINT8    *Buffer
+//
+// Output:      Size of remaining structure
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 UINT16
 GetRemainingStructuresSize(
     IN UINT8  *Buffer
@@ -4825,235 +4362,103 @@ GetRemainingStructuresSize(
     return Length;
 }
 
-#if (defined(SB_WAKEUP_TYPE_FN) && (SB_WAKEUP_TYPE_FN == 1))
-/**
-    Create "WakeUpType" NVRAM variable containing pointer to
-    Type 1 structure "Wake-up Type" field in Smbios Data Table
-    so that it can be updated on S3 resume
-
-    @param      None
-
-    @return     None
-
-**/
-VOID
-SaveWakeupTypeLocation(
-)
-{
-	UINT8		    *Buffer;
-	UINT8		    *FoundPtr = NULL;
-
-    Buffer = SmbiosDataTable;
-
-    if (FindStructureType(&Buffer, &FoundPtr, 1, 1)) {
-        FoundPtr += 0x18;
-
-        TRACE((-1, "WakeUpType byte location: %x\n", FoundPtr));
-
-        pRS->SetVariable(
-                        L"WakeUpType",
-                        &gAmiSmbiosNvramGuid,
-                        EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_NON_VOLATILE,
-                        4,
-                        &FoundPtr);
-    }
-}
-#endif      // SB_WAKEUP_TYPE_FN
-
-#if SMBIOS_2X_SUPPORT
-/**
-    Updates the SMBIOS 2.x Entry Point Header
-
-    @param pSmbiosTableEntryPoint
-
-    @retval None
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   UpdateEPSHeader
+//
+// Description: Updates the SMBIOS Entry Point Header
+//
+// Input:       IN SMBIOS_TABLE_ENTRY_POINT  *pSmbiosTableEntryPoint
+//
+// Output:      None
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID
 UpdateEPSHeader(
     IN  SMBIOS_TABLE_ENTRY_POINT  *pSmbiosTableEntryPoint
 )
 {
-    TRACE((-1, ":::  SMBIOS - UpdateEPSHeader. pSmbiosTableEntryPoint = %08x  :::\n", pSmbiosTableEntryPoint));
+#if ( defined(CSM_SUPPORT) && (CSM_SUPPORT != 0) )
+    UINT32  Granularity;
 
-#if (defined(SB_WAKEUP_TYPE_FN) && (SB_WAKEUP_TYPE_FN == 1))
-    // Save Smbios Type 1 "Wakeup Type" location in NVRAM for S3 resume
-    SaveWakeupTypeLocation();
-#endif                                          // SB_WAKEUP_TYPE_FN
-
+    if ((LegacyRegionProtocol != NULL) && (((UINT32)pSmbiosTableEntryPoint & 0xffff0000) == 0x000f0000)) {
+    	LegacyRegionProtocol->UnLock (LegacyRegionProtocol,
+									  0xf0000,
+                                      0x10000,
+									  &Granularity);
+	}
+#endif
     // Updating EPS Header
     // Update SMBIOS Data Structure Table length in EPS Header
     pSmbiosTableEntryPoint->TableLength = GetTotalStructureSize(SmbiosDataTable);
-    pSmbiosTableEntryPoint->TableAddress = (UINT32)(UINTN)SmbiosDataTable;
-    TRACE((-1, "***  SMBIOS 2.x - TableAddress = %08x  ***\n", pSmbiosTableEntryPoint->TableAddress));
+    pSmbiosTableEntryPoint->TableAddress = (UINT32)SmbiosDataTable;
 
     // Find and update number of SMBios Structures in EPS Header
     pSmbiosTableEntryPoint->NumberOfSmbiosStructures = GetNumberOfStructures(SmbiosDataTable);
 
     // Find and update largest SMBios Structure in EPS Header
-    pSmbiosTableEntryPoint->MaxStructureSize = GetLargestStructureSize((UINT8*)(UINTN)pSmbiosTableEntryPoint->TableAddress);
+    pSmbiosTableEntryPoint->MaxStructureSize = GetLargestStructureSize((UINT8*)pSmbiosTableEntryPoint->TableAddress);
 
     // Update Checksums in EPS Header
     pSmbiosTableEntryPoint->IntermediateChecksum = 0;
     pSmbiosTableEntryPoint->IntermediateChecksum = SmbiosCheckSum((UINT8*)pSmbiosTableEntryPoint + 0x10, 15);
-
     pSmbiosTableEntryPoint->EntryPointStructureChecksum = 0;
     pSmbiosTableEntryPoint->EntryPointStructureChecksum = SmbiosCheckSum((UINT8*)pSmbiosTableEntryPoint,
                                                                       pSmbiosTableEntryPoint->EntryPointLength);
-
-    TRACE((-1, ":::  SMBIOS - Exit UpdateEPSHeader  :::\n"));
-}
-#endif                                          // SMBIOS_2X_SUPPORT
-
-#if SMBIOS_3X_SUPPORT
-/**
-    Updates the SMBIOS 3.x Entry Point Header
-
-    @param pSmbiosV3TableEntryPoint
-
-    @retval None
-
-**/
-VOID
-UpdateEPSHeader_3(
-    IN  SMBIOS_3X_TABLE_ENTRY_POINT *pSmbiosV3TableEntryPoint
-)
-{
-    TRACE((-1, ":::  SMBIOS - UpdateEPSHeader_3. pSmbiosV3TableEntryPoint = %016lx  :::\n", pSmbiosV3TableEntryPoint));
-
-#if (defined(SB_WAKEUP_TYPE_FN) && (SB_WAKEUP_TYPE_FN == 1))
-    // Save Smbios Type 1 "Wakeup Type" location in NVRAM for S3 resume
-    SaveWakeupTypeLocation();
-#endif                                          // SB_WAKEUP_TYPE_FN
-
-    pSmbiosV3TableEntryPoint->TableMaximumSize = GetTotalStructureSize(SmbiosDataTable);
-    pSmbiosV3TableEntryPoint->TableAddress = (UINT64)(UINTN)SmbiosDataTable;
-    TRACE((-1, "***  SMBIOS 3.0 - TableAddress = %016lx  ***\n", pSmbiosV3TableEntryPoint->TableAddress));
-
-    // Update Checksums in EPS Header
-    pSmbiosV3TableEntryPoint->EntryPointStructureChecksum = 0;
-    pSmbiosV3TableEntryPoint->EntryPointStructureChecksum = SmbiosCheckSum((UINT8*)pSmbiosV3TableEntryPoint,
-                                                                      pSmbiosV3TableEntryPoint->EntryPointLength);
-
-    TRACE((-1, ":::  SMBIOS - Exit UpdateEPSHeader_3  :::\n"));
-}
-#endif                                          // SMBIOS_3X_SUPPORT
-
-/**
-    SMBIOS protocol - Updates the SMBIOS Table Header
-
-    @param      None
-
-    @return     EFI_STATUS
-
-**/
-EFI_STATUS
-UpdateSmbiosTableHeader(VOID)
-{
 #if ( defined(CSM_SUPPORT) && (CSM_SUPPORT != 0) )
-    UINT32      Granularity = 0;
+    if ((LegacyRegionProtocol != NULL) && (((UINT32)pSmbiosTableEntryPoint & 0xffff0000) == 0x000f0000)) {
+    	LegacyRegionProtocol->Lock (LegacyRegionProtocol,
+									0xf0000,
+                                    0x10000,
+									&Granularity);
+	}
 #endif
-
-    TRACE((-1, "*** SMBIOS - UpdateSmbiosTableHeader  ***\n"));
-
-#if ( defined(CSM_SUPPORT) && (CSM_SUPPORT != 0) )
-    if (LegacyRegionProtocol != NULL) {
-        LegacyRegionProtocol->UnLock(LegacyRegionProtocol,
-                                     0xf0000,
-                                     0x10000,
-                                     &Granularity);
-    }
-#endif                                          // CSM_SUPPORT
-
-#if SMBIOS_2X_SUPPORT
-    UpdateEPSHeader(pSmbiosTableEntryPoint);
-#endif                                          // SMBIOS_2X_SUPPORT
-
-#if SMBIOS_3X_SUPPORT
-    UpdateEPSHeader_3(pSmbiosV3TableEntryPoint);
-#endif                                          // SMBIOS_3X_SUPPORT
-
-#if ( defined(CSM_SUPPORT) && (CSM_SUPPORT != 0) )
-    if (LegacyRegionProtocol != NULL) {
-        LegacyRegionProtocol->Lock(LegacyRegionProtocol,
-                                     0xf0000,
-                                     0x10000,
-                                     &Granularity);
-    }
-#endif                                          // CSM_SUPPORT
-
-    TRACE((-1, ":::  SMBIOS - Exit UpdateSmbiosTableHeader  :::\n"));
-    return  EFI_SUCCESS;
 }
 
-#if (CONVERT_TYPE4_V2X_TO_V3X == 1)
-/**
-    Converts Smbios Type4 structure from Smbios 2.x format
-    to Smbios 3.x
-
-    @param      **Buffer
-
-    @return     None
-
-**/
-VOID
-ConverType4ToV30(
-    IN OUT UINT8    **Buffer
-)
-{
-    UINT8       *TempBuffer;
-    UINT16      Size;
-
-    pBS->AllocatePages(
-                AllocateAnyPages,
-                EfiBootServicesData,
-                1,
-                (EFI_PHYSICAL_ADDRESS*)&TempBuffer
-                );
-
-    Size = GetStructureLength(*Buffer);
-    MemCpy(TempBuffer, *Buffer, Size);
-    ((SMBIOS_STRUCTURE_HEADER*)TempBuffer)->Length = sizeof(SMBIOS_PROCESSOR_INFO);
-    MemSet(TempBuffer + 0x2a, 6, 0);
-    MemCpy(TempBuffer + sizeof(SMBIOS_PROCESSOR_INFO), *Buffer + 0x2a, Size - 0x2a);
-    *Buffer = TempBuffer;
-}
-#endif
-
-/**
-    Update the SMBIOS Table
-
-    @param Operation
-    @param StructurePtr
-        - Adding operation: N/A
-        - Delete operation: Pointer to
-        structure to be deleted
-    @param Buffer
-        - Adding operation: Pointer to buffer
-        to be added
-        - Delete operation: N/A
-    @param Size
-        - Adding operation: Size of buffer
-        to be added
-        - Delete operation: N/A
-    @param Handle
-        - Adding operation:
-        = 0xFFFE or 0xFFFF to assign next handle number
-        = Other value to assign a specific
-        handle number
-        - Delete operation: N/A
-
-    @retval EFI_ALREADY_STARTED Input Handle already exists for "add" operation
-    @retval EFI_PROTOCOL_ERROR Input structure is invalid for "add" operation
-    @retval EFI_OUT_OF_RESOURCES Not enough space for "add" operation
-    @retval EFI_PROTOCOL_ERROR Error - Unsupported operation
-    @retval EFI_SUCCESS Function success
-
-    @remark Dynamic table sizing can only be done when SMBIOS table is at\n
-            high memory. At E000, table can be expanded up to the padding size.\n
-            This limitation is due to CSM can only allocate memory, but it does\n
-            not have memory deallocation feature.
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   UpdateSmbiosTable
+//
+// Description: Update the SMBIOS Table
+//
+// Input:       IN SMBIOS_OPERATION    Operation
+//              IN UINT8               *StructurePtr
+//                                        - Adding operation: N/A
+//                                        - Delete operation: Pointer to
+//                                          structure to be deleted
+//              IN UINT8               *Buffer
+//                                        - Adding operation: Pointer to buffer
+//                                          to be added
+//                                        - Delete operation: N/A
+//              IN UINT16              Size
+//                                        - Adding operation: Size of buffer
+//                                          to be added
+//                                        - Delete operation: N/A
+//              IN UINT16              Handle
+//                                        - Adding operation:
+//                                          = 0xFFFE or 0xFFFF to assign next handle number
+//                                          = Other value to assign a specific
+//                                              handle number
+//                                        - Delete operation: N/A
+//
+// Output:      EFI_STATUS
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes: Dynamic table sizing can only be done when SMBIOS table is at
+//        high memory. At E000, table can be expanded up to the padding size.
+//        This limitation is due to CSM can only allocate memory, but it does
+//        not have memory deallocation feature.
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
 UpdateSmbiosTable(
     IN SMBIOS_OPERATION     Operation,
@@ -5066,14 +4471,12 @@ UpdateSmbiosTable(
     EFI_STATUS              Status = -1;
     EFI_STATUS              TableCopyStatus = -1;
     UINT8                   *SmbiosTableCopy;
-    UINT8                   *AllocatedMemory = NULL;
     UINT8                   *MemoryPtr;
     UINT8                   *TempPtr;
     UINT8                   *TempPtr2;
     UINT8                   *Type127;
     UINT16                  TableLength;
-    UINT16                  Length;
-    UINT16                  StructureSize;
+    UINT32                  Length;
 
 #if ( defined(CSM_SUPPORT) && (CSM_SUPPORT != 0) )
     UINT32  Granularity;
@@ -5086,14 +4489,10 @@ UpdateSmbiosTable(
     }
 #endif
 
-    TRACE((-1, "***  SMBIOS - UpdateSmbiosTable  ***\n"));
-    TRACE((-1, "Operation = %x, Size = %x, Handle = %x\n", Operation, Size, Handle));
+    TRACE((-1, "In UpdateSmbiosTable\n"));
 
     switch (Operation) {
         case ADD_STRUCTURE:
-        case ADD_STRUCTURE_BY_INDEX:
-                TRACE((-1, "Adding structure\n"));
-                if (Buffer == NULL) break;
                 if ((Handle != 0xfffe) && (Handle != 0xffff)) {
                     // Check for existing handle
                     TempPtr = SmbiosDataTable;
@@ -5103,39 +4502,18 @@ UpdateSmbiosTable(
                     }
                 }
 
-                // Check input buffer for valid structure
+                // Check input buffer for valid structure according to its size
                 Status = CheckForValidStructure(Buffer, Size);
                 if (Status != EFI_SUCCESS) {
                     Status = EFI_PROTOCOL_ERROR;
                     break;
                 }
 
-                // Work around hanging case when Type 4 structure having header
-                // size equal to 0x2a but its actual size is 0x30 (Smbios 3.0 change)
-                if ((*Buffer == 4) && (*(Buffer + 1) == 0x2a)) {
-                    if (*(Buffer + 4) || *(Buffer + 7) || *(Buffer + 0x10) ||\
-                        *(Buffer + 0x20) || *(Buffer + 0x21) || *(Buffer + 0x22)) {
-                        if ((*(UINT32*)(Buffer + 0x2a) == 0) && \
-                            (*(UINT16*)(Buffer + 0x2e) == 0)) {
-                            MemCpy(Buffer + 0x2a, Buffer + 0x30, Size - 0x30);
-                            Size -= 6;
-                        }
-                    }
-                }
-
-#if (CONVERT_TYPE4_V2X_TO_V3X == 1)
-                if ((((SMBIOS_STRUCTURE_HEADER*)Buffer)->Type == 0x04) && (((SMBIOS_STRUCTURE_HEADER*)Buffer)->Length == 0x2a)) {
-                    TRACE((-1, "Converting Type 4 structure to Version 3.0\n"));
-                    ConverType4ToV30(&Buffer);
-                    Size += 6;
-                }
-#endif
-
                 // Make copy of the original Smbios Table
                 TableCopyStatus = pBS->AllocatePool(
                                             EfiBootServicesData,
                                             MaximumTableSize,
-                                            (void**)&SmbiosTableCopy
+                                            &SmbiosTableCopy
                                             );
                 if (EFI_ERROR(TableCopyStatus)) {
                     Status = EFI_OUT_OF_RESOURCES;
@@ -5149,77 +4527,35 @@ UpdateSmbiosTable(
                 // Check for enough space
                 TableLength = GetTotalStructureSize(SmbiosDataTable);
                 if (Size > (MaximumTableSize - TableLength)) {
-                    TRACE((-1, "Not enough space\n"));
-                    if (SmbiosTableAtE000) {
-                        TRACE((-1, "Not enough in E000\n"));
-                        Status =  EFI_OUT_OF_RESOURCES;
-                        break;
-                    }
-                    else {
-                        TRACE((-1, "Allocating memory for new table\n"));
-                        // Allocate memory to store new Smbios table
-                        TableLength = MaximumTableSize + Size;
-                        AllocatedMemory = (UINT8*)0xFFFFFFFF;
-                        Status = pBS->AllocatePages(
-                                            AllocateMaxAddress,
-                                            EfiRuntimeServicesData,
-                                            EFI_SIZE_TO_PAGES(TableLength),
-                                            (EFI_PHYSICAL_ADDRESS*)&AllocatedMemory
-                                            );
-                        if (EFI_ERROR(Status)) {
-                            TRACE((-1, "Failed to allocate memory\n"));
-                            Status = EFI_OUT_OF_RESOURCES;
-                            break;
-                        }
-
-                        // Copy current Smbios table to the new location
-                        MemCpy(AllocatedMemory, SmbiosDataTable, MaximumTableSize);
-
-                        MemoryPtr = AllocatedMemory;
-                        TRACE((-1, "Memory allocated = %x\n", MemoryPtr));
-                    }
-                }
-                else {
-                    MemoryPtr = SmbiosDataTable;
+                    Status =  EFI_OUT_OF_RESOURCES;
+                    break;
                 }
 
-                if (Operation == ADD_STRUCTURE_BY_INDEX) {
-                    UINT16          Index = 0;
+                MemoryPtr = SmbiosDataTable;
 
-                    while (((SMBIOS_STRUCTURE_HEADER*)MemoryPtr)->Type != 127) {
-                        Length = GetStructureLength(MemoryPtr);
-                        if (*(UINT16*)StructurePtr == Index++) break;
-    	                // Move pointer in the new Smbios table
-    	                MemoryPtr += Length;
-                        // Move pointer in the original Smbios table
-                        TempPtr += Length;
-                    }
-                }
-                else {
-    				if (ADD_STRUCTURE_LOCATION == 1) {
-                        // Advance the pointers to the first structure whose handle number
-                        // is larger than the input handle. In case input handle is FFFF,
-                        // move the pointers to the last structure (Type 127).
-    	                while (((SMBIOS_STRUCTURE_HEADER*)MemoryPtr)->Type != 127) {
-    	                    if (((SMBIOS_STRUCTURE_HEADER*)MemoryPtr)->Handle > Handle) {
-    	                        break;
-    	                    }
+				if (ADD_STRUCTURE_LOCATION == 1) {
+	                // Advance the pointers to the first structure whose handle number
+	                // is larger than the input handle. In case input handle is FFFF,
+	                // move the pointers to the last structure (Type 127).
+	                while (((SMBIOS_STRUCTURE_HEADER*)MemoryPtr)->Type != 127) {
+	                    if (((SMBIOS_STRUCTURE_HEADER*)MemoryPtr)->Handle > Handle) {
+	                        break;
+	                    }
 
-    	                    Length = GetStructureLength(MemoryPtr);
+	                    Length = GetStructureLength(MemoryPtr);
 
-                            // Move pointer in the new Smbios table
-    	                    MemoryPtr += Length;
+	                    // Move pointer in the new Smbios table
+	                    MemoryPtr += Length;
 
-                            // Move pointer in the original Smbios table
-    	                    TempPtr += Length;
-    	                }
-    				}
-    				else {
-    	                TempPtr2 = TempPtr;
-    	                FindStructureType(&TempPtr2, &TempPtr, 127, 1);
-    					MemoryPtr += TempPtr - SmbiosTableCopy;
-    				}
-                }
+	                    // Move pointer in the original Smbios table
+	                    TempPtr += Length;
+	                }
+				}
+				else {
+	                TempPtr2 = TempPtr;
+	                FindStructureType(&TempPtr2, &TempPtr, 127, 1);
+					MemoryPtr += TempPtr - SmbiosTableCopy;
+				}
 
                 if ((Handle == 0xfffe) || (Handle == 0xffff)) {
                     // Assign the LastHandle to the newly added structure
@@ -5247,29 +4583,20 @@ UpdateSmbiosTable(
             		((SMBIOS_STRUCTURE_HEADER*)Type127)->Handle = ++LastHandle;
                 }
 
-                TRACE((-1, "Done adding structure\n"));
                 Status = EFI_SUCCESS;
                 break;
 
         case DELETE_STRUCTURE:
-                TRACE((-1, "Deleting structure\n"));
                 // Clear UpdateCpuStructure flag if CPU (type 4) structure is being deleted
                 if (((SMBIOS_STRUCTURE_HEADER*)StructurePtr)->Type == 4) {
                     UpdateCpuStructure = FALSE;
                 }
 
                 // StructurePtr = Pointer to structure to be deleted
-                StructureSize = GetStructureLength(StructurePtr);
-                Length = GetTotalStructureSize(StructurePtr) - StructureSize;
-                TempPtr = StructurePtr + StructureSize;
+                Length = GetTotalStructureSize(StructurePtr) - GetStructureLength(StructurePtr);
+                TempPtr = StructurePtr + GetStructureLength(StructurePtr);
                 MemCpy(StructurePtr, TempPtr, Length);
-
-                // Clean up
-                TempPtr = StructurePtr + Length;
-                MemSet(TempPtr, StructureSize, 0xff);
-
                 Status = EFI_SUCCESS;
-                TRACE((-1, "Done deleting\n"));
                 break;
 
         default:
@@ -5281,19 +4608,8 @@ UpdateSmbiosTable(
         pBS->FreePool(SmbiosTableCopy);
     }
 
-    TRACE((-1, "Status = %r\n", Status));
     if (Status == EFI_SUCCESS) {
-        if (!SmbiosTableAtE000) {
-			if (AllocatedMemory) {
-			    TRACE((-1, "Freeing previous table memory\n"));
-                pBS->FreePages((EFI_PHYSICAL_ADDRESS)SmbiosDataTable, EFI_SIZE_TO_PAGES(MaximumTableSize));
-
-                SmbiosDataTable = AllocatedMemory;
-                MaximumTableSize = TableLength;
-			}
-        }
-
-        UpdateSmbiosTableHeader();
+        UpdateEPSHeader(pSmbiosTableEntryPoint);
     }
 
 #if ( defined(CSM_SUPPORT) && (CSM_SUPPORT != 0) )
@@ -5305,18 +4621,30 @@ UpdateSmbiosTable(
     }
 #endif
 
-    TRACE((-1, ":::  SMBIOS - Exit UpdateSmbiosTable. Status = %r  :::\n", Status));
+    TRACE((-1, "Exit UpdateSmbiosTable\n"));
+
     return Status;
 }
 
-/**
-    SMBIOS protocol - Searches for available handle in Smbios Data Table
-
-    @param None
-
-    @return Handle number or -1(if not found)
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   GetFreeHandle
+//
+// Description: SMBIOS protocol - Searches available handle
+//                                of Smbios Data Table
+//
+//
+// Input:       None
+//
+// Output:      UINT16 - Handle or -1(if not found)
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 UINT16
 GetFreeHandle(VOID)
 {
@@ -5337,17 +4665,25 @@ GetFreeHandle(VOID)
 	return -1; // No available Handle to use;
 }
 
-/**
-    Check input Buffer for Type 4 (CPU structure) and update it
-    with DMIEdit data if exist
-
-    @param Buffer
-    @param Size
-
-    @return Updated Buffer and Size
-
-**/
-VOID
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   CheckForType4AndUpdate
+//
+// Description: Check input Buffer for Type 4 (CPU structure) and update it
+//              with DMIEdit data if exist
+//
+// Input:       IN UINT8   **Buffer
+//              IN UINT16  *Size
+//
+// Output:      Updated Buffer and Size
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 CheckForType4AndUpdate(
     IN OUT  UINT8        **Buffer,
     IN OUT  UINT16       *Size
@@ -5362,7 +4698,7 @@ CheckForType4AndUpdate(
             pBS->AllocatePool(
                         EfiBootServicesData,
                         0x400,
-                        (void**)&PoolMemory);
+                        &PoolMemory);
             MemSet(PoolMemory, 0x400, 0);
             MemCpy(PoolMemory, *Buffer, *Size);
 
@@ -5376,98 +4712,63 @@ CheckForType4AndUpdate(
     }
 }
 
-/**
-    SMBIOS protocol - Add new structure
-
-    @param Buffer
-    @param Size
-
-    @retval EFI_OUT_OF_RESOURCES    Not enough space
-    @retval EFI_PROTOCOL_ERROR      Invalid input structure or protocol error
-    @retval EFI_SUCCESS             Function successfully executed\n
-                                    Buffer->Handle = Assigned handle number
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   AddStructure
+//
+// Description: SMBIOS protocol - Add new structure
+//
+// Input:       IN UINT8   *Buffer
+//              IN UINT16  Size
+//
+// Output:      EFI_STATUS
+//              Buffer->Handle = Assigned handle number
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
 AddStructure(
     IN UINT8        *Buffer,
     IN UINT16       Size
 )
 {
-    EFI_STATUS      Status;
-
-    TRACE((-1, "***  SMBIOS - AddStructure  ***\n"));
-
     CheckForType4AndUpdate(&Buffer, &Size);
 
-    Status = UpdateSmbiosTable(
+    return UpdateSmbiosTable(
                     ADD_STRUCTURE,
                     NULL,
                     Buffer,
                     Size,
                     0xFFFE                  // Assign next handle number
                     );
-
-    TRACE((-1, ":::  SMBIOS - Exit AddStructure. Status = %r  :::\n", Status));
-    return Status;
 }
 
-/**
-    SMBIOS protocol - Add new structure at a specific index
-
-    @param Handle
-    @param Buffer
-    @param Size
-    @param Index (zero based)
-
-    @retval EFI_ALREADY_STARTED     Input Handle already exists
-    @retval EFI_PROTOCOL_ERROR      Invalid input structure or protocol error
-    @retval EFI_OUT_OF_RESOURCES    Not enough space
-    @retval EFI_SUCCESS             Function successfully executed\n
-                                    Buffer->Handle = Assigned handle number
-
-**/
-EFI_STATUS
-AddStructureByIndex(
-    IN UINT16       Handle,
-    IN UINT8        *Buffer,
-    IN UINT16       Size,
-    IN UINT16       Index
-)
-{
-    EFI_STATUS      Status;
-
-    TRACE((-1, "***  SMBIOS - AddStructureByIndex  ***\n"));
-
-    CheckForType4AndUpdate(&Buffer, &Size);
-
-    Status = UpdateSmbiosTable(
-                    ADD_STRUCTURE_BY_INDEX,
-                    (UINT8*)&Index,
-                    Buffer,
-                    Size,
-                    Handle
-                    );
-
-    TRACE((-1, ":::  SMBIOS - Exit AddStructureByIndex. Status = %r  :::\n", Status));
-    return Status;
-}
-
-/**
-    SMBIOS protocol - Add new structure with a specific handle -
-    structure will not be added if another structure with this
-    handle already existed.
-
-    @param Handle
-    @param Buffer
-    @param Size
-
-    @retval EFI_ALREADY_STARTED     Input Handle already exists
-    @retval EFI_PROTOCOL_ERROR      Invalid input structure or protocol error
-    @retval EFI_OUT_OF_RESOURCES    Not enough space
-    @retval EFI_SUCCESS             Function successfully executed
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   AddStructureByHandle
+//
+// Description: SMBIOS protocol - Add new structure with a specific handle -
+//              structure will not be added if another structure with this
+//              handle already existed.
+//
+// Input:       IN UINT16  Handle
+//              IN UINT8   *Buffer
+//              IN UINT16  Size
+//
+// Output:      EFI_STATUS
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
 AddStructureByHandle(
     IN UINT16       Handle,
@@ -5475,10 +4776,6 @@ AddStructureByHandle(
     IN UINT16       Size
 )
 {
-    EFI_STATUS      Status;
-
-    TRACE((-1, "***  SMBIOS - AddStructureByHandle  ***\n"));
-
     CheckForType4AndUpdate(&Buffer, &Size);
 
     return UpdateSmbiosTable(
@@ -5488,33 +4785,34 @@ AddStructureByHandle(
                     Size,
                     Handle
                     );
-
-    TRACE((-1, ":::  SMBIOS - Exit AddStructureByHandle. Status = %r  :::\n", Status));
-    return Status;
 }
 
-/**
-    SMBIOS protocol - Searches and deletes structure by handle
-
-    @param Handle
-
-    @retval EFI_SUCCESS         Function successfully executed
-    @retval EFI_PROTOCOL_ERROR  Error
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   DeleteStructureByHandle
+//
+// Description: SMBIOS protocol - Searches and deletes structure by handle
+//
+// Input:       IN UINT16  Handle
+//
+// Output:      EFI_STATUS
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
 DeleteStructureByHandle(
     IN UINT16       Handle
 )
 {
-    EFI_STATUS      Status;
     UINT8           *StructurePtr = SmbiosDataTable;
 
-    TRACE((-1, "***  SMBIOS - DeleteStructureByHandle. Handle = %x  ***\n", Handle));
-
     if (FindStructureHandle(&StructurePtr, Handle)) {
-        TRACE((-1, "Deleting structure type %x\n", ((SMBIOS_STRUCTURE_HEADER*)StructurePtr)->Type));
-        Status = UpdateSmbiosTable(
+        return UpdateSmbiosTable(
                         DELETE_STRUCTURE,
                         StructurePtr,
                         0,
@@ -5523,30 +4821,32 @@ DeleteStructureByHandle(
                         );
     }
     else {
-        TRACE((-1, "Structure not found\n"));
-        Status = EFI_NOT_FOUND;
+        return  EFI_NOT_FOUND;
     }
-
-    TRACE((-1, ":::  SMBIOS - Exit DeleteStructureByHandle. Status = %r  :::\n", Status));
-    return Status;
 }
 
-/**
-    SMBIOS protocol - Searches for a structure with input handle,
-    and return a copy of this structure in BufferPtr if found.
-
-    @param Handle
-    @param BufferPtr
-    @param BufferSize
-
-    @retval EFI_SUCCESS             Function successfully executed
-    @retval EFI_OUT_OF_RESOURCES    Not enough memory to allocate for output buffer
-    @retval EFI_INVALID_PARAMETER   Structure not found
-
-    @remark Memory will be allocated for the returning structure if\n
-            structure with input handle is found. Caller is responsible\n
-            for freeing this memory when done with it.
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   ReadStructureByHandle
+//
+// Description: SMBIOS protocol - Searches for a structure with input handle,
+//              and return a copy of this structure in BufferPtr if found.
+//
+// Input:       IN      UINT16      Handle
+//              IN OUT  UINT8       **BufferPtr
+//              IN OUT  UINT16      *BufferSize
+//
+// Output:      EFI_STATUS
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:       Memory will be allocated for the returning structure if
+//              structure with input handle is found. Caller is responsible
+//              for freeing this memory when done with it.
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
 ReadStructureByHandle(
     IN      UINT16            Handle,
@@ -5557,49 +4857,47 @@ ReadStructureByHandle(
     EFI_STATUS    Status;
     UINT8         *StructurePtr = SmbiosDataTable;
 
-    TRACE((-1, "***  SMBIOS - ReadStructureByHandle  ***\n"));
-
     if (FindStructureHandle(&StructurePtr, Handle)) {
         *BufferSize = GetStructureLength(StructurePtr);
-        Status = pBS->AllocatePool(EfiBootServicesData, *BufferSize, (void**)BufferPtr);
+        Status = pBS->AllocatePool(EfiBootServicesData, *BufferSize, BufferPtr);
         if (Status != EFI_SUCCESS) {
             *BufferPtr = NULL;
             *BufferSize = 0;
-
-            TRACE((-1, "Memory allocation failed. Exit\n"));
             return  EFI_OUT_OF_RESOURCES;
         }
         MemCpy(*BufferPtr, StructurePtr, *BufferSize);
-
-        TRACE((-1, "Exit ReadStructureByHandle\n"));
         return  EFI_SUCCESS;
     }
     else {
         *BufferPtr = NULL;
         *BufferSize = 0;
-
-        TRACE((-1, "Structure not found. Exit\n"));
         return  EFI_INVALID_PARAMETER;
     }
 }
 
-/**
-    SMBIOS protocol - Searches for the (n)th structure of input
-    Type and return a copy of this structure in BufferPtr if found.
-
-    @param Type
-    @param Instance
-    @param BufferPtr
-    @param BufferSize
-
-    @retval EFI_SUCCESS             Function successfully executed
-    @retval EFI_OUT_OF_RESOURCES    Not enough memory to allocate for output buffer
-    @retval EFI_INVALID_PARAMETER   Structure not found
-
-    @remark Memory will be allocated for the returning structure if\n
-            structure with input handle is found. Caller is responsible\n
-            for freeing this memory when done with it.
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   ReadStructureByType
+//
+// Description: SMBIOS protocol - Searches for the (n)th structure of input
+//              Type and return a copy of this structure in BufferPtr if found.
+//
+// Input:       IN      UINT8       Type
+//              IN      UINT8       Instance
+//              IN OUT  UINT8       **BufferPtr
+//              IN OUT  UINT16      *BufferSize
+//
+// Output:      EFI_STATUS
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:       Memory will be allocated for the returning structure if
+//              structure with input handle is found. Caller is responsible
+//              for freeing this memory when done with it.
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
 ReadStructureByType(
     IN      UINT8           Type,
@@ -5612,44 +4910,43 @@ ReadStructureByType(
     UINT8           *StructurePtr = SmbiosDataTable;
     UINT8           *FoundStructPtr;
 
-    TRACE((-1, "***  SMBIOS - ReadStructureByType  ***\n"));
-
     if (FindStructureType(&StructurePtr, &FoundStructPtr, Type, Instance)) {
         *BufferSize = GetStructureLength(FoundStructPtr);
-        Status = pBS->AllocatePool(EfiBootServicesData, *BufferSize, (void**)BufferPtr);
+        Status = pBS->AllocatePool(EfiBootServicesData, *BufferSize, BufferPtr);
         if (Status != EFI_SUCCESS) {
             *BufferPtr = NULL;
             *BufferSize = 0;
-
-            TRACE((-1, "Memory allocation failed. Exit\n"));
             return  EFI_OUT_OF_RESOURCES;
         }
         MemCpy(*BufferPtr, FoundStructPtr, *BufferSize);
-
-        TRACE((-1, ":::  SMBIOS - Exit ReadStructureByType  :::\n"));
         return  EFI_SUCCESS;
     }
     else {
         *BufferPtr = NULL;
         *BufferSize = 0;
-
-        TRACE((-1, "Structure type %x not found\n", Type));
         return  EFI_INVALID_PARAMETER;
     }
 }
 
-/**
-    SMBIOS protocol - Overwrite an existing structure by handle
-
-    @param Handle
-    @param BufferPtr
-    @param BufferSize
-
-    @retval EFI_PROTOCOL_ERROR      Invalid input structure
-    @retval EFI_OUT_OF_RESOURCES    Not enough space
-    @retval EFI_SUCCESS             Function successfully executed
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   WriteStructureByHandle
+//
+// Description: SMBIOS protocol - Overwrite an existing structure by handle
+//
+// Input:       UINT16  Handle
+//              UINT8   *BufferPtr
+//              UINT16  BufferSize
+//
+// Output:      EFI_STATUS
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
 WriteStructureByHandle(
     IN UINT16   Handle,
@@ -5660,8 +4957,6 @@ WriteStructureByHandle(
     EFI_STATUS    Status;
 
 #if WRITE_STRUCTURE_HANDLE_POLICY == 0
-
-    TRACE((-1, "***  SMBIOS - WriteStructureByHandle  ***\n"));
 
     Status = DeleteStructureByHandle(Handle);
     if (!EFI_ERROR(Status)) {
@@ -5676,7 +4971,6 @@ WriteStructureByHandle(
                             );
     }
 
-    TRACE((-1, "::: SMBIOS - Exit WriteStructureByHandle. Status = %r  :::\n", Status));
     return Status;
 
 #else
@@ -5687,9 +4981,7 @@ WriteStructureByHandle(
     UINT16      Size;
 #if ( defined(CSM_SUPPORT) && (CSM_SUPPORT != 0) )
     UINT32      Granularity;
-#endif                                          // CSM_SUPPORT
-
-    TRACE((-1, "***  SMBIOS - WriteStructureByHandle  ***\n"));
+#endif
 
     // Check input buffer for valid structure according to its size
     Status = CheckForValidStructure(BufferPtr, BufferSize);
@@ -5697,40 +4989,25 @@ WriteStructureByHandle(
         return EFI_PROTOCOL_ERROR;
     }
 
-    MemoryPtr = SmbiosDataTable;
-    if (FindStructureHandle(&MemoryPtr, Handle)) {
-        // Check for enough space
-        Size = GetTotalStructureSize(SmbiosDataTable) - GetStructureLength(MemoryPtr);
-        if (BufferSize > (MaximumTableSize - Size)) {
-        	if (SmbiosTableAtE000) {
-        		// Table can not grow when in E000, so exit
-				TRACE((-1, "Not enough space in E000. Exit\n"));
-				return  EFI_OUT_OF_RESOURCES;
-        	}
-        	else {
-				Status = DeleteStructureByHandle(Handle);
-				if (EFI_ERROR(Status)) {
-					TRACE((-1, "Cannot delete handle %x. Exit\n", Handle));
-					return EFI_OUT_OF_RESOURCES;
-				}
-        	}
-        }
-    }
-
     // Make copy of the original Smbios Table
     Status = pBS->AllocatePool(
                             EfiBootServicesData,
                             MaximumTableSize,
-                            (void**)&SmbiosTableCopy
+                            &SmbiosTableCopy
                             );
     if (EFI_ERROR(Status)) {
-        TRACE((-1, "Memory allocation failed. Exit\n"));
         return EFI_OUT_OF_RESOURCES;
     }
 
     // TempPtr = pointer to copy of original Smbios table
     TempPtr = SmbiosTableCopy;
     MemCpy(TempPtr, SmbiosDataTable, MaximumTableSize);
+
+    // Check for enough space
+    Size = GetTotalStructureSize(SmbiosDataTable);
+    if (BufferSize > (MaximumTableSize - Size)) {
+        return  EFI_OUT_OF_RESOURCES;
+    }
 
 #if ( defined(CSM_SUPPORT) && (CSM_SUPPORT != 0) )
     if ((LegacyRegionProtocol != NULL) && SmbiosTableAtE000) {
@@ -5739,7 +5016,7 @@ WriteStructureByHandle(
                                       MaximumTableSize,
                                       &Granularity);
     }
-#endif                                          // CSM_SUPPORT
+#endif
 
     MemoryPtr = SmbiosDataTable;
 
@@ -5759,7 +5036,7 @@ WriteStructureByHandle(
 
     pBS->FreePool(SmbiosTableCopy);
 
-    UpdateSmbiosTableHeader();
+    UpdateEPSHeader(pSmbiosTableEntryPoint);
 
 #if ( defined(CSM_SUPPORT) && (CSM_SUPPORT != 0) )
     if ((LegacyRegionProtocol != NULL) && SmbiosTableAtE000) {
@@ -5768,22 +5045,54 @@ WriteStructureByHandle(
                                     MaximumTableSize,
                                     &Granularity);
     }
-#endif                                          // CSM_SUPPORT
+#endif
 
-    TRACE((-1, ":::  SMBIOS - Exit WriteStructureByHandle  :::\n"));
     return EFI_SUCCESS;
 
-#endif		                                    // WRITE_STRUCTURE_HANDLE_POLICY
+#endif			// WRITE_STRUCTURE_HANDLE_POLICY
 }
 
-/**
-    Searches for CSM16 Table in F000 segment
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   UpdateSmbiosTableHeader
+//
+// Description: SMBIOS protocol - Updates the SMBIOS Table Header
+//
+// Input:       None
+//
+// Output:      EFI_STATUS
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
+EFI_STATUS
+UpdateSmbiosTableHeader(VOID)
+{
+    UpdateEPSHeader(pSmbiosTableEntryPoint);
+    return  EFI_SUCCESS;
+}
 
-    @param Csm16Table
-
-    @retval EFI_COMPATIBILITY16_TABLE Csm16Table
-    @retval EFI_STATUS Status
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   FindCsm16Table
+//
+// Description: Searches for CSM16 Table in F000 segment
+//
+// Input:       IN OUT  EFI_COMPATIBILITY16_TABLE   **Csm16Table
+//
+// Output:      EFI_COMPATIBILITY16_TABLE** Csm16Table
+//				EFI_STATUS
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 #if (defined(ITK_SUPPORT) && (ITK_SUPPORT != 0)) || (SMBIOS_TABLE_LOCATION)
 #if (defined(CSM_SUPPORT) && (CSM_SUPPORT != 0))
 EFI_STATUS FindCsm16Table(OUT EFI_COMPATIBILITY16_TABLE** Csm16Table){
@@ -5798,19 +5107,29 @@ EFI_STATUS FindCsm16Table(OUT EFI_COMPATIBILITY16_TABLE** Csm16Table){
     }
 	return EFI_NOT_FOUND;
 }
-#endif                                          // CSM_SUPPORT
-#endif                                          // ITK_SUPPORT || SMBIOS_TABLE_LOCATION
+#endif
+#endif
 
-/**
-    Allocate memory for SMBIOS table in low memory
-
-    @param TablePtr
-    @param Size
-
-    @return EFI_STATUS
-            If success, TablePtr points to allocated memory in E000 segment.
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   SmbiosE000Alloc
+//
+// Description: Allocate memory for SMBIOS table in low memory
+//
+// Input:       IN OUT  UINT8    **TablePtr
+//              IN      UINT16   Size
+//
+// Output:      EFI_STATUS
+//              If success, TablePtr points to allocated memory in
+//              E000 segment.
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 #if (defined(ITK_SUPPORT) && (ITK_SUPPORT != 0)) || (SMBIOS_TABLE_LOCATION)
 #if (defined(CSM_SUPPORT) && (CSM_SUPPORT != 0))
 EFI_STATUS
@@ -5824,16 +5143,11 @@ SmbiosE000Alloc(
 	EFI_COMPATIBILITY16_TABLE*  Csm16Table;
     UINT32                      Granularity;
 
-    TRACE((-1, "***  SMBIOS - SmbiosE000Alloc  ***\n"));
-
     if (LegacyBiosProtocol != NULL) {
         MemSet(&Registers, sizeof (EFI_IA32_REGISTER_SET), 0);
 
         Status = FindCsm16Table(&Csm16Table);
-        if (EFI_ERROR (Status)) {
-            TRACE((-1, "Csm16 Table not found. Exit\n"));
-            return Status;
-        }
+        if (EFI_ERROR (Status)) return Status;
 
         Status = LegacyRegionProtocol->UnLock (LegacyRegionProtocol,
                                                0xe0000,
@@ -5841,10 +5155,7 @@ SmbiosE000Alloc(
                                                &Granularity);
 
         // In case E000-F000 fails to unlock then return error without allocating memory
-        if (EFI_ERROR (Status)) {
-            TRACE((-1, "Failed to unlock shadow. Exit\n"));
-            return Status;
-        }
+        if (EFI_ERROR (Status)) return Status;
 
         Registers.X.AX = Legacy16GetTableAddress;
         Registers.X.BX = E0000_BIT;         // allocate from 0xE0000 64 KB block
@@ -5871,25 +5182,32 @@ SmbiosE000Alloc(
                                     &Granularity);
     }
     else {
-        TRACE((-1, "No LegacyBiosProtocol. Exit\n"));
         Status = EFI_PROTOCOL_ERROR;
     }
 
-    TRACE((-1, ":::  SMBIOS - Exit SmbiosE000Alloc. Status = %r  :::\n", Status));
     return Status;
 }
-#endif                                          // CSM_SUPPORT
-#endif                                          // ITK_SUPPORT || SMBIOS_TABLE_LOCATION
+#endif
+#endif
 
 #if BIOS_LANGUAGE_INFO
-/**
-    Add or update BIOS Language Information structure type 13
-
-    @param None
-
-    @retval None
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   AddUpdateType13
+//
+// Description: Add or update BIOS Language Information structure type 13
+//
+// Input:       None
+//
+// Output:      None
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID
 AddUpdateType13 (VOID)
 {
@@ -5963,7 +5281,7 @@ AddUpdateType13 (VOID)
                                 "pt|PT|iso8859-1\0",
                                 "sv|SE|iso8859-1\0",
                              };
-#endif                                          // BIOS_LANGUAGE_FORMAT
+#endif
 
     CHAR8           Language[LANGUAGESIZE];         // Current Language
     CHAR8           *Lang = &Language[0];
@@ -5972,19 +5290,14 @@ AddUpdateType13 (VOID)
     UINT8           LangCounts;
 //----------------------------------------------------------------------------
 
-    TRACE((-1, "***  SMBIOS - AddUpdateType13  ***\n"));
-
     Size = sizeof(LanguageCodes);
 
     Status = GetEfiVariable(L"PlatformLangCodes",
                             &guidEfiVar,
                             NULL,
                             &Size,
-                            (void**)&LangCodes);
-    if (EFI_ERROR(Status)) {
-        TRACE((-1, "Failed to get PlatformLangCodes variable. Exit\n"));
-        return;
-    }
+                            &LangCodes);
+    if (EFI_ERROR(Status)) return;
 
     LangCounts = (UINT8)((UINT16)Size / (LANGUAGESIZE + 1));    // +1 to compensate for ";" and string terminator
 
@@ -5993,26 +5306,20 @@ AddUpdateType13 (VOID)
                             &guidEfiVar,
                             NULL,
                             &Size,
-                            (void**)&Lang);
-    if (EFI_ERROR(Status)) {
-        TRACE((-1, "Failed to get PlatformLang variable. Exit\n"));
-        return;
-    }
+                            &Lang);
+    if (EFI_ERROR(Status)) return;
 
     BufferSize = 1024;
 
-    Status = pBS->AllocatePool(EfiBootServicesData, BufferSize, (void**)&BufferPtr);
-    if (EFI_ERROR(Status)) {
-        TRACE((-1, "Memory allocation failed. Exit\n"));
-        return;
-    }
-
-    pBS->SetMem(BufferPtr, BufferSize, 0);
+    Status = pBS->AllocatePool(EfiBootServicesData, BufferSize, &BufferPtr);
+    if (EFI_ERROR(Status)) return;
 
     ((SMBIOS_STRUCTURE_HEADER*)BufferPtr)->Type = 13;
     ((SMBIOS_STRUCTURE_HEADER*)BufferPtr)->Length = sizeof(SMBIOS_BIOS_LANG_INFO);
     ((SMBIOS_BIOS_LANG_INFO*)BufferPtr)->InstallableLang = LangCounts;
     ((SMBIOS_BIOS_LANG_INFO*)BufferPtr)->Flags = BIOS_LANGUAGE_FORMAT;
+
+    pBS->SetMem(((SMBIOS_BIOS_LANG_INFO*)BufferPtr)->Reserved, 15, 0);
 
     TempPtr = BufferPtr + sizeof(SMBIOS_BIOS_LANG_INFO);
 
@@ -6025,8 +5332,7 @@ AddUpdateType13 (VOID)
 #else
                 Size = Strlen(&LangLong[j][0]);
                 MemCpy(TempPtr, &LangLong[j][0], Size);
-#endif                                          // BIOS_LANGUAGE_FORMAT
-
+#endif
                 *(TempPtr + Size) = 0;          // string termination
                 break;
             }
@@ -6057,20 +5363,27 @@ AddUpdateType13 (VOID)
     }
 
     pBS->FreePool(BufferPtr);
-
-    TRACE((-1, ":::  SMBIOS - Exit AddUpdateType13  :::\n"));
 }
 #endif
 
 #if SORT_SMBIOS_TABLE_BY_TYPE
-/**
-    Sort the Smbios data table by structure types
-
-    @param None
-
-    @retval None
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   SortSmbiosTableByType
+//
+// Description: Sort the Smbios data table by structure types
+//
+// Input:       None
+//
+// Output:      None
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID
 SortSmbiosTableByType(VOID)
 {
@@ -6080,8 +5393,6 @@ SortSmbiosTableByType(VOID)
     UINT8       Instance;
     UINT16      Type;
     UINT16      Size;
-
-    TRACE((-1, "***  SMBIOS - SortSmbiosTableByType  ***\n"));
 
     MemCpy(ScratchBufferPtr, SmbiosDataTable, MaximumTableSize);
     DestinationPtr = SmbiosDataTable;
@@ -6106,21 +5417,28 @@ SortSmbiosTableByType(VOID)
     if (FindStructureType(&SourcePtr, &FoundPtr, 127, 1)) {
         MemCpy(DestinationPtr, FoundPtr, 6);
     }
-
-    TRACE((-1, ":::  SMBIOS - Exit SortSmbiosTableByType  :::\n"));
 }
-#endif                                          // SORT_SMBIOS_TABLE_BY_TYPE
+#endif
 
-/**
-    Update Processor Information, System Slots, and On-Board
-    Devices Information structures.
-
-    @param Event
-    @param Context
-
-    @retval None
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   SmbiosDynamicUpdate
+//
+// Description: Update Processor Information, System Slots, and On-Board
+//              Devices Information structures.
+//
+// Input:       IN EFI_EVENT   Event
+//              IN VOID        *Context
+//
+// Output:      None
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID
 SmbiosDynamicUpdate (
     IN EFI_EVENT      Event,
@@ -6128,55 +5446,66 @@ SmbiosDynamicUpdate (
 )
 {
     EFI_STATUS                  Status;
-
-    TRACE((-1, "*** SmbiosDynamicUpdate Entry ***\n"));
+    EFI_GUID				    SmbiosGuid = SMBIOS_TABLE_GUID;
+#if defined iAMT_SUPPORT && iAMT_SUPPORT == 1
+	EFI_EVENT                   SigEvent;
+	EFI_GUID                    EfiSmbiosAmtDataGuid = AMT_SMBIOS_GROUP;
+#endif
+   	EFI_EVENT                   SmbiosTableEvent;
+	EFI_GUID                    EfiSmbiosTblPubGuid  = SMBIOS_EFI_TABLE_GROUP;
+#if (defined(CSM_SUPPORT) && (CSM_SUPPORT != 0))
+	UINTN                       NumberOfHandles;
+	EFI_HANDLE                  *HandleBuffer;
+#endif
 
 	pBS->CloseEvent(Event);
 
+TRACE((-1, "*** SmbiosDynamicUpdate Entry ***\n"));
+
 #if SMBIOS_DYNAMIC_UPDATE_POLICY == 0
-#if (TYPE2_STRUCTURE && UPDATE_BASEBOARD_TYPE2)
+#if UPDATE_BASEBOARD_TYPE2
     Status = gSmbiosBoardProtocol->SmbiosCreateBaseBoardData();
     ASSERT_EFI_ERROR(Status);
-#endif                                          // TYPE2_STRUCTURE && UPDATE_BASEBOARD_TYPE2
-#if (TYPE3_STRUCTURE && UPDATE_SYSTEM_CHASSIS_TYPE3)
+#endif
+#if UPDATE_SYSTEM_CHASSIS_TYPE3
     Status = gSmbiosBoardProtocol->SmbiosCreateChassisData();
     ASSERT_EFI_ERROR(Status);
-#endif                                          // TYPE3_STRUCTURE && UPDATE_SYSTEM_CHASSIS_TYPE3
-#if (TYPE4_STRUCTURE && UPDATE_CPU_TYPE4)
+#endif
+#if UPDATE_CPU_TYPE4
     if (UpdateCpuStructure) {
         Status = gSmbiosBoardProtocol->SmbiosCreateCPUData();
         ASSERT_EFI_ERROR(Status);
     }
-#endif                                          // TYPE4_STRUCTURE && UPDATE_CPU_TYPE4
-#if (TYPE9_STRUCTURE && UPDATE_SLOT_TYPE9)
+#endif
+#if UPDATE_SLOT_TYPE9
     Status = gSmbiosBoardProtocol->SmbiosCreateSystemSlotData();
     ASSERT_EFI_ERROR(Status);
-#endif                                          // TYPE9_STRUCTURE && UPDATE_SLOT_TYPE9
-#if (TYPE10_STRUCTURE && UPDATE_ONBOARD_DEV_TYPE10)
+#endif
+#if UPDATE_ONBOARD_DEV_TYPE10
     Status = gSmbiosBoardProtocol->SmbiosCreateOnBoardDevData();
     ASSERT_EFI_ERROR(Status);
-#endif                                          // TYPE10_STRUCTURE && UPDATE_ONBOARD_DEV_TYPE10
-#if (TYPE22_STRUCTURE && UPDATE_BATTERY_TYPE22)
+#endif
+#if UPDATE_BATTERY_TYPE22
     if (gSmbiosBoardProtocol->PortableBatteryInfoSupport) {
         Status = gSmbiosBoardProtocol->SmbiosCreateBatteryDevData();
         ASSERT_EFI_ERROR(Status);
     }
-#endif                                          // TYPE22_STRUCTURE && UPDATE_BATTERY_TYPE22
-#if (TYPE41_STRUCTURE && UPDATE_DEVICE_EXT_TYPE41)
+#endif
+#if UPDATE_DEVICE_EXT_TYPE41
     Status = gSmbiosBoardProtocol->SmbiosCreateOnBoardDevExtInfo();
     ASSERT_EFI_ERROR(Status);
-#endif                                          // TYPE41_STRUCTURE && UPDATE_DEVICE_EXT_TYPE41
-#endif                                          // SMBIOS_DYNAMIC_UPDATE_POLICY == 0
+#endif
+#endif          // SMBIOS_DYNAMIC_UPDATE_POLICY == 0
 
 #if BIOS_LANGUAGE_INFO
     AddUpdateType13();
-#endif                                          // BIOS_LANGUAGE_INFO
+#endif
 
 #if SMBIOS_DYNAMIC_UPDATE_POLICY == 0
 TRACE((-1, "*** Before DynamicUpdateStructures (SMBIOS_DYNAMIC_UPDATE_POLICY = 0) ***\n"));
     DynamicUpdateStructures(SmbiosDataTable);
 TRACE((-1, "*** After DynamicUpdateStructures (SMBIOS_DYNAMIC_UPDATE_POLICY = 0) ***\n"));
-#endif                                          // SMBIOS_DYNAMIC_UPDATE_POLICY
+#endif
 
     // Call OEM porting hook in SmbiosBoard.c - OEM can make changes
     // to the SMBIOS table in this hook
@@ -6192,44 +5521,39 @@ TRACE((-1, "*** After UpdateStructuresWithNvramData (SMBIOS_UPDATE_POLICY = 1) *
 
 #if SORT_SMBIOS_TABLE_BY_TYPE
     SortSmbiosTableByType();
-#endif                                          // SORT_SMBIOS_TABLE_BY_TYPE
+#endif
 
 #if (defined(CSM_SUPPORT) && (CSM_SUPPORT != 0))
-    {
-        UINTN                       NumberOfHandles;
-        EFI_HANDLE                  *HandleBuffer;
+	Status = pBS->LocateHandleBuffer(ByProtocol,
+                                     &gEfiLegacyRegion2ProtocolGuid,
+	             					 NULL,
+                                     &NumberOfHandles,
+                                     &HandleBuffer);
 
-        Status = pBS->LocateHandleBuffer(ByProtocol,
-                                         &gEfiLegacyRegion2ProtocolGuid,
-                                         NULL,
-                                         &NumberOfHandles,
-                                         &HandleBuffer);
-
-        if (!EFI_ERROR(Status)) {
-            Status = pBS->HandleProtocol(HandleBuffer[0],
-                                         &gEfiLegacyRegion2ProtocolGuid,
-                                         &LegacyRegionProtocol);
-            pBS->FreePool(HandleBuffer);
-            ASSERT_EFI_ERROR(Status);
-        }
-
-        Status = pBS->LocateHandleBuffer(ByProtocol,
-                                         &gEfiLegacyBiosProtocolGuid,
-                                         NULL,
-                                         &NumberOfHandles,
-                                         &HandleBuffer);
-
-        if (!EFI_ERROR(Status)) {
-            Status = pBS->HandleProtocol(HandleBuffer[0],
-                                         &gEfiLegacyBiosProtocolGuid,
-                                         &LegacyBiosProtocol);
-
-            pBS->FreePool(HandleBuffer);
-            ASSERT_EFI_ERROR(Status);
-        }
+    if (!EFI_ERROR(Status)) {
+    	Status = pBS->HandleProtocol(HandleBuffer[0],
+                                     &gEfiLegacyRegion2ProtocolGuid,
+    						         &LegacyRegionProtocol);
+    	pBS->FreePool(HandleBuffer);
+        ASSERT_EFI_ERROR(Status);
     }
 
-#if ((defined(ITK_SUPPORT) && (ITK_SUPPORT != 0)) || (SMBIOS_TABLE_LOCATION)) && SMBIOS_2X_SUPPORT
+	Status = pBS->LocateHandleBuffer(ByProtocol,
+                                     &gEfiLegacyBiosProtocolGuid,
+	             			         NULL,
+                                     &NumberOfHandles,
+                                     &HandleBuffer);
+
+    if (!EFI_ERROR(Status)) {
+    	Status = pBS->HandleProtocol(HandleBuffer[0],
+                                     &gEfiLegacyBiosProtocolGuid,
+    	             				 &LegacyBiosProtocol);
+
+    	pBS->FreePool(HandleBuffer);
+        ASSERT_EFI_ERROR(Status);
+    }
+
+#if (defined(ITK_SUPPORT) && (ITK_SUPPORT != 0)) || (SMBIOS_TABLE_LOCATION)
     {
         UINT8	*SmbiosE000Ptr;
         UINT32  Granularity;
@@ -6261,10 +5585,11 @@ TRACE((-1, "*** After UpdateStructuresWithNvramData (SMBIOS_UPDATE_POLICY = 1) *
             }
         }
     }
-#endif                                          // (ITK_SUPPORT || SMBIOS_TABLE_LOCATION) && SMBIOS_2X_SUPPORT
+#endif          // (ITK_SUPPORT)
 
 #if (CSM16_VERSION_MINOR >= 64)
     {
+        SMBIOS_TABLE_ENTRY_POINT    *TempPtr;
         UINT32                      Granularity;
 
         if (LegacyRegionProtocol != NULL) {
@@ -6278,30 +5603,12 @@ TRACE((-1, "*** After UpdateStructuresWithNvramData (SMBIOS_UPDATE_POLICY = 1) *
             Legacy16Data = (LEGACY16_TO_EFI_DATA_TABLE_STRUC*)(UINTN)(0xf0000 + *(UINT16*)0xfff4c);
 
         	if (*(UINT32*)(0xf0000 + Legacy16Data->Compatibility16TableOfs) == (UINT32)'$EFI') {
-                VOID    *TempPtr = 0;
-
-#if SMBIOS_2X_SUPPORT
-                // Smbios 2.x Entry Point Table
-                (SMBIOS_TABLE_ENTRY_POINT*)TempPtr = pSmbiosTableEntryPoint;
+                TempPtr = pSmbiosTableEntryPoint;
                 pSmbiosTableEntryPoint = (SMBIOS_TABLE_ENTRY_POINT*)(0xf0000 + Legacy16Data->SmbiosTableOfs);
 
-                TRACE((-1, "*** Smbios 2.x Table Entry Point = %x ***\n", pSmbiosTableEntryPoint));
+                TRACE((-1, "*** Smbios Table Entry Point = %x ***\n", pSmbiosTableEntryPoint));
 
                 MemCpy(pSmbiosTableEntryPoint, TempPtr, sizeof(SMBIOS_TABLE_ENTRY_POINT));
-#endif                                          // SMBIOS_2X_SUPPORT
-
-#if (CSM16_VERSION_MINOR >= 78)
-#if SMBIOS_3X_SUPPORT
-                // Smbios 3.0 Entry Point Table
-                (SMBIOS_3X_TABLE_ENTRY_POINT*)TempPtr = pSmbiosV3TableEntryPoint;
-                // Offset to Smbios 3.0 Entry Point Table is right after Smbios 2.x
-                pSmbiosV3TableEntryPoint = (SMBIOS_3X_TABLE_ENTRY_POINT*)(0xf0000 + Legacy16Data->SmbiosTableOfs + 0x20);
-
-                TRACE((-1, "*** Smbios 3.0 Table Entry Point = %x ***\n", pSmbiosV3TableEntryPoint));
-
-                MemCpy(pSmbiosV3TableEntryPoint, TempPtr, sizeof(SMBIOS_3X_TABLE_ENTRY_POINT));
-#endif                                          // SMBIOS_3X_SUPPORT
-#endif                                          // CSM16_VERSION_MINOR >= 78
         	}
 
         	LegacyRegionProtocol->Lock(LegacyRegionProtocol,
@@ -6310,77 +5617,21 @@ TRACE((-1, "*** After UpdateStructuresWithNvramData (SMBIOS_UPDATE_POLICY = 1) *
     									 &Granularity);
         }
     }
-#endif                                          // CSM16_VERSION_MINOR >= 64
+#endif          // (CSM16_VERSION_MINOR >= 64)
 
     TRACE((-1, "*** Installing 16bit PnP Smbios Functions ***\n"));
 
     Install16bitPnPSmbiosFunctions();
-#endif                                          // CSM_SUPPORT
+#endif          // (CSM_SUPPORT)
 
-    // Updating Smbios EPS Header
-    UpdateSmbiosTableHeader();
+    // Updating EPS Header
+    UpdateEPSHeader(pSmbiosTableEntryPoint);
 
-#if SMBIOS_2X_SUPPORT
-{
-    EFI_GUID        Smbios2Guid = SMBIOS_TABLE_GUID;
-
-    TRACE((-1, "*** Publishing Smbios 2x to System Configuration Table ***\n"));
-
-    // Update EFI Configuration Table
-    Status = pBS->InstallConfigurationTable(&Smbios2Guid, pSmbiosTableEntryPoint);
+	// Update EFI Configuration Table
+    Status = pBS->InstallConfigurationTable(&SmbiosGuid, pSmbiosTableEntryPoint);
     ASSERT_EFI_ERROR(Status);
-}
-#endif                                          // SMBIOS_2X_SUPPORT
 
-#if SMBIOS_3X_SUPPORT
-{
-    EFI_GUID        Smbios3Guid = SMBIOS_3_TABLE_GUID;
-
-    TRACE((-1, "*** Publishing Smbios 3x to System Configuration Table ***\n"));
-
-    Status = pBS->InstallConfigurationTable(&Smbios3Guid, pSmbiosV3TableEntryPoint);
-    ASSERT_EFI_ERROR(Status);
-}
-#endif                                          // SMBIOS_3X_SUPPORT
-
-#if (defined(SB_WAKEUP_TYPE_FN) && (SB_WAKEUP_TYPE_FN == 1))
-{
-    //
-    // If S4/S5 resume, update System Information structure (Type 1)
-    // Wake-up Type field with detected wake-up source type.
-    //
-
-	UINT8		    *Buffer;
-	UINT8		    *FoundPtr = NULL;
-    EFI_BOOT_MODE   BootMode;
-
-    BootMode = GetBootMode();
-
-    if ((BootMode == BOOT_ON_S4_RESUME) || (BootMode == BOOT_ON_S5_RESUME)) {
-        Buffer = SmbiosDataTable;
-
-        if (FindStructureType(&Buffer, &FoundPtr, 1, 1)) {
-            FoundPtr += 0x18;
-
-			if ((UINT32)FoundPtr < 0xfffff) {
-                NbRuntimeShadowRamWrite(TRUE);
-			}
-
-            *(UINT8*)FoundPtr = getWakeupTypeForSmbios();
-
-            if ((UINT32)FoundPtr < 0xfffff) {
-                NbRuntimeShadowRamWrite(FALSE);
-			}
-        }
-    }
-}
-#endif                                          // SB_WAKEUP_TYPE_FN
-
-#if (defined(iAMT_SUPPORT) && (iAMT_SUPPORT == 1))
-{
-    EFI_EVENT                   SigEvent;
-    EFI_GUID                    EfiSmbiosAmtDataGuid = AMT_SMBIOS_GROUP;
-
+#if defined iAMT_SUPPORT && iAMT_SUPPORT == 1
 	Status = pBS->CreateEventEx(
 					EVT_NOTIFY_SIGNAL,
 					TPL_CALLBACK,
@@ -6392,14 +5643,9 @@ TRACE((-1, "*** After UpdateStructuresWithNvramData (SMBIOS_UPDATE_POLICY = 1) *
 
 	pBS->SignalEvent(SigEvent);
 	pBS->CloseEvent(SigEvent);
-}
-#endif                                          // iAMT_SUPPORT
+#endif
 
 // Added for TPM
-{
-    EFI_EVENT       SmbiosTableEvent;
-    EFI_GUID        EfiSmbiosTblPubGuid  = SMBIOS_EFI_TABLE_GROUP;
-
     Status = pBS->CreateEventEx(
 					EVT_NOTIFY_SIGNAL,
 					TPL_CALLBACK,
@@ -6411,60 +5657,28 @@ TRACE((-1, "*** After UpdateStructuresWithNvramData (SMBIOS_UPDATE_POLICY = 1) *
 
 	pBS->SignalEvent(SmbiosTableEvent);
 	pBS->CloseEvent(SmbiosTableEvent);
-}
 
-#if SMBIOS_2X_SUPPORT
-    pRS->SetVariable(L"SmbiosEntryPointTable",
-                    &gAmiSmbiosNvramGuid,
-                    EFI_VARIABLE_RUNTIME_ACCESS | EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_NON_VOLATILE,
-                    sizeof(SMBIOS_TABLE_ENTRY_POINT*),
-                    &pSmbiosTableEntryPoint);
-#endif                                          // SMBIOS_2X_SUPPORT
-
-#if SMBIOS_3X_SUPPORT
-    pRS->SetVariable(L"SmbiosV3EntryPointTable",
-                    &gAmiSmbiosNvramGuid,
-                    EFI_VARIABLE_RUNTIME_ACCESS | EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_NON_VOLATILE,
-                    sizeof(SMBIOS_3X_TABLE_ENTRY_POINT*),
-                    &pSmbiosV3TableEntryPoint);
-#endif                                          // SMBIOS_3X_SUPPORT
-
-    pRS->SetVariable(L"SmbiosScratchBuffer",
-                    &gAmiSmbiosNvramGuid,
-                    EFI_VARIABLE_RUNTIME_ACCESS | EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_NON_VOLATILE,
-                    sizeof(UINT8*),
-                    &ScratchBufferPtr);
-
-    pRS->SetVariable(L"MaximumTableSize",
-                    &gAmiSmbiosNvramGuid,
-                    EFI_VARIABLE_RUNTIME_ACCESS | EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_NON_VOLATILE,
-                    sizeof(UINT16),
-                    &MaximumTableSize);
-
-    Status = pBS->CreateEventEx(
-                    EVT_NOTIFY_SIGNAL,
-                    TPL_CALLBACK,
-                    NotifyEventFunction,
-                    NULL,
-                    &EfiSmbiosPointerGuid,
-                    &SmbiosPointerEvent);
-    ASSERT_EFI_ERROR(Status);
-
-	pBS->SignalEvent(SmbiosPointerEvent);
-	pBS->CloseEvent(SmbiosPointerEvent);
-
-    TRACE((-1, "::: Exitting SmbiosDynamicUpdate :::\n"));
+    TRACE((-1, "*** Exitting SmbiosDynamicUpdate ***\n"));
 }
 
 #if SMBIOS_DYNAMIC_UPDATE_POLICY == 1
-/**
-    Update structures dynamically
-
-    @param None
-
-    @retval None
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   UpdateDynamicStructures
+//
+// Description: Update structures dynamically
+//
+// Input: None
+//
+// Output: None
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID
 UpdateDynamicStructures(
     VOID)
@@ -6479,44 +5693,40 @@ UpdateDynamicStructures(
     EFI_STATUS  Status;
 #endif
 
-    TRACE((-1, "***  SMBIOS - UpdateDynamicStructures  ***\n"));
-
 #if UPDATE_BASEBOARD_TYPE2
     Status = gSmbiosBoardProtocol->SmbiosCreateBaseBoardData();
     ASSERT_EFI_ERROR(Status);
-#endif                                          // UPDATE_BASEBOARD_TYPE2
+#endif
 #if UPDATE_SYSTEM_CHASSIS_TYPE3
     Status = gSmbiosBoardProtocol->SmbiosCreateChassisData();
     ASSERT_EFI_ERROR(Status);
-#endif                                          // UPDATE_SYSTEM_CHASSIS_TYPE3
+#endif
 #if UPDATE_CPU_TYPE4
     if (UpdateCpuStructure) {
         Status = gSmbiosBoardProtocol->SmbiosCreateCPUData();
         ASSERT_EFI_ERROR(Status);
     }
-#endif                                          // UPDATE_CPU_TYPE4
+#endif
 #if UPDATE_SLOT_TYPE9
     Status = gSmbiosBoardProtocol->SmbiosCreateSystemSlotData();
     ASSERT_EFI_ERROR(Status);
-#endif                                          // UPDATE_SLOT_TYPE9
+#endif
 #if UPDATE_ONBOARD_DEV_TYPE10
     Status = gSmbiosBoardProtocol->SmbiosCreateOnBoardDevData();
     ASSERT_EFI_ERROR(Status);
-#endif                                          // UPDATE_ONBOARD_DEV_TYPE10
+#endif
 #if UPDATE_BATTERY_TYPE22
     if (gSmbiosBoardProtocol->PortableBatteryInfoSupport) {
         Status = gSmbiosBoardProtocol->SmbiosCreateBatteryDevData();
         ASSERT_EFI_ERROR(Status);
     }
-#endif                                          // UPDATE_BATTERY_TYPE22
+#endif
 #if UPDATE_DEVICE_EXT_TYPE41
     Status = gSmbiosBoardProtocol->SmbiosCreateOnBoardDevExtInfo();
     ASSERT_EFI_ERROR(Status);
-#endif                                          // UPDATE_DEVICE_EXT_TYPE41
+#endif
 
     DynamicUpdateStructures(SmbiosDataTable);
-
-    TRACE((-1, ":::  SMBIOS - Exit UpdateDynamicStructures  :::\n"));
 }
 #endif
 
@@ -6531,25 +5741,29 @@ EFI_SMBIOS_PROTOCOL   EfiSmbiosProtocol = {
                                         SmbiosPiUpdateString,
                                         SmbiosPiRemoveStructure,
                                         SmbiosPiGetNextStructure,
-#if (SMBIOS_2X_SUPPORT)
-                                        SMBIOS_2X_MAJOR_VERSION,
-                                        SMBIOS_2X_MINOR_VERSION,
-#else
-                                        SMBIOS_3X_MAJOR_VERSION,
-                                        SMBIOS_3X_MINOR_VERSION,
-#endif
+                                        SMBIOS_MAJOR_VERSION,
+                                        SMBIOS_MINOR_VERSION,
                                        };
 
-/**
-    Add/Register the ProducerHandle associated with SmbiosHandle
-    to the ProducerHandleTable
-
-    @param SmbiosHandle
-    @param ProducerHandle
-
-    @retval None
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   AddProducerHandle
+//
+// Description: Add/Register the ProducerHandle associated with SmbiosHandle
+//              to the ProducerHandleTable
+//
+// Input:       IN EFI_SMBIOS_HANDLE    SmbiosHandle
+//              IN EFI_HANDLE           ProducerHandle
+//
+// Output:
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID
 AddProducerHandle (
     IN EFI_SMBIOS_HANDLE    SmbiosHandle,
@@ -6572,14 +5786,23 @@ AddProducerHandle (
     }
 }
 
-/**
-    Initialize the ProducerHandleTable
-
-    @param ProducerHandle
-
-    @retval None
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   InitializeProducerHandleTable
+//
+// Description: Initialize the ProducerHandleTable
+//
+// Input:       IN EFI_HANDLE   ProducerHandle
+//
+// Output:      None
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID
 InitializeProducerHandleTable (
     IN EFI_HANDLE  ProducerHandle
@@ -6604,14 +5827,23 @@ InitializeProducerHandleTable (
     AddProducerHandle(((EFI_SMBIOS_TABLE_HEADER*)Ptr)->Handle, ProducerHandle);
 }
 
-/**
-    Remove the "SmbiosHandle" entry from the ProducerHandleTable
-
-    @param SmbiosHandle
-
-    @retval None
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   RemoveProducerHandle
+//
+// Description: Remove the "SmbiosHandle" entry from the ProducerHandleTable
+//
+// Input:       IN EFI_SMBIOS_HANDLE    SmbiosHandle
+//
+// Output:      None
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID
 RemoveProducerHandle (
     IN EFI_SMBIOS_HANDLE    SmbiosHandle
@@ -6637,14 +5869,24 @@ RemoveProducerHandle (
     }
 }
 
-/**
-
-    @param SmbiosHandle
-    @param ProducerHandle
-
-    @return ProducerHandle
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   GetProducerHandle
+//
+// Description:
+//
+// Input:       IN EFI_SMBIOS_HANDLE    SmbiosHandle
+//              IN OUT EFI_HANDLE       *ProducerHandle
+//
+// Output:      ProducerHandle
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID
 GetProducerHandle (
     IN EFI_SMBIOS_HANDLE    SmbiosHandle,
@@ -6662,18 +5904,26 @@ GetProducerHandle (
     }
 }
 
-/**
-    Add an Smbios record
-
-    @param This
-    @param ProducerHandle OPTIONAL
-    @param SmbiosHandle
-    @param Record
-
-    @return EFI_STATUS \n
-            SmbiosHandle
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   SmbiosPiAddStructure
+//
+// Description: Add an Smbios record
+//
+// Input:       IN CONST EFI_SMBIOS_PROTOCOL    *This,
+//              IN EFI_HANDLE                   ProducerHandle, OPTIONAL
+//              IN OUT EFI_SMBIOS_HANDLE        *SmbiosHandle,
+//              IN EFI_SMBIOS_TABLE_HEADER      *Record
+//
+// Output:      SmbiosHandle
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
 SmbiosPiAddStructure (
     IN CONST EFI_SMBIOS_PROTOCOL    *This,
@@ -6684,8 +5934,6 @@ SmbiosPiAddStructure (
 {
     EFI_STATUS      Status = EFI_SUCCESS;
     UINT16          RecordSize;
-
-    TRACE((-1, "In SmbiosPiAddStructure\n"));
 
     RecordSize = GetStructureLength((UINT8*)Record);
 
@@ -6711,21 +5959,29 @@ SmbiosPiAddStructure (
         UpdateSmbiosTableHeader();
     }
 
-    TRACE((-1, "Exit SmbiosPiAddStructure. Status = %r\n", Status));
     return Status;
 }
 
-/**
-    Update the string associated with an existing SMBIOS record
-
-    @param This
-    @param SmbiosHandle
-    @param StringNumber
-    @param String
-
-    @return EFI_STATUS
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   SmbiosPiUpdateString
+//
+// Description: Update the string associated with an existing SMBIOS record
+//
+// Input:       IN CONST EFI_SMBIOS_PROTOCOL    *This,
+//              IN EFI_SMBIOS_HANDLE            *SmbiosHandle,
+//              IN UINTN                        *StringNumber,
+//              IN CHAR8                        *String
+//
+// Output:
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
 SmbiosPiUpdateString (
     IN CONST EFI_SMBIOS_PROTOCOL    *This,
@@ -6739,88 +5995,74 @@ SmbiosPiUpdateString (
     UINT8           *BufferPtr;
     UINT16          BufferSize;
 
-    TRACE((-1, "In SmbiosPiUpdateString\n"));
-
     if (*StringNumber) {
         if (FindStructureHandle(&StrucPtr, *SmbiosHandle)) {
-            TRACE((-1, "Found structure with handle = %x\n", *SmbiosHandle));
-            if (ValidateStringNumber(StrucPtr, ((SMBIOS_STRUCTURE_HEADER*)StrucPtr)->Type, *StringNumber)) {
-                BufferSize = GetStructureLength(StrucPtr);
+            BufferSize = GetStructureLength(StrucPtr);
 
-                Status = pBS->AllocatePool(EfiBootServicesData,
-                                        BufferSize + (UINT16)Strlen(String) + 1,
-                                        (void**)&BufferPtr);
-                if (EFI_ERROR(Status)) {
-                    TRACE((-1, "Memory allocation failed. Exit\n"));
-                    return EFI_UNSUPPORTED;
-                }
+            Status = pBS->AllocatePool(EfiBootServicesData,
+                                    BufferSize + (UINT16)Strlen(String) + 1,
+                                    &BufferPtr);
+            if (EFI_ERROR(Status)) return EFI_UNSUPPORTED;
 
-                MemCpy(BufferPtr, StrucPtr, BufferSize);
+            MemCpy(BufferPtr, StrucPtr, BufferSize);
 
-                if (ReplaceString(BufferPtr, *(UINT8*)StringNumber, (UINT8*)String)) {
-                    TRACE((-1, "Failed to replace string\n"));
-                    Status = EFI_UNSUPPORTED;
-                }
-                else {
-                    TRACE((-1, "Deleting structure with handle = %x\n", *SmbiosHandle));
-                    if (DeleteStructureByHandle(*SmbiosHandle)) {
-                        TRACE((-1, "Failed to delete structure\n"));
-                        Status = EFI_INVALID_PARAMETER;
-                    }
-
-                    BufferSize = GetStructureLength(BufferPtr);
-
-                    TRACE((-1, "Adding structure with handle = %x\n", *SmbiosHandle));
-                    if (AddStructureByHandle(*SmbiosHandle, BufferPtr, BufferSize)) {
-                        TRACE((-1, "Failed to add structure\n"));
-                        Status = EFI_ALREADY_STARTED;
-                    }
-                }
-
-                pBS->FreePool(BufferPtr);
-
-                UpdateSmbiosTableHeader();
-
-                Status = EFI_SUCCESS;
+            if (ReplaceString(BufferPtr, *(UINT8*)StringNumber, String)) {
+                Status = EFI_UNSUPPORTED;
             }
             else {
-                TRACE((-1, "StringNumber validation failed!\n"));
-                Status = EFI_NOT_FOUND;
+                if (DeleteStructureByHandle(*SmbiosHandle)) {
+                    Status = EFI_INVALID_PARAMETER;
+                }
+
+                BufferSize = GetStructureLength(BufferPtr);
+
+                if (AddStructureByHandle(*SmbiosHandle, BufferPtr, BufferSize)) {
+                    Status = EFI_ALREADY_STARTED;
+                }
             }
+
+            pBS->FreePool(BufferPtr);
         }
         else {
-            TRACE((-1, "Structure not found!\n"));
             Status = EFI_INVALID_PARAMETER;
         }
     }
     else {
-        TRACE((-1, "String number missing!\n"));
         Status = EFI_NOT_FOUND;
     }
 
-    TRACE((-1, "Exiting SmbiosPiUpdateString. Status = %r\n", Status));
+    if (Status == EFI_SUCCESS) {
+        UpdateSmbiosTableHeader();
+    }
+
     return Status;
-}
+};
 
-/**
-    Remove an SMBIOS record
-
-    @param This
-    @param SmbiosHandle
-
-    @return EFI_STATUS
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   SmbiosPiRemoveStructure
+//
+// Description: Remove an SMBIOS record
+//
+// Input:       IN CONST EFI_SMBIOS_PROTOCOL    *This,
+//              IN EFI_SMBIOS_HANDLE            SmbiosHandle
+//
+// Output:
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
 SmbiosPiRemoveStructure (
     IN CONST EFI_SMBIOS_PROTOCOL    *This,
     IN EFI_SMBIOS_HANDLE   SmbiosHandle
 )
 {
-    TRACE((-1, "In SmbiosPiRemoveStructure\n"));
-
     if (DeleteStructureByHandle((UINT16)SmbiosHandle)) {
-        TRACE((-1, "Failed to delete structure. Exit\n"));
         return EFI_INVALID_PARAMETER;
     }
 
@@ -6828,41 +6070,48 @@ SmbiosPiRemoveStructure (
 
     UpdateSmbiosTableHeader();
 
-    TRACE((-1, "Exit SmbiosPiRemoveStructure\n"));
     return EFI_SUCCESS;
-}
+};
 
-/**
-    Allow the caller to discover all or some of the SMBIOS records
-
-    @param This
-    @param SmbiosHandle
-    @param Type OPTIONAL
-    @param Record
-    @param ProducerHandle OPTIONAL
-
-    @return EFI_STATUS \n
-            Pointer to structure found
-
-    @par  Implementation:
-          @li SmbiosHandle = 0xfffe,  Type = NULL ==> Record = 1st record in table,\n
-                                                  SmbiosHandle = handle of record being returned\n
-          @li SmbiosHandle != 0xfffe, Type = NULL ==> If record of SmbiosHandle is not found, return EFI_NOT_FOUND, SmbiosHandle = 0xfffe\n
-                                                  else Record = next record after record of SmbiosHandle,\n
-                                                  SmbiosHandle = handle of record being returned\n
-          @li SmbiosHandle = 0xfffe,  Type <> 0   ==> If record of input "Type" is not found, return EFI_NOT_FOUND, SmbiosHandle = 0xfffe\n
-                                                  else Record = 1st record of type "*Type",\n
-                                                   SmbiosHandle = handle of record being returned\n
-          @li SmbiosHandle != 0xfffe, Type <> 0   ==> If record of SmbiosHandle is not found, or found but no record of type "*Type" after\n
-                                                  record of SmbiosHandle can be found, return EFI_NOT_FOUND, SmbiosHandle = 0xfffe\n
-                                                  else Record = next record after record of SmbiosHandle,\n
-                                                  SmbiosHandle = handle of record being returned
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   SmbiosPiGetNextStructure
+//
+// Description: Allow the caller to discover all or some of the SMBIOS records
+//
+// Input:       IN  CONST EFI_SMBIOS_PROTOCOL   *This,
+//              IN  OUT EFI_SMBIOS_HANDLE       *SmbiosHandle
+//              IN  EFI_SMBIOS_TYPE             *Type, OPTIONAL
+//              OUT EFI_SMBIOS_TABLE_HEADER     **Record,
+//              OUT EFI_HANDLE                  *ProducerHandle OPTIONAL
+//
+// Output:
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//  Implementation:
+//  SmbiosHandle = 0xfffe,  Type = NULL ==> Record = 1st record in table,
+//                                          SmbiosHandle = handle of record being returned
+//  SmbiosHandle != 0xfffe, Type = NULL ==> If record of SmbiosHandle is not found, return EFI_NOT_FOUND, SmbiosHandle = 0xfffe
+//                                          else Record = next record after record of SmbiosHandle,
+//                                               SmbiosHandle = handle of record being returned
+//  SmbiosHandle = 0xfffe,  Type <> 0   ==> If record of input "Type" is not found, return EFI_NOT_FOUND, SmbiosHandle = 0xfffe
+//                                          else Record = 1st record of type "*Type",
+//                                               SmbiosHandle = handle of record being returned
+//  SmbiosHandle != 0xfffe, Type <> 0   ==> If record of SmbiosHandle is not found, or found but no record of type "*Type" after
+//                                               record of SmbiosHandle can be found, return EFI_NOT_FOUND, SmbiosHandle = 0xfffe
+//                                          else Record = next record after record of SmbiosHandle,
+//                                               SmbiosHandle = handle of record being returned
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
 SmbiosPiGetNextStructure (
     IN CONST EFI_SMBIOS_PROTOCOL    *This,
     IN OUT EFI_SMBIOS_HANDLE        *SmbiosHandle,
-    IN EFI_SMBIOS_TYPE              *Type OPTIONAL,
+    IN EFI_SMBIOS_TYPE              *Type, OPTIONAL
     OUT EFI_SMBIOS_TABLE_HEADER     **Record,
     OUT EFI_HANDLE                  *ProducerHandle OPTIONAL
 )
@@ -6871,8 +6120,6 @@ SmbiosPiGetNextStructure (
     UINT8           *StrucPtr;
     UINT8           *StructureFoundPtr;
     UINT16          StrucSize;
-
-    TRACE((-1, "In SmbiosPiGetNextStructure\n"));
 
     StrucPtr = SmbiosDataTable;
 
@@ -6954,34 +6201,42 @@ SmbiosPiGetNextStructure (
 
 GetNext_Exit:
     if (Status == EFI_SUCCESS) {
-        *SmbiosHandle = ((EFI_SMBIOS_TABLE_HEADER*)StrucPtr)->Handle;
-        *Record = (EFI_SMBIOS_TABLE_HEADER*)StrucPtr;
-
         if (ProducerHandle != NULL) {
             GetProducerHandle(*SmbiosHandle, ProducerHandle);
         }
+
+        *SmbiosHandle = ((EFI_SMBIOS_TABLE_HEADER*)StrucPtr)->Handle;
+        *Record = (EFI_SMBIOS_TABLE_HEADER*)StrucPtr;
     }
     else {
         *SmbiosHandle = 0xfffe;
     }
 
-    TRACE((-1, "Exit SmbiosPiGetNextStructure. Status = %r\n", Status));
     return Status;
-}
+};
 
 //**********************************************************************//
 // AMI Implementation - PI Smbios Protocol Section End
 //**********************************************************************//
 
-/**
-    SMBIOS driver entry point
-
-    @param ImageHandle
-    @param SystemTable
-
-    @return EFI_STATUS
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   SmbiosDriverEntryPoint
+//
+// Description: SMBIOS driver entry point
+//
+// Input:       IN EFI_HANDLE           ImageHandle,
+//              IN EFI_SYSTEM_TABLE     *SystemTable
+//
+// Output:      EFI_STATUS
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
 SmbiosDriverEntryPoint(
 	IN EFI_HANDLE               ImageHandle,
@@ -6996,156 +6251,46 @@ SmbiosDriverEntryPoint(
     UINT8                       Type127Structure[] = {0x7f, 0x04, 0x00, 0x00, 0x00, 0x00};
     UINT16                      Size;
     EFI_EVENT                   ReadyToBootEvent;
-    BOOLEAN                     StaticTableFound = FALSE;
+    EFI_PHYSICAL_ADDRESS        MemoryAddr;
 
     InitAmiLib(ImageHandle, SystemTable);
 
-    TRACE((-1, "In SmbiosDriverEntryPoint\n"));
-
-#if SMBIOS_2X_SUPPORT
-{
-    EFI_PHYSICAL_ADDRESS    Address;
-
-    // Allocate runtime buffers for Smbios 2.x Table Entry Point
-    TRACE((-1, "Allocating memory for Smbios v2.x SmbiosEntryPointTable\n"));
-
-    Address = 0xFFFFFFFF;
-    Status = pBS->AllocatePages(
-                            AllocateAnyPages,
-                            EfiRuntimeServicesData,
-                            1,
-                            &Address
-                            );
-    ASSERT_EFI_ERROR(Status);
-    pSmbiosTableEntryPoint = (SMBIOS_TABLE_ENTRY_POINT*)Address;
-    TRACE((-1, "pSmbiosTableEntryPoint = %x\n", pSmbiosTableEntryPoint));
-
+    // Allocate runtime buffer for Smbios Table Entry Point
+    pBS->AllocatePool(EfiRuntimeServicesData, sizeof(SMBIOS_TABLE_ENTRY_POINT), &pSmbiosTableEntryPoint);
     MemCpy(pSmbiosTableEntryPoint, &SmbiosEntryPointTable, sizeof(SMBIOS_TABLE_ENTRY_POINT));
-}
-#endif                                          // SMBIOS_2X_SUPPORT
-
-#if SMBIOS_3X_SUPPORT
-    // Allocate runtime buffers for Smbios 3.x Table Entry Point
-    TRACE((-1, "Allocating memory for Smbios v3.x Smbios3EntryPointTable\n"));
-#if (SMBIOS_TABLE_ADDRESS_LIMIT == 1)
-    pBS->AllocatePool(EfiRuntimeServicesData, sizeof(SMBIOS_3X_TABLE_ENTRY_POINT), (void**)&pSmbiosV3TableEntryPoint);
-
-#else
-{
-    EFI_PHYSICAL_ADDRESS    Address;
-
-    Address = 0xFFFFFFFF;
-    Status = pBS->AllocatePages(
-                            AllocateMaxAddress,
-                            EfiRuntimeServicesData,
-                            1,
-                            &Address
-                            );
-    ASSERT_EFI_ERROR(Status);
-    pSmbiosV3TableEntryPoint = (SMBIOS_3X_TABLE_ENTRY_POINT*)Address;
-    TRACE((-1, "pSmbiosV3TableEntryPoint = %x\n", pSmbiosV3TableEntryPoint));
-}
-#endif                                          // SMBIOS_TABLE_ADDRESS_LIMIT
-
-    MemCpy(pSmbiosV3TableEntryPoint, &SmbiosV3EntryPointTable, sizeof(SMBIOS_3X_TABLE_ENTRY_POINT));
-#endif                                          // SMBIOS_3X_SUPPORT
 
     Status = pBS->LocateProtocol(&gAmiSmbiosBoardProtocolGuid,
                                  NULL,
-                                 (void**)&gSmbiosBoardProtocol);
+                                 &gSmbiosBoardProtocol);
     ASSERT_EFI_ERROR(Status);
 
-    TRACE((-1, "Get static table\n"));
     // Get SMBios Data Structure Image
     Status = LoadRealModeFileSection(&gAmiSmbiosStaticDataGuid, \
-									EFI_SECTION_FREEFORM_SUBTYPE_GUID, (void**)&Buffer, &BufferSize);
+									EFI_SECTION_FREEFORM_SUBTYPE_GUID, &Buffer, &BufferSize);
 
     // If Smbios static table is found, then use it
     // otherwise create an empty table with size determined by EXTRA_RESERVED_BYTES
     // SDL token and set the beginning structure to type 127
     if (Status == EFI_SUCCESS) {
-        TRACE((-1, "=== Static table found! ===\n"));
-
-        StaticTableFound = TRUE;
-
-        // Skip over Section GUID
-        BufferPtr = Buffer;
-        BufferPtr += sizeof (EFI_GUID);
-        BufferSize -= sizeof (EFI_GUID);
-        UpdateType127Handle(BufferPtr);
-
-#if (SMBIOS_TABLES_BUILD_TYPE == 1)			            // Use DT file
-        TRACE((-1, "Static table built from DT file\n"));
-
-        FixupHandles(BufferPtr);
-
-        // Allocate new buffer with size equals to (static table size + EXTRA_RESERVED_BYTES)
-        // to allow the table to grow
-        MaximumTableSize = (UINT16)BufferSize + EXTRA_RESERVED_BYTES;
-#else
-        TRACE((-1, "Static table built from ASM file\n"));
-        MaximumTableSize = (UINT16)BufferSize;
-#endif                                                  // SMBIOS_TABLES_BUILD_TYPE
+	    BufferPtr = Buffer;
+	    // Skip over Section GUID
+	    BufferPtr += sizeof (EFI_GUID);
+	    BufferSize -= sizeof (EFI_GUID);
+        UpdateType127Handle(Buffer);
     }
     else {
-        TRACE((-1, "=== Static table NOT found! ===\n"));
-        MaximumTableSize = EXTRA_RESERVED_BYTES;
-    }
-
-#if SMBIOS_2X_SUPPORT
-    // Allocate Runtime buffer for Smbios 2.x table
-    TRACE((-1, "Allocating memory for Smbios 2.x and 3.x table\n"));
-    SmbiosDataTable = (UINT8*)0xFFFFFFFF;
-    Status = pBS->AllocatePages(
-                            AllocateMaxAddress,
-                            EfiRuntimeServicesData,
-                            EFI_SIZE_TO_PAGES(MaximumTableSize),
-                            (EFI_PHYSICAL_ADDRESS*)&SmbiosDataTable
-                            );
-#else                                                   // SMBIOS_2X_SUPPORT
-    // Allocate Runtime buffer for Smbios 3.x table
-    TRACE((-1, "Allocating memory for Smbios 3.x table\n"));
-
-#if (SMBIOS_TABLE_ADDRESS_LIMIT == 0)
-    SmbiosDataTable = (UINT8*)0xFFFFFFFF;
-    Status = pBS->AllocatePages(
-                            AllocateMaxAddress,
-                            EfiRuntimeServicesData,
-                            EFI_SIZE_TO_PAGES(MaximumTableSize),
-                            (EFI_PHYSICAL_ADDRESS*)&SmbiosDataTable
-                            );
-#else                                                   // SMBIOS_TABLE_ADDRESS_LIMIT
-
-    Status = pBS->AllocatePages(
-                            AllocateAnyPages,
-                            EfiRuntimeServicesData,
-                            EFI_SIZE_TO_PAGES(MaximumTableSize),
-                            (EFI_PHYSICAL_ADDRESS*)&SmbiosDataTable
-                            );
-#endif                                                  // SMBIOS_TABLE_ADDRESS_LIMIT
-#endif                                                  // SMBIOS_2X_SUPPORT
-    ASSERT_EFI_ERROR(Status);
-    if (EFI_ERROR(Status)) return Status;
-
-    // Clear SmbiosDataTable to 0xff and copy static table
-    MemSet(SmbiosDataTable, MaximumTableSize, 0xff);
-
-    if (StaticTableFound) {
-        MemCpy(SmbiosDataTable, BufferPtr, BufferSize);
-
-        TRACE((-1, "Freeing Buffer\n"));
-        pBS->FreePool(Buffer);
-    }
-    else {
-        MemCpy(SmbiosDataTable, Type127Structure, sizeof(Type127Structure));
+		BufferSize = (EXTRA_RESERVED_BYTES > sizeof(Type127Structure))
+			? EXTRA_RESERVED_BYTES : sizeof(Type127Structure);
+        Status = pBS->AllocatePool(EfiBootServicesData, BufferSize, &Buffer);
+        if (EFI_ERROR(Status)) return Status;
+        MemCpy(Buffer, Type127Structure, sizeof(Type127Structure));
         LastHandle = 0;
+		BufferPtr = Buffer;
     }
 
-    TRACE((-1, "Allocating memory for Scratch buffer\n"));
-    // Allocate scratch buffer
-    Status = pBS->AllocatePool(EfiRuntimeServicesData, MaximumTableSize, (void**)&ScratchBufferPtr);
-    ASSERT_EFI_ERROR(Status);
-    if (EFI_ERROR(Status)) ScratchBufferPtr = NULL;
+    SmbiosDataTable = BufferPtr;
+    TempPtr = BufferPtr;
+    MaximumTableSize = (UINT16)BufferSize;
 
     // Set UpdateCpuStructure flag to FALSE if CPU type 4 structure does not exist
     Status = ReadStructureByType(4, 1, &TempPtr, &Size);
@@ -7155,26 +6300,47 @@ SmbiosDriverEntryPoint(
     }
     else {
         UpdateCpuStructure = TRUE;
-        pBS->FreePool(TempPtr);                 // TempPtr from ReadStructureByType
+        pBS->FreePool(TempPtr);
     }
 
     // Update structures with NVRAM data
 #if (defined(SmbiosDMIEdit_SUPPORT) && (SmbiosDMIEdit_SUPPORT !=0))
     #if SMBIOS_UPDATE_POLICY == 0
 TRACE((-1, "Before UpdateStructuresWithNvramData\n"));
-        UpdateStructuresWithNvramData(SmbiosDataTable, MaximumTableSize);
+        UpdateStructuresWithNvramData(BufferPtr, BufferSize);
 TRACE((-1, "After UpdateStructuresWithNvramData\n"));
     #endif
 #endif
 
+    // Allocate Runtime buffer and copy the SMBios Data Structures there
+    MemoryAddr = 0xFFFFFFFF;
+    Status = pBS->AllocatePages(
+                            AllocateMaxAddress,
+                            EfiRuntimeServicesData,
+                            EFI_SIZE_TO_PAGES(MaximumTableSize),
+                            &MemoryAddr
+                            );
+    ASSERT_EFI_ERROR(Status);
+    if (EFI_ERROR(Status)) return Status;
+
+    SmbiosDataTable = (UINT8*)MemoryAddr;
+
+    MemCpy(SmbiosDataTable, BufferPtr, MaximumTableSize);
+    pBS->FreePool(Buffer);
+
+    // Allocate scratch buffer
+    Status = pBS->AllocatePool(EfiRuntimeServicesData, BufferSize, &ScratchBufferPtr);
+    ASSERT_EFI_ERROR(Status);
+    if (EFI_ERROR(Status)) ScratchBufferPtr = NULL;
+
+    // Updating EPS Header
+    UpdateEPSHeader(pSmbiosTableEntryPoint);
+
 #if SMBIOS_DYNAMIC_UPDATE_POLICY == 1
-    TRACE((-1, "Before UpdateDynamicStructures\n"));
     // Update dynamic structures
     UpdateDynamicStructures();
-    TRACE((-1, "After UpdateDynamicStructures\n"));
 #endif
 
-    TRACE((-1, "Registering SmbiosDynamicUpdate callback on ReadyToBoot\n"));
     //
     // Register the event handling function to dynamically update
     // structures.
@@ -7185,12 +6351,10 @@ TRACE((-1, "After UpdateStructuresWithNvramData\n"));
                                     &ReadyToBootEvent);
     ASSERT_EFI_ERROR(Status);
 
-    TRACE((-1, "Initializing Producer Handle Table\n"));
     // Initialize Producer Handle table and set ProducerHandle
     // for each Smbios record to Smbios Driver Image Handle
     InitializeProducerHandleTable(ImageHandle);
 
-    TRACE((-1, "Installing PI Smbios protocol\n"));
     // Install PI Smbios protocol
     Status = pBS->InstallProtocolInterface(&ImageHandle,
                                           &gEfiSmbiosProtocolGuid,
@@ -7199,7 +6363,6 @@ TRACE((-1, "After UpdateStructuresWithNvramData\n"));
     ASSERT_EFI_ERROR(Status);
 
 #if AMI_SMBIOS_PROTOCOL_ENABLE
-    TRACE((-1, "Installing AMI Smbios protocol\n"));
     // Install AMI Smbios protocol
     Status = pBS->InstallProtocolInterface(&ImageHandle,
                                           &gAmiSmbiosProtocolGuid,
@@ -7208,19 +6371,27 @@ TRACE((-1, "After UpdateStructuresWithNvramData\n"));
     ASSERT_EFI_ERROR(Status);
 #endif                                          // AMI_SMBIOS_PROTOCOL_ENABLE
 
-    TRACE((-1, "Exiting SmbiosDriverEntryPoint. Status = %r\n", Status));
     return EFI_SUCCESS;
 }
 
 #if ( defined(CSM_SUPPORT) && (CSM_SUPPORT != 0) )
-/**
-    SMBIOS 16-bit PnP runtime functions installation.
-
-    @param None
-
-    @return EFI_STATUS
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   Install16bitPnPSmbiosFunctions
+//
+// Description: SMBIOS 16-bit PnP runtime functions installation.
+//
+// Input:       None
+//
+// Output:      EFI_STATUS
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
 Install16bitPnPSmbiosFunctions()
 {
@@ -7233,23 +6404,15 @@ Install16bitPnPSmbiosFunctions()
     UINTN       BufferSize;
     UINT16      *NewPnPFunctionPtr;
 
-    TRACE((-1, "In Install16bitPnPSmbiosFunctions\n"));
-
     //
     // Locate 16-bit binary and copy it to F000 segment.
     //
     Status = pBS->LocateProtocol(
         &gEfiLegacyBiosExtProtocolGuid, NULL, &BiosExtensions);
-    if (EFI_ERROR(Status)) {
-        TRACE((-1, "LegacyBiosExtProtocol not found. Exit\n"));
-        return Status;
-    }
+    if (EFI_ERROR(Status)) return Status;
 
     Status = BiosExtensions->GetEmbeddedRom(1, 0, 3, &Buffer, &BufferSize);
-    if (EFI_ERROR(Status)) {
-        TRACE((-1, "Embedded Rom not found. Exit\n"));
-        return Status;
-    }
+    if (EFI_ERROR(Status)) return Status;
 
     Dest = BiosExtensions->CopyLegacyTable(Buffer, (UINT16)BufferSize, 0, 1);
     ASSERT(Dest);
@@ -7261,12 +6424,9 @@ Install16bitPnPSmbiosFunctions()
         BiosExtensions->UnlockShadow((UINT8*)(UINTN)0xf0000, 0x10000, &LockUnlockAddr, &LockUnlockSize);
         *NewPnPFunctionPtr = (UINT16)Dest;
         BiosExtensions->LockShadow(LockUnlockAddr, LockUnlockSize);
-
-        TRACE((-1, "Exit Install16bitPnPSmbiosFunctions\n"));
         return EFI_SUCCESS;
     }
     else {
-        TRACE((-1, "Failed to copy embedded Rom. Exit\n"));
         return EFI_OUT_OF_RESOURCES;
     }
 }
@@ -7275,7 +6435,7 @@ Install16bitPnPSmbiosFunctions()
 //**********************************************************************//
 //**********************************************************************//
 //**                                                                  **//
-//**        (C)Copyright 1985-2015, American Megatrends, Inc.         **//
+//**        (C)Copyright 1985-2013, American Megatrends, Inc.         **//
 //**                                                                  **//
 //**                       All Rights Reserved.                       **//
 //**                                                                  **//

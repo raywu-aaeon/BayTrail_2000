@@ -121,7 +121,6 @@
     UINT8       DptfProcessor;
     UINT8       DopCG; //P20130628
     UINT8       MaxTolud; //EIP126704  Select dynamic or fixed mmio size.
-    UINT8       MaxTolud2; //EIP186458
 
 //EIP150350 >>     
 #if CSM_SUPPORT
@@ -156,8 +155,7 @@
       oneof varid    = SETUP_DATA.CriticalThermalTripPoint,\
           prompt       = STRING_TOKEN (STR_CRITICAL_TRIP_POINT_PROMPT),\
           help         = STRING_TOKEN (STR_CRITICAL_TRIP_POINT_HELP),\
-	  option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_105), value = 105, flags = MANUFACTURING | DEFAULT | RESET_REQUIRED;\
-          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_90), value = 90, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_90), value = 90, flags = MANUFACTURING | DEFAULT | RESET_REQUIRED;\
           option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_87), value = 87, flags = RESET_REQUIRED;\
           option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_85), value = 85, flags = RESET_REQUIRED;\
           option text  = STRING_TOKEN (STR_DPTF_TEMPERATURE_79), value = 79, flags = RESET_REQUIRED;\
@@ -664,7 +662,6 @@
       endoneof;
 //(EIP114446)<
 
-//EIP205589 >>
 //EIP165319 >>
 //EIP141999 >>
 #define NC_CHECKBOX_PRIMARY_DISPLAY\
@@ -672,14 +669,14 @@
           prompt       = STRING_TOKEN (STR_PRIMARY_DISPLAY_PROMPT),\
           help         = STRING_TOKEN (STR_PRIMARY_DISPLAY_HELP),\
           default      = DEFAULT_PRIMARY_DISPLAY,\
-          option text  = STRING_TOKEN (STR_PRIMARY_DISPLAY_AUTO), value = 3, flags = MANUFACTURING | RESET_REQUIRED;\
-          option text  = STRING_TOKEN (STR_PRIMARY_DISPLAY_IGD), value = 0, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_PRIMARY_DISPLAY_AUTO), value = 3, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_PRIMARY_DISPLAY_IGD), value = 0, flags = MANUFACTURING | RESET_REQUIRED;\
           option text  = STRING_TOKEN (STR_PRIMARY_DISPLAY_PCIE), value = 1, flags = RESET_REQUIRED;\
           option text  = STRING_TOKEN (STR_PRIMARY_DISPLAY_SG), value = 4, flags = RESET_REQUIRED;\
       endoneof;
 //EIP141999 <<
 //EIP165319 <<
-//EIP205589 <<
+      
 #define NC_CHECKBOX_GFX_BOOST\
       oneof varid    = SETUP_DATA.GfxBoost,\
           prompt       = STRING_TOKEN (STR_GFX_BOOTS_PROMPT),\
@@ -781,7 +778,7 @@
           prompt       = STRING_TOKEN (STR_FORCE_LID_STATUS_PROMPT),\
           help         = STRING_TOKEN (STR_FORCE_LID_STATUS_HELP),\
           option text  = STRING_TOKEN (STR_COMMON_ON), value = 1, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
-          option text  = STRING_TOKEN (STR_COMMON_OFF), value = 0, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_OFF), value = 0, flags = 0;\
       endoneof;
       
 #define NC_CHECKBOX_BIA\
@@ -847,16 +844,16 @@
           option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
           option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = RESET_REQUIRED;\
       endoneof;
-//EIP205589 >>
+
 #define NC_CHECKBOX_ISP_CONFIG\
       oneof varid    = SETUP_DATA.ISPDevSel,\
           prompt       = STRING_TOKEN (STR_ISP_PCI_DEVICE_SELECTION_PROMPT),\
           help         = STRING_TOKEN (STR_ISP_PCI_DEVICE_SELECTION_HELP),\
-          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = RESET_REQUIRED;\
-          option text  = STRING_TOKEN (STR_ISP_PCI_DEVICE_SELECTION_1), value = 1, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_ISP_PCI_DEVICE_SELECTION_1), value = 1, flags = RESET_REQUIRED;\
           option text  = STRING_TOKEN (STR_ISP_PCI_DEVICE_SELECTION_2), value = 2, flags = RESET_REQUIRED;\
       endoneof;
-//EIP205589 <<
+
 //EIP154014 >>
 #define NC_CHECKBOX_ENABLE_PS2_FOR_VCCVNN\
       oneof varid    = SETUP_DATA.EnablePS2ForVccVnn,\
@@ -876,34 +873,21 @@
         option text = STRING_TOKEN(STR_COMMON_DISABLED), value = 0, flags = RESET_REQUIRED;\
       endoneof;
 //EIP133630 <<
-//EIP202736 >>
+
 //EIP126704  Select dynamic or fixed mmio size.>>
 #define NC_CHECKBOX_MMIOSIZE\
             oneof varid    = SETUP_DATA.MaxTolud,\
               prompt   = STRING_TOKEN(STR_MAX_TOLUD_PROMPT),\
               help     = STRING_TOKEN(STR_MAX_TOLUD_HELP),\
-              default  = DEFAULT_MAX_TOLUD,\
+              option text = STRING_TOKEN(STR_MAX_TOLUD_DYNAMIC_STRING), value = 0,  flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
               option text = STRING_TOKEN(STR_MAX_TOLUD_2G_STRING),      value = 5,  flags = RESET_REQUIRED;\
               option text = STRING_TOKEN(STR_MAX_TOLUD_2_25G_STRING),   value = 6,  flags = RESET_REQUIRED;\
               option text = STRING_TOKEN(STR_MAX_TOLUD_2_5G_STRING),    value = 7,  flags = RESET_REQUIRED;\
               option text = STRING_TOKEN(STR_MAX_TOLUD_2_75G_STRING),   value = 8,  flags = RESET_REQUIRED;\
-              option text = STRING_TOKEN(STR_MAX_TOLUD_3G_STRING),      value = 9,  flags = MANUFACTURING | RESET_REQUIRED;\
+              option text = STRING_TOKEN(STR_MAX_TOLUD_3G_STRING),      value = 9,  flags = RESET_REQUIRED;\
             endoneof;
 //EIP126704  Select dynamic or fixed mmio size. <<
 
-//EIP173398 >> 
-//EIP186458 >>
-#define NC_CHECKBOX_MMIOSIZE_2\
-            oneof varid    = SETUP_DATA.MaxTolud2,\
-              prompt   = STRING_TOKEN(STR_MAX_TOLUD_PROMPT),\
-              help     = STRING_TOKEN(STR_MAX_TOLUD_HELP),\
-              option text = STRING_TOKEN(STR_MAX_TOLUD_2G_STRING),      value = 5,  flags = RESET_REQUIRED;\
-              option text = STRING_TOKEN(STR_MAX_TOLUD_2_25G_STRING),   value = 6,  flags = RESET_REQUIRED;\
-              option text = STRING_TOKEN(STR_MAX_TOLUD_2_5G_STRING),    value = 7,  flags = MANUFACTURING | DEFAULT | RESET_REQUIRED;\
-            endoneof;
-//EIP186458 <<	    
-//EIP173398 << 
-//EIP202736 << 
 //EIP150350 >> 
 #if CSM_SUPPORT
 #define NB_ONEOF_LCDPANELTYPE\
@@ -1069,7 +1053,6 @@
     NC_CHECKBOX_RENDER_STANDBY
     
     NC_CHECKBOX_MMIOSIZE  //EIP126704  Select dynamic or fixed mmio size.
-    NC_CHECKBOX_MMIOSIZE_2 //EIP173398 
     
 //EIP150350 >>     
 #if CSM_SUPPORT    
@@ -1327,15 +1310,7 @@
 //			NC_CHECKBOX_MEMORY_SCRAMBLER
 
         SEPARATOR
-	
-        //EIP173398 >> 
-        suppressif  ideqval SETUP_DATA.ApertureSize > 2; 
         NC_CHECKBOX_MMIOSIZE //EIP126704  Select dynamic or fixed mmio size.
-        endif;  // suppress
-        suppressif  ideqval SETUP_DATA.ApertureSize <= 2;
-        NC_CHECKBOX_MMIOSIZE_2
-        endif;  // suppress
-        //EIP173398 <<
 
     endform;
     
@@ -1352,7 +1327,7 @@
       suppressif  ideqval SETUP_DATA.InternalGraphics == 0;
         NC_CHECKBOX_IGDTUREBOEN
         NC_CHECKBOX_PRIMARY_DISPLAY //EIP141999
-//        NC_CHECKBOX_GFX_BOOST //EIP195907  
+        NC_CHECKBOX_GFX_BOOST
 		    NC_CHECKBOX_PAVC
         NC_CHECKBOX_IGD_DVMT50_PRE_ALLOC
         NC_CHECKBOX_IGD_DVMT_GFX_MEM

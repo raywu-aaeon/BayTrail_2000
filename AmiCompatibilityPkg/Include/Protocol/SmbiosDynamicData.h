@@ -1,7 +1,7 @@
 //**********************************************************************//
 //**********************************************************************//
 //**                                                                  **//
-//**        (C)Copyright 1985-2015, American Megatrends, Inc.         **//
+//**        (C)Copyright 1985-2013, American Megatrends, Inc.         **//
 //**                                                                  **//
 //**                       All Rights Reserved.                       **//
 //**                                                                  **//
@@ -12,17 +12,20 @@
 //**********************************************************************//
 //**********************************************************************//
 
-/** @file SmbiosDynamicData.h
-    AMI Smbios Dynamic Data Header file.
-
-**/
+//**********************************************************************//
+// $Header: /Alaska/BIN/Modules/SMBIOS/SmbiosProtocol/SmbiosDynamicData.h 30    6/16/11 12:28p Davidd $
+//
+// $Revision: 30 $
+//
+// $Date: 6/16/11 12:28p $
+//**********************************************************************//
+//**********************************************************************//
 
 #ifndef _SMIBios_Dynamic_H
 #define _SMIBios_Dynamic_H
 
 #include <Token.h>
 #include <AmiHobs.h>
-#include <Protocol/SmBus.h>
 
 #if SMBIOS_SUPPORT
 #define EFI_SMBIOS_DYNAMIC_DATA_GUID \
@@ -68,9 +71,6 @@ static CHAR16 *SmbiosOnBoardExtVar = L"ONBOARD DEV EXTENDED DATA";
 // Base Board Structure
 //**********************************************************************//
 #if BASE_BOARD_INFO
-/**
-    Base Board Information Structure (Type 2)
-**/
 typedef struct {                                        // Type 2
     CHAR8          *BoardManufacturer;
     CHAR8          *BoardName;
@@ -81,9 +81,6 @@ typedef struct {                                        // Type 2
 // Chassis Structure
 //**********************************************************************//
 #if SYS_CHASSIS_INFO
-/**
-    System Enclosure or Chassis Information Structure (Type 3)
-**/
 typedef struct {                                        // Type 3
     UINT8                     Type;
 } CHASSIS_DATA;
@@ -93,9 +90,6 @@ typedef struct {                                        // Type 3
 // CPU Structure
 //**********************************************************************//
 
-/**
-    Processor Information Structure (Type 4)
-**/
 typedef struct {                                        // Type 4
     UINT8                     Family;                   // 3.3.5.2
     UINT32                    ProcessorID_1;            // 3.3.5.3 - 1st DWORD
@@ -108,15 +102,12 @@ typedef struct {                                        // Type 4
     UINT8                     Upgrade;                  // 3.3.5.5
     UINT8                     Manufacturer[18];
     UINT8                     Version[48];
-    UINT16                    CoreCount;                // 3.3.5.6
-    UINT16                    CoreEnabled;              // 3.3.5.7
-    UINT16                    ThreadCount;              // 3.3.5.8
+    UINT8                     CoreCount;                // 3.3.5.6
+    UINT8                     CoreEnabled;              // 3.3.5.7
+    UINT8                     ThreadCount;              // 3.3.5.8
     UINT16                    Family2;                  // 3.3.5.2
 } CPU_DATA;
 
-/**
-    Processor Cache Information Structure (Type 7)
-**/
 typedef struct {                                        // Type 7
     UINT16                    CacheConfig;              // pg 52
     UINT16                    MaxCacheSize;             // pg 52
@@ -129,9 +120,6 @@ typedef struct {                                        // Type 7
     UINT8                     Associativity;            // 3.3.8.4
 } CACHE_DATA;
 
-/**
-    Single Processor Information Structure
-**/
 typedef struct {                                        // One for each CPU
     CPU_DATA                  CpuData;
     CACHE_DATA                L1Cache;
@@ -139,9 +127,6 @@ typedef struct {                                        // One for each CPU
     CACHE_DATA                L3Cache;
 } SINGLE_CPU_DATA;
 
-/**
-    Processor Dynamic Data structure
-**/
 typedef struct {                                        // CPU data structure
     UINT8                     NumberCPU;
     SINGLE_CPU_DATA           CpuData[NO_OF_PROCESSOR_SOCKETS];
@@ -153,9 +138,6 @@ typedef CPU_DYNAMIC_DATA SMBIOS_CPU_INFO_PROTOCOL;
 // Slot Structure
 //**********************************************************************//
 
-/**
-    System Slot Dynamic Data structure
-**/
 typedef struct {                                        // Type 9
     UINT8                     CurrentUsage[NUMBER_OF_SYSTEM_SLOTS];             // 3.3.10.3
     UINT8                     BusNumber[NUMBER_OF_SYSTEM_SLOTS];
@@ -166,9 +148,6 @@ typedef struct {                                        // Type 9
 //**********************************************************************//
 
 #if ONBOARD_DEVICE_INFO
-/**
-    On-board device Dynamic Data structure
-**/
 typedef struct {                                        // Type 10
     UINT8                     OnBoardDev[NUMBER_OF_ONBOARD_DEVICES];            // 3.3.11.1
 } ONBOARD_DEV_DYNAMIC_DATA;
@@ -178,9 +157,10 @@ typedef struct {                                        // Type 10
 // Memory Structure
 //**********************************************************************//
 
-/**
-    Memory Error Dynamic Data structure
-**/
+typedef struct {
+  UINTN   SmbusDeviceAddress:7;
+} SMBUS_DEVICE_ADDRESS;
+
 typedef struct {                                        // Type 18
     UINT8                     ErrorType;                // 3.3.19.1
     UINT8                     ErrorGranularity;         // 3.3.19.2
@@ -190,9 +170,6 @@ typedef struct {                                        // Type 18
     UINT32                    ErrorResolution;          // in bytes
 } MEM_ERROR;
 
-/**
-    Memory Array Map Dynamic Data structure
-**/
 typedef struct {                                        // Type 19
     UINT32                    StartingAddress;          // in KB
     UINT32                    EndingAddress;            // in KB
@@ -202,9 +179,6 @@ typedef struct {                                        // Type 19
 } MEM_ARRAY_MAP_ADDR;
 
 #if MEMORY_DEVICE_INFO
-/**
-    Memory Device Map Dynamic Data structure
-**/
 typedef struct {                                        // Type 20
     UINT32                    StartingAddress;          // in KB
     UINT32                    EndingAddress;            // in KB
@@ -216,9 +190,6 @@ typedef struct {                                        // Type 20
 } MEM_DEV_MAP_ADDR;
 #endif
 
-/**
-    Memory Device Dynamic Data structure
-**/
 typedef struct {                                        // Type 17
     UINT16                    MemErrInfoHandle;         // Type 18
     UINT16                    TotalWidth;               // in bits (FFFFh if unknown)
@@ -234,9 +205,6 @@ typedef struct {                                        // Type 17
     UINT16                    ConfiguredVoltage;        // Configured voltage in millivolts, 0 if unknown
 } MEMORY_DEVICE;
 
-/**
-    Memory Device Group Dynamic Data structure
-**/
 typedef struct {
     MEMORY_DEVICE             Type17;                   // Type 17
     MEM_ERROR                 Type18;                   // Type 18
@@ -245,22 +213,16 @@ typedef struct {
 #endif
 } MEMORY_DEVICE_GROUP;
 
-/**
-    Physical Memory Array Dynamic Data structure
-**/
 typedef struct {                                        // Type 16
     UINT32                    MaxCapacity;              // in KB (8000 0000h if unknown)
     UINT16                    MemErrInfoHandle;         // Type 18
     MEM_ERROR                 ArrayMemoryError;         // Type 18
     MEM_ARRAY_MAP_ADDR        MemArrayMapAddr;          // Type 19
     MEMORY_DEVICE_GROUP       MemoryDeviceData[MAX_NUMBER_OF_MEM_MODULE];           // Type 17 group
-    EFI_SMBUS_DEVICE_ADDRESS  SpdSmBusAddr[MAX_NUMBER_OF_MEM_MODULE];
+    SMBUS_DEVICE_ADDRESS      SpdSmBusAddr[MAX_NUMBER_OF_MEM_MODULE];
     UINT64                    ExtMaxCapacity;           // in Bytes when MaxCapacity = 8000 0000h, 0 otherwise
 } PHYSICAL_MEM_ARRAY;
 
-/**
-    System Memory Array Dynamic Data structure
-**/
 typedef struct {
     PHYSICAL_MEM_ARRAY        PhysicalMemArray[NO_OF_PHYSICAL_MEMORY_ARRAY];
 } SYSTEM_MEM_ARRAY_DYNAMIC_DATA;
@@ -270,22 +232,16 @@ typedef struct {
     {0x7d6b8734, 0xb754, 0x443f, { 0xb5, 0x88, 0x77, 0x43, 0x84, 0x3a, 0xd3, 0xf1 }}
 #endif
 
-/**
-    Memory SPD Data structure
-**/
 typedef struct {
     UINT8 Byte2;                                        // Memory Type
-    UINT8 Byte5To8[9 - 5];                              // Attribute, Total Width, Data Width (DDR2 & 3)
-    UINT8 Byte11To14[15 - 11];                          // ECC Data Width, Data Width (DDR4)
+    UINT8 Byte5To8[9 - 5];                              // Attribute, Total Width, Data Width
+    UINT8 Byte11To14[15 - 11];                          // ECC Data Width
     UINT8 Byte64To71[72 - 64];                          // Manufacturer (DDR2)
     UINT8 Byte73To90[91 - 73];                          // Part Number (DDR2)
     UINT8 Byte95To98[99 - 95];                          // Serial Number (DDR2)
     UINT8 Byte117To118[119 - 117];                      // Manufacturer (DDR3)
-    UINT8 Byte122To125[126 - 122];                      // Serial Number (DDR3)
+    UINT8 Byte122To125[126 - 122];                      // Serial (DDR3)
     UINT8 Byte128To145[146 - 128];                      // Part Number (DDR3)
-    UINT8 Byte320To321[322 - 320];                      // Manufacturer (DDR4)
-    UINT8 Byte325To328[329 - 325];                      // Serial Number (DDR4)
-    UINT8 Byte329To348[349 - 329];                      // Part Number (DDR4)
 } MEM_SPD_DATA;
 
 //**********************************************************************//
@@ -301,9 +257,6 @@ typedef struct {
 //**********************************************************************//
 
 #if PORTABLE_BATTERY_INFO
-/**
-    System Portable Battery Dynamic Info structure
-**/
 typedef struct {                                        // One for each Portable Battery
         UINT8                   DeviceName[65];
         UINT16                  DesignCapacity;
@@ -315,9 +268,6 @@ typedef struct {                                        // One for each Portable
         BOOLEAN					Valid;
 } SMBIOS_PORTABLE_BATTERY_DYNAMIC_INFO;
 
-/**
-    Battery Dynamic Data structure
-**/
 typedef struct {                                        // Type 22
   SMBIOS_PORTABLE_BATTERY_DYNAMIC_INFO  BatteryDynamicData[NO_OF_PORTABLE_BATTERY];
 } BATTERY_DYNAMIC_DATA;
@@ -328,9 +278,6 @@ typedef struct {                                        // Type 22
 //**********************************************************************//
 
 #if ONBOARD_DEVICE_EXTENDED_INFO
-/**
-    On-board Device Extended Dynamic Data structure
-**/
 typedef struct {                                        // Type 41
     UINT8                     OnBoardDev[ONBOARD_DEVICE_EXT_COUNT];            // 3.3.42
     UINT8                     BusNumber[ONBOARD_DEVICE_EXT_COUNT];
@@ -338,6 +285,8 @@ typedef struct {                                        // Type 41
 #endif
 
 #pragma pack()
+
+typedef struct _EFI_SMBIOS_BOARD_PROTOCOL  EFI_SMBIOS_BOARD_PROTOCOL;
 
 typedef EFI_STATUS (EFIAPI *EFI_SMBIOS_CREATE_BASE_BOARD_DATA_STRUCTURE) (
 );
@@ -364,17 +313,11 @@ typedef EFI_STATUS (EFIAPI *EFI_SMBIOS_ENABLE_SMBUS_CONTROLLER) (
 typedef EFI_STATUS (EFIAPI *EFI_SMBIOS_RESTORE_SMBUS_CONTROLLER) (
 );
 typedef EFI_STATUS (EFIAPI *EFI_SMBIOS_READ_SPD) (
-    EFI_SMBUS_DEVICE_ADDRESS    Addr,
-    UINTN                       Offset,
-    UINT8                       *Data
 );
 typedef VOID (EFIAPI *EFI_SMBIOS_OEM_UPDATE) (
 );
 
-/**
-    AMI Smbios Board Protocol
-**/
-typedef struct {
+typedef struct _EFI_SMBIOS_BOARD_PROTOCOL {
     UINT8                                           BaseBoardInfoSupport;
     UINT8                                           SysChassisInfoSupport;
     UINT8                                           ProcessorDmiEditSupport;
@@ -404,7 +347,7 @@ typedef struct {
     EFI_SMBIOS_READ_SPD                             GetSpdByte;
     EFI_SMBIOS_OEM_UPDATE                           OemUpdate;
     UINT8                                           NumberOfMemorySlots[NO_OF_PHYSICAL_MEMORY_ARRAY];
-} EFI_SMBIOS_BOARD_PROTOCOL;
+};
 
 EFI_STATUS CreateBaseBoardDataForSMBios();
 EFI_STATUS CreateChassisDataForSMBios();
@@ -415,7 +358,7 @@ EFI_STATUS CreateBatteryDataForSMBios();
 EFI_STATUS CreateOnBoardDevExtInfoForSMBios();
 EFI_STATUS EnableSmbusController();
 EFI_STATUS RestoreSmbusController();
-EFI_STATUS GetSpdByte(EFI_SMBUS_DEVICE_ADDRESS SpdAddr, UINTN Offset, UINT8 *Data);
+EFI_STATUS GetSpdByte();
 VOID       OemUpdate();
 
 #endif    // if SMBIOS_SUPPORT
@@ -425,7 +368,7 @@ VOID       OemUpdate();
 //**********************************************************************//
 //**********************************************************************//
 //**                                                                  **//
-//**        (C)Copyright 1985-2015, American Megatrends, Inc.         **//
+//**        (C)Copyright 1985-2013, American Megatrends, Inc.         **//
 //**                                                                  **//
 //**                       All Rights Reserved.                       **//
 //**                                                                  **//

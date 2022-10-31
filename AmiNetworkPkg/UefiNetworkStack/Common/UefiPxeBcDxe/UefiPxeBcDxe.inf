@@ -1,7 +1,7 @@
 #//*************************************************************************
 #//*************************************************************************
 #//**                                                                     **
-#//**        (C)Copyright 1985-2013, American Megatrends, Inc.            **
+#//**        (C)Copyright 1985-2012, American Megatrends, Inc.            **
 #//**                                                                     **
 #//**                       All Rights Reserved.                          **
 #//**                                                                     **
@@ -62,7 +62,6 @@
   MdePkg/MdePkg.dec
   MdeModulePkg/MdeModulePkg.dec
   AmiNetworkPkg/AmiNetworkPkg.dec             # AMI PORTING.
-  AmiCompatibilityPkg/AmiCompatibilityPkg.dec # AMI PORTING.
 
 [LibraryClasses]
   BaseLib
@@ -77,9 +76,6 @@
   DevicePathLib
   PcdLib
   AmiNetworkPostManagerLib                   # AMI PORTING.
-  
-[Guids]
-  gEfiNetworkStackSetupGuid                  # AMI PORTING.
 
 [Protocols]
   gEfiDevicePathProtocolGuid

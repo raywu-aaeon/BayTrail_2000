@@ -2,7 +2,7 @@
 //*****************************************************************//
 //*****************************************************************//
 //**                                                             **//
-//**         (C)Copyright 2015, American Megatrends, Inc.        **//
+//**         (C)Copyright 2013, American Megatrends, Inc.        **//
 //**                                                             **//
 //**                     All Rights Reserved.                    **//
 //**                                                             **//
@@ -16,6 +16,7 @@
 #ifndef __HOTKEY_BIN_H__
 #define __HOTKEY_BIN_H__
 
+///EIP 115082 : Referance to Style module is removed. Managed from Style hooks
 // Hotkey template moved to StyleHoook.h
 extern VOID HandleEscKey( VOID *app, VOID *hotkey, VOID *cookie );
 extern VOID HandleHelpKey( VOID *app, VOID *hotkey, VOID *cookie );
@@ -31,7 +32,7 @@ extern VOID	PrntScrnKeyNotification(VOID *app, VOID *hotkey, VOID *cookie );
 //*****************************************************************//
 //*****************************************************************//
 //**                                                             **//
-//**         (C)Copyright 2015, American Megatrends, Inc.        **//
+//**         (C)Copyright 2013, American Megatrends, Inc.        **//
 //**                                                             **//
 //**                     All Rights Reserved.                    **//
 //**                                                             **//

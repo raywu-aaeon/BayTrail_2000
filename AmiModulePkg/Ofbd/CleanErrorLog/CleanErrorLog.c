@@ -1,30 +1,34 @@
-//***********************************************************************
-//***********************************************************************
-//**                                                                   **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.          **
-//**                                                                   **
-//**                       All Rights Reserved.                        **
-//**                                                                   **
-//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093         **
-//**                                                                   **
-//**                       Phone: (770)-246-8600                       **
-//**                                                                   **
-//***********************************************************************
-//***********************************************************************
+//**********************************************************************
+//**********************************************************************
+//**                                                                  **
+//**        (C)Copyright 1985-2012, American Megatrends, Inc.         **
+//**                                                                  **
+//**                       All Rights Reserved.                       **
+//**                                                                  **
+//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093        **
+//**                                                                  **
+//**                       Phone: (770)-246-8600                      **
+//**                                                                  **
+//**********************************************************************
+//**********************************************************************
 
-/** @file 
-CleanErrorLog.c
-
-This function is used to Clean Error Log. 
-
-For example, AFU will call this function to clean error log when /CLNEVNLOG is issued.
-
-*/
-
-//---------------------------------------------------------------------------
-// Include Files
-//---------------------------------------------------------------------------
-
+//**********************************************************************
+// $Header: /AptioV/Source/Modules/Ofbd/CleanErrorLog/CleanErrorLog.c $
+//
+// $Revision: $
+//
+// $Date: $
+//**********************************************************************
+//<AMI_FHDR_START>
+//
+// Name:	CleanErrorLog.c
+//
+// Description:
+// This function is used to Clean Error Log. For example,AFU will call this function to clean error log when
+// /CLNEVNLOG is issued.
+//
+//<AMI_FHDR_END>
+//**********************************************************************
 #include <Efi.h>
 #include <Token.h>
 #if CLEAN_GPNV_ERROR_LOG_SAMPLE_TEST
@@ -43,16 +47,21 @@ EFI_GUID gEfiSmiFlashProtocolGuid = EFI_SMI_FLASH_GUID;
 EFI_SMI_FLASH_PROTOCOL *mSmiFlash = NULL;
 #endif
 
-/**
-    Clean Error Log Callback handle
-
-	This callback function is used to locate SmiFlash protocol.
-	
-    @param Event - EFI Event.
-    @param Context - Context.
-
-*/
-
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:	CleanErrorLogCallback
+//
+// Description:	Locate SmiFlash protocol callback
+//
+// Input:
+//      IN EFI_EVENT    Event
+//      IN VOID         *Context
+//
+// Output:
+//      VOID
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID CleanErrorLogCallback(
     IN EFI_EVENT Event,
     IN VOID *Context
@@ -64,14 +73,20 @@ VOID CleanErrorLogCallback(
     pBS->LocateProtocol (&gEfiSmiFlashProtocolGuid, NULL, &mSmiFlash);
 #endif
 }
-
-/**
-    Clean Error Log In Smm function handle
-
-	This function is used to register CleanErrorLogCallback function.
-
-*/
-
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:	CleanErrorLogInSmm
+//
+// Description:	OFBD Clear event log InSmm Function
+//
+// Input:
+//      VOID
+//
+// Output:
+//      VOID
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID CleanErrorLogInSmm(VOID)
 {
 #if CLEAN_GPNV_ERROR_LOG_SAMPLE_TEST
@@ -90,17 +105,19 @@ VOID CleanErrorLogInSmm(VOID)
 #endif
 }
 
-/**
-   	Ofbd (Clean Gpnv Error Log handle)
-	
-	This function is used to Clean Gpnv Error Logging data region.
-	
-	@param pOFBDHdr - Ofbd header.
-
-  	@return EFI_STATUS
-  	@retval EFI_SUCCESS Function executed successfully
-*/ 
-
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:	OFBDCleanErrorLogHandle
+//
+// Description:	OFBD Clean Gpnv Error Log Handle
+//
+// Input:
+//      IN OUT OFBD_HDR *pOFBDHdr
+// Output:
+//      EFI_STATUS
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
 OFBDCleanErrorLogHandle( 
     IN OUT OFBD_HDR *pOFBDHdr)
@@ -167,16 +184,20 @@ OFBDCleanErrorLogHandle(
     return(Status);
 }
 
-/**
-   	This function is Ofbd Clean Gpnv Error Log function entry point
-
-	@param Buffer - Ofbd header.
-  	@param pOFBDDataHandled - handle value returns
-  	
-	@retval	0xFF means Function executed successfully
-	@retval	0xFE means Function error occured
-*/ 
-
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:	CleanErrorLogEntry
+//
+// Description:	OFBD Clean Gpnv Error Log Entry Point
+//
+// Input:
+//      IN VOID             *Buffer
+//      IN OUT UINT8        *pOFBDDataHandled
+// Output:
+//      VOID
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID CleanErrorLogEntry (
     IN VOID             *Buffer,
     IN OUT UINT8        *pOFBDDataHandled )
@@ -217,7 +238,7 @@ VOID CleanErrorLogEntry (
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2012, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **

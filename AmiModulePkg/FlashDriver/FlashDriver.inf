@@ -1,7 +1,7 @@
 #**********************************************************************
 #**********************************************************************
 #**                                                                  **
-#**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+#**        (C)Copyright 1985-2011, American Megatrends, Inc.         **
 #**                                                                  **
 #**                       All Rights Reserved.                       **
 #**                                                                  **
@@ -20,27 +20,35 @@
   INF_VERSION                    = 0x00010005
   BASE_NAME                      = FlashDriver
   FILE_GUID                      = CBC59C4A-383A-41eb-A8EE-4498AEA567E4
-  MODULE_TYPE                    = DXE_RUNTIME_DRIVER
+  MODULE_TYPE                    = DXE_RUNTIME_DRIVER #RT_DRIVER
+  VERSION_STRING                 = 1.0
   ENTRY_POINT                    = FlashDriverEntry
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64
+#
+#  
+
 
 [Sources]  
   Flash.c
 
 [Packages]
   MdePkg/MdePkg.dec   
-  AmiCompatibilityPkg/AmiCompatibilityPkg.dec
-  AmiModulePkg/AmiModulePkg.dec
+  AmiCompatibilityPkg/AmiCompatibilityPkg.dec 
   
 [LibraryClasses]
   AmiDxeLib
+  AmiCspLib
   FlashLib
   UefiDriverEntryPoint
   UefiBootServicesTableLib
-  AmiCriticalSectionLib
 	
 [Protocols]
-  gFlashProtocolGuid             #PRODUCES, AmiCompatibilityPkg.dec
-  gFlashSmmProtocolGuid          #PRODUCES, AmiCompatibilityPkg.dec
+	gFlashProtocolGuid                    #PRODUCES, AmiCompatibilityPkg.dec
+	gFlashSmmProtocolGuid          #PRODUCES, AmiCompatibilityPkg.dec
 
 [Depex]
   TRUE
@@ -48,7 +56,7 @@
 #**********************************************************************
 #**********************************************************************
 #**                                                                  **
-#**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+#**        (C)Copyright 1985-2011, American Megatrends, Inc.         **
 #**                                                                  **
 #**                       All Rights Reserved.                       **
 #**                                                                  **

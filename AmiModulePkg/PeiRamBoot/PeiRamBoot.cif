@@ -13,5 +13,4 @@
 "Pei\PeiRamBootPei.inf"
 "Pei\PeiRamBootCacheRdy.inf"
 "Dxe\PeiRamBootDxe.inf"
-"Dxe\PeiRamBootOfbdLib.inf"
 <endComponent>

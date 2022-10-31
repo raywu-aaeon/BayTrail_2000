@@ -1,7 +1,7 @@
 /** @file
   Functions implementation related with DHCPv4 for UefiPxeBc Driver.
 
-  Copyright (c) 2009 - 2014, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2009 - 2012, Intel Corporation. All rights reserved.<BR>
 
   This program and the accompanying materials
   are licensed and made available under the terms and conditions of the BSD License
@@ -256,18 +256,7 @@ PxeBcBuildDhcp4Options (
     OptList[Index]->OpCode  = PXEBC_DHCP4_TAG_MAXMSG;
     OptList[Index]->Length  = (UINT8) sizeof (PXEBC_DHCP4_OPTION_MAX_MESG_SIZE);
     OptEnt.MaxMesgSize      = (PXEBC_DHCP4_OPTION_MAX_MESG_SIZE *) OptList[Index]->Data;
-	//
-	// AMI PORTING STARTS.
-	// 
-#if (NET_PKG_AMI_PORTING_ENABLE == 1)
-	Value                   = NTOHS (PXEBC_DHCP4_PACKET_MAX_SIZE);
-#else
-	Value                   = NTOHS (PXEBC_DHCP4_PACKET_MAX_SIZE - 8);
-#endif	// NET_PKG_AMI_PORTING_ENABLE
-	//
-	// AMI PORTING ENDS.
-	// 
-	
+    Value                   = NTOHS (PXEBC_DHCP4_PACKET_MAX_SIZE - 8);
     CopyMem (&OptEnt.MaxMesgSize->Size, &Value, sizeof (UINT16));
     Index++;
     OptList[Index]          = GET_NEXT_DHCP_OPTION (OptList[Index - 1]);
@@ -483,7 +472,6 @@ PxeBcParseDhcp4Packet (
 
   //
   // Parse DHCPv4 options in this offer, and store the pointers.
-  // First, try to parse DHCPv4 options from the DHCP optional parameters field.
   //
   for (Index = 0; Index < PXEBC_DHCP4_TAG_INDEX_MAX; Index++) {
     Options[Index] = PxeBcParseDhcp4Options (
@@ -492,38 +480,9 @@ PxeBcParseDhcp4Packet (
                        mInterestedDhcp4Tags[Index]
                        );
   }
-  //
-  // Second, Check if bootfilename and serverhostname is overloaded to carry DHCP options refers to rfc-2132. 
-  // If yes, try to parse options from the BootFileName field, then ServerName field.
-  //
-  Option = Options[PXEBC_DHCP4_TAG_INDEX_OVERLOAD];
-  if (Option != NULL) {
-    if ((Option->Data[0] & PXEBC_DHCP4_OVERLOAD_FILE) != 0) {
-      for (Index = 0; Index < PXEBC_DHCP4_TAG_INDEX_MAX; Index++) {
-        if (Options[Index] == NULL) {
-          Options[Index] = PxeBcParseDhcp4Options (
-                             (UINT8 *) Offer->Dhcp4.Header.BootFileName,
-                             sizeof (Offer->Dhcp4.Header.BootFileName),
-                             mInterestedDhcp4Tags[Index]
-                             );
-        }
-      }
-    }
-    if ((Option->Data[0] & PXEBC_DHCP4_OVERLOAD_SERVER_NAME) != 0) {
-      for (Index = 0; Index < PXEBC_DHCP4_TAG_INDEX_MAX; Index++) {
-        if (Options[Index] == NULL) {
-          Options[Index] = PxeBcParseDhcp4Options (
-                             (UINT8 *) Offer->Dhcp4.Header.ServerName,
-                             sizeof (Offer->Dhcp4.Header.ServerName),
-                             mInterestedDhcp4Tags[Index]
-                             );
-        }
-      }
-    }
-  }
 
   //
-  // The offer with zero "yiaddr" is a proxy offer.
+  // The offer with "yiaddr" is a proxy offer.
   //
   if (Offer->Dhcp4.Header.YourAddr.Addr[0] == 0) {
     IsProxyOffer = TRUE;
@@ -547,21 +506,30 @@ PxeBcParseDhcp4Packet (
   }
 
   //
-  // Parse PXE boot file name:
-  // According to PXE spec, boot file name should be read from DHCP option 67 (bootfile name) if present.
-  // Otherwise, read from boot file field in DHCP header.
+  // Check whether bootfilename and serverhostname overloaded, refers to rfc-2132 in details.
+  // If overloaded, parse the buffer as nested DHCPv4 options, or else just parse as bootfilename
+  // and serverhostname option.
   //
-  if (Options[PXEBC_DHCP4_TAG_INDEX_BOOTFILE] != NULL) {
+  Option = Options[PXEBC_DHCP4_TAG_INDEX_OVERLOAD];
+  if (Option != NULL && (Option->Data[0] & PXEBC_DHCP4_OVERLOAD_FILE) != 0) {
+
+    Options[PXEBC_DHCP4_TAG_INDEX_BOOTFILE] = PxeBcParseDhcp4Options (
+                                                (UINT8 *) Offer->Dhcp4.Header.BootFileName,
+                                                sizeof (Offer->Dhcp4.Header.BootFileName),
+                                                PXEBC_DHCP4_TAG_BOOTFILE
+                                                );
     //
     // RFC 2132, Section 9.5 does not strictly state Bootfile name (option 67) is null
     // terminated string. So force to append null terminated character at the end of string.
     //
-    Ptr8 =  (UINT8*)&Options[PXEBC_DHCP4_TAG_INDEX_BOOTFILE]->Data[0];
-    Ptr8 += Options[PXEBC_DHCP4_TAG_INDEX_BOOTFILE]->Length;
-    if (*(Ptr8 - 1) != '\0') {
-      *Ptr8 = '\0';
+    if (Options[PXEBC_DHCP4_TAG_INDEX_BOOTFILE] != NULL) {
+      Ptr8 =  (UINT8*)&Options[PXEBC_DHCP4_TAG_INDEX_BOOTFILE]->Data[0];
+      Ptr8 += Options[PXEBC_DHCP4_TAG_INDEX_BOOTFILE]->Length;
+      *Ptr8 =  '\0';
     }
-  } else if (Offer->Dhcp4.Header.BootFileName[0] != 0) {
+
+  } else if ((Options[PXEBC_DHCP4_TAG_INDEX_BOOTFILE] == NULL) &&
+            (Offer->Dhcp4.Header.BootFileName[0] != 0)) {
     //
     // If the bootfile is not present and bootfilename is present in DHCPv4 packet, just parse it.
     // Do not count dhcp option header here, or else will destroy the serverhostname.
@@ -845,19 +813,7 @@ PxeBcCacheDhcp4Offer (
         //
         Private->OfferIndex[OfferType][Private->OfferCount[OfferType]] = Private->OfferNum;
         Private->OfferCount[OfferType]++;
-        
-        //        
-        // AMI PORTING STARTS
-        //     
-#if(NET_PKG_AMI_PORTING_ENABLE)
-      } else if (Private->OfferCount[OfferType] == 0) {
-#else
       } else if (Private->OfferCount[OfferType] > 0) {
-#endif  // NET_PKG_AMI_PORTING_ENABLE
-        //          
-        // AMI PORTING ENDS
-        //
-          
         //
         // Only cache the first PXE10/WFM11a offer, and discard the others.
         //
@@ -1203,18 +1159,7 @@ PxeBcDhcp4CallBack (
                  PXEBC_DHCP4_TAG_MAXMSG
                  );
   if (MaxMsgSize != NULL) {
-	//
-	// AMI PORTING STARTS.
-	// 
-#if (NET_PKG_AMI_PORTING_ENABLE == 1)
-	Value                   = HTONS (PXEBC_DHCP4_PACKET_MAX_SIZE);
-#else
-	Value                   = HTONS (PXEBC_DHCP4_PACKET_MAX_SIZE - 8);
-#endif	// NET_PKG_AMI_PORTING_ENABLE
-	//
-	// AMI PORTING ENDS.
-	// 
-	
+    Value = HTONS (PXEBC_DHCP4_PACKET_MAX_SIZE - 8);
     CopyMem (MaxMsgSize->Data, &Value, sizeof (Value));
   }
 
@@ -1240,22 +1185,6 @@ PxeBcDhcp4CallBack (
   switch (Dhcp4Event) {
 
   case Dhcp4SendDiscover:
-  	//
-	// AMI PORTING STARTS.
-	//
-#if (NET_PKG_AMI_PORTING_ENABLE == 1)
-  	if (Packet->Length > PXEBC_DHCP4_PACKET_MAX_SIZE) {
-		//
-		// If the to be sent packet exceeds the maximum length, abort the DHCP process.
-		//
-		Status = EFI_ABORTED;
-		break;
-	}
-#endif	// NET_PKG_AMI_PORTING_ENABLE
-	//
-	// AMI PORTING ENDS.
-	//
-	
     //
     // Cache the DHCPv4 discover packet to mode data directly.
     // It need to check SendGuid as well as Dhcp4SendRequest.
@@ -1263,21 +1192,6 @@ PxeBcDhcp4CallBack (
     CopyMem (&Mode->DhcpDiscover.Dhcpv4, &Packet->Dhcp4, Packet->Length);
 
   case Dhcp4SendRequest:
-	//
-	// AMI PORTING STARTS.
-	//
-#if (NET_PKG_AMI_PORTING_ENABLE == 1)
-	if (Packet->Length > PXEBC_DHCP4_PACKET_MAX_SIZE) {
-		//
-		// If the to be sent packet exceeds the maximum length, abort the DHCP process.
-		//
-		Status = EFI_ABORTED;
-		break;
-	}
-#endif	// NET_PKG_AMI_PORTING_ENABLE
-	//
-	// AMI PORTING ENDS.
-	//
     if (Mode->SendGUID) {
       //
       // Send the system Guid instead of the MAC address as the hardware address if required.
@@ -1293,21 +1207,6 @@ PxeBcDhcp4CallBack (
     break;
 
   case Dhcp4RcvdOffer:
-	//
-	// AMI PORTING STARTS.
-	//
-#if (NET_PKG_AMI_PORTING_ENABLE == 1)
-	if (Packet->Length > PXEBC_DHCP4_PACKET_MAX_SIZE) {
-		//
-		// Ignore the incoming packets which exceed the maximum length.
-		//
-		Status = EFI_ABORTED;
-		break;
-	}
-#endif	// NET_PKG_AMI_PORTING_ENABLE
-	//
-	// AMI PORTING ENDS.
-	//
     Status = EFI_NOT_READY;
     if (Private->OfferNum < PXEBC_OFFER_MAX_NUM) {
       //
@@ -1333,22 +1232,6 @@ PxeBcDhcp4CallBack (
     break;
 
   case Dhcp4RcvdAck:
-	//
-	// AMI PORTING STARTS.
-	//
-#if (NET_PKG_AMI_PORTING_ENABLE == 1)
-	if (Packet->Length > PXEBC_DHCP4_PACKET_MAX_SIZE) {
-		//
-		// Abort the DHCP if the ACK packet exceeds the maximum length.
-		//
-		Status = EFI_ABORTED;
-		break;
-	}
-#endif	// NET_PKG_AMI_PORTING_ENABLE
-	//
-	// AMI PORTING ENDS.
-	//
-	
     //
     // Cache the DHCPv4 ack to Private->Dhcp4Ack, but it's not the final ack in mode data
     // without verification.
@@ -1691,7 +1574,7 @@ PxeBcDhcp4Dora (
   CopyMem (&PxeMode->StationIp, &Private->StationIp, sizeof (EFI_IPv4_ADDRESS));
   CopyMem (&PxeMode->SubnetMask, &Private->SubnetMask, sizeof (EFI_IPv4_ADDRESS));
 
-  Status = PxeBcFlushStationIp (Private, &Private->StationIp, &Private->SubnetMask);
+  Status = PxeBcFlushStaionIp (Private, &Private->StationIp, &Private->SubnetMask);
   if (EFI_ERROR (Status)) {
     goto ON_EXIT;
   }

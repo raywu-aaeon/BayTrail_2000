@@ -1,7 +1,7 @@
 #**********************************************************************
 #**********************************************************************
 #**                                                                  **
-#**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+#**        (C)Copyright 1985-2013, American Megatrends, Inc.         **
 #**                                                                  **
 #**                       All Rights Reserved.                       **
 #**                                                                  **
@@ -38,20 +38,18 @@
   MdePkg/MdePkg.dec
   AmiCompatibilityPkg/AmiCompatibilityPkg.dec
   AmiCryptoPkg/AmiCryptoPkg.dec
-  MdeModulePkg/MdeModulePkg.dec #EIP178977
 
 [LibraryClasses]
   PeimEntryPoint
   PeiServicesLib
   AmiPeiLib
   PeiCryptLib
-  AmiRomLayoutLib
+  ReportFVLib  #<EIP134987+> 2013/09/09
 
 [Ppis]
   gEfiPeiBootInRecoveryModePpiGuid
   gEfiPeiMemoryDiscoveredPpiGuid  #<EIP134987+> 2013/09/04
-  gPeiCapsulePpiGuid #EIP178977
-    
+  
 [Depex]
   #gEfiPeiMemoryDiscoveredPpiGuid
   TRUE
@@ -59,7 +57,7 @@
 #**********************************************************************
 #**********************************************************************
 #**                                                                  **
-#**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+#**        (C)Copyright 1985-2013, American Megatrends, Inc.         **
 #**                                                                  **
 #**                       All Rights Reserved.                       **
 #**                                                                  **

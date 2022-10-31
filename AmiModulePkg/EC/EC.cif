@@ -5,7 +5,6 @@
 	RefName = "EC"
 [INF]
 "EC.inf"
-"DxeKscLib.inf" #EIP175650
 [files]
 "EC.sdl"
 [parts]

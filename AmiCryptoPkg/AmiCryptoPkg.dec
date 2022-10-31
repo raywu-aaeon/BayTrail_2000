@@ -13,7 +13,6 @@
 
 [Includes]
 Include
-Include/Library
 ../MdePkg/Include
 ../MdePkg/Include/Guid
 ../AmiCompatibilityPkg/Include
@@ -24,9 +23,9 @@ Include/Library
 [LibraryClasses]
   ##  @libraryclass  Provides basic library functions for cryptographic primitives.
   ##
-  BaseCryptLib| ../../AmiCompatibilityPkg/Include/Library/BaseCryptLib.h
-  AmiCryptLib|../../AmiCompatibilityPkg/Include/Library/CryptLib.h
-  PeiCryptLib|../../AmiCompatibilityPkg/Include/Library/CryptLib.h
+#  BaseCryptoLib| ../../AmiCompatibilityPkg/Include/BaseCryptLib.h
+  AmiCryptLib|../../AmiCompatibilityPkg/Include/CryptLib.h
+  PeiCryptLib|../../AmiCompatibilityPkg/Include/CryptLib.h
 
 [Guids]  
 #temp###will be moved to Ami AmiCompatibilityPkg.dec

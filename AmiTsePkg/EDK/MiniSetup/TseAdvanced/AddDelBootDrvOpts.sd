@@ -126,7 +126,7 @@
                 option
                     text  = STRING_TOKEN(STR_SELECT_TO_DEL),
                     value = 0xFFFF,
-                    flags = DEFAULT | MANUFACTURING;
+                    flags = DEFAULT;
                 option
                     text  = STRING_TOKEN(STR_EMPTY),
                     value = 0,
@@ -151,7 +151,7 @@
 				option
 				text = STRING_TOKEN(STR_EMPTY),
 				value = 0,
-				flags = DEFAULT | MANUFACTURING;
+				flags = DEFAULT;
 				option
 				text = STRING_TOKEN(STR_EMPTY),
 				value = 1,
@@ -233,7 +233,7 @@
                 option
                     text  = STRING_TOKEN(STR_SELECT_TO_DEL),
                     value = 0xFFFF,
-                    flags = DEFAULT | MANUFACTURING;
+                    flags = DEFAULT;
                 option
                     text  = STRING_TOKEN(STR_EMPTY),
                     value = 0,

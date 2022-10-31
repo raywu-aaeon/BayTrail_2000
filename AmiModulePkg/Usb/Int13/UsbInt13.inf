@@ -1,7 +1,7 @@
 #*************************************************************************
 #*************************************************************************
 #**                                                                     **
-#**        (C)Copyright 1985-2016, American Megatrends, Inc.            **
+#**        (C)Copyright 1985-2012, American Megatrends, Inc.            **
 #**                                                                     **
 #**                       All Rights Reserved.                          **
 #**                                                                     **
@@ -35,9 +35,6 @@
 [LibraryClasses]
   AmiDxeLib
   UefiDriverEntryPoint
-  UefiLib
-  UefiBootServicesTableLib
-  DebugLib
 
 [Protocols]
   gEfiLegacyBiosProtocolGuid
@@ -53,7 +50,7 @@
 #*************************************************************************
 #*************************************************************************
 #**                                                                     **
-#**        (C)Copyright 1985-2016, American Megatrends, Inc.            **
+#**        (C)Copyright 1985-2012, American Megatrends, Inc.            **
 #**                                                                     **
 #**                       All Rights Reserved.                          **
 #**                                                                     **

@@ -2,7 +2,7 @@
  #**********************************************************************
  #**********************************************************************
  #**                                                                  **
- #**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+ #**        (C)Copyright 1985-2012, American Megatrends, Inc.         **
  #**                                                                  **
  #**                       All Rights Reserved.                       **
  #**                                                                  **
@@ -31,7 +31,6 @@
   Include/Ppi
   Include/Protocol
   Include/Guid
-  ../Build
  
 [LibraryClasses]
  
@@ -48,15 +47,9 @@
   gEfiGlobalNvsAreaProtocolGuid={0x74e1e48, 0x8132, 0x47a1,{0x8c, 0x2c, 0x3f, 0x14, 0xad, 0x9a, 0x66, 0xdc}}
   gIsctNvsAreaProtocolGuid={0x6614a586, 0x788c, 0x47e2, {0x89, 0x2d, 0x72, 0xe2, 0xc, 0x34, 0x48, 0x90}}
   gAmiTbtPlatformPolicyProtocolGuid = {0x380D7A5E, 0x1BCA, 0x11E1, {0xA1, 0x10, 0xE8, 0xEB, 0x47, 0x24, 0x01, 0x9B}} #EIP150027
-  ## Include/Protocol/AmiTbtNvs.h
-  gAmiTbtNvsProtocolGuid = {0xba1d893b, 0x803e, 0x4b26, {0xa3, 0xde, 0x58, 0x57, 0x3, 0xff, 0x7b, 0x26}}
  
 [Ppis]
   gOemPchPlatformPolicyOverridePpiGuid={0x61187967, 0x9a77, 0x419d,{0xaa, 0xea, 0x64, 0xdd, 0x56, 0x19, 0x08, 0x15}}
-
-[PcdsFixedAtBuild]
-  gAmiChipsetModulePkgTokenSpaceGuid.PcdGpioPortBaseAddress|0x0500|UINT16|0x20000012
-  gAmiChipsetModulePkgTokenSpaceGuid.PcdRcrbBaseAddress|0xfed1c000|UINT32|0x20000013
 
 [PcdsDynamic]
   gAmiChipsetModulePkgTokenSpaceGuid.PcdSbOemSetupElink|0x0|UINT32|0x2000000d
@@ -65,16 +58,3 @@
   gAmiChipsetModulePkgTokenSpaceGuid.PcdEnableAcpiModeElink|0x0|UINT32|0x20000010
   gAmiChipsetModulePkgTokenSpaceGuid.PcdDisableAcpiModeElink|0x0|UINT32|0x20000011
 
-#*************************************************************************
-#*************************************************************************
-#**                                                                     **
-#**        (C)Copyright 1985-2014, American Megatrends, Inc.            **
-#**                                                                     **
-#**                       All Rights Reserved.                          **
-#**                                                                     **
-#**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093           **
-#**                                                                     **
-#**                       Phone: (770)-246-8600                         **
-#**                                                                     **
-#*************************************************************************
-#*************************************************************************

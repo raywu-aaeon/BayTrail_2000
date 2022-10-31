@@ -38,7 +38,6 @@
 #include <Token.h>
 #include <AmiLib.h>
 #include <AMITSEElinks.h>
-#include <SignOn.h>
 //#include <TimeStamp.h> 
 
 #if SETUP_BMP_LOGO_SUPPORT
@@ -83,7 +82,7 @@ AMI_SIGN_ON Signon= {
 		(UINT8)0x24, (UINT8)'S', (UINT8)'G', (UINT8)'N', (UINT8)0x24,
 		(UINT8)0x2,
 		(UINT16)0x0,
-		CONVERT_TO_STRING(AMITSE_VERSION) " Copyright (C) %04x American Megatrends, Inc. \0" CONVERT_TO_STRING(BIOS_SIGNON_MESSAGE2_STRING) 
+		CONVERT_TO_STRING(AMITSE_VERSION) " Copyright (C) 2013 American Megatrends, Inc. \0" CONVERT_TO_STRING(BIOS_SIGNON_MESSAGE2_STRING) 
 		};
 		
 	

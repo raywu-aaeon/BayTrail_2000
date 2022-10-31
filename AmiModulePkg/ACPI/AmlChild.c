@@ -12,11 +12,25 @@
 //**********************************************************************
 //**********************************************************************
 
-/** @file AmlChild.c
-    ACPI AML Name space parsing/manipulation functions for ACPI SDT.
+//**********************************************************************
+// $Header: /Alaska/BIN/Modules/ACPI/Template/Core/AmlChild.c 2     5/14/11 2:10p Yakovlevs $
+//
+// $Revision: 2 $
+//
+// $Date: 5/14/11 2:10p $
+//**********************************************************************
 
-**/
 
+//**********************************************************************
+//<AMI_FHDR_START>
+//
+// Name: AmlChild.c
+//
+// Description:	
+//  ACPI AML Name space parsing/manipulation functions for ACPI SDT.
+//
+//<AMI_FHDR_END>
+//**********************************************************************
 
 #include "AcpiCore.h"
 

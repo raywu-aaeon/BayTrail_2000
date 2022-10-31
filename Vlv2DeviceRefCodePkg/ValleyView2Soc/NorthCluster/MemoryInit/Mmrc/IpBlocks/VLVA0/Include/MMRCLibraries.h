@@ -37,11 +37,8 @@ Abstract:
 #define MAX_DUNIT_ROW_ADDRESS_BIT   (MIN_RANK_BIT - 1)
 #define OFFSET_HIGH_LOW_SHIFT       (MAX_DUNIT_ROW_ADDRESS_BIT - 6 - 15)
 #define LATECMD_STEPSIZE  1
-#define LATECMD_SWEEP_RANGE_1066_DDLL  3
-#define LATECMD_SWEEP_RANGE_1333_ADLL  10
-#define LATECMD_SWEEP_RANGE_DEFAULT    3
-#define RMT_CMD_SWEEP_RANGE_1066_DDLL		2
-#define RMT_CMD_SWEEP_RANGE_1333_ADLL		4
+#define LATECMD_SWEEP_RANGE		3
+#define RMT_CMD_SWEEP_RANGE		2
 
 #define UPM_PERCENT_LATECMD    10     // Percentage of Unit Interval (LPDDR3: HALF_CLK)
 #define PERFORMANCE       0
@@ -563,7 +560,6 @@ typedef struct {
   UINT32                 CATraining_tsc_duration_low; 
   UINT32                 CATraining_tsc_duration_hgh; 
   UINT32                 CATraining_tsc_count;    
-  UINT8                   Override_dram_RTT_NOM;
 } MMRC_DATA;
 
 

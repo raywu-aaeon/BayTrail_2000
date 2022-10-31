@@ -1,3 +1,32 @@
+
+#**********************************************************************
+#**********************************************************************
+#**                                                                  **
+#**        (C)Copyright 1985-2012, American Megatrends, Inc.         **
+#**                                                                  **
+#**                       All Rights Reserved.                       **
+#**                                                                  **
+#**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093        **
+#**                                                                  **
+#**                       Phone: (770)-246-8600                      **
+#**                                                                  **
+#**********************************************************************
+#**********************************************************************
+#**********************************************************************
+# $Header: /Alaska/SOURCE/Modules/AmiGopPolicy/AmiGopPolicy.sdl 4     7/26/12 7:30a Josephlin $
+#
+# $Revision: 4 $
+#
+# $Date: 7/26/12 7:30a $
+#**********************************************************************
+#<AMI_FHDR_START>
+#
+# Name:         AmiGopPolicy.sdl
+#
+# Description:	AmiGopPolicy parameters file.
+#
+#<AMI_FHDR_END>
+#**********************************************************************
 TOKEN
 	Name  = "AmiGopPolicy"
 	Value  = "1"
@@ -9,42 +38,54 @@ TOKEN
 End
 
 TOKEN
-    Name  = "AMIGOPPOLICY_VER"
-    Value  = "07"
-    Help  = "AmiGopPolicy Version Number.\ DO NOT CHANGE THIS VALUE"
-    TokenType = Integer
-    TargetEQU = Yes
-    TargetMAK = Yes
-    TargetH = Yes
-    Lock = Yes
+	Name  = "AmiGopPolicySetupData"
+	Value  = "$(AMI_GOP_POLICY_SD_FILE)"
+	TokenType = File
+	TargetMAK = Yes
 End
 
 TOKEN
-	Name  = "OEM_EDID_OVERRIDE_PROTOCOL_SUPPORT"
-	Value  = "0"
-	Help  = "If set, Include EDID Override Protocol support in Project."
-	TokenType = Boolean
-	TargetH = Yes
+	Name  = "AmiGopPolicySetupString"
+	Value  = "$(AMI_GOP_POLICY_UNI_FILE)"
+	TokenType = File
+	TargetMAK = Yes
 End
 
 PATH
 	Name  = "AMIGOPPOLICY_DIR"
 End
 
+MODULE
+	Help  = "Includes AmiGopPolicy.mak to Project"
+	File  = "AmiGopPolicy.mak"
+End
+
 ELINK
-	Name  = "$(AMIGOPPOLICY_DIR)/AmiGopPolicy.sd"
+	Name  = "$(AmiGopPolicySetupData)"
 	Parent  = "SETUP_DEFINITIONS"
 	InvokeOrder = AfterParent
 End
 
 ELINK
-	Name  = "$(AMIGOPPOLICY_DIR)/AmiGopPolicy.uni"
+	Name  = "$(AmiGopPolicySetupString)"
 	Parent  = "SetupStringFiles"
 	InvokeOrder = AfterParent
 End
 
 ELINK
-	Name  = "$(AMIGOPPOLICY_DIR)/AmiGopPolicySetup.c"
+	Name  = "$(AMIGOPPOLICY_DIR)\AmiGopPolicy.sd"
+	Parent  = "AMI_GOP_POLICY_SD_FILE"
+	InvokeOrder = AfterParent
+End
+
+ELINK
+	Name  = "$(AMIGOPPOLICY_DIR)\AmiGopPolicy.uni"
+	Parent  = "AMI_GOP_POLICY_UNI_FILE"
+	InvokeOrder = AfterParent
+End
+
+ELINK
+	Name  = "$(AMIGOPPOLICY_DIR)\AmiGopPolicySetup.c"
 	Parent  = "SetupCallbackFiles"
 	InvokeOrder = AfterParent
 End
@@ -62,12 +103,6 @@ ELINK
 End
 
 ELINK
-	Name  = "AmiGopPolicyProtocolInsatll,"
-	Parent  = "SignalConnectDriversEvent,"
-	InvokeOrder = AfterParent
-End
-
-ELINK
 	Name  = "AmiDefaultGopDeviceCheck,"
 	Parent  = "OemGopDeviceCheckList"
 	InvokeOrder = AfterParent
@@ -76,13 +111,6 @@ End
 ELINK
 	Name  = "AmiDefaultGopSwitchFunction,"
 	Parent  = "OemGopSwitchHookList"
-	InvokeOrder = AfterParent
-End
-
-ELINK
-	Name  = "AmiDefaultGopEdidOverrideGetEdid,"
-	Parent  = "OemGopEdidOverrideGetEdidList"
-	Token  = "OEM_EDID_OVERRIDE_PROTOCOL_SUPPORT" "=" "1"
 	InvokeOrder = AfterParent
 End
 
@@ -135,6 +163,18 @@ ELINK
 End
 
 ELINK
+	Name  = "AMI_GOP_POLICY_SD_FILE"
+	Help  = "AmiGopPolicy Setup Data file. Note: This eLink only permit to include one file."
+	InvokeOrder = ReplaceParent
+End
+
+ELINK
+	Name  = "AMI_GOP_POLICY_UNI_FILE"
+	Help  = "AmiGopPolicy Setup Data file. Note: This eLink only permit to include one file."
+	InvokeOrder = ReplaceParent
+End
+
+ELINK
 	Name  = "OemGopDeviceCheckList"
 	InvokeOrder = ReplaceParent
 End
@@ -145,19 +185,19 @@ ELINK
 End
 
 ELINK
-    Name  = "gEfiGraphicsOutputProtocolGuid"
-    Parent  = "AdditionalSetupProtocols"
-    InvokeOrder = AfterParent
-End
-
-ELINK
 	Name  = "gEfiComponentNameProtocolGuid"
 	Parent  = "AdditionalSetupProtocols"
 	InvokeOrder = AfterParent
 End
 
+#ELINK
+#	Name  = "gEfiComponentName2ProtocolGuid"
+#	Parent  = "AdditionalSetupProtocols"
+#	InvokeOrder = AfterParent
+#End
+
 ELINK
-	Name  = "gEfiComponentName2ProtocolGuid"
+	Name  = "gEfiGraphicsOutputProtocolGuid"
 	Parent  = "AdditionalSetupProtocols"
 	InvokeOrder = AfterParent
 End
@@ -168,23 +208,11 @@ ELINK
 	InvokeOrder = AfterParent
 End
 
-ELINK
-	Name  = "gEfiEdidDiscoveredProtocolGuid"
-	Parent  = "AdditionalSetupProtocols"
-	InvokeOrder = AfterParent
-End
-
-ELINK
-	Name  = "gEfiPciIoProtocolGuid"
-	Parent  = "AdditionalSetupProtocols"
-	InvokeOrder = AfterParent
-End
-
 INFComponent
 	Name  = "AmiGopPolicy"
 	File  = "AmiGopPolicy.inf"
 	Package  = "AmiModulePkg"
-	ModuleTypes  = "BASE"
+	ModuleTypes  = "DXE_DRIVER"
 End
 
 LibraryMapping
@@ -193,9 +221,17 @@ LibraryMapping
 	Override  = "AmiModulePkg.Bds"
 End
 
-Outputregister
-	Name = "AmiGopLinksList"
-	Path = "Build"
-	File = "AmiGopPolicyLinks.h"
-	Template = "AmiGopPolicyLinks.tmp"
-End
+#**********************************************************************
+#**********************************************************************
+#**                                                                  **
+#**        (C)Copyright 1985-2012, American Megatrends, Inc.         **
+#**                                                                  **
+#**                       All Rights Reserved.                       **
+#**                                                                  **
+#**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093        **
+#**                                                                  **
+#**                       Phone: (770)-246-8600                      **
+#**                                                                  **
+#**********************************************************************
+#**********************************************************************
+

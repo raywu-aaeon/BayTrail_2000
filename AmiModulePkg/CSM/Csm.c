@@ -87,7 +87,7 @@ VOID DisconnectSerialIO();
 VOID DummyFunction(EFI_EVENT Event, VOID *Context);
 EFI_TPL     gOldTplValue = 0;
 UINT16      gProtectedIrqMask = 0xffff;
-BBS_TABLE   *gBbsTableBackup = NULL;
+BBS_TABLE   *gOriginalBbsTable = NULL;
 
 VOID DumpBbsTable(UINT32);
 #define BBS_LOWEST_ACTIVE_PRIORITY 0xfffb
@@ -1633,11 +1633,12 @@ LegacyBoot (
     Status = ShadowAllLegacyOproms(This);   // Launch remaining OpROMs
     ASSERT_EFI_ERROR(Status);
 
-    // For the 1st boot allocate BBS table backup
-    if (gBbsTableBackup == NULL){
+    // For the 1st boot store BBS table, else update the entries
+    if (gOriginalBbsTable == NULL){
         Status = pBS->AllocatePool(EfiBootServicesData, (sizeof(BBS_TABLE))*gCoreBiosInfo->BbsEntriesNo,
-                               &gBbsTableBackup);
+                               &gOriginalBbsTable);
         ASSERT_EFI_ERROR(Status);
+        pBS->CopyMem(gOriginalBbsTable, gCoreBiosInfo->BbsTable, (sizeof(BBS_TABLE))*gCoreBiosInfo->BbsEntriesNo);
     }
     else
     {
@@ -1656,14 +1657,13 @@ LegacyBoot (
         for (i = 0; i < gCoreBiosInfo->BbsEntriesNo; i++)
         {
             if (gCoreBiosInfo->BbsTable[i].BootPriority == BBS_UNPRIORITIZED_ENTRY
-                && gBbsTableBackup[i].BootPriority != BBS_UNPRIORITIZED_ENTRY)
+                && gOriginalBbsTable[i].BootPriority != BBS_UNPRIORITIZED_ENTRY)
             {
                 gCoreBiosInfo->BbsTable[i].BootPriority = ++LowestPriority; // bump the entry all the way back
                 ASSERT(LowestPriority < BBS_LOWEST_ACTIVE_PRIORITY);
             }
         }
     }
-    pBS->CopyMem(gBbsTableBackup, gCoreBiosInfo->BbsTable, (sizeof(BBS_TABLE))*gCoreBiosInfo->BbsEntriesNo);
 
     DumpBbsTable(0);
 
@@ -1783,8 +1783,6 @@ LegacyBoot (
         pBS->ConnectController(gVgaHandle, NULL, NULL, TRUE);
     }
     ConnectSerialIO();
-
-    pBS->CopyMem(gCoreBiosInfo->BbsTable, gBbsTableBackup, (sizeof(BBS_TABLE))*gCoreBiosInfo->BbsEntriesNo);
 
     return EFI_SUCCESS;
 

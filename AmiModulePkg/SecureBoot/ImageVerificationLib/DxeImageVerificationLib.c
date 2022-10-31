@@ -60,8 +60,8 @@ Intel Corporation.
 #include <Protocol/SimpleTextIn.h>
 #include <Protocol/SimpleTextOut.h>
 #include <../SecureBoot.h>
+#include <Protocol/PciIo.h> //EIP 119953
 #include <CryptLib.h>
-
 // {3AA83745-9454-4f7a-A7C0-90DBD02FAB8E}
 //#define BDS_CONNECT_DRIVERS_PROTOCOL_GUID \
 //    { 0x3aa83745, 0x9454, 0x4f7a, { 0xa7, 0xc0, 0x90, 0xdb, 0xd0, 0x2f, 0xab, 0x8e } }
@@ -222,6 +222,202 @@ DxeImageVerificationLibImageRead (
   return EFI_SUCCESS;
 }
 
+
+/**
+  Get the image type.
+
+  @param[in]    File       This is a pointer to the device path of the file that is
+                           being dispatched. 
+
+  @return UINT32           Image Type             
+
+**/
+UINT32
+GetImageType (
+  IN  CONST EFI_DEVICE_PATH_PROTOCOL   *File
+  )
+{
+  EFI_STATUS                        Status;
+  EFI_HANDLE                        DeviceHandle; 
+  EFI_DEVICE_PATH_PROTOCOL          *TempDevicePath;
+  EFI_BLOCK_IO_PROTOCOL             *BlockIo;
+  UINT8                             nDevicePathSubType;
+  //EIP 119953 Start
+  EFI_PCI_IO_PROTOCOL               *PciIoInterface = NULL; 
+  UINT64                            AttributesResult;       
+  EFI_HANDLE                        WorkAroundDevHandle;
+  //EIP 119953 Stop
+
+  // Unknown device path: image security policy is applied to the image with the least trusted origin.
+  if (File == NULL) {
+   return IMAGE_UNKNOWN;
+  }
+  //
+  // First check to see if File is from a Firmware Volume. 
+  //
+  DeviceHandle      = NULL;
+  TempDevicePath = (EFI_DEVICE_PATH_PROTOCOL *)File;
+  Status = pBS->LocateDevicePath (
+                  &gEfiFirmwareVolume2ProtocolGuid,
+                  &TempDevicePath,
+                  &DeviceHandle
+                  );
+  if (!EFI_ERROR (Status)) {
+    Status = pBS->OpenProtocol (
+                    DeviceHandle,
+                    &gEfiFirmwareVolume2ProtocolGuid,
+                    NULL,
+                    NULL,
+                    NULL,
+                    EFI_OPEN_PROTOCOL_TEST_PROTOCOL
+                    );
+    if (!EFI_ERROR (Status)) {
+      return IMAGE_FROM_FV;
+    }
+  }
+  //
+  // Next check to see if File is from a Block I/O device
+  // Must be a Block I/O device since we reached here after Int FV path check
+  //
+  DeviceHandle   = NULL;
+  TempDevicePath = (EFI_DEVICE_PATH_PROTOCOL *)File;
+  Status = pBS->LocateDevicePath (
+                  &gEfiBlockIoProtocolGuid,
+                  &TempDevicePath,
+                  &DeviceHandle
+                  );
+  if (!EFI_ERROR (Status)) {
+    BlockIo = NULL;
+    Status = pBS->OpenProtocol (
+                    DeviceHandle,
+                    &gEfiBlockIoProtocolGuid,
+                    (VOID **) &BlockIo,
+                    NULL,
+                    NULL,
+                    EFI_OPEN_PROTOCOL_GET_PROTOCOL
+                    );
+    if (!EFI_ERROR (Status) && BlockIo != NULL) {
+      if (BlockIo->Media != NULL) {
+        if (BlockIo->Media->RemovableMedia) {
+          //
+          // Block I/O is present and specifies the media is removable
+          //
+          return IMAGE_FROM_REMOVABLE_MEDIA;
+        } else {
+          //
+          // Block I/O is present and specifies the media is not removable
+          //
+          return IMAGE_FROM_FIXED_MEDIA;
+        }
+      }
+    }
+  }
+  //
+  // File is not in a Firmware Volume or on a Block I/O device, so check to see if 
+  // the device path supports the Simple File System Protocol.
+  //
+  DeviceHandle   = NULL;
+  TempDevicePath = (EFI_DEVICE_PATH_PROTOCOL *)File;
+  Status = pBS->LocateDevicePath (
+                  &gEfiSimpleFileSystemProtocolGuid,
+                  &TempDevicePath,
+                  &DeviceHandle
+                  );
+  if (!EFI_ERROR (Status)) {
+    //
+    // Simple File System is present without Block I/O, so assume media is fixed.
+    //
+    return IMAGE_FROM_FIXED_MEDIA;
+  }
+
+  //EIP 122339 Start: Return IMAGE_FROM_FV if the EFI_PCI_IO_PROTOCOL installed
+  //on the same handle as the Device Path has the attribute EFI_PCI_IO_ATTRIBUTE_EMBEDDED_ROM
+  WorkAroundDevHandle = NULL;
+  //
+  // Check if an instance of the EFI_PCI_IO_PROTOCOL is installed on the same handle
+  // as the Device Path.  If an instance is found WorkAroundDevHandle contains the
+  // handle for the Device Path and EFI_PCI_IO_PROTOCOL instance.
+  //
+  Status = pBS->LocateDevicePath(
+                    &gEfiPciIoProtocolGuid,
+                    &File,
+                    &WorkAroundDevHandle
+  );
+  if(!(EFI_ERROR(Status)))
+  {   
+      Status = pBS->HandleProtocol(
+                        WorkAroundDevHandle,
+                        &gEfiPciIoProtocolGuid,
+                        &PciIoInterface
+      );
+      
+      if(!(EFI_ERROR(Status)))
+      {
+          //
+          // Using the EFI_PCI_IO_PROTOCOL get the value of the PCI controller's
+          // Embedded Rom attribute (EFI_PCI_IO_ATTRIBUTE_EMBEDDED_ROM)
+          //
+          Status = PciIoInterface->Attributes(
+                                    PciIoInterface,
+                                    EfiPciIoAttributeOperationGet,
+                                    0, //this parameter is ignored during Get operation
+                                    &AttributesResult
+          );
+          //
+          // Check if the PCI controller's EFI_PCI_IO_ATTRIBUTE_EMBEDDED_ROM is set
+          //          
+
+          if(!EFI_ERROR(Status) && (AttributesResult & EFI_PCI_IO_ATTRIBUTE_EMBEDDED_ROM))
+              return IMAGE_FROM_FV;
+      }
+  }
+  //EIP 122339 Stop
+  //
+  // File is not from an FV, Block I/O or Simple File System, so the only options
+  // left are a PCI Option ROM and a Load File Protocol such as a PXE Boot from a NIC.  
+  //
+  TempDevicePath = (EFI_DEVICE_PATH_PROTOCOL *)File;
+  while (!IsDevicePathEndType (TempDevicePath)) {
+    nDevicePathSubType = DevicePathSubType (TempDevicePath);
+    switch (DevicePathType (TempDevicePath)) {
+    
+    case MEDIA_DEVICE_PATH:
+
+      if (nDevicePathSubType == MEDIA_RELATIVE_OFFSET_RANGE_DP) {
+        return IMAGE_FROM_OPTION_ROM;
+      }
+    //
+    // EFI Specification extension on Media Device Path. MEDIA_FW_VOL_FILEPATH_DEVICE_PATH is adopted by UEFI later and added in UEFI2.10. 
+    // In EdkCompatibility Package, we only support MEDIA_FW_VOL_FILEPATH_DEVICE_PATH that complies with
+    // EFI 1.10 and UEFI 2.10.
+    //
+      if (nDevicePathSubType == MEDIA_FV_FILEPATH_DP) {
+        return IMAGE_FROM_FV;
+      }    
+      // Case for embedded FV application such as Shell
+      // check GUID. BootOptions.h
+      //
+      if (nDevicePathSubType == MEDIA_VENDOR_DP && 
+        !guidcmp(&((VENDOR_DEVICE_PATH*)TempDevicePath)->Guid, &AmiMediaDevicePathGuid)) {
+        return IMAGE_FROM_FV;
+      }
+      break;
+
+    case MESSAGING_DEVICE_PATH:
+
+      if (nDevicePathSubType == MSG_MAC_ADDR_DP) {
+        return IMAGE_FROM_REMOVABLE_MEDIA;
+      } 
+      break;
+
+    default:
+      break;
+    }
+    TempDevicePath = NextDevicePathNode (TempDevicePath);
+  }
+  return IMAGE_UNKNOWN; 
+}
+
 /**
   Calculate hash of Pe/Coff image based on the authenticode image hashing in
   PE/COFF Specification 8.0 Appendix A
@@ -252,7 +448,7 @@ HashPeImage (
   UINTN                     Index;
   UINTN                     Pos;
 
-  const UINT8             *addr[MAX_ELEM_NUM];
+  const UINT8             *addr[MAX_ELEM_NUM]; // tbd. test if 20 elements is enough
   UINTN                   num_elem, len[MAX_ELEM_NUM];
   EFI_GUID                *EfiHashAlgorithmGuid;
 
@@ -321,7 +517,7 @@ HashPeImage (
     //
     // Invalid header magic number.
     //
-//    TRACE((TRACE_ALWAYS,"Invalid header magic number.\n"));
+    TRACE((TRACE_ALWAYS,"Invalid header magic number.\n"));
     goto Done;
   }
 
@@ -502,7 +698,7 @@ HashPeImage (
     if(num_elem >= MAX_ELEM_NUM)
 //        goto Done;
          {
-//TRACE((TRACE_ALWAYS,"MAX_ELEM_NUM.1 = %d\n", num_elem));
+TRACE((TRACE_ALWAYS,"MAX_ELEM_NUM.1 = %d\n", num_elem));
         goto Done;}
     // Security review EIP[125931]: HashPeImage does not validate certificate table offset and size
     if (((UINT64)SumOfBytesHashed+HashSize) > mImageSize) 
@@ -548,7 +744,7 @@ HashPeImage (
        if(num_elem >= MAX_ELEM_NUM)
 //         goto Done;
          {
-//TRACE((TRACE_ALWAYS,"MAX_ELEM_NUM.2=%d\n", num_elem));
+TRACE((TRACE_ALWAYS,"MAX_ELEM_NUM.2=%d\n", num_elem));
         goto Done;}
 
     } else if (mImageSize < ((UINT64)CertSize + SumOfBytesHashed)) {
@@ -1077,7 +1273,7 @@ TRACE((TRACE_ALWAYS,"\nLook for a match in '%S'===>\n\n", VariableName));
             Cert       = (EFI_SIGNATURE_DATA *) ((UINT8 *) CertList + sizeof (EFI_SIGNATURE_LIST) + CertList->SignatureHeaderSize);
             CertCount  = (CertList->SignatureListSize - sizeof (EFI_SIGNATURE_LIST) - CertList->SignatureHeaderSize) / CertList->SignatureSize;
             RootCertSize  = CertList->SignatureSize-sizeof(EFI_GUID); // sig data structure starts with SigOwner Guid
-TRACE((TRACE_ALWAYS,"Cert Guid %g (enum type %d)\nCertSize = 0x%X\n", &CertList->SignatureType, ValidCertType, RootCertSize));
+TRACE((TRACE_ALWAYS,"Signature Type %g\nRootCertSize = %X\n",CertList->SignatureType, RootCertSize));
 
             for (Index = 0; Index < CertCount; Index++) {
               //
@@ -1089,12 +1285,12 @@ TRACE((TRACE_ALWAYS,"Cert Guid %g (enum type %d)\nCertSize = 0x%X\n", &CertList-
                 case CertSha256:
                     if(RootCertSize == mImageDigestSize && 
                         MemCmp(RootCert, mImageDigest, mImageDigestSize) == 0) {
+TRACE((TRACE_ALWAYS,"Hash Cert match found...\n"));
                       //
                       // Found the signature in database.
                       //
                         IsVerified = TRUE;
                     }
-TRACE((TRACE_ALWAYS,"Sha256 Cert match %d (Cert bytes [%02X],[%02X],..)\n",IsVerified, RootCert[0], RootCert[1]));
                     break;
 // x509, x509_ShaXXX
 /*
@@ -1193,60 +1389,61 @@ TRACE((TRACE_ALWAYS,"\n<===%s cert match in '%S'\n",(IsVerified?"Got":"No"), Var
 }
 
 
-/**
-        Handle for Security Architectural Protocol
-        Provide verification service for signed images, which include both signature validation
-        and platform policy control. For signature types, both UEFI WIN_CERTIFICATE_UEFI_GUID and
-        MSFT Authenticode type signatures are supported.
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   DxeImageVerificationHandler
+//
+// Description: Handle for Security Architectural Protocol
+//        Provide verification service for signed images, which include both signature validation
+//        and platform policy control. For signature types, both UEFI WIN_CERTIFICATE_UEFI_GUID and
+//        MSFT Authenticode type signatures are supported.
+//
+//        In this implementation, only verify external executables when in USER MODE.
+//        Executables from FV is bypass, so pass in AuthenticationStatus is ignored.
+//
+//        The image verification policy is:
+//          If the image is signed,
+//            At least one valid signature or at least one hash value of the image must match a record
+//            in the security database "db", and no valid signature nor any hash value of the image may
+//            be reflected in the security database "dbx".
+//          Otherwise, the image is not signed,
+//            The SHA256 hash value of the image must match a record in the security database "db", and
+//            not be reflected in the security data base "dbx".
+//
+//        Caution: This function may receive untrusted input.
+//          PE/COFF image is external input, so this function will validate its data structure
+//          within this image buffer before use.
+//
+//  Input:
+//     File                   This is a pointer to the device path of the file that is
+//                            being dispatched. This will optionally be used for logging.
+//     FileBuffer             File buffer matches the input file device path.
+//     FileSize               Size of File buffer matches the input file device path.
+//
+// Output:      EFI_STATUS
+//
+//      EFI_SUCCESS            The file specified by File did authenticate, and the
+//                             platform policy dictates that the DXE Core may use File.
+//      EFI_INVALID_PARAMETER  File is NULL.
+//      EFI_SECURITY_VIOLATION The file specified by File did not authenticate, and
+//                             the platform policy dictates that File should be placed
+//                             in the untrusted state. A file may be promoted from
+//                             the untrusted to the trusted state at a future time
+//                             with a call to the Trust() DXE Service.
+//      EFI_ACCESS_DENIED      The file specified by File did not authenticate, and
+//                             the platform policy dictates that File should not be
+//                             used for any purpose.
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
-        In this implementation, only verify external executables when in USER MODE.
-        Executables from FV is bypass, so pass in AuthenticationStatus is ignored.
-
-        The image verification policy is:
-          If the image is signed,
-            At least one valid signature or at least one hash value of the image must match a record
-            in the security database "db", and no valid signature nor any hash value of the image may
-            be reflected in the security database "dbx".
-          Otherwise, the image is not signed,
-            The SHA256 hash value of the image must match a record in the security database "db", and
-            not be reflected in the security data base "dbx".
-
-        Caution: This function may receive untrusted input.
-          PE/COFF image is external input, so this function will validate its data structure
-          within this image buffer before use.
-
-  @param[in]    AuthenticationStatus 
-                           The authentication status returned from the security
-                           measurement services for the input file.
-  @param[in]    File       The pointer to the device path of the file that is
-                           being dispatched. This will optionally be used for logging.
-  @param[in]    FileBuffer The file buffer matches the input file device path.
-  @param[in]    FileSize   The size of File buffer matches the input file device path.
-  @param[in]    BootPolicy A boot policy that was used to call LoadImage() UEFI service.
-
-  @return       EFI_STATUS
-
-      EFI_SUCCESS            The file specified by File did authenticate, and the
-                             platform policy dictates that the DXE Core may use File.
-      EFI_INVALID_PARAMETER  File is NULL.
-      EFI_SECURITY_VIOLATION The file specified by File did not authenticate, and
-                             the platform policy dictates that File should be placed
-                             in the untrusted state. A file may be promoted from
-                             the untrusted to the trusted state at a future time
-                             with a call to the Trust() DXE Service.
-      EFI_ACCESS_DENIED      The file specified by File did not authenticate, and
-                             the platform policy dictates that File should not be
-                             used for any purpose.
-
-**/
 EFI_STATUS
 EFIAPI
 DxeImageVerificationHandler (
   IN  UINT32                           AuthenticationStatus,
   IN  CONST EFI_DEVICE_PATH_PROTOCOL   *File,
   IN  VOID                             *FileBuffer,
-  IN  UINTN                            FileSize,
-  IN BOOLEAN                           BootPolicy
+  IN  UINTN                            FileSize
   )
 {
   EFI_STATUS                  Status;
@@ -1267,7 +1464,7 @@ DxeImageVerificationHandler (
   WIN_CERTIFICATE_UEFI_GUID            *WinCertUefiGuid;
   UINT8                                *AuthData;
   UINTN                                 AuthDataSize;
-  EFI_IMAGE_DATA_DIRECTORY             *SecDataDir;
+  EFI_IMAGE_DATA_DIRECTORY            *SecDataDir;
   UINT32                                OffSet;
 
   //
@@ -1296,7 +1493,7 @@ DxeImageVerificationHandler (
   //
   // Check the image type and get policy setting.
   //
-  switch (AmiGetImageType (File, FileBuffer, FileSize, BootPolicy)) {
+  switch (GetImageType (File)) {
   
   case IMAGE_FROM_FV:
     Policy = ALWAYS_EXECUTE;
@@ -1440,7 +1637,7 @@ DxeImageVerificationHandler (
     Action = EFI_IMAGE_EXECUTION_AUTH_SIG_FAILED;
     for (OffSet = SecDataDir->VirtualAddress;
        OffSet < (SecDataDir->VirtualAddress + SecDataDir->Size);
-       OffSet += (WinCertificate->dwLength + ALIGN_SIZE (WinCertificate->dwLength))) {
+         OffSet += WinCertificate->dwLength, OffSet += ALIGN_SIZE (OffSet)) {
     
         WinCertificate = (WIN_CERTIFICATE *) (mImageBase + OffSet);
         TRACE((TRACE_ALWAYS,"\nOffSet = %X, WinCertificate->dwLength %X\n\n", OffSet, WinCertificate->dwLength));
@@ -1667,29 +1864,32 @@ TRACE((TRACE_ALWAYS,"Image Verification ...%r\n", Status));
 //<AMI_PHDR_END>
 static EFI_STATUS  InitDigitalProtocolCallback(IN EFI_EVENT Event, IN VOID *Context)
 {
+    EFI_STATUS Status;
     UINTN      DataSize;
-    UINT8      *pSecureBootEnable;
+    UINT8      *pSecureBootEnable=NULL;
     //
     // Look up for image authorization policy in "SetupData" variable
     //
 #if (defined(ENABLE_IMAGE_EXEC_POLICY_OVERRIDE) && ENABLE_IMAGE_EXEC_POLICY_OVERRIDE == 1)
     DataSize = sizeof(mSecureBootSetup);
-    if(EFI_ERROR(pRS->GetVariable (AMI_SECURE_BOOT_SETUP_VAR,&gSecureSetupGuid,NULL,&DataSize,&mSecureBootSetup)) ||
+    Status = pRS->GetVariable (AMI_SECURE_BOOT_SETUP_VAR,&gSecureSetupGuid,NULL,&DataSize,&mSecureBootSetup);
+    if(EFI_ERROR(Status) ||
        // Standard boot mode policy->apply defaults
        mSecureBootSetup.SecureBootMode == STANDARD_SECURE_BOOT || 
        // Policy check against fixed settings
        mSecureBootSetup.Load_from_OROM < LOAD_FROM_OROM ||
        mSecureBootSetup.Load_from_REMOVABLE_MEDIA < LOAD_FROM_REMOVABLE_MEDIA ||
        mSecureBootSetup.Load_from_FIXED_MEDIA < LOAD_FROM_FIXED_MEDIA
-    )
+    ){ 
 #endif
-    { 
         // NVRAM service getting installed from CoreDxe image which is being validated by this policy
         // until we have NVRAM, use hardwired policy
         mSecureBootSetup.Load_from_OROM = LOAD_FROM_OROM;
         mSecureBootSetup.Load_from_REMOVABLE_MEDIA = LOAD_FROM_REMOVABLE_MEDIA;
         mSecureBootSetup.Load_from_FIXED_MEDIA = LOAD_FROM_FIXED_MEDIA;
+#if (defined(ENABLE_IMAGE_EXEC_POLICY_OVERRIDE) && ENABLE_IMAGE_EXEC_POLICY_OVERRIDE == 1)
     }
+#endif
     //
     // SecureBoot variable to be installed along with NVRAM driver
     //
@@ -1701,8 +1901,12 @@ static EFI_STATUS  InitDigitalProtocolCallback(IN EFI_EVENT Event, IN VOID *Cont
     //
     if(mSecureBootEnable == 0)
         return EFI_SUCCESS;
+
+    Status =  pBS->LocateProtocol( &gAmiDigitalSignatureProtocolGuid, NULL, &mDigitalSigProtocol );
+    if(EFI_ERROR(Status))
+        return Status;
     
-    return pBS->LocateProtocol( &gAmiDigitalSignatureProtocolGuid, NULL, &mDigitalSigProtocol );
+    return Status;
 }
 
 //<AMI_PHDR_START>
@@ -1744,7 +1948,7 @@ EFI_STATUS EFIAPI InstallSecurityArchProtocolHandle(
         &p
     );
 
-    return   RegisterSecurity2Handler (
+    return   RegisterSecurityHandler (
             DxeImageVerificationHandler,
             EFI_AUTH_OPERATION_VERIFY_IMAGE | EFI_AUTH_OPERATION_IMAGE_REQUIRED
             );

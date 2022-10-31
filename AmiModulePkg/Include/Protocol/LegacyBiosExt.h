@@ -1,7 +1,7 @@
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2015, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2012, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **
@@ -12,10 +12,23 @@
 //**********************************************************************
 //**********************************************************************
 
-/** @file
-  @brief AMI CSM extension interfaces and definitions
-**/
-
+//**********************************************************************
+// $Header: /Alaska/SOURCE/Modules/CSM/Generic/Protocol/LegacyBiosExt.h 30    12/23/11 2:14p Olegi $
+//
+// $Revision: 30 $
+//
+// $Date: 12/23/11 2:14p $
+//**********************************************************************
+// 
+//**********************************************************************
+//<AMI_FHDR_START>
+//
+// Name:    LegacyBiosExt.h
+//
+// Description: AMI extensions to LegacyBios protocol
+//
+//<AMI_FHDR_END>
+//**********************************************************************
 #ifndef __LEGACY_BIOS_EXT_PROTOCOL_H__
 #define __LEGACY_BIOS_EXT_PROTOCOL_H__
 #ifdef __cplusplus
@@ -24,7 +37,6 @@ extern "C" {
 
 #include <Protocol/LegacyRegion.h>
 #include <Protocol/LegacyBios.h>
-#include <Protocol/LegacyBiosPlatform.h>
 #include <Protocol/PciIo.h>
 
 #define EFI_LEGACY_BIOS_EXT_PROTOCOL_GUID            \
@@ -365,10 +377,9 @@ struct _AMI_OPROM_POLICY_PROTOCOL {
     CHECK_UEFI_OPROM_POLICY CheckUefiOpromPolicy;
     EXECUTE_OPROM_POLICY ProcessOpRom;
 };
-
-/**
-    CSM16_CONFIGURATION definitions
-**/
+//---------------------------------//
+// CSM16_CONFIGURATION definitions //
+//---------------------------------//-------------------------------------
 typedef enum {
     Csm16FeatureGet,
     Csm16FeatureSet,
@@ -399,119 +410,15 @@ typedef EFI_STATUS (*EFI_AMICSM16_CONFIGURATION) (
     OUT OPTIONAL UINT32 *Data
 );
 
-/**
-    OEM function prototypes
-**/
 
-#define CSM_OEM_FUNCTION_PROTOTYPES
-
-typedef struct {
-   UINTN        Seg;
-   UINTN        Bus;
-   UINTN        Dev;
-   UINTN        Fun;
-   UINTN        Flags;
-   UINT8        DiskFrom;
-   UINT8        DiskTo;
-   VOID         *RomAddress;
-   UINT32       RomSize;
-} AMI_CSM_EXECUTED_PCI_ROM;
-
-typedef struct {
-    struct {
-        UINT16  Offset;
-        UINT16  Segment;
-    } FarCall;
-    EFI_IA32_REGISTER_SET   Regs;
-    struct {
-        UINT32  Stack;
-        UINT32  StackSize;
-    } StackData;
-    BOOLEAN     isFarCall;  //if false, then INT86.
-    UINT8       BiosInt;
-} AMI_CSM_THUNK_DATA;
-
-typedef EFI_STATUS (AMI_CSM_GET_OPROM_VIDEO_SWITCHING_MODE)(
-    IN EFI_PCI_IO_PROTOCOL  *PciIo  OPTIONAL,
-    IN UINT16   TextSwitchingMode,
-    OUT UINTN   *SetTxtSwitchingMode
-);
-typedef EFI_STATUS (AMI_CSM_GET_CUSTOM_PCI_PIRQ_MASK)(
-    IN EFI_PCI_IO_PROTOCOL  *PciIo,
-    IN UINT16   IrqMask,
-    OUT UINTN   *ModifiedIrqMask
-);
-
-typedef EFI_STATUS (AMI_CSM_GET_GATE_A20_INFORMATION)(
-    OUT UINTN   *GateA20Info
-);
-
-typedef EFI_STATUS (AMI_CSM_GET_NMI_INFORMATION)(
-    OUT UINTN   *NmiInfo
-);
-
-typedef EFI_STATUS (AMI_CSM_GET_PLATFORM_HANDLE)(
-    EFI_LEGACY_BIOS_PLATFORM_PROTOCOL *This,
-    EFI_GET_PLATFORM_HANDLE_MODE    Mode,
-    UINT16      Type,
-    EFI_HANDLE  **HandleBuffer,
-    UINTN       *HandleCount,
-    VOID        OPTIONAL **AdditionalData
-);
-
-typedef EFI_STATUS (AMI_CSM_GET_PLATFORM_EMBEDDED_ROM)(
-    UINT16      ModuleId,
-    UINT16      VendorId,
-    UINT16      DeviceId,
-    VOID        **ImageStart,
-    UINTN       *ImageSize
-);
-
-typedef EFI_STATUS (AMI_CSM_GET_PLATFORM_PCI_EMBEDDED_ROM)(
-    IN EFI_PCI_IO_PROTOCOL *PciIo,
-    OUT VOID    **PciRom,
-    OUT UINTN   *PciRomSize
-);
-
-typedef EFI_STATUS (AMI_CSM_CHECK_OEM_PCI_SIBLINGS)(
-    EFI_PCI_IO_PROTOCOL *PciIo,
-    AMI_CSM_EXECUTED_PCI_ROM *ExecutedRom
-);
-
-typedef EFI_STATUS (AMI_CSM_ENABLE_OEM_PCI_SIBLINGS)(
-    EFI_PCI_IO_PROTOCOL *PciIo
-);
-
-typedef EFI_STATUS (AMI_CSM_16_CALL_COMPANION)(
-    IN OUT AMI_CSM_THUNK_DATA *ThunkData,
-    IN BOOLEAN Priority
-);
-
-typedef EFI_STATUS (AMI_CSM_GET_ROUTING_TABLE)(
-    IN  EFI_LEGACY_BIOS_PLATFORM_PROTOCOL   *This,
-    OUT VOID  **RoutingTable,
-    OUT UINTN *RoutingTableEntries,
-    OUT VOID  **LocalPirqTable, OPTIONAL
-    OUT UINTN *PirqTableSize, OPTIONAL
-    OUT VOID  **LocalIrqPriorityTable, OPTIONAL
-    OUT UINTN *IrqPriorityTableEntries OPTIONAL);
-
-typedef EFI_STATUS (AMI_CSM_BSP_UPDATE_PRT)(
-    IN EFI_LEGACY_BIOS_PROTOCOL *This, IN  VOID *RoutingTable
-);
-
-typedef EFI_STATUS (AMI_CSM_BSP_PREPARE_TO_BOOT)(
-    IN  EFI_LEGACY_BIOS_PLATFORM_PROTOCOL     *This,
-    IN  BBS_BBS_DEVICE_PATH *BbsDevicePath,
-    IN  VOID                *BbsTable,
-    IN  UINT32              LoadOptionsSize,
-    IN  VOID                *LoadOptions,
-    IN  VOID                *EfiToLegacyBootTable
-);
-
-/**
-    EFI_LEGACY_BIOS_PLATFORM_GET_PLATFORM_INFO extension definitions
-**/
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name:    EFI_GET_PLATFORM_INFO_EXT_MODE
+//
+// Description: EFI_LEGACY_BIOS_PLATFORM_GET_PLATFORM_INFO extension definitions
+//
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
 typedef enum {
   EfiGetPlatformOpromVideoMode,
   EfiGetPlatformIntSaveRestoreTable,
@@ -543,10 +450,15 @@ typedef EFI_STATUS (EFIAPI *EFI_AMICSM_GET_PLATFORM_INFO) (
     IN UINT16                           LegacyOffset
 );
 
-/**
-    EFI_LEGACY_BIOS_EXT_PROTOCOL: extends LegacyBios protocol with the 
-    AMI implementation specific CSM functions and data.
-**/
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name:        EFI_LEGACY_BIOS_EXT_PROTOCOL
+//
+// Description: Extends LegacyBios protocol with the AMI implementation specific
+//              CSM functions and data.
+//
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
 
 typedef struct _EFI_LEGACY_BIOS_EXT_PROTOCOL {
   EFI_AMICSM_GET_EMBEDDED_ROM GetEmbeddedRom;
@@ -577,7 +489,7 @@ typedef struct _EFI_LEGACY_BIOS_EXT_PROTOCOL {
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2015, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2012, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **

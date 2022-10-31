@@ -1,59 +1,73 @@
-//***********************************************************************
-//***********************************************************************
-//**                                                                   **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.          **
-//**                                                                   **
-//**                       All Rights Reserved.                        **
-//**                                                                   **
-//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093         **
-//**                                                                   **
-//**                       Phone: (770)-246-8600                       **
-//**                                                                   **
-//***********************************************************************
-//***********************************************************************
+//**********************************************************************
+//**********************************************************************
+//**                                                                  **
+//**        (C)Copyright 1985-2012, American Megatrends, Inc.         **
+//**                                                                  **
+//**                       All Rights Reserved.                       **
+//**                                                                  **
+//**         5555 Oakbrook Pkwy, Suite 200, Norcross, GA 30093        **
+//**                                                                  **
+//**                       Phone: (770)-246-8600                      **
+//**                                                                  **
+//**********************************************************************
+//**********************************************************************
+// $Header: /Alaska/SOURCE/Core/Modules/IdeBus/Ata.c 34    1/03/12 11:22p Rajkumarkc $
+//
+// $Revision: 34 $
+//
+// $Date: 1/03/12 11:22p $
+//**********************************************************************
 
-/** @file Ata.c
-    ATA Services
-
-**/
-
+//<AMI_FHDR_START>
 //---------------------------------------------------------------------------
+//
+// Name: Ata.c
+//
+// Description:	ATA Services
+//
+//---------------------------------------------------------------------------
+//<AMI_FHDR_END>
+
 
 #include "IdeBus.h"
-
-//---------------------------------------------------------------------------
-
-#if ( defined(BOOT_SECTOR_WRITE_PROTECT) && (BOOT_SECTOR_WRITE_PROTECT != 0) )
-#include <Protocol/AmiBlockIoWriteProtection.h>
-extern AMI_BLOCKIO_WRITE_PROTECTION_PROTOCOL *AmiBlkWriteProtection;
-#endif
+#include <Protocol\IdeBusBoard.h>
 
 extern PLATFORM_IDE_PROTOCOL    *gPlatformIdeProtocol;
 
-/**
-    Detects the ATA/ATAPI device
-
-    @param  AMI_IDE_BUS_PROTOCOL    *IdeBusInterface;
-
-    @retval EFI_STATUS
-
-    @note  
-    Here is the control flow of this function:
-     1. If controller not present return EFI_NOT_FOUND
-     2. If IDE_BSY bit not clear and IDE_DRDY not set, return EFI_DEVICE_ERROR
-     3. If Identify command fails, return EFI_NOT_FOUND
-     4. Else return Success
-
-**/
-EFI_STATUS
-DetectIdeDevice (
-    IN  AMI_IDE_BUS_PROTOCOL    *IdeBusInterface
-)
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:	DetectIdeDevice
+//
+// Description:	Detects the ATA/ATAPI device
+//
+// Input:
+//  IDE_BUS_PROTOCOL    *IdeBusInterface;
+//
+// Output:
+//  EFI_STATUS
+//
+// Modified:
+//
+// Referrals: IdeBusStart
+//
+// Notes:
+//  Here is the control flow of this function:
+// 1. If controller not present return EFI_NOT_FOUND
+// 2. If BSY bit not clear and DRDY not set, return EFI_DEVICE_ERROR
+// 3. If Identify command fails, return EFI_NOT_FOUND
+// 4. Else return Success
+//
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
+EFI_STATUS DetectIdeDevice(
+    IN IDE_BUS_PROTOCOL *IdeBusInterface )
 {
-    EFI_STATUS  Status;
-    UINT16      Index;
-    IO_REGS     Regs = IdeBusInterface->IdeDevice.Regs;
-    UINT8       Data8;
+    EFI_STATUS Status;
+    UINT16     Index;
+    IO_REGS    Regs = IdeBusInterface->IdeDevice.Regs;
+    UINT8      Data8;
 
     //
     // Check if the controller is present
@@ -62,7 +76,7 @@ DetectIdeDevice (
 
     if ( Status == EFI_NOT_FOUND ) {
         //
-        // Status Register is 0xff
+        // Status Reg is 0xff
         //
         return EFI_NOT_FOUND;  
     }
@@ -71,15 +85,15 @@ DetectIdeDevice (
         IdeSoftReset( IdeBusInterface );
 
         //
-        //3 Second loop
+        //3 Sec loop
         //    
         for ( Index = 0; Index < 300; Index++ ) {
             //
-            //check for IDE_BSY bit to be clear
+            //check for BSY bit to be clear
             //
             Status = WaitforBitClear( IdeBusInterface->PciIO,
                                       Regs.CommandBlock.StatusReg,
-                                      IDE_BSY,
+                                      BSY,
                                       1 );          // 1 msec
 
             if ( Status == EFI_SUCCESS ) {
@@ -111,18 +125,18 @@ DetectIdeDevice (
                   IdeBusInterface->IdeDevice.Device << 4 );
 
     //
-    //Check for IDE_BSY bit to be clear
+    //Check for BSY bit to be clear
     //
     Status = WaitforBitClear( IdeBusInterface->PciIO,
                               Regs.CommandBlock.StatusReg,
-                              IDE_BSY,
-                              gPlatformIdeProtocol->PoweonBusyClearTimeout ); // 10 second
+                              BSY,
+                              gPlatformIdeProtocol->PoweonBusyClearTimeout ); // 10 sec
 	if(EFI_ERROR(Status)){
 		return Status;
 	}
 
     //
-    //Check Drive ready. ATAPI devices will not set IDE_DRDY bit after reset
+    //Check Drive ready. ATAPI devices will not set DRDY bit after reset
     //
     Status = CheckDriveReady( IdeBusInterface );
 
@@ -173,26 +187,36 @@ DetectIdeDevice (
     return EFI_SUCCESS;
 }
 
-/**
-    Detects the ATA/ATAPI Controller
-
-    @param AMI_IDE_BUS_PROTOCOL *IdeBusInterface;
-
-    @retval EFI_STATUS
-
-    @note  
-  Here is the control flow of this function:
-     1. Select the drive
-     2. Read status Register
-     3. If Status_Reg = 0xff, return Not_Found
-     4. Check if Busy bit is clear, return Found
-     5. If the BUS is not floating return EFI_DEVICE_ERROR
-
-**/
-EFI_STATUS
-ControllerPresence (
-    IN  AMI_IDE_BUS_PROTOCOL    *IdeBusInterface
-)
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:	ControllerPresence
+//
+// Description:	Detects the ATA/ATAPI Controller
+//
+// Input:
+//	IDE_BUS_PROTOCOL			*IdeBusInterface;
+//
+// Output:
+//	EFI_STATUS
+//
+// Modified:
+//
+// Referrals: DetectIdeDevice
+//
+// Notes:
+//  Here is the control flow of this function:
+// 1. Select the drive
+// 2. Read status Register
+// 3. If Status_Reg = 0xff, return Not_Found
+// 4. Check if Busy bit is clear, return Found
+// 5. If the BUS is not floating return EFI_DEVICE_ERROR
+//
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
+EFI_STATUS ControllerPresence(
+    IN IDE_BUS_PROTOCOL *IdeBusInterface )
 {
     UINT8   Device = IdeBusInterface->IdeDevice.Device;
     IO_REGS Regs   = IdeBusInterface->IdeDevice.Regs;
@@ -212,9 +236,9 @@ ControllerPresence (
     //
     IdeReadByte( IdeBusInterface->PciIO, Regs.CommandBlock.StatusReg, &Data8 );
 
-    // When the Controller is not present , Status register returns 0xFF
+    // When the Controller is not present , Status reg returns 0xFF
     // With Controller Present and Port is disabled in the Controller 
-    // status register returns 0x7F. On both the cases return with ERROR.
+    // status register returns 0x7F. On both the cases return with error.
 
     if ( (Data8 == 0xff) || (Data8 == 0x7f) ) {
         return EFI_NOT_FOUND;
@@ -274,56 +298,72 @@ ControllerPresence (
     return EFI_SUCCESS;
 }
 
-/**
-    Reset ATA device
-
-        
-    @param IdeBusInterface 
-
-    @retval 
-        EFI_STATUS
-
-**/
-EFI_STATUS
-AtaReset (
-    IN  EFI_BLOCK_IO_PROTOCOL   *This,
-    IN  BOOLEAN                 ExtendedVerification
-)
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:	AtaReset
+//
+// Description:	Reset ATA device
+//
+// Input:
+//	IN IDE_BUS_PROTOCOL			*IdeBusInterface,
+//
+// Output:
+//	EFI_STATUS
+//
+// Modified:
+//
+// Referrals: InitIdeBlockIO
+//
+// Notes:
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
+EFI_STATUS AtaReset(
+    IN EFI_BLOCK_IO_PROTOCOL *This,
+    IN BOOLEAN               ExtendedVerification )
 {
     return EFI_SUCCESS;
 }
 
-/**
-    Read from ATA device
-        
-    @param This 
-    @param MediaId 
-    @param LBA,
-    @param BufferSize 
-    @param Buffer 
-
-    @retval EFI_STATUS
-
-    @note  
-    1. Check for ERROR conditions.
-    2. Call AtaReadWritePio.
-
-**/
-
-EFI_STATUS
-AtaBlkRead (
-    IN  EFI_BLOCK_IO_PROTOCOL   *This,
-    IN  UINT32                  MediaId,
-    IN  EFI_LBA                 LBA,
-    IN  UINTN                   BufferSize,
-    OUT VOID                    *Buffer
-)
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:	AtaBlkRead
+//
+// Description:	Read from ATA device
+// Input:
+//	IN EFI_BLOCK_IO_PROTOCOL                        *This,
+//	IN UINT32                                       MediaId,
+//	IN EFI_LBA                                      LBA,
+//	IN UINTN                                        BufferSize,
+//	OUT VOID                                        *Buffer
+//
+// Output:
+//	EFI_STATUS
+//
+// Modified:
+//
+// Referrals: InitIdeBlockIO, AtaReadWritePio
+//
+// Notes:
+//	1. Check for error conditions.
+//	2. Call AtaReadWritePio.
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
+EFI_STATUS AtaBlkRead(
+    IN EFI_BLOCK_IO_PROTOCOL *This,
+    IN UINT32                MediaId,
+    IN EFI_LBA               LBA,
+    IN UINTN                 BufferSize,
+    OUT VOID                 *Buffer )
 {
-    UINTN                   DataN;
-    EFI_STATUS              Status;
-    AMI_IDE_BUS_PROTOCOL    *IdeBusInterface = ((IDE_BLOCK_IO*)This)->IdeBusInterface;
-    EFI_BLOCK_IO_MEDIA      *BlkMedia = This->Media;
-    UINTN                   BufferAddress;
+    UINTN              DataN;
+    EFI_STATUS         Status;
+    IDE_BUS_PROTOCOL   *IdeBusInterface = ((IDE_BLOCK_IO*)This)->IdeBusInterface;
+    EFI_BLOCK_IO_MEDIA *BlkMedia = This->Media;
+    UINTN              BufferAddress;
 
     //    
     //Check if Media ID matches
@@ -346,7 +386,7 @@ AtaBlkRead (
     // properly aligned the buffer address should be divisible by IoAlign  
     // with no remainder. 
     // 
-    BufferAddress = (UINTN)Buffer;
+    (VOID *)BufferAddress = Buffer;
     if((BlkMedia->IoAlign > 1 ) && (BufferAddress % BlkMedia->IoAlign)) {
         return EFI_INVALID_PARAMETER;
     }
@@ -398,36 +438,44 @@ AtaBlkRead (
     return Status;
 }
 
-/**
-    Write to ATA device
-        
-    @param This 
-    @param MediaId 
-    @param LBA,
-    @param BufferSize 
-    @param Buffer 
-
-    @retval EFI_STATUS
-
-    @note  
-    1. Check for error conditions.
-    2. Call AtaReadWritePio.
-
-**/
-EFI_STATUS
-AtaBlkWrite (
-    IN  EFI_BLOCK_IO_PROTOCOL   *This,
-    IN  UINT32                  MediaId,
-    IN  EFI_LBA                 LBA,
-    IN  UINTN                   BufferSize,
-    IN  VOID                    *Buffer
-)
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:	AtaBlkWrite
+//
+// Description:	Write to ATA device
+// Input:
+//	IN EFI_BLOCK_IO_PROTOCOL                        *This,
+//	IN UINT32                                       MediaId,
+//	IN EFI_LBA                                      LBA,
+//	IN UINTN                                        BufferSize,
+//	OUT VOID                                        *Buffer
+//
+// Output:
+//	EFI_STATUS
+//
+// Modified:
+//
+// Referrals: InitIdeBlockIO, AtaReadWritePio
+//
+// Notes:
+//	1. Check for error conditions.
+//	2. Call AtaReadWritePio.
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
+EFI_STATUS AtaBlkWrite(
+    IN EFI_BLOCK_IO_PROTOCOL *This,
+    IN UINT32                MediaId,
+    IN EFI_LBA               LBA,
+    IN UINTN                 BufferSize,
+    IN VOID                  *Buffer )
 {
-    UINTN                   DataN;
-    EFI_STATUS              Status;
-    AMI_IDE_BUS_PROTOCOL    *IdeBusInterface = ((IDE_BLOCK_IO*)This)->IdeBusInterface;
-    EFI_BLOCK_IO_MEDIA      *BlkMedia = This->Media;
-    UINTN                   BufferAddress;
+    UINTN              DataN;
+    EFI_STATUS         Status;
+    IDE_BUS_PROTOCOL   *IdeBusInterface = ((IDE_BLOCK_IO*)This)->IdeBusInterface;
+    EFI_BLOCK_IO_MEDIA *BlkMedia = This->Media;
+    UINTN              BufferAddress;
 
     //
     //Check if Media ID matches
@@ -446,7 +494,7 @@ AtaBlkWrite (
     // properly aligned the buffer address should be divisible by IoAlign  
     // with no remainder. 
     // 
-    BufferAddress =(UINTN) Buffer;
+    (VOID *)BufferAddress = Buffer;
     if((BlkMedia->IoAlign > 1 ) && (BufferAddress % BlkMedia->IoAlign)) {
         return EFI_INVALID_PARAMETER;
     }
@@ -475,22 +523,6 @@ AtaBlkWrite (
     if ( LBA + DataN > BlkMedia->LastBlock + 1 ) {
         return EFI_INVALID_PARAMETER;
     }
-    
-#if ( defined(BOOT_SECTOR_WRITE_PROTECT) && (BOOT_SECTOR_WRITE_PROTECT != 0) )
-    if(AmiBlkWriteProtection != NULL) {
-        // Get user input
-        Status = AmiBlkWriteProtection->BlockIoWriteProtectionCheck ( 
-                                                    AmiBlkWriteProtection,
-                                                    This,
-                                                    LBA,
-                                                    BufferSize
-                                                    );
-        // Abort operation if denied
-        if(Status == EFI_ACCESS_DENIED) {
-            return Status;
-        }
-    } 
-#endif
 
     if ( gPlatformIdeProtocol->IdeBusMasterSupport ) {
         if ( DMACapable( IdeBusInterface )) {
@@ -513,70 +545,88 @@ AtaBlkWrite (
     return Status;
 }
 
-/**
-    Flush the cache
-        
-    @param This 
-
-    @retval EFI_STATUS
-
-**/
-EFI_STATUS
-AtaBlkFlush (
-    IN  EFI_BLOCK_IO_PROTOCOL   *This
-)
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:	AtaBlkFlush
+//
+// Description:	Flush the cache
+// Input:
+//	IN EFI_BLOCK_IO_PROTOCOL                        *This,
+//
+// Output:
+//	EFI_STATUS
+//
+// Modified:
+//
+// Referrals: InitIdeBlockIO
+//
+// Notes:
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
+EFI_STATUS AtaBlkFlush(
+    IN EFI_BLOCK_IO_PROTOCOL *This )
 {
     return EFI_SUCCESS;
 }
 
-/**
-    Issues Read/Write Command and Read/Write the data from/to the ATA device
-
-
-    @param  IdeBusInterface
-    @param  *Buffer,
-    @param  ByteCount,
-    @param  LBA
-    @param  ReadWriteCommand 
-    @param  ReadWrite Read/Write = 0/1
-
-    @retval *Buffer
-
-    @note  
-    1. Check if Multiple sectors can be read/written to the ATA device.
-    2. Check for 48-bit LBA support.
-    3. Issue the command based on step 1 and step 2 results.
-    4. check for errors.
-    5. If success read/write data.
-    6. Based on step 1 results, complete the read/write sequence
-    7. If all sectors are not completed, goto step 3.
-
-**/
-EFI_STATUS
-AtaReadWritePio (
-    IN  AMI_IDE_BUS_PROTOCOL    *IdeBusInterface,
-    IN  OUT VOID                *Buffer,
-    IN  UINTN                   ByteCount,
-    IN  UINT64                  LBA,
-    IN  UINT8                   ReadWriteCommand,
-    IN  BOOLEAN                 ReadWrite
-)
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:	AtaReadWritePio
+//
+// Description:	Issues Read/Write Command and Read/Write the data from/to the ATA device
+//
+// Input:
+//	IN IDE_BUS_PROTOCOL				*IdeBusInterface,
+//	VOID                                                    *Buffer,
+//	UINTN							ByteCount,
+//	UINT64							LBA
+//	IN UINT8						ReadWriteCommand,
+//	IN BOOLEAN						ReadWrite		 Read/Write = 0/1
+//
+// Output:
+//	*Buffer
+//
+// Modified:
+//
+// Referrals: AtaBlkWrite, AtaBlkRead
+//
+// Notes:
+//	1. Check if Multiple sectors can be read/written to the ATA device.
+//	2. Check for 48-bit LBA support.
+//	3. Issue the command based on step 1 and step 2 results.
+//	4. check for errors.
+//	5. If success read/write data.
+//	6. Based on step 1 results, complete the read/write sequence
+//	7. If all sectors are not completed, goto step 3.
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
+EFI_STATUS AtaReadWritePio(
+    IN IDE_BUS_PROTOCOL *IdeBusInterface,
+    IN OUT VOID         *Buffer,
+    IN UINTN            ByteCount,
+    IN UINT64           LBA,
+    IN UINT8            ReadWriteCommand,
+    IN BOOLEAN          ReadWrite )
 {
-    EFI_STATUS              Status;
-    INT32                   WordCount;
-    UINT32                  SectorCount;
-    UINTN                   Remainder;
-    UINT8                   Data8;
-    IDE_DEVICE_INTERFACE    *IdeDevice  = &(IdeBusInterface->IdeDevice);
-    UINT8                   BlockSize   = 1;    // 1 sector Default
-    VOID                    *TempBuffer;
-    IO_REGS                 Regs        = IdeBusInterface->IdeDevice.Regs;
-    INT64                   LoopCount;
-    INT64                   MaxSectorCount;
-    INT64                   Total_Number_Of_Sectors;
-    UINT32                  EraseCommandTimeout = 0;
-    UINT32                  SectorSize = ATA_SECTOR_BYTES;
-    BOOLEAN                 SectorGTBytes = FALSE;
+    EFI_STATUS           Status;
+    INT32                WordCount;
+    UINT32               SectorCount;
+    UINTN                Remainder;
+    UINT8                Data8;
+    IDE_DEVICE_INTERFACE *IdeDevice  = &(IdeBusInterface->IdeDevice);
+    UINT8                BlockSize   = 1;                         // 1 sector Default
+    VOID                 *TempBuffer;
+    IO_REGS              Regs        = IdeBusInterface->IdeDevice.Regs;
+    INT64                LoopCount;
+    INT64                MaxSectorCount;
+    INT64                Total_Number_Of_Sectors;
+    UINT32               EraseCommandTimeout = 0;
+    UINT32               SectorSize = ATA_SECTOR_BYTES;
+    BOOLEAN              SectorGTBytes = FALSE;
 
     //
     //Check if the device supports Multiple sector Read/Write
@@ -668,16 +718,7 @@ AtaReadWritePio (
         //For Security Erase command the time out value comes from Identify Data.
         //
         if ( ReadWriteCommand == SECURITY_ERASE_UNIT ) {
-            UINT8   *BufferData = (UINT8*) Buffer;
-
-            // BIT:1 of the BufferData[0] refers Enhanced Security Erase mode.
-            // If this Bit is set, Identify Data Word 90 will be used for Erase command timeout
-            // else Word 89 will be used for the timeout.
-            if( BufferData[0] & 2 ) {
-                EraseCommandTimeout= (UINT32)(IdeBusInterface->IdeDevice.IdentifyData.Time_Esecurity_Earse_90);
-            } else {
-                EraseCommandTimeout = (UINT32)( IdeBusInterface->IdeDevice.IdentifyData.Time_security_Earse_89 );
-            }
+            EraseCommandTimeout = (UINT32)( IdeBusInterface->IdeDevice.IdentifyData.Time_security_Earse_89 );
 
             if ( EraseCommandTimeout <= 254 ) {
                 EraseCommandTimeout = EraseCommandTimeout * 2 * 1000 * 60; //Value * 2Minitues
@@ -707,11 +748,11 @@ AtaReadWritePio (
             }
 
             //
-            //Check for IDE_DRQ
+            //Check for DRQ
             //
             Status = WaitforBitSet( IdeBusInterface->PciIO,
                                     Regs.ControlBlock.AlternateStatusReg,
-                                    IDE_DRQ,
+                                    DRQ,
                                     DRQ_TIMEOUT );
 
             if ( EFI_ERROR( Status )) {
@@ -719,7 +760,7 @@ AtaReadWritePio (
             }
 
             //
-            //Calculate # of Words to be read/written
+            //Caluculate # of Words to be read/written
             //
             if ( SectorCount ) {
                 if ( SectorCount >= BlockSize ) {
@@ -760,11 +801,11 @@ AtaReadWritePio (
                          Regs.CommandBlock.StatusReg,
                          &Data8 );
 
-            if ( Data8 & 0x21 ) {          // IDE_ERR OR IDE_DF bit set ?
+            if ( Data8 & 0x21 ) {          // ERR OR DF bit set ?
                 return EFI_DEVICE_ERROR;
             }
 
-            TempBuffer = (UINT8*)(TempBuffer) + (WordCount * 2);
+            ((UINT8*)TempBuffer) += (WordCount * 2);
 
             if ( SectorCount ) {
                 SectorCount -= (WordCount * 2) / SectorSize;
@@ -796,49 +837,59 @@ AtaReadWritePio (
     return EFI_SUCCESS;
 }
 
-/**
-    Issues command which require data to be read
-
-    @param  IdeBusInterface 
-    @param  VOID    *Buffer,
-    @param  UINT32  ByteCount,
-    @param  UINT8   SectorCount,
-    @param  UINT8   LBALow,
-    @param  UINT8   LBAHigh,
-    @param  UINT8   Device,
-    @param  UINT8   Command,
-    @param  BOOLEAN     Multiple  // to determine the block size
-
-    @retval *Buffer
-
-    @note  
-    Used to get Identify command data etc.
-    1. Issue the command
-    2. Check for errors.
-    3. Check if Data is ready. If yes, read it else return error.
-
-**/
-EFI_STATUS
-AtaPioDataIn (
-    IN  AMI_IDE_BUS_PROTOCOL    *IdeBusInterface,
-    OUT VOID                    *Buffer,
-    IN  UINT32                  ByteCount,
-    IN  UINT8                   Features,
-    IN  UINT8                   SectorCount,
-    IN  UINT8                   LBALow,
-    IN  UINT8                   LBAMid,
-    IN  UINT8                   LBAHigh,
-    IN  UINT8                   Device,
-    IN  UINT8                   Command,
-    IN  BOOLEAN                 Multiple
-)
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:	AtaPioDataIn
+//
+// Description:	Issues command which require data to be read
+//
+// Input:
+//	IN IDE_BUS_PROTOCOL				*IdeBusInterface,
+//	VOID                                                    *Buffer,
+//	UINT32							ByteCount,
+//	UINT8							SectorCount,
+//	UINT8							LBALow,
+//	UINT8							LBAMid,
+//	UINT8							LBAHigh,
+//	UINT8							Device,
+//	UINT8							Command,
+//	BOOLEAN							Multiple  // to determine the block size
+// Output:
+//	*Buffer
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//		Used to get Identify command data etc.
+//	1. Issue the command
+//	2. Check for errors.
+//	3. Check if Data is ready. If yes, read it else return error.
+//
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
+EFI_STATUS AtaPioDataIn(
+    IN IDE_BUS_PROTOCOL *IdeBusInterface,
+    OUT VOID            *Buffer,
+    IN UINT32           ByteCount,
+    IN UINT8            Features,
+    IN UINT8            SectorCount,
+    IN UINT8            LBALow,
+    IN UINT8            LBAMid,
+    IN UINT8            LBAHigh,
+    IN UINT8            Device,
+    IN UINT8            Command,
+    IN BOOLEAN          Multiple )
 {
-    IO_REGS     Regs = IdeBusInterface->IdeDevice.Regs;
-    EFI_STATUS  Status;
-    UINT8       Data8;
-    UINT32      BlockSize;
-    VOID        *TempBuffer = Buffer;
-    UINT32      SectorSize = ATA_SECTOR_BYTES;
+    IO_REGS    Regs = IdeBusInterface->IdeDevice.Regs;
+    EFI_STATUS Status;
+    UINT8      Data8;
+    UINT32     BlockSize;
+    VOID       *TempBuffer = Buffer;
+    UINT32     SectorSize = ATA_SECTOR_BYTES;
     INT64       TempByteCount;
 
 
@@ -904,11 +955,11 @@ AtaPioDataIn (
                      &Data8 );
 
         //
-        //Check for IDE_BSY bit to be clear
+        //Check for BSY bit to be clear
         //
         Status = WaitforBitClear( IdeBusInterface->PciIO,
                                   Regs.ControlBlock.AlternateStatusReg,
-                                  IDE_BSY,
+                                  BSY,
                                   COMMAND_COMPLETE_TIMEOUT );
 
         if ( EFI_ERROR( Status )) {
@@ -916,14 +967,14 @@ AtaPioDataIn (
         }
 
         //
-        //Check if IDE_DRQ is set else it is an ERROR
+        //Check if DRQ is set else it is an error
         //
         IdeReadByte( IdeBusInterface->PciIO,
                      Regs.CommandBlock.StatusReg,
                      &Data8 );
 
         //
-        // IDE_DRQ bit set ?
+        // DRQ bit set ?
         //
         if ( !(Data8 & 0x08)) {       
             //
@@ -941,74 +992,80 @@ AtaPioDataIn (
                                       BlockSize / 2,
                                       TempBuffer );
         //
-        //		Wait for IDE_DRQ to go low
+        //		Wait for DRQ to go low
         //
         WaitforBitClear( IdeBusInterface->PciIO,
                          Regs.CommandBlock.StatusReg,
-                         IDE_DRQ,
+                         DRQ,
                          DRQ_CLEAR_TIMEOUT );
 
         if ( EFI_ERROR( Status )) {
             return EFI_DEVICE_ERROR;
         }
-        TempBuffer = (UINT8*)(TempBuffer) + BlockSize;
-
+        ((UINT8*)TempBuffer) += BlockSize;
     }
 
     return EFI_SUCCESS;
 }
 
-/**
-    Issues Read/Write Command and Read/Write the data from/to the ATA device
-    with SubCommand Support.
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:	AtaPioDataOut
+//
+// Description:	Issues Read/Write Command and Read/Write the data from/to the ATA device
+//               with SubCommand Support.
+// Input:
+//	IN IDE_BUS_PROTOCOL				*IdeBusInterface,
+//	VOID                            *Buffer,
+//	UINTN							ByteCount,
+//  UINT8                           Features,
+//	UINT32							SectorCountIn,
+//	UINT8							LBALow,
+//	UINT8							LBALowExp,
+//	UINT8							LBAMid,
+//	UINT8							LBAMidExp,
+//	UINT8							LBAHigh,
+//	UINT8							LBAHighExp,
+//	UINT8							Device,
+//	UINT8							Command,
+//	BOOLEAN						    ReadWrite, // Read/Write = 0/1
+//	BOOLEAN							Multiple   // to determine the block size
+// Output:
+//	*Buffer
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//	1. Check if Multiple sectors can be read/written to the ATA device.
+//	2. Check for 48-bit LBA support.
+//	3. Issue the command based on step 1 and step 2 results.
+//	4. check for errors.
+//	5. If success read/write data.
+//	6. Based on step 1 results, complete the read/write sequence
+//	7. If all sectors are not completed, goto step 3.
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
-    @param  IdeBusInterface 
-    @param  VOID    *Buffer,
-    @param  UINTN   ByteCount,
-    @param  UINT8   Features,
-    @param  UINT32  SectorCountIn,
-    @param  UINT8   LBALow,
-    @param  UINT8   LBALowExp,
-    @param  UINT8   LBAMid,
-    @param  UINT8   LBAMidExp,
-    @param  UINT8   LBAHigh,
-    @param  UINT8   LBAHighExp,
-    @param  UINT8   Device,
-    @param  UINT8   Command,
-    @param  BOOLEAN ReadWrite, // Read/Write = 0/1
-    @param  BOOLEAN Multiple   // to determine the block size
-
-    @retval *Buffer
-
-    @note  
-    1. Check if Multiple sectors can be read/written to the ATA device.
-    2. Check for 48-bit LBA support.
-    3. Issue the command based on step 1 and step 2 results.
-    4. check for errors.
-    5. If success read/write data.
-    6. Based on step 1 results, complete the read/write sequence
-    7. If all sectors are not completed, goto step 3.
-
-**/
-
-EFI_STATUS
-AtaPioDataOut   (
-    IN  AMI_IDE_BUS_PROTOCOL    *IdeBusInterface,
-    IN  OUT VOID                *Buffer,
-    IN  UINTN                   ByteCount,
-    IN  UINT8                   Features,
-    IN  UINT32                  SectorCountIn,
-    IN  UINT8                   LBALow,
-    IN  UINT8                   LBALowExp,
-    IN  UINT8                   LBAMid,
-    IN   UINT8                  LBAMidExp,
-    IN  UINT8                   LBAHigh,
-    IN  UINT8                   LBAHighExp,
-    IN  UINT8                   Device,
-    IN  UINT8                   Command,
-    IN  BOOLEAN                 ReadWrite,
-    IN  BOOLEAN                 Multiple
-)
+EFI_STATUS AtaPioDataOut(
+    IN IDE_BUS_PROTOCOL *IdeBusInterface,
+    IN OUT VOID         *Buffer,
+    IN UINTN            ByteCount,
+    IN UINT8            Features,
+    IN UINT32           SectorCountIn,
+    IN UINT8            LBALow,
+    IN UINT8            LBALowExp,
+    IN UINT8            LBAMid,
+    IN UINT8            LBAMidExp,
+    IN UINT8            LBAHigh,
+    IN UINT8            LBAHighExp,
+    IN UINT8            Device,
+    IN UINT8            Command,
+    IN BOOLEAN          ReadWrite,
+    IN BOOLEAN          Multiple )
 {
     EFI_STATUS           Status;
     INT32                WordCount;
@@ -1138,11 +1195,11 @@ AtaPioDataOut   (
                 return EFI_DEVICE_ERROR;
             }
             //
-            //Check for IDE_DRQ
+            //Check for DRQ
             //
             Status = WaitforBitSet( IdeBusInterface->PciIO,
                                     Regs.ControlBlock.AlternateStatusReg,
-                                    IDE_DRQ,
+                                    DRQ,
                                     DRQ_TIMEOUT );
 
             if ( EFI_ERROR( Status )) {
@@ -1193,12 +1250,11 @@ AtaPioDataOut   (
                          Regs.CommandBlock.StatusReg,
                          &Data8 );
 
-            if ( Data8 & 0x21 ) {          // IDE_ERR OR IDE_DF bit set ?
+            if ( Data8 & 0x21 ) {          // ERR OR DF bit set ?
                 return EFI_DEVICE_ERROR;
             }
 
-            TempBuffer = (UINT8*)(TempBuffer) + (WordCount * 2);
-                
+            ((UINT8*)TempBuffer) += (WordCount * 2);
 
             if ( SectorCount ) {
                 SectorCount -= (WordCount * 2) / SectorSize;
@@ -1228,36 +1284,45 @@ AtaPioDataOut   (
 }
 
 
-/**
-    Issues ATA Read/Write Command
-
-    @param  IdeBusInterface 
-    @param  UINT64  LBA,
-    @param  INT32   SectorCount,
-    @param  UINT8   Command
-    @param  UINT8   Features
-
-    @retval EFI_STATUS
-
-    @note  
-    1. Select the drive.
-    2. check if BSY and DRQ bits are zero.
-    3. Issue the command.
-
-**/
-EFI_STATUS
-IssueAtaReadWriteCommand (
-    IN  AMI_IDE_BUS_PROTOCOL    *IdeBusInterface,
-    IN  UINT64                  LBA,
-    IN  INT32                   SectorCount,
-    IN  UINT8                   Command,
-    IN  UINT8                   Features
-)
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:	IssueAtaReadWriteCommand
+//
+// Description:	Issues ATA Read/Write Command
+//
+// Input:
+//	IN IDE_BUS_PROTOCOL				*IdeBusInterface,
+//	UINT64							LBA,
+//	INT32							SectorCount,
+//	UINT8							Command
+//  UINT8                           Features         OPTIONAL   
+//
+// Output:
+//				EFI_STATUS
+// Modified:
+//
+// Referrals: AtaReadWritePio
+//
+// Notes:
+//	1. Select the drive.
+//	2. check if BSY and DRQ bits are zero.
+//	3. Issue the command.
+//
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
+EFI_STATUS IssueAtaReadWriteCommand(
+    IN IDE_BUS_PROTOCOL *IdeBusInterface,
+    IN UINT64           LBA,
+    IN INT32            SectorCount,
+    IN UINT8            Command,
+    IN UINT8            Features )
 {
-    EFI_STATUS              Status;
-    IDE_DEVICE_INTERFACE    *IdeDevice  = &(IdeBusInterface->IdeDevice);
-    IO_REGS                 Regs    = IdeBusInterface->IdeDevice.Regs;
-    UINT8                   Device  = (IdeDevice->Device << 4);
+    EFI_STATUS           Status;
+    IDE_DEVICE_INTERFACE *IdeDevice = &(IdeBusInterface->IdeDevice);
+    IO_REGS              Regs       = IdeBusInterface->IdeDevice.Regs;
+    UINT8                Device     = (IdeDevice->Device << 4);
 
     //
     // Select the drive
@@ -1265,11 +1330,11 @@ IssueAtaReadWriteCommand (
     IdeWriteByte( IdeBusInterface->PciIO, Regs.CommandBlock.DeviceReg, Device );
 
     //
-    //Before Writing to Sector Count Register, IDE_BSY and IDE_DRQ bit should be zero
+    //Before Writing to Sector Count Reg, BSY and DRQ bit should be zero
     //
     Status = WaitforBitClear( IdeBusInterface->PciIO,
                               Regs.ControlBlock.AlternateStatusReg,
-                              IDE_BSY | IDE_DRQ,
+                              BSY | DRQ,
                               DRQ_TIMEOUT );
 
     if ( EFI_ERROR( Status )) {
@@ -1277,11 +1342,11 @@ IssueAtaReadWriteCommand (
     }
 
     //
-    //Check for IDE_DRDY
+    //Check for DRDY
     //
     Status = WaitforBitSet( IdeBusInterface->PciIO,
                             Regs.ControlBlock.AlternateStatusReg,
-                            IDE_DRDY,
+                            DRDY,
                             DRDY_TIMEOUT );
 
     if ( EFI_ERROR( Status )) {
@@ -1348,33 +1413,43 @@ IssueAtaReadWriteCommand (
     return EFI_SUCCESS;
 }
 
-/**
-    Issues command where no data transfer takes place
-
-    @param  IdeBusInterface 
-    @param  VOID    *Buffer,
-    @param  UINT32  ByteCount,
-    @param  UINT8   SectorCount,
-    @param  UINT8   LBALow,
-    @param  UINT8   LBAMid,
-    @param  UINT8   LBAHigh,
-    @param  UINT8   Device,
-    @param  UINT8   Command,
-
-    @retval *Buffer
-
-**/
-EFI_STATUS
-IdeNonDataCommand (
-    IN  AMI_IDE_BUS_PROTOCOL    *IdeBusInterface,
-    IN  UINT8                   Features,
-    IN  UINT8                   SectorCount,
-    IN  UINT8                   LBALow,
-    IN  UINT8                   LBAMid,
-    IN  UINT8                   LBAHigh,
-    IN  UINT8                   Device,
-    IN  UINT8                   Command
-)
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:	IdeNonDataCommand
+//
+// Description:	Issues command where no data transfer takes place
+//
+// Input:
+//	IN IDE_BUS_PROTOCOL				*IdeBusInterface,
+//	VOID                                                    *Buffer,
+//	UINT32							ByteCount,
+//	UINT8							SectorCount,
+//	UINT8							LBALow,
+//	UINT8							LBAMid,
+//	UINT8							LBAHigh,
+//	UINT8							Device,
+//	UINT8							Command,
+// Output:
+//	*Buffer
+//
+// Modified:
+//
+// Referrals: IdeSetFeatureCommand
+//
+// Notes:
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
+EFI_STATUS IdeNonDataCommand(
+    IN IDE_BUS_PROTOCOL *IdeBusInterface,
+    IN UINT8            Features,
+    IN UINT8            SectorCount,
+    IN UINT8            LBALow,
+    IN UINT8            LBAMid,
+    IN UINT8            LBAHigh,
+    IN UINT8            Device,
+    IN UINT8            Command )
 {
     IO_REGS    Regs = IdeBusInterface->IdeDevice.Regs;
     EFI_STATUS Status;
@@ -1386,11 +1461,11 @@ IdeNonDataCommand (
     IdeWriteByte( IdeBusInterface->PciIO, Regs.CommandBlock.DeviceReg, Device );
 
     //
-    //Wait for IDE_DRDY to be set
+    //Wiat for DRDY to be set
     //
     Status = WaitforBitSet( IdeBusInterface->PciIO,
                             Regs.ControlBlock.AlternateStatusReg,
-                            IDE_DRDY,
+                            DRDY,
                             DRDY_TIMEOUT );
 
     if ( EFI_ERROR( Status )) {
@@ -1427,11 +1502,11 @@ IdeNonDataCommand (
                  &Data8 );
 
     //
-    //Check for IDE_BSY bit to be clear
+    //Check for BSY bit to be clear
     //
     Status = WaitforBitClear( IdeBusInterface->PciIO,
                               Regs.ControlBlock.AlternateStatusReg,
-                              IDE_BSY | IDE_DRQ,
+                              BSY | DRQ,
                               gPlatformIdeProtocol->PoweonBusyClearTimeout );
 
     if ( EFI_ERROR( Status )) {
@@ -1439,57 +1514,66 @@ IdeNonDataCommand (
     }
 
     //
-    //Check for any ERRORs
+    //Check for any errors
     //
     IdeReadByte( IdeBusInterface->PciIO, Regs.CommandBlock.StatusReg, &Data8 );
 
-    if ( Data8 & (IDE_DF | IDE_ERR)) {
+    if ( Data8 & (DF | ERR)) {
         return EFI_DEVICE_ERROR;
     }
 
     return EFI_SUCCESS;
 }
 
-/**
-    Issues command where no data transfer takes place
-
-        
-    @param  IdeBusInterface 
-    @param  VOID    *Buffer,
-    @param  UINT32  ByteCount,
-    @param  UINT8   SectorCount,
-    @param  UINT8   SectorCountExp,
-    @param  UINT8   LBALow,
-    @param  UINT8   LBALowExp,
-    @param  UINT8   LBAMid,
-    @param  UINT8   LBAMidExp,
-    @param  UINT8   LBAHigh,
-    @param  UINT8   LBAHighExp,
-    @param  UINT8   Device,
-    @param  UINT8   Command,
-
-    @retval *Buffer
-
-**/
-EFI_STATUS
-IdeNonDataCommandExp (
-    IN  AMI_IDE_BUS_PROTOCOL    *IdeBusInterface,
-    IN  UINT8                   Features,
-    IN  UINT8                   SectorCount,
-    IN  UINT8                   SectorCountExp,
-    IN  UINT8                   LBALow,
-    IN  UINT8                   LBALowExp,
-    IN  UINT8                   LBAMid,
-    IN  UINT8                   LBAMidExp,
-    IN  UINT8                   LBAHigh,
-    IN  UINT8                   LBAHighExp,
-    IN  UINT8                   Device,
-    IN  UINT8                   Command
-)
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:	IdeNonDataCommandExp
+//
+// Description:	Issues command where no data transfer takes place
+//
+// Input:
+//	IN IDE_BUS_PROTOCOL				*IdeBusInterface,
+//	VOID                                                    *Buffer,
+//	UINT32							ByteCount,
+//	UINT8							SectorCount,
+//	UINT8							SectorCountExp,
+//	UINT8							LBALow,
+//	UINT8							LBALowExp,
+//	UINT8							LBAMid,
+//	UINT8							LBAMidExp,
+//	UINT8							LBAHigh,
+//	UINT8							LBAHighExp,
+//	UINT8							Device,
+//	UINT8							Command,
+// Output:
+//	*Buffer
+//
+// Modified:
+//
+// Referrals: IdeSetFeatureCommand
+//
+// Notes:
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
+EFI_STATUS IdeNonDataCommandExp(
+    IN IDE_BUS_PROTOCOL *IdeBusInterface,
+    IN UINT8            Features,
+    IN UINT8            SectorCount,
+    IN UINT8            SectorCountExp,
+    IN UINT8            LBALow,
+    IN UINT8            LBALowExp,
+    IN UINT8            LBAMid,
+    IN UINT8            LBAMidExp,
+    IN UINT8            LBAHigh,
+    IN UINT8            LBAHighExp,
+    IN UINT8            Device,
+    IN UINT8            Command )
 {
-    IO_REGS     Regs = IdeBusInterface->IdeDevice.Regs;
-    EFI_STATUS  Status;
-    UINT8       Data8;
+    IO_REGS    Regs = IdeBusInterface->IdeDevice.Regs;
+    EFI_STATUS Status;
+    UINT8      Data8;
 
     //
     //Select the drive
@@ -1497,11 +1581,11 @@ IdeNonDataCommandExp (
     IdeWriteByte( IdeBusInterface->PciIO, Regs.CommandBlock.DeviceReg, Device );
 
     //
-    //Wait for IDE_DRDY to be set
+    //Wiat for DRDY to be set
     //
     Status = WaitforBitSet( IdeBusInterface->PciIO,
                             Regs.ControlBlock.AlternateStatusReg,
-                            IDE_DRDY,
+                            DRDY,
                             DRDY_TIMEOUT );
 
     if ( EFI_ERROR( Status )) {
@@ -1554,11 +1638,11 @@ IdeNonDataCommandExp (
                  &Data8 );
 
     //
-    //Check for IDE_BSY bit to be clear
+    //Check for BSY bit to be clear
     //
     Status = WaitforBitClear( IdeBusInterface->PciIO,
                               Regs.ControlBlock.AlternateStatusReg,
-                              IDE_BSY | IDE_DRQ,
+                              BSY | DRQ,
                               gPlatformIdeProtocol->PoweonBusyClearTimeout );
 
     if ( EFI_ERROR( Status )) {
@@ -1570,28 +1654,38 @@ IdeNonDataCommandExp (
     //
     IdeReadByte( IdeBusInterface->PciIO, Regs.CommandBlock.StatusReg, &Data8 );
 
-    if ( Data8 & (IDE_DF | IDE_ERR)) {
+    if ( Data8 & (DF | ERR)) {
         return EFI_DEVICE_ERROR;
     }
 
     return EFI_SUCCESS;
 }
 
-/**
-    Issues IDENTIFY DATA command (0xEC)
-
-    @param IdeBusInterface 
-    @param Buffer 
-
-    @retval *Buffer
-
-**/
-EFI_STATUS
-AtaIdentifyCommand (
-    IN  AMI_IDE_BUS_PROTOCOL    *IdeBusInterface,
-    IN  OUT VOID                *Buffer
-
-)
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:	AtaIdentifyCommand
+//
+// Description:	Issues IDENTIFY DATA command (0xEC)
+//
+// Input:
+//	IN IDE_BUS_PROTOCOL				*IdeBusInterface,
+//	IN OUT VOID						*Buffer
+//
+// Output:
+//	*Buffer
+//
+// Modified:
+//
+// Referrals: AtaPioDataIn
+//
+// Notes:
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
+EFI_STATUS AtaIdentifyCommand(
+    IN IDE_BUS_PROTOCOL *IdeBusInterface,
+    IN OUT VOID         *Buffer )
 {
     EFI_STATUS Status = AtaPioDataIn(
         IdeBusInterface,
@@ -1609,20 +1703,31 @@ AtaIdentifyCommand (
     return Status;
 }
 
-/**
-    Issues IDENTIFY PACKET DATA command (0xA1)
-
-    @param IdeBusInterface 
-    @param Buffer 
-
-    @retval *Buffer
-
-**/
-EFI_STATUS
-AtapiIdentifyCommand (
-    IN  AMI_IDE_BUS_PROTOCOL    *IdeBusInterface,
-    IN  OUT VOID                *Buffer
-)
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:	AtapiIdentifyCommand
+//
+// Description:	Issues IDENTIFY PACKET DATA command (0xA1)
+//
+// Input:
+//	IN IDE_BUS_PROTOCOL				*IdeBusInterface,
+//	IN OUT VOID						*Buffer
+//
+// Output:
+//	*Buffer
+//
+// Modified:
+//
+// Referrals: AtaPioDataIn
+//
+// Notes:
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
+EFI_STATUS AtapiIdentifyCommand(
+    IN IDE_BUS_PROTOCOL *IdeBusInterface,
+    IN OUT VOID         *Buffer )
 {
     return AtaPioDataIn(
                IdeBusInterface,
@@ -1638,22 +1743,29 @@ AtapiIdentifyCommand (
                FALSE );
 }
 
-/**
-    Gets Identify command data.
-
-        
-    @param IdeBusInterface 
-    @retval 
-        EFI_STATUS
-
-    @note  ATA/ATAPI device type should have been known already.
-
-**/
-EFI_STATUS
-GetIdentifyData (
-    IN  AMI_IDE_BUS_PROTOCOL    *IdeBusInterface,
-    IN  OUT VOID                *Buffer
-)
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:	GetIdentifyData
+//
+// Description:	Gets Identify command data.
+//
+// Input:
+//	IN IDE_BUS_PROTOCOL				*IdeBusInterface,
+// Output:
+//		EFI_STATUS
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:	ATA/ATAPI device type should have beeen known already.
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
+EFI_STATUS GetIdentifyData(
+    IN IDE_BUS_PROTOCOL *IdeBusInterface,
+    IN OUT VOID         *Buffer )
 {
     //
     //check whether it is a ATA or ATAPI device
@@ -1690,20 +1802,30 @@ GetIdentifyData (
     }
 }
 
-/**
-    Issue a ATA Non-Data Command
-
-    @param IdeBusInterface 
-
-    @retval EFI_STATUS
-
-**/
-EFI_STATUS
-IdeSetFeatureCommand (
-    IN  AMI_IDE_BUS_PROTOCOL    *IdeBusInterface,
-    UINT8                       SubCommand,
-    UINT8                       Mode
-)
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:	IdeSetFeatureCommand
+//
+// Description:	Issue a ATA Non-Data Command
+//
+// Input:
+//	IN IDE_BUS_PROTOCOL				*IdeBusInterface,
+// Output:
+//		EFI_STATUS
+//
+// Modified:
+//
+// Referrals: IdeNonDataCommand
+//
+// Notes:
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
+EFI_STATUS IdeSetFeatureCommand(
+    IN IDE_BUS_PROTOCOL *IdeBusInterface,
+    UINT8               SubCommand,
+    UINT8               Mode )
 {
     return IdeNonDataCommand(
                IdeBusInterface,
@@ -1716,19 +1838,28 @@ IdeSetFeatureCommand (
                SET_FEATURE_COMMAND );
 }
 
-/**
-    Issue a Soft Reset
-
-        
-    @param IdeBusInterface 
-    @retval 
-        EFI_STATUS
-
-**/
-EFI_STATUS
-IdeSoftReset (
-    IN  AMI_IDE_BUS_PROTOCOL    *IdeBusInterface
-)
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:	IdeSoftReset
+//
+// Description:	Issue a Soft Reset
+//
+// Input:
+//	IN IDE_BUS_PROTOCOL				*IdeBusInterface
+// Output:
+//		EFI_STATUS
+//
+// Modified:
+//
+// Referrals: DetectIdeDevice
+//
+// Notes:
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
+EFI_STATUS IdeSoftReset(
+    IN IDE_BUS_PROTOCOL *IdeBusInterface )
 {
     UINT8   Device = IdeBusInterface->IdeDevice.Device;
     IO_REGS Regs   = IdeBusInterface->IdeDevice.Regs;
@@ -1749,25 +1880,25 @@ IdeSoftReset (
     IdeReadByte( IdeBusInterface->PciIO, Regs.CommandBlock.StatusReg, &Data8 );
 
     //
-    //If IDE_BSY bit set, don't issue Soft reset
+    //If BSY bit set, don't issue Soft reset
     //
     if ( Data8 & 0x80 ) {
         return EFI_DEVICE_ERROR;
     }
 
     //
-    //Assert IDE_SRST, disable IDE_NIEN
+    //Assert SRST, disable nIEN
     //
-    Data8 = IDE_SRST | IDE_NIEN;
+    Data8 = SRST | nIEN;
     IdeWriteByte( IdeBusInterface->PciIO,
                   Regs.ControlBlock.DeviceControlReg,
                   Data8 );
     pBS->Stall( 100 );               // 100 usec
 
     //
-    //DeAssert IDE_SRST
+    //Deassert SRST
     //
-    Data8 = IDE_NIEN;
+    Data8 = nIEN;
     IdeWriteByte( IdeBusInterface->PciIO,
                   Regs.ControlBlock.DeviceControlReg,
                   Data8 );
@@ -1776,26 +1907,35 @@ IdeSoftReset (
     return EFI_SUCCESS;
 }
 
-/**
-    Waits for IDE_BSY bit to get clear
-
-    @param IdeBusInterface 
-    @param TimeOutValue 
-
-    @retval EFI_STATUS
-
-    @note  Wait for IDE_BSY bit to get clear. Check for any ERRORs.
-
-**/
-EFI_STATUS
-WaitForCmdCompletionWithTimeOutValue (
-    IN  AMI_IDE_BUS_PROTOCOL    *IdeBusInterface,
-    IN  UINT32                  TimeOutvalue
-)
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:	WaitForCmdCompletionWithTimeOutValue
+//
+// Description:	Waits for BSY bit to get clear
+//
+// Input:
+//	IN IDE_BUS_PROTOCOL				*IdeBusInterface
+//  IN UINT32						TimeOutValue
+//
+// Output:
+//		EFI_STATUS
+//
+// Modified:
+//
+// Referrals: AtaReadWritePio
+//
+// Notes:	Wait for BSY bit to get clear. Check for any errors.
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
+EFI_STATUS WaitForCmdCompletionWithTimeOutValue(
+    IN IDE_BUS_PROTOCOL *IdeBusInterface,
+    IN UINT32           TimeOutvalue )
 {
-    UINT8       Data8;
-    EFI_STATUS  Status;
-    IO_REGS     Regs = IdeBusInterface->IdeDevice.Regs;
+    UINT8      Data8;
+    EFI_STATUS Status;
+    IO_REGS    Regs = IdeBusInterface->IdeDevice.Regs;
 
     //	Read ATL_STATUS and ignore the result. Just a delay
     IdeReadByte( IdeBusInterface->PciIO,
@@ -1806,21 +1946,21 @@ WaitForCmdCompletionWithTimeOutValue (
     // Otherwise Use the Timeout value to check the Busy bit to clear.
     if ( TimeOutvalue == 0 ) {
         //
-        //Check for IDE_BSY bit to be clear without Timeout value
+        //Check for BSY bit to be clear without Timout value
         //
         Status = WaitforBitClearWithoutTimeout(
                                 IdeBusInterface->PciIO,
                                 Regs.ControlBlock.
                                 AlternateStatusReg,
-                                IDE_BSY );
+                                BSY );
     }
     else {
         //
-        //Check for IDE_BSY bit to be clear
+        //Check for BSY bit to be clear
         //
         Status = WaitforBitClear( IdeBusInterface->PciIO,
                                   Regs.ControlBlock.AlternateStatusReg,
-                                  IDE_BSY,
+                                  BSY,
                                   TimeOutvalue );
     }
 
@@ -1828,36 +1968,45 @@ WaitForCmdCompletionWithTimeOutValue (
         return EFI_DEVICE_ERROR;
     }
 
-    //Check for ERRORs.
+    //Check for errors.
     IdeReadByte( IdeBusInterface->PciIO,
                  Regs.CommandBlock.StatusReg,
                  &Data8 );
 
-    if ( Data8 & (IDE_ERR | IDE_DF)) {
+    if ( Data8 & (ERR | DF)) {
         return EFI_DEVICE_ERROR;
     }
 
     return EFI_SUCCESS;
 }
 
-/**
-    Waits for IDE_BSY bit to get clear
-
-    @param IdeBusInterface 
-
-    @retval EFI_STATUS
-
-    @note  Wait for BSY bit to get clear. Check for any errors.
-
-**/
-EFI_STATUS  
-WaitForCmdCompletion (
-    IN  AMI_IDE_BUS_PROTOCOL    *IdeBusInterface
-)
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:	WaitForCmdCompletion
+//
+// Description:	Waits for BSY bit to get clear
+//
+// Input:
+//	IN IDE_BUS_PROTOCOL				*IdeBusInterface
+//
+// Output:
+//		EFI_STATUS
+//
+// Modified:
+//
+// Referrals: AtaReadWritePio
+//
+// Notes:	Wait for BSY bit to get clear. Check for any errors.
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
+EFI_STATUS WaitForCmdCompletion(
+    IN IDE_BUS_PROTOCOL *IdeBusInterface )
 {
-    UINT8       Data8;
-    EFI_STATUS  Status;
-    IO_REGS     Regs = IdeBusInterface->IdeDevice.Regs;
+    UINT8      Data8;
+    EFI_STATUS Status;
+    IO_REGS    Regs = IdeBusInterface->IdeDevice.Regs;
 
     //
     //Read ATL_STATUS and ignore the result. Just a delay
@@ -1867,11 +2016,11 @@ WaitForCmdCompletion (
                  &Data8 );
 
     //
-    //Check for IDE_BSY bit to be clear
+    //Check for BSY bit to be clear
     //
     Status = WaitforBitClear( IdeBusInterface->PciIO,
                               Regs.ControlBlock.AlternateStatusReg,
-                              IDE_BSY,
+                              BSY,
                               COMMAND_COMPLETE_TIMEOUT );
 
     if ( EFI_ERROR( Status )) {
@@ -1879,29 +2028,40 @@ WaitForCmdCompletion (
     }
 
     //
-    //Check for ERRORs.
+    //Check for errors.
     //
     IdeReadByte( IdeBusInterface->PciIO, Regs.CommandBlock.StatusReg, &Data8 );
 
-    if ( Data8 & (IDE_ERR | IDE_DF)) {
+    if ( Data8 & (ERR | DF)) {
         return EFI_DEVICE_ERROR;
     }
 
     return EFI_SUCCESS;
 }
 
-/**
-    Disabled Interrupt generation feature
-
-    @param AMI_IDE_BUS_PROTOCOL *IdeBusInterface;
-
-    @retval EFI_STATUS
-
-**/
-void
-DisableIdeInterrupt (
-    IN  AMI_IDE_BUS_PROTOCOL    *IdeBusInterface
-)
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:	DisableIdeInterrupt
+//
+// Description:	Disabled Interrupt generation feature
+//
+// Input:
+//	IDE_BUS_PROTOCOL			*IdeBusInterface;
+//
+// Output:
+//	EFI_STATUS
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
+void DisableIdeInterrupt(
+    IN IDE_BUS_PROTOCOL *IdeBusInterface )
 {
     IO_REGS Regs = IdeBusInterface->IdeDevice.Regs;
     UINT8   Data8, Flags;
@@ -1931,18 +2091,29 @@ DisableIdeInterrupt (
                   Data8 );
 }
 
-/**
-    Check if IDE_BSY is cleared and IDE_DRDY set
-
-    @param  IdeBusInterface 
-
-    @retval EFI_STATUS
-
-**/
-EFI_STATUS
-CheckDriveReady (
-    IN  AMI_IDE_BUS_PROTOCOL    *IdeBusInterface
-)
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:	CheckDriveReady
+//
+// Description:	Check if BSY is cleared and DRDY set
+//
+// Input:
+//	IN IDE_BUS_PROTOCOL				*IdeBusInterface,
+//
+// Output:
+//	EFI_STATUS
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
+EFI_STATUS CheckDriveReady(
+    IN IDE_BUS_PROTOCOL *IdeBusInterface )
 {
     IO_REGS Regs = IdeBusInterface->IdeDevice.Regs;
     UINT8   Data8;
@@ -1968,27 +2139,38 @@ CheckDriveReady (
     return EFI_DEVICE_ERROR;
 }
 
-/**
-    Checks for a particular Bit to be set for a given amount of time
-
-    @param  PciIO 
-    @param  UINT16  AlternateStatusReg,
-    @param  UINT8   BitSet,
-    @param  UINT32  TimeOut
-
-    @retval EFI_STATUS
-
-**/
-EFI_STATUS
-WaitforBitSet (
-    IN  EFI_PCI_IO_PROTOCOL *PciIO,
-    UINT16                  AlternateStatusReg,
-    UINT8                   BitSet,
-    UINT32                  TimeOut
-)
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:	WaitforBitSet
+//
+// Description:	Checks for a particular Bit to be set for a given amount of time
+//
+// Input:
+//	IN EFI_PCI_IO_PROTOCOL			*PciIO,
+//	UINT16							AlternateStatusReg,
+//	UINT8							BitSet,
+//	UINT32							TimeOut
+//
+// Output:
+//		EFI_STATUS
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
+EFI_STATUS WaitforBitSet(
+    IN EFI_PCI_IO_PROTOCOL *PciIO,
+    UINT16                 AlternateStatusReg,
+    UINT8                  BitSet,
+    UINT32                 TimeOut )
 {
-    UINT8   Delay;
-    UINT8   Data8;
+    UINT8 Delay;
+    UINT8 Data8;
 
     for (; TimeOut > 0; TimeOut-- )
     {
@@ -2005,26 +2187,37 @@ WaitforBitSet (
     return EFI_TIMEOUT;
 }
 
-/**
-    Waits for the given bit to be clear
-
-    @param  UINT16  AlternateStatus,
-    @param  UINT8   BitClear
-    @param  UINT32  BUSY_CLEAR_TIMEOUT		// Millisecond
-
-    @retval EFI_STATUS
-
-**/
-EFI_STATUS
-WaitforBitClear (
-    IN EFI_PCI_IO_PROTOCOL  *PciIO,
-    UINT16                  AlternateStatus,
-    UINT8                   BitClear,
-    UINT32                  Timeout
-)
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:	WaitforBitClear
+//
+// Description:	Waits for the given bit to be clear
+//
+// Input:
+//	UINT16		AlternateStatus,
+//	UINT8		BitClear
+//	UINT32		BUSY_CLEAR_TIMEOUT		// Millisecond
+//
+// Output:
+//		EFI_STATUS
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
+EFI_STATUS WaitforBitClear(
+    IN EFI_PCI_IO_PROTOCOL *PciIO,
+    UINT16                 AlternateStatus,
+    UINT8                  BitClear,
+    UINT32                 Timeout )
 {
-    UINT8   Delay;
-    UINT8   Data8;
+    UINT8 Delay;
+    UINT8 Data8;
 
     for (; Timeout > 0; Timeout-- )
     {
@@ -2041,22 +2234,34 @@ WaitforBitClear (
     return EFI_TIMEOUT;
 }
 
-/**
-    Waits for the given bit to be clear
-
-    @param  UINT16  AlternateStatus,
-    @param  UINT8   BitClear
-
-    @retval EFI_STATUS
-
-**/
-EFI_STATUS
-WaitforBitClearWithoutTimeout (
-    IN  EFI_PCI_IO_PROTOCOL *PciIO,
-    UINT16                  AlternateStatus,
-    UINT8                   BitClear )
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:	WaitforBitClearWithoutTimeout
+//
+// Description:	Waits for the given bit to be clear
+//
+// Input:
+//	UINT16		AlternateStatus,
+//	UINT8		BitClear
+//
+// Output:
+//		EFI_STATUS
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
+EFI_STATUS WaitforBitClearWithoutTimeout(
+    IN EFI_PCI_IO_PROTOCOL *PciIO,
+    UINT16                 AlternateStatus,
+    UINT8                  BitClear )
 {
-    UINT8   Data8;
+    UINT8 Data8;
 
     do
     {
@@ -2071,21 +2276,32 @@ WaitforBitClearWithoutTimeout (
     return EFI_NOT_FOUND;
 }
 
-/**
-    Returns the MOST significant Bit set.
-
-    @param UINT32		Data
-
-    @retval UINT8
-
-**/
-UINT8
-ReturnMSBset (
-    UINT32  Data
-)
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:	ReturnMSBset
+//
+// Description:	Returns the MOST significant Bit set.
+//
+// Input:
+//	UINT32		Data
+//
+// Output:
+//		UINT8
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
+UINT8 ReturnMSBset(
+    UINT32 Data )
 {
-    UINT8   Index;
-    UINT8   Value = 0xFF; 
+    UINT8 Index;
+    UINT8 Value = 0xFF; 
 
     for ( Index = 0; Index < 32; Index++ )
     {
@@ -2098,22 +2314,33 @@ ReturnMSBset (
     return Value;
 }
 
-/**
-    Reads 1 Byte of data from the IO port
-
-    @param  PciIO 
-    @param  Register 
-    @param  Data8 
-
-    @retval UINT8   *Data8
-
-**/
-EFI_STATUS
-IdeReadByte (
-    IN  EFI_PCI_IO_PROTOCOL *PciIO,
-    IN  UINT16              Register,
-    OUT UINT8               *Data8
-)
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:	IdeReadByte
+//
+// Description:	Reads 1 Byte of data from the IO port
+//
+// Input:
+//	IN EFI_PCI_IO_PROTOCOL			*PciIO,
+//	IN UINT16						Register,
+//	OUT UINT8						*Data8
+//
+// Output:
+//	OUT UINT8						*Data8
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
+EFI_STATUS IdeReadByte(
+    IN EFI_PCI_IO_PROTOCOL *PciIO,
+    IN UINT16              Register,
+    OUT UINT8              *Data8 )
 {
     PciIO->Io.         Read(
         PciIO,
@@ -2126,24 +2353,35 @@ IdeReadByte (
     return EFI_SUCCESS;
 }
 
-/**
-    Reads N Bytes of data from the IO port
-
-    @param PciIO 
-    @param Register 
-    @param Count 
-    @param Data8 
-
-    @retval UINT8   *Data8
-
-**/
-EFI_STATUS
-IdeReadMultipleByte (
-    IN  EFI_PCI_IO_PROTOCOL *PciIO,
-    IN  UINT16              Register,
-    IN  UINT32              Count,
-    OUT UINT8               *Data8
-)
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:	IdeReadMultipleByte
+//
+// Description:	Reads N Bytes of data from the IO port
+//
+// Input:
+//	IN EFI_PCI_IO_PROTOCOL			*PciIO,
+//	IN UINT16						Register,
+//	IN UINT64						Count
+//	OUT UINT8						*Data8
+//
+// Output:
+//	OUT UINT8						*Data8
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
+EFI_STATUS IdeReadMultipleByte(
+    IN EFI_PCI_IO_PROTOCOL *PciIO,
+    IN UINT16              Register,
+    IN UINT32              Count,
+    OUT UINT8              *Data8 )
 {
     EFI_STATUS Status;
 
@@ -2158,22 +2396,33 @@ IdeReadMultipleByte (
     return Status;
 }
 
-/**
-    Reads 1 Word of data from the IO port
-
-    @param PciIO 
-    @param Register 
-    @param Data16 
-
-    @retval UINT16  Data16
-
-**/
-EFI_STATUS
-IdeReadWord (
-    IN  EFI_PCI_IO_PROTOCOL *PciIO,
-    IN  UINT16              Register,
-    OUT UINT16              *Data16
-)
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:	IdeReadWord
+//
+// Description:	Reads 1 Word of data from the IO port
+//
+// Input:
+//	IN EFI_PCI_IO_PROTOCOL			*PciIO,
+//	IN UINT16						Register,
+//	OUT UINT16						*Data16
+//
+// Output:
+//	OUT UINT16						*Data16
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
+EFI_STATUS IdeReadWord(
+    IN EFI_PCI_IO_PROTOCOL *PciIO,
+    IN UINT16              Register,
+    OUT UINT16             *Data16 )
 {
     EFI_STATUS Status;
 
@@ -2188,29 +2437,39 @@ IdeReadWord (
     return Status;
 }
 
-/**
-    Reads N Word of data from the IO port
-
-        
-    @param PciIO 
-    @param Register 
-    @param Count (Count in WORDS)
-    @param Data16 
-
-    @retval UINT16  *Data16
-
-**/
-EFI_STATUS
-IdeReadMultipleWord (
-    IN  EFI_PCI_IO_PROTOCOL *PciIO,
-    IN  UINT16              Register,
-    IN  UINT32              Count,
-    OUT UINT16             *Data16
-)
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:	IdeReadMultipleWord
+//
+// Description:	Reads N Word of data from the IO port
+//
+// Input:
+//	IN EFI_PCI_IO_PROTOCOL			*PciIO,
+//	IN UINT16						Register,
+//	IN UINT32						Count   (Count in WORDS)
+//	OUT UINT8						*Data16
+//
+// Output:
+//	OUT UINT16						*Data16
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
+EFI_STATUS IdeReadMultipleWord(
+    IN EFI_PCI_IO_PROTOCOL *PciIO,
+    IN UINT16              Register,
+    IN UINT32              Count,
+    OUT UINT16             *Data16 )
 {
-    EFI_STATUS  Status;
-    UINT16      *Buffer = Data16;
-    BOOLEAN     MemoryAllocated = FALSE;
+    EFI_STATUS Status;
+    UINT16     *Buffer         = Data16;
+    BOOLEAN    MemoryAllocated = FALSE;
 
     //
     //Allocate memory only if ADDRESS is not WORD aligned
@@ -2233,8 +2492,8 @@ IdeReadMultipleWord (
         Register,
         Count,
         Buffer );
-
-    ASSERT_EFI_ERROR(Status);	
+		
+	ASSERT_EFI_ERROR(Status);	
 
     if ( MemoryAllocated ) {
         pBS->CopyMem( Data16, Buffer, Count * sizeof(UINT16));
@@ -2244,23 +2503,33 @@ IdeReadMultipleWord (
     return EFI_SUCCESS;
 }
 
-/**
-    Writes 1 Byte of data to the IO port
-
-        
-    @param PciIO 
-    @param Register 
-    @param Data8 
-
-    @retval UINT8   *Data8
-
-**/
-EFI_STATUS
-IdeWriteByte (
-    IN  EFI_PCI_IO_PROTOCOL *PciIO,
-    IN  UINT16              Register,
-    IN  UINT8               Data8
-)
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:	IdeWriteByte
+//
+// Description:	Writes 1 Byte of data to the IO port
+//
+// Input:
+//	IN EFI_PCI_IO_PROTOCOL			*PciIO,
+//	IN UINT16						Register,
+//	OUT UINT8						Data8
+//
+// Output:
+//	OUT UINT8						*Data8
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
+EFI_STATUS IdeWriteByte(
+    IN EFI_PCI_IO_PROTOCOL *PciIO,
+    IN UINT16              Register,
+    IN UINT8               Data8 )
 {
     PciIO->Io.Write(
         PciIO,
@@ -2273,27 +2542,37 @@ IdeWriteByte (
     return EFI_SUCCESS;
 }
 
-/**
-    Writes N Bytes of data to the IO port
-
-        
-    @param PciIO 
-    @param Register 
-    @param Count (Count in BYTES)
-    @param Data8 
-
-    @retval EFI_STATUS
-
-**/
-EFI_STATUS
-IdeWriteMultipleByte (
-    IN   EFI_PCI_IO_PROTOCOL    *PciIO,
-    IN  UINT16                  Register,
-    IN  UINT32                  Count,
-    IN  UINT8                   *Data8
-)
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:	IdeWriteMultipleByte
+//
+// Description:	Writes N Bytes of data to the IO port
+//
+// Input:
+//	IN EFI_PCI_IO_PROTOCOL			*PciIO,
+//	IN UINT16						Register,
+//	IN UINT32						Count  (Count in BYTES)
+//	IN UINT8						*Data8
+//
+// Output:
+// EFI_STATUS
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
+EFI_STATUS IdeWriteMultipleByte(
+    IN EFI_PCI_IO_PROTOCOL *PciIO,
+    IN UINT16              Register,
+    IN UINT32              Count,
+    IN UINT8               *Data8 )
 {
-    EFI_STATUS  Status;
+    EFI_STATUS Status;
 
     Status = PciIO->Io.Write(
         PciIO,
@@ -2306,23 +2585,33 @@ IdeWriteMultipleByte (
     return Status;
 }
 
-/**
-    Writes 1 word of data to the IO port
-
-        
-    @param PciIO 
-    @param Register 
-    @param Data16 
-
-    @retval EFI_STATUS
-
-**/
-EFI_STATUS
-IdeWriteWord (
-    IN  EFI_PCI_IO_PROTOCOL *PciIO,
-    IN  UINT16              Register,
-    IN  UINT16              Data16
-)
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:	IdeWriteWord
+//
+// Description:	Writes 1 word of data to the IO port
+//
+// Input:
+//	IN EFI_PCI_IO_PROTOCOL			*PciIO,
+//	IN UINT16						Register,
+//	OUT UINT16						*Data16
+//
+// Output:
+//	EFI_STATUS
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
+EFI_STATUS IdeWriteWord(
+    IN EFI_PCI_IO_PROTOCOL *PciIO,
+    IN UINT16              Register,
+    IN UINT16              Data16 )
 {
     PciIO->Io.Write(
         PciIO,
@@ -2335,28 +2624,35 @@ IdeWriteWord (
     return EFI_SUCCESS;
 }
 
-/**
-    Writes N Words of data to the IO port
-
-        
-    @param PciIO 
-    @param Register 
-    @param Count (Count in WORDS)
-    @param Data16 
-
-    @retval 
-
-    @note  
-     Count : # of WORDs to write
-
-**/
-EFI_STATUS
-IdeWriteMultipleWord (
-    IN  EFI_PCI_IO_PROTOCOL *PciIO,
-    IN  UINT16              Register,
-    IN  UINT32              Count,
-    IN  UINT16              *Data16
-)
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:	IdeWriteMultipleWord
+//
+// Description:	Writes N Words of data to the IO port
+//
+// Input:
+//	IN EFI_PCI_IO_PROTOCOL			*PciIO,
+//	IN UINT16						Register,
+//	IN UINT64						Count (Count in WORDS)
+//	IN UINT16						*Data16
+//
+// Output:
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+// Count : # of WORDs to write
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
+EFI_STATUS IdeWriteMultipleWord(
+    IN EFI_PCI_IO_PROTOCOL *PciIO,
+    IN UINT16              Register,
+    IN UINT32              Count,
+    IN UINT16              *Data16 )
 {
     EFI_STATUS Status;
     UINT16     *Buffer         = Data16;
@@ -2395,23 +2691,34 @@ IdeWriteMultipleWord (
     return EFI_SUCCESS;
 }
 
-/**
-    Writes 1 Dword of data to the IO port
-
-        
-    @param PciIO 
-    @param Register 
-    @param Data16 
-
-    @retval EFI_STATUS
-
-**/
-EFI_STATUS
-IdeWriteDword (
-    IN  EFI_PCI_IO_PROTOCOL *PciIO,
-    IN  UINT16              Register,
-    IN  UINT32              Data32
-)
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:	IdeWriteDword
+//
+// Description:	Writes 1 Dword of data to the IO port
+//
+// Input:
+//	IN EFI_PCI_IO_PROTOCOL			*PciIO,
+//	IN UINT16						Register,
+//	OUT UINT16						*Data16
+//
+// Output:
+//	EFI_STATUS
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
+EFI_STATUS IdeWriteDword(
+    IN EFI_PCI_IO_PROTOCOL *PciIO,
+    IN UINT16              Register,
+    IN UINT32              Data32 )
 {
     PciIO->Io.Write(
         PciIO,
@@ -2424,18 +2731,29 @@ IdeWriteDword (
     return EFI_SUCCESS;
 }
 
-/**
-    Checks if the command is for 48-bit LBA
-
-    @param Command 
-
-    @retval TRUE/FLASE
-
-**/
-BOOLEAN
-Check48BitCommand (
-    IN  UINT8   Command
-)
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:	Check48BitCommand
+//
+// Description:	Checks if the command is for 48-bit LBA
+//
+// Input:
+//	IN UINT8			Command
+//
+// Output:
+//		TRUE/FLASE
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
+BOOLEAN Check48BitCommand(
+    IN UINT8 Command )
 {
     if ( Command == READ_SECTORS_EXT
          || Command == READ_MULTIPLE_EXT
@@ -2450,16 +2768,17 @@ Check48BitCommand (
     }
 }
 
-//***********************************************************************
-//***********************************************************************
-//**                                                                   **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.          **
-//**                                                                   **
-//**                       All Rights Reserved.                        **
-//**                                                                   **
-//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093         **
-//**                                                                   **
-//**                       Phone: (770)-246-8600                       **
-//**                                                                   **
-//***********************************************************************
-//***********************************************************************
+//**********************************************************************
+//**********************************************************************
+//**                                                                  **
+//**        (C)Copyright 1985-2012, American Megatrends, Inc.         **
+//**                                                                  **
+//**                       All Rights Reserved.                       **
+//**                                                                  **
+//**         5555 Oakbrook Pkwy, Suite 200, Norcross, GA 30093        **
+//**                                                                  **
+//**                       Phone: (770)-246-8600                      **
+//**                                                                  **
+//**********************************************************************
+//**********************************************************************
+//**********************************************************************

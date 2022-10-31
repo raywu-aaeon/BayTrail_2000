@@ -1,7 +1,7 @@
 //*************************************************************************
 //*************************************************************************
 //**                                                                     **
-//**        (C)Copyright 1985-2017, American Megatrends, Inc.            **
+//**        (C)Copyright 1985-2014, American Megatrends, Inc.            **
 //**                                                                     **
 //**                       All Rights Reserved.                          **
 //**                                                                     **
@@ -1029,14 +1029,6 @@ ClearPowerState()
     Data16 |= B_PCH_TCO_CNT_TMR_HLT;
     IoWrite16(ACPI_BASE_ADDRESS + R_PCH_TCO_CNT, Data16);
 
-#if defined(LPC_WA_ENABLE_LPC_CLKRUN) && LPC_WA_ENABLE_LPC_CLKRUN
-    //
-    // Enable LPC CLKRUN# to extend LPC circuit life
-    //
-    Data8 = MmioRead8(ILB_BASE_ADDRESS + R_PCH_ILB_LPCC);
-    MmioOr8 (ILB_BASE_ADDRESS + R_PCH_ILB_LPCC, B_PCH_ILB_LPCC_CLKRUN_EN);
-#endif
-
   //
   // if NMI_NOW_STS is set 
   // NMI NOW bit is "Write '1' to clear"
@@ -1345,7 +1337,7 @@ PlatformPchInit(
 //*************************************************************************
 //*************************************************************************
 //**                                                                     **
-//**        (C)Copyright 1985-2017, American Megatrends, Inc.            **
+//**        (C)Copyright 1985-2014, American Megatrends, Inc.            **
 //**                                                                     **
 //**                       All Rights Reserved.                          **
 //**                                                                     **

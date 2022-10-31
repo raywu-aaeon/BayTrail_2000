@@ -6,18 +6,18 @@
 [INF]
 "SdioControllerPeiLib.inf"
 "SdioControllerDxeLib.inf"
-"SdioDriver.inf"
 [files]
+"SdioDriver.mak"	
 "SdioDriver.sdl"	
+"SdioDriver.c"	
+"SdioBlkIo.c"
+"SdioDriver.h"
 "SdioDriver.chm"	
-"SdioDriverElink.txt"	
 [parts]
 "SdioSmm"
 "SDIOINT13"
 "SdioProtocols"
 "SdioSetup"
+"SdioRecovery"
 "SdioIncludes"
-"SdMmcTemplate"
-[dependency]
-AmiModulePkg >= "SS: AptioV;$/AptioV/Source/Interfaces/AmiModulePkg;AmiModulePkg_28"
 <endComponent>

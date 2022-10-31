@@ -47,6 +47,7 @@
   PeiServicesLib
   HobLib
   AmiPeiLib
+  ReportFVLib
   ReportStatusCodeLib
   
 [Guids]
@@ -60,4 +61,4 @@
   gEfiPeiDeviceRecoveryModulePpiGuid    ## CONSUMES
   
 [Depex]
-  ( gEfiPeiBootInRecoveryModePpiGuid OR gFlashUpdBootModePpiGuid ) AND gEfiPeiMemoryDiscoveredPpiGuid AND gEfiPeiDecompressPpiGuid
+  gEfiPeiMemoryDiscoveredPpiGuid AND ( gEfiPeiBootInRecoveryModePpiGuid OR gFlashUpdBootModePpiGuid )

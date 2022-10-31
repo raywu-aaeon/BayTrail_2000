@@ -20,7 +20,6 @@
 "AmiSioDxeLib\AmiSioDxeLib.inf" #EIP142955
 "SbSmmCorePlatformHookLib\SbSmmCorePlatformHookLib.inf" #EIP134333
 "SbPciDxeLib\SbPciDxeLib.inf" #EIP153622
-"SbHdaVerbTableLib\SbHdaVerbTableLib.inf" #EIP176554
 [parts]
 "AmiChipsetModulePkg.AmiSbCspLib"
 <endComponent>

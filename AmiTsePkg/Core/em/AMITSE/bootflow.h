@@ -24,10 +24,15 @@
 //*****************************************************************//
 //*****************************************************************//
 //*****************************************************************//
-/** @file bootflow.h
-    bootflow header
-
-**/
+//<AMI_FHDR_START>
+//----------------------------------------------------------------------------
+//
+// Name:		bootflow.h
+//
+// Description:	bootflow header
+//
+//----------------------------------------------------------------------------
+//<AMI_FHDR_END>
 
 #ifndef _BOOTFLOW_H_
 #define	_BOOTFLOW_H_
@@ -54,7 +59,7 @@
 #define	BOOT_FLOW_CONDITION_FAST_BOOT	        7
 #define BOOT_FLOW_CONDITION_PCI_OUT_OF_RESOURCE 9
 #define	BOOT_FLOW_HOTKEY_BOOT                   0xA
-#define	BOOT_FLOW_CONDITION_OS_UPD_CAP 			0xB			
+#define	BOOT_FLOW_CONDITION_OS_UPD_CAP 			0xB			//EIP93521
 #define	BOOT_FLOW_CONDITION_NULL	0xFFFFFFFF
 
 typedef struct _BOOT_FLOW	BOOT_FLOW;

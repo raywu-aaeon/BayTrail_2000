@@ -34,12 +34,6 @@ typedef struct {
 // MemoryMap - The current memory map
 //
 UINTN     mMemoryMapKey = 0;
-//*** AMI PORTING BEGIN ***//
-// ExitBootServices workaround.
-// This variable is used increase chances of ExitBootServices() call to succeed.
-UINTN     LastRuntimeAllocationKey = 0;
-BOOLEAN   MemoryMapKeyVerified = FALSE;
-//*** AMI PORTING END *****//
 
 #define MAX_MAP_DEPTH 6
 
@@ -714,10 +708,6 @@ CoreConvertPages (
   UINT64          Attribute;
   LIST_ENTRY      *Link;
   MEMORY_MAP      *Entry;
-  //*** AMI PORTING BEGIN ***//
-  // ExitBootServices workaround.
-  BOOLEAN		  RuntimeMemoryMapAlteringAllocation;
-  //*** AMI PORTING END *****//
 
   Entry = NULL;
   NumberOfBytes = LShiftU64 (NumberOfPages, EFI_PAGE_SHIFT);
@@ -731,26 +721,6 @@ CoreConvertPages (
   if (NumberOfPages == 0 || ((Start & EFI_PAGE_MASK) != 0) || (Start > (Start + NumberOfBytes))) {
     return EFI_INVALID_PARAMETER;
   }
-  //*** AMI PORTING BEGIN ***//
-  // ExitBootServices workaround.
-  // Update LastRuntimeAllocationKey variable only if this is a runtime memory allocation
-  // outside of the pre-allocated bin.
-  if  ( ( NewType == EfiACPIReclaimMemory   ||
-		  NewType == EfiACPIMemoryNVS       ||
-		  NewType == EfiRuntimeServicesCode ||
-		  NewType == EfiRuntimeServicesData
-		) && 
-		( ! mMemoryTypeStatistics[NewType].Special ||
-	  	  mMemoryTypeStatistics[NewType].BaseAddress == 0 ||
-	  	  Start < mMemoryTypeStatistics[NewType].BaseAddress ||
-	  	  End > mMemoryTypeStatistics[NewType].MaximumAddress
-	  	)
-  ){
-	  RuntimeMemoryMapAlteringAllocation = TRUE;
-  }else {
-	  RuntimeMemoryMapAlteringAllocation = FALSE;
-  }
-  //*** AMI PORTING END *****//
 
   //
   // Convert the entire range
@@ -913,12 +883,6 @@ CoreConvertPages (
   //
   // Converted the whole range, done
   //
-  //*** AMI PORTING BEGIN ***//
-  // ExitBootServices workaround.
-  if  ( RuntimeMemoryMapAlteringAllocation ){
-	  LastRuntimeAllocationKey = mMemoryMapKey;
-  }
-  //*** AMI PORTING END *****//
 
   return EFI_SUCCESS;
 }
@@ -1496,56 +1460,9 @@ CoreGetMemoryMap (
   // Compute the buffer size needed to fit the entire map
   //
   BufferSize = Size * NumberOfRuntimeEntries;
-  //*** AMI PORTING BEGIN ***//
-  // Improvement: The original method of memory map size calculation is too inaccurate.
-  // The memory map returned by this function (external map) is a compact form of the internal map.
-  // The commented out loop below calculates size of the internal map and returns it as a size of external map.
-  // The size of the internal memory map can be quite larger (in certain extreme cases more than 15 times larger) 
-  // than the size of the external map.
-  // Some OS crash when memory map size exceeds OS specific maximum supported value.
-  // AMI code below is a more accurate calculation of the external memory size.
-  
-  //for (Link = gMemoryMap.ForwardLink; Link != &gMemoryMap; Link = Link->ForwardLink) {
-  //  BufferSize += Size;
-  //}
-  // Add descriptors for a predefined memory type ranges.
-  for (Type = (EFI_MEMORY_TYPE) 0; Type < EfiMaxMemoryType; Type++) {
-    if (mMemoryTypeStatistics[Type].Special                        &&
-        mMemoryTypeStatistics[Type].NumberOfPages > 0)              {
-    	BufferSize += Size;
-    }
-  }
   for (Link = gMemoryMap.ForwardLink; Link != &gMemoryMap; Link = Link->ForwardLink) {
-    Entry = CR (Link, MEMORY_MAP, Link, MEMORY_MAP_SIGNATURE);
-    if ((UINT32)Entry->Type < EfiMaxMemoryType) {
-      if (Entry->Type == EfiConventionalMemory) {
-        for (Type = (EFI_MEMORY_TYPE) 0; Type < EfiMaxMemoryType; Type++) {
-          if (mMemoryTypeStatistics[Type].Special                        &&
-              mMemoryTypeStatistics[Type].NumberOfPages > 0              &&
-              Entry->Start >= mMemoryTypeStatistics[Type].BaseAddress    &&
-              Entry->End   <= mMemoryTypeStatistics[Type].MaximumAddress) {
-            break;
-          }
-        }
-        if (Type != EfiMaxMemoryType){
-            // This memory descriptor will not be part of the external memory map
-            // because it falls into one of the predefined memory type ranges.
-        	continue;
-        }
-      } else {
-        if (mMemoryTypeStatistics[Entry->Type].Special                          &&
-            mMemoryTypeStatistics[Entry->Type].NumberOfPages > 0                &&
-            Entry->Start <= mMemoryTypeStatistics[Entry->Type].MaximumAddress+1 &&
-            Entry->End+1 >= mMemoryTypeStatistics[Entry->Type].BaseAddress)      {
-          // This memory descriptor will not be part of the external memory map
-          // because it falls into or adjacent to one of the predefined memory type ranges.
-          continue;
-        }
-      }
-    }
     BufferSize += Size;
   }
-  //*** AMI PORTING END *****//  
 
   if (*MemoryMapSize < BufferSize) {
     Status = EFI_BUFFER_TOO_SMALL;
@@ -1600,7 +1517,7 @@ CoreGetMemoryMap (
     // Adding explicit UINT32 typecast to resolve the issue.
     if ((UINT32)MemoryMap->Type < EfiMaxMemoryType) {
     //if (MemoryMap->Type < EfiMaxMemoryType) {
-    //*** AMI PORTING END *****//
+    //*** AMI PORTING END *****//    	
       if (mMemoryTypeStatistics[MemoryMap->Type].Runtime) {
         MemoryMap->Attribute |= EFI_MEMORY_RUNTIME;
       }
@@ -1654,7 +1571,7 @@ CoreGetMemoryMap (
           reflect GCD memory maps entries in the UEFI memory map.
           AMI initiated the process with the PI working group, but it may take a while...
           */
-          MemoryMap->Attribute &= ~EFI_MEMORY_RUNTIME;
+                    MemoryMap->Attribute &= ~EFI_MEMORY_RUNTIME;
           //*** AMI PORTING END *****//
         } else if (GcdMapEntry->GcdMemoryType == EfiGcdMemoryTypeMemoryMappedIo) {
           if ((GcdMapEntry->Attributes & EFI_MEMORY_PORT_IO) == EFI_MEMORY_PORT_IO) {
@@ -1678,13 +1595,6 @@ CoreGetMemoryMap (
   //
   BufferSize = ((UINT8 *)MemoryMap - (UINT8 *)MemoryMapStart);
 
-  //*** AMI PORTING BEGIN ***//
-  // We have already checked if *MemoryMapSize is large enough at the beginning of the function.
-  // This assert statement is an additional debug check to ensure that there are no bugs in the code and 
-  // the loop that calculates memory map size is in synchronization
-  // with the loop that performs the actual copying.
-  ASSERT (*MemoryMapSize >= BufferSize) ;
-  //*** AMI PORTING END *****//  
   Status = EFI_SUCCESS;
 
 Done:
@@ -1785,11 +1695,8 @@ CoreTerminateMemoryMap (
 
   CoreAcquireMemoryLock ();
 
-  //*** AMI PORTING BEGIN ***//
-  // ExitBootServices workaround.
-  //if (MapKey == mMemoryMapKey) {
-  if (MemoryMapKeyVerified && MapKey >= LastRuntimeAllocationKey) {
-  //*** AMI PORTING END *****//  
+  if (MapKey == mMemoryMapKey) {
+
     //
     // Make sure the memory map is following all the construction rules
     // This is the last chance we will be able to display any messages on
@@ -1834,12 +1741,6 @@ Done:
   return Status;
 }
 
-//*** AMI PORTING BEGIN ***//
-// ExitBootServices workaround.
-VOID VeiryMemoryMapKey(IN UINTN MapKey){
-	MemoryMapKeyVerified = (MapKey == mMemoryMapKey);
-}
-//*** AMI PORTING END *****//  
 
 
 

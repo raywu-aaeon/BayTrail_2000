@@ -50,38 +50,13 @@
 #define _TPM_STRUCT_PARTIAL_SIZE( type, field )  \
     ((UINTN)&(((type*)0)->field))
 
-
-#define EV_POST_CODE                ((TCG_EVENTTYPE) 0x00000001)
-#define EV_SEPARATOR                ((TCG_EVENTTYPE) 0x00000004)
-#define EV_S_CRTM_CONTENTS          ((TCG_EVENTTYPE) 0x00000007)
-#define EV_S_CRTM_VERSION           ((TCG_EVENTTYPE) 0x00000008)
-
-//
-// EFI specific event types
-//
-#define EV_EFI_EVENT_BASE                   ((TCG_EVENTTYPE) 0x80000000)
-#define EV_EFI_VARIABLE_DRIVER_CONFIG       (EV_EFI_EVENT_BASE + 1)
-#define EV_EFI_VARIABLE_BOOT                (EV_EFI_EVENT_BASE + 2)
-#define EV_EFI_BOOT_SERVICES_APPLICATION    (EV_EFI_EVENT_BASE + 3)
-#define EV_EFI_BOOT_SERVICES_DRIVER         (EV_EFI_EVENT_BASE + 4)
-#define EV_EFI_RUNTIME_SERVICES_DRIVER      (EV_EFI_EVENT_BASE + 5)
-#define EV_EFI_GPT_EVENT                    (EV_EFI_EVENT_BASE + 6)
-#define EV_EFI_ACTION                       (EV_EFI_EVENT_BASE + 7)
-#define EV_EFI_PLATFORM_FIRMWARE_BLOB       (EV_EFI_EVENT_BASE + 8)
-#define EV_EFI_HANDOFF_TABLES               (EV_EFI_EVENT_BASE + 9)
-#define EV_EFI_SETUP_MODE                   (EV_EFI_EVENT_BASE + 0x0a)
-#define EV_EFI_PLATFORM_KEY                 (EV_EFI_EVENT_BASE + 0x0b)
-#define EV_EFI_KEY_EXCHANGE_KEY             (EV_EFI_EVENT_BASE + 0x0c)
-#define EV_EFI_AUTHORIZED_DB                (EV_EFI_EVENT_BASE + 0x0d)
-#define EV_EFI_FORBIDDEN_DBX                (EV_EFI_EVENT_BASE + 0x0e)
-#define EV_EFI_EXECUTION_INFO_TABLE         (EV_EFI_EVENT_BASE + 0x0f)
-
 #pragma pack (push)
 #pragma pack (1)
 
 //
 // TCG_PCClientEventStructure
 //
+#pragma pack (pop)
 
 //
 // Per the EFI Implementation
@@ -96,8 +71,6 @@ typedef struct _TPM_TRANSMIT_BUFFER
     VOID  *Buffer;
     UINTN Size;
 } TPM_TRANSMIT_BUFFER;
-
-#pragma pack (pop)
 
 //
 // Definitons of TPM commands

@@ -17,7 +17,6 @@
 "DptfAcpiTable\DDRTempLocalPart.asl"
 "DptfAcpiTable\DDRTempRemotePart.asl"
 "DptfAcpiTable\Dptf.asl"
-"Lpit\Lpit.aslc"
 "Madt\Madt.h"
 "SwitchableGraphics\Pch\SgDgpuPch.asl"
 "98_LINK.ASL"

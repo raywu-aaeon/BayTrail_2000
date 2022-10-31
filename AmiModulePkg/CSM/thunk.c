@@ -258,6 +258,9 @@ BOOLEAN FarCall86(
     // Mask all HW interrupts for real mode for CSM16 function #0 (InitializeYourself).
     // This is needed since IVT is not installed before executing function #0.
     //
+    // TODO: Explore the possibility of IVT installation from CSM32; in this case the
+    // code that is updating and using ProtectedIrqMask can be removed.
+    //
     if (IsCsm16Call && FuncNumber == 00 ) {
         gLegacy8259->GetMask(gLegacy8259, NULL, NULL, &ProtectedSaveIrqMask, NULL);      // Save current Mask
         ProtectedIrqMask = -1;

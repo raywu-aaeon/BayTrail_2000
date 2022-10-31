@@ -13,8 +13,6 @@ LIBRARY_CLASS = MinisetupBin
 LIB | MiniSetupLocal.lib
 [binaries.X64]
 LIB | MiniSetupLocalx64.lib
-[binaries.AARCH64]
-LIB | MiniSetupLocalAarch64.lib
 
 
 [Packages]
@@ -39,5 +37,5 @@ LIB | MiniSetupLocalAarch64.lib
   
 [BuildOptions]
 MSFT:*_*_*_CC_FLAGS = /DTSE_FOR_APTIO_4_50
-GCC:*_*_*_CC_FLAGS = -DTSE_FOR_APTIO_4_50  
+  
   

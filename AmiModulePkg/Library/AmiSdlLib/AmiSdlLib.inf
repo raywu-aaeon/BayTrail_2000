@@ -1,7 +1,7 @@
 #**********************************************************************
 #**********************************************************************
 #**                                                                  **
-#**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+#**        (C)Copyright 1985-2011, American Megatrends, Inc.         **
 #**                                                                  **
 #**                       All Rights Reserved.                       **
 #**                                                                  **
@@ -13,14 +13,14 @@
 #**********************************************************************
 
 ## @file
-#   This AMI SDL Data Manipulation Library
+#   This AMI PCI Express Lib
 ##
 
 [Defines]
   INF_VERSION                    = 0x00010005
   BASE_NAME                      = AmiSdlLib
   FILE_GUID                      = 2B61A427-84F4-462d-8965-A1B5B6D9ED93
-  MODULE_TYPE                    = DXE_DRIVER
+  MODULE_TYPE                    = BASE
   VERSION_STRING                 = 1.0
   LIBRARY_CLASS                  = AmiSdlLib
 #  CONSTRUCTOR                    = AmiSdlLibConstructor
@@ -36,6 +36,7 @@
 
 [Packages]
   MdePkg/MdePkg.dec
+  IntelFrameworkPkg/IntelFrameworkPkg.dec
   AmiModulePkg/AmiModulePkg.dec
   AmiCompatibilityPkg/AmiCompatibilityPkg.dec
 
@@ -47,4 +48,5 @@
   
 [LibraryClasses]
   AmiDxeLib
+  
   

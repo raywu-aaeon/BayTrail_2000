@@ -1,7 +1,7 @@
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2015, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2013, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **
@@ -14,14 +14,14 @@
 
 #include <Token.h>
 #include <AmiDxeLib.h>
-#include <Protocol/smiflash.h>
+#include <Protocol/SmiFlash.h>
 #include <Protocol/SmmCpu.h>
 #include <Protocol/SmmBase2.h>
 #include <Protocol/SmmSwDispatch2.h>
+//#include <Protocol/SmmSxDispatch2.h>
 #include <Protocol/SmmSxDispatch.h>
 #include <Protocol/DevicePath.h>
 #include <Protocol/LoadedImage.h>
-#include <Library/AmiBufferValidationLib.h>
 #include <AmiSmm.h>
 //PI 1.1 ++
 #include <Protocol/SmmAccess2.h>
@@ -57,26 +57,25 @@ EFI_GUID gFwCapFfsGuid          = AMI_FW_CAPSULE_FFS_GUID;
 static FLASH_UPD_POLICY FlUpdatePolicy = {FlashUpdatePolicy, BBUpdatePolicy};
 
 EFI_SHA256_HASH  *gHashTbl = NULL;
-UINT8             gHashDB[SHA256_DIGEST_SIZE];
-CRYPT_HANDLE      gpPubKeyHndl;
+UINT8     gHashDB[SHA256_DIGEST_SIZE];
+static CRYPT_HANDLE  gpPubKeyHndl;
 
 AMI_DIGITAL_SIGNATURE_PROTOCOL *gAmiSig;
 
 #if FWCAPSULE_RECOVERY_SUPPORT == 1
 extern EFI_GUID gEfiCapsuleVendorGuid;
-static EFI_PHYSICAL_ADDRESS  gpFwCapsuleMailbox     = 0;
-static UINTN                 gpFwCapsuleMailboxSize = 0;
-static CHAR16                gCapsuleNameBuffer[30];
+EFI_CAPSULE_BLOCK_DESCRIPTOR  *gpEfiCapsuleHdr    = NULL;
 #endif
 
-// Allocate the space in OS Reserved mem for new FW image to be uploaded by a Flash tool
-// Alternatively the buffer may be reserved within the SMM TSEG based on NEW_BIOS_MEM_ALLOC Token setting
-// AFU would have to execute a sequence of SW SMI calls to load new BIOS image to a reserved mem
-static EFI_PHYSICAL_ADDRESS gpFwCapsuleBuffer = 0;
-UINTN gFwCapMaxSize                           = 0;
+// BIOS allocates the space in AcpiNVS for new BIOS image to be uploaded by Flash tool
+// Alternatively the buffer may be reserved within the SMM TSEG. Check NEW_BIOS_MEM_ALLOC Token
+// AFU would have to execute a sequence of SW SMI calls to load new BIOS image to mem
+UINTN    gRomFileSize      = FWCAPSULE_IMAGE_SIZE;
+UINT32   *pFwCapsuleLowMem = NULL;
+APTIO_FW_CAPSULE_HEADER    *pFwCapsuleHdr;
 
-static EFI_SMRAM_DESCRIPTOR *mSmramRanges    = NULL;
-static UINTN                mSmramRangeCount = 0;
+static EFI_SMRAM_DESCRIPTOR *mSmramRanges;
+static UINTN                mSmramRangeCount;
 //----------------------------------------------------------------------
 // Flash Upd Protocol defines
 //----------------------------------------------------------------------
@@ -90,44 +89,35 @@ typedef EFI_STATUS (EFIAPI *FLASH_ERASE)(
 FLASH_PROTOCOL      *Flash;
 
 FLASH_READ_WRITE    pFlashWrite; // Original Ptr inside FlashAPI
-FLASH_READ_WRITE    pFlashUpdate;
 FLASH_ERASE         pFlashErase;
 
-// Global variable used to store the address of the start of the BIOS region in the flash part
-UINTN Flash4GBMapStart = (0xFFFFFFFF - FLASH_SIZE + 1);
+static   UINT32    Flash4GBMapStart;
 ROM_AREA *RomLayout = NULL;
 //----------------------------------------------------------------------
 
 //----------------------------------------------------------------------
 // UpFront Function definitions
-BOOLEAN SupportUpdateCapsuleReset (
-    VOID
-);
 EFI_STATUS CapsuleValidate (
     IN OUT UINT8     **pFwCapsule,
-    IN OUT APTIO_FW_CAPSULE_HEADER     **pFwCapsuleHdr
+    IN OUT APTIO_FW_CAPSULE_HEADER     **pFWCapsuleHdr
 );
+
 EFI_STATUS LoadFwImage(
-    IN OUT FUNC_BLOCK  *pFuncBlock
+    IN OUT FUNC_BLOCK   *pFuncBlock
 );
 EFI_STATUS GetFlUpdPolicy(
     IN OUT FLASH_POLICY_INFO_BLOCK  *InfoBlock
 );
 EFI_STATUS SetFlUpdMethod(
-    IN OUT FUNC_FLASH_SESSION_BLOCK  *pSessionBlock
-);
-EFI_STATUS SecureFlashWrite (
-    VOID* FlashAddress, UINTN Size, VOID* DataBuffer
-);
-EFI_STATUS SecureFlashUpdate (
-    VOID* FlashAddress, UINTN Size, VOID* DataBuffer
-);
-EFI_STATUS SecureFlashErase (
-    VOID* FlashAddress, UINTN Size
+    IN OUT FUNC_FLASH_SESSION_BLOCK    *pSessionBlock
 );
 EFI_STATUS FindCapHdrFFS(
     IN  VOID    *pCapsule,
-    OUT UINT8  **pFfsData
+    OUT UINT8 **pFfsData
+);
+BOOLEAN IsAddressInSmram (
+    IN EFI_PHYSICAL_ADDRESS  Buffer,
+    IN UINT64                Length
 );
 
 //----------------------------------------------------------------------
@@ -157,19 +147,12 @@ EFI_SEC_SMI_FLASH_PROTOCOL    SecSmiFlash = {
 
 #if FWCAPSULE_RECOVERY_SUPPORT == 1
 
-#if defined(CSLIB_WARM_RESET_SUPPORTED) 
-
-#if CSLIB_WARM_RESET_SUPPORTED == 1
-extern SBLib_ResetSystem( IN EFI_RESET_TYPE ResetType );
-#else
+#if CSLIB_WARM_RESET_SUPPORTED == 0
 
 //#if (defined x64_BUILD && x64_BUILD == 1)
 //VOID    flushcaches();
 void    DisableCacheInCR0();
 //#endif
-
-UINT8 ReadRtcIndexedRegister(IN UINT8 Index);
-VOID WriteRtcIndexedRegister(IN UINT8 Index, IN UINT8 Value);
 
 //<AMI_PHDR_START>
 //---------------------------------------------------------------------------
@@ -191,7 +174,7 @@ UINT8 ReadRtcIndexedRegister(IN UINT8 Index){
 
     UINT8 Byte = IoRead8(0x70) & 0x80;   // preserve bit 7
     IoWrite8(0x70, Index | Byte);
-    Byte = IoRead8(0x71);
+    Byte = IoRead8(0x71);              
     return Byte;
 }
 
@@ -335,43 +318,11 @@ VOID S3RTCresume (VOID)
 */
     IoWrite32(PM_BASE_ADDRESS + 0x04, IoData );
 }
-#endif // #if CSLIB_WARM_RESET_SUPPORTED
-#endif //#if defined(CSLIB_WARM_RESET_SUPPORTED) 
+//#else
+//extern SBLib_ResetSystem( IN EFI_RESET_TYPE ResetType );
+#endif
+extern SBLib_ResetSystem( IN EFI_RESET_TYPE ResetType );
 
-/**
- * Capsule NVRAM variables are owned by either the runtime Capsule Update service 
- * or by this driver. Each service must not override previously created instances 
- * of the variable and create a new one with n+1 index
- */
-CHAR16* GetLastFwCapsuleVariable()
-{
-    EFI_STATUS Status = EFI_SUCCESS;
-    UINTN Index = 0;
-    EFI_PHYSICAL_ADDRESS    IoData=0;
-    UINTN                   Size;
-
-    Swprintf_s(gCapsuleNameBuffer, 30, L"%s", EFI_CAPSULE_VARIABLE_NAME);
-    // get any NVRAM variable of the format L"CapsuleUpdateDataN" where N is an integer
-    while(!EFI_ERROR(Status)) {
-        if(Index > 0 )
-            Swprintf_s(gCapsuleNameBuffer, 30, L"%s%d", EFI_CAPSULE_VARIABLE_NAME, Index);
-        Size = sizeof(EFI_PHYSICAL_ADDRESS);
-        Status = pRS->GetVariable(  gCapsuleNameBuffer, &gEfiCapsuleVendorGuid,
-                                    NULL,
-                                    &Size, 
-                                    &IoData);
-        TRACE((TRACE_ALWAYS,"Get '%S' %r, %lX\n", gCapsuleNameBuffer, Status, IoData));
-        if(!EFI_ERROR(Status) && 
-           (IoData == gpFwCapsuleMailbox && 
-            !EFI_ERROR(AmiValidateSmramBuffer((VOID*)IoData, gpFwCapsuleMailboxSize)))
-        ) {
-            break;
-        }
-        Index++;
-    }
-
-    return gCapsuleNameBuffer;
-}
 
 //<AMI_PHDR_START>
 //---------------------------------------------------------------------------
@@ -386,8 +337,7 @@ CHAR16* GetLastFwCapsuleVariable()
 //========================================================================================
 //
 // Input:
-//    IN  EFI_HANDLE    DispatchHandle                   Handle of SMI dispatch
-//                                                       protocol
+//    IN  EFI_HANDLE    DispatchHandle                   Handle of SMI dispatch  protocol
 //    IN  EFI_SMM_SX_DISPATCH_CONTEXT* DispatchContext   Pointer to SMI dispatch
 //                                                       context structure
 //
@@ -399,59 +349,85 @@ CHAR16* GetLastFwCapsuleVariable()
 VOID SmiS5CapsuleCallback ( IN  EFI_HANDLE                    DispatchHandle,
                             IN  EFI_SMM_SX_DISPATCH_CONTEXT   *DispatchContext
 ){
-    EFI_PHYSICAL_ADDRESS    IoData;
-    UINTN                   Size=sizeof(UINTN); //CSP20130805
-    EFI_CAPSULE_HEADER     *CapsuleHeader;
+    EFI_PHYSICAL_ADDRESS      IoData;
+    UINTN       Size=sizeof(UINTN); //CSP20130805
+    EFI_CAPSULE_HEADER   *CapsuleHeader;
     EFI_CAPSULE_BLOCK_DESCRIPTOR *pCapsuleMailboxPtr;
-    AMI_FLASH_UPDATE_BLOCK  FlUpdateBlock;
 
-    TRACE((TRACE_ALWAYS,"SecSMI. S5 Trap\n"));
-    
-    //
-    //Check if the Capsule update is supported by platform policy
-    //
-    if (!SupportUpdateCapsuleReset()) 
-        return;
+//TRACE((TRACE_ALWAYS,"SecSMI. S5 Trap\n"));
 
-    Size = sizeof(AMI_FLASH_UPDATE_BLOCK);
-    if(EFI_ERROR(pRS->GetVariable(FLASH_UPDATE_VAR,&FlashUpdGuid, NULL, &Size, &FlUpdateBlock)) ||
-       FlUpdateBlock.FlashOpType != FlCapsule)
-        return;
+    Size=sizeof(EFI_PHYSICAL_ADDRESS);
+    if(pRS->GetVariable(
+           EFI_CAPSULE_VARIABLE_NAME, &gEfiCapsuleVendorGuid,
+            NULL, &Size, &IoData)==EFI_SUCCESS)
+    {     
+        // verify the FW capsule is in memory. May first check if pCapsuleMailboxPtr == IoData
+        pCapsuleMailboxPtr = (EFI_CAPSULE_BLOCK_DESCRIPTOR*)IoData;
+        CapsuleHeader = (EFI_CAPSULE_HEADER*)pCapsuleMailboxPtr[0].Union.DataBlock;
+        //
+        // Compare GUID with APTIO_FW_CAPSULE_GUID 
+        //
+        if (guidcmp (&CapsuleHeader->CapsuleGuid, &gFWCapsuleGuid))
+            return;
 
-    // verify the FW capsule mailbox is in SMRAM
-    Size = sizeof(EFI_PHYSICAL_ADDRESS);
-    if(EFI_ERROR(pRS->GetVariable(GetLastFwCapsuleVariable(), &gEfiCapsuleVendorGuid, NULL, &Size, &IoData)))
-        return;
-
-    if(IoData != gpFwCapsuleMailbox ||
-       EFI_ERROR(AmiValidateSmramBuffer((VOID*)IoData, gpFwCapsuleMailboxSize)))
-        return;
-    
-    pCapsuleMailboxPtr = (EFI_CAPSULE_BLOCK_DESCRIPTOR*)(UINTN)IoData;
-    CapsuleHeader = (EFI_CAPSULE_HEADER*)pCapsuleMailboxPtr[0].Union.DataBlock;
-    //
-    // Compare GUID with APTIO_FW_CAPSULE_GUID 
-    //
-    if (guidcmp (&CapsuleHeader->CapsuleGuid, &gFWCapsuleGuid))
-        return;
-
-    TRACE((TRACE_ALWAYS,"Enter warm reset...\n"));
-
-#if defined(CSLIB_WARM_RESET_SUPPORTED)
-    #if CSLIB_WARM_RESET_SUPPORTED == 1
-    DisableCacheInCR0(); //EIP127538
-    SBLib_ResetSystem(EfiResetWarm);
-    #else
-    S3RTCresume();
-    #endif
+#if CSLIB_WARM_RESET_SUPPORTED == 1
+        DisableCacheInCR0(); //EIP127538
+        SBLib_ResetSystem(EfiResetWarm);
+#else
+        S3RTCresume();
 #endif
-}
 
+    } 
+}
+/*
+VOID SmiS5CapsuleCallback ( IN  EFI_HANDLE                    DispatchHandle,
+                            IN  EFI_SMM_SX_DISPATCH_CONTEXT   *DispatchContext 
+){
+    EFI_STATUS          Status = EFI_DEVICE_ERROR;
+    UINTN       Size=sizeof(AMI_FLASH_UPDATE_BLOCK);
+    EFI_CAPSULE_HEADER   *CapsuleHeader;
+    AMI_FLASH_UPDATE_BLOCK FlUpdateBlock;
+
+    if(pRS->GetVariable(FLASH_UPDATE_VAR,&FlashUpdGuid, NULL, &Size, &FlUpdateBlock)==EFI_SUCCESS)
+    {     
+        // verify the FW capsule is in memory. May first check if pFlUpdateBlock == IoData
+        if(FlUpdateBlock->FlashUpdate & FlCapsule)
+            return;
+
+        CapsuleHeader = (EFI_CAPSULE_HEADER*)gpEfiCapsuleHdr[0].DataBlock;
+        //
+        // Compare GUID with APTIO_FW_CAPSULE_GUID 
+        //
+        if (guidcmp (&CapsuleHeader->CapsuleGuid, &gFWCapsuleGuid))
+            return;
+
+        // SMM variant of EFI Var Service
+        Attributes = EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_RUNTIME_ACCESS | EFI_VARIABLE_BOOTSERVICE_ACCESS;
+        Status = pRS->SetVariable (
+             CAPSULE_UPDATE_VAR,  
+             &CapsuleVendorGuid,     
+             Attributes,  
+             sizeof (EFI_PHYSICAL_ADDRESS), 
+             (VOID *) &gpEfiCapsuleHdr);
+
+        if(EFI_ERROR(Status))
+            return;
+    );
+
+#if CSLIB_WARM_RESET_SUPPORTED == 1
+        SBLib_ResetSystem(EfiResetWarm);
+#else
+        S3RTCresume();
+#endif
+
+    } 
+}
+*/
 //<AMI_PHDR_START>
 //----------------------------------------------------------------------------
 // Procedure:    SupportUpdateCapsuleReset
 //
-// Description:  This function returns platform policy capability for capsule update via a system reset.
+// Description:  This function returns if the platform supports update capsule across a system reset.
 //
 // Input:        None
 //
@@ -462,7 +438,8 @@ VOID SmiS5CapsuleCallback ( IN  EFI_HANDLE                    DispatchHandle,
 //<AMI_PHDR_END>
 BOOLEAN SupportUpdateCapsuleReset (
     VOID
-){
+)
+{
   //
   //If the platform has a way to guarantee the memory integrity across a system reset, return 
   //TRUE, else FALSE. 
@@ -473,6 +450,7 @@ BOOLEAN SupportUpdateCapsuleReset (
 
     return FALSE;
 }
+
 
 //<AMI_PHDR_START>
 //----------------------------------------------------------------------------
@@ -490,42 +468,48 @@ BOOLEAN SupportUpdateCapsuleReset (
 //----------------------------------------------------------------------------
 //<AMI_PHDR_END>
 EFI_STATUS UpdateCapsule (
-    IN FUNC_FLASH_SESSION_BLOCK *pSessionBlock,
-    IN APTIO_FW_CAPSULE_HEADER  *pFwCapsuleHdr
+    IN FUNC_FLASH_SESSION_BLOCK *pSessionBlock
 ){
+    EFI_STATUS          Status;
     EFI_CAPSULE_BLOCK_DESCRIPTOR *pCapsuleMailboxPtr;
-    UINT32              Attributes;
-    CHAR16             *EfiFwCapsuleVarName = NULL;
-
-    //
-    //Check if the platform supports update capsule across a system reset
-    //
-    if (!SupportUpdateCapsuleReset()) {
-        return EFI_UNSUPPORTED;
-    }
+    UINT32              Attributes ;
     //
     //Compare GUID with APTIO_FW_CAPSULE_GUID 
     //
-    if (!pFwCapsuleHdr || guidcmp (&pFwCapsuleHdr->CapHdr.CapsuleGuid, &gFWCapsuleGuid))
-        return EFI_DEVICE_ERROR; 
+    if (!guidcmp (&pFwCapsuleHdr->CapHdr.CapsuleGuid, &gFWCapsuleGuid)
+    ){
+        pCapsuleMailboxPtr = gpEfiCapsuleHdr;
+        pCapsuleMailboxPtr[0].Length = pFwCapsuleHdr->CapHdr.HeaderSize;
+        pCapsuleMailboxPtr[0].Union.DataBlock = (EFI_PHYSICAL_ADDRESS)pFwCapsuleHdr;
+        pCapsuleMailboxPtr[1].Length = pFwCapsuleHdr->CapHdr.CapsuleImageSize-pFwCapsuleHdr->CapHdr.HeaderSize;
+        if((UINT32*)pFwCapsuleLowMem == (UINT32*)pFwCapsuleHdr) {
+        // Fw Cap Hdr is on top of Payload
 
-    pCapsuleMailboxPtr = (EFI_CAPSULE_BLOCK_DESCRIPTOR*)(UINTN)gpFwCapsuleMailbox;
-    pCapsuleMailboxPtr[0].Length = pFwCapsuleHdr->CapHdr.HeaderSize;
-    pCapsuleMailboxPtr[0].Union.DataBlock = (EFI_PHYSICAL_ADDRESS)(UINTN)pFwCapsuleHdr;
+            pCapsuleMailboxPtr[1].Union.DataBlock = pCapsuleMailboxPtr[0].Union.DataBlock+pCapsuleMailboxPtr[0].Length;
+        } else {
+        // Fw Cap Hdr is embedded inside Payload
+            pCapsuleMailboxPtr[1].Union.DataBlock = (EFI_PHYSICAL_ADDRESS)pFwCapsuleLowMem;
+        }
+        pCapsuleMailboxPtr[2].Length = 0;
+        pCapsuleMailboxPtr[2].Union.DataBlock = 0;
+        //
+        //Check if the platform supports update capsule across a system reset
+        //
+        if (!SupportUpdateCapsuleReset()) {
+            return EFI_UNSUPPORTED;
+        }
+        // SMM variant of EFI Var Service
+        Attributes = EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_RUNTIME_ACCESS | EFI_VARIABLE_BOOTSERVICE_ACCESS;
+        Status = pRS->SetVariable (
+             EFI_CAPSULE_VARIABLE_NAME, &gEfiCapsuleVendorGuid,
+             Attributes,  
+             sizeof(EFI_PHYSICAL_ADDRESS),
+            (VOID*)&pCapsuleMailboxPtr); 
 
-    pCapsuleMailboxPtr[1].Length = pFwCapsuleHdr->CapHdr.CapsuleImageSize-pFwCapsuleHdr->CapHdr.HeaderSize;
-    pCapsuleMailboxPtr[1].Union.DataBlock = (EFI_PHYSICAL_ADDRESS)(UINTN)SecSmiFlash.pFwCapsule;
-
-    pCapsuleMailboxPtr[2].Length = 0;
-    pCapsuleMailboxPtr[2].Union.DataBlock = 0;
-
-    EfiFwCapsuleVarName = GetLastFwCapsuleVariable();
-    Attributes = EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_RUNTIME_ACCESS | EFI_VARIABLE_BOOTSERVICE_ACCESS;
-    // Erase prev Var copy
-    pRS->SetVariable ( EfiFwCapsuleVarName, &gEfiCapsuleVendorGuid, 0, 0, NULL);
-    if(!EFI_ERROR(pRS->SetVariable ( EfiFwCapsuleVarName, &gEfiCapsuleVendorGuid, Attributes, sizeof(EFI_PHYSICAL_ADDRESS),(VOID*)&gpFwCapsuleMailbox)))
-        return EFI_SUCCESS;
-
+        if(!EFI_ERROR(Status))
+            return Status;
+    }
+ 
     return EFI_DEVICE_ERROR;
 }
 
@@ -542,7 +526,7 @@ EFI_STATUS UpdateCapsule (
 //  IN UINTN CapsuleCount - number of capsule
 //  IN EFI_PHYSICAL_ADDRESS ScatterGatherList - physical address of datablock list points to capsule
 //
-// Output:      EFI_SUCCESS - capsule processed successfully
+// Output:        EFI_SUCCESS - capsule processed successfully
 //              EFI_INVALID_PARAMETER - CapsuleCount is less than 1,CapsuleGuid is not supported
 //              EFI_DEVICE_ERROR - capsule processing failed
 //
@@ -551,17 +535,17 @@ EFI_STATUS UpdateCapsule (
 EFI_STATUS SetFlashUpdateVar (
     IN FUNC_FLASH_SESSION_BLOCK    *pSessionBlock
 ){
-    UINTN               Size;
-    UINT32              CounterHi;
+    EFI_STATUS          Status = EFI_DEVICE_ERROR;
+    UINTN               Size=0;
+    UINT32              CounterHi = 0;
 
     if(pSessionBlock->FlUpdBlock.FlashOpType == FlRecovery &&
         pSessionBlock->FlUpdBlock.FwImage.AmiRomFileName[0] == 0
     )
-        return EFI_DEVICE_ERROR;
+        return Status;//EFI_DEVICE_ERROR;
 
-    CounterHi = 0;
+// Better yet - get EFI_TIME
     Size = sizeof(UINT32);
-// MonotonicCounter is a boot time service, hence the variable may have restricted access in runtime
     if(EFI_ERROR(pRS->GetVariable(L"MonotonicCounter", &gAmiGlobalVariableGuid,
                   NULL, &Size, &CounterHi))
     )
@@ -573,10 +557,15 @@ EFI_STATUS SetFlashUpdateVar (
     CounterHi = (EFI_VARIABLE_NON_VOLATILE |
         EFI_VARIABLE_RUNTIME_ACCESS |
         EFI_VARIABLE_BOOTSERVICE_ACCESS);
-    // Erase prev copy
-    pRS->SetVariable ( FLASH_UPDATE_VAR, &FlashUpdGuid,0,0,NULL); 
-    if(!EFI_ERROR(pRS->SetVariable ( FLASH_UPDATE_VAR, &FlashUpdGuid, CounterHi,
-                  sizeof(AMI_FLASH_UPDATE_BLOCK), (VOID*) &pSessionBlock->FlUpdBlock )))
+    Status = pRS->SetVariable (
+        FLASH_UPDATE_VAR,
+        &FlashUpdGuid,
+        CounterHi,
+        sizeof(AMI_FLASH_UPDATE_BLOCK),
+        (VOID*) &pSessionBlock->FlUpdBlock
+    );
+
+    if(!EFI_ERROR(Status))
         return EFI_SUCCESS;
 
     return EFI_DEVICE_ERROR;
@@ -604,7 +593,7 @@ EFI_STATUS GetFlUpdPolicy(
 
 //TRACE((TRACE_ALWAYS,"SecSMI. GetPolicy. %X_%X\n",FlUpdatePolicy.FlashUpdate, FlUpdatePolicy.BBUpdate));
 
-    if(EFI_ERROR(AmiValidateMemoryBuffer(InfoBlock, sizeof(FLASH_POLICY_INFO_BLOCK))))
+    if(IsAddressInSmram((EFI_PHYSICAL_ADDRESS)InfoBlock, sizeof(FLASH_POLICY_INFO_BLOCK)))
         return EFI_DEVICE_ERROR;
 
     MemCpy(&InfoBlock->FlUpdPolicy, &FlUpdatePolicy, sizeof(FLASH_UPD_POLICY));
@@ -635,20 +624,18 @@ EFI_STATUS SetFlUpdMethod(
     IN OUT FUNC_FLASH_SESSION_BLOCK    *pSessionBlock
 )
 {
-    EFI_STATUS          Status;
+    EFI_STATUS          Status = EFI_DEVICE_ERROR;
 #if RUNTIME_SECURE_UPDATE_FLOW == 1
     UINT32              HashBlock;
     UINT32              BlockSize;
     UINT8              *BlockAddr;
 #endif
     UINT32             *FSHandl;
-    APTIO_FW_CAPSULE_HEADER    *pFwCapsuleHdr;
 
 //TRACE((TRACE_ALWAYS,"SecSMI. SetFlash\nSize     : %X\n",pSessionBlock->FlUpdBlock.ImageSize));
-    Status = EFI_DEVICE_ERROR;
 
-    if(EFI_ERROR(AmiValidateMemoryBuffer(pSessionBlock, sizeof(FUNC_FLASH_SESSION_BLOCK))))
-        return Status;
+    if(IsAddressInSmram((EFI_PHYSICAL_ADDRESS)pSessionBlock, sizeof(FUNC_FLASH_SESSION_BLOCK)))
+        return EFI_DEVICE_ERROR;
 
 //if(pSessionBlock->FlUpdBlock.FlashOpType == FlRecovery)
 //TRACE((TRACE_ALWAYS,"File Name: %s\n",pSessionBlock->FlUpdBlock.FwImage.AmiRomFileName));
@@ -659,10 +646,11 @@ EFI_STATUS SetFlUpdMethod(
 //TRACE((TRACE_ALWAYS,"FlOpType : %X\n",pSessionBlock->FlUpdBlock.FlashOpType));
 // Verify if chosen Flash method is compatible with FlUpd Policy
     if(((pSessionBlock->FlUpdBlock.ROMSection & (1<<BOOT_BLOCK)) && (pSessionBlock->FlUpdBlock.FlashOpType & FlUpdatePolicy.BBUpdate)) || 
-      (!(pSessionBlock->FlUpdBlock.ROMSection & (1<<BOOT_BLOCK)) && (pSessionBlock->FlUpdBlock.FlashOpType & FlUpdatePolicy.FlashUpdate))
+      (!(pSessionBlock->FlUpdBlock.ROMSection & (1<<BOOT_BLOCK))&& (pSessionBlock->FlUpdBlock.FlashOpType & FlUpdatePolicy.FlashUpdate))
     ){
 
-//TRACE((TRACE_ALWAYS,"Buff Adr : %lX\nBuff Size: %X\n",gpFwCapsuleBuffer, gFwCapMaxSize));
+//TRACE((TRACE_ALWAYS,"Buff Adr : %X\nBuff Size: %X\n",pFwCapsuleLowMem, gRomFileSize));
+
 //!!! make sure Flash blocks BOOT_BLOCK, MAIN_, NV_ and EC_ are matching enum types in FlashUpd.h
         // Get Flash Update mode   
         switch(pSessionBlock->FlUpdBlock.FlashOpType)
@@ -671,40 +659,30 @@ EFI_STATUS SetFlUpdMethod(
             case FlCapsule:
 #endif
             case FlRuntime:
-               //  common for FlRuntime or Capsule
+            //  common for FlRuntime or Capsule
+                if(pSessionBlock->FlUpdBlock.ImageSize > gRomFileSize)
+                    break; // suspecting buffer overrun. 
 
-                SecSmiFlash.pFwCapsule = (UINT32*)gpFwCapsuleBuffer;
+                SecSmiFlash.pFwCapsule = pFwCapsuleLowMem;
                 // AFU updates the address in CapsuleMailboxPtr if 
                 // it's capable of allocating large buffer to load entire FW Capsule image
                 if(pSessionBlock->FlUpdBlock.FwImage.CapsuleMailboxPtr[0] != 0 )
                 {
-                    if(EFI_ERROR(AmiValidateMemoryBuffer((VOID*)(pSessionBlock->FlUpdBlock.FwImage.CapsuleMailboxPtr[0]),
-                                                          pSessionBlock->FlUpdBlock.ImageSize)))
-                        break;
-
-                    if(SecSmiFlash.pFwCapsule != NULL) {
-
-                        if(pSessionBlock->FlUpdBlock.ImageSize > gFwCapMaxSize)
-                           break; // suspecting buffer overrun
-
-                        MemCpy((VOID*)SecSmiFlash.pFwCapsule, 
-                               (VOID*)pSessionBlock->FlUpdBlock.FwImage.CapsuleMailboxPtr[0],
-                                pSessionBlock->FlUpdBlock.ImageSize);
-
-                    } else {
+#if NEW_BIOS_MEM_ALLOC != 2
+                    if(SecSmiFlash.pFwCapsule != NULL)
+                        MemCpy((UINT8*)SecSmiFlash.pFwCapsule,
+                            (UINT8*)pSessionBlock->FlUpdBlock.FwImage.CapsuleMailboxPtr[0],
+                            pSessionBlock->FlUpdBlock.ImageSize);
+                    else
+#endif
                         SecSmiFlash.pFwCapsule = (UINT32*)pSessionBlock->FlUpdBlock.FwImage.CapsuleMailboxPtr[0];
-                    }
                 } 
                 // else AFU must've uploaded the image to designated SMM space using LoadFw command
-//TRACE((TRACE_ALWAYS,"SecSmiFlash.pFwCapsule : %X\n",SecSmiFlash.pFwCapsule));
-                if(SecSmiFlash.pFwCapsule == NULL)
-                    break;
-                // verify we got a capsule at SecSmiFlash.pFwCapsule, update pointers to FwCapHdr and to start of a Payload
+
+// verify we got a capsule at pFwCapsuleLowMem, update a ptr to FwCapHdr within Payload image
                 Status = CapsuleValidate((UINT8**)&(SecSmiFlash.pFwCapsule), &pFwCapsuleHdr);
-                if(EFI_ERROR(Status) || pFwCapsuleHdr == NULL)
-                    break;
-                // capture RomLayout from new Secure Image if it's loaded in memory and validated
-                SecSmiFlash.RomLayout = (ROM_AREA *)(UINTN)((UINTN)pFwCapsuleHdr+pFwCapsuleHdr->RomLayoutOffset);
+                if(EFI_ERROR(Status)) break;
+
                 if(pSessionBlock->FlUpdBlock.FlashOpType == FlRuntime)
                 {
 #if RUNTIME_SECURE_UPDATE_FLOW == 1
@@ -726,7 +704,7 @@ EFI_STATUS SetFlUpdMethod(
             // Set Capsule EFI Var if Capsule(Verify Capsule Mailbox points to FW_CAPSULE) 
                 pSessionBlock->FlUpdBlock.ImageSize = pFwCapsuleHdr->CapHdr.CapsuleImageSize;
 #if FWCAPSULE_RECOVERY_SUPPORT == 1
-                Status = UpdateCapsule (pSessionBlock, pFwCapsuleHdr);
+                Status = UpdateCapsule (pSessionBlock);
                 if(EFI_ERROR(Status)) break;
 #endif
             //  common for Recovery or Capsule
@@ -747,7 +725,6 @@ EFI_STATUS SetFlUpdMethod(
         SecSmiFlash.RomLayout = RomLayout; // back to default RomLayout
         pSessionBlock->FSHandle  = 0;
         pSessionBlock->ErrorCode = 1;
-
         return EFI_DEVICE_ERROR;
     }
     // FSHandle is updated if Capsule validation passed.
@@ -755,6 +732,9 @@ EFI_STATUS SetFlUpdMethod(
     //  SetMethod is called with new Image
     FSHandl = (UINT32*)gHashTbl;
     SecSmiFlash.FSHandle = *FSHandl; // should be unique per Capsule;
+    SecSmiFlash.pFwCapsule = SecSmiFlash.pFwCapsule; // may be changed 
+    // use RomLayout from new Secure Image if it's loaded in memory and validated
+    SecSmiFlash.RomLayout = (ROM_AREA *)(UINTN)((UINT32)pFwCapsuleHdr+pFwCapsuleHdr->RomLayoutOffset);
     pSessionBlock->FSHandle  = SecSmiFlash.FSHandle;
     pSessionBlock->ErrorCode = 0;
 
@@ -783,35 +763,38 @@ EFI_STATUS LoadFwImage(
     IN OUT FUNC_BLOCK   *pFuncBlock
 )
 {
-    if(gpFwCapsuleBuffer == 0 || pFuncBlock == NULL)
+    if(IsAddressInSmram((EFI_PHYSICAL_ADDRESS)pFuncBlock, sizeof(FUNC_BLOCK)))
         return EFI_DEVICE_ERROR;
+
+//    if(IsAddressInSmram((EFI_PHYSICAL_ADDRESS)pFuncBlock->BufAddr, sizeof(EFI_PHYSICAL_ADDRESS)))
+//        return EFI_DEVICE_ERROR;
 
     pFuncBlock->ErrorCode = 1;
-    
-//TRACE((TRACE_ALWAYS,"SecSMI. LoadImage at %lX\n",(UINTN)gpFwCapsuleBuffer + pFuncBlock->BlockAddr));
-    if(EFI_ERROR(AmiValidateMemoryBuffer(pFuncBlock, sizeof(FUNC_BLOCK))))
-        return EFI_DEVICE_ERROR;
-
-    // prevent leaking of the SMM code to the external buffer
-    if(EFI_ERROR(AmiValidateMemoryBuffer((VOID*)(pFuncBlock->BufAddr), pFuncBlock->BlockSize)))
-        return EFI_DEVICE_ERROR;
-
-// assuming the address in 0 based offset in new ROM image
-    if(((UINT64)pFuncBlock->BlockAddr + pFuncBlock->BlockSize) > (UINT64)gFwCapMaxSize)
-        return EFI_DEVICE_ERROR;
-
     SecSmiFlash.FSHandle = 0; // clear out Hndl. Will be set to valid number in SetFlashMethod
     SecSmiFlash.pFwCapsule = NULL;
     SecSmiFlash.RomLayout = RomLayout; // back to default RomLayout
 
-    MemCpy((VOID*)((UINTN)gpFwCapsuleBuffer+pFuncBlock->BlockAddr), 
-            (VOID*)pFuncBlock->BufAddr, pFuncBlock->BlockSize);
+//TRACE((TRACE_ALWAYS,"SecSMI. LoadImage at %X\n",(UINT32)pFwCapsuleLowMem + pFuncBlock->BlockAddr));
+
+    if(pFwCapsuleLowMem == NULL) 
+        return EFI_DEVICE_ERROR;
+
+// assuming the address in 0 based offset in new ROM image
+    if(((UINT32)pFwCapsuleLowMem + pFuncBlock->BlockAddr + pFuncBlock->BlockSize) >
+       ((UINT32)pFwCapsuleLowMem + gRomFileSize)
+    )
+        return EFI_DEVICE_ERROR;
+
+    MemCpy((VOID*)((UINT32)pFwCapsuleLowMem+pFuncBlock->BlockAddr), 
+            (UINT8*)pFuncBlock->BufAddr, pFuncBlock->BlockSize);
 
     pFuncBlock->ErrorCode = (UINT8)MemCmp(
-        (VOID*)((UINTN)gpFwCapsuleBuffer+pFuncBlock->BlockAddr), 
-        (VOID*)pFuncBlock->BufAddr, pFuncBlock->BlockSize)==0?0:1;
+        (VOID*)((UINT32)pFwCapsuleLowMem+pFuncBlock->BlockAddr), 
+        (VOID*)pFuncBlock->BufAddr, pFuncBlock->BlockSize);
 
-    return (pFuncBlock->ErrorCode==0)?EFI_SUCCESS:EFI_DEVICE_ERROR;
+    pFuncBlock->ErrorCode = 0;
+
+    return EFI_SUCCESS;
 }
 // End Secured Flash Update API
 
@@ -823,7 +806,7 @@ EFI_STATUS LoadFwImage(
 //
 // Description: Verifies if the Update range is protected by Signature
 //              1. return Success if flash region is inside unSigned RomArea
-//              2. if region is signed - compare its hash with pre-calculated Hash in smm
+//              2. if region is signed - verify range against internal the Hash
 //                  and return pointer to internal DataBuffer
 //
 // Input:
@@ -846,25 +829,18 @@ EFI_STATUS BeforeSecureUpdate (
     UINTN       PageCount;
     UINT32      *FSHandl;
 
-    // enforce write protection if RomArea undefined
-    // Always use embedded RomLayout to enforce static Rom Hole locations in new ROM image
-    if ( RomLayout == NULL )
-        Status = EFI_WRITE_PROTECTED;
+    FSHandl = (UINT32*)gHashTbl;
 
-    for (Area = RomLayout; Area && Area->Size!=0; Area++)
+    Area = SecSmiFlash.RomLayout;
+
+    if ( Area == NULL )
+        return EFI_WRITE_PROTECTED;
+
+    for (; Area && Area->Size!=0; Area++)
     {
-        if(Area->Address == 0) // construct an Address field if not initialized
-            Area->Address = (UINT64)Flash4GBMapStart + Area->Offset;
-//TRACE((-1, "RomArea %8X(%8X) + Size %8X = %8X, Attr %X\n",Area->Address, Area->Offset, Area->Size, Area->Address+Area->Size, Area->Attributes));
-        if( ((UINTN)FlashAddress >= Area->Address && 
-             (UINTN)FlashAddress  < (Area->Address+Area->Size))
-             ||
-             (Area->Address >= (UINTN)FlashAddress && 
-              Area->Address  < ((UINT64)(UINTN)FlashAddress + Size)) )
+        if(((EFI_PHYSICAL_ADDRESS)(UINTN)FlashAddress >= Area->Address) && 
+           ((EFI_PHYSICAL_ADDRESS)(UINTN)FlashAddress+Size) <= (Area->Address+Area->Size))
         {
-//TRACE((-1, "\nSignAttr %x(%x)\nRomArea %lX, Size %8X, (%lX)\nFlsAddr %lX, Size %8X, (%lX)\n", Area->Attributes, (Area->Attributes & ROM_AREA_FV_SIGNED),
-//        Area->Address, Area->Size, Area->Address+Area->Size, 
-//        (UINTN)FlashAddress, Size, (UINT64)(UINTN)FlashAddress+Size));
             if (Area->Attributes & ROM_AREA_FV_SIGNED)
             {
                 Status = EFI_WRITE_PROTECTED;
@@ -872,63 +848,59 @@ EFI_STATUS BeforeSecureUpdate (
             }
         }
     }
-//    TRACE((-1, "%r FlashAdddr %8lx(%8X), sz %X\n",Status, FlashAddress, (UINTN)FlashAddress-Flash4GBMapStart, Size));
-//if(Status != EFI_WRITE_PROTECTED) {
-//    TRACE((-1, "Spi range %08lX : %08lX - %08lX\n", FlashAddress, (UINTN)FlashAddress-Flash4GBMapStart, (UINTN)FlashAddress-Flash4GBMapStart+Size));
-//}
     if(Status == EFI_WRITE_PROTECTED &&
         (FlUpdatePolicy.FlashUpdate & FlRuntime)
     ){
         // check Verify status by comparing FSHandl with gHashTbl[0]
         // should be unique per Capsule;
-        FSHandl = (UINT32*)gHashTbl;
-        if(SecSmiFlash.pFwCapsule == NULL ||
-           SecSmiFlash.FSHandle == 0 || 
+        if(SecSmiFlash.FSHandle == 0 || 
            SecSmiFlash.FSHandle != *FSHandl)
             return Status; // EFI_WRITE_PROTECTED
 
         PageSize = FLASH_BLOCK_SIZE;
         PageCount=( (UINTN)FlashAddress - Flash4GBMapStart) / PageSize;
-        // Flash Write -> Update ptr to internal Acpi NVS or SMM Buffer
-        BuffAddr = (UINT8*)SecSmiFlash.pFwCapsule;
-        PageAddr = (UINT8*)((UINTN)BuffAddr + (PageSize * PageCount));
-        BuffAddr = (UINT8*)((UINTN)BuffAddr + ((UINTN)FlashAddress - Flash4GBMapStart));
-//TRACE((-1, "Page %2d, PageAddr=%x, WriteBuff=%8X(%8X), Size=%x\n", PageCount, PageAddr, BuffAddr, *((UINT32*)BuffAddr), Size));
-        Status = EFI_SUCCESS;
-        HashCounter = 2; // addr may rollover to next flash page
-        while(HashCounter-- && PageCount < SEC_FLASH_HASH_TBL_BLOCK_COUNT)
-        { 
-            // compare calculated block hash with corresponding hash from the Hw Hash Table
-            // if no match -> make Size=0 to skip Flash Write Op
-            Status = gAmiSig->Hash(gAmiSig, &gEfiHashAlgorithmSha256Guid, 
-                1, (const UINT8**)&PageAddr, (const UINTN*)&PageSize, gHashDB); 
-            if(EFI_ERROR(Status) || 
-                MemCmp(gHashDB, SecSmiFlash.HashTbl[PageCount], SHA256_DIGEST_SIZE)
-            ){   
-//TRACE((-1, "Hash Err!\nPage %2d, PageAddr=%x, WriteBuff=%8X(%8X), Size=%x\n", PageCount, PageAddr, BuffAddr, *((UINT32*)BuffAddr), Size));
-                return EFI_WRITE_PROTECTED;
+
+        if(SecSmiFlash.pFwCapsule != NULL)
+        {
+            // Flash Write -> Update ptr to internal Acpi NVS or SMM Buffer
+            BuffAddr = (UINT8*)SecSmiFlash.pFwCapsule;
+            PageAddr = (UINT8*)((UINTN)BuffAddr + (PageSize * PageCount));
+            BuffAddr = (UINT8*)((UINTN)BuffAddr + ((UINTN)FlashAddress - Flash4GBMapStart));
+
+            Status = EFI_SUCCESS;
+            HashCounter = 2; // addr may rollover to next flash page
+            while(HashCounter-- && PageCount < SEC_FLASH_HASH_TBL_BLOCK_COUNT)
+            { 
+                // compare calculated block hash with corresponding hash from the Hw Hash Table
+                // if no match -> make Size=0 to skip Flash Write Op
+                Status = gAmiSig->Hash(gAmiSig, &gEfiHashAlgorithmSha256Guid, 
+                    1, (const UINT8**)&PageAddr, (const UINTN*)&PageSize, gHashDB); 
+                if(EFI_ERROR(Status) || 
+                    MemCmp(gHashDB, SecSmiFlash.HashTbl[PageCount], SHA256_DIGEST_SIZE)
+                ){   
+                    //TRACE((-1, "Hash Err! FlashBuff = %8X, Data = %8X, BlockAddr=%x, BlockSize=%x\n", BuffAddr, *((UINT32*)BuffAddr), PageAddr, Size));
+                    return EFI_WRITE_PROTECTED;
+                }
+                // repeat Hash check on next Flash Block if Write Block overlaps the Flash Block boundary
+                PageCount++;
+                PageAddr = (UINT8*)((UINTN)PageAddr + PageSize);
+                if((BuffAddr+Size) <= PageAddr)
+                    break;
             }
-            // repeat Hash check on next Flash Block if Write Block overlaps the Flash Block boundary
-            PageCount++;
-            PageAddr = (UINT8*)((UINTN)PageAddr + PageSize);
-//TRACE((-1, "Page %2d, PageAddr=%x\n", PageCount, PageAddr));
-            if(PageAddr >= (BuffAddr+Size))
-                break;
-        }
-        // not Erase ?
-        if(DataBuffer != NULL)
-            *DataBuffer = BuffAddr;
+            // Erase 
+            if(DataBuffer != NULL)
+                *DataBuffer = BuffAddr;
+        }            
     }
 
     return Status;
 }
-
 // <AMI_PHDR_START>
 //----------------------------------------------------------------------------
 //
 // Name: SecureFlashWrite
 //
-// Description: Allows to write to flash device if Secure Capsule is loaded into memory
+// Description: Allows to write to flash device is Secure Capsule is loaded into memory
 //              Function replacing Flash->Write API call
 //
 // Input:       VOID* FlashAddress, UINTN Size, VOID* DataBuffer
@@ -943,42 +915,13 @@ EFI_STATUS SecureFlashWrite (
 )
 {
     EFI_STATUS  Status;
-    UINT8       *CurrBuff = (UINT8*)DataBuffer;
+    UINT8       *CurrBuff;
 
+    CurrBuff = (UINT8*)DataBuffer;
     Status = BeforeSecureUpdate(FlashAddress, Size, &CurrBuff);
-//    TRACE((-1, "SecSMIFlash: Write %r, FlshAddr=%X(%X), BuffAddr=%X, OrgBuff=%X\n", Status, FlashAddress, Size, CurrBuff, DataBuffer));
+//TRACE((-1, "SecSMIFlash Write %X, BuffAddr=%X(%X) Lock Status=%r\n", FlashAddress, DataBuffer, CurrBuff, Status));
     if(!EFI_ERROR(Status))
         return pFlashWrite(FlashAddress, Size, CurrBuff);
-
-    return Status;
-}
-
-// <AMI_PHDR_START>
-//----------------------------------------------------------------------------
-//
-// Name: SecureFlashupdate
-//
-// Description: Allows to update flash device if Secure Capsule is loaded into memory
-//              Function replacing Flash->Write API call
-//
-// Input:       VOID* FlashAddress, UINTN Size, VOID* DataBuffer
-// 
-//
-// Output:      EFI_SUCCESS
-//
-//--------------------------------------------------------------------------
-// <AMI_PHDR_END>
-EFI_STATUS SecureFlashUpdate (
-    VOID* FlashAddress, UINTN Size, VOID* DataBuffer
-)
-{
-    EFI_STATUS  Status;
-    UINT8       *CurrBuff = (UINT8*)DataBuffer;
-
-    Status = BeforeSecureUpdate(FlashAddress, Size, &CurrBuff);
-//TRACE((-1, "SecSMIFlash: Update %r, FlshAddr=%X(%X), BuffAddr=%X, OrgBuff=%X\n", Status, FlashAddress, Size, CurrBuff, DataBuffer));
-    if(!EFI_ERROR(Status))
-        return pFlashUpdate(FlashAddress, Size, CurrBuff);
 
     return Status;
 }
@@ -1005,11 +948,11 @@ EFI_STATUS SecureFlashErase (
     EFI_STATUS  Status;
 
     Status = BeforeSecureUpdate(FlashAddress, Size, NULL);
-//TRACE((-1, "SecSMIFlash Erase %r, FlshAddr=%X(%X)\n", Status, FlashAddress, Size));
+//TRACE((-1, "SecSMIFlash Erase %X - %X Lock Status=%r\n", FlashAddress, Size, Status));
     if(!EFI_ERROR(Status)) 
         return pFlashErase(FlashAddress, Size);
 
-    return Status;
+    return Status;//EFI_SUCCESS;
 }
 
 //**********************************************************************
@@ -1017,7 +960,7 @@ EFI_STATUS SecureFlashErase (
 //
 // Procedure:  GetFwCapFfs
 //
-// Description:    Loads binary from RAW section of X firmware volume
+// Description:    Loads binary from RAW section of X firwmare volume
 //
 //  Input:
 //               NameGuid  - The guid of binary file
@@ -1118,23 +1061,22 @@ EFI_STATUS GetRomLayout(
     UINT8*  pFwCapHdr=NULL;
 
 // 1. Try to locate RomLayout from embedded CapHdr Ffs 
+    //Locate from Ffs or install the Hob in SecureFlashDxe.c
     Status = GetFwCapFfs(&gFwCapFfsGuid, &pFwCapHdr, &Size);
     if(!EFI_ERROR(Status)) 
     {
         // Skip over Section GUID
-        FwCapHdr = (APTIO_FW_CAPSULE_HEADER*)((UINTN)pFwCapHdr + sizeof (EFI_GUID));
+        FwCapHdr = (APTIO_FW_CAPSULE_HEADER*)pFwCapHdr;
+        (UINT8*)FwCapHdr += sizeof (EFI_GUID);
         Size -= sizeof (EFI_GUID);
-        *RomLayout = (ROM_AREA *)((UINTN)FwCapHdr+FwCapHdr->RomLayoutOffset);
+        *RomLayout = (ROM_AREA *)(UINTN)((UINT32)FwCapHdr+FwCapHdr->RomLayoutOffset);
+        TRACE((-1, "Get Rom Map from the FwCap FFS at %X(size 0x%X)\nRomLayout offs %X\n", FwCapHdr, Size, FwCapHdr->RomLayoutOffset));
         RomLayoutSize = sizeof(ROM_AREA);
-        for (Area=*RomLayout; 
-             Area->Size!=0 && RomLayoutSize<=(Size - FwCapHdr->RomLayoutOffset); 
-             Area++)
+        for (Area=*RomLayout; Area->Size!=0 && RomLayoutSize<=(Size - FwCapHdr->RomLayoutOffset); Area++)
         {
-            TRACE((-1, "%08X...%08lX, offs %08X, size 0x%08X, attr %X\n",Area->Address, (Area->Address+Area->Size), Area->Offset, Area->Size, Area->Attributes));
-            RomLayoutSize += sizeof(ROM_AREA);
+            RomLayoutSize+=sizeof(ROM_AREA);
         }
         Area=*RomLayout; 
-        TRACE((-1, "Use Rom Map from FwCapHdr FFS at %X(size 0x%X), map offs %X(size 0x%X)\n", FwCapHdr, Size, FwCapHdr->RomLayoutOffset, RomLayoutSize));
     }
     else
     {
@@ -1145,36 +1087,73 @@ EFI_STATUS GetRomLayout(
         if (RomLayoutHob!=NULL)
         {
     // -------- Get RomLayoutHob ----------------------
-        	Status = FindNextHobByGuid((EFI_GUID *)&AmiRomLayoutHobGuid, (VOID **)&RomLayoutHob);
-            if (!EFI_ERROR(Status))
+            if (!EFI_ERROR( 
+                        FindNextHobByGuid(&AmiRomLayoutHobGuid, &RomLayoutHob)
+                    ))
             {
                 RomLayoutSize =   RomLayoutHob->Header.Header.HobLength
                                   - sizeof(ROM_LAYOUT_HOB);
-
-                Area=(ROM_AREA*)(RomLayoutHob+1);
-                TRACE((-1, "Use Default Rom Map from the Hob at %X(size 0x%X)\n", Area, RomLayoutSize));
+          
+                Area=(ROM_AREA*)((UINT8*)RomLayoutHob+1);
+    TRACE((-1, "Get Default Rom Map from the Hob at %X\n", Area));
             }
         }
     }
     if(RomLayoutSize)
     {
-        //---Allocate memory in SMRAM for RomLayout---
-        *RomLayout = NULL;
-        Status = pSmst->SmmAllocatePool(EfiRuntimeServicesData, RomLayoutSize,(void **)RomLayout);
-        if (EFI_ERROR(Status) || *RomLayout == NULL)
-            return EFI_NOT_FOUND;
-
-        pBS->CopyMem( *RomLayout, Area, RomLayoutSize);
-    
-        if(pFwCapHdr)
-            pBS->FreePool(pFwCapHdr);
-
-        return EFI_SUCCESS;
+        //---Allocate memory for RomLayout------------------------------
+        VERIFY_EFI_ERROR(
+                pSmst->SmmAllocatePool(EfiRuntimeServicesData, RomLayoutSize,(void **)RomLayout)
+        );
+        if (*RomLayout)
+        {
+            pBS->CopyMem(
+                *RomLayout, Area, RomLayoutSize
+            );
+            if(pFwCapHdr)
+              pBS->FreePool(pFwCapHdr);
+            return EFI_SUCCESS;
+        }
     }
 
     return EFI_NOT_FOUND;
 }
 #endif //#if RUNTIME_SECURE_UPDATE_FLOW == 1
+
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure: IsAddressInSmram
+//
+// Description: CThis function check if the address is in SMRAM
+//
+// Input: 
+//  Address - the buffer address to be checked.
+//  Range   - the buffer length to be checked
+//
+// Output: 
+//  TRUE  this address is in SMRAM.
+//  FALSE this address is NOT in SMRAM.
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
+BOOLEAN IsAddressInSmram (
+  IN EFI_PHYSICAL_ADDRESS  Buffer,
+  IN UINT64                Length
+)
+{
+  UINTN  Index;
+//TRACE((TRACE_ALWAYS,"Addr in SMRAM %X_%X\n",Buffer, Length));
+  for (Index = 0; Index < mSmramRangeCount; Index ++) {
+    if (((Buffer >= mSmramRanges[Index].CpuStart) && (Buffer < mSmramRanges[Index].CpuStart + mSmramRanges[Index].PhysicalSize)) ||
+        ((mSmramRanges[Index].CpuStart >= Buffer) && (mSmramRanges[Index].CpuStart < Buffer + Length))) {
+//TRACE((TRACE_ALWAYS,"TRUE\n"));
+      return TRUE;
+    }
+  }
+//TRACE((TRACE_ALWAYS,"FALSE\n"));
+  return FALSE;
+}
 
 // !!! do not install if OFBD SecFlash is installed 
 #if INSTALL_SECURE_FLASH_SW_SMI_HNDL == 1
@@ -1251,7 +1230,6 @@ SecSMIFlashSMIHandler (
     RETURN(Status);
 }
 #endif
-
 //<AMI_PHDR_START>
 //----------------------------------------------------------------------
 // Procedure:   InSmmFunction
@@ -1271,59 +1249,27 @@ EFI_STATUS InSmmFunction(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
 #if INSTALL_SECURE_FLASH_SW_SMI_HNDL == 1
     EFI_SMM_SW_DISPATCH2_PROTOCOL    *pSwDispatch = NULL;
     EFI_SMM_SW_REGISTER_CONTEXT      SwContext;
-    UINTN                            Index;
+    UINTN                           Index;
 #endif
 #if FWCAPSULE_RECOVERY_SUPPORT == 1
 const EFI_SMM_SX_REGISTER_CONTEXT      SxRegisterContext = {SxS5, SxEntry};
       EFI_SMM_SX_DISPATCH2_PROTOCOL    *SxDispatchProtocol;
-#if CSLIB_WARM_RESET_SUPPORTED == 0
-      static EFI_GUID guidHob = HOB_LIST_GUID;
-      EFI_HOB_HANDOFF_INFO_TABLE *pHit;
-#endif
 #endif
 
     EFI_HANDLE              Handle = NULL;
     EFI_HANDLE              DummyHandle = NULL;
     EFI_STATUS              Status;
 
-    UINTN   Size;
+    UINTN   DescSize=0;
     UINT8   MinSMIPort = SecSMIflash_Load;    //0x1d
     //UINT8   MinSMIPort = SecSMIflash_GetPolicy; //0x1e;
     UINT8   MaxSMIPort = SecSMIflash_SetFlash; //0x1f;
-    EFI_SMM_ACCESS2_PROTOCOL *SmmAccess;
-    VOID    *Memory = NULL;
 
-    InitAmiSmmLib( ImageHandle, SystemTable );
-    
-#if defined(CSLIB_WARM_RESET_SUPPORTED) 
-    #if FWCAPSULE_RECOVERY_SUPPORT == 1 && CSLIB_WARM_RESET_SUPPORTED == 0
-    //Get Boot Mode
-    pHit = GetEfiConfigurationTable(pST, &guidHob);
-    if (pHit && pHit->BootMode == BOOT_ON_FLASH_UPDATE) {
-        if( (ReadRtcIndexedRegister(0xB) & ( 1 << 5 )) == ( 1 << 5 )) {
-            // ========== INTEL CHIPSET PORTING ========================
-            //clear RTC_STS bit in PM1_STS if resuming from RTC alarm on flash update
-            IoWrite16(PM_BASE_ADDRESS, ( IoRead16(PM_BASE_ADDRESS) | (1 << 10) ));
-            //disable the RTC alarm
-            WriteRtcIndexedRegister(0xB, ( ReadRtcIndexedRegister(0xB) & ~( 1 << 5 ) ));
-        }
-    }
-#endif
-#endif
-    
-    Status = pSmst->SmmLocateProtocol(&gAmiSmmDigitalSignatureProtocolGuid, NULL, &gAmiSig);
-    if (EFI_ERROR(Status)) return Status;
+    UINT32                  Flags=0;
+    EFI_SMM_ACCESS2_PROTOCOL     *SmmAccess;
+    UINTN                         Size;
 
-// Test if Root Platform Key is available,else - don't install Flash Upd security measures.
-    gpPubKeyHndl.Blob = NULL;
-    gpPubKeyHndl.BlobSize = 0;
-    Status = gAmiSig->GetKey(gAmiSig, &gpPubKeyHndl, &gPRKeyGuid, gpPubKeyHndl.BlobSize, 0);
-TRACE((TRACE_ALWAYS,"GetKey %r (%X, %d bytes)\n",Status, gpPubKeyHndl.Blob,gpPubKeyHndl.BlobSize));
-    if (EFI_ERROR(Status) || gpPubKeyHndl.Blob == NULL) {
-        if(Status == EFI_BUFFER_TOO_SMALL) 
-            return EFI_SUCCESS;
-        return Status;
-    }
+     InitAmiSmmLib( ImageHandle, SystemTable );
     //
     // Get SMRAM information
     //
@@ -1334,64 +1280,80 @@ TRACE((TRACE_ALWAYS,"GetKey %r (%X, %d bytes)\n",Status, gpPubKeyHndl.Blob,gpPub
     Status = SmmAccess->GetCapabilities (SmmAccess, &Size, NULL);
     ASSERT (Status == EFI_BUFFER_TOO_SMALL);
     if (Size==0) return EFI_NOT_FOUND;
-    Status = pSmst->SmmAllocatePool(EfiRuntimeServicesData,Size,(VOID **)&mSmramRanges);
-    ASSERT_EFI_ERROR (Status);
+    Status = pSmst->SmmAllocatePool (EfiRuntimeServicesData,Size,(VOID **)&mSmramRanges);
     if (EFI_ERROR(Status)) return Status;
     Status = SmmAccess->GetCapabilities (SmmAccess, &Size, mSmramRanges);
     if (EFI_ERROR(Status)) return Status;
     mSmramRangeCount = Size / sizeof (EFI_SMRAM_DESCRIPTOR);
+
+    Status = pSmst->SmmLocateProtocol(&gAmiSmmDigitalSignatureProtocolGuid, NULL, &gAmiSig);
+//    Status = pBS->LocateProtocol(&gAmiSmmDigitalSignatureProtocolGuid, NULL, &gAmiSig);
+    if (EFI_ERROR(Status)) return Status;
+
+// Get PRKey and move it in SMM protected location
+    gpPubKeyHndl.Blob = NULL;
+    gpPubKeyHndl.BlobSize = 0;
+    Status = gAmiSig->GetKey(gAmiSig, &gpPubKeyHndl, &gPRKeyGuid, gpPubKeyHndl.BlobSize, Flags);
+TRACE((TRACE_ALWAYS,"GetKey %r (%x, %x bytes)\n",Status, gpPubKeyHndl.Blob,gpPubKeyHndl.BlobSize));
+    if (EFI_ERROR(Status)) {
+        if(Status == EFI_BUFFER_TOO_SMALL) 
+            return EFI_SUCCESS;
+        return Status;
+    }
     //
     // Allocate scratch buffer to hold entire Signed BIOS image for Secure Capsule and Runtime Flash Updates
     // AFU would have to execute a sequence of SW SMI calls to push entire BIOS image to SMM
     //
+    //
     //NEW_BIOS_MEM_ALLOC == 2 AFU will allocate a buffer and provide pointer via SET_FLASH_METHOD API call. 
     //
-    gFwCapMaxSize = FWCAPSULE_IMAGE_SIZE;
-#if NEW_BIOS_MEM_ALLOC < 2
 #if NEW_BIOS_MEM_ALLOC == 0
     //
     // Alternatively the buffer may be reserved within the SMM TSEG memory 
     //
-    Status = pSmst->SmmAllocatePool(EfiRuntimeServicesData, gFwCapMaxSize, &Memory);
-    gpFwCapsuleBuffer = (EFI_PHYSICAL_ADDRESS)(UINTN)Memory;
-#endif
+    Status = pSmst->SmmAllocatePool(EfiRuntimeServicesData, gRomFileSize, (void**)&pFwCapsuleLowMem);
+
+//TRACE((TRACE_ALWAYS,"SecSmiFlash: Alloc 0x%X bytes in SMM, %r\n",gRomFileSize, Status));
+#else
 #if NEW_BIOS_MEM_ALLOC == 1
     //
-    // The buffer is allocated anywhere within reserved system memory
+    // The buffer is reserved within the ACPI NVS memory
     //
-//    Status = pST->BootServices->AllocatePool(EfiReservedMemoryType, gFwCapMaxSize, &gpFwCapsuleBuffer);
-    Status = pST->BootServices->AllocatePages(AllocateAnyPages, EfiReservedMemoryType, EFI_SIZE_TO_PAGES(gFwCapMaxSize), &gpFwCapsuleBuffer);
+    Status = pST->BootServices->AllocatePool(EfiACPIMemoryNVS, gRomFileSize, &pFwCapsuleLowMem);
+//TRACE((TRACE_ALWAYS,"SecSmiFlash: AllocatePool=%X,(0x%x) %r\n",pFwCapsuleLowMem,gRomFileSize,  Status));
 #endif
-    TRACE((TRACE_ALWAYS,"Allocate FwCapsuleBuffer %lX,0x%X %r\n",gpFwCapsuleBuffer, gFwCapMaxSize, Status));
+#endif
     ASSERT_EFI_ERROR(Status);
     if (EFI_ERROR(Status)) return Status;
-    MemSet((void*)gpFwCapsuleBuffer, gFwCapMaxSize, 0 );
+#if NEW_BIOS_MEM_ALLOC < 2
+    MemSet((void*)pFwCapsuleLowMem, gRomFileSize, 0 );
 #endif
     //
     // Allocate space to hold a Hash table for all Flash blocks
     //
-    Size = SEC_FLASH_HASH_TBL_SIZE;
-    Status = pSmst->SmmAllocatePool(EfiRuntimeServicesData, Size, (void**)&gHashTbl);
-//TRACE((TRACE_ALWAYS,"AllocateHashTbl HashTbl Pool %lx(0x%x) %r\n",gHashTbl, Size, Status));
+    DescSize = SEC_FLASH_HASH_TBL_SIZE;
+    Status = pSmst->SmmAllocatePool(EfiRuntimeServicesData, DescSize, (void**)&gHashTbl);
+//    TRACE((TRACE_ALWAYS,"SecSmiFlash: AllocateHashTbl Pool=%X,(0x%x) %r\n",HashTbl,HashTbl,  Status));
     if (EFI_ERROR(Status)) return Status;
-    MemSet((void*)gHashTbl, Size, 0xdb );
+    MemSet((void*)gHashTbl, DescSize, 0xdb );
+
 
 #if FWCAPSULE_RECOVERY_SUPPORT == 0
     FlUpdatePolicy.FlashUpdate &=~FlCapsule;
     FlUpdatePolicy.BBUpdate &=~FlCapsule;
 #else    
     //
-    // Reserve pool in smm runtime memory for capsule's mailbox list
+    // Reserve pool in non-smm runtime memory for capsule's mailbox list
     //
-    gpFwCapsuleMailboxSize = 4*sizeof(EFI_CAPSULE_BLOCK_DESCRIPTOR) + sizeof(EFI_CAPSULE_HEADER); // (4*16)+28
-    Status = pSmst->SmmAllocatePool(EfiRuntimeServicesData, gpFwCapsuleMailboxSize, &Memory);
-    gpFwCapsuleMailbox = (EFI_PHYSICAL_ADDRESS)(UINTN)Memory;
-    //TRACE((TRACE_ALWAYS,"Allocate FwCapsuleMailbox %lx(0x%x) %r\n",gpFwCapsuleMailbox,Size, Status));
+    // EfiACPIMemoryNVS
+    DescSize = 4*sizeof(EFI_CAPSULE_BLOCK_DESCRIPTOR) + sizeof(EFI_CAPSULE_HEADER); // (4*16)+28
+    Status = pBS->AllocatePool(EfiACPIMemoryNVS, DescSize, &gpEfiCapsuleHdr);
     if (EFI_ERROR(Status)) return Status;
-    MemSet((void*)gpFwCapsuleMailbox, gpFwCapsuleMailboxSize, 0 );
+    //    pEfiCapsuleHdr&=0xFFFFFFFFFFFFFFF8;  // !!!make sure descriptor is 8-byte aligned
+    MemSet((void*)gpEfiCapsuleHdr, DescSize, 0 );
 
     //
-    // Install callback on S5 Sleep Type SMI. Needed to transition to S3 if Capsule's mailbox is pending
+    // Install callback on S5 Sleep Type SMI. Needed to transition to S3 if Capsule's mailbox ie pending
     // Locate the Sx Dispatch Protocol
     //
     // gEfiSmmSxDispatch2ProtocolGuid
@@ -1422,32 +1384,35 @@ AFU For Rom Holes in Runtime/Capsule upd
     4. calls to upd  Rom hole -erase,write should pass
 */
     Status = GetRomLayout(SystemTable, &RomLayout);
-TRACE((TRACE_ALWAYS,"Smm Rom Layout at %X, %r\n",RomLayout, Status));
+TRACE((TRACE_ALWAYS,"SecSmiFlash: Get Rom Layout ptr=%X, %r\n",RomLayout, Status));
     // Rom Layout HOB may not be found in Recovery mode and if FW does not include built in FwCapsule Hdr file
+    // In this case another attempt will be made to locate RomLayout during SetFlashMode Command 
 //    if (EFI_ERROR(Status)) goto Done;
     //
     // Trap the original Flash Driver API calls to enforce 
     // Flash Write protection in SMM at the driver API level
     //
-	Status = pSmst->SmmLocateProtocol( &gFlashSmmProtocolGuid, NULL, &Flash);
-    if (EFI_ERROR(Status)) 
-        Status = pBS->LocateProtocol(&gFlashSmmProtocolGuid, NULL, &Flash);
-TRACE((TRACE_ALWAYS,"Flash->Write API fixup %X->%X(->%X)\n", Flash, Flash->Write,SecureFlashWrite));
+    Status = pBS->LocateProtocol(&gFlashSmmProtocolGuid, NULL, &Flash);
+TRACE((TRACE_ALWAYS,"SecSmiFlash: Flash Protocol Fixup %X->%X\n",Flash->Write,SecureFlashWrite));
     if (EFI_ERROR(Status)) goto Done;
 
     // preserve org Flash API
     pFlashWrite = Flash->Write; 
-    pFlashUpdate = Flash->Update;
     pFlashErase = Flash->Erase;
     // replace with local functions 
-    Flash->Write = SecureFlashWrite;
-    Flash->Update= SecureFlashUpdate;
     Flash->Erase = SecureFlashErase;
+    Flash->Write = SecureFlashWrite;
+    // Calculate the flash mapping start address. This is calculated
+    // as follows:
+    //  1. Find the total size of the flash (FLASH_BLOCK_SIZE * NUMBER_OF_BLOCKS)
+    //  2. Subtract the total flash size from 4GB
+    Flash4GBMapStart = 0xFFFFFFFF - (FLASH_BLOCK_SIZE * NUMBER_OF_BLOCKS);
+    Flash4GBMapStart ++;    
 #endif
     //
     // Install Secure SMI Flash Protocol 
     //
-    SecSmiFlash.pFwCapsule = (UINT32*)gpFwCapsuleBuffer;
+    SecSmiFlash.pFwCapsule = pFwCapsuleLowMem;
     SecSmiFlash.HashTbl = gHashTbl;
     SecSmiFlash.RomLayout = RomLayout;
     SecSmiFlash.FSHandle = 0;
@@ -1482,7 +1447,7 @@ TRACE((TRACE_ALWAYS,"Flash->Write API fixup %X->%X(->%X)\n", Flash, Flash->Write
         Status    = pSwDispatch->Register(pSwDispatch, SecSMIFlashSMIHandler, &SwContext, &Handle);
         ASSERT_EFI_ERROR(Status);
         if (EFI_ERROR(Status)) break;
-        //If any errors,unregister any registered SwSMI by this driver.
+        //TODO: If any errors, unregister any registered SwSMI by this driver.
         //If error, and driver is unloaded, then a serious problem would exist.
     }
 #endif
@@ -1516,7 +1481,7 @@ EFI_STATUS SecSMIFlashDriverEntryPoint(
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2015, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2013, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **

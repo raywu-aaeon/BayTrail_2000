@@ -7,7 +7,6 @@
 "MdeModulePkg.dec"	
 "MdeModulePkg.sdl"	
 "License.txt"	
-"MdeModulePkg.chm"	
 [parts]
 "MdeModulePkg.Include"
 "MdeModulePkg.LibraryInstances"

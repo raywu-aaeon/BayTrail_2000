@@ -8,7 +8,7 @@
 --*/
 /*++
 
-Copyright (c)  2006 - 2015 Intel Corporation. All rights reserved
+Copyright (c)  2006 - 2012 Intel Corporation. All rights reserved
 This software and associated documentation (if any) is furnished
 under a license and may only be used or copied in accordance
 with the terms of the license. Except as permitted by such

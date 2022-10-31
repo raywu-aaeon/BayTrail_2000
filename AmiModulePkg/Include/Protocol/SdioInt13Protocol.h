@@ -1,19 +1,31 @@
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2012, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **
-//**         5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093     **
+//**         5555 Oakbrook Pkwy, Suite 200, Norcross, GA 30093        **
 //**                                                                  **
 //**                       Phone: (770)-246-8600                      **
 //**                                                                  **
 //**********************************************************************
+//**********************************************************************
+// $Header: /Alaska/SOURCE/Modules/SdioDriver/SdioInt13Protocol.h 2     4/19/11 6:59a Lavanyap $
+//
+// $Revision: 2 $
+//
+// $Date: 4/19/11 6:59a $
+//**********************************************************************
 
-/** @file SdioInt13Protocol.h
-    Sdio Int13 protocol header definition.
-**/
+//**********************************************************************
+//<AMI_FHDR_START>
+//
+// Name:    SdioInt13Protocol.c
+//
+// Description: Sdio Int13 protocol header definiation.
+//<AMI_FHDR_END>
+//**********************************************************************
 
 #ifndef _SDIO_INT13_PROT_H
 #define _SDIO_INT13_PROT_H
@@ -22,11 +34,10 @@
 extern "C" {
 #endif
 
-//----------------------------------------------------------------------
+#include <EFI.h>
 
-#include <Efi.h>
-
-//----------------------------------------------------------------------
+//#define EFI_SDIO_PROTOCOL_GUID    \
+//  { 0x9708adb2, 0x28b1, 0x46f7, 0x9a, 0x6c, 0xe7, 0x44, 0x97, 0xfa, 0x66, 0x79}
 
 
 //GUID_VARIABLE_DECLARATION(gEfiSdioProtocolGuid,EFI_SDIO_PROTOCOL_GUID);
@@ -77,11 +88,11 @@ typedef struct _EFI_SDIO_PROTOCOL {
 //****************************************************************************
 //****************************************************************************
 //**                                                                        **
-//**             (C)Copyright 1985-2014, American Megatrends, Inc.          **
+//**             (C)Copyright 1985-2012, American Megatrends, Inc.          **
 //**                                                                        **
 //**                          All Rights Reserved.                          **
 //**                                                                        **
-//**                 5555 Oakbrook Parkway, Norcross, GA 30093              **
+//**                 5555 Oakbrook Pkwy, Norcross, GA 30093                 **
 //**                                                                        **
 //**                          Phone (770)-246-8600                          **
 //**                                                                        **

@@ -1,27 +1,18 @@
 TOKEN
-    Name  = "FsRecovery_SUPPORT"
-    Value  = "1"
-    Help  = "Switch for Enabling FsRecovery support in the project"
-    TokenType = Boolean
-    Master = Yes
+	Name  = "FsRecovery_SUPPORT"
+	Value  = "1"
+	Help  = "Switch for Enabling FsRecovery support in the project"
+	TokenType = Boolean
+	Master = Yes
 End
 
 TOKEN
-    Name  = "NTFSRecovery_SUPPORT"
-    Value  = "1"
-    Help  = "Main switch to enable NTFSRecovery support in Project"
-    TokenType = Boolean
+	Name  = "NTFSRecovery_SUPPORT"
+	Value  = "1"
+	Help  = "Main switch to enable NTFSRecovery support in Project"
+	TokenType = Boolean
 End
 
-TOKEN
-    Name  = "NTFS_NAME_CORRECTION"
-    Value  = "0"
-    TokenType = Boolean
-    TargetMAK = Yes
-    TargetH = Yes
-    Token = "NTFSRecovery_SUPPORT" "=" "1"
-End
-    
 TOKEN
     Name  = "EXTRecovery_SUPPORT"
     Value  = "1"
@@ -29,43 +20,9 @@ TOKEN
     TokenType = Boolean
 End
 
-TOKEN
-    Name  = "EXFATRecovery_SUPPORT"
-    Value  = "1"
-    Help  = "Main switch to enable ExFatRecovery support in Project"
-    TokenType = Boolean
-    TargetH = Yes
-End
-
-TOKEN
-    Name  = "SEARCH_PATH"
-    Value = "0"
-    Help = "If ON, a path may be specified in the token RECOVERY_PATH."
-    TokenType = BOOLEAN
-    TargetH = Yes
-End
-
-TOKEN
-    Name  = "RECOVERY_PATH"
-    Value  = "Recovery/BIOS/"
-    TokenType = Expression
-    TargetH = Yes
-End
-
-TOKEN
-    Name  = "MATCH_VOLUME_NAME"
-    Value = "0"
-    Help = "If ON, the volume name must match token VOLUME_NAME before the volume is searched."
-    TokenType = BOOLEAN
-    TargetH = Yes
-End
-
-TOKEN
-    Name  = "VOLUME_NAME"
-    Value  = "AMI"
-    TokenType = Expression
-    TargetH = Yes
-    Token = "MATCH_VOLUME_NAME" "=" "1"
+MODULE
+    Help  = "Includes FsRecovery.mak to Project"
+    File  = "FsRecovery.mak"
 End
 
 ELINK
@@ -99,62 +56,47 @@ ELINK
     InvokeOrder = AfterParent
 End
 
-ELINK
-    Name  = "ProcessExFatDevice,"
-    Parent  = "FsRecoveryList"
-    Token = "EXFATRecovery_SUPPORT" "=" "1"
-    InvokeOrder = AfterParent
-End
-
-OUTPUTREGISTER
-    Name = "FsRecoveryElinksFile"
-    File = "FsRecoveryElinks.h"
-    Path = "Build"    
-    Template = "FsREcovery.txt"
-End
-
 INFComponent
-    Name  = "NTFSRecovery"
-    File  = "NTFSRecovery.inf"
-    Package  = "AmiModulePkg"
-    ModuleTypes  = "PEIM"
-    Token = "NTFSRecovery_SUPPORT" "=" "1"
-End
-
-LibraryMapping
-    Class  = "NULL"
-    Instance  = "AmiModulePkg.NTFSRecovery"
-    Override  = "AmiModulePkg.FsRecovery"
+	Name  = "NTFSRecovery"
+	File  = "NTFSRecovery.inf"
+	Package  = "AmiModulePkg"
+	ModuleTypes  = "PEIM"
     Token = "NTFSRecovery_SUPPORT" "=" "1"
 End
 
 INFComponent
-    Name  = "EXTRecovery"
-    File  = "EXTRecovery.inf"
-    Package  = "AmiModulePkg"
-    ModuleTypes  = "PEIM"
-    Token = "EXTRecovery_SUPPORT" "=" "1"
-End
-
-LibraryMapping
-    Class  = "NULL"
-    Instance  = "AmiModulePkg.EXTRecovery"
-    Override  = "AmiModulePkg.FsRecovery"
-    Token = "EXTRecovery_SUPPORT" "=" "1"
+	Name  = "RecoveryNullLib"
+	File  = "RecoveryNullLib.inf"
+	Package  = "AmiModulePkg"
+	ModuleTypes  = "PEIM"
 End
 
 INFComponent
-    Name  = "ExFatRecovery"
-    File  = "ExFatRecovery.inf"
-    Package  = "AmiModulePkg"
-    ModuleTypes  = "PEIM"
-    Token = "EXFATRecovery_SUPPORT" "=" "1"
+	Name  = "EXTRecovery"
+	File  = "EXTRecovery.inf"
+	Package  = "AmiModulePkg"
+	ModuleTypes  = "PEIM"
+	Token = "EXTRecovery_SUPPORT" "=" "1"
 End
 
+LibraryMapping
+    Class  = "EXTRecoverylib"
+    Instance  = "AmiModulePkg.RecoveryNullLib"
+End
 
 LibraryMapping
-    Class  = "NULL"
-    Instance  = "AmiModulePkg.ExFatRecovery"
-    Override  = "AmiModulePkg.FsRecovery"
-    Token = "EXFATRecovery_SUPPORT" "=" "1"
+	Class  = "EXTRecoverylib"
+	Instance  = "AmiModulePkg.EXTRecovery"
+	Token = "EXTRecovery_SUPPORT" "=" "1"
+End
+
+LibraryMapping
+	Class  = "NTFSRecoverylib"
+	Instance  = "AmiModulePkg.RecoveryNullLib"
+End
+
+LibraryMapping
+	Class  = "NTFSRecoverylib"
+	Instance  = "AmiModulePkg.NTFSRecovery"
+	Token = "NTFSRecovery_SUPPORT" "=" "1"
 End

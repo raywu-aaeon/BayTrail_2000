@@ -203,6 +203,11 @@ UINTN AlignAddress (
     UINTN                       Address
     );
 
+VOID ZeroMemory (
+    VOID                        *Buffer,
+    UINTN                       Size
+);
+
 /****** DO NOT WRITE BELOW THIS LINE *******/
 #ifdef __cplusplus
 }

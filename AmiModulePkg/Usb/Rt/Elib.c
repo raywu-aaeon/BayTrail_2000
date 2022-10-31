@@ -1,46 +1,63 @@
-//**********************************************************************
-//**********************************************************************
-//**                                                                  **
-//**        (C)Copyright 1985-2016, American Megatrends, Inc.         **
-//**                                                                  **
-//**                       All Rights Reserved.                       **
-//**                                                                  **
-//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093        **
-//**                                                                  **
-//**                       Phone: (770)-246-8600                      **
-//**                                                                  **
-//**********************************************************************
-//**********************************************************************
+//****************************************************************************
+//****************************************************************************
+//**                                                                        **
+//**             (C)Copyright 1985-2013, American Megatrends, Inc.          **
+//**                                                                        **
+//**                          All Rights Reserved.                          **
+//**                                                                        **
+//**                 5555 Oakbrook Pkwy, Norcross, GA 30093                 **
+//**                                                                        **
+//**                          Phone (770)-246-8600                          **
+//**                                                                        **
+//****************************************************************************
+//****************************************************************************
 
-/** @file Elib.c
-    AMI USB MEM/IO/PCI access routines
+//****************************************************************************
+// $Header: /Alaska/SOURCE/Modules/USB/ALASKA/RT/elib.c 19    8/29/12 8:16a Ryanchou $
+//
+// $Revision: 19 $
+//
+// $Date: 8/29/12 8:16a $
+//****************************************************************************
 
-**/
+//<AMI_FHDR_START>
+//-----------------------------------------------------------------------------
+//
+//  Name:           Elib.c
+//
+//  Description:    AMI USB MEM/IO/PCI access routines
+//
+//-----------------------------------------------------------------------------
+//<AMI_FHDR_END>
 
-#include <Library/IoLib.h>
 #include "AmiDef.h"
 #include "UsbDef.h"
-#if !USB_RT_DXE_DRIVER
-#include <Library/AmiBufferValidationLib.h>
-#endif
 
 extern  USB_GLOBAL_DATA         *gUsbData;
+//extern  EFI_SMM_SYSTEM_TABLE    *gSmst;
 
-/**
-    This routine delays for specified number of micro seconds
+UINT8   ByteReadIO(UINT16);
+UINT16  WritePCIConfig(UINT16, UINT8);
 
-    @param Usec      Amount of delay (count in 1 microsec)
-
-    @retval VOID
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   FixedDelay
+//
+// Description: This routine delays for specified number of micro seconds
+//
+// Input:   wCount      Amount of delay (count in 1 microsec)
+//
+// Output:  None
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 VOID 
 FixedDelay(
     UINTN           Usec                           
  )
 {
-#if !USB_RT_DXE_DRIVER
+#if USB_RUNTIME_DRIVER_IN_SMM
     UINTN   Counter, i;
     UINT32  Data32, PrevData;
 
@@ -71,993 +88,389 @@ FixedDelay(
     return;
 }
 
-EFI_STATUS
-UsbHcStrucValidation(
-    HC_STRUC* HcStruc
-)
-{
-    UINTN       Index;
-
-    if (HcStruc == NULL) {
-        return EFI_ACCESS_DENIED;
-    }
-    
-    for (Index = 0; Index < gUsbData->HcTableCount; Index++) {
-        if (HcStruc == gUsbData->HcTable[Index]) {
-            break;
-        }
-    }
-
-    if (Index == gUsbData->HcTableCount) {
-        return EFI_ACCESS_DENIED;
-    }
-
-    if (!(HcStruc->dHCFlag & HC_STATE_USED)) {
-        return EFI_ACCESS_DENIED;
-    }
-
-    return EFI_SUCCESS;
-}
-
-EFI_STATUS
-UsbDevInfoValidation(
-    DEV_INFO* DevInfo
-)
-{
-    UINTN       Index;
-    UINT8       *MemBlockEnd = gUsbData->fpMemBlockStart + (gUsbData->MemPages << 12);
-
-    if (DevInfo == NULL) {
-        return EFI_ACCESS_DENIED;
-    }
-    
-    for (Index = 0; Index < MAX_DEVICES; Index++) {
-        if (DevInfo == &gUsbData->aDevInfoTable[Index]) {
-            break;
-        }
-    }
-
-    if (Index == MAX_DEVICES) {
-        return EFI_ACCESS_DENIED;
-    }
-
-#if USB_RUNTIME_DRIVER_IN_SMM
-    if (DevInfo->fpPollEDPtr) {
-        if ((DevInfo->fpPollEDPtr < gUsbData->fpMemBlockStart) ||
-            ((DevInfo->fpPollEDPtr + sizeof(MEM_BLK)) > MemBlockEnd)) {
-            return EFI_ACCESS_DENIED;
-        }
-    }
-
-    if (DevInfo->fpPollTDPtr) {
-        if ((DevInfo->fpPollTDPtr < gUsbData->fpMemBlockStart) ||
-            ((DevInfo->fpPollTDPtr + sizeof(MEM_BLK)) > MemBlockEnd)) {
-            return EFI_ACCESS_DENIED;
-        }
-    }
-
-    if (DevInfo->fpPollDataBuffer) {
-        if ((DevInfo->fpPollDataBuffer < gUsbData->fpMemBlockStart) ||
-            ((DevInfo->fpPollDataBuffer + DevInfo->PollingLength) > MemBlockEnd)) {
-            return EFI_ACCESS_DENIED;
-        }
-    }
-#endif
-
-    return EFI_SUCCESS;
-}
-
-/**
-    This routine reads a DWORD from the specified Memory Address
-
-    @param 
-        BaseAddr   - Memory address
-        Offset     - Offset of BaseAddr
-
-    @retval Value read
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   DwordReadMem
+//
+// Description: This routine reads a DWORD from the specified Memory Address
+//
+// Input:   dBaseAddr   - Memory address to read
+//          bOffset     - Offset of dBaseAddr
+//
+// Output:  Value read
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT32
-DwordReadMem(
-    UINTN   BaseAddr, 
-    UINT16  Offset
-)
+DwordReadMem(UINT32 dBaseAddr, UINT16 wOffset)
 {
-    return MmioRead32((UINTN)(BaseAddr + Offset));
+    return *(volatile UINT32*)(UINTN)(dBaseAddr+wOffset);
 }
 
 
-/**
-    This routine writes a dword to a specified Memory Address
-
-    @param 
-        BaseAddr   - Memory address
-        Offset     - Offset of BaseAddr
-        Value      - Data to write
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   DwordWriteMem
+//
+// Description: This routine writes a DWORD to a specified Memory Address
+//
+// Input:   dBaseAddr   - Memory address to write
+//          bOffset     - Offset of dBaseAddr
+//          dValue      - Data to write
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 VOID
-DwordWriteMem(
-    UINTN   BaseAddr, 
-    UINT16  Offset, 
-    UINT32  Value
-)
+DwordWriteMem(UINT32 dBaseAddr, UINT16 wOffset, UINT32 dValue)
 {
-    MmioWrite32((UINTN)(BaseAddr + Offset), Value);
+    *(volatile UINT32*)(UINTN)(dBaseAddr+wOffset) = dValue;
 }
 
 
-/**
-    This routine resets the specified bits at specified memory address
-
-    @param 
-        BaseAddr   - Memory address
-        Offset     - Offset of BaseAddr
-        Value      - Data to reset
-
-    @retval VOID
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   DwordResetMem
+//
+// Description: This routine resets the specified bits at specified memory address
+//
+// Input:   dBaseAddr   - Memory address to read
+//          bOffset     - Offset of dBaseAddr
+//
+// Output:  Value read
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 VOID
-DwordResetMem(
-    UINTN   BaseAddr, 
-    UINT16  Offset, 
-    UINT32  Value
-)
+DwordResetMem(UINT32 dBaseAddr, UINT16 wOffset, UINT32 dValue)
 {
-    UINT32 Data = DwordReadMem(BaseAddr, Offset);
-    
-    Data &= ~Value;
-    DwordWriteMem(BaseAddr, Offset, Data);
+    UINT32 data = DwordReadMem(dBaseAddr, wOffset);
+    data &= ~dValue;
+    DwordWriteMem(dBaseAddr, wOffset, data);
 }
 
 
-/**
-    This routine sets the specified bits at specified memory address
-
-    @param 
-        BaseAddr   - Memory address
-        Offset     - Offset of BaseAddr
-        Value      - Data to set
-
-    @retval VOID
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   DwordSetMem
+//
+// Description: This routine sets the specified bits at specified memory address
+//
+// Input:   dBaseAddr   - Memory address to read
+//          bOffset     - Offset of dBaseAddr
+//
+// Output:  Value read
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 VOID
-DwordSetMem(
-    UINTN   BaseAddr, 
-    UINT16  Offset, 
-    UINT32  Value
-)
+DwordSetMem(UINT32 dBaseAddr, UINT16 wOffset, UINT32 dValue)
 {
-    UINT32 Data = DwordReadMem(BaseAddr, Offset);
-    
-    Data |= Value;
-    DwordWriteMem(BaseAddr, Offset, Data);
+    UINT32 data = DwordReadMem(dBaseAddr, wOffset);
+    data |= dValue;
+    DwordWriteMem(dBaseAddr, wOffset, data);
 }
 
 
-/**
-    This routine reads a byte from the specified IO address
-
-    @param IoAddr     I/O address to read
-
-    @retval Value read
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   ByteReadIO
+//
+// Description: This routine reads a Byte from the specified IO address
+//
+// Input:   wIOAddr     I/O address to read
+//
+// Output:  Value read
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT8
-ByteReadIO(
-    UINT16 IoAddr
-)
+ByteReadIO(UINT16 wIOAddr)
 {
-    return IoRead8(IoAddr);
+//    UINT8 value;
+//    gSmst->SmmIo.Io.Read(&gSmst->SmmIo, SMM_IO_UINT8, (UINT64)wIOAddr, 1, &value);
+//    return value;
+    return IoRead8(wIOAddr);
 }
 
 
-/**
-    This routine writes a byte to the specified IO address
-
-    @param
-        IoAddr     I/O address to write
-        Value      Byte value to write
-
-    @retval VOID
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   ByteWriteIO
+//
+// Description: This routine writes a byte to the specified IO address
+//
+// Input:   wIOAddr     I/O address to write
+//          bValue      Byte value to write
+//
+// Output:  None
+//
+// Modified:    Nothing
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 VOID
-ByteWriteIO(
-    UINT16  IoAddr,
-    UINT8   Value
-)
+ByteWriteIO (UINT16 wIOAddr, UINT8 bValue)
 {
-    IoWrite8(IoAddr, Value);
+//    gSmst->SmmIo.Io.Write(&gSmst->SmmIo, SMM_IO_UINT8, (UINT64)wIOAddr, 1, &bValue);
+    IoWrite8(wIOAddr, bValue);
 }
 
 
-/**
-    This routine reads a word from the specified IO address
-
-    @param IoAddr     I/O address to read
-
-    @retval Value read
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   WordReadIO
+//
+// Description: This routine reads a Word from the specified IO address
+//
+// Input:   wIOAddr     I/O address to read
+//
+// Output:  Value read
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT16
-WordReadIO(
-    UINT16 IoAddr
-)
+WordReadIO(UINT16 wIOAddr)
 {
-    return IoRead16(IoAddr);
+//    UINT16 value;
+//    gSmst->SmmIo.Io.Read(&gSmst->SmmIo, SMM_IO_UINT16, (UINT64)wIOAddr, 1, &value);
+//    return  value;
+    return IoRead16(wIOAddr);
 }
 
 
-/**
-    This routine writes a word to the specified IO address
-
-    @param
-        IoAddr     I/O address to write
-        Value      Word value to write
-
-    @retval VOID
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   WordWriteIO
+//
+// Description: This routine writes a word to the specified IO address
+//
+// Input:   wIOAddr     I/O address to write
+//          wValue      Word value to write
+//
+// Output:  None
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 VOID
-WordWriteIO(
-    UINT16 IoAddr,
-    UINT16 Value
-)
+WordWriteIO (UINT16 wIOAddr, UINT16 wValue)
 {
-    IoWrite16(IoAddr, Value);
+//    gSmst->SmmIo.Io.Write(&gSmst->SmmIo, SMM_IO_UINT16, (UINT64)wIOAddr, 1, &wValue);
+    IoWrite16(wIOAddr, wValue);
 }
 
 
-/**
-    This routine reads a dword from the specified IO address
-
-    @param IoAddr     I/O address to read
-
-    @retval Value read
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   DwordReadIO
+//
+// Description: This routine reads a dword from the specified IO address
+//
+// Input:   wIOAddr     I/O address to read
+//
+// Output:  Value read
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT32
-DwordReadIO(
-    UINT16 IoAddr
-)
+DwordReadIO(UINT16 wIOAddr)
 {
-    return IoRead32(IoAddr);
+//    UINT32  value;
+//    gSmst->SmmIo.Io.Read(&gSmst->SmmIo, SMM_IO_UINT32, (UINT64)wIOAddr, 1, &value);
+//    return  value;
+    return IoRead32(wIOAddr);
 }
 
 
-/**
-    This routine writes a double word to the specified IO address
-
-    @param
-        IoAddr     I/O address to write
-        Value      Double word value to write
-
-    @retval VOID
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   DwordWriteIO
+//
+// Description: This routine writes a double word to the specified IO address
+//
+// Input:   wIOAddr     I/O address to write
+//      dValue      Double word value to write
+//
+// Output:  None
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 VOID
-DwordWriteIO(
-    UINT16 IoAddr, 
-    UINT32 Value
-)
+DwordWriteIO(UINT16 wIOAddr, UINT32 dValue)
 {
-    IoWrite32(IoAddr, Value);
+//    gSmst->SmmIo.Io.Write(&gSmst->SmmIo, SMM_IO_UINT32, (UINT64)wIOAddr, 1, &dValue);
+    IoWrite32(wIOAddr, dValue);
 }
 
 
-/**
-    This routine reads from the PCI configuration space register
-    the value can be typecasted to 8bits - 32bits
-
-    @param
-        BusDevFunc - Bus, device & function number of the PCI device
-        Register   - Register offset to read
-
-    @retval Value read
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   ReadPCIConfig
+//
+// Description: This routine reads from the PCI configuration space register
+//              the value can be typecasted to 8bits - 32bits
+//
+// Input:   BusDevFunc - Bus, device & function number of the PCI device
+//          Register   - Register offset to read
+//
+// Output:  Value read
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT32
-ReadPCIConfig(
-    UINT16  BusDevFunc,
-    UINT8   Register
-)
+ReadPCIConfig(UINT16 BusDevFunc, UINT8 Register)
 {
-    UINT32  Data;
-    UINTN   Address = (gUsbData->PciExpressBaseAddress + (UINTN)(BusDevFunc << 12 | (Register & 0xFC)));
+    UINT32 data;
+    DwordWriteIO(0xCF8, (UINT32)(0x80000000 | (BusDevFunc<<8) | (Register & 0xFC)));
+    data = DwordReadIO(0xCFC);
+    return (data >> ((Register & 3) << 3)); // Adjust uneven register
 
-    Data = *(volatile UINT32*)(Address);
-   
-    return (Data >> ((Register & 3) << 3));
 }
 
-/**
-    This routine writes a byte value to the PCI configuration
-    register space
 
-    @param
-        BusDevFunc - Bus, device & function number of the PCI device
-        Register   - Register offset to write
-        Value      - Value to write
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   ByteWritePCIConfig
+//
+// Description: This routine writes a byte value to the PCI configuration
+//      register space
+//
+// Input:   BusDevFunc - Bus, device & function number of the PCI device
+//      Register   - Register offset to read
+//      Value      - Value to write
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 VOID
-ByteWritePCIConfig(
-    UINT16  BusDevFunc,
-    UINT8   Register,
-    UINT8   Value
-)
+ByteWritePCIConfig(UINT16 BusDevFunc, UINT8 Register, UINT8 Value)
 {
-    UINTN   Address = (gUsbData->PciExpressBaseAddress + (UINTN)(BusDevFunc << 12 | Register));
-
-    *(volatile UINT8*)(Address) = Value;
+    UINT16 wIOAddr;
+    wIOAddr = WritePCIConfig(BusDevFunc, Register);
+    ByteWriteIO (wIOAddr, Value);
 }
 
-/**
-    This routine writes a word value to the PCI configuration
-    register space
 
-    @param
-        BusDevFunc - Bus, device & function number of the PCI device
-        Register   - Register offset to write
-        Value      - Value to write
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   WordWritePCIConfig
+//
+// Description: This routine writes a byte value to the PCI configuration
+//      register space
+//
+// Input:   BusDevFunc - Bus, device & function number of the PCI device
+//      Register   - Register offset to read
+//      Value      - Value to write
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 VOID
-WordWritePCIConfig(
-    UINT16  BusDevFunc,
-    UINT8   Register,
-    UINT16  Value
-)
+WordWritePCIConfig(UINT16 BusDevFunc, UINT8 Register, UINT16 Value)
 {
-    UINTN   Address = (gUsbData->PciExpressBaseAddress + (UINTN)(BusDevFunc << 12 | Register));
-
-    *(volatile UINT16*)(Address) = Value;
+    UINT16 wIOAddr;
+    wIOAddr = WritePCIConfig(BusDevFunc, Register);
+    WordWriteIO (wIOAddr, Value);
 }
 
-/**
-    This routine writes a Dword value to the PCI configuration
-    register space
 
-    @param
-        BusDevFunc - Bus, device & function number of the PCI device
-        Register   - Register offset to write
-        Value      - Value to write
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   DwordWritePCIConfig
+//
+// Description: This routine writes a Dword value to the PCI configuration
+//      register space
+//
+// Input:   BusDevFunc - Bus, device & function number of the PCI device
+//      Register   - Register offset to read
+//      Value      - Value to write
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 VOID
-DwordWritePCIConfig(
-    UINT16  BusDevFunc,
-    UINT8   Register,
-    UINT32  Value
-)
+DwordWritePCIConfig(UINT16 BusDevFunc, UINT8 Register, UINT32 Value)
 {
-    UINTN   Address = (gUsbData->PciExpressBaseAddress + (UINTN)(BusDevFunc << 12 | Register));
-
-    *(volatile UINT32*)(Address) = Value;
+    UINT16 wIOAddr;
+    wIOAddr = WritePCIConfig(BusDevFunc, Register);
+    DwordWriteIO (wIOAddr, Value);
 }
 
-/**
-    This routine reads a dword value from the PCI configuration
-    register space of the host controller.
 
-    @param
-        HcStruc     - HcStruc pointer
-        Offset      - Register offset to read
-
-**/
-
-UINT32
-HcReadPciReg(
-    HC_STRUC	*HcStruc,
-    UINT32		Offset
-)
-{
-#if !USB_RT_DXE_DRIVER
-    return ReadPCIConfig(HcStruc->wBusDevFuncNum, Offset);
-#else
-    EFI_STATUS	            Status;
-	UINT32                  Data = 0;
-    EFI_PCI_IO_PROTOCOL	    *PciIo = HcStruc->PciIo;
-
-    Status = PciIo->Pci.Read(PciIo, EfiPciIoWidthUint32, Offset, 1, &Data);
-    ASSERT_EFI_ERROR(Status);
-    return Data;
-#endif
-}
-
-/**
-    This routine writes a dword value to the PCI configuration
-    register space of the host controller.
-
-    @param
-        HcStruc     - HcStruc pointer
-        Offset      - Register offset to write
-        Data        - Value to write
-
-**/
-
-VOID
-HcWritePciReg(
-    HC_STRUC    *HcStruc,
-    UINT32      Offset,
-    UINT32      Data
-)
-{
-#if !USB_RT_DXE_DRIVER
-    DwordWritePCIConfig(HcStruc->wBusDevFuncNum, Offset, Data);
-    return;
-#else
-	EFI_STATUS              Status;
-    EFI_PCI_IO_PROTOCOL	    *PciIo = HcStruc->PciIo;
-
-    Status = PciIo->Pci.Write(PciIo, EfiPciIoWidthUint32, Offset, 1, &Data);
-    ASSERT_EFI_ERROR(Status);
-    return;
-#endif
-}
-
-/**
-    This routine writes a word value to the PCI configuration
-    register space of the host controller.
-
-    @param
-        HcStruc     - HcStruc pointer
-        Offset      - Register offset to write
-        Data        - Value to write
-
-**/
-
-VOID
-HcWordWritePciReg(
-    HC_STRUC    *HcStruc,
-    UINT32      Offset,
-    UINT16      Data
-)
-{
-#if !USB_RT_DXE_DRIVER
-    WordWritePCIConfig(HcStruc->wBusDevFuncNum, Offset, Data);
-    return;
-#else
-    EFI_STATUS	            Status;
-    EFI_PCI_IO_PROTOCOL	    *PciIo = HcStruc->PciIo;
-
-    Status = PciIo->Pci.Write(PciIo, EfiPciIoWidthUint16, Offset, 1, &Data);
-    ASSERT_EFI_ERROR(Status);
-    return;
-#endif
-}
-
-/**
-    This routine reads a dword value from the MMIO register 
-    of the host controller.
-
-    @param
-        HcStruc     - HcStruc pointer
-        Offset      - Register offset to read
-
-**/
-
-UINT32
-HcReadHcMem(
-    HC_STRUC    *HcStruc,
-    UINT32      Offset
-)
-{
-#if !USB_RT_DXE_DRIVER
-    if (Offset > HcStruc->BaseAddressSize) {
-        return 0;
-    }
-    return DwordReadMem(HcStruc->BaseAddress, Offset);
-#else
-    EFI_STATUS              Status;
-    UINT32                  Data = 0;
-    EFI_PCI_IO_PROTOCOL	    *PciIo = HcStruc->PciIo;
-
-	Status = PciIo->Mem.Read(PciIo, EfiPciIoWidthUint32, 0, Offset, 1, &Data);
-    ASSERT_EFI_ERROR(Status);
-    return Data;
-#endif
-}
-
-/**
-    This routine writes a dword value to the MMIO register 
-    of the host controller.
-
-    @param
-        HcStruc     - HcStruc pointer
-        Offset      - Register offset to write
-        Data        - Value to write
-        
-**/
-
-VOID
-HcWriteHcMem(
-    HC_STRUC    *HcStruc,
-    UINT32      Offset,
-    UINT32      Data
-)
-{
-#if !USB_RT_DXE_DRIVER
-    if ((Offset + sizeof(UINT32)) > HcStruc->BaseAddressSize) {
-        return;
-    }
-    DwordWriteMem(HcStruc->BaseAddress, Offset, Data);
-    return;
-#else
-    EFI_STATUS	            Status;
-    EFI_PCI_IO_PROTOCOL	    *PciIo = HcStruc->PciIo;
-
-    Status = PciIo->Mem.Write(PciIo, EfiPciIoWidthUint32, 0, Offset, 1, &Data);
-    ASSERT_EFI_ERROR(Status);
-    return;
-#endif
-}
-
-/**
-    This routine sets the specified bits to the MMIO register 
-    of the host controller.
-
-    @param
-        HcStruc     - HcStruc pointer
-        Offset      - Register offset to set
-        Data        - Value to set
-        
-**/
-
-VOID
-HcSetHcMem(
-    HC_STRUC    *HcStruc,
-    UINT32      Offset,
-    UINT32      Bit
-)
-{
-	UINT32  Data;
-
-    if (Offset > HcStruc->BaseAddressSize) {
-        return;
-    }
-
-	Data = HcReadHcMem(HcStruc, Offset) | Bit;
-	HcWriteHcMem(HcStruc, Offset, Data);
-    return;
-}
-
-/**
-    This routine clears the specified bits to the MMIO register 
-    of the host controller.
-
-    @param
-        HcStruc     - HcStruc pointer
-        Offset      - Register offset to clear
-        Data        - Value to clear
-        
-**/
-
-VOID
-HcClearHcMem(
-	HC_STRUC	*HcStruc,
-	UINT32		Offset,
-	UINT32		Bit
-)
-{
-    UINT32  Data;
-
-    if (Offset > HcStruc->BaseAddressSize) {
-        return;
-    }
-
-    Data = HcReadHcMem(HcStruc, Offset) & ~Bit;
-    HcWriteHcMem(HcStruc, Offset, Data);
-    return;
-}
-
-/**
-    This routine reads a dword value from the operational register 
-    of the host controller.
-
-    @param
-        HcStruc     - HcStruc pointer
-        Offset      - Register offset to read
-
-**/
-
-UINT32
-HcReadOpReg(
-    HC_STRUC    *HcStruc,
-    UINT32      Offset
-)
-{
-    return HcReadHcMem(HcStruc, HcStruc->bOpRegOffset + Offset);
-}
-
-/**
-    This routine write a dword value to the operational register
-    of the host controller.
-
-    @param
-        HcStruc     - HcStruc pointer
-        Offset      - Register offset to write
-        Data        - Value to write
-        
-**/
-
-VOID
-HcWriteOpReg(
-    HC_STRUC    *HcStruc,
-    UINT32      Offset,
-    UINT32      Data
-)
-{
-    HcWriteHcMem(HcStruc, HcStruc->bOpRegOffset + Offset, Data);
-    return;
-}
-
-/**
-    This routine sets the specified bits to the operational register 
-    of the host controller.
-
-    @param
-        HcStruc     - HcStruc pointer
-        Offset      - Register offset to set
-        Data        - Value to set
-        
-**/
-
-VOID
-HcSetOpReg(
-    HC_STRUC    *HcStruc,
-    UINT32      Offset,
-    UINT32      Bit
-)
-{
-    UINT32  Data;
-
-    Data = HcReadOpReg(HcStruc, Offset) | Bit;
-    HcWriteOpReg(HcStruc, Offset, Data);
-    return;
-}
-
-/**
-    This routine clears the specified bits to the operational register 
-    of the host controller.
-
-    @param
-        HcStruc     - HcStruc pointer
-        Offset      - Register offset to clear
-        Data        - Value to clear
-        
-**/
-
-VOID
-HcClearOpReg(
-    HC_STRUC    *HcStruc,
-    UINT32      Offset,
-    UINT32      Bit
-)
-{
-    UINT32  Data;
-
-    Data = HcReadOpReg(HcStruc, Offset) & ~Bit;
-    HcWriteOpReg(HcStruc, Offset, Data);
-	return;
-}
-
-/**
-    This routine reads a byte value from the Io register 
-    of the host controller.
-
-    @param
-        HcStruc     - HcStruc pointer
-        Offset      - Register offset to read
-
-**/
-
-UINT8
-HcByteReadHcIo(
-    HC_STRUC    *HcStruc,
-    UINT32      Offset
-)
-{
-#if !USB_RT_DXE_DRIVER
-    return ByteReadIO((UINT16)HcStruc->BaseAddress + Offset);
-#else
-    EFI_STATUS              Status;
-    UINT8                   Data = 0;
-    EFI_PCI_IO_PROTOCOL	    *PciIo = HcStruc->PciIo;
-
-    Status = PciIo->Io.Read(PciIo, EfiPciIoWidthUint8, 4, Offset, 1, &Data);
-    ASSERT_EFI_ERROR(Status);
-    return Data;
-#endif
-}
-
-/**
-    This routine writes a byte value to the Io register 
-    of the host controller.
-
-    @param
-        HcStruc     - HcStruc pointer
-        Offset      - Register offset to write
-        Data        - Value to write
-        
-**/
-
-VOID
-HcByteWriteHcIo(
-    HC_STRUC    *HcStruc,
-    UINT32      Offset,
-    UINT8       Data
-)
-{
-#if !USB_RT_DXE_DRIVER
-    ByteWriteIO((UINT16)HcStruc->BaseAddress + Offset, Data);
-    return;
-#else
-    EFI_STATUS	            Status;
-    EFI_PCI_IO_PROTOCOL	    *PciIo = HcStruc->PciIo;
-
-    Status = PciIo->Io.Write(PciIo, EfiPciIoWidthUint8, 4, Offset, 1, &Data);
-    ASSERT_EFI_ERROR(Status);
-    return;
-#endif
-}
-
-/**
-    This routine reads a word value from the Io register 
-    of the host controller.
-
-    @param
-        HcStruc     - HcStruc pointer
-        Offset      - Register offset to read
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   WritePCIConfig
+//
+// Description: This function opens PCI configuration for a given register
+//
+// Input:   wBDF  - Bus, device and function number
+//          bReg  - Register number to read
+//
+// Output:  IO register to write the value
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT16
-HcWordReadHcIo(
-    HC_STRUC    *HcStruc,
-    UINT32      Offset
-)
+WritePCIConfig(UINT16 wBDF, UINT8 bReg)
 {
-#if !USB_RT_DXE_DRIVER
-    return WordReadIO((UINT16)HcStruc->BaseAddress + Offset);
-#else
-    EFI_STATUS              Status;
-    UINT16                  Data = 0;
-    EFI_PCI_IO_PROTOCOL	    *PciIo = HcStruc->PciIo;
-
-    Status = PciIo->Io.Read(PciIo, EfiPciIoWidthUint16, 4, Offset, 1, &Data);
-    ASSERT_EFI_ERROR(Status);
-    return Data;
-#endif
+    DwordWriteIO(0xCF8, (UINT32)(0x80000000 | (wBDF<<8) | (bReg & 0xFC)));
+    return (UINT16)(0xCFC+(bReg & 3));
 }
 
-/**
-    This routine writes a word value to the Io register 
-    of the host controller.
 
-    @param
-        HcStruc     - HcStruc pointer
-        Offset      - Register offset to write
-        Data        - Value to write
-        
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   SpeakerBeep
+//
+// Description: This routine produces a sound on the internal PC speaker
+//
+// Input:   bFreq -     Sound frequency
+//      wDuration - Sound duration in 15 microsecond units
+//      fpHCStruc - Pointer to HCStruc
+//
+// Output:  None
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 VOID
-HcWordWriteHcIo(
-    HC_STRUC    *HcStruc,
-    UINT32      Offset,
-    UINT16      Data
-)
-{
-#if !USB_RT_DXE_DRIVER
-    WordWriteIO((UINT16)HcStruc->BaseAddress + Offset, Data);
-    return;
-#else
-    EFI_STATUS	            Status;
-    EFI_PCI_IO_PROTOCOL	    *PciIo = HcStruc->PciIo;
-
-    Status = PciIo->Io.Write(PciIo, EfiPciIoWidthUint16, 4, Offset, 1, &Data);
-    ASSERT_EFI_ERROR(Status);
-    return;
-#endif
-}
-
-/**
-    This routine reads a dword value from the Io register 
-    of the host controller.
-
-    @param
-        HcStruc     - HcStruc pointer
-        Offset      - Register offset to read
-
-**/
-
-UINT32
-HcDwordReadHcIo(
-    HC_STRUC    *HcStruc,
-    UINT32      Offset
-)
-{
-#if !USB_RT_DXE_DRIVER
-    return DwordReadIO((UINT16)HcStruc->BaseAddress + Offset);
-#else
-    EFI_STATUS              Status;
-    UINT32                  Data = 0;
-    EFI_PCI_IO_PROTOCOL	    *PciIo = HcStruc->PciIo;
-
-    Status = PciIo->Io.Read(PciIo, EfiPciIoWidthUint32, 4, Offset, 1, &Data);
-    ASSERT_EFI_ERROR(Status);
-    return Data;
-#endif
-}
-
-/**
-    This routine writes a dword value to the Io register 
-    of the host controller.
-
-    @param
-        HcStruc     - HcStruc pointer
-        Offset      - Register offset to write
-        Data        - Value to write
-        
-**/
-
-VOID
-HcDwordWriteHcIo(
-    HC_STRUC    *HcStruc,
-    UINT32      Offset,
-    UINT32      Data
-)
-{
-#if !USB_RT_DXE_DRIVER
-    DwordWriteIO((UINT16)HcStruc->BaseAddress + Offset, Data);
-    return;
-#else
-    EFI_STATUS              Status;
-    EFI_PCI_IO_PROTOCOL	    *PciIo = HcStruc->PciIo;
-
-    Status = PciIo->Io.Write(PciIo, EfiPciIoWidthUint32, 4, Offset, 1, &Data);
-    ASSERT_EFI_ERROR(Status);
-    return;
-#endif
-}
-
-/**
-    This routine uses Map of the DMA services for DMA operations. 
-
-    @param
-        HcStruc     - HcStruc pointer
-        Direction   - Data direction 
-        BufferAddr  - BufferAddr for DmaMap.
-        BufferSize  - BufferSize for DmaMap
-        PhyAddr     - Phyaddr to access
-        Mapping     - A resulting value to pass to HcDmaUnmap.
-**/
-
-UINT8
-HcDmaMap(
-    HC_STRUC    *HcStruc,
-    UINT8       Direction,
-    UINT8       *BufferAddr,
-    UINT32      BufferSize,
-    UINT8       **PhyAddr,
-    VOID        **Mapping
-)
-{
-#if !USB_RT_DXE_DRIVER
-    *PhyAddr = BufferAddr;
-#else
-    EFI_PCI_IO_PROTOCOL_OPERATION       Operation;
-    EFI_PHYSICAL_ADDRESS                Addr;
-    EFI_STATUS                          Status;
-    UINTN                               Bytes = BufferSize;
-    EFI_PCI_IO_PROTOCOL	                *PciIo = HcStruc->PciIo;
-
-    if (Direction & BIT7) {
-        Operation = EfiPciIoOperationBusMasterWrite;
-    } else {
-        Operation = EfiPciIoOperationBusMasterRead;
-    }
-
-	Status = PciIo->Map(PciIo, Operation, BufferAddr, &Bytes, &Addr, Mapping);
-    
-	if (EFI_ERROR(Status) || Bytes != BufferSize) {
-        *PhyAddr = BufferAddr;
-		return USB_ERROR;
-	}
-
-	*PhyAddr = (UINT8*)Addr;
-#endif
-	return USB_SUCCESS;
-}
-
-/**
-    This routine uses UnMap of the DMA services for DMA operations. 
-
-    @param
-        HcStruc     - HcStruc pointer
-        Mapping     - The mapping value returned from HcDmaMap.
-**/
-
-UINT8
-HcDmaUnmap(
-	HC_STRUC	*HcStruc,
-	VOID		*Mapping
-)
-{
-#if USB_RT_DXE_DRIVER
-
-    EFI_STATUS              Status;
-    EFI_PCI_IO_PROTOCOL	    *PciIo = HcStruc->PciIo;
-
-    Status = PciIo->Unmap(PciIo, Mapping);
-    if (EFI_ERROR(Status)) {
-        return USB_ERROR;
-    }
-#endif
-    return USB_SUCCESS;
-}
-
-/**
-    This routine produces a sound on the internal PC speaker
-
-    @param
-        Freq -     Sound frequency
-        Duration - Sound duration in 15 microsecond units
-        HcStruc - Pointer to HCStruc
-
-    @retval VOID
-
-**/
-
-VOID
-SpeakerBeep(
-    UINT8       Freq,
-    UINT16      Duration, 
-    HC_STRUC    *HcStruc
-)
+SpeakerBeep (UINT8 bFreq, UINT16 wDuration, HC_STRUC*   fpHCStruc)
 {
 #if USB_BEEP_ENABLE
-    UINT8   Value;
-    if (gUsbData->dUSBStateFlag & USB_FLAG_ENABLE_BEEP_MESSAGE) {
+    UINT8   bValue;
+    if(gUsbData->dUSBStateFlag & USB_FLAG_ENABLE_BEEP_MESSAGE) {
         ByteWriteIO((UINT8)0x43, (UINT8)0xB6);
-        ByteWriteIO((UINT8)0x42, (UINT8)Freq);
-        ByteWriteIO((UINT8)0x42, (UINT8)Freq);
-        Value = ByteReadIO((UINT8)0x61);
-        ByteWriteIO((UINT8)0x61, (UINT8)(Value | 03));
-        FixedDelay((UINTN)Duration * 15);
-        ByteWriteIO((UINT8)0x61, (UINT8)(Value));
+        ByteWriteIO((UINT8)0x42, (UINT8)bFreq);
+        ByteWriteIO((UINT8)0x42, (UINT8)bFreq);
+        bValue = ByteReadIO((UINT8)0x61);
+        ByteWriteIO((UINT8)0x61, (UINT8)(bValue | 03));
+        FixedDelay((UINTN)wDuration * 15);
+        ByteWriteIO((UINT8)0x61, (UINT8)(bValue));
     }
 #endif
 }
 
-//**********************************************************************
-//**********************************************************************
-//**                                                                  **
-//**        (C)Copyright 1985-2016, American Megatrends, Inc.         **
-//**                                                                  **
-//**                       All Rights Reserved.                       **
-//**                                                                  **
-//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093        **
-//**                                                                  **
-//**                       Phone: (770)-246-8600                      **
-//**                                                                  **
-//**********************************************************************
-//**********************************************************************
+//****************************************************************************
+//****************************************************************************
+//**                                                                        **
+//**             (C)Copyright 1985-2013, American Megatrends, Inc.          **
+//**                                                                        **
+//**                          All Rights Reserved.                          **
+//**                                                                        **
+//**                 5555 Oakbrook Pkwy, Norcross, GA 30093                 **
+//**                                                                        **
+//**                          Phone (770)-246-8600                          **
+//**                                                                        **
+//****************************************************************************
+//****************************************************************************

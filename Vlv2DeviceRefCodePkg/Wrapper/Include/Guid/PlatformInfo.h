@@ -177,10 +177,8 @@ typedef enum {
   BOARD_ID_BL_STHI        = 0x7,    // PPV- STHI Board
   BOARD_ID_BB_RVP         = 0x20,   // Bayley Bay Board
   BOARD_ID_BS_RVP         = 0x30,   // Bakersport Board
-  BOARD_ID_CVH            = 0x90,   // Crestview Hills
-  BOARD_ID_MINNOW2        = 0xA0,   // Minnow Max 2
-  BOARD_ID_KRSIP_INTERPOSER = 0x91, // Kendrick Ridge SIP Interposer
-  BOARD_ID_KRSIP_MRB = 0x92         // Kendrick Ridge SIP MRB
+  BOARD_ID_CVH            = 0x90    // Crestview Hills
+
 } BOARD_ID_LIST;
 
 //(CSP20130313E+)>>

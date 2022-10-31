@@ -24,10 +24,15 @@
 //*****************************************************************//
 //*****************************************************************//
 //*****************************************************************//
-/** @file TseCommon.h
-    Tse Common Helper header file
-
-**/
+//<AMI_FHDR_START>
+//----------------------------------------------------------------------------
+//
+// Name:		TseCommon.h
+//
+// Description:	Tse Common Helper header file
+//
+//----------------------------------------------------------------------------
+//<AMI_FHDR_END>
 
 #ifndef _TSECOMMON_H_
 #define _TSECOMMON_H_
@@ -72,12 +77,10 @@ VOID    CheckForKeyHook( EFI_EVENT Event, VOID *Context );
 VOID CheckForClickHook( EFI_EVENT Event, VOID *Context );
 VOID    ClearScreen( UINT8 Attrib );
 VOID    *SaveScreen( VOID );
-VOID ClearFlushBuffer(UINT8 Attrib);
 
 extern EFI_BOOT_SERVICES *gBS;
 extern EFI_SYSTEM_TABLE *gST;
-
-//extern EFI_GUID  gEfiDevicePathProtocolGuid;
+extern EFI_GUID  gEfiDevicePathProtocolGuid;
 
 #endif
 

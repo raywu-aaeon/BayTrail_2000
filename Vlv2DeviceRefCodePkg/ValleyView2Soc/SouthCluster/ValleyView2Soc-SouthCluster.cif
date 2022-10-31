@@ -1,10 +1,11 @@
 <component>
 	name = "ValleyView2Soc-SouthCluster"
 	category = ModulePart
-	LocalRoot = "Vlv2DeviceRefCodePkg\ValleyView2Soc\SouthCluster\"
+	LocalRoot = "Vlv2DeviceRefCodePkg\ValleyView2Soc\SouthCluster"
 	RefName = "Vlv2DeviceRefCodePkg.ValleyView2Soc.ValleyView2Soc-SouthCluster"
-[INF]
+[inf]
 "ActiveBios\Dxe\ActiveBios.inf"
+"FotaDxe\FotaFwUpdateCapsule.inf"
 "FotaDxe\FotaFwUpdateCapsule.inf"
 "I2cStack\I2cBus\I2cBus.inf"
 "I2cStack\I2cHost\I2cHost.inf"
@@ -23,8 +24,7 @@
 "Pcie\Smm\PchPcieSmm.inf"
 "Reset\RuntimeDxe\PchReset.inf"
 "S3Support\Dxe\PchS3Support.inf"
-"S3Support\Pei\PchS3Peim.inf"
-"S3Support\Smm\S3SupportSmm.inf"
+"S3Support\S3\PchS3Peim.inf"
 "SataController\Dxe\SataController.inf"
 "SDControllerDxe\MmcHostDxe.inf"
 "SDMediaDeviceDxe\MmcMediaDeviceDxe.inf"

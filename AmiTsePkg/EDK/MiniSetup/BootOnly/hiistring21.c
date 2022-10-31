@@ -2,7 +2,7 @@
 //*****************************************************************//
 //*****************************************************************//
 //**                                                             **//
-//**         (C)Copyright 2015, American Megatrends, Inc.        **//
+//**         (C)Copyright 2011, American Megatrends, Inc.        **//
 //**                                                             **//
 //**                     All Rights Reserved.                    **//
 //**                                                             **//
@@ -25,10 +25,15 @@
 //*****************************************************************//
 //*****************************************************************//
 
-/** @file hiistring21.c
-    This file contains code to handle UEFI2.1 supported hii strings.
-
-**/
+//<AMI_FHDR_START>
+//----------------------------------------------------------------------------
+//
+// Name:		hiistring21.c
+//
+// Description:	This file contains code to handle UEFI2.1 supported hii strings.
+//
+//----------------------------------------------------------------------------
+//<AMI_FHDR_END>
 
 #ifdef TSE_FOR_APTIO_4_50
 #include "Token.h"  
@@ -59,16 +64,6 @@
 #include "HiiLib.h"
 #include "variable.h"
 #include "TseDrvHealth.h"       //Has TSE related driver health structures
-#include "boot.h"
-#include <Protocol/AMIPostMgr.h>
-#include <Protocol/EsaTseInterfaces.h>
-#include "PwdLib.h"
-#include "AmiLib.h"				//Added for using CONVERT_TO_STRING macro
-#include "AmiDxeLib.h"
-#include "Library/PcdLib.h"
-#if TSE_SUPPORT_WRITE_CHAR_LAST_ROW_COLUMN
-#include "Protocol/AmiTextOut.h"
-#endif //TSE_SUPPORT_WRITE_CHAR_LAST_ROW_COLUMN
 
 #pragma pack(push,1)
 typedef struct{
@@ -77,11 +72,16 @@ typedef struct{
 } RESOURCE_SECTION_HEADER;
 #pragma pack(pop)
 
+typedef struct HOT_KEYS
+{
+    EFI_KEY_DATA    KeyData;
+    UINT16          BootOption;
+    UINT32          BootOptionCrc;
+}HOT_KEYS;
 UINT32      CheckBootOptionMatch (UINT16 BootOption);
 HOT_KEYS    *gHotKeysDetails = NULL;
 UINTN       gHotKeysCount = 0;
 UINTN       gAllocateKeysCount = 0;
-UINTN       gSkipEscCode = 0 ;
 #define HOTKEY_ALLOC_UNIT   10
 #define HOT_KEY_SHIFT           0x00000100          
 #define HOT_KEY_CTRL            0x00000200
@@ -125,14 +125,11 @@ EFI_HII_DATABASE_PROTOCOL *gHiiDatabase;
 EFI_HII_FONT_PROTOCOL *gHiiFont;
 
 extern EFI_GUID gEfiGlobalVariableGuid;
-CHAR8 *GlyphWidthCache = NULL;
+CHAR8 *GlyphWidthCache = NULL;//EIP 85564 : UefiHiiTestPrintLength function needs optimization
 
 CHAR8 *_GetSupportedLanguages(EFI_HII_HANDLE HiiHandle);
 VOID _GetNextLanguage(CHAR8 **LangCode, CHAR8 *Lang);
 EFI_STATUS UefiHiiWrapperGetString( EFI_HII_HANDLE handle, CHAR8 *Language, EFI_STRING_ID StringId, CHAR16 *buffer,UINTN *bufferSize );
-
-extern BOOLEAN gBrowserCallbackEnabled;
-BOOLEAN gEnableDrvNotification = FALSE; //TRUE if allow notification function to process action, FALSE to ignore the notification
 
 extern VOID *EfiLibAllocatePool(IN UINTN AllocationSize);
 extern EFI_STATUS HiiExtendedInitializeProtocol();
@@ -142,14 +139,10 @@ extern INTN EfiAsciiStrCmp(IN CHAR8 *String, IN CHAR8 *String2);
 extern CHAR8 *StrDup8( CHAR8 *string );
 extern EFI_STATUS ReadImageResource(EFI_HANDLE ImageHandle, EFI_GUID *pGuid,
 					VOID **ppData, UINTN *pDataSize);
-extern EFI_GUID gEfiShellFileGuid;
 BOOLEAN AdvancedRepairSupported (VOID);
 VOID DriverHealthSystemReset (VOID);
-VOID ReInstallBgrt();
-CHAR16 *DefaultPasswordFromToken(CHAR16 * PasswordString);
-BOOLEAN   IsTseCachePlatformLang (VOID);
 // Typecast EFI_KEY_OPTION to make it compatible Aptio 4 and 5
-/*
+#pragma pack(push,1)
 typedef struct {
   ///
   /// Specifies options about how the key will be processed.
@@ -173,17 +166,21 @@ typedef struct {
   ///
   //EFI_INPUT_KEY      Keys[];
 } AMI_EFI_KEY_OPTION;
-*/
-
-CHAR16  gPlatformLang [20];			
-CHAR16  gCachePlatformLang[20];//To Save the Current PlatformLang for Cache purpose.
-/**
-
-    @param 
-
-    @retval 
-
-**/
+#pragma pack(pop)
+CHAR16  gPlatformLang [20];			//EIP97951
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:    _GetSupportedLanguages
+//
+// Description:
+//
+// Parameter:
+//
+// Return value:
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 CHAR8 *_GetSupportedLanguages (EFI_HII_HANDLE HiiHandle)
 {
   EFI_STATUS  status;
@@ -241,13 +238,19 @@ VOID _GetNextLanguage(CHAR8 **LangCode, CHAR8 *Lang)
   *LangCode = StringPtr + Index;
 }
 
-/**
-
-    @param 
-
-    @retval EFI_STATUS
-        EFI_SUCCESS
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:    HiiInitializeProtocol
+//
+// Description:
+//
+// Parameter:
+//
+// Return value: EFI_STATUS
+//					EFI_SUCCESS
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS Uefi21HiiInitializeProtocol(VOID)
 {
 	EFI_STATUS Status = EFI_SUCCESS;
@@ -305,7 +308,7 @@ UINT16 Uefi21HiiChangeStringLanguage(VOID* handle, UINT16 token, CHAR16 *lang, C
 		return INVALID_TOKEN;
 
 	//
-	//Iterate through the languages supported by package list to see whether passed language is supported. If yes, add/change the string. 
+	//EIP-75536 Iterate through the languages supported by package list to see whether passed language is supported. If yes, add/change the string. 
 	//
 	LangStrings = Languages;
 	if (*LangStrings != 0)
@@ -330,7 +333,7 @@ UINT16 Uefi21HiiChangeStringLanguage(VOID* handle, UINT16 token, CHAR16 *lang, C
 	else
 		newToken = INVALID_TOKEN;
 
-	MemFreePointer ((VOID **)&passedLang);
+	MemFreePointer ((VOID **)&passedLang);//EIP 77875 : Freeing the allocated memory before returning
     MemFreePointer ((VOID **)&Languages);
     MemFreePointer ((VOID **)&Lang);
 	return newToken;
@@ -350,17 +353,21 @@ VOID EfiStrCpy (IN CHAR16   *Destination, IN CHAR16   *Source);
 #define EfiCopyMem(_Destination, _Source, _Length)  gBS->CopyMem((_Destination), (_Source), (_Length))
 #define EfiZeroMem(_Destination, _Length)  gBS->SetMem((_Destination), (_Length), 0)
   
-/**
-    Returns the string for incoming token.
-    If lang is valid then return string for this lang
-    else return string for PlatformLang variable
-    else return english string - default
-
-    @param Handle, string token and lang code
-
-    @retval Sting buffer
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:	Uefi21HiiGetStringLanguage
+//
+// Description:	Returns the string for incoming token.
+//						If lang is valid then return string for this lang
+//						else return string for PlatformLang variable
+//						else return english string - default
+//
+// Input:		Handle, string token and lang code
+//
+// Output:		Sting buffer
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 CHAR16 *Uefi21HiiGetStringLanguage(EFI_HII_HANDLE handle, UINT16 token, CHAR16 *lang)
 {
 	EFI_STATUS status;
@@ -380,7 +387,7 @@ CHAR16 *Uefi21HiiGetStringLanguage(EFI_HII_HANDLE handle, UINT16 token, CHAR16 *
 		language = StrDup16to8(lang);
 	else
 	{
-		
+		//EIP97951-Start
 		//language = VarGetNvramName( L"PlatformLang", &gEfiGlobalVariableGuid, NULL, &Size );
 		if (*gPlatformLang)		//gPlatformLang will filled in mainsetuploop only if any call comes before it get from NVRAM
 		{
@@ -399,9 +406,9 @@ CHAR16 *Uefi21HiiGetStringLanguage(EFI_HII_HANDLE handle, UINT16 token, CHAR16 *
 		   	EfiCopyMem (gPlatformLang, language, Size);
 			}
 		}
-				
+		//EIP97951-End		
 	}
-	if(NULL == language)
+	if(NULL == language)//EIP-75351 Suppress the warnings from static code analyzer
 	  return NULL;
 	if ( handle == INVALID_HANDLE )
 		handle = gHiiHandle;	  
@@ -421,7 +428,7 @@ CHAR16 *Uefi21HiiGetStringLanguage(EFI_HII_HANDLE handle, UINT16 token, CHAR16 *
 	{
 		//81617 : Avoiding memory leaks in TSE
 		MemFreePointer( (VOID **)&language );
-		language = StrDup8(CONVERT_TO_STRING(DEFAULT_LANGUAGE_CODE));
+		language = StrDup8(TSE_TO_STRING(DEFAULT_LANGUAGE_CODE));
 		status = UefiHiiWrapperGetString(handle, language,token ,buffer, &bufferSize );
 // String not found in Default Lang
 		if (( EFI_ERROR(status) )&&(bufferSize==0))
@@ -442,20 +449,6 @@ CHAR16 *Uefi21HiiGetStringLanguage(EFI_HII_HANDLE handle, UINT16 token, CHAR16 *
 			else
 			{
 //81617 : Avoiding memory leaks in TSE
-				MemFreePointer( (VOID **)&language );
-				return buffer;
-			}
-		}
-		if (EFI_BUFFER_TOO_SMALL == status)
-		{
-		    buffer = (CHAR16*)EfiLibAllocateZeroPool(bufferSize);
-		    if(buffer == NULL)
-		    {
-		      return buffer;
-		    }
-			status = UefiHiiWrapperGetString (handle, language, token, buffer, &bufferSize );
-			if (!EFI_ERROR (status))
-			{
 				MemFreePointer( (VOID **)&language );
 				return buffer;
 			}
@@ -578,16 +571,21 @@ EFI_STATUS GetUnicodeCollection2Protocol(VOID **Protocol)
 
 	return Status;
 }
+//EIP : 85564 STARTS
 CHAR16 *TseSkipEscCode(CHAR16 *String);
 UINTN EfiStrLen(IN CHAR16 *String);
-/**
-    function to get the printable lenght of the string
-
-    @param string 
-
-    @retval Size of string
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:	EfiTestPrintLength
+//
+// Description:	function to get the printable lenght of the string
+//
+// Input:		CHAR16 *string
+//
+// Output:		Size of string
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 UINTN UefiHiiTestPrintLength ( IN CHAR16   *String )
 {
 
@@ -620,7 +618,7 @@ UINTN UefiHiiTestPrintLength ( IN CHAR16   *String )
 		{
 			Size = Blt->Width * Blt->Height;
 			Size = Size/GLYPH_WIDTH;
-            Size = Size/(Blt->Height/EFI_GLYPH_HEIGHT); 
+            Size = Size/(Blt->Height/EFI_GLYPH_HEIGHT); // EIP72588
 			MemFreePointer(&Blt->Image.Bitmap);
 			MemFreePointer(&Blt);
 		}
@@ -643,10 +641,6 @@ UINTN UefiHiiTestPrintLength ( IN CHAR16   *String )
   		    if (GlyphWidthCache == NULL)
   			    return 0;
   	    }
-  	    
-  	  // Skip Esc Characters from String
-  	    if(gSkipEscCode)
-  	        String = (UINT16* )TseSkipEscCode(String);
       		
   	    StringLen = EfiStrLen(String);
   	    while(Index < StringLen) //Get the glyph of each character
@@ -678,10 +672,6 @@ UINTN UefiHiiTestPrintLength ( IN CHAR16   *String )
   		    Size += *(GlyphWidthCache+Character);
   		    Index++;
   	    }
-  	    
-  	    if(String != NULL && gSkipEscCode)
-  	       gBS->FreePool( String );
-  	    
   	    Size = ((Size/GLYPH_WIDTH)*NG_SIZE);
 	}
 #endif
@@ -690,16 +680,21 @@ DONE:
 
 	return Size;
 }
+//EIP : 85564 ENDS
 
-/**
-    function to get the Blt for the message with the given attributes
-
-    @param Message EFI_UGA_PIXEL Foreground, EFI_UGA_PIXEL Background, 
-    @param Width OUT EFI_UGA_PIXEL **BltBuffer
-
-    @retval Size of string
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:	HiiString2BltBuffer
+//
+// Description:	function to get the Blt for the message with the given attributes
+//
+// Input:		CHAR16 *Message, EFI_UGA_PIXEL Foreground, EFI_UGA_PIXEL Background, 
+//				OUT	UINTN *Width, OUT EFI_UGA_PIXEL **BltBuffer
+//
+// Output:		Size of string
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS HiiString2BltBuffer(	CHAR16 *Message,
 								EFI_UGA_PIXEL Foreground, 
 								EFI_UGA_PIXEL Background, 
@@ -720,6 +715,7 @@ EFI_STATUS HiiString2BltBuffer(	CHAR16 *Message,
   FontDisplayInfo.BackgroundColor = Background;
 
   // Get the String To Image Blt Buffer
+  //EIP127249 starts
   Status = gHiiFont->StringToImage (gHiiFont, Flag, Message, &FontDisplayInfo, &Blt, BltX, BltY, &RowInfo, NULL, NULL);	//Get the width from row info
   if(EFI_ERROR(Status))
   {
@@ -747,6 +743,7 @@ EFI_STATUS HiiString2BltBuffer(	CHAR16 *Message,
   }  
   Blt->Width = (UINT16)RowInfo->LineWidth;
   Blt->Height = (UINT16)RowInfo->LineHeight;
+	//EIP127249 Ends
   Status = gHiiFont->StringToImage (gHiiFont, Flag, Message, &FontDisplayInfo, &Blt, BltX, BltY, NULL, NULL, NULL);
   if(EFI_ERROR(Status))
   {
@@ -764,14 +761,19 @@ DONE:
   return Status;
 }
 
-/**
-    Clears the boot key gloabl details
-
-    @param VOID
-
-    @retval VOID
-
-**/
+//EIP: 62631 Start
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:	RefreshBootKeysDetails
+//
+// Description:	Clears the boot key gloabl details
+//
+// Input:		VOID
+//
+// Output:		VOID
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID RefreshBootKeysDetails (VOID)
 {
     gHotKeysCount = 0;
@@ -779,14 +781,18 @@ VOID RefreshBootKeysDetails (VOID)
     MemFreePointer ((VOID **)&gHotKeysDetails);
 }
 
-/**
-    Function to form the boot option hot keys
-
-    @param CHAR16 * = Hot key name to retrieve the hot key details
-
-    @retval VOID
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:	FormHotBootKeys
+//
+// Description:	Function to form the boot option hot keys
+//
+// Input:		CHAR16 * = Hot key name to retrieve the hot key details
+//
+// Output:		VOID
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 #ifdef EFI_KEY_OPTION_REVISION_MASK
 #define KEY_DATA_INPUT_KEY_COUNT(KeyData) ((KeyData) >> 30)
 #define KEY_DATA_VALUE(KeyData) (KeyData)
@@ -801,7 +807,7 @@ VOID FormHotBootKeys (CHAR16 *VarName)
 //    HOT_KEYS        *ParseKey = NULL; Not used
     UINTN		    size=0;
     UINT32          CRC32 = 0;
-    EFI_KEY_OPTION  *HotKeyBuff = NULL;
+    AMI_EFI_KEY_OPTION  *HotKeyBuff = NULL;
 
     
     if (gHotKeysCount >= gAllocateKeysCount)
@@ -854,7 +860,7 @@ VOID FormHotBootKeys (CHAR16 *VarName)
 
     while (Keycount)
     {                                                       //Since the values are ORED the values may read at reverse also
-        InputKey = (EFI_INPUT_KEY *)((UINT8 *)HotKeyBuff + (sizeof (EFI_KEY_OPTION) + ((Keycount-1) * sizeof (EFI_INPUT_KEY))));
+        InputKey = (EFI_INPUT_KEY *)((UINT8 *)HotKeyBuff + (sizeof (AMI_EFI_KEY_OPTION) + ((Keycount-1) * sizeof (EFI_INPUT_KEY))));
         gHotKeysDetails [gHotKeysCount].KeyData.Key.ScanCode |= InputKey->ScanCode;
         gHotKeysDetails [gHotKeysCount].KeyData.Key.UnicodeChar |= InputKey->UnicodeChar;
         Keycount --;
@@ -862,14 +868,18 @@ VOID FormHotBootKeys (CHAR16 *VarName)
     gHotKeysCount ++;
 }
 
-/**
-    Function to free the extra memories allocated
-
-    @param VOID
-
-    @retval VOID
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:	FreeExtraKeyMemories
+//
+// Description:	Function to free the extra memories allocated
+//
+// Input:		VOID
+//
+// Output:		VOID
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID FreeExtraKeyMemories (VOID)
 {
     if (gHotKeysCount < gAllocateKeysCount)
@@ -878,14 +888,18 @@ VOID FreeExtraKeyMemories (VOID)
     }
 }
 
-/**
-    Function to form the hot keys from NVRAM
-
-    @param VOID
-
-    @retval VOID
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:	FindandSetHotKeys
+//
+// Description:	Function to form the hot keys from NVRAM
+//
+// Input:		VOID
+//
+// Output:		VOID
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID FindandSetHotKeys (VOID)
 {
 #ifndef STANDALONE_APPLICATION
@@ -904,7 +918,7 @@ VOID FindandSetHotKeys (VOID)
         return;
     }
     RefreshBootKeysDetails ();
-    SetBootOptionSupportVariable (EFI_BOOT_OPTION_SUPPORT_KEY|EFI_BOOT_OPTION_SUPPORT_APP);            //Indicates boot manager supports hot key boot
+    SetBootOptionSupportVariable (EFI_BOOT_OPTION_SUPPORT_KEY);            //Indicates boot manager supports hot key boot
     Status = InitUnicodeCollectionProtocol (&UnicodeInterface);
     do
     { 
@@ -935,16 +949,20 @@ VOID FindandSetHotKeys (VOID)
 #endif
 }
 
-/**
-    Checks for the key pressed by user matches the boot key options
-
-    @param AMI_EFI_KEY_DATA = Input key details pressed by user
-        UINT16 * = Boot index to return; Memory should be allocated by user              
-
-    @retval BOOLEAN TRUE = If boot option found for user pressed key
-        FALSE = If boot index not found for user pressed key
-
-**/
+//<AMI_PHDR_START>
+//--------------------------------------------------------------------------------------
+// Procedure:	CheckforHotKey
+//
+// Description:	Checks for the key pressed by user matches the boot key options
+//
+// Input:		AMI_EFI_KEY_DATA = Input key details pressed by user
+//              UINT16 * = Boot index to return; Memory should be allocated by user              
+//
+// Output:		BOOLEAN TRUE = If boot option found for user pressed key
+//                      FALSE = If boot index not found for user pressed key
+//
+//--------------------------------------------------------------------------------------
+//<AMI_PHDR_END>
 BOOLEAN CheckforHotKey (AMI_EFI_KEY_DATA InputKey)
 {
     UINTN		Count = 0;
@@ -966,16 +984,21 @@ BOOLEAN CheckforHotKey (AMI_EFI_KEY_DATA InputKey)
     }
     return FALSE;
 }
+//EIP: 62631 End
 
-/**
-    Finds all agent handle which opens the input handle upto the last agent for the controller
-
-    @param EFI_HANDLE = Handle to be examined
-        EFI_HANDLE = Handle to be matched
-
-    @retval BOOLEAN => If handle matches return TRUE else FALSE
-
-**/
+//<AMI_PHDR_START>
+//-----------------------------------------------------------------------------------------------------------
+// Procedure:	FindtheMatchUptoEndNode
+//
+// Description:	Finds all agent handle which opens the input handle upto the last agent for the controller
+//
+//	Input:		EFI_HANDLE = Handle to be examined
+//              EFI_HANDLE = Handle to be matched
+//
+// Output:		BOOLEAN => If handle matches return TRUE else FALSE
+//
+//------------------------------------------------------------------------------------------------------------
+//<AMI_PHDR_END>
 BOOLEAN FindtheMatchUptoEndNode (EFI_HANDLE Handle, EFI_HANDLE DPHandle)
 {
     EFI_GUID    **ppGuid = NULL;
@@ -1019,14 +1042,18 @@ BOOLEAN FindtheMatchUptoEndNode (EFI_HANDLE Handle, EFI_HANDLE DPHandle)
     return RetStatus;
 }           
 
-/**
-    Checks whether the input handle has the driver health support
-
-    @param EFI_HANDLE = Handle to be examined
-
-    @retval BOOLEAN => TRUE if input handle has the driver health support else FALSE
-
-**/ 
+//<AMI_PHDR_START>
+//--------------------------------------------------------------------------------------------
+// Procedure:	MatchDPHandleWithDrvHlthHndls
+//
+// Description:	Checks whether the input handle has the driver health support
+//
+//	Input:		EFI_HANDLE = Handle to be examined
+//
+// Output:		BOOLEAN => TRUE if input handle has the driver health support else FALSE
+//
+//--------------------------------------------------------------------------------------------
+//<AMI_PHDR_END> 
 BOOLEAN MatchDPHandleWithDrvHlthHndls (EFI_HANDLE DPHandle)
 {
 	EFI_STATUS  Status;
@@ -1089,14 +1116,18 @@ BOOLEAN MatchDPHandleWithDrvHlthHndls (EFI_HANDLE DPHandle)
     return FALSE;
 }
 
-/**
-    Repairs the driver for the input device path protocol
-
-    @param EFI_DEVICE_PATH_PROTOCOL * = Device path for the handle to which repair operation to be done
-
-    @retval VOID
-
-**/
+//<AMI_PHDR_START>
+//-----------------------------------------------------------------------------------------------------------
+// Procedure:	CheckForDeviceNeedRepair
+//
+// Description:	Repairs the driver for the input device path protocol
+//
+// Input:		EFI_DEVICE_PATH_PROTOCOL * = Device path for the handle to which repair operation to be done
+//
+// Output:		VOID
+//
+//------------------------------------------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS CheckForDeviceNeedRepair (EFI_DEVICE_PATH_PROTOCOL *DevicePath)
 {
  //   UINTN       EntryCount = 0; Not used
@@ -1130,12 +1161,7 @@ EFI_STATUS CheckForDeviceNeedRepair (EFI_DEVICE_PATH_PROTOCOL *DevicePath)
 	{
 		return Status;
 	}
-	gEnableDrvNotification = TRUE;      
-	gBrowserCallbackEnabled = TRUE;   
 	Status = DrvHealthInstance->GetHealthStatus (DrvHealthInstance, DevHandle, NULL, &HealthStatus, NULL, &FormHiiHandle);
-	gEnableDrvNotification = FALSE;     
-    gBrowserCallbackEnabled = FALSE; 
-    
     if (EFI_ERROR (Status))
     {
         return Status;
@@ -1161,14 +1187,7 @@ DriverRepair:
     }
     if (AdvancedRepairSupported ())
     {
-        gEnableDrvNotification = TRUE;      
-        gBrowserCallbackEnabled = TRUE;     
-        
         Status = DrvHealthInstance->GetHealthStatus (DrvHealthInstance, DevHandle, NULL, &HealthStatus, NULL, &FormHiiHandle);
-        
-        gEnableDrvNotification = FALSE;      
-        gBrowserCallbackEnabled = FALSE;    
-        
         if (!EFI_ERROR (Status))
         {
             if (EfiDriverHealthStatusConfigurationRequired == HealthStatus)
@@ -1186,14 +1205,7 @@ DriverRepair:
                 {
                     return Status;
                 }
-                gEnableDrvNotification = TRUE;       
-                gBrowserCallbackEnabled = TRUE;     
-                
                 Status = DrvHealthInstance->GetHealthStatus (DrvHealthInstance, DevHandle, NULL, &HealthStatus, NULL, &FormHiiHandle);
-                
-                gEnableDrvNotification = FALSE;     
-                gBrowserCallbackEnabled = FALSE;    
-                
                 if (EFI_ERROR (Status))
                 {
                     return Status;
@@ -1214,14 +1226,7 @@ DriverRepair:
             }
         }
     }
-    gEnableDrvNotification = TRUE;      
-    gBrowserCallbackEnabled = TRUE;     
-    
     Status = DrvHealthInstance->GetHealthStatus (DrvHealthInstance, DevHandle, NULL, &HealthStatus, NULL, &FormHiiHandle);
-    
-    gEnableDrvNotification = FALSE;     
-    gBrowserCallbackEnabled = FALSE;    
-    
     if ((!(EFI_ERROR (Status))) && (EfiDriverHealthStatusHealthy == HealthStatus) )
     {
         return EFI_SUCCESS;
@@ -1229,603 +1234,27 @@ DriverRepair:
     return EFI_UNSUPPORTED;
 }
 
-/**
-    Function to return the PlatformLang
-
-    @param Size 
-
-    @retval PlatformLang String
-
-**/
+//<AMI_PHDR_START>
+//-----------------------------------------------------------------------------------------------------------
+// Procedure:	ReadPlatformLang
+//
+// Description:	Function to return the PlatformLang
+//
+// Input:	UINTN *Size 	
+//
+// Output:		PlatformLang String
+//
+//------------------------------------------------------------------------------------------------------------
+//<AMI_PHDR_END>
 CHAR16 *ReadPlatformLang( UINTN *Size )
 {
-	VOID *buffer = NULL;
-	if(IsTseCachePlatformLang())
- 	{
- 		if(*gCachePlatformLang )
- 		{
- 			*Size=(EfiStrLen(gCachePlatformLang)*sizeof(CHAR16));
- 			buffer = EfiLibAllocateZeroPool(*Size+sizeof(CHAR16));
- 			EfiCopyMem (buffer, gCachePlatformLang, *Size);
- 		}
- 		return buffer;
- 	}	
-	else
 	return VarGetNvramName (L"PlatformLang", &gEfiGlobalVariableGuid, NULL, Size);
-}
-
-/**
-    Loads ESA FV and inits the ESA_INTERFACES_FOR_TSE protocol
-               
-    @param VOID
-
-    @retval VOID
-
-**/
-ESA_INTERFACES_FOR_TSE	*gEsaInterfaceForTSE = (ESA_INTERFACES_FOR_TSE *)NULL;
-EFI_STATUS ESAInitFvHook(VOID);
-extern UINT16 gDbgPrint ;
-VOID UpdateGoPUgaDraw( VOID );
-extern BOOLEAN gLaunchOtherSetup;
-extern VOID    *gBgrtSafeBuffer;
-extern UINTN gTableKey;
-EFI_STATUS InitEsaTseInterfaces (void)
-{
-#if ESA_BINARY_SUPPORT
-	EFI_STATUS Status = EFI_SUCCESS;
-	extern EFI_GRAPHICS_OUTPUT_PROTOCOL	*gGOP;
-	extern UINTN 					gPostStatus;
-	extern BOOLEAN					gQuietBoot;
-	extern EFI_SYSTEM_TABLE 	*gST;
-
-	if (NULL == gEsaInterfaceForTSE)
-	{
-		ESAInitFvHook ();
-		Status = gBS->LocateProtocol(&gEsaInterfacesForTseProtocolGuid, NULL,(void**) &gEsaInterfaceForTSE);
-	}
-	if (EFI_ERROR (Status))
-	{
-		gEsaInterfaceForTSE = (ESA_INTERFACES_FOR_TSE	*)NULL;
-	}
-	else
-	{
-#if TSE_BUILD_AS_APPLICATION
-		UpdateGoPUgaDraw ();
-#endif	
-		Status = gEsaInterfaceForTSE->EsaTseSetGetVariables (TSEHANDLE, 1, &gHiiHandle, 0);
-		Status = gEsaInterfaceForTSE->EsaTseSetGetVariables (LANGDATA,1, &gLanguages, &gLangCount);
-		Status = gEsaInterfaceForTSE->EsaTseSetGetVariables (GOP, 1, &gGOP, 0);
-		if(!gLaunchOtherSetup){
-			Status = gEsaInterfaceForTSE->EsaTseSetGetVariables (PostStatus, 1, 0, &gPostStatus);
-		}
-		Status = gEsaInterfaceForTSE->EsaTseSetGetVariables (QuietBoot, 1, 0, (UINTN*)&gQuietBoot);
-		Status = gEsaInterfaceForTSE->EsaTseSetGetVariables (TSEDEBUG, 1, 0, (UINTN*)&gDbgPrint);
-		Status = gEsaInterfaceForTSE->EsaTseSetGetVariables (BOOTDISABLEDOPTION, 1, 0, (UINTN*)&DISABLED_BOOT_OPTION);
-		Status = gEsaInterfaceForTSE->EsaTseSetGetVariables (DRIVERDISABLEDOPTION, 1, 0, (UINTN*)&DISABLED_DRIVER_OPTION);
-		Status = gEsaInterfaceForTSE->EsaTseSetGetVariables (BgrtSafeBuffer, 1, 0, (UINTN*)&gBgrtSafeBuffer);
-		Status = gEsaInterfaceForTSE->EsaTseSetGetVariables (TableKey, 1, 0, (UINTN*)&gTableKey);
-		
-		gEsaInterfaceForTSE->InitGraphicsLibEntry (gImageHandle, gST);
-	}
-	return Status;
-#else
-	return EFI_UNSUPPORTED;
-#endif	
-}
-
-/**
-    Gets default password throug sdl tokens
-               
-    @param PasswordType 
-
-    @retval CHAR16 * Password 
-
-**/
-#define EMPTY_DATA ""
-CHAR16 *GetDefaultPasswordFromTokens (UINT32 PasswordType)
-{
-#if TSE_DEFAULT_SETUP_PASSWORD_SUPPORT
-	if (AMI_PASSWORD_ADMIN == PasswordType)
-	{
-		return  DefaultPasswordFromToken(CONVERT_TO_WSTRING(TSE_ADMIN_PASSWORD));
-	}
-	if (AMI_PASSWORD_USER == PasswordType)
-	{
-		return DefaultPasswordFromToken(CONVERT_TO_WSTRING(TSE_USER_PASSWORD));
-	}
-#endif	
-	return NULL;
-}
-	
-/**
-    Returns token RT_ACCESS_SUPPORT_IN_HPKTOOL value
-
-    @param VOID
-
-    @retval BOOLEAN
-
-**/
-BOOLEAN   TseRtAccessSupport (VOID)
-{
-#ifdef RT_ACCESS_SUPPORT_IN_HPKTOOL
-	return RT_ACCESS_SUPPORT_IN_HPKTOOL;
-#else
-	return 0;
-#endif
-}
-
-/**
-    Returns token TSE_BEST_TEXT_GOP_MODE value
-
-    @param VOID
-
-    @retval BOOLEAN
-
-**/
-BOOLEAN   IsTseBestTextGOPModeSupported (VOID)
-{
-#ifdef TSE_BEST_TEXT_GOP_MODE
-	return TSE_BEST_TEXT_GOP_MODE;
-#else
-	return FALSE;
-#endif
-}
-
-/**
-    Returns TSE_SUPPORT_DEFAULT_FOR_STRING_CONTROL token value
-
-    @param VOID
-
-    @retval BOOLEAN
-
-**/
-BOOLEAN   IsSupportDefaultForStringControl (VOID)
-{
-#if TSE_SUPPORT_DEFAULT_FOR_STRING_CONTROL
-	return TSE_SUPPORT_DEFAULT_FOR_STRING_CONTROL;
-#else
-	return FALSE;
-#endif
-}
-
-/**
-    Wrapper function to call ReInstallBGRT
-
-    @param VOID
-
-    @retval VOID
-
-**/
-VOID ReInstallBgrtWrapper (
-    )
-{
-#if CONTRIB_BGRT_TABLE_TO_ACPI
-	ReInstallBgrt();
-#endif
-}
-/**
-    Returns token value TSE_SUPPORT_WRITE_CHAR_LAST_ROW_COLUMN
-
-    @param VOID
-
-    @retval BOOLEAN
-
-**/
-BOOLEAN IsWriteCharLastRowColSupport()
-{
-#if TSE_SUPPORT_WRITE_CHAR_LAST_ROW_COLUMN
-    return 1;
-#else
-    return 0;
-#endif
-}
-/**
-    function to write char to the last Row Col
-
-    @param String 
-    @param Attribute 
-    @param Row 
-    @param Alignment 
-    @param UpdateBackground 
-
-    @retval EFI_STATUS
-
-**/
-EFI_STATUS WriteCharLastRowCol (CHAR16 *String, UINT32 Attribute, UINT32 Row, UINT32 Alignment, BOOLEAN UpdateBackground)
-{
-    EFI_STATUS Status = EFI_UNSUPPORTED;
-    
-#if TSE_SUPPORT_WRITE_CHAR_LAST_ROW_COLUMN    
-    AMI_TEXT_OUT_PROTOCOL *pr = (AMI_TEXT_OUT_PROTOCOL *)NULL;
-    EFI_GUID  AmiTextOutProtocolGuid = AMI_TEXT_OUT_PROTOCOL_GUID;
-        
-    Status = gBS->LocateProtocol(&AmiTextOutProtocolGuid, NULL, &pr);
-    if(EFI_ERROR(Status))
-        return Status;
-
-    Status = pr->PrintLine(pr, String, Attribute, Row, Alignment, UpdateBackground);    //will print on last line
-#endif
-    return Status;
-}
-
-/**
-    Returns token value  TSEMousePostTriggerTime
-
-    @param VOID
-
-    @retval UINT64
-
-**/
-UINT64 TSEMousePostTriggerTime(VOID)
-{
-	return TSE_MOUSE_POST_TRIGGER_TIME;
-}
-
-/**
-    Function to return whether MousePointer is on softkbd or not
-
-    @param VOID
-
-    @retval TRUE/FALSE
-
-**/
-BOOLEAN TSEIsMouseOnSoftkbd(VOID);
-BOOLEAN IsMouseOnSoftkbd(VOID)
-{
-#if (MINISETUP_MOUSE_SUPPORT && AMITSE_SOFTKBD_SUPPORT)
-	return TSEIsMouseOnSoftkbd();	
-#endif
-	return FALSE;	
-}
-
-/**
-    Returns the value of token which decides whether to skip orphan variable or not
-
-    @param VOID
-
-    @retval UINT32
-
-**/
-UINT32 SkipOrphanBootOrderVar()
-{
-#if TSE_SKIP_ORPHAN_BOOT_ORDER_VARIABLE
-	return TSE_SKIP_ORPHAN_BOOT_ORDER_VARIABLE;
-#else
-	return 0;
-#endif
-}
-
-/**
-    Returns token TSE_ISOLATE_SETUP_DATA value for checking Isolating SetupData
-	 Feature is enabled or not
-
-    @param VOID
-
-    @retval BOOLEAN
-
-**/
-
-BOOLEAN   IsIsolateSetupDataSupported (VOID)
-{
-#if TSE_ISOLATE_SETUP_DATA
-	return TSE_ISOLATE_SETUP_DATA;
-#else
-	return 0;
-#endif
-}
-
-/**
-    Returns the password String of token 
-
-    @param  PwdString
-
-    @retval CHAR16 *
-
-**/
-CHAR16 *DefaultPasswordFromToken(CHAR16 * PwdString)
-{
-	CHAR16 *DefPwd=NULL;
-	DefPwd= (CHAR16 *)EfiLibAllocateZeroPool(StrLen(PwdString)*sizeof(CHAR16));
-	if(DefPwd == NULL)
-		return NULL;
-	StrnCpy(DefPwd,PwdString+1,StrLen(PwdString)-2);
-	if((StrCmp(DefPwd,(CHAR16 *)L"EMPTY_DATA")==0) || (StrLen(DefPwd)==0)) 
-	{
-	     MemFreePointer ((VOID **) &DefPwd);
-		 return CONVERT_TO_WSTRING(EMPTY_DATA);
-	}
-	return DefPwd;
-}
-
-
-/**
-    Returns token TSE_WAIT_FOR_KEY_EVENT_BEFORE_READ value
-
-    @param VOID
-
-    @retval BOOLEAN
-
-**/
-BOOLEAN   IsWaitForKeyEventSupport (VOID)
-{
-#if TSE_WAIT_FOR_KEY_EVENT_BEFORE_READ
-	return TSE_WAIT_FOR_KEY_EVENT_BEFORE_READ;
-#else
-	return FALSE;
-#endif
-}
-
-/**
-    Returns System ResetType from  AmiTsePcdResetType value
-
-    @param VOID
-
-    @retval UINT8
-
-**/
-UINT8 TseGetResetType()
-{
- return PcdGet8(AmiTsePcdResetType);
-}
-
-/**
-    Returns GUID of the  PCD shell file
-
-    @param VOID
-
-    @retval EFI_GUID
-
-**/
-EFI_GUID TSEGetPCDptr()
-{
-	EFI_GUID *gPEfiShellFileGuid  = (EFI_GUID *)PcdGetPtr(PcdShellFile);
-	return *gPEfiShellFileGuid;
-}
-/**
-	Returns POPUP_MENU_ENTER_SETUP token value
-
-	@param		VOID
-
-	@retval		BOOLEAN
-
-**/
-BOOLEAN IsPopupMenuEnterSetupEnabled(VOID)
-{
-#if POPUP_MENU_ENTER_SETUP
-	return TRUE;
-#else
-	return FALSE;
-#endif	
-}
-
-
-/**
-    Returns  BOOT_TO_IMAGE_CODE_TYPE_SUPPORT token value
-
-    @param VOID
-
-    @retval UINT8
-
-**/
-
-UINT8  IsImageCodeTypeSupport (VOID)
-{
-#ifdef BOOT_TO_IMAGE_CODE_TYPE_SUPPORT
-	return BOOT_TO_IMAGE_CODE_TYPE_SUPPORT;
-#endif
-	return 0;					//Defaultly enabled.
-}
-
-
-/**
-    Returns  TSE_WATCHDOG_TIMER token value
-
-    @param VOID
-
-    @retval UINT8
-
-**/
-BOOLEAN IsTseWatchDogTimer()
-{
-#if TSE_WATCHDOG_TIMER
-	return TSE_WATCHDOG_TIMER;
-#else
-	return 0;
-#endif  
-}
-
-/**
-	Retrurns TEXT_EXCESS_SUPPORT token value
-	
-	@param	VOID
-	
-	@retval	UINT8
-**/
-UINT8  IsTSETextExcessSupport (VOID)
-{
-#ifdef TEXT_EXCESS_SUPPORT
-    return TEXT_EXCESS_SUPPORT;
-#endif
-    return 0;					//Defaultly disabled.
-}
-
-/**
-	Returns DEFAULT_CONDITIONAL_EXPRESSION_SUPPORT token value
-
-	@param		VOID
-
-	@retval		BOOLEAN
-
-**/
-BOOLEAN IsDefaultConditionalExpression(VOID)
-{
-#if DEFAULT_CONDITIONAL_EXPRESSION_SUPPORT
-	return TRUE;
-#else 
-	return FALSE;				//Defaultly disabled.
-#endif
-}
-
-/**
-	Returns TSE_DISPLAY_FORMSET_PARSING_ERROR token value
-
-	@param		VOID
-
-	@retval		BOOLEAN
-
-**/
-
-BOOLEAN IsTSEDisplayFormsetParsingError(VOID)
-{
-#if TSE_DISPLAY_FORMSET_PARSING_ERROR
-	return TRUE;
-#else 
-	return FALSE;				//Default -> disabled.
-#endif
-}
-
-/**
-    Returns token GROUP_DYNAMIC_PAGES_BY_CLASSCODE value
-
-    @param VOID
-
-    @retval BOOLEAN
-
-**/
-BOOLEAN IsGroupDynamicPagesByClass()
-{
-#if GROUP_DYNAMIC_PAGES_BY_CLASSCODE
-    return 1;
-#else
-    return 0;
-#endif  
-}
-
-
-/**
-	Returns TSE_CACHE_PLATFORM_LANG token value
-
-	@param		VOID
-
-	@retval		BOOLEAN
-
-**/
-BOOLEAN   IsTseCachePlatformLang (VOID)
-{
-#if TSE_CACHE_PLATFORM_LANG
-	return 1;
-#else
-	return 0;
-#endif
-}
-
-/**
- 			BootFlowExitHook is called from BootFlowManageExit()
-   
-  @retval 	EFI_NOT_SUPPORTED to continue normal BootFlowManageExit() flow
-  			EFI_NOT_STARTED - return from BootFlowManageExit with EFI_NOT_STARTED 
-  				for TSE_POST_STATUS_NO_BOOT_OPTION_FOUND - TSE will display error and call BootFlowManageExit in a loop until return value changes
-				for TSE_POST_STATUS_ALL_BOOT_OPTIONS_FAILED TSE will call CheckForKeyHook() to enter Setup
-  			EFI_SUCCESS - return from BootFlowManageExit with EFI_SUCCESS
-**/
-EFI_STATUS BootFlowExitHook(VOID)
-{
-	return EFI_UNSUPPORTED;
-}
-
-/**
-    Returns TSE_RECOVERY_SUPPORT token value
-
-    @param VOID
-
-    @retval BOOLEAN
-
-**/
-BOOLEAN   IsRecoverySupported(VOID)
-{
-#if TSE_RECOVERY_SUPPORT
-    return TSE_RECOVERY_SUPPORT;
-#else
-    return 0;
-#endif
-}
-
-/**
-    Returns TSE_BREAK_INTERACTIVE_BBS_POPUP token value
-	
-    @param VOID
-
-    @retval BOOLEAN
-
-**/
-#if !OVERRIDE_TSEBreakInteractiveBbsPopup
-BOOLEAN   TSEBreakInteractiveBbsPopup (void)
-{
-#if TSE_BREAK_INTERACTIVE_BBS_POPUP
-    return TSE_BREAK_INTERACTIVE_BBS_POPUP;
-#else
-    return 0;
-#endif
-}
-#endif
-
-
-/**
-    Returns TSE_BOOT_TO_DISABLED_BOOT_OPTIONS token value
-	
-    @param VOID
-
-    @retval BOOLEAN
-
-**/
-BOOLEAN IsBootToDisabledBootOption(void)
-{
-#if TSE_BOOT_TO_DISABLED_BOOT_OPTIONS
-	return 1;
-#else
-	return 0;
-#endif
-}
-
-/**
-	Returns TSE_GOP_NOTIFICATION_SUPPORT token value
-
-	@param		VOID
-
-	@retval		BOOLEAN
-
-**/
-
-BOOLEAN IsTSEGopNotificationSupport(VOID)
-{
-#if TSE_GOP_NOTIFICATION_SUPPORT
-	return TRUE; // Default enabled 
-#else 
-	return FALSE;		
-#endif
-}
-
-/**
-    Returns SETUP_HIDE_DISABLE_BOOT_OPTIONS token value
-	
-    @param VOID
-
-    @retval BOOLEAN
-
-**/
-BOOLEAN IsSetupHideDisableBootOptions(void)
-{
-#if SETUP_HIDE_DISABLE_BOOT_OPTIONS
-	return 1;
-#else
-	return 0;
-#endif
 }
 //*****************************************************************//
 //*****************************************************************//
 //*****************************************************************//
 //**                                                             **//
-//**         (C)Copyright 2015, American Megatrends, Inc.        **//
+//**         (C)Copyright 2012, American Megatrends, Inc.        **//
 //**                                                             **//
 //**                     All Rights Reserved.                    **//
 //**                                                             **//

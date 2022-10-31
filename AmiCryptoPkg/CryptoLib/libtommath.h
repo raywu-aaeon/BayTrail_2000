@@ -575,7 +575,7 @@ static int mp_mod (mp_int * a, mp_int * b, mp_int * c)
 
 /* this is a shell function that calls either the normal or Montgomery
  * exptmod functions.  Originally the call to the montgomery code was
- * embedded in the normal function but that wasted a lot of stack space
+ * embedded in the normal function but that wasted alot of stack space
  * for nothing (since 99% of the time the Montgomery code would be called)
  */
 static int mp_exptmod (mp_int * G, mp_int * X, mp_int * P, mp_int * Y)
@@ -1618,7 +1618,7 @@ static int mp_div(mp_int * a, mp_int * b, mp_int * c, mp_int * d)
   }
 	
   /* init our temps */
-  if ((res = mp_init_multi(&ta, &tb, &tq, &q, NULL)) != MP_OKAY) {
+  if ((res = mp_init_multi(&ta, &tb, &tq, &q, NULL) != MP_OKAY)) {
      return res;
   }
 
@@ -2214,7 +2214,7 @@ static int mp_2expt (mp_int * a, int b)
   /* zero a as per default */
   mp_zero (a);
 
-  /* grow a to accommodate the single bit */
+  /* grow a to accomodate the single bit */
   if ((res = mp_grow (a, b / DIGIT_BIT + 1)) != MP_OKAY) {
     return res;
   }
@@ -2326,7 +2326,7 @@ CLEANUP:
 }
 
 
-/* multiplies |a| * |b| and only computes up to digs digits of result
+/* multiplies |a| * |b| and only computes upto digs digits of result
  * HAC pp. 595, Algorithm 14.12  Modified so you can control how 
  * many digits of output are created.
  */
@@ -2685,7 +2685,7 @@ mp_montgomery_setup (mp_int * n, mp_digit * rho)
  *
  * Based on Algorithm 14.32 on pp.601 of HAC.
 */
-/*static*/ int fast_mp_montgomery_reduce (mp_int * x, mp_int * n, mp_digit rho)
+int fast_mp_montgomery_reduce (mp_int * x, mp_int * n, mp_digit rho)
 {
   int     ix, res, olduse;
   mp_word W[MP_WARRAY];
@@ -2836,7 +2836,7 @@ static int mp_mul_2(mp_int * a, mp_int * b)
 {
   int     x, res, oldused;
 
-  /* grow to accommodate result */
+  /* grow to accomodate result */
   if (b->alloc < a->used + 1) {
     if ((res = mp_grow (b, a->used + 1)) != MP_OKAY) {
       return res;
@@ -2898,8 +2898,8 @@ static int mp_mul_2(mp_int * a, mp_int * b)
 /*
  * shifts with subtractions when the result is greater than b.
  *
- * The method is slightly modified to shift B unconditionally up to just under
- * the leading bit of b.  This saves a lot of multiple precision shifting.
+ * The method is slightly modified to shift B unconditionally upto just under
+ * the leading bit of b.  This saves alot of multiple precision shifting.
  */
 static int mp_montgomery_calc_normalization (mp_int * a, mp_int * b)
 {

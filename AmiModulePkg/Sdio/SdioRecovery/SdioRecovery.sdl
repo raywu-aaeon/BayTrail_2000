@@ -1,0 +1,73 @@
+TOKEN
+	Name  = SdioRecovery_SUPPORT
+	Value  = "0"
+	TokenType = Boolean
+	TargetEQU = Yes
+	TargetMAK = Yes
+	Master = Yes
+	Help  = "Main switch to enable SdioRecovery support in Project"
+   	Token = "Recovery_SUPPORT" "=" "1"
+End
+
+TOKEN
+    Name  = "PCI_SD_MMC_IO_MAP_BASE_ADDRESS"
+    Value  = "0xF100"
+    Help  = "IO map address to be allocated for SD/MMC Device's, the OEM has to be aware that this address is not used by someone in PEI phase, if used OEM has to Port this address and allocate resource also."
+    TokenType = Integer
+    TargetH = Yes
+End
+
+TOKEN
+    Name  = "PCI_SD_MMC_MEM_MAP_BASE_ADDRESS"
+    Value  = "0xd0b01000"
+    Help  = "Memory map address to be allocated for SD/MMC Device's, the OEM has to be aware that this address is not used by someone in PEI phase, if used OEM has to Port this address and allocate resource also."
+    TokenType = Integer
+    TargetH = Yes
+End
+
+TOKEN
+    Name  = "MAX_SDIO_RECOVERY_DEVICE"
+    Value  = "4"
+    Help  = "Maximum SD/MMC Device to be supported for recovery."
+    TokenType = Integer
+    TargetH = Yes
+End
+
+TOKEN
+    Name  = "MAXIMUM_PCI_BRIDGE"
+    Value  = "12"
+    Help  = "Port this - Maximum Bridge's in the Platform including number of root/rootport Bridge's."
+    TokenType = Integer
+    TargetH = Yes
+End
+
+PATH
+    Name  = "SdioRecovery_DIR"
+End
+
+MODULE
+	Help  = "Includes SdioRecovery.mak to Project"
+	File  = "SdioRecovery.mak"
+End
+
+ELINK
+    Name  = "SD_ROOT_BRIDGE_LIST"
+    InvokeOrder = ReplaceParent
+    Help  = "List of Root Bridge's under which SD/MMC Device has to be searched \Format - {Bus, Dev, Func}"
+End
+
+ELINK
+    Name  = "{0x0,0x0,0x0},"
+    Parent  = "SD_ROOT_BRIDGE_LIST"
+    InvokeOrder = AfterParent
+    Help  = "Add Root Bridge's under which SD/MMC Device has to be searched in this ELINK \Format - {Bus, Dev, Func},{Bus, Dev, Func},..."
+End
+
+INFComponent
+    Name  = "SdioRecovery"
+    File  = "SdioRecovery.inf"
+    Package  = "AmiModulePkg"
+    ModuleTypes  = "PEIM"
+    Token = "SDIO_DRIVER_SUPPORT" "=" "1"
+End
+

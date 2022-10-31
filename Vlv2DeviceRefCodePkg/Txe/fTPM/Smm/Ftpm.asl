@@ -90,10 +90,8 @@ DefinitionBlock (
       // Operational region for TPM support, TPM Physical Presence and TPM Memory Clear
       // Region Offset 0xFFFF0000 and Length 0xF0 will be fixed in C code.
       //
-      //AMI_OVERIDE - EIP173375 fix some TPM issue >>
-      OperationRegion (TNVF, SystemMemory, 0xFFFF0000, 0xF0)
-      Field (TNVF, AnyAcc, NoLock, Preserve)
-      //AMI_OVERIDE - EIP173375 fix some TPM issue <<
+      OperationRegion (TNVS, SystemMemory, 0xFFFF0000, 0xF0)
+      Field (TNVS, AnyAcc, NoLock, Preserve)
       {
         PPIN,   8,  //   Software SMI for Physical Presence Interface
         PPIP,   32, //   Used for save physical presence paramter

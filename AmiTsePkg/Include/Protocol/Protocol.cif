@@ -1,11 +1,9 @@
 <component>
 	name = "Protocol"
 	category = ModulePart
-	LocalRoot = "AmiTsePkg\Include\Protocol\"
+	LocalRoot = "AmiTsePkg\Include\Protocol"
 	RefName = "AmiTsePkg.Protocol"
 [files]
-"AMIPostMgr.h"	
-"EsaTseInterfaces.h"	
-"AMIScreenMgmt.h"	
+"AMIPostMgr.h"
 <endComponent>
 

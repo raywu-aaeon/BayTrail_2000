@@ -25,9 +25,13 @@
 // 
 // 
 //**********************************************************************
-/** @file MeudMsg.c
-
-**/
+//<AMI_FHDR_START>
+//
+// Name:	MeudMsg.c
+//
+// Description:
+//
+//<AMI_FHDR_END>
 //**********************************************************************
 #include "Efi.h"
 #include "token.h"
@@ -40,17 +44,21 @@
 extern EFI_BOOT_SERVICES *gBS;
 extern EFI_SYSTEM_TABLE *gST;
 extern EFI_RUNTIME_SERVICES *gRT;
-/**
-    Show Message on Screen If Ignition FW runs on Factory Default
-
-        
-    @param VOID
-
-        BOOLEAN
-    @retval TRUE if the screen was used to ask password
-    @retval FALSE if the screen was not used to ask password.
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:	ShowMEUDErrors
+//
+// Description:	Show Message on Screen If Ignition FW runs on Factory Default
+//
+// Input:
+//      VOID
+//
+// Output:      BOOLEAN. Should return TRUE if the screen was used to
+//              ask password; FALSE if the screen was not used to ask
+//              password.
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 BOOLEAN ShowMEUDErrors(VOID)
 {
     EFI_GUID       gMEUDErrorGuid = MEUD_ERROR_GUID;

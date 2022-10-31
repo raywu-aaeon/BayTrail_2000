@@ -1,0 +1,143 @@
+TOKEN
+	Name  = "SynTCGAslVar_SUPPORT"
+	Value  = "1"
+	Help  = "Main switch to enable SynTCGAslVar support in Project"
+	TokenType = Boolean
+	TargetEQU = Yes
+	TargetMAK = Yes
+    Token = "TCG_SUPPORT" "=" "1"
+	Master = Yes
+End
+
+PATH
+	Name  = "SynTCGAslVar_DIR"
+End
+
+MODULE
+	Help  = "Includes SynTCGAslVar.mak to Project"
+	File  = "SynTcgAslVar.mak"
+End
+
+TOKEN
+	Name  = "OVERRIDE_TCG_ASL"
+	Value  = "1"
+	Help  = "Override the TCG.sdl OVERRIDE_TCG_ASL token, Do not modify it."
+	TokenType = Boolean
+	TargetEQU = Yes
+	TargetMAK = Yes
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "TCGSMM_SUPPORT"
+	Value  = "0"
+	Help  = "Override the TCG.sdl TCGSMM_SUPPORT token, Do not modify it."
+	TokenType = Boolean
+	TargetEQU = Yes
+	TargetMAK = Yes
+End
+
+TOKEN
+	Name  = "TcgLegacy_SUPPORT"
+	Value  = "0"
+	Help  = "Override the TCG.sdl TcgLegacy_SUPPORT token, Do not modify it."
+	TokenType = Boolean
+	TargetEQU = Yes
+	TargetMAK = Yes
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "TCG_LEGACY"
+	Value  = "0"
+	Help  = "Override the TCG.sdl TCG_LEGACY token, Do not modify it."
+	TokenType = Boolean
+	TargetEQU = Yes
+	TargetMAK = Yes
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "USING_SMI"
+	Value  = "1"
+	Help  = "Allow override of TCG ASL files"
+	TokenType = Boolean
+	TargetEQU = Yes
+	TargetMAK = Yes
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "_TRST_"
+	Value  = "2"
+	Help  = "Platform transition for PPI request under O.S. 0: None 1: Shutdown 2: Reboot 3: OS Vendor Specific"
+	TokenType = Integer
+	TargetH = Yes
+    TargetMAK = Yes
+	Range  = "0 - 4"
+End
+
+TOKEN
+	Name  = "SYNI"
+	Value  = "0B2h"
+	Help  = "Add a name of smiport for asl using, The SMI port"
+	TokenType = Integer
+	TargetH = Yes
+	TargetMAK = Yes
+End
+
+TOKEN
+    Name  = "SYNI"
+    Value  = "00h"
+    Help  = "Add a name of smiport for asl using, The SMI port"
+    TokenType = Integer
+    TargetH = Yes
+    TargetMAK = Yes
+    Token = "USING_SMI" "=" "0"
+End
+
+TOKEN
+	Name  = "SYNN"
+	Value  = "0bch"
+	Help  = "Allow override of TCG ASL files, The SMI trig number."
+	TokenType = Integer
+	TargetMAK = Yes
+	TargetH = Yes
+End
+
+#ELINK
+#	Name  = "$(BUILD_DIR)\SynTCGAslVar.ffs"
+#	Parent  = "FV_MAIN"
+#	InvokeOrder = AfterParent
+#End
+
+#ELINK
+#	Name  = "$(BUILD_DIR)\tcg_ppi1_2.ffs"
+#	Parent  = "FV_MAIN"
+#	InvokeOrder = AfterParent
+#End
+
+INFComponent
+    Name  = "SynTCGAslVar"
+    File  = "SynTCGAslVarDxe.inf"
+    Package  = "AmiModulePkg"
+    ModuleTypes  = "DXE_DRIVER"
+End
+
+INFComponent
+    Name  = "SynTCGAslVar"
+    File  = "SynTCGAslVarSMM.inf"
+    Package  = "AmiModulePkg"
+    ModuleTypes  = "DXE_SMM_DRIVER"
+    Token = "USING_SMI" "=" "1"
+End
+
+INFComponent
+    Name  = "SynTCGAml"
+    File  = "SynTcgAml.inf"
+    Package  = "AmiModulePkg"
+    ModuleTypes  = "DXE_DRIVER"
+End
+
+
+

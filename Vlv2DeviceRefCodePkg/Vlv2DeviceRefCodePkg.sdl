@@ -8,30 +8,6 @@ TOKEN
 	Master = Yes
 End
 
-#EIP176554 >>
-TOKEN
-	Name  = "PLATFORM_RC_PACKAGE"
-	Value  = "Vlv2DeviceRefCodePkg"
-	TokenType = Expression
-	TargetMAK = Yes
-End
-
-TOKEN
-	Name  = "CHIPSET_REF_DEC_PATH"
-	Value  = "Vlv2DeviceRefCodePkg\Vlv2DeviceRefCodePkg.dec"
-	TokenType = Expression
-	TargetMAK = Yes
-End
-
-TOKEN
-	Name  = "CHIPSET_REF_DEC_NAME"
-	Value  = "ChipsetReference.dec"
-	TokenType = Expression
-	TargetMAK = Yes
-	Lock = Yes    
-End
-#EIP176554 <<
-
 TOKEN
 	Name  = "MRC_DEBUG_SUPPORT"
 	Value  = "0"
@@ -468,23 +444,7 @@ End
 
 TOKEN
 	Name  = "CMOS_PS2_VCC_VNN_CONTROL"
-	Value  = "0x47"
-	TokenType = Integer
-	TargetEQU = Yes
-	TargetH = Yes
-End
-
-TOKEN
-	Name  = "CMOS_MEM_CHANNEL2_CONTROL"
-	Value  = "0x48"
-	TokenType = Integer
-	TargetEQU = Yes
-	TargetH = Yes
-End
-
-TOKEN
-	Name  = "DEFAULT_CMOS_MEM_CHANNEL2_CONTROL"
-	Value  = "0x1"
+	Value  = "0x89"
 	TokenType = Integer
 	TargetEQU = Yes
 	TargetH = Yes
@@ -623,23 +583,15 @@ INFComponent
 	ModuleTypes  = "DXE_DRIVER"
 End
 
-#P20150512 >>
 #P20130627_4 >>
 INFComponent
 	Name  = "PchS3Peim"
-	File  = "ValleyView2Soc/SouthCluster/S3Support/Pei/PchS3Peim.inf"
+	File  = "ValleyView2Soc/SouthCluster/S3Support/S3/PchS3Peim.inf"
 	Package  = "Vlv2DeviceRefCodePkg"
 	ModuleTypes  = "PEIM"
 End
 #P20130627_4 <<
 
-INFComponent
-	Name  = "S3SupportSmm"
-	File  = "ValleyView2Soc/SouthCluster/S3Support/Smm/S3SupportSmm.inf"
-	Package  = "Vlv2DeviceRefCodePkg"
-	ModuleTypes  = "DXE_SMM_DRIVER"
-End
-#P20150512 <<
 INFComponent
 	Name  = "SmartTimer"
 	File  = "ValleyView2Soc/SouthCluster/SmartTimer/Dxe/SmartTimer.inf"
@@ -810,15 +762,12 @@ INFComponent
 	Token = "MMC_SUPPORT" "=" "1"
 End
 
-#EIP180903 move ShadowDown to asl _WAK >>
 INFComponent
 	Name  = "ShadowDownPei"
 	File  = "ValleyView2Soc/SouthCluster/ShadowDownPei/ShadowDownPei.inf"
 	Package  = "Vlv2DeviceRefCodePkg"
 	ModuleTypes  = "PEIM"
-	Disable = Yes 	
 End
-#EIP180903 move ShadowDown to asl _WAK <<
 
 INFComponent
 	Name  = "DxeRuntimePciLibPciExpress"
@@ -1018,13 +967,12 @@ INFComponent
 	Package  = "Vlv2DeviceRefCodePkg"
 End
 
-#Use AMI TCG2's drivers
-#INFComponent
-#      Name  = "FtpmSmm"
-#      File  = "Txe\fTPM\Smm\FtpmSmm.inf"
-#      Package  = "Vlv2DeviceRefCodePkg"
-#      ModuleTypes  = "DXE_SMM_DRIVER"
-#End
+INFComponent
+      Name  = "FtpmSmm"
+      File  = "Txe\fTPM\Smm\FtpmSmm.inf"
+      Package  = "Vlv2DeviceRefCodePkg"
+      ModuleTypes  = "DXE_SMM_DRIVER"
+End
 
 #EIP154718 >>
 INFComponent
@@ -1179,25 +1127,18 @@ FFS_FILE
 	INFComponent  = "Vlv2DeviceRefCodePkg.CpuPei"
 End
 
-#Use AMI TCG2's drivers
-#FFS_FILE
-#    Name  = "FtpmSmm"
-#    FD_AREA  = "FV_MAIN"
-#    INFComponent  = "Vlv2DeviceRefCodePkg.FtpmSmm"
-#    Rule_Override  = "DRIVER_ACPITABLE"
-#End
+
+FFS_FILE
+    Name  = "FtpmSmm"
+    FD_AREA  = "FV_MAIN"
+    INFComponent  = "Vlv2DeviceRefCodePkg.FtpmSmm"
+    Rule_Override  = "DRIVER_ACPITABLE"
+End
 
 #P20130627_4 >>
 FFS_FILE
 	Name  = "PchS3Peim"
-	FD_AREA  = "FV_BB"
+	FD_AREA  = "FV_MAIN"
 	INFComponent  = "Vlv2DeviceRefCodePkg.PchS3Peim"
 End
 #P20130627_4 <<
-#P20150512 >>
-FFS_FILE
-	Name  = "S3SupportSmm"
-	FD_AREA  = "FV_MAIN"
-	INFComponent  = "Vlv2DeviceRefCodePkg.S3SupportSmm"
-End
-#P20150512 <<

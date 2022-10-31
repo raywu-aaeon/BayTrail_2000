@@ -1,0 +1,94 @@
+#**********************************************************************
+#**********************************************************************
+#**                                                                  **
+#**        (C)Copyright 1985-2012, American Megatrends, Inc.         **
+#**                                                                  **
+#**                       All Rights Reserved.                       **
+#**                                                                  **
+#**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093        **
+#**                                                                  **
+#**                       Phone: (770)-246-8600                      **
+#**                                                                  **
+#**********************************************************************
+#**********************************************************************
+## @file
+#   This driver installs UsbRecovery
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = UsbRecovery
+  FILE_GUID                      = 8401A046-6F70-4505-8471-7015B40355E3
+  MODULE_TYPE                    = PEIM
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = PeimInitializeUsbBot
+  
+[Sources]
+  UsbPeim.h
+  HubPeim.h
+  PeiUsbLib.c
+  PeiUsbLib.h
+  usb.h 
+  AmiMapping.h
+  BotPeim.c	
+  BotPeim.h	
+  PeiAtapi.c	
+  UsbBotPeim.c	
+  UsbBotPeim.h	
+  atapi.h	
+  HubPeim.c	
+  UsbIoPeim.c	
+  UsbPeim.c
+  UsbIo.h
+  UhcPeim.c	
+  UhcPeim.h	
+  UsbHostController.h
+  UhciPeiUsb.c	
+  PeiGetUCtrl.h
+  EhciPei.c	
+  EhciPei.h	
+  EhciPeiBoard.c
+  OhciPei.c	
+  OhciPei.h	
+  OhciPeiBoard.c
+  OhciPPI.h
+  XhciPei.c	
+  XhciPei.h	
+
+[LibraryClasses]
+  PeimEntryPoint
+  PeiServicesLib
+  HobLib
+  AmiPeiLib
+  ReportFVLib
+  ReportStatusCodeLib
+  BaseMemoryLib
+
+[Ppis]
+  gEfiPeiRecoveryModulePpiGuid
+  gEfiPeiDeviceRecoveryModulePpiGuid
+  gEfiPeiVirtualBlockIoPpiGuid
+  gPeiUsbIoPpiGuid
+  gPeiUsbHostControllerPpiGuid
+
+[Guids]
+  gAmiRecoveryImageHobGuid
+  gSerialCapsuleGuid
+  gBlockDeviceCapsuleGuid
+  gOemCapsuleGuid
+
+[Packages]
+  AmiModulePkg\AmiModulePkg.dec
+  AmiCompatibilityPkg\AmiCompatibilityPkg.dec
+  MdePkg\MdePkg.dec
+  MdeModulePkg\MdeModulePkg.dec
+  IntelFrameworkPkg\IntelFrameworkPkg.dec
+  IntelFrameworkModulePkg\IntelFrameworkModulePkg.dec
+  Vlv2DeviceRefCodePkg/Vlv2DeviceRefCodePkg.dec #EIP169542
+
+[Depex]
+  gEfiPeiBootInRecoveryModePpiGuid AND gEfiPeiMemoryDiscoveredPpiGuid AND gPchUsbPolicyPpiGuid #EIP169542
+
+[BuildOptions] 
+  *_*_*_CC_FLAGS = /D USBR_OHCI_CONTROLLER_PCI_ADDRESS /D USBR_OHCI_CONTROLLER_PCI_REGISTER_VALUE
+

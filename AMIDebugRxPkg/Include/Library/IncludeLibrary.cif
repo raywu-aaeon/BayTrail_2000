@@ -8,5 +8,4 @@
 "AMIpeidebugX64.h"	
 "AMIPeiGUIDs.h"	
 "EHCI.h"	
-"DbgPerf.h"
 <endComponent>

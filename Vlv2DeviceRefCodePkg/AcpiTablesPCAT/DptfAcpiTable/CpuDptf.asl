@@ -69,6 +69,10 @@ DefinitionBlock (
   External(\_SB.SDP1, IntObj)
   External(\_SB.DLPO, PkgObj)
   External(\_SB.STEP, IntObj)
+
+  External(\_SB.MIPL, IntObj) // (828) PPCC Minimum Power Limit
+  External(\_SB.MAPL, IntObj) // (830) PPCC Maximum Power Limit
+  External(\_SB.PPSZ, IntObj) // (832) PPCC power step size
   External(\_SB.MBID, DeviceObj)
 
   Scope(\_SB)
@@ -111,87 +115,29 @@ DefinitionBlock (
       //
       Method(PPCC,0,Serialized,,PkgObj)
       {
-        If(LEqual(SDP1,4))
-        {
-          Return(PPC1)            // N2805 fanless 10"
-        }
-        ElseIf (LLess(SDP1,4))
-        {
-          Return(PPC2)            // all other mobile SKUs
-        }
-        Else
-        {
-          Return(PPC3)            // all desktops
-        }
+        Store (MIPL,Index(DerefOf(Index(PPCX,1)),1)) // PowerLimitMinimum
+        Store (MAPL,Index(DerefOf(Index(PPCX,1)),2)) // PowerLimitMaximum
+        Store (PPSZ,Index(DerefOf(Index(PPCX,1)),5)) // StepSize
+        Return(PPCX)
       }
 
-      Name (PPC1, Package()
+      Name (PPCX, Package()
       {
         0x2, //Revision
 
         Package ()   //Power Limit 1
         {
-          0,    //PowerLimitIndex, 0 for Power Limit 1
-          3000, //PowerLimitMinimum in mW
-          4300, //PowerLimitMaximum
+          0, //PowerLimitIndex, 0 for Power Limit 1
+          2750, //PowerLimitMinimum in mW
+          7000, //PowerLimitMaximum
           1000, //TimeWindowMinimum
           1000, //TimeWindowMaximum
-          200   //StepSize
+          200  //StepSize
         },
 
         Package ()   //Power Limit 2
         {
-          1,    //PowerLimitIndex, 1 for Power Limit 2
-          8000, //PowerLimitMinimum
-          8000, //PowerLimitMaximum
-          1000, //TimeWindowMinimum
-          1000, //TimeWindowMaximum
-          1000  //StepSize
-        }
-      })
-
-      Name (PPC2, Package()
-      {
-        0x2, //Revision
-
-        Package ()   //Power Limit 1
-        {
-          0,    //PowerLimitIndex, 0 for Power Limit 1
-          4500, //PowerLimitMinimum in mW
-          7500, //PowerLimitMaximum
-          1000, //TimeWindowMinimum
-          1000, //TimeWindowMaximum
-          200   //StepSize
-        },
-
-        Package ()   //Power Limit 2
-        {
-          1,    //PowerLimitIndex, 1 for Power Limit 2
-          8000, //PowerLimitMinimum
-          8000, //PowerLimitMaximum
-          1000, //TimeWindowMinimum
-          1000, //TimeWindowMaximum
-          1000  //StepSize
-        }
-      })
-
-      Name (PPC3, Package()
-      {
-        0x2, //Revision
-
-        Package ()   //Power Limit 1
-        {
-          0,    //PowerLimitIndex, 0 for Power Limit 1
-          8500, //PowerLimitMinimum in mW
-          8500, //PowerLimitMaximum
-          1000, //TimeWindowMinimum
-          1000, //TimeWindowMaximum
-          200   //StepSize
-        },
-
-        Package ()   //Power Limit 2
-        {
-          1,    //PowerLimitIndex, 1 for Power Limit 2
+          1, //PowerLimitIndex, 1 for Power Limit 2
           8000, //PowerLimitMinimum
           8000, //PowerLimitMaximum
           1000, //TimeWindowMinimum
@@ -522,7 +468,8 @@ DefinitionBlock (
           Return(\_PR.CPU0._PTC())
         } Else
         {
-          Return(Package(){
+          Return(Package() 
+	  {
             Buffer(){0},
             Buffer(){0}
           })

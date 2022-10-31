@@ -52,7 +52,7 @@ End
 TOKEN
 	Name  = "ORPHAN_GROUP_HEADERS_POLICY"
 	Value  = "ORPHAN_BOOT_OPTIONS_POLICY_DELETE"
-	Help  = "Defines handling of the legacy boot option headers associated with groups of devices.\The supported policies are: \ORPHAN_BOOT_OPTIONS_POLICY_KEEP\ORPHAN_BOOT_OPTIONS_POLICY_DELETE\ORPHAN_BOOT_OPTIONS_POLICY_DISABLE\"
+	Help  = "Defines handling of the non-firmware (third party) boot options not associated with the device.\The supported policies are: \ORPHAN_BOOT_OPTIONS_POLICY_KEEP\ORPHAN_BOOT_OPTIONS_POLICY_DELETE\ORPHAN_BOOT_OPTIONS_POLICY_DISABLE\"
 	TokenType = Expression
 	TargetH = Yes
 	Range  = "ORPHAN_BOOT_OPTIONS_POLICY_KEEP"
@@ -287,6 +287,7 @@ ELINK
 	Name  = "BuildLegacyLocationFilePath,"
 	Parent  = "BootOptionBuildFilePathFunctions"
 	Token = "CSM_SUPPORT" "=" "1"
+	Token = "MATCH_BOOT_OPTION_BY_LOCATION" "=" "1"
 	InvokeOrder = AfterParent
 End
 
@@ -322,12 +323,6 @@ ELINK
 	Token = "MATCH_BOOT_OPTION_BY_LOCATION" "=" "0"
 	Token = "MATCH_BOOT_OPTION_BY_DEVICE" "=" "1"
 	InvokeOrder = AfterParent
-End
-
-ELINK
-    Name  = "ConnectRootBridgeHandlesBeforeEndOfDxe,"
-    Parent  = "BDS_CONTROL_FLOW"
-    InvokeOrder = AfterParent
 End
 
 ELINK
@@ -458,17 +453,11 @@ ELINK
 	InvokeOrder = AfterParent
 End
 
+#EIP144150 >>
 ELINK
-    Name  = "InitConVars,"
-    Parent  = "/* Full System Initialization */"
-    InvokeOrder = AfterParent
-End
-
-ELINK
-    Name = "ShadowAllLegacyOptionRoms,"
-    Parent  = "/* Full System Initialization */"
-    InvokeOrder = AfterParent
-    Token = "CSM_SUPPORT" "=" "1"
+	Name  = "InitConVars,"
+	Parent  = "/* Full System Initialization */"
+	InvokeOrder = AfterParent
 End
 
 ELINK
@@ -476,6 +465,7 @@ ELINK
 	Parent  = "/* Full System Initialization */"
 	InvokeOrder = AfterParent
 End
+#EIP144150 <<
 
 ELINK
 	Name  = "InstallFwLoadFile,"
@@ -501,12 +491,6 @@ ELINK
 	Name  = "RecoverTheMemoryAbove4Gb,"
 	Parent  = "BDS_CONTROL_FLOW"
 	InvokeOrder = AfterParent
-End
-
-ELINK
-    Name  = "PerformCapsuleVariableCleanup,"
-    Parent  = "BDS_CONTROL_FLOW"
-    InvokeOrder = AfterParent
 End
 
 ELINK
@@ -625,12 +609,6 @@ End
 ELINK
 	Name  = "ReadBootOptionAndBoot,"
 	Parent  = "HandoffToTse,"
-	InvokeOrder = AfterParent
-End
-
-ELINK
-	Name  = "MatchUefiFloppyDrive,"
-	Parent  = "BootOptionMatchingFunctions"
 	InvokeOrder = AfterParent
 End
 

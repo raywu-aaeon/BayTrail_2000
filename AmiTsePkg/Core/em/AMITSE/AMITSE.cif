@@ -11,7 +11,7 @@
 "AMITSE.mak"	
 "AMITSE.chm"	
 "Uefisetup.ini"	
-"UefiHpkTool.exe"	
+"UefiHpkTool.exe"
 "HPKTool_Linux"	
 "changelog.log"	
 "SmLogo.bmp"	
@@ -42,11 +42,8 @@
 "AmiTseFdfFileStatement.txt"	
 "Logoffs.txt"	
 "Romhole.txt"	
-"AMITSEElinks.txt"	
-"HotClickElinks.txt"	
-"HotKeyElinks.txt"	
-"SetupDataFdFileStatement.txt"	
 [parts]
+"AmiTsePkg"
 "AmiTsePrivatePkg"
 "AMITSE.AMITSEBoard"
 "AMITSE.TseAdvancedBin"
@@ -57,6 +54,4 @@
 "AMITSE.EzportBin"
 "AMITSE.LegacyBin"
 "AMITSE.EzportPlusBin"
-[dependency]
-AmiTsePkg >= "SS: AptioV;$/AptioV/Source/Interfaces/AmiTsePkg;AmiTsePkg_2_18_1263"
 <endComponent>

@@ -43,13 +43,15 @@ reproduced, stored in a retrieval system, or transmitted in any
 form or by any means without the express written consent of
 Intel Corporation.
 
---*/
-	
-/** @file PpmPolicyInitDxe.h
-		Header file for the PpmPolicyInitDxe Driver.
-	
-**/
+Module Name:
 
+  PpmPolicyInitDxe.h
+
+Abstract:
+
+  Header file for the PpmPolicyInitDxe Driver.
+
+--*/
 #ifndef _PPM_DXE_POLICY_INIT_H_
 #define _PPM_DXE_POLICY_INIT_H_
 

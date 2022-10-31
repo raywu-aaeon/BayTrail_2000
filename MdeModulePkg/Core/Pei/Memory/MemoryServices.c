@@ -1,7 +1,7 @@
 /** @file
   EFI PEI Core memory services
   
-Copyright (c) 2006 - 2014, Intel Corporation. All rights reserved.<BR>
+Copyright (c) 2006 - 2012, Intel Corporation. All rights reserved.<BR>
 This program and the accompanying materials                          
 are licensed and made available under the terms and conditions of the BSD License         
 which accompanies this distribution.  The full text of the license may be found at        
@@ -89,9 +89,7 @@ PeiInstallPeiMemory (
 {
   PEI_CORE_INSTANCE                     *PrivateData;
 
-  //*** AMI PORTING BEGIN ***//
-  DEBUG ((EFI_D_LOAD, "Memory Installed: Address=%lX; Length=%lX\n", MemoryBegin, MemoryLength));
-  //*** AMI PORTING END ***//
+  DEBUG ((EFI_D_INFO, "PeiInstallPeiMemory MemoryBegin 0x%lX, MemoryLength 0x%lX\n", MemoryBegin, MemoryLength));
   PrivateData = PEI_CORE_INSTANCE_FROM_PS_THIS (PeiServices);
 
   //
@@ -193,7 +191,7 @@ PeiAllocatePages (
   //
   // Verify that there is sufficient memory to satisfy the allocation
   //
-  RemainingPages = (UINTN)(*FreeMemoryTop - *FreeMemoryBottom) >> EFI_PAGE_SHIFT;
+  RemainingPages = EFI_SIZE_TO_PAGES ((UINTN) (*FreeMemoryTop - *FreeMemoryBottom));
   //
   // For page allocation, the overhead sizeof (EFI_HOB_MEMORY_ALLOCATION) needs one extra page.
   // So the number of remaining pages needs to be greater than that of the request pages.

@@ -55,15 +55,12 @@
   UefiDriverEntryPoint
   AmiCspLib  #EIP167096
   S3BootScriptLib  #EIP167096
-  SmmServicesTableLib  #EIP180260
-  UefiBootServicesTableLib  #EIP180260
-  
+
 [Protocols]  
   gDxePchPlatformPolicyProtocolGuid
   gEfiSmmIchnDispatchProtocolGuid
   gEfiSmmSwDispatchProtocolGuid
-  gEfiSmmReadyToLockProtocolGuid  #EIP180260
-
+  
 [Depex]
   gDxePchPlatformPolicyProtocolGuid   AND
   gEfiSmmBase2ProtocolGuid             AND

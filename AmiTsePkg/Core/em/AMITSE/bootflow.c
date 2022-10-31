@@ -24,10 +24,15 @@
 //*****************************************************************//
 //*****************************************************************//
 //*****************************************************************//
-/** @file bootflow.c
-    This file bootflow related functions and tables
-
-**/
+//<AMI_FHDR_START>
+//----------------------------------------------------------------------------
+//
+// Name:		bootflow.c
+//
+// Description:	This file bootflow related functions and tables
+//
+//----------------------------------------------------------------------------
+//<AMI_FHDR_END>
 
 #ifdef TSE_FOR_APTIO_4_50
 
@@ -35,7 +40,7 @@
 #include <Efi.h>
 #include <Protocol/SimpleTextIn.h>
 
-#include "Include/Setup.h" // for MAIN_FORM_SET_CLASS
+#include "Setup.h" // for MAIN_FORM_SET_CLASS
 #include "AutoId.h" // for MAIN_MAIN
 
 #else //#ifdef TSE_FOR_APTIO_4_50
@@ -62,7 +67,6 @@
 
 extern BOOLEAN gEnterSetup;
 extern EFI_GUID gEfiShellFileGuid;
-extern EFI_RUNTIME_SERVICES  *gRT;
 
 EFI_GUID _gBootFlowGuid = BOOT_FLOW_VARIABLE_GUID;
 static EFI_GUID _gTPMBootFlowGuid = TPM_BOOT_FLOW_VARIABLE_GUID;
@@ -71,14 +75,11 @@ VOID SetupDebugPrint(IN CONST CHAR8  *Format, ...) ;
 #if SUPPRESS_PRINT
     #define SETUP_DEBUG_TSE(format,...)
 #else //Else of SUPPRESS_PRINT
-#if BUILD_OS == BUILD_OS_LINUX
+#if TSE_GNUC_BUILD_SUPPORT
     #define SETUP_DEBUG_TSE(format,...) SetupDebugPrint(format, ##__VA_ARGS__)
-#else //Else of BUILD_OS == BUILD_OS_LINUX
+#else //Else of TSE_GNUC_BUILD_SUPPORT
     #define SETUP_DEBUG_TSE(format,...) SetupDebugPrint(format, __VA_ARGS__)
-#endif //End of BUILD_OS == BUILD_OS_LINUX
-#endif
-#ifndef EFI_SECURE_BOOT_MODE_NAME
-#define EFI_SECURE_BOOT_MODE_NAME  L"SecureBoot"
+#endif //End of TSE_GNUC_BUILD_SUPPORT
 #endif
 
 static BOOT_FLOW _gBootFlowTable[] =
@@ -89,7 +90,7 @@ static BOOT_FLOW _gBootFlowTable[] =
 	{ BOOT_FLOW_CONDITION_RECOVERY,		            0x40,					0,				1,			0,				0,					0,					TRUE,				TRUE,			FALSE,			                            TRUE,			                            FALSE,				NULL },
 	{ BOOT_FLOW_CONDITION_PCI_OUT_OF_RESOURCE,		0x79,		            0,				1,			0,				0,					0,					TRUE,				TRUE,			FALSE,			                            TRUE,			                            FALSE,				NULL },
 	{ BOOT_FLOW_CONDITION_FIRST_BOOT,	            MAIN_FORM_SET_CLASS,	0,				MAIN_MAIN,	0,				0,					0,					TRUE,				TRUE,			FALSE,			                            TRUE,			                            FALSE,				NULL },
-	{ BOOT_FLOW_CONDITION_OS_UPD_CAP,	            0,						0,				0,			0,				0,					0,					FALSE,				TRUE,			FALSE,			                            FALSE,			                            FALSE,				&OsUpdateCapsuleWrap },
+	{ BOOT_FLOW_CONDITION_OS_UPD_CAP,	            0,						0,				0,			0,				0,					0,					FALSE,				TRUE,			FALSE,			                            FALSE,			                            FALSE,				&OsUpdateCapsuleWrap },		//EIP93521
     { BOOT_FLOW_HOTKEY_BOOT,                        0,						0,				0,			0,				0,					0,					FALSE,				TRUE,			FALSE,			                            FALSE,			                            FALSE,				&LaunchHotKeyBootOption },
 #if SETUP_OEM_KEY1_ENABLE
 	{ BOOT_FLOW_CONDITION_OEM_KEY1,		            0,						0,				0,			0,				0,					0,					FALSE,				TRUE,			FALSE,			                            FALSE,			                            FALSE,				&OemKey1HookHook },
@@ -118,20 +119,23 @@ static BOOT_FLOW _gBootFlowTable[] =
 // Set the initial Bootflow table.
 // OEM may have thier own Bottflow table and update the gBootFlowTable with that in the Entry hooks.
 BOOT_FLOW	*gBootFlowTable = _gBootFlowTable;
-EFI_STATUS LaunchSecondaryBootPath (CHAR16 *);			
-EFI_STATUS EfiLibNamedEventSignal (IN EFI_GUID  *Name );    
+EFI_STATUS LaunchSecondaryBootPath (CHAR16 *);			//EIP 88447
 
-/**
-    Determines boot flow entry path based on the boot
-    flow variable.
-
-    @param VOID
-
-    @retval EFI_SUCCESS: Normal boot
-    @retval EFI_UNSUPPORTED: do not proceed to boot
-    @retval EFI_NOT_STARTED: Do not enter setup
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:	BootFlowManageEntry
+//
+// Description:	Determines boot flow entry path based on the boot
+//              flow variable.
+//
+// Input:		VOID
+//
+// Output:		EFI_SUCCESS: Normal boot
+//              EFI_UNSUPPORTED: do not proceed to boot
+//              EFI_NOT_STARTED: Do not enter setup
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS BootFlowManageEntry( VOID )
 {
 	EFI_STATUS Status = EFI_SUCCESS;
@@ -190,34 +194,31 @@ EFI_STATUS BootFlowManageEntry( VOID )
 	return Status;
 }
 
-/**
-    Determines boot flow exit path based on the boot
-    flow variable.
-
-    @param VOID
-
-    @retval EFI_UNSUPPORTED: enter setup if all the boot options fail        
-    @retval EFI_NOT_STARTED: try again and again if all boot options fail
-              
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:	BootFlowManageExit
+//
+// Description:	Determines boot flow exit path based on the boot
+//              flow variable.
+//
+// Input:		VOID
+//
+// Output:		EFI_UNSUPPORTED: enter setup if all the boot options
+//              fail
+//              EFI_NOT_STARTED: try again and again if all boot
+//              options fail
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS BootFlowManageExit (VOID)
 {
 	EFI_STATUS Status = EFI_SUCCESS;
-	EFI_STATUS GetVariableStatus = EFI_SUCCESS;
 	UINT32 condition = BOOT_FLOW_CONDITION_NORMAL;
 	UINT32 *conditionPtr;
 	UINTN size = 0;
-	UINT8 SecBoot = 0;
 
 	BOOT_FLOW *bootFlowPtr;
-	EFI_GUID	AfterLastBootGuid = AMITSE_AFTER_LAST_BOOT_OPTION_GUID;
 	SETUP_DEBUG_TSE ("\n[TSE] Entering BootFlowManageExit");
-	
-	Status = BootFlowExitHookHook();
-	if ((Status == EFI_SUCCESS) || (Status == EFI_NOT_STARTED))
-		return Status;
-	
 	conditionPtr = VarGetNvramName( L"BootFlow", &_gBootFlowGuid, NULL, &size );
 	if ( conditionPtr != NULL )
 		condition = *conditionPtr;
@@ -258,12 +259,8 @@ EFI_STATUS BootFlowManageExit (VOID)
 
 		if (bootFlowPtr->LaunchShell)                 
 		{
-			LaunchSecondaryBootPath (gBootFileName);			
-			EfiLibNamedEventSignal (&AfterLastBootGuid);		
-			size = sizeof(UINT8);
-			GetVariableStatus = gRT->GetVariable(EFI_SECURE_BOOT_MODE_NAME, &gEfiGlobalVariableGuid, NULL, &size, &SecBoot);
-			if((!( EFI_ERROR( GetVariableStatus ) ) && (SecBoot == FALSE)) || (EFI_ERROR( GetVariableStatus )))
-				BootLaunchGuid (&gEfiShellFileGuid);
+			LaunchSecondaryBootPath (gBootFileName);			//EIP 88447
+			BootLaunchGuid (&gEfiShellFileGuid);
 		}
 		break;
 	}

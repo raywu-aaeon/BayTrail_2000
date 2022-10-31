@@ -60,14 +60,6 @@ End
 LibraryMapping
 	Class  = "PeiDebugDbgrLib"
 	Instance  = "AMIDebugRx.DbgRxDbgrLib"
-	Arch  = "IA32"
-End
-
-LibraryMapping
-	Class  = "PeiDebugDbgrLib"
-	Instance  = "AMIDebugRx.DbgRxDbgrX64Lib"
-	Arch  = "X64"
-	Token = "DbgRxDbgrX64Lib_SUPPORT" "=" "1"
 End
 
 LibraryMapping

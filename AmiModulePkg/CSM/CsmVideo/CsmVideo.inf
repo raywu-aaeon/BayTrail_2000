@@ -47,7 +47,7 @@
   gEfiSimpleTextOutProtocolGuid
   gEfiComponentNameProtocolGuid
   gAmiCsmVideoPolicyProtocolGuid
-  gOpromStartEndProtocolGuid
+  
 
 [Guids]
   gAmiCsmThunkDriverGuid

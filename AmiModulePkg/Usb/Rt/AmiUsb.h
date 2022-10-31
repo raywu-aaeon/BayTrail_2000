@@ -1,21 +1,35 @@
+//****************************************************************************
+//****************************************************************************
+//**                                                                        **
+//**             (C)Copyright 1985-2009, American Megatrends, Inc.          **
+//**                                                                        **
+//**                          All Rights Reserved.                          **
+//**                                                                        **
+//**                 5555 Oakbrook Pkwy, Norcross, GA 30093                 **
+//**                                                                        **
+//**                          Phone (770)-246-8600                          **
+//**                                                                        **
+//****************************************************************************
+//****************************************************************************
+
 //**********************************************************************
-//**********************************************************************
-//**                                                                  **
-//**        (C)Copyright 1985-2016, American Megatrends, Inc.         **
-//**                                                                  **
-//**                       All Rights Reserved.                       **
-//**                                                                  **
-//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093        **
-//**                                                                  **
-//**                       Phone: (770)-246-8600                      **
-//**                                                                  **
-//**********************************************************************
+// $Header: /Alaska/SOURCE/Modules/USB/ALASKA/rt/amiusb.h 31    8/29/12 8:40a Ryanchou $
+//
+// $Revision: 31 $
+//
+// $Date: 8/29/12 8:40a $
+//
 //**********************************************************************
 
-/** @file AmiUsb.h
-    AMI UsbRt driver definitions
-
-**/
+//<AMI_FHDR_START>
+//----------------------------------------------------------------------------
+//
+//  Name:           AmiUsb.h
+//
+//  Description:    AMI UsbRt driver definitions
+//
+//----------------------------------------------------------------------------
+//<AMI_FHDR_END>
 
 #ifndef _EFI_USB_H
 #define _EFI_USB_H
@@ -23,7 +37,7 @@
 #include <Token.h>
 
 #include <Protocol/DevicePath.h>
-#if !USB_RT_DXE_DRIVER
+#if USB_RUNTIME_DRIVER_IN_SMM
 #include <Protocol/SmmBase.h>
 #include <Protocol/SmmControl2.h>
 #include <Protocol/SmmSwDispatch2.h>
@@ -46,69 +60,67 @@
 #include "UsbDef.h"
 
 EFI_STATUS
-EFIAPI
 USBDriverEntryPoint(
   IN EFI_HANDLE           ImageHandle,
   IN EFI_SYSTEM_TABLE     *SystemTable
   );
 
 
-#if !USB_RT_DXE_DRIVER
+#if USB_RUNTIME_DRIVER_IN_SMM
 EFI_STATUS
 EFIAPI
-USBSWSMIHandler(
+USBSWSMIHandler (
 		IN EFI_HANDLE	DispatchHandle,
 		IN CONST VOID	*Context OPTIONAL,
 		IN OUT VOID		*CommBuffer OPTIONAL,
 		IN OUT UINTN	*CommBufferSize OPTIONAL
-);
+  );
 
 EFI_STATUS
 EFIAPI
-UhciHWSMIHandler(
+UhciHWSMIHandler (
 		IN EFI_HANDLE	DispatchHandle,
 		IN CONST VOID	*Context OPTIONAL,
 		IN OUT VOID		*CommBuffer OPTIONAL,
 		IN OUT UINTN	*CommBufferSize OPTIONAL
-);
+  );
 
 EFI_STATUS
 EFIAPI
-OhciHWSMIHandler(
+OhciHWSMIHandler (
 		IN EFI_HANDLE	DispatchHandle,
 		IN CONST VOID	*Context OPTIONAL,
 		IN OUT VOID		*CommBuffer OPTIONAL,
 		IN OUT UINTN	*CommBufferSize OPTIONAL
-);
+  );
 
 EFI_STATUS
 EFIAPI
-EhciHWSMIHandler(
+EhciHWSMIHandler (
 		IN EFI_HANDLE	DispatchHandle,
 		IN CONST VOID	*Context OPTIONAL,
 		IN OUT VOID		*CommBuffer OPTIONAL,
 		IN OUT UINTN	*CommBufferSize OPTIONAL
-);
+  );
 
 EFI_STATUS
 EFIAPI
-XhciHwSmiHandler(
+XhciHwSmiHandler (
 		IN EFI_HANDLE	DispatchHandle,
 		IN CONST VOID	*Context OPTIONAL,
 		IN OUT VOID		*CommBuffer OPTIONAL,
 		IN OUT UINTN	*CommBufferSize OPTIONAL
-);
-
+  );
 EFI_STATUS
 EFIAPI
-Emul6064TrapCallback(
+Emul6064TrapCallback (
         IN CONST EFI_GUID  *Protocol,
         IN VOID            *Interface,
         IN EFI_HANDLE      Handle
-);
+  );
 #endif
 
-VOID		EFIAPI UsbApiHandler(VOID*);
+VOID		UsbApiHandler(VOID*);
 EFI_STATUS	InstallUsbProtocols(VOID);
 
 EFI_STATUS	UsbInstallHwSmiHandler(HC_STRUC*);
@@ -155,24 +167,22 @@ VOID USBMassAPIAssignDriveNumber(URP_STRUC*);       // USB BIOS API function 08h
 VOID USBMassAPICheckDevStatus(URP_STRUC*);          // USB BIOS API function 09h
 VOID USBMassAPIGetDevStatus(URP_STRUC*);            // USB BIOS API function 0Ah
 VOID USBMassAPIGetDeviceParameters(URP_STRUC*);     // USB BIOS API function 0Bh
-VOID USBMassAPIEfiReadDevice(URP_STRUC*);           // USB Mass API Sub-Func 0Ch
-VOID USBMassAPIEfiWriteDevice(URP_STRUC*);          // USB Mass API Sub-Func 0Dh
-VOID USBMassAPIEfiVerifyDevice(URP_STRUC*);         // USB Mass API Sub-Func 0Eh
 
 DEV_INFO*   USBWrap_GetnthDeviceInfoStructure(UINT8);
 VOID        USBWrap_GetDeviceCount(URP_STRUC*);
 UINT8       USBWrapGetATAErrorCode(UINT32);
 UINT16      USBMassRWVCommand(DEV_INFO*, UINT8, VOID*);
 UINT8*      USB_GetDescriptor(HC_STRUC*, DEV_INFO*, UINT8*, UINT16, UINT8, UINT8);
-UINT8		UsbSetInterface(HC_STRUC*, DEV_INFO*, UINT8);
 
 UINT32      USB_ReConfigDevice(HC_STRUC*, DEV_INFO*);
 UINT32      USB_ReConfigDevice2(HC_STRUC*, DEV_INFO*, CNFG_DESC*, INTRF_DESC*);
 DEV_INFO*   UsbAllocDevInfo();
-VOID        PrepareForLegacyOs(VOID);
+VOID        prepareForLegacyOS();
 UINT32      USB_ResetAndReconfigDev(HC_STRUC*, DEV_INFO*);
 UINT32		USB_DevDriverDisconnect(HC_STRUC*, DEV_INFO*);
 VOID        USBKB_LEDOn();
+
+typedef VOID (*API_FUNC)(URP_STRUC*);
 
 UINT8        USB_StartHostControllers(USB_GLOBAL_DATA*);
 UINT8        USB_StopHostControllers(USB_GLOBAL_DATA*);
@@ -199,26 +209,22 @@ UINT8        USB_DeinitDeviceDataDummy (HC_STRUC*,DEV_INFO*);
 VOID*        USB_MemAlloc(UINT16);
 UINT8        USB_MemFree(VOID*, UINT16);
 UINT8        USBCheckPortChange (HC_STRUC*, UINT8, UINT8);
-VOID         EFIAPI UsbKbcAccessControl(UINT8);
-EFI_STATUS   EFIAPI USBRT_LegacyControl (VOID *fpURP);
-VOID         EFIAPI USB_StopUnsupportedHc();
-UINT8        UsbControlTransfer(HC_STRUC*, DEV_INFO*, DEV_REQ, UINT16, VOID*);
-UINT8        UsbInterruptTransfer(HC_STRUC*, DEV_INFO*, UINT8, UINT16, VOID*, UINT16, UINT16);
-VOID         CheckBiosOwnedHc(VOID);
-DEV_DRIVER*  UsbFindDeviceDriverEntry(DEV_DRIVER*);
+VOID         UsbKbcAccessControl(UINT8);
+EFI_STATUS   USBRT_LegacyControl (VOID *fpURP);
+VOID         USB_StopUnsupportedHc();
 
 #endif
 
-//**********************************************************************
-//**********************************************************************
-//**                                                                  **
-//**        (C)Copyright 1985-2016, American Megatrends, Inc.         **
-//**                                                                  **
-//**                       All Rights Reserved.                       **
-//**                                                                  **
-//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093        **
-//**                                                                  **
-//**                       Phone: (770)-246-8600                      **
-//**                                                                  **
-//**********************************************************************
-//**********************************************************************
+//****************************************************************************
+//****************************************************************************
+//**                                                                        **
+//**             (C)Copyright 1985-2009, American Megatrends, Inc.          **
+//**                                                                        **
+//**                          All Rights Reserved.                          **
+//**                                                                        **
+//**                 5555 Oakbrook Pkwy, Norcross, GA 30093                 **
+//**                                                                        **
+//**                          Phone (770)-246-8600                          **
+//**                                                                        **
+//****************************************************************************
+//****************************************************************************

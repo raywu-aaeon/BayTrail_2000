@@ -1,7 +1,7 @@
 <component>
 	name = "AmiTseHddSecurity"
 	category = ModulePart
-	LocalRoot = "AmiModulePkg/HddSecurity/AmiTseHddSecurity/"
+	LocalRoot = "AmiModulePkg\HddSecurity\AmiTseHddSecurity\"
 	RefName = "AmiTseHddSecurity"
 [INF]
 "AmiTseHddSecurity.inf"

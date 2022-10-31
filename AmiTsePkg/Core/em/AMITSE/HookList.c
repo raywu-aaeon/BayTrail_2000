@@ -24,10 +24,15 @@
 //*****************************************************************//
 //*****************************************************************//
 //*****************************************************************//
-/** @file HookList.c
-    AMITSE Hook definitions
-
-**/
+//<AMI_FHDR_START>
+//----------------------------------------------------------------------------
+//
+// Name:		hooklist.c
+//
+// Description:	AMITSE Hook definitions
+//
+//----------------------------------------------------------------------------
+//<AMI_FHDR_END>
 
 #ifdef TSE_FOR_APTIO_4_50
 #include <Efi.h>
@@ -42,6 +47,7 @@
 UINTN gHookBase = TSE_HOOKBASE_VALUE;
 
 typedef VOID TSE_HOOK (VOID);
+
 extern TSE_HOOK HOOK_LIST_FROM_ELINKS;
 
 #define HOOK0	(TSE_HOOK *)((UINTN)TSE_HOOKBASE_VALUE)
@@ -81,10 +87,7 @@ extern TSE_HOOK HOOK_LIST_FROM_ELINKS;
 #define HOOK34	(TSE_HOOK *)((UINTN)TSE_HOOKBASE_VALUE+34)
 #define HOOK35	(TSE_HOOK *)((UINTN)TSE_HOOKBASE_VALUE+35)
 #define HOOK36	(TSE_HOOK *)((UINTN)TSE_HOOKBASE_VALUE+36)
-#define HOOK37	(TSE_HOOK *)((UINTN)TSE_HOOKBASE_VALUE+37)
-#define HOOK38	(TSE_HOOK *)((UINTN)TSE_HOOKBASE_VALUE+38)
-#define HOOK39	(TSE_HOOK *)((UINTN)TSE_HOOKBASE_VALUE+39)
-
+#define HOOK37	(TSE_HOOK *)((UINTN)TSE_HOOKBASE_VALUE+37)//EIP-111415 SwitchToPostScreenHook
 
 TSE_HOOK * AMITSE_HookList [] = {HOOK_LIST_FROM_ELINKS, NULL};
 

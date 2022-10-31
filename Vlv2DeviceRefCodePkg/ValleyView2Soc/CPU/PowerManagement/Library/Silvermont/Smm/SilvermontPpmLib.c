@@ -2125,7 +2125,7 @@ Returns:
 //  UINT64                W;
   UINT16                BusRatioRangeX2;
   UINT16                VidRange;
-  UINT16                ReducedStep =0;
+
   DEBUG((EFI_D_ERROR,"\n\n   ==  ==  CreateFvidTable  ==  ==\n\n"));
 
   //
@@ -2300,46 +2300,34 @@ Returns:
   DEBUG ((EFI_D_ERROR, "\n\t-->REST of VID ENTRY\n"));
 
   for (i = 1; i < NumberOfStates; i++) {
+    FvidPointer[i + 1 + Turbo].FvidState.State     = i + Turbo;
+    FvidPointer[i + 1 + Turbo].FvidState.BusRatio  = CurrentBusRatio - StepSize;
+
     CurrentBusRatio = CurrentBusRatio - StepSize;
-    if (CurrentBusRatio == 8) {
-      FvidPointer[0].FvidHeader.Gv3States -= 1;
-      ReducedStep ++;
-      DEBUG ((EFI_D_ERROR, "change FVID[0].FvidHeader.Gv3States = %x\n\n", FvidPointer[0].FvidHeader.Gv3States));
-      continue;
-    }
-    
-    FvidPointer[i + 1 + Turbo- ReducedStep].FvidState.State     = i + Turbo - ReducedStep;
-    FvidPointer[i + 1 + Turbo- ReducedStep].FvidState.BusRatio  = CurrentBusRatio;
 
     if (BusRatioRange != 0) {
-      FvidPointer[i + 1 + Turbo- ReducedStep].FvidState.Vid       = ((CurrentBusRatio - mMinBusRatio) * VidRange * 2) / BusRatioRangeX2 + mMinVid;
+      FvidPointer[i + 1 + Turbo].FvidState.Vid       = ((CurrentBusRatio - mMinBusRatio) * VidRange * 2) / BusRatioRangeX2 + mMinVid;
     } else {
-      FvidPointer[i + 1 + Turbo- ReducedStep].FvidState.Vid       = mMinVid;
+      FvidPointer[i + 1 + Turbo].FvidState.Vid       = mMinVid;
     }
 
     if (((CurrentBusRatio - mMinBusRatio) * VidRange * 2) % BusRatioRangeX2) {
       //
       // Round up if there is a remainder to remain above the minimum voltage
       //
-      FvidPointer[i + 1 + Turbo- ReducedStep].FvidState.Vid++;
+      FvidPointer[i + 1 + Turbo].FvidState.Vid++;
     }
 
     if (BusRatioRange != 0) {
-      FvidPointer[i + 1 + Turbo- ReducedStep].FvidState.Power      = ((CurrentBusRatio - mMinBusRatio) * PowerRange * 2) / BusRatioRangeX2 + FVID_MIN_POWER_MIDVIEW;
+      FvidPointer[i + 1 + Turbo].FvidState.Power      = ((CurrentBusRatio - mMinBusRatio) * PowerRange * 2) / BusRatioRangeX2 + FVID_MIN_POWER_MIDVIEW;
     } else {
-      FvidPointer[i + 1 + Turbo- ReducedStep].FvidState.Power     = FVID_MIN_POWER_MIDVIEW;
+      FvidPointer[i + 1 + Turbo].FvidState.Power     = FVID_MIN_POWER_MIDVIEW;
     }
 
-    if ( NumberOfStates - i == 1) {
-      FvidPointer[i + 1 + Turbo - ReducedStep].FvidState.BusRatio = mMinBusRatio;
-      FvidPointer[i + 1 + Turbo - ReducedStep].FvidState.Vid = mMinVid;
-      FvidPointer[i + 1 + Turbo - ReducedStep].FvidState.Power = FVID_MIN_POWER_MIDVIEW;
-    }
-
-    DEBUG ((EFI_D_ERROR, "FVID[%02d].State = %x\n", (i + 1 + Turbo- ReducedStep), FvidPointer[i + 1 + Turbo- ReducedStep].FvidState.State));
-    DEBUG ((EFI_D_ERROR, "FVID[%02d].BusRatio = %x\n", (i + 1 + Turbo- ReducedStep), FvidPointer[i + 1 + Turbo- ReducedStep].FvidState.BusRatio ));
-    DEBUG ((EFI_D_ERROR, "FVID[%02d].Vid = %x\n", (i + 1 + Turbo- ReducedStep), FvidPointer[i + 1 + Turbo- ReducedStep].FvidState.Vid ));
-    DEBUG( (EFI_D_ERROR, "FVID[%02d].Power = %x\n\n", (i + 1 + Turbo- ReducedStep), FvidPointer[i + 1 + Turbo- ReducedStep].FvidState.Power));
+    DEBUG ((EFI_D_ERROR, "FVID[%02d].State = %x\n", (i + 1 + Turbo), FvidPointer[i + 1 + Turbo].FvidState.State));
+    DEBUG ((EFI_D_ERROR, "FVID[%02d].BusRatio = %x\n", (i + 1 + Turbo), FvidPointer[i + 1 + Turbo].FvidState.BusRatio ));
+    DEBUG ((EFI_D_ERROR, "FVID[%02d].Vid = %x\n", (i + 1 + Turbo), FvidPointer[i + 1 + Turbo].FvidState.Vid ));
+    DEBUG( (EFI_D_ERROR, "FVID[%02d].Power = %x\n\n", (i + 1 + Turbo), FvidPointer[i + 1 + Turbo].FvidState.Power));
   }
 
   DEBUG((EFI_D_ERROR,"\n\n"));

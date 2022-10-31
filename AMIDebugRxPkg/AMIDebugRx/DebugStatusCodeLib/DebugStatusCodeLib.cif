@@ -6,7 +6,6 @@
 [INF]
 "PeiDebugStatusCodeLib.inf"
 "DxeDebugStatusCodeLib.inf"
-"SmmDebugStatusCodeLib.inf"
 "CommonDebugStatusCodeLib.inf"
 [files]
 "DebugStatusCodeLib.sdl"	

@@ -1,58 +1,53 @@
-//***********************************************************************
-//***********************************************************************
-//**                                                                   **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.          **
-//**                                                                   **
-//**                       All Rights Reserved.                        **
-//**                                                                   **
-//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093         **
-//**                                                                   **
-//**                       Phone: (770)-246-8600                       **
-//**                                                                   **
-//***********************************************************************
-//***********************************************************************
+//**********************************************************************
+//**********************************************************************
+//**                                                                  **
+//**        (C)Copyright 1985-2013, American Megatrends, Inc.         **
+//**                                                                  **
+//**                       All Rights Reserved.                       **
+//**                                                                  **
+//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093        **
+//**                                                                  **
+//**                       Phone: (770)-246-8600                      **
+//**                                                                  **
+//**********************************************************************
+//**********************************************************************
 
-/** @file 
-OemSetup.c
-
-Basically this function is not always necessary for all projects, because there 
-is a more direct method to achieve the same target. Two E-Links exposed by 
-SMIFlash module, SMIFlashPreUpdateList and SMIFlashEndUpdateList, are made for 
-doing the same thing as this OFBD module.
-
-We prefer you make use of E-Links than this OFBD module. The only advantage of 
-this OFBD module is you don't have to link your code with SMIFlash module. If 
-DMI data is stored in the NVRAM, you have two ways to preserve DMI data when updating NVRAM.
-
-	1. Controlled by SMBIOS module: 
-	
-SMBIOS module can set SMBIOS_PRESERVE_NVRAM token to preserves DMI data through e-Link 
-PreserveDmiEditData and RestoreDmiEditData.
-
-	2. Controlled By Flash utility: 
-	
-AFU will call into OEMSETUP.c only when user issues /r or /sp command. 
-		
-When SMBIOS_PRESERVE_NVRAM token is disable, OEM enginner can set OEMSETUP_SUPPORT token
-to handle the duty of DMI data preservation through OEM NVRAM/Setup Variable Preserve module. 
-	
-Thus user can decide to clear DMI data or not. In this case, /n parameter will clear NVRAM, 
-and /r parameter is required to preserve DMI data in NVRAM. When /n is triggered, without /r 
-all DMI data in NVRAM will be cleared. 
-
-*/
-
-//---------------------------------------------------------------------------
-// Include Files
-//---------------------------------------------------------------------------
-
+//**********************************************************************
+// $Header: /AptioV/Source/Modules/Ofbd/OemSetup/OemSetup.c $
+//
+// $Revision: $
+//
+// $Date: $
+//**********************************************************************
+//<AMI_FHDR_START>
+//
+// Name:	OemSetup.c
+//
+// Description: 
+// Basically this function is not always necessary for all projects, because there is a more direct method to achieve
+// the same target. Two E-Links exposed by SMIFlash module, SMIFlashPreUpdateList and SMIFlashEndUpdateList, are made
+// for doing the same thing as this OFBD module.
+//
+// We prefer you make use of E-Links than this OFBD module. The only advantage of this OFBD module is you don't have
+// to link your code with SMIFlash module.If DMI data is stored in the NVRAM, you have two ways to preserve DMI data
+// when updating NVRAM.
+//
+// 1. Controlled by SMBIOS module: SMBIOS module can set SMBIOS_PRESERVE_NVRAM token to preserves DMI data through
+// e-Link PreserveDmiEditData and RestoreDmiEditData.
+//
+// 2. Controlled By Flash utility: AFU will call into OEMSETUP.c only when user issues /r or /sp command. When
+// SMBIOS_PRESERVE_NVRAM token is disable, OEM enginner can set OEMSETUP_SUPPORT token to handle the duty of DMI data
+// preservation through OEM NVRAM/Setup Variable Preserve module. Thus user can decide to clear DMI data or not.
+// In this case, /n parameter will clear NVRAM, and /r parameter is required to preserve DMI data in NVRAM. When /n is
+// triggered, without /r all DMI data in NVRAM will be cleared. 
+//
+//<AMI_FHDR_END>
+//**********************************************************************
 #include <Efi.h>
 #include <Token.h>
 #include <AmiLib.h>
 #include <AmiDxeLib.h>
-#if SMBIOS_SUPPORT
 #include <Protocol/AmiSmbios.h>
-#endif
 #include "OemSetup.h"
 #include "../Ofbd.h"
 
@@ -77,17 +72,19 @@ VOID RestoreDmiEditVariables (VOID);
 SAVED_VAR   *gRestoreVarList = NULL;
 #endif
 
-/**
-   	Ofbd (Oem Setup Store/Restore Support handle)
-	
-	This function is used to tell the Afu, the BIOS supports this feature.
-	
-	@param pOFBDHdr - Ofbd header.
-
-  	@return EFI_STATUS
-  	@retval EFI_SUCCESS Function executed successfully
-*/ 
-
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:	OFBDSETUPSupportHandle
+//
+// Description:	OFBD SETUP Store/Restore Support Handle
+//
+// Input:
+//      IN OUT OFBD_HDR *pOFBDHdr
+// Output:
+//      EFI_STATUS
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
 OFBDSETUPSupportHandle( 
     IN OUT OFBD_HDR *pOFBDHdr)
@@ -103,17 +100,19 @@ OFBDSETUPSupportHandle(
     return(Status);
 }
 
-/**
-   	Ofbd (Oem Setup Store handle)
-			
-	Afu will call this function before update the Nvram, if the user has issued /SP and /N commands.
-	
-	@param pOFBDHdr - Ofbd header.
-
-  	@return EFI_STATUS
-  	@retval EFI_SUCCESS Function executed successfully
-*/ 
-
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:	OFBDSETUPStoreHandle
+//
+// Description:	OFBD SETUP Store Handle
+//
+// Input:
+//      IN OUT OFBD_HDR *pOFBDHdr
+// Output:
+//      EFI_STATUS
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
 OFBDSETUPStoreHandle(
     IN OUT OFBD_HDR *pOFBDHdr)
@@ -135,17 +134,19 @@ OFBDSETUPStoreHandle(
     return(Status);
 }
 
-/**
-   	Ofbd (Oem Setup Restore handle)
-			
-	Afu will call this function after update the Nvram, if the user has issued /SP and /N commands.
-	
-	@param pOFBDHdr - Ofbd header.
-
-  	@return EFI_STATUS
-  	@retval EFI_SUCCESS Function executed successfully
-*/ 
-
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:	OFBDSETUPRestoreHandle
+//
+// Description:	OFBD SETUP Restore Handle
+//
+// Input:
+//      IN OUT OFBD_HDR *pOFBDHdr
+// Output:
+//      EFI_STATUS
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
 OFBDSETUPRestoreHandle(
     IN OUT OFBD_HDR *pOFBDHdr)
@@ -167,17 +168,19 @@ OFBDSETUPRestoreHandle(
     return(Status);
 }
 
-/**
-   	Ofbd (Oem Dmi Store handle)
-			
-	Afu will call this function before update the Nvram, if the user has issued /R and /N commands.
-	
-	@param pOFBDHdr - Ofbd header.
-
-  	@return EFI_STATUS
-  	@retval EFI_SUCCESS Function executed successfully
-*/ 
-
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:	OFBDDMIStoreHandle
+//
+// Description:	OFBD DMI Data Store Handle
+//
+// Input:
+//      IN OUT OFBD_HDR *pOFBDHdr
+// Output:
+//      EFI_STATUS
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
 OFBDDMIStoreHandle(
     IN OUT OFBD_HDR *pOFBDHdr)
@@ -203,17 +206,19 @@ OFBDDMIStoreHandle(
     return(Status);
 }
 
-/**
-   	Ofbd (Oem Dmi Restore handle)
-			
-	Afu will call this function after update the Nvram, if the user has issued /R and /N commands.
-	
-	@param pOFBDHdr - Ofbd header.
-
-  	@return EFI_STATUS
-  	@retval EFI_SUCCESS Function executed successfully
-*/ 
-
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:	OFBDDMIRestoreHandle
+//
+// Description:	OFBD DMI Data Restore Handle
+//
+// Input:
+//      IN OUT OFBD_HDR *pOFBDHdr
+// Output:
+//      EFI_STATUS
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
 OFBDDMIRestoreHandle(
     IN OUT OFBD_HDR *pOFBDHdr)
@@ -239,16 +244,20 @@ OFBDDMIRestoreHandle(
     return(Status);
 }
 
-/**
-   	This function is Ofbd Oem Nvram/Setup Store/Restore function entry point
-
-	@param Buffer - Ofbd header.
-  	@param pOFBDDataHandled - handle value returns
-  	
-	@retval	0xFF means Function executed successfully
-	@retval	0xFE means Function error occured
-*/ 
-
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:	OEMSETUPEntry
+//
+// Description:	OFBD NVRAM/SETUP Store/Restore Entry point
+//
+// Input:
+//      IN VOID             *Buffer
+//      IN OUT UINT8        *pOFBDDataHandled
+// Output:
+//      VOID
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID OEMSETUPEntry (
     IN VOID             *Buffer,
     IN OUT UINT8        *pOFBDDataHandled )
@@ -334,13 +343,20 @@ VOID OEMSETUPEntry (
 // Label 5.001_SmiFlash_05
 //   
 #if (SMBIOS_DMIEDIT_DATA_LOC == 2) && (SMBIOS_PRESERVE_NVRAM != 1)
-
-/**
-   	Ofbd (Preserve DmiEdit Variables)
-			
-	Preserve all variables that GUID is gAmiSmbiosNvramGuid.
-*/ 
-
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------
+// Procedure:   PreserveDmiEditVariables
+//
+// Description: Preserve all variables that GUID is gAmiSmbiosNvramGuid.
+//
+// Input:       NONE
+//
+// Output:      NONE
+//
+// Returns:     NONE
+//
+//----------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID PreserveDmiEditVariables(VOID)
 {
     UINTN               VarNameSize = 2, VariableSize, Result;
@@ -470,13 +486,20 @@ VOID PreserveDmiEditVariables(VOID)
 
     }while(Status != EFI_NOT_FOUND);
 }
-
-/**
-   	Ofbd (Restore DmiEdit Variables)
-			
-	Restore all variables that GUID is gAmiSmbiosNvramGuid.
-*/ 
-
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------
+// Procedure:   RestoreDmiEditVariables
+//
+// Description: Restore all variables that GUID is gAmiSmbiosNvramGuid.
+//
+// Input:       NONE
+//
+// Output:      NONE
+//
+// Returns:     NONE
+//
+//----------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID RestoreDmiEditVariables (VOID)
 {
     SAVED_VAR           *TempPoint;
@@ -507,7 +530,7 @@ VOID RestoreDmiEditVariables (VOID)
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2013, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **

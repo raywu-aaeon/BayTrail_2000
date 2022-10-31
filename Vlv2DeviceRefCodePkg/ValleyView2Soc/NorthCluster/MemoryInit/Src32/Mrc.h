@@ -35,8 +35,8 @@ Abstract:
 #include "../Mmrc/IpBlocks/VLVA0/Include/MMRC.h"
 
 // MRC_VERSION will be written at runtime into byte @ PCI Dev 0 Function 0, 0xF0
-#define MRC_VERSION 0x66	//MRC v1.02
-#define DEBUG_MSG_MRC_VERSION "v1.02"
+#define MRC_VERSION 0x64	//MRC v1.00
+#define DEBUG_MSG_MRC_VERSION "v1.00"
 
 #pragma pack(1)
 

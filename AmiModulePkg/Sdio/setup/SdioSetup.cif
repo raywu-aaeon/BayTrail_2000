@@ -1,10 +1,10 @@
 <component>
-    name = "SdioSetup"
-    category = ModulePart
-    LocalRoot = "AmiModulePkg\Sdio\setup\"
-    RefName = "SdioSetup"
+	name = "SdioSetup"
+	category = ModulePart
+	LocalRoot = "AmiModulePkg\Sdio\setup\"
+	RefName = "SdioSetup"
 [files]
-"SdioSetup.uni"
-"SdioSetup.sd"
-"SdioSetup.c"
+"SdioSetup.uni"	
+"SdioSetup.sd"	
+"SdioSetup.c"	
 <endComponent>

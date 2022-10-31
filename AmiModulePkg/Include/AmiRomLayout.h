@@ -48,7 +48,7 @@ typedef struct {
     /// They can be published "on-demand" using RomLayout module's porting infrastructure.__
     GUID Guid;
     /// Physical address the area is mapped at during firmware execution.
-    /// If address is not specified in the VeB ROM Layout Wizard, Address is set to '<Rom-Starting-Address>+Offset'.
+    /// If address is not specified in the VeB ROM Layout Wizard, Address is set to `<Rom-Starting-Address>+Offset`.
     UINT64 Address;
     /// Area offset in the ROM image.
     ///
@@ -64,8 +64,8 @@ typedef struct {
     /// There are several attribute groups:
     ///  - @ref RomAreaAccessAttributes "Access Attributes"
     ///  - @ref RomAreaContentTypeAttributes "Content Type Attributes"
-    ///  - @ref RomAreaCryptographicAttributes "Cryptographic Attributes"
-    ///  - @ref RomAreaUpdateAttributes "Update Attributes"
+    ///  - @ref RomAreaSignedAttribute "Signed Attribute"
+    ///  - @ref RomAreaUpdateAttribute "Update Attribute"
     UINT32 Attributes;
 } AMI_ROM_AREA;
 
@@ -151,23 +151,18 @@ typedef struct {
 #define AMI_ROM_AREA_VITAL                0x00000400
 ///@}
 
-/// @name Cryptographic Attributes
-/// @anchor RomAreaCryptographicAttributes
-/// Cryptographic attributes define if the area should be included during cryptographic processing of the ROM image.
+/// @name Singed Attribute
+/// @anchor RomAreaSignedAttribute
+/// Defines if the area is a part of a digital signature that might be embedded into a ROM image
 ///@{
 
 /// If the attribute is defined, the area is hashed during digital signature creation and validation.
 /// If the attribute is not defined, the area is skipped during digital signature creation and validation.
 #define AMI_ROM_AREA_SIGNED               0x00000200
-/// An area containing the BIOS boot code and/or BIOS boot configuration data whose integrity measurement
-/// (via a cryptographic hash) must be recorded in TPM PCRs and reported in TCG log as EV_EFI_PLATFORM_FIRMWARE_BLOB event.
-/// The Firmware Volume containing a platform firmware that is either contains or measures the EFI Boot service and EFI Runtime services
-/// code must have this attribute set.
-#define AMI_ROM_AREA_TCG_MEASURED         0x00008000
 ///@}
 
 /// @name Update Attributes
-/// @anchor RomAreaUpdateAttributes
+/// @anchor RomAreaUpdateAttribute
 /// Reserved for future use.
 ///@{
 
@@ -178,9 +173,6 @@ typedef struct {
 
 #define AMI_ROM_LAYOUT_VERSION 1
 #define AMI_ROM_LAYOUT_SIGNATURE		SIGNATURE_32('R','O','M','L')
-
-/// When ROM area address is set to this value, the ROM area is not memory mapped.
-#define AMI_ROM_AREA_NOT_MEMORY_MAPPED  0xFFFFFFFFFFFFFFFFULL
 
 #endif
 //**********************************************************************

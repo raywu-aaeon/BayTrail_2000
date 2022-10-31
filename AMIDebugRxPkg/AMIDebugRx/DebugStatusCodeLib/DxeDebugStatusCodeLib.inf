@@ -1,6 +1,6 @@
 #*************************************************************************
 #**                                                                     **
-#**        (C)Copyright 1985-2014, American Megatrends, Inc.            **
+#**        (C)Copyright 1985-2012, American Megatrends, Inc.            **
 #**                                                                     **
 #**                       All Rights Reserved.                          **
 #**                                                                     **
@@ -16,7 +16,7 @@
   FILE_GUID                      = C3EB098D-1641-406d-97A9-0BB15CA9E1BC
   MODULE_TYPE                    = BASE
   VERSION_STRING                 = 0.1
-  LIBRARY_CLASS                  = DxeDebugStatusCodeLib|DXE_CORE DXE_DRIVER DXE_RUNTIME_DRIVER UEFI_APPLICATION UEFI_DRIVER
+  LIBRARY_CLASS                  = DxeDebugStatusCodeLib|DXE_CORE DXE_DRIVER SMM_CORE DXE_SMM_DRIVER DXE_RUNTIME_DRIVER UEFI_APPLICATION UEFI_DRIVER
 
 #
 #  VALID_ARCHITECTURES           = IA32 X64
@@ -36,11 +36,12 @@
   AMIDebugRxPkg/AMIDebugRxPkg.dec
 
 [LibraryClasses]
+  DebugLib
   CommonDebugStatusCodeLib
 
 #*************************************************************************
 #**                                                                     **
-#**        (C)Copyright 1985-2014, American Megatrends, Inc.            **
+#**        (C)Copyright 1985-2012, American Megatrends, Inc.            **
 #**                                                                     **
 #**                       All Rights Reserved.                          **
 #**                                                                     **

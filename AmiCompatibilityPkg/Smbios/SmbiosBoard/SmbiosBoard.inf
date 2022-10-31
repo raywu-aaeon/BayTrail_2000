@@ -1,7 +1,7 @@
 #*************************************************************************
 #*************************************************************************
 #**                                                                     **
-#**        (C)Copyright 1985-2015, American Megatrends, Inc.            **
+#**        (C)Copyright 1985-2012, American Megatrends, Inc.            **
 #**                                                                     **
 #**                       All Rights Reserved.                          **
 #**                                                                     **
@@ -47,12 +47,13 @@
 
 [Depex]
   gEfiCpuArchProtocolGuid AND
+  gEfiPciRootBridgeIoProtocolGuid AND
   gEfiSmbusHcProtocolGuid #EIP130719
-
+  
 #*************************************************************************
 #*************************************************************************
 #**                                                                     **
-#**        (C)Copyright 1985-2015, American Megatrends, Inc.            **
+#**        (C)Copyright 1985-2012, American Megatrends, Inc.            **
 #**                                                                     **
 #**                       All Rights Reserved.                          **
 #**                                                                     **

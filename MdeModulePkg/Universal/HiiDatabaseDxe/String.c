@@ -1558,29 +1558,6 @@ Done:
     FreePool (StringPackage->StringPkgHdr);
     FreePool (StringPackage);
   }
-//*** AMI PORTING BEGIN ***//
-// Bug fix. This function sets status to EFI_INVALID_PARAMETER and transfers control to a 'Done' label above
-// when new language pack has to be created but LanguageName is NULL
-// (see else-branch of the 'if (MatchStringPackage != NULL)' statement above).
-// The problem is that the big for-loop above has already created a new string ID, 
-// but StringPackage->MaxStringId, which tracks highest used string ID has not been updated.
-// As a result all future HiiNewString calls will return a wrong string ID (which is one less than it ought to be).
-// The code below fixes the problem by removing newly created string ID.
-  else if (MatchStringPackage == NULL && Status == EFI_INVALID_PARAMETER){
-    for (Link = PackageListNode->StringPkgHdr.ForwardLink;
-      Link != &PackageListNode->StringPkgHdr;
-      Link = Link->ForwardLink
-      ) {
-        StringPackage = CR (Link, HII_STRING_PACKAGE_INSTANCE, StringEntry, HII_STRING_PACKAGE_SIGNATURE);
-        BlockPtr  =   StringPackage->StringBlock 
-                    + StringPackage->StringPkgHdr->Header.Length - StringPackage->StringPkgHdr->HdrSize
-                    - sizeof (EFI_HII_SIBT_END_BLOCK) - Ucs2BlockSize;
-        *BlockPtr = EFI_HII_SIBT_END;
-        StringPackage->StringPkgHdr->Header.Length -= Ucs2BlockSize;
-        PackageListNode->PackageListHdr.PackageLength -= Ucs2BlockSize;		
-    }  
-  }
-//*** AMI PORTING END *****//
 
   return Status;
 }

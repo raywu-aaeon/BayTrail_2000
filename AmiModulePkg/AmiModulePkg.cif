@@ -1,6 +1,6 @@
 <component>
 	name = "AmiModulePkg"
-	category = eCore
+	category = ModulePart
 	LocalRoot = "AmiModulePkg\"
 	RefName = "AmiModulePkg"
 [files]

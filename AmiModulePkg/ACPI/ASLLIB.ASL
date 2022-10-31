@@ -50,13 +50,11 @@
 //  OS invokes _PIC to notify ASL of current Interrupt controller mode
 // _PIC Input arguments : 0-PIC mode (Default), 1-APIC mode
 	Method(_PIC, 1) { 
-#if ASL_ACPI_DBG8_ASL_SUPPORT
 		if(Arg0) {
 			Store(0xAA, DBG8)	// APIC
 		} else {
 			Store(0xAC, DBG8)	 // PIC
 		}
-#endif
 		Store(Arg0, PICM) 
 	}
 

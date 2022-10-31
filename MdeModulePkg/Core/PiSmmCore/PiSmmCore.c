@@ -13,7 +13,6 @@
 **/
 
 #include "PiSmmCore.h"
-#include "SmmMemLib.h"                                  // EIP288532
 
 //
 // Physical pointer to private structure shared between SMM IPL and the SMM Core
@@ -282,41 +281,6 @@ SmmEndOfDxeHandler (
   return EFI_SUCCESS;
 }
 
-
-// EIP288532+>
-/**
-  Determine if two buffers overlap in memory.
-
-  @param[in] Buff1  Pointer to first buffer
-  @param[in] Size1  Size of Buff1
-  @param[in] Buff2  Pointer to second buffer
-  @param[in] Size2  Size of Buff2
-
-  @retval TRUE      Buffers overlap in memory.
-  @retval FALSE     Buffer doesn't overlap.
-
-**/
-BOOLEAN
-InternalIsBufferOverlapped (
-  IN UINT8      *Buff1,
-  IN UINTN      Size1,
-  IN UINT8      *Buff2,
-  IN UINTN      Size2
-  )
-{
-  //
-  // If buff1's end is less than the start of buff2, then it's ok.
-  // Also, if buff1's start is beyond buff2's end, then it's ok.
-  //
-  if (((Buff1 + Size1) <= Buff2) || (Buff1 >= (Buff2 + Size2))) {
-    return FALSE;
-  }
-
-  return TRUE;
-}
-// EIP288532+<
-
-
 /**
   The main entry point to SMM Foundation.
 
@@ -335,7 +299,6 @@ SmmEntryPoint (
   EFI_STATUS                  Status;
   EFI_SMM_COMMUNICATE_HEADER  *CommunicateHeader;
   BOOLEAN                     InLegacyBoot;
-  BOOLEAN                     IsOverlapped;                             // EIP288532
 
   PERF_START (NULL, "SMM", NULL, 0) ;
 
@@ -364,78 +327,25 @@ SmmEntryPoint (
     // Protocol or an Asynchronous SMI
     //
     if (gSmmCorePrivate->CommunicationBuffer != NULL) {
-      // EIP288532+>
-      //*** AMI PORTING BEGIN ***//
-      // Improvement: Addressing potential Time-Of-Check-to-Time-Of-Use security vulnerability (USRT mantis 1636)
-      // Original code validates gSmmCorePrivate->CommunicationBuffer and gSmmCorePrivate->BufferSize and than uses them.
-      // However, since gSmmCorePrivate is outside of SMM, there is a possibility of am attacker modifying the data structure
-      // after it has been validated, and before it has been used.
-      // The issue is mitigated to caching buffer address and size using local variables.
-      VOID *CommunicationBuffer = gSmmCorePrivate->CommunicationBuffer;
-      UINTN BufferSize = gSmmCorePrivate->BufferSize;
-      //*** AMI PORTING END *****//
-      // EIP288532+<
-      
       //
       // Synchronous SMI for SMM Core or request from Communicate protocol
       //
-      // EIP288532+>
-      IsOverlapped = InternalIsBufferOverlapped (
-                       //*** AMI PORTING BEGIN ***//
-                       // Improvement: USRT mantis 1636. See comments above.
-                       //(UINT8 *) gSmmCorePrivate->CommunicationBuffer,
-                       //gSmmCorePrivate->BufferSize,
-                       CommunicationBuffer,
-                       BufferSize,
-                       //*** AMI PORTING END *****//
-                       (UINT8 *) gSmmCorePrivate,
-                       sizeof (*gSmmCorePrivate)
-                       );
-      //*** AMI PORTING BEGIN ***//
-      // Improvement: USRT mantis 1636. See comments above.
-      //if (!SmmIsBufferOutsideSmmValid ((UINTN)gSmmCorePrivate->CommunicationBuffer, gSmmCorePrivate->BufferSize) || IsOverlapped) {
-      if (!SmmIsBufferOutsideSmmValid ((UINTN)CommunicationBuffer, BufferSize) || IsOverlapped) {
-      //if (IsOverlapped) {    
-      //*** AMI PORTING END *****//
-        //
-        // If CommunicationBuffer is not in valid address scope,
-        // or there is overlap between gSmmCorePrivate and CommunicationBuffer,
-        // return EFI_INVALID_PARAMETER
-        //
-        gSmmCorePrivate->CommunicationBuffer = NULL;
-        gSmmCorePrivate->ReturnStatus = EFI_INVALID_PARAMETER;
-      } else {
-        //*** AMI PORTING BEGIN ***//
-        // Improvement: USRT mantis 1636. See comments above.
-        //CommunicateHeader = (EFI_SMM_COMMUNICATE_HEADER *)gSmmCorePrivate->CommunicationBuffer;
-        //gSmmCorePrivate->BufferSize -= OFFSET_OF (EFI_SMM_COMMUNICATE_HEADER, Data);
-        CommunicateHeader = (EFI_SMM_COMMUNICATE_HEADER *)CommunicationBuffer;
-        BufferSize -= OFFSET_OF (EFI_SMM_COMMUNICATE_HEADER, Data);
-        //*** AMI PORTING END *****//
-        Status = SmiManage (
-                   &CommunicateHeader->HeaderGuid, 
-                   NULL, 
-                   CommunicateHeader->Data, 
-                   //*** AMI PORTING BEGIN ***//
-                   // Improvement: USRT mantis 1636. See comments above.
-                   //&gSmmCorePrivate->BufferSize
-                   &BufferSize
-                   //*** AMI PORTING END *****//
-                   );
-        //
-        // Update CommunicationBuffer, BufferSize and ReturnStatus
-        // Communicate service finished, reset the pointer to CommBuffer to NULL
-        //
-        //*** AMI PORTING BEGIN ***//
-        // Improvement: USRT mantis 1636. See comments above.
-        //gSmmCorePrivate->BufferSize += OFFSET_OF (EFI_SMM_COMMUNICATE_HEADER, Data);
-        gSmmCorePrivate->BufferSize = BufferSize + OFFSET_OF (EFI_SMM_COMMUNICATE_HEADER, Data);
-        //*** AMI PORTING END *****//
-        gSmmCorePrivate->CommunicationBuffer = NULL;
-        gSmmCorePrivate->ReturnStatus = (Status == EFI_SUCCESS) ? EFI_SUCCESS : EFI_NOT_FOUND;
-      }
-      // EIP288532+>
+      CommunicateHeader = (EFI_SMM_COMMUNICATE_HEADER *)gSmmCorePrivate->CommunicationBuffer;
+      gSmmCorePrivate->BufferSize -= OFFSET_OF (EFI_SMM_COMMUNICATE_HEADER, Data);
+      Status = SmiManage (
+                 &CommunicateHeader->HeaderGuid, 
+                 NULL, 
+                 CommunicateHeader->Data, 
+                 &gSmmCorePrivate->BufferSize
+                 );
 
+      //
+      // Update CommunicationBuffer, BufferSize and ReturnStatus
+      // Communicate service finished, reset the pointer to CommBuffer to NULL
+      //
+      gSmmCorePrivate->BufferSize += OFFSET_OF (EFI_SMM_COMMUNICATE_HEADER, Data);
+      gSmmCorePrivate->CommunicationBuffer = NULL;
+      gSmmCorePrivate->ReturnStatus = (Status == EFI_SUCCESS) ? EFI_SUCCESS : EFI_NOT_FOUND;
     }
   }
 

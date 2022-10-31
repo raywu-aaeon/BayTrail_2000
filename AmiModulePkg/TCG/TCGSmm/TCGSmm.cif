@@ -1,0 +1,10 @@
+<component>
+	name = "TCGSmm"
+	category = ModulePart
+	LocalRoot = "AmiModulePkg\TCG\TCGSmm\"
+	RefName = "TCGSmm"
+[files]
+"TCGSmm.sdl"
+[INF]
+"TcgSmm.inf"
+<endComponent>

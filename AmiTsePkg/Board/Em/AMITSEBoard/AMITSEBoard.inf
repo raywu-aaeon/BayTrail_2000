@@ -51,7 +51,7 @@ OemTokens.c
   DebugLib
   UefiLib
   PrintLib
-#  UefiDriverEntryPoint
+  UefiDriverEntryPoint
 #  AmiIntrinsicLib
   ReportStatusCodeLib
   

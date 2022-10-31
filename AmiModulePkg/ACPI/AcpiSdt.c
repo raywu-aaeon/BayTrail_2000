@@ -12,12 +12,25 @@
 //**********************************************************************
 //**********************************************************************
 
+//**********************************************************************
+// $Header: /Alaska/BIN/Modules/ACPI/Template/Core/AcpiSdt.c 2     5/14/11 2:14p Yakovlevs $
+//
+// $Revision: 2 $
+//
+// $Date: 5/14/11 2:14p $
+//**********************************************************************
 
-/** @file AcpiSdt.c
-    ACPI SDT protocol Implementation.
 
-**/
-
+//**********************************************************************
+//<AMI_FHDR_START>
+//
+// Name: AcpiSdt.c
+//
+// Description:	
+//  ACPI SDT protocol Implementation.
+//
+//<AMI_FHDR_END>
+//**********************************************************************
 
 //
 // Includes
@@ -208,7 +221,7 @@ OpenSdt (
   return SdtOpenSdtTable (TableKey, Handle);
 }
 
-
+/*
 /**
   Create a handle from an ACPI opcode
   

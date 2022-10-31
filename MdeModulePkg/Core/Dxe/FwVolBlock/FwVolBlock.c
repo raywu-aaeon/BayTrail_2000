@@ -4,7 +4,7 @@
   It consumes FV HOBs and creates read-only Firmare Volume Block protocol
   instances for each of them.
 
-Copyright (c) 2006 - 2014, Intel Corporation. All rights reserved.<BR>
+Copyright (c) 2006 - 2012, Intel Corporation. All rights reserved.<BR>
 This program and the accompanying materials
 are licensed and made available under the terms and conditions of the BSD License
 which accompanies this distribution.  The full text of the license may be found at
@@ -495,13 +495,6 @@ ProduceFVBProtocolOnBuffer (
       //
       // FvImage buffer is not at its required alignment.
       //
-      //*** AMI PORTING BEGIN ***//
-      // Ignore the alignment requirement if FV has already been copied to memory.
-      // This might happen if we are on a recovery boot path.
-      EFI_GCD_MEMORY_SPACE_DESCRIPTOR  Descriptor;
-      Status = CoreGetMemorySpaceDescriptor(BaseAddress, &Descriptor);
-      if (EFI_ERROR(Status) || Descriptor.GcdMemoryType != EfiGcdMemoryTypeSystemMemory)
-      //*** AMI PORTING END *****//
       return EFI_VOLUME_CORRUPTED;
     }
   }
@@ -526,52 +519,14 @@ ProduceFVBProtocolOnBuffer (
   // First, count the number of blocks
   //
   FvbDev->NumBlocks = 0;
-  //*** AMI PORTING BEGIN ***//
-  // This and other changes in this function are adding additional FV format checks to
-  // prevent buffer overflow and other error situations caused by ill-formed FV.
-  /*
   for (PtrBlockMapEntry = FwVolHeader->BlockMap;
        PtrBlockMapEntry->NumBlocks != 0;
        PtrBlockMapEntry++) {
     FvbDev->NumBlocks += PtrBlockMapEntry->NumBlocks;
   }
-  */
-#define INCREMENT_AND_BREAK_ON_OVERFLOW(Value,Increment) {\
-  UINTN __TmpSum__ = (Value)+(Increment);\
-  if ((Value) > __TmpSum__) {Status = EFI_VOLUME_CORRUPTED; break;}\
-  Value = __TmpSum__;\
-}
-  {
-    EFI_FV_BLOCK_MAP_ENTRY *EndOfBlockMap;
-    Status = EFI_SUCCESS;
-    
-    if (FwVolHeader->HeaderLength > FwVolHeader->FvLength || FwVolHeader->HeaderLength < sizeof(EFI_FIRMWARE_VOLUME_HEADER) ){
-    	Status = EFI_VOLUME_CORRUPTED;
-    	goto Error;
-    }
-    if ((UINTN)((UINTN)FwVolHeader + FwVolHeader->FvLength) < (UINTN)FwVolHeader){
-    	Status = EFI_OUT_OF_RESOURCES;
-    	goto Error;
-    }
-    EndOfBlockMap = (EFI_FV_BLOCK_MAP_ENTRY *)( (UINT8*)FwVolHeader + FwVolHeader->HeaderLength );
-    for (PtrBlockMapEntry = FwVolHeader->BlockMap;
-         PtrBlockMapEntry < EndOfBlockMap && PtrBlockMapEntry->NumBlocks != 0;
-         PtrBlockMapEntry++) {
-      INCREMENT_AND_BREAK_ON_OVERFLOW(FvbDev->NumBlocks, PtrBlockMapEntry->NumBlocks)
-    }
-    if (EFI_ERROR(Status)) goto Error;
-    if (PtrBlockMapEntry >= EndOfBlockMap){
-    	Status = EFI_VOLUME_CORRUPTED;
-    	goto Error;
-    }
-  }
   //
   // Second, allocate the cache
   //
-  if (FvbDev->NumBlocks >= (MAX_ADDRESS / sizeof (LBA_CACHE))) {
-    CoreFreePool (FvbDev);
-    return EFI_OUT_OF_RESOURCES;
-  }
   FvbDev->LbaCache = AllocatePool (FvbDev->NumBlocks * sizeof (LBA_CACHE));
   if (FvbDev->LbaCache == NULL) {
     CoreFreePool (FvbDev);
@@ -588,23 +543,10 @@ ProduceFVBProtocolOnBuffer (
     for (BlockIndex2 = 0; BlockIndex2 < PtrBlockMapEntry->NumBlocks; BlockIndex2++) {
       FvbDev->LbaCache[BlockIndex].Base = LinearOffset;
       FvbDev->LbaCache[BlockIndex].Length = PtrBlockMapEntry->Length;
-      //*** AMI PORTING BEGIN ***//
-      //LinearOffset += PtrBlockMapEntry->Length;
-      INCREMENT_AND_BREAK_ON_OVERFLOW(LinearOffset,PtrBlockMapEntry->Length)
-      //*** AMI PORTING END *****//
+      LinearOffset += PtrBlockMapEntry->Length;
       BlockIndex++;
     }
   }
-  //*** AMI PORTING BEGIN ***//
-  if (    EFI_ERROR(Status) 
-	   || LinearOffset != FwVolHeader->FvLength
-	   || FwVolHeader->ExtHeaderOffset < FwVolHeader->HeaderLength
-	   || FwVolHeader->ExtHeaderOffset > FwVolHeader->FvLength - sizeof(EFI_FIRMWARE_VOLUME_EXT_HEADER)
-  ){
-	Status = EFI_VOLUME_CORRUPTED;
-	goto Error;
-  }
-  //*** AMI PORTING END *****//
 
   //
   // Judget whether FV name guid is produced in Fv extension header
@@ -652,13 +594,7 @@ ProduceFVBProtocolOnBuffer (
   if (FvProtocol != NULL) {
     *FvProtocol = FvbDev->Handle;
   }
-  //*** AMI PORTING BEGIN ***//
-Error:
-  if (EFI_ERROR(Status)){
-      if (FvbDev->LbaCache != NULL) FreePool(FvbDev->LbaCache);
-      FreePool(FvbDev);
-  }
-  //*** AMI PORTING END *****//
+
   return Status;
 }
 
@@ -704,10 +640,6 @@ FwVolBlockDriverInit (
   This DXE service routine is used to process a firmware volume. In
   particular, it can be called by BDS to process a single firmware
   volume found in a capsule.
-
-  Caution: The caller need validate the input firmware volume to follow
-  PI specification.
-  DxeCore will trust the input data and process firmware volume directly.
 
   @param  FvHeader               pointer to a firmware volume header
   @param  Size                   the size of the buffer pointed to by FvHeader

@@ -29,7 +29,6 @@
 [LibraryClasses]
   PeiServicesLib
   BaseMemoryLib
-  DebugLib
   
 [GUIDS]
   gAmiRomLayoutFfsFileGuid

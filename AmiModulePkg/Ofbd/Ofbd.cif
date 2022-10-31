@@ -20,5 +20,4 @@
 "OfbdCleanErrorLog"
 "OfbdOemOaDataHandle"
 "OfbdBatteryCheck"
-"OfbdOemGetPattern"
 <endComponent>

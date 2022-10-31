@@ -1,7 +1,7 @@
 ;**********************************************************************
 ;**********************************************************************
 ;**                                                                  **
-;**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+;**        (C)Copyright 1985-2012, American Megatrends, Inc.         **
 ;**                                                                  **
 ;**                       All Rights Reserved.                       **
 ;**                                                                  **
@@ -12,6 +12,12 @@
 ;**********************************************************************
 ;**********************************************************************
 
+;**********************************************************************
+; $Header: /Alaska/SOURCE/Modules/Legacy Serial Redirection/SredirBootFail.asm 1     2/27/12 5:58a Jittenkumarp $
+;
+; $Revision: 1 $
+;
+; $Date: 2/27/12 5:58a $
 ;**********************************************************************
 ;<AMI_FHDR_START>
 ;
@@ -40,8 +46,8 @@ OEM16_CSEG SEGMENT PARA PUBLIC 'CODE' USE16
         PUBLIC EnableLegcaySredirModuleStart
 EnableLegcaySredirModuleStart LABEL BYTE
         jmp     SHORT EnableLegcaySredirCsm16Api
-        db      '$','S','B','F'
-SreDirBin_Base_Segadd       dw      0000h ;SreDirBin Segment Address
+
+SreDirBin_Base_Segadd       dw      0000h ;SreDirBin Segement Address
 SreDirBin_Base_Offadd       dw      0000h ;SreDirbin offset Address
 Flag                        dw      0000h
 
@@ -66,20 +72,32 @@ Flag                        dw      0000h
 ;----------------------------------------------------------------------------
 
 EnableLegcaySredirCsm16Api  PROC FAR PUBLIC
-   
+; Adjust current IP so that the data offsets are valid
+      
+        call    $+3             ; Push curent IP
+        pop     bx              ; Get current IP in BX
+        shr     bx, 4
+        mov     ax, cs          ; Always x000h
+        add     ax, bx          ; New CS
+        push    ax
+        mov     ax, OFFSET newOffset
+        sub     ax, OFFSET EnableLegcaySredirModuleStart
+        push    ax
+        ;;push    newOffset-EnableLegcaySredirModuleStart
+        retf                    ; Execute from new CS:IP
+
+newOffset:
+    
         push    bx
         push    si
         push    ax
         push    es
         push    0
         pop     es
-        mov     si, offset SreDirBin_Base_Segadd
-        mov     bx, word ptr cs:[si]
+        mov     bx, word ptr cs:[2]
         mov     es, bx
-        mov     si, offset SreDirBin_Base_Offadd
-        mov     bx, word ptr cs:[si]
-        mov     si, offset Flag
-        mov     ax, word ptr cs:[si]
+        mov     bx, word ptr cs:[4]
+        mov     ax, word ptr cs:[6]
         mov     si, ax
         add     si, bx
         mov     al, 00h
@@ -101,7 +119,7 @@ END
 ;**********************************************************************
 ;**********************************************************************
 ;**                                                                  **
-;**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+;**        (C)Copyright 1985-2012, American Megatrends, Inc.         **
 ;**                                                                  **
 ;**                       All Rights Reserved.                       **
 ;**                                                                  **

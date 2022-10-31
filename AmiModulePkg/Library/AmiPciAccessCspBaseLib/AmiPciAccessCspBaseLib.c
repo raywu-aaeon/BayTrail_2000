@@ -1,7 +1,7 @@
 //*************************************************************************
 //*************************************************************************
 //**                                                                     **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.            **
+//**        (C)Copyright 1985-2012, American Megatrends, Inc.            **
 //**                                                                     **
 //**                       All Rights Reserved.                          **
 //**                                                                     **
@@ -19,11 +19,14 @@
 //
 // $Date: $
 //*************************************************************************
-/** @file AmiPciAccessCspBaseLib.c
-    Library Class for AMI CSP PCI Interface
-
-	@note Requires Chipset Specific Porting for each project!
-**/
+//<AMI_FHDR_START>
+//
+// Name:  AmiPciAccessCspBaseLib.c
+//
+// Description: Library Class for AMI SIO Driver.
+//
+//
+//<AMI_FHDR_END>
 //*************************************************************************
 
 //-------------------------------------------------------------------------
@@ -43,7 +46,9 @@
 //-------------------------------------------------------------------------
 // Constants, Macros and Type Definitions
 //-------------------------------------------------------------------------
+//TODO Make it coming from PCD!
 #define PCIE_MAX_BUS ((PCIEX_LENGTH/0x100000)-1)
+//TODO
 
 // GUID Definition(s)
 extern EFI_GUID gAmiGlobalVariableGuid;
@@ -58,17 +63,22 @@ UINTN           			gMcfgTableKey=0;
 EFI_ACPI_TABLE_PROTOCOL     *gAcpiTableProtocol=NULL;
 
 
-/**
-    This function will create the MCFG ACPI table when ACPI
-    support protocol is available.
-
-    @param Event Event of callback
-    @param Context Context of callback.
-
-    @retval VOID
-
-    @note  Porting required.
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:   CreateNbAcpiTables
+//
+// Description: This function will create the MCFG ACPI table when ACPI
+//              support protocol is available.
+//
+// Input:       Event   - Event of callback
+//              Context - Context of callback.
+//
+// Output:      None
+//
+// Notes:       Porting required.
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 VOID CreateNbAcpiTables (
     IN EFI_EVENT        Event,
@@ -130,20 +140,25 @@ VOID CreateNbAcpiTables (
 // Following functions are HOST BRIDGE Infrastructure Overrides and Porting.
 //----------------------------------------------------------------------------
 
-/**
-    This procedure will be invoked in PCI Host Bridge Protocol
-    when NotifyPhase function is called with phase
-    EfiPciHostBridgeBeginEnumeration.
-
-    @param ResAllocProtocol Pointer to Host Bridge Resource
-        Allocation Protocol.
-    @param RbIoProtocolBuffer Pointer to Root Bridge I/O Protocol.
-    @param RbCount Root Bridge counter.
-
-    @retval EFI_STATUS
-
-    @note  Porting required if needed.
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:   HbNotifyCspBeforeEnumeration
+//
+// Description: This procedure will be invoked in PCI Host Bridge Protocol
+//              when NotifyPhase function is called with phase
+//              EfiPciHostBridgeBeginEnumeration.
+//
+// Input:       ResAllocProtocol   - Pointer to Host Bridge Resource
+//                                   Allocation Protocol.
+//              RbIoProtocolBuffer - Pointer to Root Bridge I/O Protocol.
+//              RbCount            - Root Bridge counter.
+//
+// Output:      EFI_STATUS
+//
+// Notes:       Porting required if needed.
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS HbNotifyCspBeforeEnumeration (
     IN EFI_PCI_HOST_BRIDGE_RESOURCE_ALLOCATION_PROTOCOL *ResAllocProtocol,
     IN EFI_PCI_ROOT_BRIDGE_IO_PROTOCOL                  **RbIoProtocolBuffer,
@@ -159,20 +174,25 @@ EFI_STATUS HbNotifyCspBeforeEnumeration (
 
 
 
-/**
-    This procedure will be invoked in PCI Host Bridge Protocol
-    when NotifyPhase function is called with phase
-    EfiPciHostBridgeBeginBusAllocation.
-
-    @param ResAllocProtocol Pointer to Host Bridge Resource
-        Allocation Protocol.
-    @param RbIoProtocolBuffer Pointer to Root Bridge I/O Protocol.
-    @param RbCount Root Bridge counter.
-
-    @retval EFI_STATUS
-
-    @note  Porting required if needed.
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:   HbNotifyCspBeginBusAllocation
+//
+// Description: This procedure will be invoked in PCI Host Bridge Protocol
+//              when NotifyPhase function is called with phase
+//              EfiPciHostBridgeBeginBusAllocation.
+//
+// Input:       ResAllocProtocol   - Pointer to Host Bridge Resource
+//                                   Allocation Protocol.
+//              RbIoProtocolBuffer - Pointer to Root Bridge I/O Protocol.
+//              RbCount            - Root Bridge counter.
+//
+// Output:      EFI_STATUS
+//
+// Notes:       Porting required if needed.
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS HbNotifyCspBeginBusAllocation (
     IN EFI_PCI_HOST_BRIDGE_RESOURCE_ALLOCATION_PROTOCOL *ResAllocProtocol,
     IN EFI_PCI_ROOT_BRIDGE_IO_PROTOCOL                   **RbIoProtocolBuffer,
@@ -186,20 +206,25 @@ EFI_STATUS HbNotifyCspBeginBusAllocation (
 }
 
 
-/**
-    This procedure will be invoked in PCI Host Bridge Protocol
-    when NotifyPhase function is called with phase
-    EfiPciHostBridgeEndBusAllocation
-
-    @param ResAllocProtocol Pointer to Host Bridge Resource
-        Allocation Protocol.
-    @param RbIoProtocolBuffer Pointer to Root Bridge I/O Protocol.
-    @param RbCount Root Bridge counter.
-
-    @retval EFI_STATUS
-
-    @note  Porting required if needed.
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:   HbNotifyCspEndBusAllocation
+//
+// Description: This procedure will be invoked in PCI Host Bridge Protocol
+//              when NotifyPhase function is called with phase
+//              EfiPciHostBridgeEndBusAllocation
+//
+// Input:       ResAllocProtocol   - Pointer to Host Bridge Resource
+//                                   Allocation Protocol.
+//              RbIoProtocolBuffer - Pointer to Root Bridge I/O Protocol.
+//              RbCount            - Root Bridge counter.
+//
+// Output:      EFI_STATUS
+//
+// Notes:       Porting required if needed.
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS HbNotifyCspEndBusAllocation (
     IN EFI_PCI_HOST_BRIDGE_RESOURCE_ALLOCATION_PROTOCOL *ResAllocProtocol,
     IN EFI_PCI_ROOT_BRIDGE_IO_PROTOCOL                  **RbIoProtocolBuffer,
@@ -212,20 +237,25 @@ EFI_STATUS HbNotifyCspEndBusAllocation (
     return Status;
 }
 
-/**
-    This procedure will be invoked in PCI Host Bridge Protocol
-    when NotifyPhase function is called with phase
-    EfiPciHostBridgeBeginResourceAllocation.
-
-    @param ResAllocProtocol Pointer to Host Bridge Resource
-        Allocation Protocol.
-    @param RbIoProtocolBuffer Pointer to Root Bridge I/O Protocol.
-    @param RbCount Root Bridge counter.
-
-    @retval EFI_STATUS
-
-    @note  Porting required if needed.
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:   HbNotifyCspBeginResourceAllocation
+//
+// Description: This procedure will be invoked in PCI Host Bridge Protocol
+//              when NotifyPhase function is called with phase
+//              EfiPciHostBridgeBeginResourceAllocation.
+//
+// Input:       ResAllocProtocol   - Pointer to Host Bridge Resource
+//                                   Allocation Protocol.
+//              RbIoProtocolBuffer - Pointer to Root Bridge I/O Protocol.
+//              RbCount            - Root Bridge counter.
+//
+// Output:      EFI_STATUS
+//
+// Notes:       Porting required if needed.
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 EFI_STATUS HbNotifyCspBeginResourceAllocation (
     IN EFI_PCI_HOST_BRIDGE_RESOURCE_ALLOCATION_PROTOCOL *ResAllocProtocol,
@@ -240,20 +270,25 @@ EFI_STATUS HbNotifyCspBeginResourceAllocation (
 }
 
 
-/**
-    This procedure will be invoked in PCI Host Bridge Protocol
-    when NotifyPhase function is called with phase
-    EfiPciHostBridgeAllocateResources.
-
-    @param ResAllocProtocol Pointer to Host Bridge Resource
-        Allocation Protocol.
-    @param RbIoProtocolBuffer Pointer to Root Bridge I/O Protocol.
-    @param RbCount Root Bridge counter.
-
-    @retval EFI_STATUS
-
-    @note  Porting required if needed.
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:   HbNotifyCspAllocateResources
+//
+// Description: This procedure will be invoked in PCI Host Bridge Protocol
+//              when NotifyPhase function is called with phase
+//              EfiPciHostBridgeAllocateResources.
+//
+// Input:       ResAllocProtocol   - Pointer to Host Bridge Resource
+//                                   Allocation Protocol.
+//              RbIoProtocolBuffer - Pointer to Root Bridge I/O Protocol.
+//              RbCount            - Root Bridge counter.
+//
+// Output:      EFI_STATUS
+//
+// Notes:       Porting required if needed.
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 EFI_STATUS HbNotifyCspAllocateResources (
     IN EFI_PCI_HOST_BRIDGE_RESOURCE_ALLOCATION_PROTOCOL *ResAllocProtocol,
@@ -267,20 +302,25 @@ EFI_STATUS HbNotifyCspAllocateResources (
     return Status;
 }
 
-/**
-    This procedure will be invoked in PCI Host Bridge Protocol
-    when NotifyPhase function is called with phase
-    EfiPciHostBridgeSetResources.
-
-    @param ResAllocProtocol Pointer to Host Bridge Resource
-        Allocation Protocol.
-    @param RbIoProtocolBuffer Pointer to Root Bridge I/O Protocol.
-    @param RbCount Root Bridge counter.
-
-    @retval EFI_STATUS
-
-    @note  Porting required if needed.
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:   HbNotifyCspSetResources
+//
+// Description: This procedure will be invoked in PCI Host Bridge Protocol
+//              when NotifyPhase function is called with phase
+//              EfiPciHostBridgeSetResources.
+//
+// Input:       ResAllocProtocol   - Pointer to Host Bridge Resource
+//                                   Allocation Protocol.
+//              RbIoProtocolBuffer - Pointer to Root Bridge I/O Protocol.
+//              RbCount            - Root Bridge counter.
+//
+// Output:      EFI_STATUS
+//
+// Notes:       Porting required if needed.
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS HbNotifyCspSetResources (
     IN EFI_PCI_HOST_BRIDGE_RESOURCE_ALLOCATION_PROTOCOL *ResAllocProtocol,
     IN EFI_PCI_ROOT_BRIDGE_IO_PROTOCOL                  **RbIoProtocolBuffer,
@@ -294,20 +334,25 @@ EFI_STATUS HbNotifyCspSetResources (
 }
 
 
-/**
-    This procedure will be invoked in PCI Host Bridge Protocol
-    when NotifyPhase function is called with phase
-    EfiPciHostBridgeEndResourceAllocation
-
-    @param ResAllocProtocol Pointer to Host Bridge Resource
-        Allocation Protocol.
-    @param RbIoProtocolBuffer Pointer to Root Bridge I/O Protocol.
-    @param RbCount Root Bridge counter.
-
-    @retval EFI_STATUS
-
-    @note  Porting required if needed.
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:   HbNotifyCspEndResourceAllocation
+//
+// Description: This procedure will be invoked in PCI Host Bridge Protocol
+//              when NotifyPhase function is called with phase
+//              EfiPciHostBridgeEndResourceAllocation
+//
+// Input:       ResAllocProtocol   - Pointer to Host Bridge Resource
+//                                   Allocation Protocol.
+//              RbIoProtocolBuffer - Pointer to Root Bridge I/O Protocol.
+//              RbCount            - Root Bridge counter.
+//
+// Output:      EFI_STATUS
+//
+// Notes:       Porting required if needed.
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS HbNotifyCspEndResourceAllocation (
     IN EFI_PCI_HOST_BRIDGE_RESOURCE_ALLOCATION_PROTOCOL *ResAllocProtocol,
     IN EFI_PCI_ROOT_BRIDGE_IO_PROTOCOL                  **RbIoProtocolBuffer,
@@ -321,19 +366,24 @@ EFI_STATUS HbNotifyCspEndResourceAllocation (
 }
 
 
-/**
-    This procedure will be invoked in PCI Host Bridge Protocol
-    StartBusEnumeration function, it must prepare initial Bus
-    ACPI Resource
-
-    @param HostBrgData Pointer to Host Bridge private structure data.
-    @param RootBrgData Pointer to Root Bridge private structure data.
-    @param RootBrgIndex Root Bridge index (0 Based).
-
-    @retval EFI_STATUS
-
-    @note  Porting required if needed.
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:   HbCspStartBusEnumeration
+//
+// Description: This procedure will be invoked in PCI Host Bridge Protocol
+//              StartBusEnumeration function, it must prepare initial Bus
+//              ACPI Resource
+//
+// Input:       HostBrgData  - Pointer to Host Bridge private structure data.
+//              RootBrgData  - Pointer to Root Bridge private structure data.
+//              RootBrgIndex - Root Bridge index (0 Based).
+//
+// Output:      EFI_STATUS
+//
+// Notes:       Porting required if needed.
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS HbCspStartBusEnumeration (
 							IN PCI_HOST_BRG_DATA    *HostBrgData,
 							IN PCI_ROOT_BRG_DATA    *RootBrgData,
@@ -346,18 +396,23 @@ EFI_STATUS HbCspStartBusEnumeration (
     return Status;
 }
 
-/**
-    This procedure will be invoked in PCI Host Bridge Protocol
-    SubmitBusNumbers function.
-
-    @param HostBrgData Pointer to Host Bridge private structure data.
-    @param RootBrgData Pointer to Root Bridge private structure data.
-    @param RootBrgIndex Root Bridge index (0 Based).
-
-    @retval EFI_STATUS
-
-    @note  Porting required if needed.
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:   HbCspSetBusNnumbers
+//
+// Description: This procedure will be invoked in PCI Host Bridge Protocol
+//              SubmitBusNumbers function.
+//
+// Input:       HostBrgData  - Pointer to Host Bridge private structure data.
+//              RootBrgData  - Pointer to Root Bridge private structure data.
+//              RootBrgIndex - Root Bridge index (0 Based).
+//
+// Output:      EFI_STATUS
+//
+// Notes:       Porting required if needed.
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS HbCspSetBusNnumbers (
 							IN PCI_HOST_BRG_DATA    *HostBrgData,
 							IN PCI_ROOT_BRG_DATA    *RootBrgData,
@@ -370,18 +425,23 @@ EFI_STATUS HbCspSetBusNnumbers (
     return Status;
 }
 
-/**
-    This procedure will be invoked in PCI Host Bridge Protocol
-    SubmitResources function.
-
-    @param HostBrgData Pointer to Host Bridge private structure data.
-    @param RootBrgData Pointer to Root Bridge private structure data.
-    @param RootBrgIndex Root Bridge index (0 Based).
-
-    @retval EFI_STATUS
-
-    @note  Porting required if needed.
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:   HbCspSubmitResources
+//
+// Description: This procedure will be invoked in PCI Host Bridge Protocol
+//              SubmitResources function.
+//
+// Input:       HostBrgData  - Pointer to Host Bridge private structure data.
+//              RootBrgData  - Pointer to Root Bridge private structure data.
+//              RootBrgIndex - Root Bridge index (0 Based).
+//
+// Output:      EFI_STATUS
+//
+// Notes:       Porting required if needed.
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS HbCspSubmitResources (
 								IN PCI_HOST_BRG_DATA    *HostBrgData,
 								IN PCI_ROOT_BRG_DATA    *RootBrgData,
@@ -394,43 +454,25 @@ EFI_STATUS HbCspSubmitResources (
     return Status;
 }
 
-/** 
- * @internal
- * Attempts to set a variable. If attempt fails because the variable already exists with different attributes,
- * tries to delete the variable and to create it with the new attributes specified by Attributes. 
- *
- * @retval EFI_SUCCESS The variable has been successfully created.
- */
-static EFI_STATUS AmiPciAccessCspBaseLibSetVariableWithNewAttributes(
-    IN CHAR16 *Name, IN EFI_GUID *Guid, IN UINT32 Attributes,
-    IN UINTN DataSize, IN VOID *Data    
-)
-{
-    EFI_STATUS Status;
-    
-    Status = pRS->SetVariable(Name, Guid, Attributes, DataSize, Data);
-    if (!EFI_ERROR(Status) || Status != EFI_INVALID_PARAMETER) return Status;
-
-    Status = pRS->SetVariable(Name, Guid, 0, 0, NULL); // Delete the variable
-    if (EFI_ERROR(Status)) return Status;
-
-    return pRS->SetVariable(Name, Guid, Attributes, DataSize, Data);
-}
-
-/**
-    This procedure will be invoked during PCI bus enumeration,
-    it determines the PCI memory base address below 4GB whether
-    it is overlapping the main memory, if it is overlapped, then
-    updates MemoryCeiling variable and reboot.
-
-    @param HostBrgData Pointer to Host Bridge private structure data.
-    @param RootBrgData Pointer to Root Bridge private structure data.
-    @param RootBrgIndex Root Bridge index (0 Based).
-
-    @retval EFI_STATUS
-
-    @note  Porting required if needed.
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:   HbCspAdjustMemoryMmioOverlap
+//
+// Description: This procedure will be invoked during PCI bus enumeration,
+//              it determines the PCI memory base address below 4GB whether
+//              it is overlapping the main memory, if it is overlapped, then
+//              updates MemoryCeiling variable and reboot.
+//
+// Input:       HostBrgData  - Pointer to Host Bridge private structure data.
+//              RootBrgData  - Pointer to Root Bridge private structure data.
+//              RootBrgIndex - Root Bridge index (0 Based).
+//
+// Output:      EFI_STATUS
+//
+// Notes:       Porting required if needed.
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS HbCspAdjustMemoryMmioOverlap (
 									IN PCI_HOST_BRG_DATA    *HostBrgData,
 									IN PCI_ROOT_BRG_DATA    *RootBrgData,
@@ -544,13 +586,13 @@ EFI_STATUS HbCspAdjustMemoryMmioOverlap (
         {
 
             // Set memory ceiling variable.
-            AmiPciAccessCspBaseLibSetVariableWithNewAttributes(
-                gMemoryCeilingVariable,
-                &gAmiGlobalVariableGuid,
-                EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS,
-                sizeof (UINT32),
-                &NewMemoryCeiling
-            );
+            pRS->SetVariable( gMemoryCeilingVariable,
+                              &gAmiGlobalVariableGuid,
+                              EFI_VARIABLE_NON_VOLATILE +
+                              EFI_VARIABLE_BOOTSERVICE_ACCESS +
+                              EFI_VARIABLE_RUNTIME_ACCESS,
+                              sizeof (UINT32),
+                              &NewMemoryCeiling );
 
             TRACE((-1, "\nResetting System for NewMemoryCeiling : %8X\n", NewMemoryCeiling));
 
@@ -570,13 +612,13 @@ EFI_STATUS HbCspAdjustMemoryMmioOverlap (
     if (MemoryCeiling != LowestAllocMMIO)
     {
         // Set memory ceiling variable.
-        AmiPciAccessCspBaseLibSetVariableWithNewAttributes(
-            gMemoryCeilingVariable, 
-            &gAmiGlobalVariableGuid, 
-            EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS,
-            sizeof (UINT32), 
-            &LowestAllocMMIO
-        );
+        pRS->SetVariable( gMemoryCeilingVariable, \
+                          &gAmiGlobalVariableGuid, \
+                          EFI_VARIABLE_NON_VOLATILE + \
+                          EFI_VARIABLE_BOOTSERVICE_ACCESS + \
+                          EFI_VARIABLE_RUNTIME_ACCESS,
+                          sizeof (UINT32), \
+                          &LowestAllocMMIO );
 
         TRACE((-1, "\nResetting System for LowestAllocMMIO : %8X\n", LowestAllocMMIO));
 
@@ -590,18 +632,23 @@ EFI_STATUS HbCspAdjustMemoryMmioOverlap (
     return EFI_SUCCESS;
 }
 
-/**
-    This function will be invoked after Initialization of generic
-    part of the Host and Root Bridges.
-    All Handles for PCIHostBrg and PciRootBrg has been created
-    and Protocol Intergaces installed.
-
-    @param HostBrgData Pointer to Host Bridge private structure data.
-
-    @retval EFI_STATUS
-
-    @note  Porting required if needed.
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:   HbCspBasicChipsetInit
+//
+// Description: This function will be invoked after Initialization of generic
+//              part of the Host and Root Bridges.
+//              All Handles for PCIHostBrg and PciRootBrg has been created
+//              and Protocol Intergaces installed.
+//
+// Input:       HostBrgData  - Pointer to Host Bridge private structure data.
+//
+// Output:      EFI_STATUS
+//
+// Notes:       Porting required if needed.
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS HbCspBasicChipsetInit (
     IN PCI_HOST_BRG_DATA    *HostBrg0, UINTN	HbCount)
 {
@@ -629,16 +676,21 @@ EFI_STATUS HbCspBasicChipsetInit (
     return EFI_SUCCESS;
 }
 
-/**
-    This function will be invoked when Pci Host Bridge driver runs  
-    out of resources.
-
-    @param HostBrgData Pointer to Host Bridge private structure data.
-
-    @retval EFI_STATUS
-
-    @note  Porting required if needed.
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:   HbCspGetProposedResources
+//
+// Description: This function will be invoked when Pci Host Bridge driver runs  
+//              out of resources.
+//
+// Input:       HostBrgData  - Pointer to Host Bridge private structure data.
+//
+// Output:      EFI_STATUS
+//
+// Notes:       Porting required if needed.
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS HbCspGetProposedResources (
     IN PCI_HOST_BRG_DATA                            *HostBrgData,
     IN PCI_ROOT_BRG_DATA                            *RootBrgData,
@@ -651,21 +703,26 @@ EFI_STATUS HbCspGetProposedResources (
     return Status;
 }
 
-/**
-    This function is called for all the PCI controllers that
-    the PCI bus driver finds.
-    It can be used to Preprogram the controller.
-
-    @param HostBrgData Pointer to Host Bridge private structure data.
-    @param RootBrgData Pointer to Root Bridge private structure data.
-    @param RootBrgNumber Root Bridge number (0 Based).
-    @param PciAddress Address of the controller on the PCI bus.
-    @param Phase The phase during enumeration
-
-    @retval EFI_STATUS
-
-    @note  Porting required if needed.
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:   HbCspPreprocessController
+//
+// Description: This function is called for all the PCI controllers that
+//              the PCI bus driver finds.
+//              It can be used to Preprogram the controller.
+//
+// Input:       HostBrgData   - Pointer to Host Bridge private structure data.
+//              RootBrgData   - Pointer to Root Bridge private structure data.
+//              RootBrgNumber - Root Bridge number (0 Based).
+//              PciAddress    - Address of the controller on the PCI bus.
+//              Phase         - The phase during enumeration
+//
+// Output:      EFI_STATUS
+//
+// Notes:       Porting required if needed.
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS HbCspPreprocessController (
     IN PCI_HOST_BRG_DATA                            *HostBrgData,
     IN PCI_ROOT_BRG_DATA                            *RootBrgData,
@@ -680,19 +737,24 @@ EFI_STATUS HbCspPreprocessController (
     return Status;
 }
 
-/**
-    This function is invoked in PCI Host Bridge Driver when time
-    to ask GCD for resources. You can overwrite a default
-    algorithm used to allocate resources for the Root Bridge.
-
-    @param HostBrgData Pointer to Host Bridge private structure data.
-    @param RootBrgData Pointer to Root Bridge private structure data.
-    @param RootBrgIndex Root Bridge index (0 Based).
-
-    @retval EFI_STATUS
-
-    @note  Porting required if needed.
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:   HbCspAllocateResources
+//
+// Description: This function is invoked in PCI Host Bridge Driver when time
+//              to ask GCD for resources. You can overwrite a default
+//              algorithm used to allocate resources for the Root Bridge.
+//
+// Input:       HostBrgData  - Pointer to Host Bridge private structure data.
+//              RootBrgData  - Pointer to Root Bridge private structure data.
+//              RootBrgIndex - Root Bridge index (0 Based).
+//
+// Output:      EFI_STATUS
+//
+// Notes:       Porting required if needed.
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS HbCspAllocateResources (
 							IN PCI_HOST_BRG_DATA    *HostBrgData,
 							IN PCI_ROOT_BRG_DATA    *RootBrgData,
@@ -857,29 +919,34 @@ EFI_STATUS HbCspAllocateResources (
 // Following functions are ROOT BRIDGE Infrastructure Overrides and Porting.
 //----------------------------------------------------------------------------
 
-/**
-    Chipset Specific function to Map Internal Device address
-    residing ABOVE 4G to the BELOW 4G address space for DMA.
-    MUST BE IMPLEMENTED if CHIPSET supports address space
-    decoding ABOVE 4G.
-
-    @param RbData Root Bridge private structure data
-    @param Operation Operation to provide Mapping for
-    @param HostAddress HostAddress of the Device
-    @param NumberOfBytes Number of Byte in Mapped Buffer.
-    @param DeviceAddress Mapped Device Address.
-    @param Mapping Mapping Info Structure this function must
-        allocate and fill.
-
-        EFI_STATUS
-    @retval EFI_SUCCESS Successful.
-    @retval EFI_UNSUPPORTED The Map function is not supported.
-    @retval EFI_INVALID_PARAMETER One of the parameters has an
-        invalid value.
-
-    @note  Porting is required for chipsets that supports Decoding
-              of the PCI Address Space ABOVE 4G.
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:   RbCspIoPciMap
+//
+// Description: Chipset Specific function to Map Internal Device address
+//              residing ABOVE 4G to the BELOW 4G address space for DMA.
+//              MUST BE IMPLEMENTED if CHIPSET supports address space
+//              decoding ABOVE 4G.
+//
+// Input:       *RbData        - Root Bridge private structure data
+//              Operation      - Operation to provide Mapping for
+//              HostAddress    - HostAddress of the Device
+//              *NumberOfBytes - Number of Byte in Mapped Buffer.
+//              *DeviceAddress - Mapped Device Address.
+//              **Mapping      - Mapping Info Structure this function must
+//                               allocate and fill.
+//
+// Output:      EFI_STATUS
+//                  EFI_SUCCESS - Successful.
+//                  EFI_UNSUPPORTED - The Map function is not supported.
+//                  EFI_INVALID_PARAMETER - One of the parameters has an
+//                                          invalid value.
+//
+// Notes:       Porting is required for chipsets that supports Decoding
+//              of the PCI Address Space ABOVE 4G.
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS RbCspIoPciMap (
     IN PCI_ROOT_BRG_DATA                            *RbData,
     IN EFI_PCI_ROOT_BRIDGE_IO_PROTOCOL_OPERATION    Operation,
@@ -947,23 +1014,28 @@ EFI_STATUS RbCspIoPciMap (
 }
 
 
-/**
-    Chipset Specific function to Unmap previousely Mapped
-    buffer for DMA.
-    MUST BE IMPLEMENTED if CHIPSET supports address space
-    decoding ABOVE 4G.
-
-    @param RbData Root Bridge private structure data
-    @param Mapping Mapping Info Structure this function must free.
-
-        EFI_STATUS
-    @retval EFI_SUCCESS Successful.
-    @retval EFI_UNSUPPORTED The Unmap function is not supported.
-    @retval EFI_INVALID_PARAMETER One of the parameters has an
-        invalid value.
-
-    @note  Porting required if needed.
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:   RbCspIoPciUnmap
+//
+// Description: Chipset Specific function to Unmap previousely Mapped
+//              buffer for DMA.
+//              MUST BE IMPLEMENTED if CHIPSET supports address space
+//              decoding ABOVE 4G.
+//
+// Input:       *RbData  - Root Bridge private structure data
+//              *Mapping - Mapping Info Structure this function must free.
+//
+// Output:      EFI_STATUS
+//                  EFI_SUCCESS - Successful.
+//                  EFI_UNSUPPORTED - The Unmap function is not supported.
+//                  EFI_INVALID_PARAMETER - One of the parameters has an
+//                                          invalid value.
+//
+// Notes:       Porting required if needed.
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS RbCspIoPciUnmap (
     IN PCI_ROOT_BRG_DATA                            *RbData,
     OUT PCI_ROOT_BRIDGE_MAPPING                     *Mapping )
@@ -1006,20 +1078,25 @@ EFI_STATUS RbCspIoPciUnmap (
     return Status;
 }
 
-/**
-    Chipset Specific function to do PCI RB Attributes releated
-    programming.
-
-    @param RbData Pointer to Root Bridge private structure.
-    @param Attributes The Root Bridge attributes to be programming.
-    @param ResourceBase Pointer to the resource base. (OPTIONAL)
-    @param ResourceLength Pointer to the resource Length. (OPTIONAL)
-
-        EFI_STATUS
-    @retval EFI_SUCCESS Successful.
-    @retval EFI_INVALID_PARAMETER One of the parameters has an
-        invalid value.
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:   RbCspIoPciAttributes
+//
+// Description: Chipset Specific function to do PCI RB Attributes releated
+//              programming.
+//
+// Input:       RbData         - Pointer to Root Bridge private structure.
+//              Attributes     - The Root Bridge attributes to be programming.
+//              ResourceBase   - Pointer to the resource base. (OPTIONAL)
+//              ResourceLength - Pointer to the resource Length. (OPTIONAL)
+//
+// Output:      EFI_STATUS
+//                  EFI_SUCCESS - Successful.
+//                  EFI_INVALID_PARAMETER - One of the parameters has an
+//                                          invalid value.
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS RbCspIoPciAttributes (
     IN PCI_ROOT_BRG_DATA                            *RbData,
     IN UINT64                                       Attributes,
@@ -1035,24 +1112,29 @@ EFI_STATUS RbCspIoPciAttributes (
     return Status;
 }
 
-/**
-    Read Pci Registers into buffer.
-    Csp Function which actualy access PCI Config Space.
-    Chipsets that capable of having PCI EXPRESS Ext Cfg Space
-    transactions.
-    Must Implement this access routine here.
-
-    @param RbData Root Bridge private structure.
-    @param Width PCI Width.
-    @param Address PCI Address.
-    @param Count Number of width reads/writes.
-    @param Buffer Buffer where read/written.
-    @param Write Set if write.
-
-        EFI_STATUS
-    @retval EFI_SUCCESS Successful read.
-    @retval EFI_INVALID_PARAMETER One of the parameters has an
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:   RootBridgeIoPciRW
+//
+// Description: Read Pci Registers into buffer.
+//              Csp Function which actualy access PCI Config Space.
+//              Chipsets that capable of having PCI EXPRESS Ext Cfg Space
+//              transactions.
+//              Must Implement this access routine here.
+//
+// Input:       *RbData - Root Bridge private structure.
+//              Width   - PCI Width.
+//              Address - PCI Address.
+//              Count   - Number of width reads/writes.
+//              *Buffer - Buffer where read/written.
+//              Write   - Set if write.
+//
+// Output:      EFI_STATUS
+//                  EFI_SUCCESS - Successful read.
+//                  EFI_INVALID_PARAMETER - One of the parameters has an
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS RootBridgeIoPciRW (
     IN PCI_ROOT_BRG_DATA                        *RbData,
     IN EFI_PCI_ROOT_BRIDGE_IO_PROTOCOL_WIDTH    Width,
@@ -1145,7 +1227,7 @@ EFI_STATUS RootBridgeIoPciRW (
 //*************************************************************************
 //*************************************************************************
 //**                                                                     **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.            **
+//**        (C)Copyright 1985-2011, American Megatrends, Inc.            **
 //**                                                                     **
 //**                       All Rights Reserved.                          **
 //**                                                                     **

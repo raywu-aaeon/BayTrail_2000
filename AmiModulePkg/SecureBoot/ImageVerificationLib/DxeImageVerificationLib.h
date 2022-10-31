@@ -1,7 +1,7 @@
 /**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2013, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **
@@ -38,9 +38,15 @@ Intel Corporation.
 #ifndef __IMAGEVERIFICATIONLIB_H__
 #define __IMAGEVERIFICATIONLIB_H__
 
+
+#include <Protocol/FirmwareVolume.h>
 #include <Protocol/DevicePath.h>
+#include <Protocol/BlockIo.h>
+#include <Protocol/SimpleFileSystem.h>
 #include <Library/SecurityManagementLib.h>
 
+//#include "WinCertificate.h"
+//#include <ImageAuthentication.h>
 #include <Guid/ImageAuthentication.h>
 #include <Protocol/Hash.h>
 
@@ -78,7 +84,7 @@ Intel Corporation.
 #define HASHALG_SHA1                           0x00000001
 #define HASHALG_SHA256                         0x00000002
 
-#define MAX_ELEM_NUM        28 // ~28 max number of PE hdr elements to be hashed in one pass
+#define MAX_ELEM_NUM        28 // TBD. ~20 max number of PE hdr elements to be hashed in one pass
 ///
 /// SHA-1 digest size in bytes.
 ///
@@ -131,32 +137,11 @@ typedef struct _AMI_VALID_CERT_IN_SIG_DB {
   UINT32          SigLength;
 } AMI_VALID_CERT_IN_SIG_DB;
 
-
-/**
-  Get the image type.
-
-  @param[in]  File         This is a pointer to the device path of the file that is
-                           being dispatched. This will optionally be used for logging.
-  @param[in]  FileBuffer   A pointer to the buffer with the UEFI file image
-  @param[in]  FileSize     The size of File buffer.
-  @param[in]  BootPolicy   A boot policy that was used to call LoadImage() UEFI service.
-
-  @return UINT32           Image Type
-
-**/
-UINT32
-AmiGetImageType (
-  IN  CONST EFI_DEVICE_PATH_PROTOCOL   *File,
-  IN  VOID                             *FileBuffer,
-  IN  UINTN                            FileSize,
-  IN BOOLEAN                           BootPolicy
-  );
-
 #endif
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2013, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **

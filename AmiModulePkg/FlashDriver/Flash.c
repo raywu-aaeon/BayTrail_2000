@@ -1,7 +1,7 @@
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2012, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **
@@ -28,12 +28,19 @@
 //<AMI_FHDR_END>
 //**********************************************************************
 #include <AmiDxeLib.h>
+#include <AmiCspLib.h>
 #include <Flash.h>
 #include <Ffs.h>
 #include <RomLayout.h>
 #include <AmiHobs.h>
 #include <Protocol/FlashProtocol.h>
-#include <Library/AmiCriticalSectionLib.h>
+
+typedef struct
+{
+    BOOLEAN Busy;
+    BOOLEAN SmiState;
+    UINT8 IntState[2];
+} CRITICAL_SECTION;
 
 typedef struct
 {
@@ -53,7 +60,6 @@ typedef struct
 {
     ROM_AREA *RomArea;
     UINT32 AreaSize ;
-    BOOLEAN RestoreSignature;                                           // [ EIP341497 ]
 } UPDATED_AREA_DESCRIPTOR;
 
 //-----Prototypes------------------------------------
@@ -91,11 +97,13 @@ extern const UINTN FlashEmpty;
 extern const BOOLEAN FlashNotMemoryMapped;
 
 #define BEGIN_CRITICAL_SECTION(Cs) \
-    { EFI_STATUS Status = BeginCriticalSection(Cs);\
-      ASSERT(Status==EFI_SUCCESS || Status==EFI_ACCESS_DENIED);\
-      if (EFI_ERROR(Status)) return Status;\
+    { if ((Cs)->Busy) return EFI_ACCESS_DENIED;\
+      BeginCriticalSection(Cs);\
     }
-#define END_CRITICAL_SECTION(Cs) VERIFY_EFI_ERROR(EndCriticalSection(Cs))
+#define END_CRITICAL_SECTION(Cs) EndCriticalSection(Cs)
+
+VOID BeginCriticalSection(CRITICAL_SECTION *Cs);
+VOID EndCriticalSection(CRITICAL_SECTION *Cs);
 
 //---Flash data protocole------------------------------------------
 FLASH_PROTOCOL_PRIVATE FlashData =
@@ -111,7 +119,6 @@ ROM_AREA *RomLayout = NULL;
 #define MAX_NUMBER_OF_UPDATED_AREAS 10
 UPDATED_AREA_DESCRIPTOR UpdatedArea[MAX_NUMBER_OF_UPDATED_AREAS];
 INT32 NumberOfUpdatedAreas=0;
-CRITICAL_SECTION Cs;
 
 /*************** OUTSIDE SMM **********************************/
 // <AMI_PHDR_START>
@@ -154,7 +161,6 @@ VOID FlashDrvVirtAddressChange (
     {
         pRS->ConvertPointer(0, &UpdatedArea[i].RomArea);
     }
-    pRS->ConvertPointer(0,&Cs);
 }
 
 // <AMI_PHDR_START>
@@ -214,9 +220,10 @@ EFI_STATUS FlashDriverInit(
 
 //Fill MailBox 
     FlashData.MailBox->WriteEnableStatus = 0;
-    Status = CreateCriticalSection(&Cs);
-    ASSERT_EFI_ERROR(Status);
-    FlashData.MailBox->Cs = Cs;
+    FlashData.MailBox->Cs.Busy = FALSE;
+    FlashData.MailBox->Cs.SmiState = FALSE;
+    FlashData.MailBox->Cs.IntState[0] = 0;
+    FlashData.MailBox->Cs.IntState[1] = 0;
 
     Status = pBS->InstallProtocolInterface(&Handler, &gFlashProtocolGuid, EFI_NATIVE_INTERFACE, &FlashData.Flash);
     ASSERT_EFI_ERROR(Status);
@@ -252,11 +259,11 @@ EFI_STATUS FlashDriverSmmInit(
 
     VERIFY_EFI_ERROR(pBS->LocateProtocol(&gFlashProtocolGuid, NULL, &NotSmmFlash));
 
-    //Reasign MailBox
+//Reasign MailBox
     FlashData.MailBox = NotSmmFlash->MailBox;
-    Cs = FlashData.MailBox->Cs;
+TRACE((-1, "Smm allocate %i bytes at %lx\n", FlashData.MailBox->RomLayoutSize, RomLayout));
 
-   //Save SMM copy of ROM layout
+//Save SMM copy of ROM layout
     if(FlashData.MailBox->RomLayoutSize != 0) {
         VERIFY_EFI_ERROR(pSmst->SmmAllocatePool(EfiRuntimeServicesData, FlashData.MailBox->RomLayoutSize, &RomLayout));
         pBS->CopyMem(RomLayout, FlashData.MailBox->RomLayout, FlashData.MailBox->RomLayoutSize);
@@ -287,7 +294,6 @@ EFI_STATUS FlashDriverSmmInit(
 VOID BeforeErase(VOID* FlashAddress)
 {
     ROM_AREA *Area;
-    UINT32 Data;                                                        // [ EIP341497 ]
 
     if (   RomLayout == NULL
             || NumberOfUpdatedAreas == MAX_NUMBER_OF_UPDATED_AREAS
@@ -300,25 +306,12 @@ VOID BeforeErase(VOID* FlashAddress)
         {
             if (Area->Type!=RomAreaTypeFv) return;
 
-// [ EIP341497 ] +>
-/*
             UpdatedArea[NumberOfUpdatedAreas++].RomArea = Area;
             // Invalidate FV by destroying the signature
             FlashDriverWrite(
                 &((EFI_FIRMWARE_VOLUME_HEADER*)FlashAddress)->Signature,
                 sizeof(UINT32),
                 (UINT32*)&FlashEmpty
-*/
-            UpdatedArea[NumberOfUpdatedAreas].AreaSize = Area->Size;
-			UpdatedArea[NumberOfUpdatedAreas].RomArea = Area;
-			UpdatedArea[NumberOfUpdatedAreas++].RestoreSignature = FALSE;
-            // Invalidate FV by destroying the signature
-            Data = (UINT32)~FlashEmpty;			
-            FlashDriverWrite(
-                &((EFI_FIRMWARE_VOLUME_HEADER*)FlashAddress)->Signature,
-                sizeof(UINT32),
-                &Data
-// [ EIP341497 ] +<
             );
             return;
         }
@@ -369,7 +362,6 @@ VOID BeforeWrite(VOID* FlashAddress, UINTN Size, VOID* DataBuffer)
             {
                 Fv->Signature = (UINT32)FlashEmpty;
                 UpdatedArea[i].AreaSize = (UINT32)Fv->FvLength;
-				UpdatedArea[i].RestoreSignature = TRUE;                 // [ EIP341497 ]
             }
             
             return;
@@ -763,10 +755,10 @@ EFI_STATUS EFIAPI FlashDriverReadExt(
     VOID* FlashAddress, UINTN Size, VOID* DataBuffer
 ){
     EFI_STATUS Status;
-    BEGIN_CRITICAL_SECTION(Cs);
+    BEGIN_CRITICAL_SECTION(&FlashData.MailBox->Cs);
     Status = FlashDriverRead(FlashAddress,Size,DataBuffer);
     AfterRead(FlashAddress, Size, DataBuffer);
-    END_CRITICAL_SECTION(Cs);
+    END_CRITICAL_SECTION(&FlashData.MailBox->Cs);
     return Status;
 }
 
@@ -781,11 +773,11 @@ EFI_STATUS EFIAPI FlashDriverEraseExt(
     if ((UINT8*)BLOCK(FlashAddress)!=FlashAddress || Size%FlashBlockSize!=0)
         return EFI_UNSUPPORTED;
 
-    BEGIN_CRITICAL_SECTION(Cs);
+    BEGIN_CRITICAL_SECTION(&FlashData.MailBox->Cs);
     //---Invalidate FV by destroying the signature----------------
     BeforeErase(FlashAddress);
     Status = FlashDriverErase(FlashAddress, Size);
-    END_CRITICAL_SECTION(Cs);
+    END_CRITICAL_SECTION(&FlashData.MailBox->Cs);
     return Status;
 }
 
@@ -795,13 +787,13 @@ EFI_STATUS EFIAPI FlashDriverWriteExt(
     EFI_STATUS Status;
     if (Size==0) return EFI_SUCCESS;
 
-    BEGIN_CRITICAL_SECTION(Cs);
+    BEGIN_CRITICAL_SECTION(&FlashData.MailBox->Cs);
     //---Invalidate FV by destroying the signature--------------------
     BeforeWrite(FlashAddress, Size, DataBuffer);
     Status = FlashDriverWrite(FlashAddress,Size,DataBuffer);
     //---Restore FV signature-------------------------------------------
     AfterWrite(FlashAddress, Size, DataBuffer);
-    END_CRITICAL_SECTION(Cs);
+    END_CRITICAL_SECTION(&FlashData.MailBox->Cs);
     return Status;
 }
 
@@ -815,20 +807,20 @@ EFI_STATUS EFIAPI FlashDriverUpdateExt(
     if ((UINT8*)BLOCK(FlashAddress)!=FlashAddress || Size%FlashBlockSize!=0)
         return EFI_UNSUPPORTED;
 
-    BEGIN_CRITICAL_SECTION(Cs);
+    BEGIN_CRITICAL_SECTION(&FlashData.MailBox->Cs);
     BeforeErase(FlashAddress);
     BeforeWrite(FlashAddress, Size, DataBuffer);
     Status = FlashDriverUpdate(FlashAddress,Size,DataBuffer);
     AfterWrite(FlashAddress, Size, DataBuffer);
-    END_CRITICAL_SECTION(Cs);
+    END_CRITICAL_SECTION(&FlashData.MailBox->Cs);
     return Status;
 }
 
 EFI_STATUS EFIAPI FlashDriverDeviceWriteEnableExt(){
     EFI_STATUS Status;
-    BEGIN_CRITICAL_SECTION(Cs);
+    BEGIN_CRITICAL_SECTION(&FlashData.MailBox->Cs);
     Status = FlashDriverDeviceWriteEnable();
-    END_CRITICAL_SECTION(Cs);
+    END_CRITICAL_SECTION(&FlashData.MailBox->Cs);
     return Status;
 }
 
@@ -836,7 +828,7 @@ EFI_STATUS EFIAPI FlashDriverDeviceWriteDisableExt(){
     EFI_STATUS Status;
     UINT32 OldWriteEnableStatus;
 
-    BEGIN_CRITICAL_SECTION(Cs);
+    BEGIN_CRITICAL_SECTION(&FlashData.MailBox->Cs);
     OldWriteEnableStatus = FlashData.MailBox->WriteEnableStatus;
     Status = FlashDriverDeviceWriteDisable();
     if (OldWriteEnableStatus!=0 && FlashData.MailBox->WriteEnableStatus==0)
@@ -850,26 +842,83 @@ EFI_STATUS EFIAPI FlashDriverDeviceWriteDisableExt(){
         INT32 i;
         for (i=0; i<NumberOfUpdatedAreas; i++)
         {
-			if (UpdatedArea[i].RestoreSignature){                       // [ EIP341497 ]
-                EFI_FIRMWARE_VOLUME_HEADER* Fv 
-                    = (EFI_FIRMWARE_VOLUME_HEADER*)(
-                        UpdatedArea[i].RomArea->Address+FlashDeviceBase
-                      );
-                UINT32 FvSignature = FV_SIGNATURE;
-                //Restore FV signature
-                FlashDriverWrite(
-                    &Fv->Signature, sizeof(UINT32), &FvSignature
-                );
-//            UpdatedArea[i] = UpdatedArea[NumberOfUpdatedAreas-1];     // [ EIP341497 ]
-//            NumberOfUpdatedAreas--;                                   // [ EIP341497 ]
-			}                                                           // [ EIP341497 ]
+            EFI_FIRMWARE_VOLUME_HEADER* Fv 
+                = (EFI_FIRMWARE_VOLUME_HEADER*)(
+                    UpdatedArea[i].RomArea->Address+FlashDeviceBase
+                  );
+            UINT32 FvSignature = FV_SIGNATURE;
+            //Restore FV signature
+            FlashDriverWrite(
+                &Fv->Signature, sizeof(UINT32), &FvSignature
+            );
+            UpdatedArea[i] = UpdatedArea[NumberOfUpdatedAreas-1];
+            NumberOfUpdatedAreas--;
         }
-		NumberOfUpdatedAreas = 0;                                       // [ EIP341497 ]
         FlashDeviceWriteDisable();
     }
 
-    END_CRITICAL_SECTION(Cs);
+    END_CRITICAL_SECTION(&FlashData.MailBox->Cs);
     return Status;
+}
+
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   BeginCriticalSection
+//
+// Description: This function calls when critical section begins. It disables interupts, 
+//              and Smi and fills CRITICAL_SECTION structure fields
+//
+// Input:       CRITICAL_SECTION *Cs - pointer to CRITICAL_SECTION structure
+//
+// Output:      VOID
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
+VOID BeginCriticalSection(CRITICAL_SECTION *Cs)
+{
+    CRITICAL_SECTION TempCs;
+
+    TempCs.IntState[0] = IoRead8(0x21);
+    TempCs.IntState[1] = IoRead8(0xa1);
+    TempCs.SmiState = SbLib_GetSmiState();
+
+    IoWrite8(0x21, 0xff);
+    IoWrite8(0xa1, 0xff);
+    SbLib_SmiDisable();
+
+    Cs->Busy = TRUE;
+
+    Cs->IntState[0] = TempCs.IntState[0];
+    Cs->IntState[1] = TempCs.IntState[1];
+    Cs->SmiState = TempCs.SmiState;
+}
+
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   EndCriticalSection
+//
+// Description: This function calls when critical section ends. It enable interupts, 
+//              and Smi and fills CRITICAL_SECTION structure fields
+//
+// Input:       CRITICAL_SECTION *Cs - pointer to CRITICAL_SECTION structure
+//
+// Output:      VOID
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
+VOID EndCriticalSection(CRITICAL_SECTION *Cs)
+{
+    CRITICAL_SECTION TempCs;
+
+    TempCs.IntState[0] = Cs->IntState[0];
+    TempCs.IntState[1] = Cs->IntState[1];
+    TempCs.SmiState = Cs->SmiState;
+
+    Cs->Busy = FALSE;
+
+    if (TempCs.SmiState) SbLib_SmiEnable();
+    IoWrite8(0x21, TempCs.IntState[0]);
+    IoWrite8(0xa1, TempCs.IntState[1]);
 }
 
 //<AMI_PHDR_START>
@@ -900,7 +949,7 @@ EFI_STATUS EFIAPI FlashDriverEntry(
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2012, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **

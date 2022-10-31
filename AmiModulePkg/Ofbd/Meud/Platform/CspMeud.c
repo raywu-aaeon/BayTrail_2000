@@ -58,18 +58,6 @@ OFBD_TC_55_ME_PROCESS_STRUCT  *StructPtr;
 EFI_PHYSICAL_ADDRESS   Phy_Address;
 BOOLEAN IsSecoverMode = FALSE;
 
-FLASH_REGIONS_DESCRIPTOR
-FlashRegionsDescriptor[] =
-{
-    { FDT_BLK, "DSC" },
-    { BIOS_BLK, "BIOS" },
-    { GBE_BLK, "GBE" },
-    { PDR_BLK, "PDR" },
-    { REG8_BLK, "EC" },
-    { ME_BLK, "ME" },
-    { MAX_BLK, "" },
-};
-
 // Define in OFBD module.
 extern EFI_SMM_BASE2_PROTOCOL          *gSmmBase2;
 extern EFI_SMM_CPU_PROTOCOL            *gSmmCpu;
@@ -358,24 +346,16 @@ VOID CSP_MEUDInSmm(VOID)
 
     Status = pSwDispatch->Register(pSwDispatch, MEUDSMIHandler, &SwContext, \
                                                                      &Handle);
-
-    Status = pBS->LocateProtocol(
-                    &gEfiHeciProtocolGuid,
-                    NULL,
-                    &gHeciNotifyRegistration );
-    if( !EFI_ERROR(Status) )
-    {
-        HeciProtocolCallBack( NULL, NULL );
-    }
-    else
-    {
-        Status = RegisterProtocolCallback(
+    
+    Status = RegisterProtocolCallback(
                     &gEfiHeciProtocolGuid,
                     HeciProtocolCallBack,
                     NULL,   
                     &gHeciEvent,
-                    &gHeciNotifyRegistration );
-    }
+                    &gHeciNotifyRegistration
+    );
+    
+    HeciProtocolCallBack(gHeciEvent, NULL); //EIP131757
 }
 //<AMI_PHDR_START>
 //----------------------------------------------------------------------------
@@ -399,84 +379,68 @@ GetRegionOffset(
     UINT32*  Length
 )
 {
-    volatile UINT32	*FDOC;
-    volatile UINT32	*FDOD;
-    UINT32	FlashDescriptorSig = 0x0FF0A55A;
-    UINT32	Buffer32, RegionStart, RegionEnd;
-    UINT8   EdsRegion;
+	    volatile UINT32	*FDOC;
+	    volatile UINT32	*FDOD;
+	    UINT32	FlashDescriptorSig = 0x0FF0A55A;
+	    UINT32	Buffer32, RegionStart, RegionEnd;
 
-    FDOC = (UINT32*)(SPI_BASE + 0xB0);
-    FDOD = (UINT32*)(SPI_BASE + 0xB4);
 
-    *FDOC = 0;
+	    FDOC = (UINT32*)(SPI_BASE + 0xB0);
+	    FDOD = (UINT32*)(SPI_BASE + 0xB4);
+	    *FDOC = 0;
 
-    if( *FDOD != FlashDescriptorSig )
-        return EFI_UNSUPPORTED;
+	    if (*FDOD != FlashDescriptorSig)
+	        return EFI_UNSUPPORTED;
 
-    switch( Region )
-    {
-        //Mapping old definition to region number
-        case PDR_BLK:
-            EdsRegion = 4;
-            break;
+	    switch(Region)
+	    {
+	        // Flash Descriptor
+	        case 0:
+	        *FDOC = 0x2000;
+	        break;
 
-        case GBE_BLK:
-            EdsRegion = 3;
-            break;
+	        // BIOS
+	        case 1:
+	        *FDOC = 0x2004;
+	        break;
 
-        case ME_BLK:
-            EdsRegion = 2;
-            break;
+	        // ME
+	        case 2:
+	        *FDOC = 0x2008;
+	        break;
 
-        case ME_OPR_BLK:
-            EdsRegion = 0xFF;
-            break;
+	        // GBE
+	        case 3:
+	        *FDOC = 0x200C;
+	        break;
 
-        case BIOS_BLK:
-            EdsRegion = 1;
-            break;
+	        // Platform Data
+	        case 4:
+	        *FDOC = 0x2010;
+	        break;
 
-        case DER_BLK:
-            EdsRegion = 5;
-            break;
-            
-        case BIOS_2ND_BLK:
-            EdsRegion = 6;
-            break;
+	        default:
+	        return EFI_UNSUPPORTED;
+	        break;
+	    }
+	    Buffer32 = *FDOD;
+	    RegionEnd = Buffer32 >> 16;
+	    RegionStart = Buffer32 & 0xFFFF;
 
-        default:
-            EdsRegion = Region;
-            break;
-    }
+	    *Offset = RegionStart << 12;
+	    *Length = (RegionEnd - RegionStart + 1) << 12;
+	    if((Region == 0) && (RegionEnd == 0))
+	    {
+	        *Length = 0x1000;
+	        return EFI_SUCCESS;
+	    }
+	    if(RegionEnd == 0)
+	    {
+	        *Length = 0;
+	        return EFI_NOT_FOUND;
+	    }
 
-    if( EdsRegion != 0xFF )
-        *FDOC = (0x2000 + (EdsRegion * 0x04));
-    else
-        return EFI_UNSUPPORTED;
-
-    Buffer32 = *FDOD;
-
-    //If the region is unsued
-    if( Buffer32 == 0x00007FFF )
-        return EFI_UNSUPPORTED;
-
-    RegionEnd = Buffer32 >> 16;
-    RegionStart = Buffer32 & 0xFFFF;
-
-    *Offset = RegionStart << 12;
-    *Length = (RegionEnd - RegionStart + 1) << 12;
-    if((Region == 0) && (RegionEnd == 0))
-    {
-        *Length = 0x1000;
-        return EFI_SUCCESS;
-    }
-    if(RegionEnd == 0)
-    {
-        *Length = 0;
-        return EFI_NOT_FOUND;
-    }
-
-    return EFI_SUCCESS;
+	    return EFI_SUCCESS;
 }
 //<AMI_PHDR_START>
 //----------------------------------------------------------------------------
@@ -535,38 +499,46 @@ HandleBuffer(
     UINT32        Offset, Length;
     UINT32        HFS = GetHFS();
 
-    switch( StructPtr->bBlockType )
+    switch(StructPtr->bBlockType)
     {
-        case ME_BLK:
-            Status = GetRegionOffset( StructPtr->bBlockType, &Offset, &Length );
-            if( EFI_ERROR(Status) ) return Status;
-            if( (HFS & BIT05) || (HFS & BIT10) )
-                *Step = 2;
-            else
-                *Step = 1;
+        case FDT_BLK:
+            Status = GetRegionOffset(0, &Offset, &Length);
+            *Step = 0;
+        break;
+
+        case PDR_BLK:
+            Status = GetRegionOffset(4, &Offset, &Length);
+            if(Status == EFI_NOT_FOUND)
+                return EFI_UNSUPPORTED;
+            *Step = 0;
         break;
 
         case GBE_BLK:
-            Status = GetRegionOffset( StructPtr->bBlockType, &Offset, &Length );
+            Status = GetRegionOffset(3, &Offset, &Length);
             if(Status == EFI_NOT_FOUND)
                 return EFI_UNSUPPORTED;
             // Store Mac address
             if(Length)
             {
-                UINT8   *Address = (UINT8*)FLASH_BASE_ADDRESS(Offset);
+                UINT8* Address = (UINT8*)FLASH_BASE_ADDRESS(Offset);
                 FlashRead(Address, MacAddr, 6);
             }
             *Step = 0;
         break;
 
+        case ME_BLK:
+            Status = GetRegionOffset(2, &Offset, &Length);
+            if((HFS & BIT05) || (HFS & BIT10))
+                *Step = 2;
+            else
+                *Step = 1;
+
+        break;
         default:
-            Status = GetRegionOffset( StructPtr->bBlockType, &Offset, &Length );
-            if( EFI_ERROR(Status) )
-                return EFI_UNSUPPORTED;
             *Step = 0;
+            return EFI_UNSUPPORTED;
         break;
     }
-
     *ProgramOffset = Offset;
     *ProgramLength = Length;
 
@@ -666,25 +638,32 @@ UpdateRegions(
     // Show Strings
     if(!EFI_ERROR(Status))
     {
-        UINT8   ResultString[25];
-        UINT8   Index;
 
-        for( Index = 0; Index < MAX_BLK; Index++ )
+        switch(StructPtr->bBlockType)
         {
-            if( FlashRegionsDescriptor[Index].FlashRegion == MAX_BLK )
-                break;
+            case FDT_BLK:
+                MEProcessHandleResult((BIT03 | BIT02), 
+                          "Update success for /FDT!!");
+            break;
+            case PDR_BLK:
+                MEProcessHandleResult((BIT03 | BIT02), 
+                          "Update success for /PDR!!");
+            break;
+            case GBE_BLK:
+                MEProcessHandleResult((BIT03 | BIT02), 
+                          "Update success for /GBE!!");
+            break;
 
-            if( FlashRegionsDescriptor[Index].FlashRegion == StructPtr->bBlockType )
-            {
-                Sprintf( ResultString, "Update success for %s", FlashRegionsDescriptor[Index].Command );
-                    break;
-            }
+            case ME_OPR_BLK:
+                MEProcessHandleResult((BIT03 | BIT02), 
+                          "Update success for /OPR!!");
+            break;
+
+            default:
+                MEProcessHandleResult((BIT03 | BIT02), 
+                          "Update success for /MER!!");
+            break;
         }
-
-        if( (Index == MAX_BLK) || (FlashRegionsDescriptor[Index].FlashRegion == MAX_BLK) )
-            Sprintf( ResultString, "Update success" );
-
-        MEProcessHandleResult( (BIT03 | BIT02), ResultString );
     }
     return EFI_SUCCESS;
 }

@@ -459,10 +459,7 @@ InitializePlatform(
 
     Status = gBS->CreateEventEx(
                  EVT_NOTIFY_SIGNAL,
-// [ EIP257385 ]>>
-//                 TPL_NOTIFY,
-                 TPL_CALLBACK,
-// [ EIP257385 ]<<
+                 TPL_NOTIFY,
                  EnableAcpiCallback,
                  NULL,
                  &gEfiEventExitBootServicesGuid,

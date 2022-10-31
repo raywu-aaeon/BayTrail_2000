@@ -1,45 +1,51 @@
+//****************************************************************************
+//****************************************************************************
+//**                                                                        **
+//**             (C)Copyright 1985-2011, American Megatrends, Inc.          **
+//**                                                                        **
+//**                          All Rights Reserved.                          **
+//**                                                                        **
+//**                 5555 Oakbrook Pkwy, Norcross, GA 30093                 **
+//**                                                                        **
+//**                          Phone (770)-246-8600                          **
+//**                                                                        **
+//****************************************************************************
+//****************************************************************************
+
 //**********************************************************************
-//**********************************************************************
-//**                                                                  **
-//**        (C)Copyright 1985-2016, American Megatrends, Inc.         **
-//**                                                                  **
-//**                       All Rights Reserved.                       **
-//**                                                                  **
-//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093        **
-//**                                                                  **
-//**                       Phone: (770)-246-8600                      **
-//**                                                                  **
-//**********************************************************************
+// $Header: /Alaska/SOURCE/Modules/USB/ALASKA/rt/amiusbrtCCID.h 2     5/02/12 1:59a Rajeshms $
+//
+// $Revision: 2 $
+//
+// $Date: 5/02/12 1:59a $
+//
 //**********************************************************************
 
-/** @file AmiUsbRtCcid.h
-    AMI Usb CCID driver definitions
-
-**/
+//<AMI_FHDR_START>
+//----------------------------------------------------------------------------
+//
+//  Name:           AmiUsbrtCCID.h
+//
+//  Description:    AMI Usb CCID driver definitions
+//
+//----------------------------------------------------------------------------
+//<AMI_FHDR_END>
 
 #ifndef _EFI_CCID_RT_H
 #define _EFI_CCID_RT_H
 
 #include    <Token.h>
-#include    "UsbDef.h"
 #include    <AmiDxeLib.h>
+#include	"UsbDef.h"
 
 //CCID APIs
-#define    USB_CCID_SMARTCLASSDESCRIPTOR   0x000
-#define    USB_CCID_ATR                    0x001
-#define    USB_CCID_POWERUP_SLOT           0x002
-#define    USB_CCID_POWERDOWN_SLOT         0x003
-#define    USB_CCID_GET_SLOT_STATUS        0x004
-#define    USB_CCID_XFRBLOCK               0x005
-#define    USB_CCID_GET_PARAMETERS         0x006
-
-//SMART CARD PROTOCOL APIs
-#define    USB_SMART_CARD_READER_CONNECT       0x007
-#define    USB_SMART_CARD_READER_DISCONNECT    0x008
-#define    USB_SMART_CARD_READER_STATUS        0x009
-#define    USB_SMART_CARD_READER_TRANSMIT      0x00A
-#define    USB_SMART_CARD_READER_CONTROL       0x00B
-#define    USB_SMART_CARD_READER_GET_ATTRIB    0x00C
+#define		USB_CCID_SMARTCLASSDESCRIPTOR   0x000
+#define		USB_CCID_ATR     		        0x001
+#define		USB_CCID_POWERUP_SLOT  		    0x002
+#define		USB_CCID_POWERDOWN_SLOT         0x003
+#define		USB_CCID_GET_SLOT_STATUS		0x004
+#define		USB_CCID_XFRBLOCK				0x005
+#define		USB_CCID_GET_PARAMETERS			0x006
 
 typedef     struct  _ICC_DEVICE ICC_DEVICE;
 typedef     struct  _SMARTCLASS_DESC SMARTCLASS_DESC;
@@ -52,90 +58,66 @@ typedef     struct  _ATR_DATA ATR_DATA;
 //         equates for bVoltageSupport
 //
 #define    AUTO_VOLT                    0x00
-#define    VOLT_5                       0x01
-#define    VOLT_3                       0x02
-#define    VOLT_18                      0x04
+#define    VOLT_5                        0x01
+#define    VOLT_3                        0x02
+#define    VOLT_18                        0x04
 
 
 //    
 //         equates for dwFeatures
 //
-#define    AUTO_PARAMETER_CONFIG          0x02
-#define    AUTO_ACTIVATION_OF_ICC         0x04
+#define    AUTO_PARAMETER_CONFIG        0x02
+#define    AUTO_ACTIVATION_OF_ICC        0x04
 #define    AUTO_ACTIVATION_VOLT_SELECTION 0x08
 #define    AUTO_ICC_CLOCK_FREQ            0x10
-#define    AUTO_BAUD_RATE_SELECTION       0x20
-#define    AUTO_PPS_NEGOTIATION_CCID      0x40
+#define    AUTO_BAUD_RATE_SELECTION    0x20
+#define    AUTO_PPS_NEGOTIATION_CCID     0x40
 #define    AUTO_PPS_NEGOTIATION_ACTIVE    0x80
 #define    STOP_CLOCK_MODE                0x100
-#define    NAD_OTHER_THAN_00              0x200
-#define    AUTO_IFSD_EXCHANGE             0x400
-#define    CHARACTER_LEVEL_EXCHANGE       0x00000
+#define    NAD_OTHER_THAN_00            0x200
+#define    AUTO_IFSD_EXCHANGE            0x400
+#define    CHARACTER_LEVEL_EXCHANGE    0x00000
 #define    TDPU_LEVEL_EXCHANGE            0x10000
-#define    SHORT_ADPU_LEVEL_EXCHANGE      0x20000
+#define    SHORT_ADPU_LEVEL_EXCHANGE    0x20000
 #define    EXT_ADPU_LEVEL_EXCHANGE        0x40000
 
-#define    PC_TO_RDR_ICCPOWERON           0x62
-#define    PC_TO_RDR_ICCPOWEROFF          0x63
+#define    PC_TO_RDR_ICCPOWERON        0x62
+#define    PC_TO_RDR_ICCPOWEROFF        0x63
 #define    PC_TO_RDR_GETSLOTSTATUS        0x65
-#define    PC_TO_RDR_XFRBLOCK             0x6F
+#define    PC_TO_RDR_XFRBLOCK            0x6F
 #define    PC_TO_RDR_GETPARAMETERS        0x6C
-#define    PC_TO_RDR_RESETPARAMETERS      0x6D
+#define    PC_TO_RDR_RESETPARAMETERS    0x6D
 #define    PC_TO_RDR_SETPARAMETERS        0x61
-#define    PC_TO_RDR_ESCAPE               0x6B
-#define    PC_TO_RDR_ICCCLOCK             0x6E
-#define    PC_TO_RDR_T0APDU               0x6A
-#define    PC_TO_RDR_SECURE               0x69
-#define    PC_TO_RDR_MECHANICAL           0x71
+#define    PC_TO_RDR_ESCAPE            0x6B
+#define    PC_TO_RDR_ICCCLOCK            0x6E
+#define    PC_TO_RDR_T0APDU            0x6A
+#define    PC_TO_RDR_SECURE            0x69
+#define    PC_TO_RDR_MECHANICAL        0x71
 #define    PC_TO_RDR_ABORT                0x72
-#define    PC_TO_RDR_SETDATARATEANDCLOCK  0x73
+#define    PC_TO_RDR_SETDATARATEANDCLOCK 0x73
 
 
 #define    RDR_TO_PC_DATABLOCK            0x80
-#define    RDR_TO_PC_SLOTSTATUS           0x81
-#define    RDR_TO_PC_PARAMETERS           0x82
-#define    RDR_TO_PC_ESCAPE               0x83
-#define    RDR_TO_PC_DATARATEANDCLOCK     0x84
+#define    RDR_TO_PC_SLOTSTATUS        0x81
+#define    RDR_TO_PC_PARAMETERS        0x82
+#define    RDR_TO_PC_ESCAPE            0x83
+#define    RDR_TO_PC_DATARATEANDCLOCK    0x84
 
-#define RDR_TO_PC_NOTIFYSLOTCHANGE        0x50
-#define RDR_TO_PC_HARDWAREERROR           0x51
+#define RDR_TO_PC_NOTIFYSLOTCHANGE    0x50
+#define RDR_TO_PC_HARDWAREERROR        0x51
 //
 // BIT definition for ConfiguredStatus
 //
-#define ICCPRESENT                        0x01
-#define VOLTAGEAPPLIED                    0x02
-#define BAUDRATEPROGRAMMED                0x04
-#define ATRDATAPRESENT                    0x08
-#define CARDREMOVED                       0x40
-#define CONFIGFAILED                      0x80
+#define ICCPRESENT                    0x01
+#define VOLTAGEAPPLIED                0x02
+#define    BAUDRATEPROGRAMMED            0x04
+#define    ATRDATAPRESENT                0x08
+#define    CONFIGFAILED                0x80
 
 #define IBLOCK      0x00
 #define RBLOCK      0x80
 #define SBLOCK      0xC0
 
-
-// Codes for access mode
-#define SCARD_AM_READER                   0x0001 // Exclusive access to reader
-#define SCARD_AM_CARD                     0x0002 // Exclusive access to card
-
-// Codes for card action
-#define SCARD_CA_NORESET                  0x0000 // Don’t reset card
-#define SCARD_CA_COLDRESET                0x0001 // Perform a cold reset
-#define SCARD_CA_WARMRESET                0x0002 // Perform a warm reset
-#define SCARD_CA_UNPOWER                  0x0003 // Power off the card
-#define SCARD_CA_EJECT                    0x0004 // Eject the card
-
-// Protocol types
-#define SCARD_PROTOCOL_UNDEFINED          0x0000
-#define SCARD_PROTOCOL_T0                 0x0001
-#define SCARD_PROTOCOL_T1                 0x0002
-#define SCARD_PROTOCOL_RAW                0x0004
-
-// Smart Card Reader Status
-#define SCARD_UNKNOWN                     0x0000
-#define SCARD_ABSENT                      0x0001
-#define SCARD_INACTIVE                    0x0002
-#define SCARD_ACTIVE                      0x0003
 
 
 //CCID Class specific request
@@ -227,15 +209,10 @@ struct    _ATR_DATA {
 
 };
 
-#define ICC_DEVICE_SIG       SIGNATURE_32('I','C','C','D') 
-
 struct _ICC_DEVICE {
 
-    UINT32          Signature;
-    EFI_HANDLE      ChildHandle;
-    EFI_HANDLE      SCardChildHandle;
+    EFI_HANDLE      ChildHandle;            
     UINT8           Slot;                   // slot number
-    UINT8           SlotConnectStatus;
     UINT8           RawATRData[32];
     ATR_DATA        AtrData;                // Processed ATR data
     UINT8           TransmissionProtocolSupported; // BitMap
@@ -766,42 +743,6 @@ USBCCIDAPIGetParametersSMM (
 
 );
 
-EFI_STATUS
-ConfigureCCID(
-    DEV_INFO          *fpDevInfo,
-    ICC_DEVICE        *fpICCDevice
-);
-
-VOID
-USBSCardReaderAPIConnectSMM (
-    IN OUT URP_STRUC *fpURP
-);
-
-VOID
-USBSCardReaderAPIDisConnectSMM (
-    IN OUT URP_STRUC *fpURP
-);
-
-VOID
-USBSCardReaderAPIStatusSMM (
-    IN OUT URP_STRUC *fpURP
-);
-
-VOID
-USBSCardReaderAPITransmitSMM (
-    IN OUT URP_STRUC *fpURP
-);
-
-VOID
-USBSCardReaderAPIControlSMM (
-    IN OUT URP_STRUC *fpURP
-);
-
-VOID
-USBSCardReaderAPIGetAttribSMM (
-    IN OUT URP_STRUC *fpURP
-);
-
 ICC_DEVICE*
 GetICCDevice(
     DEV_INFO        *fpDevInfo, 
@@ -823,18 +764,25 @@ FindNumberOfTs(
     UINT8    Data
 );
 
+VOID
+MemCopy (
+    UINT8*  fpSrc,
+    UINT8*  fpDest,
+    UINT32  dSize
+);
+
 #endif
 
-//**********************************************************************
-//**********************************************************************
-//**                                                                  **
-//**        (C)Copyright 1985-2016, American Megatrends, Inc.         **
-//**                                                                  **
-//**                       All Rights Reserved.                       **
-//**                                                                  **
-//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093        **
-//**                                                                  **
-//**                       Phone: (770)-246-8600                      **
-//**                                                                  **
-//**********************************************************************
-//**********************************************************************
+//****************************************************************************
+//****************************************************************************
+//**                                                                        **
+//**             (C)Copyright 1985-2011, American Megatrends, Inc.          **
+//**                                                                        **
+//**                          All Rights Reserved.                          **
+//**                                                                        **
+//**                 5555 Oakbrook Pkwy, Norcross, GA 30093                 **
+//**                                                                        **
+//**                          Phone (770)-246-8600                          **
+//**                                                                        **
+//****************************************************************************
+//****************************************************************************

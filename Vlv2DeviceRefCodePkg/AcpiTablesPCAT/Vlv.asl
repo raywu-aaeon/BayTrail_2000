@@ -35,17 +35,19 @@ Scope (\_SB.PCI0)
   Device(GFX0)   // Mobile I.G.D
   {
     Name(_ADR, 0x00020000)
-#ifdef WIN8_SUPPORT     
-    Method(_DEP){
-    	if (LAnd(LGreaterEqual(OSYS, 2013), LEqual(S0IX, 1))) {
-			Return(Package() {\_SB.PEPD})
-		}Else{
-			Return(Package(){})
-		}
-	}
-#endif    
 #endif //AMI_OVERRIDE
-
+#ifdef WIN8_SUPPORT 
+    Method(GDEP, 0)
+    {
+      If(LEqual(OSYS,2013))
+      {
+        Name(_DEP, Package(0x1)
+        {
+          PEPD
+        })
+      }
+    }
+#endif
     include("INTELGFX.ASL")
     include("INTELISPDev2.ASL")
 #ifndef AMI_ACPI_SUPPORT //AMI_OVERRIDE

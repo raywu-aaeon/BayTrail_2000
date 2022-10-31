@@ -1,8 +1,9 @@
 /** @file
-  Disk I/O 2 protocol as defined in the UEFI 2.4 specification.
+  Disk IO protocol as defined in the UEFI 2.0 specification.
 
-  The Disk I/O 2 protocol defines an extension to the Disk I/O protocol to enable
-  non-blocking / asynchronous byte-oriented disk operation.
+  The Disk IO2 protocol is used to convert block oriented devices into byte
+  oriented devices. The Disk IO protocol is intended to layer on top of the
+  Block IO protocol.
 
   Copyright (c) 2013, Intel Corporation. All rights reserved.<BR>
   This program and the accompanying materials                          

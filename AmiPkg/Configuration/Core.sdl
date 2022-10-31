@@ -1,6 +1,6 @@
 TOKEN
 	Name  = "CORE_BUILD_NUMBER"
-	Value  = "10"
+	Value  = "9"
 	TokenType = Integer
 	TargetEQU = Yes
 	TargetMAK = Yes

@@ -1,29 +1,34 @@
-//***********************************************************************
-//***********************************************************************
-//**                                                                   **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.          **
-//**                                                                   **
-//**                       All Rights Reserved.                        **
-//**                                                                   **
-//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093         **
-//**                                                                   **
-//**                       Phone: (770)-246-8600                       **
-//**                                                                   **
-//***********************************************************************
-//***********************************************************************
+//**********************************************************************
+//**********************************************************************
+//**                                                                  **
+//**        (C)Copyright 1985-2012, American Megatrends, Inc.         **
+//**                                                                  **
+//**                       All Rights Reserved.                       **
+//**                                                                  **
+//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093        **
+//**                                                                  **
+//**                       Phone: (770)-246-8600                      **
+//**                                                                  **
+//**********************************************************************
+//**********************************************************************
 
-/** @file 
-OemCmd.c
-
-By OEMCMD module, OEM engineers define customized commands to extend AFU functions. 
-AFU sends OEM defined commands to BIOS if user issued /oemcmd:<command> or 
-/cmd:{command}. Then BIOS reacts by these customized commands.
-
-*/
-
-//---------------------------------------------------------------------------
-// Include Files
-//---------------------------------------------------------------------------
+//**********************************************************************
+// $Header: /AptioV/Source/Modules/Ofbd/OemCmd/OemCmd.c $
+//
+// $Revision: $
+//
+// $Date: $
+//**********************************************************************
+//<AMI_FHDR_START>
+//
+// Name:	OemCmd.c
+//
+// Description: 
+// By OEMCMD module, OEM engineers define customized commands to extend AFU functions. AFU sends OEM defined commands
+// to BIOS if user issued /oemcmd:<command>. Then BIOS reacts by these customized commands.
+//
+//<AMI_FHDR_END>
+//**********************************************************************
 #include <Efi.h>
 #include <Token.h>
 #include <AmiLib.h>
@@ -31,21 +36,22 @@ AFU sends OEM defined commands to BIOS if user issued /oemcmd:<command> or
 #include "OemCmd.h"
 #include "../Ofbd.h"
 
+//#define CONVERT_TO_STRING(a) #a
 #define STR(a) CONVERT_TO_STRING(a)
 
-/**
-    Ofbd (Oem Command handle)
-
-	Oem Command Support protocol is for Flash Utility to send specific command 
-	
-	parameters to BIOS for customer special purpose.
-	
-    @param pOFBDHdr - Ofbd header.
-
-    @return EFI_STATUS
-    @retval EFI_SUCCESS Function executed successfully
-*/ 
-
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:	OFBDOEMCMDHandle
+//
+// Description:	OFBD OEM CMD Handle
+//
+// Input:
+//      IN OUT OFBD_HDR *pOFBDHdr
+// Output:
+//      EFI_STATUS
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
 OFBDOEMCMDHandle( 
     IN OUT OFBD_HDR *pOFBDHdr)
@@ -273,16 +279,20 @@ OFBDOEMCMDHandle(
     return(Status);
 }
 
-/**
-   	This function is Ofbd Oem Command Checking function entry point
-
-	@param Buffer - Ofbd header.
-  	@param pOFBDDataHandled - handle value returns
-  	
-	@retval	0xFF means Function executed successfully
-	@retval	0xFE means Function error occured
-*/ 
-
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:	OEMCMDEntry
+//
+// Description:	OFBD OEM CMD CHECKING Entry Point
+//
+// Input:
+//      IN VOID             *Buffer
+//      IN OUT UINT8        *pOFBDDataHandled
+// Output:
+//      VOID
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID OEMCMDEntry (
     IN VOID             *Buffer,
     IN OUT UINT8        *pOFBDDataHandled )
@@ -323,7 +333,7 @@ VOID OEMCMDEntry (
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2012, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **

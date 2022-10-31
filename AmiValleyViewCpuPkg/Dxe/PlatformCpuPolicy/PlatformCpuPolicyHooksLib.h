@@ -17,12 +17,16 @@ any responsibility for any errors or inaccuracies that may appear herein.  Excep
 as expressly permitted by the license for the Material, no part of the Material
 may be reproduced, stored in a retrieval system, transmitted in any form, or
 distributed by any means without the express written consent of Intel Corporation.
---*/
 
-/** @file PlatformCpuPolicyHooksLib.h    
-    Header file for C objects within the files of the Personality driver.
-    This file is for driver files use only, and should not be included by code outside the driver.    
-**/
+
+Module Name:
+  PlatformCpuPolicyHooksLib.h
+
+Abstract:
+  Header file for C objects within the files of the Personality driver.
+  This file is for driver files use only, and should not be included by code outside the driver.
+
+--*/
 
 #ifndef _PLATFORM_CPU_POLICY_HOOKS_LIB_H_
 #define _PLATFORM_CPU_POLICY_HOOKS_LIB_H_

@@ -3,5 +3,6 @@
 	category = ModulePart
 	RefName = "AmiPkg.Build"
 [files]
-"makefile"	
+"go.bat"	
+"makefile"
 <endComponent>

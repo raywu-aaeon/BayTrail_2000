@@ -1,7 +1,7 @@
 //*************************************************************************
 //*************************************************************************
 //**                                                                     **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.            **
+//**        (C)Copyright 1985-2012, American Megatrends, Inc.            **
 //**                                                                     **
 //**                       All Rights Reserved.                          **
 //**                                                                     **
@@ -40,7 +40,9 @@
 #include <Protocol/ComponentName2.h>
 #include <Library/HeciMsgLib.h>
 #include <Protocol/SeCOperation.h> //P20130628
-#include <Library/PrintLib.h>  //CSP20140829   
+
+EFI_GUID gEfiComponentName2ProtocolGuid = EFI_COMPONENT_NAME2_PROTOCOL_GUID;
+EFI_GUID gEfiSeCOperationProtocolGuid = {0x704ebea2, 0x5ee6, 0x4898,{ 0x96, 0x59, 0x1, 0x8b, 0x74, 0xb4, 0x47, 0x89}}; //P20130628
 
 INTN
 EfiStrnCmp (
@@ -58,17 +60,6 @@ EfiStrnCpy (
   );
 
 UINTN EfiStrLen(CHAR16 *string);
-//CSP20140829 >>   
-CHAR16 *DDRTypeName[] = {
-  L" (DDR3)",
-  L" (DDR3L)",
-  L" (DDR3U)",
-  L" (DDR3All)",
-  L" (LPDDR2)",
-  L" (LPDDR3)",
-  L" (DDR4)",
-};
-//CSP20140829 <<
 //<AMI_PHDR_START>
 //----------------------------------------------------------------------------
 //
@@ -107,79 +98,67 @@ InitNbStrings (
   UINTN                           HandleCount, i;
   EFI_COMPONENT_NAME2_PROTOCOL    *ComponentName = NULL;
   UINT32                          MaxBufferSize = 0;
-  SEC_OPERATION_PROTOCOL          *SeCOp; //P20130628
-  SEC_INFOMATION                  SeCInfo; //P20130628
-//CSP20140829 >>   
-  UINT8                           DDRtype;
-  CHAR16                          StringBuffer[20];
+    SEC_OPERATION_PROTOCOL    *SeCOp; //P20130628
+    SEC_INFOMATION            SeCInfo; //P20130628
   // Get the Memory Info HOB Protocol if it exists.
   Status = pBS->LocateProtocol (&gMemInfoProtocolGuid, NULL, &MemInfoProtocol);
-  
-  if (!EFI_ERROR(Status)){
-      DDRtype = MemInfoProtocol->MemInfoData.ddrType;
-      if ((Class == MAIN_FORM_SET_CLASS) || (Class == CHIPSET_FORM_SET_CLASS)) {
-          MemorySize = MemInfoProtocol->MemInfoData.memSize;
-          UnicodeSPrint(StringBuffer,16,L"%4d MB",MemorySize);
-          StrCat (StringBuffer,DDRTypeName[DDRtype]);
-          InitString(
-                  HiiHandle,
-                  STRING_TOKEN(STR_MEMORY_SIZE_VALUE),
-                  StringBuffer
-                  );
-      }
+
+  if ((Class == MAIN_FORM_SET_CLASS) || (Class == CHIPSET_FORM_SET_CLASS)) {
+    MemorySize = MemInfoProtocol->MemInfoData.memSize;
+    InitString(
+              HiiHandle,
+              STRING_TOKEN(STR_MEMORY_SIZE_VALUE),
+              L"%4d MB (LPDDR3)",
+              MemorySize
+              );
+  }
 //P20130624 >>
-      if (Class == CHIPSET_FORM_SET_CLASS) {
-          MemorySize = MemInfoProtocol->MemInfoData.dimmSize[Slot_Couter];
-          Slot_Couter += 1;
-          UnicodeSPrint(StringBuffer,16,L"%4d MB",MemorySize);
-          StrCat (StringBuffer,DDRTypeName[DDRtype]);
-          if(MemorySize)
-              InitString(
+  if (Class == CHIPSET_FORM_SET_CLASS) {
+    MemorySize = MemInfoProtocol->MemInfoData.dimmSize[Slot_Couter];
+    Slot_Couter += 1;
+    if(MemorySize)
+			InitString(
 									HiiHandle,
 									STRING_TOKEN(STR_MEMORY_SIZE_SLOT0_VALUE), 
-									StringBuffer
+									L"%4d MB (LPDDR3)",
+									MemorySize
 									);
       
 #if(DIMM_SLOT_NUM>1)
-          MemorySize = MemInfoProtocol->MemInfoData.dimmSize[Slot_Couter];
-          Slot_Couter += 1;
-          UnicodeSPrint(StringBuffer,16,L"%4d MB",MemorySize);
-          StrCat (StringBuffer,DDRTypeName[DDRtype]);
-          if(MemorySize)
-		      InitString(
+    MemorySize = MemInfoProtocol->MemInfoData.dimmSize[Slot_Couter];
+    Slot_Couter += 1;
+    if(MemorySize)
+			InitString(
 									HiiHandle,
 									STRING_TOKEN(STR_MEMORY_SIZE_SLOT1_VALUE),
-									StringBuffer
+									L"%4d MB (LPDDR3)",
+									MemorySize
 									);
 #endif  //#if(MEM_RANK_NUM>1)
 #if (MEM_CHANNEL_NUM == 2)
-          MemorySize = MemInfoProtocol->MemInfoData.dimmSize[Slot_Couter];
-          Slot_Couter += 1;
-          UnicodeSPrint(StringBuffer,16,L"%4d MB",MemorySize);
-          StrCat (StringBuffer,DDRTypeName[DDRtype]);
-          if(MemorySize)
-			  InitString(
+    MemorySize = MemInfoProtocol->MemInfoData.dimmSize[Slot_Couter];
+    Slot_Couter += 1;
+    if(MemorySize)
+			InitString(
 									HiiHandle,
 									STRING_TOKEN(STR_MEMORY_SIZE_SLOT2_VALUE),
-									StringBuffer
+									L"%4d MB (LPDDR3)",
+									MemorySize
 									);
 
 #if(DIMM_SLOT_NUM>1)
-          MemorySize = MemInfoProtocol->MemInfoData.dimmSize[Slot_Couter];
-          UnicodeSPrint(StringBuffer,16,L"%4d MB",MemorySize);
-          StrCat (StringBuffer,DDRTypeName[DDRtype]);
-          if(MemorySize)
-			  InitString(
+    MemorySize = MemInfoProtocol->MemInfoData.dimmSize[Slot_Couter];
+    if(MemorySize)
+			InitString(
 									HiiHandle,
 									STRING_TOKEN(STR_MEMORY_SIZE_SLOT3_VALUE),
-									StringBuffer
+									L"%4d MB (LPDDR3)",
+									MemorySize
 									);
 //P20130624 << 
 #endif  //#if(MEM_RANK_NUM>1)
 #endif  //#if (MEM_RANK_NUM == 2)
-      }//end of CHIPSET_FORM_SET_CLASS
-  }//end of LocateProtocol
-//CSP20140829 << 
+  }
 
   // Locate ComponentName2 Protocol handles.
   Status = pBS->LocateHandleBuffer (
@@ -333,7 +312,7 @@ UINTN EfiStrLen(CHAR16 *string) {
 //*************************************************************************
 //*************************************************************************
 //**                                                                     **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.            **
+//**        (C)Copyright 1985-2012, American Megatrends, Inc.            **
 //**                                                                     **
 //**                       All Rights Reserved.                          **
 //**                                                                     **

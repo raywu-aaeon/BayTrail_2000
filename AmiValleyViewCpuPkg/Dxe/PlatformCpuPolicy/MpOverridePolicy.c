@@ -27,13 +27,6 @@ Abstract:
 
 --*/
 
-/** @file MpOverridePolicy.c
-		
-    This file contains the protocol member for the policies
-    for selecting the BSP, disabling unsupported processors etc.	
-	
-**/
-
 #include "PlatformCpuPolicy.h"
 #ifdef EFI_EVENT_RUNTIME_CONTEXT
 #undef EFI_EVENT_RUNTIME_CONTEXT

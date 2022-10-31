@@ -3,13 +3,12 @@
 	category = ModulePart
 	LocalRoot = "MdeModulePkg\Core\"
 	RefName = "MdeModulePkg.Foundation"
-[INF]
-"Dxe\DxeMain.inf"
-"Pei\PeiMain.inf"
-"DxeIplPeim\DxeIpl.inf"
-"RuntimeDxe\RuntimeDxe.inf"
 [files]
 "Foundation.sdl"	
 "Foundation.mak"	
-"Foundation.chm"	
+[INF]
+"Dxe/DxeMain.inf"
+"Pei/PeiMain.inf"
+"DxeIplPeim/DxeIpl.inf"
+"RuntimeDxe/RuntimeDxe.inf"
 <endComponent>

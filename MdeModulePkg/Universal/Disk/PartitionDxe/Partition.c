@@ -205,9 +205,6 @@ PartitionDriverBindingStart (
   PARTITION_DETECT_ROUTINE  *Routine;
   BOOLEAN                   MediaPresent;
   EFI_TPL                   OldTpl;
-  //*** AMI PORTING BEGIN ***//
-  EFI_STATUS                PreviousStatus = EFI_SUCCESS;
-  //*** AMI PORTING END *****//
 
   BlockIo2 = NULL;
   OldTpl = gBS->RaiseTPL (TPL_CALLBACK); 
@@ -326,16 +323,15 @@ PartitionDriverBindingStart (
                    BlockIo2,
                    ParentDevicePath
                    );
-      //*** AMI PORTING BEGIN ***//
-      // Try again on EFI_MEDIA_CHANGED
-      if (Status == EFI_MEDIA_CHANGED && PreviousStatus != EFI_MEDIA_CHANGED) {
-    	PreviousStatus = Status;
-        continue;
-      }
-      //*** AMI PORTING END *****//
-      if (!EFI_ERROR (Status) || Status == EFI_MEDIA_CHANGED || Status == EFI_NO_MEDIA) {
+//*** AMI PORTING BEGIN ***//
+      if (!EFI_ERROR (Status) /* || Status == EFI_MEDIA_CHANGED */ || Status == EFI_NO_MEDIA) {
         break;
       }
+      // Try again on EFI_MEDIA_CHANGED
+      if (Status == EFI_MEDIA_CHANGED) {
+        continue;
+      }
+//*** AMI PORTING END *****//
       Routine++;
     }
   }
@@ -1189,12 +1185,7 @@ PartitionInstallChildHandle (
 
 //*** AMI PORTING BEGIN ***//
 // Partition GUID support. See comments before PartitionInstallChildHandle for additional details.
-  if (PartitionGuid == NULL){
-	  Private->EspGuid = NULL;
-  }else {
-	  CopyGuid(&Private->PartitionGuidBuffer, PartitionGuid);
-	  Private->EspGuid = &Private->PartitionGuidBuffer;
-  }
+  Private->EspGuid = PartitionGuid;
 /*  if (InstallEspGuid) {
     Private->EspGuid = &gEfiPartTypeSystemPartGuid;
   } else {

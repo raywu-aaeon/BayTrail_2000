@@ -5,4 +5,5 @@
 	RefName = "AmiNetworkPkg.Protocol"
 [files]
 "AmiIpAvail.h"	
+"NetworkStackSetup.h"	
 <endComponent>

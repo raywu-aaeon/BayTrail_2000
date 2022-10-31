@@ -1,28 +1,34 @@
-//***********************************************************************
-//***********************************************************************
-//**                                                                   **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.          **
-//**                                                                   **
-//**                       All Rights Reserved.                        **
-//**                                                                   **
-//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093         **
-//**                                                                   **
-//**                       Phone: (770)-246-8600                       **
-//**                                                                   **
-//***********************************************************************
-//***********************************************************************
+//**********************************************************************
+//**********************************************************************
+//**                                                                  **
+//**        (C)Copyright 1985-2012, American Megatrends, Inc.         **
+//**                                                                  **
+//**                       All Rights Reserved.                       **
+//**                                                                  **
+//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093        **
+//**                                                                  **
+//**                       Phone: (770)-246-8600                      **
+//**                                                                  **
+//**********************************************************************
+//**********************************************************************
 
-/** @file 
-OemOaHandle.c
-
-This function is used for OEM can receive the OA data, and then decide what to do.
-
-*/
-
-//---------------------------------------------------------------------------
-// Include Files
-//---------------------------------------------------------------------------
-
+//**********************************************************************
+// $Header: /AptioV/Source/Modules/Ofbd/OemOaHandle/OemOaHandle.c $
+//
+// $Revision: $
+//
+// $Date: $
+//**********************************************************************
+//<AMI_FHDR_START>
+//
+// Name:	OemOaHandle.c
+//
+// Description:
+//
+// This function is used for OEM can receive the OA data, and then decide what to do.
+//
+//<AMI_FHDR_END>
+//**********************************************************************
 #include <Efi.h>
 #include <Token.h>
 #include <AmiLib.h>
@@ -33,18 +39,19 @@ This function is used for OEM can receive the OA data, and then decide what to d
 //#define CONVERT_TO_STRING(a) #a
 #define STR(a) CONVERT_TO_STRING(a)
 
-/**
-   	Ofbd (Oem OA Data handle)
-	
-	This function is used for BIOS can to check or modify the OA 3 binary data, 
-	before Afu to flash it.
-	
-	@param pOFBDHdr - Ofbd header.
-
-  	@return EFI_STATUS
-  	@retval EFI_SUCCESS Function executed successfully
-*/ 
-
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:	OFBDOemOADataHandle
+//
+// Description:	OFBD Oem OA Data Handle
+//
+// Input:
+//      IN OUT OFBD_HDR *pOFBDHdr
+// Output:
+//      EFI_STATUS
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
 OFBDOemOADataHandle( 
     IN OUT OFBD_HDR *pOFBDHdr)
@@ -60,6 +67,26 @@ OFBDOemOADataHandle(
     
     pOFBDTblEnd = (UINT8 *)((UINT8 *)pOFBDHdr + (pOFBDHdr->OFBD_Size));
     OAStructPtr = (OFBD_TC_5A_OA_HANDLE_STRUCT *)((UINT8 *)pOFBDHdr + pOFBDHdr->OFBD_HDR_SIZE + sizeof(OFBD_EXT_HDR)); 
+    
+    //
+    // OA Structure Description:
+    //
+    /*
+    UINT8 	dbOASts;		// Bit 0: Notification BIOS, utility is now ready to update the OA data.                                - OFBD_TC_OA_UPDATE_NOTIFY
+                            // Bit 1~7: Reserved
+                            
+    UINT8 	dbErrorID;		// 0~255 : Filled by O.E.M.
+    
+    UINT16 	dwRetSts;		// Bit 0: OA data is invalid, tell the utility stop the flash procedure                                 - OFBD_RS_OA_DATA_IS_INVALID
+                            // Bit 1: OA data has been modified, tell the utility use the new data to update                        - OFBD_RS_OA_DATA_IS_MODIFIED
+                            // Bit 2: BIOS has updated the OA, so tell the utility doesn't to update                                - OFBD_RS_OA_UPDATE_SKIPPED
+                            // Bit 3: BIOS doesn't allow the OA update, tell the utility stop the flash procedure                   - OFBD_RS_OA_UPDATE_DECLINED
+                            // Bit 4~14: Reserved
+                            // Bit 15: Use dbErrorID field for utility return OEM specific error code, when this Bit is set to 1.   - OFBD_RS_OA_USE_OEM_ERROR_ID
+	UINT32  ddOABlockAddr;  // OA Block Address of BIOS ROM (For NCB mode to use)
+    UINT64  ddOADataBuffer; // OA Data Buffer
+    UINT32  dwOADataSize;   // OA Data Buffer Size
+    */
     
     //
     // Please add your code here +>>>
@@ -132,16 +159,20 @@ OFBDOemOADataHandle(
     return(Status);
 }
 
-/**
-   	This function is Ofbd Oem OA Data function entry point
-
-	@param Buffer - Ofbd header.
-  	@param pOFBDDataHandled - handle value returns
-  	
-	@retval	0xFF means Function executed successfully
-	@retval	0xFE means Function error occured
-*/ 
-
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:	OemOAHandleEntry
+//
+// Description:	OFBD Oem OA Data Handle Entry Point
+//
+// Input:
+//      IN VOID             *Buffer
+//      IN OUT UINT8        *pOFBDDataHandled
+// Output:
+//      VOID
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID OemOAHandleEntry (
     IN VOID             *Buffer,
     IN OUT UINT8        *pOFBDDataHandled )
@@ -182,7 +213,7 @@ VOID OemOAHandleEntry (
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2012, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **

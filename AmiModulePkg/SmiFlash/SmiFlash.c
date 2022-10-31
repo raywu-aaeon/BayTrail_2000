@@ -1,7 +1,7 @@
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2013, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **
@@ -11,12 +11,28 @@
 //**                                                                  **
 //**********************************************************************
 //**********************************************************************
-/** @file
-  SmiFlash SMM Driver File.
-**/
 
-//----------------------------------------------------------------------
-// header includes
+//**********************************************************************
+// $Header: $
+//
+// $Revision: $
+//
+// $Date: $
+//**********************************************************************
+// Revision History
+// ----------------
+// $Log: $
+// 
+//
+//**********************************************************************
+//<AMI_FHDR_START>
+//
+// Name:    SMIFlash.c
+//
+// Description: SMIFlash Driver.
+//
+//<AMI_FHDR_END>
+//**********************************************************************
 #include <AmiDxeLib.h>
 //#include <Library\Debuglib.h>
 #include <Token.h>
@@ -41,7 +57,6 @@
 #include <RomLayout.h>
 #include <Protocol\FirmwareVolume2.h>
 #include <Protocol\SmmAccess2.h>
-#include <Library\AmiBufferValidationLib.h>
 #define ROM_LAYOUT_FFS_GUID \
     { 0x0DCA793A, 0xEA96, 0x42d8, 0xBD, 0x7B, 0xDC, 0x7F, 0x68, 0x4E, 0x38, 0xC1 }
 
@@ -49,7 +64,6 @@
 // component MACROs
 #define FLASH_EMPTY_BYTE (UINT8)(-FLASH_ERASE_POLARITY)
 #define STR(a) CONVERT_TO_STRING(a)
-
 //----------------------------------------------------------------------
 // Module defined global variables
 
@@ -129,15 +143,61 @@ EFI_SMI_FLASH_PROTOCOL  SmiFlash = {
     EraseFlash,
     FLASH_SIZE
 };
-
-
-/**
- * Procedure to report the Flash Blocks Information.
- *
- * @param pInfoBlock parameter that specifies the where the blocks infomation to be stored.
- *
- * @retval pInfoBlock parameter that specifies the blocks infomation
- */
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure: CheckAddressRange
+//
+// Description: Check address range to avoid TSEG area.
+//
+// Input: 
+//  Address - starting address
+//  Range   - length of the area
+//
+// Output: 
+//  EFI_SUCCESS         - Access granted
+//  EFI_ACCESS_DENIED   - Access denied!
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
+EFI_STATUS
+CheckAddressRange(
+    IN UINT8 *Address,
+    IN UINTN Range
+)
+{
+    UINT8   Count = 0;
+    EFI_PHYSICAL_ADDRESS    TsegStart;
+    EFI_PHYSICAL_ADDRESS    TsegEnd;
+    // Check the size and range
+    for( Count = 0; Count < mSmramRangeCount; Count++ )
+    {
+        TsegStart = mSmramRanges[Count].CpuStart;
+        TsegEnd = mSmramRanges[Count].CpuStart + mSmramRanges[Count].PhysicalSize;
+        if( ((EFI_PHYSICAL_ADDRESS)Address >= TsegStart) &&
+            ((EFI_PHYSICAL_ADDRESS)Address < TsegEnd) )
+            return EFI_ACCESS_DENIED;
+    
+        if( ((EFI_PHYSICAL_ADDRESS)Address < TsegStart) &&
+            (((EFI_PHYSICAL_ADDRESS)Address + Range) > TsegStart) )
+            return EFI_ACCESS_DENIED;
+    }
+    return EFI_SUCCESS;
+}
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------
+// Procedure:   GetFlashInfo
+//
+// Description:
+//
+// Input:
+//
+// Output:
+//
+// Returns:
+//
+//----------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
 GetFlashInfo(
     IN OUT INFO_BLOCK   *pInfoBlock
@@ -212,7 +272,7 @@ GetFlashInfo(
 	
 	//Assign types
 	NcbType =  NcbType + (UINT8)NumberOfNcb - 1;
-    for (pBlock = NULL, Index = 0; Index < NumBlocks; Index++) {
+    for (Index = 0; Index < NumBlocks; Index++) {
     
         pBlock = (BLOCK_DESC *)BlkOff;
         Add = Index * FLASH_BLOCK_SIZE;
@@ -255,26 +315,34 @@ GetFlashInfo(
 
         MemCpy ( (UINT8*)BlkOff, ProjectTagSign, 4 );
         BlkOff += sizeof (UINT32);
-        *(UINT8*)BlkOff++ = (UINT8)TagLength;
+        *(UINT8*)BlkOff = (UINT8)TagLength;
+        BlkOff += 1;
         // Added for AFU to identify the Core Version.
         *(UINT8*)BlkOff = 'V';
+        BlkOff += 1;
     }
 
-#if defined (FLASH_PART_STRING_LENGTH) && (FLASH_PART_STRING_LENGTH != 0)
+#ifdef FLASH_PART_STRING_LENGTH
     if (((UINT64)pInfoBlock + pInfoBlock->Length) > \
-            (++BlkOff + FLASH_PART_STRING_LENGTH + 8))
+            (BlkOff + FLASH_PART_STRING_LENGTH + 8))
         GetFlashPartInfomation ( (UINT8*)Flash4GBMapStart, (UINT8*)BlkOff );
 #endif
     return EFI_SUCCESS;
 }
-
-/**
- * Procedure to enable Flash Write.
- *
- * @param pFuncBlock parameter that specifies the Block information.
- *
- * @retval EFI_SUCCESS Flash Write enable successfully.
- */
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------
+// Procedure:   EnableFlashWrite
+//
+// Description:
+//
+// Input:
+//
+// Output:
+//
+// Returns:
+//
+//----------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS EnableFlashWrite(
     IN OUT FUNC_BLOCK    *pFuncBlock
 )
@@ -282,13 +350,21 @@ EFI_STATUS EnableFlashWrite(
     return Flash->DeviceWriteEnable();
 }
 
-/**
- * Procedure to disable Flash Write.
- *
- * @param pFuncBlock parameter that specifies the Block information.
- *
- * @retval EFI_SUCCESS Flash Write disable successfully.
- */
+
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------
+// Procedure:   DisableFlashWrite
+//
+// Description:
+//
+// Input:
+//
+// Output:
+//
+// Returns:
+//
+//----------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS DisableFlashWrite(
     IN OUT FUNC_BLOCK    *pFuncBlock
 )
@@ -296,39 +372,55 @@ EFI_STATUS DisableFlashWrite(
     return Flash->DeviceWriteDisable();
 }
 
-/**
- * Procedure to erase Flash block.
- *
- * @param pFuncBlock parameter that specifies the Block information.
- *
- * @retval EFI_SUCCESS Flash erase successfully.
- */
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------
+// Procedure:   EraseFlash
+//
+// Description:
+//
+// Input:
+//
+// Output:
+//
+// Returns:
+//
+//----------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS EraseFlash(
     IN OUT FUNC_BLOCK   *pFuncBlock
 )
 {
     EFI_STATUS    Status;
     UINT8         *BlockAddress;
-    BlockAddress = (UINT8*)(UINTN)(pFuncBlock->BlockAddr + \
-                                (0xFFFFFFFF - SmiFlash.FlashCapacity + 1));
+    BlockAddress =
+        (UINT8*)(UINTN)(pFuncBlock->BlockAddr +
+                        (0xFFFFFFFF - SmiFlash.FlashCapacity + 1));
     (UINT32)BlockAddress &= (0xFFFFFFFF - FLASH_BLOCK_SIZE + 1);
 
     // Checking access rang for avoiding the privilege escalation into SMM 
     // via Smiflash driver.
-    if(EFI_ERROR(AmiValidateMemoryBuffer (BlockAddress, \
-                                FlashBlockSize))) return EFI_ACCESS_DENIED;
+    Status = CheckAddressRange( BlockAddress, FlashBlockSize );
+    if(EFI_ERROR(Status)) return Status;
+
     Status = Flash->Erase(BlockAddress, FlashBlockSize);
     pFuncBlock->ErrorCode = EFI_ERROR(Status) != 0;
     return Status;
 }
 
-/**
- * Procedure to read Flash block.
- *
- * @param pFuncBlock parameter that specifies the Block information.
- *
- * @retval EFI_SUCCESS Flash read successfully.
- */
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------
+// Procedure:   ReadFlash
+//
+// Description:
+//
+// Input:
+//
+// Output:
+//
+// Returns:
+//
+//----------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS ReadFlash(
     IN OUT FUNC_BLOCK   *pFuncBlock
 )
@@ -341,10 +433,10 @@ EFI_STATUS ReadFlash(
     
     // Checking access rang for avoiding the privilege escalation into SMM 
     // via Smiflash driver.
-    if (EFI_ERROR(AmiValidateMemoryBuffer ((UINT8*)(Flash4GBMapStart + \
-            pFuncBlock->BlockAddr), pFuncBlock->BlockSize))) return EFI_ACCESS_DENIED;
-    if (EFI_ERROR(AmiValidateMemoryBuffer ((UINT8*)pFuncBlock->BufAddr, \
-                                    pFuncBlock->BlockSize))) return EFI_ACCESS_DENIED;
+    Status = CheckAddressRange( (UINT8*)(Flash4GBMapStart + pFuncBlock->BlockAddr),
+                                pFuncBlock->BlockSize );
+    if(EFI_ERROR(Status)) return Status;
+
     Status = Flash->Read(
                  (UINT8*)(Flash4GBMapStart + pFuncBlock->BlockAddr),
                  pFuncBlock->BlockSize,
@@ -354,13 +446,20 @@ EFI_STATUS ReadFlash(
     return Status;
 }
 
-/**
- * Procedure to write Flash block.
- *
- * @param pFuncBlock parameter that specifies the Block information.
- *
- * @retval EFI_SUCCESS Flash write successfully.
- */
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------
+// Procedure:   WriteFlash
+//
+// Description:
+//
+// Input:
+//
+// Output:
+//
+// Returns:
+//
+//----------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS WriteFlash(
     IN OUT FUNC_BLOCK   *pFuncBlock
 )
@@ -368,14 +467,14 @@ EFI_STATUS WriteFlash(
     EFI_STATUS      Status;
     UINT8           *FlashAddress;
     
-    FlashAddress = (UINT8*)(UINTN)(pFuncBlock->BlockAddr + \
-                                    (0xFFFFFFFF - SmiFlash.FlashCapacity + 1));
+    FlashAddress =
+        (UINT8*)(UINTN)(pFuncBlock->BlockAddr +
+                        (0xFFFFFFFF - SmiFlash.FlashCapacity + 1));
+
     // Checking access rang for avoiding the privilege escalation into SMM 
     // via Smiflash driver.
-    if (EFI_ERROR(AmiValidateMemoryBuffer ((UINT8*)FlashAddress, \
-                            pFuncBlock->BlockSize))) return EFI_ACCESS_DENIED;
-    if (EFI_ERROR(AmiValidateMemoryBuffer ((UINT8*)pFuncBlock->BufAddr, \
-                            pFuncBlock->BlockSize))) return EFI_ACCESS_DENIED;
+    Status = CheckAddressRange( FlashAddress, pFuncBlock->BlockSize );
+    if(EFI_ERROR(Status)) return Status;
 
     Status = Flash->Write(
                  FlashAddress, pFuncBlock->BlockSize, (UINT8*)pFuncBlock->BufAddr
@@ -384,25 +483,27 @@ EFI_STATUS WriteFlash(
     return Status;
 }
 
-/**
- * Procedure to SmiFlash SMI handler.
- *
- * @param DispatchHandle  The unique handle assigned to this handler by SmiHandlerRegister().
- * @param Context         Points to an optional handler context which was specified when the
- *                        handler was registered.
- * @param CommBuffer      A pointer to a collection of data in memory that will
- *                        be conveyed from a non-SMM environment into an SMM environment.
- * @param CommBufferSize  The size of the CommBuffer.
- * 
- * @retval EFI_SUCCESS Command is handled successfully.
- */
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------
+// Procedure:   SMIFlashSMIHandler
+//
+// Description:
+//
+// Input:
+//
+// Output:
+//
+// Returns:
+//
+//----------------------------------------------------------------------
+//<AMI_PHDR_END>
 #if PI_SPECIFICATION_VERSION >= 0x1000A
 EFI_STATUS 
 SMIFlashSMIHandler (
-    IN EFI_HANDLE                   DispatchHandle,
-    IN CONST VOID                   *Context OPTIONAL,
-    IN OUT VOID                     *CommBuffer OPTIONAL,
-    IN OUT UINTN                    *CommBufferSize OPTIONAL
+    IN  EFI_HANDLE                  DispatchHandle,
+		IN CONST VOID                   *Context OPTIONAL,
+		IN OUT VOID                     *CommBuffer OPTIONAL,
+		IN OUT UINTN                    *CommBufferSize OPTIONAL
 )
 #else
 VOID SMIFlashSMIHandler (
@@ -477,27 +578,32 @@ VOID SMIFlashSMIHandler (
 
     // Checking access rang for avoiding the privilege escalation into SMM 
     // via Smiflash driver.
-    if(Data == SMIFLASH_GET_FLASH_INFO) {
-        Status = AmiValidateMemoryBuffer((UINT8*)pCommBuff, sizeof(INFO_BLOCK));
-    } else Status = AmiValidateMemoryBuffer((UINT8*)pCommBuff, sizeof(FUNC_BLOCK));
+    if(Data == SMIFLASH_GET_FLASH_INFO)
+        Status = CheckAddressRange( (UINT8*)pCommBuff, sizeof(INFO_BLOCK) );
+    else
+        Status = CheckAddressRange( (UINT8*)pCommBuff, sizeof(FUNC_BLOCK) );
     if(EFI_ERROR(Status)) RETURN(Status);
    
     // Initial Error code for blocking Flash Update from PreHandler eLink.
     if (Data != SMIFLASH_GET_FLASH_INFO) ((FUNC_BLOCK*)pCommBuff)->ErrorCode = 0;
         
-    for (i = 0; SMIFlashPreHandler[i] != NULL; SMIFlashPreHandler[i++](Data, pCommBuff));
+    for (i = 0; SMIFlashPreHandler[i] != NULL; i++) 
+        SMIFlashPreHandler[i](Data, pCommBuff);
+
     // Process SmiFlash functions if GetFlashInfo call or No Error.
     if ((Data == SMIFLASH_GET_FLASH_INFO) || \
         (((FUNC_BLOCK*)pCommBuff)->ErrorCode == 0)) {
 
         switch (Data) {
             case 0x20:      // Enable Flash
-                for (i = 0; SMIFlashPreUpdate[i] != NULL; SMIFlashPreUpdate[i++]()); 
+                for (i = 0; SMIFlashPreUpdate[i] != NULL; i++) 
+                    SMIFlashPreUpdate[i]();
                 EnableFlashWrite((FUNC_BLOCK *)pCommBuff);
                 break;
                 
             case 0x24:      // Disable Flash
-                for (i = 0; SMIFlashEndUpdate[i] != NULL; SMIFlashEndUpdate[i++]());
+                for (i = 0; SMIFlashEndUpdate[i] != NULL; i++) 
+                    SMIFlashEndUpdate[i]();
                 DisableFlashWrite((FUNC_BLOCK *)pCommBuff);
                 break;
                 
@@ -517,15 +623,26 @@ VOID SMIFlashSMIHandler (
                 GetFlashInfo((INFO_BLOCK *)pCommBuff);
         }
     }
-    for (i = 0; SMIFlashEndHandler[i] != NULL; SMIFlashEndHandler[i++](Data, pCommBuff));
+    for (i = 0; SMIFlashEndHandler[i] != NULL; i++)
+        SMIFlashEndHandler[i](Data, pCommBuff);
+
     RETURN(Status);
 }
 
-/**
- * Procedure to prepare Rom Layout information for reporting Flash Infomatoin used.
- *
- * @retval EFI_SUCCESS Flash read successfully.
- */
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------
+// Procedure:   PrepareRomLayout
+//
+// Description: Preparing RomLayout table for GetFlashInfo()
+//
+// Input:
+//
+// Output:
+//
+// Returns:
+//
+//----------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS PrepareRomLayout(VOID)
 {
 	EFI_FIRMWARE_VOLUME2_PROTOCOL *Fv;
@@ -587,7 +704,7 @@ EFI_STATUS PrepareRomLayout(VOID)
 #if VERIFY_BOOT_SUPPORT				
 			case (FV_PRE_BB_BASE - 0x1000): 
 #endif
-//EIP166866 <<	
+//EIP166866 <<			
 			case FV_BB_BASE:
 			case FV_MAIN_BASE:
 			case NVRAM_ADDRESS:
@@ -622,9 +739,9 @@ EFI_STATUS PrepareRomLayout(VOID)
 			case FV_PRE_BB_BASE: 
 //EIP166866 >>			
 #if VERIFY_BOOT_SUPPORT				
-			case (FV_PRE_BB_BASE - 0x1000): 
+		    case (FV_PRE_BB_BASE - 0x1000): 
 #endif
-//EIP166866 <<	
+//EIP166866 <<			
 			case FV_BB_BASE:
 				RomLayout[i].Type = BOOT_BLOCK;
 				break;
@@ -657,15 +774,20 @@ EFI_STATUS PrepareRomLayout(VOID)
 	return Status;
 }
 
-/**
-  In SMM Function for SmiFlash SMM driver.
-
-  @param[in] ImageHandle  Image handle of this driver.
-  @param[in] SystemTable  A Pointer to the EFI System Table.
-
-  @retval EFI_SUCEESS     
-  @return Others          Some error occurs.
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------
+// Procedure:   InSmmFunction
+//
+// Description:
+//
+// Input:
+//
+// Output:
+//
+// Returns:
+//
+//----------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS InSmmFunction(
     IN EFI_HANDLE          ImageHandle,
     IN EFI_SYSTEM_TABLE    *SystemTable
@@ -762,16 +884,20 @@ EFI_STATUS InSmmFunction(
     for (Index = 0; SMIFlashInSmm[Index] != NULL; SMIFlashInSmm[Index++]());
     return EFI_SUCCESS;
 }
-
-/**
-  Entry Point for SmiFlash SMM driver.
-
-  @param[in] ImageHandle  Image handle of this driver.
-  @param[in] SystemTable  A Pointer to the EFI System Table.
-
-  @retval EFI_SUCEESS     
-  @return Others          Some error occurs.
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------
+// Procedure:   SMIFlashDriverEntryPoint
+//
+// Description:
+//
+// Input:
+//
+// Output:
+//
+// Returns:
+//
+//----------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS SMIFlashDriverEntryPoint(
     IN EFI_HANDLE       ImageHandle,
     IN EFI_SYSTEM_TABLE *SystemTable
@@ -784,7 +910,7 @@ EFI_STATUS SMIFlashDriverEntryPoint(
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2013, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **

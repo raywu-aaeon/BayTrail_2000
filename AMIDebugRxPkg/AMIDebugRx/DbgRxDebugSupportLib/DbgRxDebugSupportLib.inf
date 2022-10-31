@@ -1,6 +1,6 @@
 #*************************************************************************
 #**                                                                     **
-#**        (C)Copyright 1985-2014, American Megatrends, Inc.            **
+#**        (C)Copyright 1985-2012, American Megatrends, Inc.            **
 #**                                                                     **
 #**                       All Rights Reserved.                          **
 #**                                                                     **
@@ -25,9 +25,6 @@
 [Binaries.Ia32]
   BIN | DbgRxDebugSupportLib.lib
 
-[Binaries.X64]
-  BIN | DbgRxDebugSupportLibx64.lib
-
 [Sources]
 	
 [Packages]
@@ -38,11 +35,17 @@
   AMIDebugRxPkg/AMIDebugRxPkg.dec
 
 [LibraryClasses]
+  BaseLib
+  DebugLib
+  IoLib
+  PeiServicesLib
+  HobLib
+  AmiPeiLib
   CommonDebugSupportLib
   
 #*************************************************************************
 #**                                                                     **
-#**        (C)Copyright 1985-2014, American Megatrends, Inc.            **
+#**        (C)Copyright 1985-2012, American Megatrends, Inc.            **
 #**                                                                     **
 #**                       All Rights Reserved.                          **
 #**                                                                     **

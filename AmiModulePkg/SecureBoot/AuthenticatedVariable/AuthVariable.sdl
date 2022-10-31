@@ -20,13 +20,6 @@ PATH
     Help  = "Path to AuthVariable Module in Project"
 End
 
-ELINK
-	Name  = "SetVendorKeysVar,"
-	Parent  = "SetVariableHook"
-	Help  = "Called before SetVariable"
-	InvokeOrder = AfterParent
-End
-
 INFComponent
     Name  = "AuthVariable"
     File  = "AuthVariable.inf"
@@ -35,7 +28,7 @@ End
 
 INFComponent
     Name  = "AuthVariableLink"
-    File  = "AuthVariableLink.inf"
+    File  = "AuthVariablelink.inf"
     Package  = "AmiModulePkg"
 End
 

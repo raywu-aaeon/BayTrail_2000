@@ -20,17 +20,20 @@
 #  VALID_ARCHITECTURES           = IA32 X64
 #
 [Defines]
-INF_VERSION     = 0x00010015
-BASE_NAME       = FwCapsuleHdr
-MODULE_TYPE     = USER_DEFINED
-FILE_GUID       = 414D94AD-998D-47D2-BFCD-4E882241DE32
-SECTION_GUID    = 5A88641B-BBB9-4AA6-80F7-498AE407C31F
+INF_VERSION 	= 0x00010015
+BASE_NAME 		= FwCapsuleHdr
+MODULE_TYPE 	= USER_DEFINED
+FILE_GUID 		= 414D94AD-998D-47D2-BFCD-4E882241DE32
+SECTION_GUID 	= 5A88641B-BBB9-4AA6-80F7-498AE407C31F
 
 [Sources]
 FwCapsuleHdr.cbin
 
 [Packages]
- MdePkg/MdePkg.dec
- AmiCompatibilityPkg/AmiCompatibilityPkg.dec
- AmiCryptoPkg/AmiCryptoPkg.dec
+  MdePkg/MdePkg.dec
+  AmiModulePkg/AmiModulePkg.dec
+  AmiCompatibilityPkg/AmiCompatibilityPkg.dec
+  AmiCryptoPkg/AmiCryptoPkg.dec
 
+[Depex]
+  TRUE

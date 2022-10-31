@@ -96,50 +96,6 @@ Scope(\)
     L27D,  1          //  (31) LPIO2 I2C #7 Disable
   }
 
-  // 
-  // Support S0, S3, S4, and S5.  The proper bits to be set when 128   // Support S0, S3, S4, and S5.  The proper bits to be set when 
-  // entering a given sleep state are found in the Power Management 129   // entering a given sleep state are found in the Power Management 
-  // 1 Control ( PM1_CNT ) register, located at ACPIBASE + 04h, 130   // 1 Control ( PM1_CNT ) register, located at PMC Base + 0xA0 
-  // bits 10d - 12d.
-  // 131   // 
-  OperationRegion(PPSC, SystemMemory, Add(\PMCB, 0xA0), 0x08) // PMC Base + 0xA0 
-  Field(PPSC,DWordAcc,Lock,Preserve) { 
-    DM1P,  1,  //BIT0 
-    PW1P,  1,  //BIT1 
-    PW2P,  1,  //2 
-    UR1P,  1,  //3 
-    UR2P,  1,  //4 
-    SP1P,  1,  //5 
-    SP2P,  1,  //6 
-    SP3P,  1,  //7 
-    EMMP,  1,  //8 
-    SDI1,  1,  //9 
-    SDI2,  1,  //10 
-    ,      2,  //11-mipi, 12-HDA 
-    LPEP,  1,  //13 
-    ,      1,  //14 -USB SIP Bridge 
-    ,      1,  //15 
-    ,      1,  //16 
-    SATP,  1,  //17, SATA Power State Current 
-    USBP,  1,  //18 
-    SECP,  1,  //19, SEC Power State Current 
-    PRP1,  1,  //20 
-    PRP2,  1,  //21 
-    PRP3,  1,  //22 
-    PRP4,  1,  //23, PCIE Rootports 1-4 
-    DM2P,  1,  //24, LPIO2 DMA 
-    IC1P,  1,  //25 
-    IC2P,  1,  //26 
-    IC3P,  1,  //27 
-    IC4P,  1,  //28 
-    IC5P,  1,  //29 
-    IC6P,  1,  //30 
-    IC7P,  1,  //31 
-    Offset(0x4), //reg_D3_STS_1_type 
-    ,      2,  //0-SMBus 
-    ISHP,  1,  //2 
-    ,      29 
-  }
 
   OperationRegion(CLKC, SystemMemory, \PCLK, 0x18)// PMC CLK CTL Registers
   Field(CLKC,DWordAcc,Lock,Preserve)
@@ -183,15 +139,8 @@ scope (\_SB)
     Name (_SUB, "80867270")
     Name (_UID, 1)
 #ifdef WIN8_SUPPORT     
-    Method(_DEP){
-    	if (LAnd(LGreaterEqual(OSYS, 2013), LEqual(S0IX, 1))) {
-			Return(Package() {\_SB.PEPD})
-		}Else{
-			Return(Package(){})
-		}
-	}
+    Name (_DEP, Package() {\_SB.I2C2.RTEK})
 #endif    
-
     Name(_PR0,Package() {PLPE})
 
     Method (_STA, 0x0, NotSerialized)
@@ -270,16 +219,9 @@ scope (\_SB)
     Name (_DDN, "Intel(R) SST Audio - LPE0F28")  // _DDN: DOS Device Name
     Name (_SUB, "80867270")
     Name (_UID, 1)
-#ifdef WIN8_SUPPORT     
-    Method(_DEP){
-    	if (LAnd(LGreaterEqual(OSYS, 2013), LEqual(S0IX, 1))) {
-			Return(Package() {\_SB.PEPD})
-		}Else{
-			Return(Package(){})
-		}
-	}
+#ifdef WIN8_SUPPORT    
+    Name (_DEP, Package() {\_SB.I2C2.RTEK})
 #endif    
-
     Name(_PR0,Package() {PLPE})
 
     Method (_STA, 0x0, NotSerialized)
@@ -398,23 +340,7 @@ scope (\_SB.PCI0)
     //
     // SATA Methods pulled in via SSDT.
     //
-    Device(PRT0)
-    {
-      Name(_ADR,0x0000FFFF)  // Port 0
-    }
-    Device(PRT1)
-    {
-      Name(_ADR,0x0001FFFF)  // Port 1
-    }
-    Device(PRT2)
-    {
-      Name(_ADR,0x0002FFFF)  // Port 2
-    }
-    Device(PRT3)
-    {
-      Name(_ADR,0x0003FFFF)  // Port 3
-    }
-    
+
     OperationRegion(SATR, PCI_Config, 0x74,0x4)
     Field(SATR,WordAcc,NoLock,Preserve)
     {
@@ -435,16 +361,6 @@ scope (\_SB.PCI0)
 
       Return(0xf)
     }
-
-#ifdef WIN8_SUPPORT     
-    Method(_DEP){
-    	if (LAnd(LGreaterEqual(OSYS, 2013), LEqual(S0IX, 1))) {
-			Return(Package() {\_SB.PEPD})
-		}Else{
-			Return(Package(){})
-		}
-	}
-#endif  
 
     Method(_DSW, 3)
     {
@@ -664,15 +580,11 @@ scope (\_SB.PCI0.EHC1) {
     Name(_ADR, 0x001D0000)
 #endif //AMI_OVERRIDE - for RC0.8.0 
 //AMI_OVERRIDE <<
-
 #ifdef WIN8_SUPPORT     
-    Method(_DEP){
-    	if (LAnd(LGreaterEqual(OSYS, 2013), LEqual(S0IX, 1))) {
-			Return(Package() {\_SB.PEPD})
-		}Else{
-			Return(Package(){})
-		}
-	}
+    Name(_DEP, Package(0x1)
+    {
+      PEPD
+    })
 #endif    
     include("PchEhci.asl")
 //    Method(_PRW, 0) { Return(GPRW(0x0D, 4)) }  // can wakeup from S4 state
@@ -738,13 +650,10 @@ scope (\_SB.PCI0.EHC1) {
   {
     Name (_ADR, 0x001a0000)                     // Device 0x1a, Function 0
 #ifdef WIN8_SUPPORT     
-    Method(_DEP){
-    	if (LAnd(LGreaterEqual(OSYS, 2013), LEqual(S0IX, 1))) {
-			Return(Package() {\_SB.PEPD})
-		}Else{
-			Return(Package(){})
-		}
-	}
+    Name(_DEP, Package(0x1)
+    {
+      PEPD
+    })
 #endif    
 
 

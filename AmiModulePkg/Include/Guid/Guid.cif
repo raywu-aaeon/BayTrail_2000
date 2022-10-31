@@ -4,12 +4,9 @@
 	LocalRoot = "AmiModulePkg\Include\Guid\"
 	RefName = "AmiModulePkg.Guid"
 [files]
-"AmiDevicePath.h"	
-"AmiGlobalVariable.h"	
-"AmiModulePkgTokenSpace.h"	
-"AmiPlatformInfo.h"	
-"AmiRecoveryDevice.h"	
-"AmiResetSystemEvent.h"	
-"AmiRomLayout.h"	
-"AmiPerformanceProfiling.h"	
+"AmiDevicePath.h"
+"AmiGlobalVariable.h"
+"AmiModulePkgTokenSpace.h"
+"AmiRecoveryDevice.h"
+"AmiRomLayout.h"
 <endComponent>

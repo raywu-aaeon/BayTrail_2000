@@ -12,7 +12,7 @@ End
 
 TOKEN
 	Name  = "AMI_PKG_VERSION"
-	Value  = "12"
+	Value  = "11"
 	Help  = "AmiPkg version.\Do not change."
 	TokenType = Integer
 	TargetMAK = Yes
@@ -64,7 +64,7 @@ End
 
 TOKEN
 	Name  = "ACTIVE_PLATFORM"
-	Value  = "Build/Platform.dsc"
+	Value  = "Build/platform.dsc"
 	Help  = "Name of the description (.dsc) file for the active platform.\Must be the same as the name specified in the PLATFORM_DSC or <Arch-Type>_PLATFORM_DSC SDL output directive."
 	TokenType = Expression
 	TargetMAK = Yes
@@ -104,7 +104,7 @@ End
 
 TOKEN
 	Name  = "EXTERNAL_CC_FLAGS"
-	Value  = "-D PI_SPECIFICATION_VERSION=0x1001E -D EFI_SPECIFICATION_VERSION=0x20028"
+	Value  = "-D PI_SPECIFICATION_VERSION=0x10014 -D EFI_SPECIFICATION_VERSION=0x2001F"
 	Help  = "C compiler flags that will be appended to the standard C flags in tools_def.txt"
 	TokenType = Expression
 	TargetMAK = Yes
@@ -200,14 +200,6 @@ TOKEN
 End
 
 TOKEN
-	Name  = "LANGUAGE_FONT_LIST"
-	Value  = "drawing;$(SUPPORTED_LANGUAGES)"
-	Help  = "Semicolon separated list of language identifiers. \The fonts for these languages will be included into the ROM image.\Should be set to 'drawing;$(SUPPORTED_LANGUAGES)'.\'drawing' is a pseudo language that includes drawing characters mandated by UEFI specification."
-	TokenType = Expression
-	TargetMAK = Yes
-End
-
-TOKEN
 	Name  = "FLASH_SIZE"
 	Value  = "0x100000"
 	Help  = "Size of the Flash Device in bytes"
@@ -223,13 +215,6 @@ TOKEN
 	Help  = "Size of the Flash Device Block"
 	TokenType = Integer
 	TargetH = Yes
-End
-
-TOKEN
-	Name  = "FLASH_ADDRESS"
-	Value  = "0xFFFFFFFF - $(FLASH_SIZE) + 1"
-	Help  = "Starting address of the Flash Device."
-	TokenType = Integer
 End
 
 TOKEN
@@ -326,38 +311,10 @@ TOKEN
 End
 
 TOKEN
-	Name  = "LZMAF86_SUPPORT"
-	Value  = "0"
-	Help  = "This token enables flavor of the LZMA compression algorithm(LZMAF86) optimized for IA32/X64 instruction set.\LZMAF86 has a better compression ratio but longer decompression time."
-	TokenType = Boolean
-	Token = "LZMA_SUPPORT" "=" "1"
-	Token = "INTEL_ARCHITECTURE_SUPPORT" "=" "1"
-	Token = "INTEL_FRAMEWORK_MODULE_PKG_VERSION" ">=" "5"
-End
-
-TOKEN
 	Name  = "USE_TE_SECTION_FOR_UNCOMPRESSED_PEI_EXECUTABLES"
 	Value  = "1"
 	Help  = "When this token is enabled, uncompressed PEI executables with default packaging are packaged into a TE FFS section.\When the token is disabled, the executables are packaged into a PE section.\\"
 	TokenType = Boolean
-End
-
-TOKEN
-	Name  = "UNCOMPRESSED_PEI_EXECUTABLES_ALIGNMENT"
-	Value  = " "
-	Help  = "Defines alignment of the uncompressed PEI executables.\Blank value (default) sets 4-byte alignment (PI spec. requirement)\If value is not blank, it must have 'Align = X' format.\X must be one of: Auto, 8, 16, 32, 64, 128, 512, 1K, 4K, 32K, 64K.\'Align = Auto' sets alignment based on PE image header section alignment."
-	TokenType = Expression
-	TargetFDF = Yes
-	Range  = "Blank or 'Align = X', X is one of: Auto, 8, 16, 32, 64, 128, 512, 1K, 4K, 32K, 64K"
-End
-
-TOKEN
-	Name  = "SEC_CORE_EXECUTABLE_ALIGNMENT"
-	Value  = "Align = 8"
-	Help  = "Defines alignment of the SEC Core executable.\Blank value sets 4-byte alignment (PI spec. requirement)\If value is not blank, it must have 'Align = X' format.\X must be one of: Auto, 8, 16, 32, 64, 128, 512, 1K, 4K, 32K, 64K.\'Align = Auto' sets alignment based on PE image header section alignment."
-	TokenType = Expression
-	TargetFDF = Yes
-	Range  = "Blank or 'Align = X', X is one of: Auto, 8, 16, 32, 64, 128, 512, 1K, 4K, 32K, 64K"
 End
 
 TOKEN
@@ -369,7 +326,7 @@ End
 
 TOKEN
 	Name  = "FLASH_DEFINITION"
-	Value  = "Build/Platform.fdf"
+	Value  = "Build/platform.fdf"
 	Help  = "Name of the flash definition file (.fdf) for the platform.\Must be the same as the name specified in the PLATFORM_FDF SDL output directive."
 	TokenType = Expression
 	TargetDSC = Yes
@@ -410,56 +367,18 @@ End
 TOKEN
 	Name  = "COMPRESSION_SECTION"
 	Value  = "COMPRESS PI_STD"
-	Help  = "Compression type.\Do not modify this token.\A proper value is automatically selected based on value of the\LZMA_SUPPORT and LZMAF86_SUPPORT SDL tokens."
+	Help  = "Compression type.\Do not modify this token.\The proper value is automatically selected based on value of the\LZMA_SUPPORT and NESTED_FV_MAIN SDL tokens\\"
 	TokenType = Expression
 	TargetFDF = Yes
 	Lock = Yes
+	Token = "NESTED_FV_MAIN" "=" "0"
 	Token = "LZMA_SUPPORT" "=" "0"
 End
 
 TOKEN
 	Name  = "COMPRESSION_SECTION"
-	Value  = "GUIDED EE4E5898-3914-4259-9D6E-DC7BD79403CF PROCESSING_REQUIRED = TRUE"
-	Help  = "Compression type.\Do not modify this token.\A proper value is automatically selected based on value of the\LZMA_SUPPORT and LZMAF86_SUPPORT SDL tokens."
-	TokenType = Expression
-	TargetFDF = Yes
-	Lock = Yes
-	Token = "LZMA_SUPPORT" "=" "1"
-End
-
-TOKEN
-	Name  = "COMPRESSION_SECTION"
-	Value  = "GUIDED D42AE6BD-1352-4bfb-909A-CA72A6EAE889 PROCESSING_REQUIRED = TRUE"
-	Help  = "Compression type.\Do not modify this token.\A proper value is automatically selected based on value of the\LZMA_SUPPORT and LZMAF86_SUPPORT SDL tokens."
-	TokenType = Expression
-	TargetFDF = Yes
-	Lock = Yes
-	Token = "LZMAF86_SUPPORT" "=" "1"
-End
-
-TOKEN
-	Name  = "PEI_COMPRESSION_SECTION"
-	Value  = "$(COMPRESSION_SECTION)"
-	Help  = "Compression type that is used to package PEI modules.\Do not modify this token.\A proper value is automatically selected based on value of the\LZMA_SUPPORT, LZMAF86_SUPPORT, and NESTED_FV_MAIN SDL tokens."
-	TokenType = Expression
-	TargetFDF = Yes
-	Lock = Yes
-End
-
-TOKEN
-	Name  = "DXE_COMPRESSION_SECTION"
-	Value  = "$(PEI_COMPRESSION_SECTION)"
-	Help  = "Compression type that is used to package DXE modules.\Do not modify this token.\A proper value is automatically selected based on value of the\LZMA_SUPPORT, LZMAF86_SUPPORT, and NESTED_FV_MAIN SDL tokens."
-	TokenType = Expression
-	TargetFDF = Yes
-	Lock = Yes
-	Token = "NESTED_FV_MAIN" "=" "0"
-End
-
-TOKEN
-	Name  = "DXE_COMPRESSION_SECTION"
-	Value  = "NONE"
-	Help  = "Compression type that is used to package DXE modules.\Do not modify this token.\A proper value is automatically selected based on value of the\LZMA_SUPPORT, LZMAF86_SUPPORT, and NESTED_FV_MAIN SDL tokens."
+	Value  = "COMPRESS PI_NONE"
+	Help  = "Compression type.\Do not modify this token.\The proper value is automatically selected based on value of the\LZMA_SUPPORT and NESTED_FV_MAIN SDL tokens\\"
 	TokenType = Expression
 	TargetFDF = Yes
 	Lock = Yes
@@ -467,9 +386,20 @@ TOKEN
 End
 
 TOKEN
+	Name  = "COMPRESSION_SECTION"
+	Value  = "GUIDED EE4E5898-3914-4259-9D6E-DC7BD79403CF"
+	Help  = "Compression type.\Do not modify this token.\The proper value is automatically selected based on value of the\LZMA_SUPPORT and NESTED_FV_MAIN SDL tokens\\"
+	TokenType = Expression
+	TargetFDF = Yes
+	Lock = Yes
+	Token = "NESTED_FV_MAIN" "=" "0"
+	Token = "LZMA_SUPPORT" "=" "1"
+End
+
+TOKEN
 	Name  = "UNCOMPRESSED_PEI_EXECUTABLE_SECTION"
 	Value  = "TE TE"
-	Help  = "FFS section that is used to package uncompressed PEI executables.\Do not modify this token.\A proper value is automatically selected based on the value of the\USE_TE_SECTION_FOR_UNCOMPRESSED_PEI_EXECUTABLES SDL token.\\"
+	Help  = "FFS section that is used to package uncompressed PEI executables.\Do not modify this token.\The proper value is automatically selected based on the value of the\USE_TE_SECTION_FOR_UNCOMPRESSED_PEI_EXECUTABLES SDL token.\\"
 	TokenType = Expression
 	TargetFDF = Yes
 	Lock = Yes
@@ -479,7 +409,7 @@ End
 TOKEN
 	Name  = "UNCOMPRESSED_PEI_EXECUTABLE_SECTION"
 	Value  = "PE32 PE32"
-	Help  = "FFS section that is used to package uncompressed PEI executables.\Do not modify this token.\A proper value is automatically selected based on the value of the\USE_TE_SECTION_FOR_UNCOMPRESSED_PEI_EXECUTABLES SDL token.\\"
+	Help  = "FFS section that is used to package uncompressed PEI executables.\Do not modify this token.\The proper value is automatically selected based on the value of the\USE_TE_SECTION_FOR_UNCOMPRESSED_PEI_EXECUTABLES SDL token.\\"
 	TokenType = Expression
 	TargetFDF = Yes
 	Lock = Yes
@@ -489,7 +419,7 @@ End
 TOKEN
 	Name  = "FFS_FILE_CHECKSUM_KEYWORD"
 	Value  = "Checksum"
-	Help  = "Keyword that is emitted into FDF file to enable FFS file checksum.\Do not modify this token.\A proper value is automatically selected based on the value of the\FFS_FILE_CHECKSUM_SUPPORT SDL token."
+	Help  = "Keyword that is emitted into FDF file to enable FFS file checksum.\Do not modify this token.\The proper value is automatically selected based on the value of the\FFS_FILE_CHECKSUM_SUPPORT SDL token."
 	TokenType = Expression
 	TargetFDF = Yes
 	Lock = Yes
@@ -499,7 +429,7 @@ End
 TOKEN
 	Name  = "FFS_FILE_CHECKSUM_KEYWORD"
 	Value  = " "
-	Help  = "Keyword that is emitted into FDF file to enable FFS file checksum.\Do not modify this token.\A proper value is automatically selected based on the value of the\FFS_FILE_CHECKSUM_SUPPORT SDL token."
+	Help  = "Keyword that is emitted into FDF file to enable FFS file checksum.\Do not modify this token.\The proper value is automatically selected based on the value of the\FFS_FILE_CHECKSUM_SUPPORT SDL token."
 	TokenType = Expression
 	TargetFDF = Yes
 	Lock = Yes
@@ -544,22 +474,21 @@ OUTPUTREGISTER
 	Name  = "MODULE_MAK"
 	Help  = "list of make files for enabled components"
 	Path  = "Build"
-	File  = "module.mak"
+	File  = "module.tmp.mak"
 	Lock = Yes
-	GCC_Compatible = Yes
 End
 
 OUTPUTREGISTER
 	Name  = "PLATFORM_FDF"
 	Path  = "Build"
-	File  = "Platform.fdf"
+	File  = "platform.fdf"
 End
 
 FD_INFO
 	Name  = "AMIROM"
 	Size  = "$(FLASH_SIZE)"
 	Blk_Size  = "$(FLASH_BLOCK_SIZE)"
-	Address  = "$(FLASH_ADDRESS)"
+	Address  = "0xFFFFFFFF - $(FLASH_SIZE) + 1"
 	ErasePolarity  = "0x01"
 End
 
@@ -593,7 +522,7 @@ FD_AREA
 	FD_INFO  = "AMIROM"
 	Offset  = "$(NVRAM_OFFSET)"
 	Size  = "$(NVRAM_SIZE)"
-	Layout_Attribute  = "0xd00"
+	Layout_Attribute  = "0x100"
 	Attributes  = "0xffff"
 	Alignment  = "16"
 End
@@ -604,7 +533,6 @@ FD_AREA
 	FD_INFO  = "AMIROM"
 	Offset  = "$(NVRAM_OFFSET)+$(NVRAM_SIZE)"
 	Size  = "$(NVRAM_SIZE)"
-	Layout_Attribute  = "0xd00"
 	Attributes  = "0x0"
 	Token = "FAULT_TOLERANT_NVRAM_UPDATE" "=" "1"
 End
@@ -615,7 +543,7 @@ FD_AREA
 	FD_INFO  = "AMIROM"
 	Offset  = "$(FV_MAIN_OFFSET)"
 	Size  = "$(FV_MAIN_SIZE)"
-	Layout_Attribute  = "0xd09"
+	Layout_Attribute  = "0x109"
 	Attributes  = "0xffff"
 	Alignment  = "16"
 	Guid  = "5C60F367-A505-419A-859E-2A4FF6CA6FE5"
@@ -654,7 +582,7 @@ FD_AREA
 	FD_INFO  = "AMIROM"
 	Offset  = "$(FLASH_SIZE) - $(FV_BB_SIZE)"
 	Size  = "$(FV_BB_SIZE)"
-	Layout_Attribute  = "0xd89"
+	Layout_Attribute  = "0x109"
 	Attributes  = "0xffff"
 	Alignment  = "16"
 	Guid  = "61C0F511-A691-4F54-974F-B9A42172CE53"

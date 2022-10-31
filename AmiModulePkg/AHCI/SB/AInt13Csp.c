@@ -1,45 +1,57 @@
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2012, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **
-//**         5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093     **
+//**         5555 Oakbrook Pkwy, Suite 200, Norcross, GA 30093        **
 //**                                                                  **
 //**                       Phone: (770)-246-8600                      **
 //**                                                                  **
 //**********************************************************************
 //**********************************************************************
 
-/** @file AInt13Csp.c
-    AHCI INT13 Support Chip set Configuration File
+//****************************************************************************
+// $Header: /Alaska/SOURCE/Modules/AHCI/INT13/CSP/AInt13Csp.c 3     2/10/11 10:52a Rameshr $
+//
+// $Revision: 3 $
+//
+// $Date: 2/10/11 10:52a $
+//
+//****************************************************************************
 
-**/
-//---------------------------------------------------------------------------
-
-#include "AmiDxeLib.h"
-#include "Protocol/PciIo.h"
-
-//---------------------------------------------------------------------------
+//<AMI_FHDR_START>
+//----------------------------------------------------------------------------
+//
+//  Name:           AINT13CSP.C
+//  Description:    AHCI INT13 Support Chipset Configuration File
+//
+//----------------------------------------------------------------------------
+//<AMI_FHDR_END>
 
 #define LBAR_REGISTER		    0x20
 #define LBAR_ADDRESS_MASK	    0xFFFFFFE0
 #define INDEX_OFFSET_FROM_LBAR  0x10
 #define DATA_OFFSET_FROM_LBAR   0x14
 
+#include "AmiDxeLib.h"
+#include "Protocol/PciIo.h"
 
-
-/**
-    This is chip set porting routine that returns index/data ports
-    to access memory-mapped registers.
-
-    @param    PciIo
-
-    @retval    EFI_SUCCESS Access information is collected
-    @retval    EFI_ACCESS_DENIED No Access information available
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Name:        GetAccessInfo
+//
+// Description: This is chipset porting routine that returns index/data ports
+//              to access memory-mapped registers.
+//
+// Input:       PciIo
+//
+// Output:      EFI_SUCCESS         - Access information is collected
+//              EFI_ACCESS_DENIED   - No Access information avaliable
+//
+//-------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 EFI_STATUS
 GetAccessInfo (
@@ -63,14 +75,15 @@ GetAccessInfo (
 
 }
 
+
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2012, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **
-//**         5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093     **
+//**         5555 Oakbrook Pkwy, Suite 200, Norcross, GA 30093        **
 //**                                                                  **
 //**                       Phone: (770)-246-8600                      **
 //**                                                                  **

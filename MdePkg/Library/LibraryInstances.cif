@@ -32,7 +32,6 @@
 "BaseS3SmbusLib\BaseS3SmbusLib.inf"
 "BaseS3StallLib\BaseS3StallLib.inf"
 "BaseSerialPortLibNull\BaseSerialPortLibNull.inf"
-"BaseSmbusLibNull\BaseSmbusLibNull.inf"
 "BaseSynchronizationLib\BaseSynchronizationLib.inf"
 "BaseTimerLibNullTemplate\BaseTimerLibNullTemplate.inf"
 "BaseUefiDecompressLib\BaseUefiDecompressLib.inf"

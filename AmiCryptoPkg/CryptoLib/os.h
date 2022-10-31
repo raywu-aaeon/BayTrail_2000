@@ -1,9 +1,15 @@
 /*
- * OS specific functions
- * Copyright (c) 2005-2009, Jouni Malinen <j@w1.fi>
+ * wpa_supplicant/hostapd / OS specific functions
+ * Copyright (c) 2005-2006, Jouni Malinen <j@w1.fi>
  *
- * This software may be distributed under the terms of the BSD license.
- * See README for more details.
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
+ * published by the Free Software Foundation.
+ *
+ * Alternatively, this software may be distributed under the terms of BSD
+ * license.
+ *
+ * See README and COPYING for more details.
  */
 
 #ifndef OS_H
@@ -68,16 +74,6 @@ int os_get_time(struct os_time *t);
 int os_mktime(int year, int month, int day, int hour, int min, int sec,
 	      os_time_t *t);
 
-struct os_tm {
-	int sec; /* 0..59 or 60 for leap seconds */
-	int min; /* 0..59 */
-	int hour; /* 0..23 */
-	int day; /* 1..31 */
-	int month; /* 1..12 */
-	int year; /* Four digit year */
-};
-
-int os_gmtime(os_time_t t, struct os_tm *tm);
 
 /**
  * os_daemonize - Run in the background (detach from the controlling terminal)
@@ -183,25 +179,6 @@ char * os_readfile(const char *name, size_t *len);
  * Caller is responsible for freeing the returned buffer with os_free().
  */
 void * os_zalloc(size_t size);
-
-/**
- * os_calloc - Allocate and zero memory for an array
- * @nmemb: Number of members in the array
- * @size: Number of bytes in each member
- * Returns: Pointer to allocated and zeroed memory or %NULL on failure
- *
- * This function can be used as a wrapper for os_zalloc(nmemb * size) when an
- * allocation is used for an array. The main benefit over os_zalloc() is in
- * having an extra check to catch integer overflows in multiplication.
- *
- * Caller is responsible for freeing the returned buffer with os_free().
- */
-//static inline void * os_calloc(size_t nmemb, size_t size)
-//{
-//	if (size && nmemb > (~(size_t) 0) / size)
-//		return NULL;
-//	return os_zalloc(nmemb * size);
-//}
 
 
 /*
@@ -406,12 +383,6 @@ int os_snprintf(char *str, size_t size, const char *format, ...);
 
 #else /* OS_NO_C_LIB_DEFINES */
 
-#ifdef WPA_TRACE
-void * os_malloc(size_t size);
-void * os_realloc(void *ptr, size_t size);
-void os_free(void *ptr);
-char * os_strdup(const char *s);
-#else /* WPA_TRACE */
 #ifndef os_malloc
 #define os_malloc(s) malloc((s))
 #endif
@@ -421,15 +392,6 @@ char * os_strdup(const char *s);
 #ifndef os_free
 #define os_free(p) free((p))
 #endif
-#ifndef os_strdup
-//#ifdef _MSC_VER
-#if defined(_MSC_VER) || defined(__GNUC__)
-#define os_strdup(s) _strdup(s)
-#else
-#define os_strdup(s) strdup(s)
-#endif
-#endif
-#endif /* WPA_TRACE */
 
 #ifndef os_memcpy
 #define os_memcpy(d, s, n) memcpy((d), (s), (n))
@@ -444,12 +406,18 @@ char * os_strdup(const char *s);
 #define os_memcmp(s1, s2, n) memcmp((s1), (s2), (n))
 #endif
 
+#ifndef os_strdup
+#ifdef _MSC_VER
+#define os_strdup(s) _strdup(s)
+#else
+#define os_strdup(s) strdup(s)
+#endif
+#endif
 #ifndef os_strlen
 #define os_strlen(s) strlen(s)
 #endif
 #ifndef os_strcasecmp
-//#ifdef _MSC_VER
-#if defined(_MSC_VER) || defined(__GNUC__)
+#ifdef _MSC_VER
 #define os_strcasecmp(s1, s2) _stricmp((s1), (s2))
 #else
 #define os_strcasecmp(s1, s2) strcasecmp((s1), (s2))
@@ -490,14 +458,6 @@ char * os_strdup(const char *s);
 #endif
 
 #endif /* OS_NO_C_LIB_DEFINES */
-
-
-//static inline void * os_realloc_array(void *ptr, size_t nmemb, size_t size)
-//{
-//	if (size && nmemb > (~(size_t) 0) / size)
-//		return NULL;
-//	return os_realloc(ptr, nmemb * size);
-//}
 
 
 /**

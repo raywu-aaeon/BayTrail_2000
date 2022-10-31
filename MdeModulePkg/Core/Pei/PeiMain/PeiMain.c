@@ -1,7 +1,7 @@
 /** @file
   Pei Core Main Entry Point
   
-Copyright (c) 2006 - 2013, Intel Corporation. All rights reserved.<BR>
+Copyright (c) 2006 - 2011, Intel Corporation. All rights reserved.<BR>
 This program and the accompanying materials
 are licensed and made available under the terms and conditions of the BSD License
 which accompanies this distribution.  The full text of the license may be found at
@@ -15,6 +15,7 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 #include "PeiMain.h"
 //*** AMI PORTING BEGIN ***//
 #include <AmiStatusCodes.h>
+#include <Library/AmiReportFvLib.h>
 #include <Library/TimerLib.h>
 #include <PeiCoreHooks.h> // PeiCore eLink hooks support
 //*** AMI PORTING END ***//
@@ -66,9 +67,7 @@ EFI_PEI_SERVICES  gPs = {
   PeiFfsFindFileByName,
   PeiFfsGetFileInfo,
   PeiFfsGetVolumeInfo,
-  PeiRegisterForShadow,
-  PeiFfsFindSectionData3,
-  PeiFfsGetFileInfo2
+  PeiRegisterForShadow
 };
 
 //*** AMI PORTING BEGIN ***//
@@ -157,7 +156,7 @@ ShadowPeiCore (
   from SEC to PEI. After switching stack in the PEI core, it will restart
   with the old core data.
 
-  @param SecCoreDataPtr  Points to a data structure containing information about the PEI core's operating
+  @param SecCoreData     Points to a data structure containing information about the PEI core's operating
                          environment, such as the size and location of temporary RAM, the stack location and
                          the BFV location.
   @param PpiList         Points to a list of one or more PPI descriptors to be installed initially by the PEI core.
@@ -174,27 +173,23 @@ ShadowPeiCore (
 VOID
 EFIAPI
 PeiCore (
-  IN CONST EFI_SEC_PEI_HAND_OFF        *SecCoreDataPtr,
+  IN CONST EFI_SEC_PEI_HAND_OFF        *SecCoreData,
   IN CONST EFI_PEI_PPI_DESCRIPTOR      *PpiList,
   IN VOID                              *Data
   )
 {
   PEI_CORE_INSTANCE           PrivateData;
-  EFI_SEC_PEI_HAND_OFF        *SecCoreData;
-  EFI_SEC_PEI_HAND_OFF        NewSecCoreData;
   EFI_STATUS                  Status;
   PEI_CORE_TEMP_POINTERS      TempPtr;
   PEI_CORE_INSTANCE           *OldCoreData;
   EFI_PEI_CPU_IO_PPI          *CpuIo;
   EFI_PEI_PCI_CFG2_PPI        *PciCfg;
   EFI_HOB_HANDOFF_INFO_TABLE  *HandoffInformationTable;
-  EFI_PEI_TEMPORARY_RAM_DONE_PPI *TemporaryRamDonePpi;
-  
+
   //
   // Retrieve context passed into PEI Core
   //
-  OldCoreData = (PEI_CORE_INSTANCE *) Data;
-  SecCoreData = (EFI_SEC_PEI_HAND_OFF *) SecCoreDataPtr;
+  OldCoreData = (PEI_CORE_INSTANCE *)Data;
 
   //
   // Perform PEI Core phase specific actions.
@@ -300,11 +295,9 @@ PeiCore (
     //
     // Memory is available to the PEI Core and the PEI Core has been shadowed to memory.
     //
-    CopyMem (&NewSecCoreData, SecCoreDataPtr, sizeof (NewSecCoreData));
-    SecCoreData = &NewSecCoreData;
-
+    
     CopyMem (&PrivateData, OldCoreData, sizeof (PrivateData));
-
+    
     CpuIo = (VOID*)PrivateData.ServiceTableShadow.CpuIo;
     PciCfg = (VOID*)PrivateData.ServiceTableShadow.PciCfg;
     
@@ -342,7 +335,7 @@ PeiCore (
     //*** AMI PORTING BEGIN ***//
 	//Bug fix: The original code works only if performance is measured using an 
 	//incrementing timer with a starting value of 0, which is not necessarily the case.
-	//The modification below removes the restriction.
+	//The modification below convers removes the restriction.
     //PERF_START (NULL, "SEC", NULL, 1);
 	PERF_CODE(
 		UINT64 TimerStartValue;
@@ -412,22 +405,6 @@ PeiCore (
 
   } else {
     //
-    // Try to locate Temporary RAM Done Ppi.
-    //
-    Status = PeiServicesLocatePpi (
-               &gEfiTemporaryRamDonePpiGuid,
-               0,
-               NULL,
-               (VOID**)&TemporaryRamDonePpi
-               );
-    if (!EFI_ERROR (Status)) {
-      //
-      // Disable the use of Temporary RAM after the transition from Temporary RAM to Permanent RAM is complete.
-      //
-      TemporaryRamDonePpi->TemporaryRamDone ();
-    }
-
-    //
     // Alert any listeners that there is permanent memory available
     //
     PERF_START (NULL,"DisMem", NULL, 0);
@@ -446,9 +423,11 @@ PeiCore (
   }
   //*** AMI PORTING BEGIN ***//
   if (OldCoreData == NULL) {
+      ReportFV2Pei( ( EFI_PEI_SERVICES **)&PrivateData.Ps );
       ProcessPeiCoreInitializeHooks(NULL, ( EFI_PEI_SERVICES **)&PrivateData.Ps);
   }
   else {
+	  ReportFV2PeiAfterMem( ( EFI_PEI_SERVICES **)&PrivateData.Ps );
 	  ProcessPeiCoreMemoryInstalledHooks(NULL, ( EFI_PEI_SERVICES **)&PrivateData.Ps);
   }
   //*** AMI PORTING END ***//
@@ -503,7 +482,7 @@ PeiCore (
 //*** AMI PORTING BEGIN ***//  
 //Change format and debug mask of the message
   //DEBUG ((EFI_D_INFO, "DXE IPL Entry\n"));
-  DEBUG ((DEBUG_INFO | DEBUG_LOAD, "DxeIpl Entry (%p)\n",TempPtr.DxeIpl->Entry));
+  DEBUG ((DEBUG_INFO | DEBUG_LOAD, "DxeIpl Entry (%X)\n",TempPtr.DxeIpl->Entry));
 //*** AMI PORTING END *****//  
   Status = TempPtr.DxeIpl->Entry (
                              TempPtr.DxeIpl,
@@ -512,7 +491,7 @@ PeiCore (
                              );
 //*** AMI PORTING BEGIN ***//
   // If DXE IPL returned control, let's call dispatcher again
-  // DXE IPL might have discovered new FV or have changed a boot mode
+  // DXE IPL might have dicovered new FV or have changed a boot mode
 
   // reset previous bitmap so that the dispatcher will attempt to execute any new PEIMs
   // dispatch

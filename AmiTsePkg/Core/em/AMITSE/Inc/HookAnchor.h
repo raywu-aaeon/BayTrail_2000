@@ -24,10 +24,15 @@
 //*****************************************************************//
 //*****************************************************************//
 //*****************************************************************//
-/** @file HookAnchor.h
-    TSE hook functions
-
-**/
+//<AMI_FHDR_START>
+//----------------------------------------------------------------------------
+//
+// Name:		hookanchor.h
+//
+// Description:	TSE hook functions
+//
+//----------------------------------------------------------------------------
+//<AMI_FHDR_END>
 
 #ifndef _HOOKANCHOR_H_
 #define	_HOOKANCHOR_H_
@@ -82,9 +87,8 @@ VOID ProcessProceedToBootNowHook(VOID);
 VOID ProcessConOutAvailableHook(VOID);
 VOID ProcessUIInitHookHook(VOID);
 VOID AfterInitPostScreenHook(VOID);
-VOID SwitchToPostScreenHook(VOID);
-BOOLEAN SetupEntryHook(VOID);
-EFI_STATUS BootFlowExitHookHook(VOID);
+VOID SwitchToPostScreenHook(VOID);//EIP-111415 SwitchToPostScreenHook
+
 VOID LastTSEHook(VOID);
 
 typedef VOID (TSE_HOOK) (VOID);
@@ -98,7 +102,6 @@ typedef EFI_STATUS (TSE_HOOK_T6) (UINT8 *BGColor, UINT8 *FGColor, UINT8 *SecBGCo
 								 UINT8 *LabelBGColor, UINT8 *LabelFGColor,UINT8 *NSelLabelFGColor, UINT8 *EditBGColor, UINT8 *EditFGColor,
 								 UINT8 *PopupFGColor, UINT8 *PopupBGColor);
 typedef CONTROL_ACTION (TSE_HOOK_T7) (VOID *MouseInfo);
-typedef EFI_STATUS (TSE_HOOK_T9) ();
 
 extern TSE_HOOK * AMITSE_HookList [];
 
@@ -142,8 +145,7 @@ extern UINTN gHookBase;
 #define HOOKID35	(gHookBase+35)
 #define HOOKID36	(gHookBase+36)
 #define HOOKID37	(gHookBase+37)//EIP-SwitchToPostScreenHook
-#define HOOKID38	(gHookBase+38)
-#define HOOKID39	(gHookBase+39)
+
 
 #endif /* _HOOKANCHOR_H_ */
 

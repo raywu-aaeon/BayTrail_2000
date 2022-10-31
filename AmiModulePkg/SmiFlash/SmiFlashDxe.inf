@@ -42,12 +42,8 @@
   AmiDxeLib
   UefiDriverEntryPoint
 
-[Guids]
-  gEfiEventExitBootServicesGuid
-
 [Protocols]
   gEfiUsbProtocolGuid
-  gBdsAllDriversConnectedProtocolGuid
 
 [Depex]
   #TRUE

@@ -1257,7 +1257,7 @@ Returns:
   //
   // Register DTS SW SMI 0xD0 handler
   //
-  SwContext.SwSmiInputValue = DTMI;  //EIP209971
+  SwContext.SwSmiInputValue = 0xD0;
   Status = SwDispatch->Register (
                          SwDispatch,
                          DtsSwSmiCallback,

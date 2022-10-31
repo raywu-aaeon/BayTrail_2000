@@ -8,7 +8,7 @@
 --*/
 /*++
 
-Copyright (c)  2007 - 2015 Intel Corporation. All rights reserved
+Copyright (c)  2007 - 2012 Intel Corporation. All rights reserved
 This software and associated documentation (if any) is furnished
 under a license and may only be used or copied in accordance
 with the terms of the license. Except as permitted by such
@@ -41,6 +41,7 @@ EFI_GUID gEfiTdtOperationProtocolGuid = EFI_TDT_OPERATION_PROTOCOL_GUID;
 
 
 extern DXE_SEC_POLICY_PROTOCOL *mDxePlatformSeCPolicy;
+extern EFI_GUID gSeCPlatformReadyToBootGuid; // AMI_OVERRIDE - EIP142314
 
 #define ONE_SECOND_TIMEOUT  1000000
 #define FWU_TIMEOUT         90
@@ -582,7 +583,7 @@ Returns:
 {
   EFI_STATUS  Status;
 //  EFI_EVENT   AmtReadyToBootEvent;
-//  EFI_EVENT   SeCPlatformReadyToBootEvent;
+  EFI_EVENT   SeCPlatformReadyToBootEvent;  //AMI_OVERRIDE - EIP142314
   UINT32      SeCMode;
   UINT32      SeCStatus;
 
@@ -607,19 +608,21 @@ Returns:
    }
   */
 
-//  Status = gBS->CreateEventEx (
-//                  EFI_EVENT_NOTIFY_SIGNAL,
-//                  EFI_TPL_CALLBACK,
-//                  SeCEmptyEvent,
-//                  NULL,
-//                  &gSeCPlatformReadyToBootGuid,
-//                  &SeCPlatformReadyToBootEvent
-//                  );
-//  ASSERT_EFI_ERROR (Status);
-//  if (!EFI_ERROR (Status)) {
-//    gBS->SignalEvent (SeCPlatformReadyToBootEvent);
-//    gBS->CloseEvent (SeCPlatformReadyToBootEvent);
-//  }
+  // AMI_OVERRIDE - EIP142314 After executing cmd "closemnf" of fpt.exe, POST time will be longer >>
+  Status = gBS->CreateEventEx (
+                  EVT_NOTIFY_SIGNAL,
+                  TPL_CALLBACK,
+                  SeCEmptyEvent,
+                  NULL,
+                  &gSeCPlatformReadyToBootGuid,
+                  &SeCPlatformReadyToBootEvent
+                  );
+  ASSERT_EFI_ERROR (Status);
+  if (!EFI_ERROR (Status)) {
+    gBS->SignalEvent (SeCPlatformReadyToBootEvent);
+    gBS->CloseEvent (SeCPlatformReadyToBootEvent);
+  }
+  // AMI_OVERRIDE - EIP142314 After executing cmd "closemnf" of fpt.exe, POST time will be longer <<
 
   HeciGetSeCMode(&SeCMode);
   HeciGetSeCStatus(&SeCStatus);

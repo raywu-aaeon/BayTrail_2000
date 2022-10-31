@@ -48,13 +48,16 @@ reproduced, stored in a retrieval system, or transmitted in any
 form or by any means without the express written consent of
 Intel Corporation.
 
+Module Name:
+
+  PpmPolicyInitDxe.c
+
+Abstract:
+
+  This file is a wrapper for Intel PPM Platform Policy driver.
+  Get Setup Value to initilize Intel PPM DXE Platform Policy.
+
 --*/
-
-/** @file PpmPolicyInitDxe.c
-	This file is a wrapper for Intel PPM Platform Policy driver.
-	Get Setup Value to initilize Intel PPM DXE Platform Policy.
-
-**/
 
 #include <Efi.h>
 #include <token.h>
@@ -88,14 +91,7 @@ EFI_GUID	gSetupGuid = SETUP_GUID;
 //(EIP41465)>>>
 OEM_CPU_DATA    gOemCpuData;
 
-/**
-    OemPpmPolicy Override.
 
-    @param SetupData - SETUP_DATA
-
-    @retval Oem Override
-
-**/
 VOID
 OemPpmPolicy (SETUP_DATA *SetupData)
 {
@@ -137,15 +133,6 @@ Returns:
 }
 #endif
 
-/**
-    PpmDxePolicyInitEntryPoint
-    
-    @param ImageHandle - EFI_HANDLE
-    @param *SystemTable - EFI_SYSTEM_TABLE
-
-    @retval EFI_Status
-
-**/
 EFI_STATUS
 EFIAPI
 PpmDxePolicyInitEntryPoint (

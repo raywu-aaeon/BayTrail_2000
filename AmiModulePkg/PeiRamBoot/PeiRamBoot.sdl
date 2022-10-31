@@ -82,7 +82,6 @@
 # 
 #
 #****************************************************************************
-
 TOKEN
 	Name  = "PeiRamBootSupport"
 	Value  = "1"
@@ -130,7 +129,6 @@ TOKEN
 	Token = "PEI_RAM_BOOT_S3_SUPPORT" "=" "1"
 End
 
-
 #-TOKEN
 #-	Name  = "PRESERVE_NESTED_FV_IN_MEM"
 #-	Value  = "0"
@@ -140,6 +138,7 @@ End
 #-	TargetH = Yes
 #-	Token = "PEI_RAM_BOOT_S3_SUPPORT" "=" "1"
 #-End
+
 TOKEN
 	Name  = "OPTIMIZE_BOOT_FV_COPY"
 	Value  = "0"
@@ -152,7 +151,7 @@ End
 
 PATH
 	Name  = "PeiRamBoot_DIR"
-	Path  = "AmiModulePkg\PeiRamBoot"
+	PATH  = "AmiModulePkg\PeiRamBoot"
 End
 
 PATH
@@ -168,24 +167,6 @@ End
 MODULE
 	Help  = "Includes PeiRamBoot.mak to Project"
 	File  = "PeiRamBoot.mak"
-End
-
-ELINK
-	Name  = "PeiRamBootOfbdLib"
-	Parent  = "AMI_OFBD_LIBRARIES"
-	InvokeOrder = AfterParent
-End
-
-ELINK
-	Name  = "$(PEIRAMBOOT_DXE_DIR)\PeiRamBootOfbdLib.h"
-	Parent  = "OFBD_FUNC_INCLUDE_FILES"
-	InvokeOrder = AfterParent
-End
-
-ELINK
-	Name  = "PeiRamBootOfbdEntry,"
-	Parent  = "OFBD_INIT_FUNC_LIST"
-	InvokeOrder = AfterParent
 End
 
 ELINK
@@ -211,6 +192,7 @@ INFComponent
 	Path  = "PEIRAMBOOT_PEI_DIR"
 End
 
+
 INFComponent
 	Name  = "PeiRamBootDxe"
 	File  = "PeiRamBootDxe.inf"
@@ -225,26 +207,7 @@ INFComponent
 	Package  = "AmiModulePkg"
 	ModuleTypes  = "PEIM"
 	Path  = "PEIRAMBOOT_PEI_DIR"
-	Token = "COPY_TO_RAM_WHILE_DISPATCH" "=" "1"
-End
-
-INFComponent
-	Name  = "PeiRamBootOfbdLib"
-	File  = "PeiRamBootOfbdLib.inf"
-	Package  = "AmiModulePkg"
-	Path  = "PEIRAMBOOT_DXE_DIR"
-End
-
-LibraryMapping
-	Class  = "PeiRamBootOfbdLib"
-	Instance  = "AmiModulePkg.PeiRamBootOfbdLib"
-End
-
-LibraryMapping
-	Class  = "NULL"
-	Instance  = "AmiModulePkg.PeiAmiRomLayoutLib"
-	Override  = "AmiModulePkg.PeiRamBootPei"
-	Token = "CORE_COMBINED_VERSION" ">=" "0x5000a"
+	TOKEN = "COPY_TO_RAM_WHILE_DISPATCH" "=" "1"
 End
 
 FFS_FILE
@@ -255,17 +218,9 @@ FFS_FILE
 End
 
 FFS_FILE
-	Name  = "PeiRamBootDxe"
-	FD_AREA  = "FV_MAIN"
-	INFComponent  = "AmiModulePkg.PeiRamBootDxe"
-	Apriori_Index  = "5"
-End
-
-FFS_FILE
 	Name  = "PeiRamBootCacheRdy"
 	FD_AREA  = "FV_BB"
 	INFComponent  = "AmiModulePkg.PeiRamBootCacheRdy"
 	Rule_Override  = "Compressed"
-	Token = "COPY_TO_RAM_WHILE_DISPATCH" "=" "1"
+        TOKEN = "COPY_TO_RAM_WHILE_DISPATCH" "=" "1"
 End
-

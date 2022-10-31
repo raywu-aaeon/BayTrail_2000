@@ -62,21 +62,11 @@ End
 
 TOKEN
     Name  = "FWCAPSULE_RECOVERY_SUPPORT"
-    Value  = "0"
+    Value  = "1"
     Help  = "Enable APTIO FW Capsule recovery PPI and relevant runtime SecSmiFlash code"
     TokenType = Boolean
     TargetMAK = Yes
     TargetH = Yes
-End
-
-TOKEN
-    Name  = "FWCAPSULE_RECOVERY_SUPPORT"
-    Value  = "1"
-    Help  = "Don't modify this value!"
-    TokenType = Boolean
-    TargetMAK = Yes
-    TargetH = Yes
-    Token = "Recovery_SUPPORT" "=" "1"
 End
 
 TOKEN

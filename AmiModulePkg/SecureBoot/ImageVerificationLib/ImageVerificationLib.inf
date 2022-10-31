@@ -15,7 +15,9 @@ DxeImageVerificationLib.h
   MdePkg/MdePkg.dec
   MdeModulePkg/MdeModulePkg.dec
   AmiCompatibilityPkg/AmiCompatibilityPkg.dec
+  AmiModulePkg/AmiModulePkg.dec
   AmiCryptoPkg/AmiCryptoPkg.dec
+  IntelFrameworkPkg/IntelFrameworkPkg.dec
 
 [LibraryClasses]
   AmiDxeLib
@@ -41,7 +43,12 @@ DxeImageVerificationLib.h
 
  [Protocols]
  gAmiDigitalSignatureProtocolGuid
+ gEfiFirmwareVolume2ProtocolGuid
  gEfiSecurityArchProtocolGuid
+# gEfiSecurity2ArchProtocolGuid
+ gEfiSimpleFileSystemProtocolGuid
+ gEfiBlockIoProtocolGuid
+ gEfiPciIoProtocolGuid
  
 # [BuildOptions]
 #*_*_*_CC_FLAGS = /DNO_SETUP_COMPILE

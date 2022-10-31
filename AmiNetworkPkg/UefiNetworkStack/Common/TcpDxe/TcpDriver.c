@@ -14,7 +14,7 @@
 /** @file
   The driver binding and service binding protocol for the TCP driver.
 
-  Copyright (c) 2009 - 2014, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2009 - 2013, Intel Corporation. All rights reserved.<BR>
 
   This program and the accompanying materials
   are licensed and made available under the terms and conditions of the BSD License
@@ -363,6 +363,8 @@ TcpCreateService (
     goto ON_ERROR;
   }
 
+  TcpSetVariableData (TcpServiceData);
+
   return EFI_SUCCESS;
 
 ON_ERROR:
@@ -512,6 +514,11 @@ TcpDestroyService (
     TcpDestroyTimer ();
 
     //
+    // Clear the variable.
+    //
+    TcpClearVariableData (TcpServiceData);
+
+    //
     // Release the TCP service data
     //
     FreePool (TcpServiceData);
@@ -563,7 +570,7 @@ Tcp4DriverBindingSupported (
                     );
   if (!EFI_ERROR (Status)) {
       
-      if (gAmiIpAvailProtocol == NULL) {  // Fix for "When Csm is disabled , cant see MAC lan"
+      if (gAmiIpAvailProtocol != NULL) {
           
          //
          // Check whether AMI_IP_AVAIL_PROTOCOL is installed
@@ -573,6 +580,7 @@ Tcp4DriverBindingSupported (
                         NULL,
                        (void **)&gAmiIpAvailProtocol    
                         );
+    
          //
          // If AMI_IP_AVAIL_PROTOCOL is not available, no IPvx drivers are loaded so TCP driver is not supported
          //
@@ -734,7 +742,7 @@ Tcp6DriverBindingSupported (
                     EFI_OPEN_PROTOCOL_TEST_PROTOCOL
                     );
   if (!EFI_ERROR (Status)) {      
-      if (gAmiIpAvailProtocol == NULL) {              
+      if (gAmiIpAvailProtocol != NULL) {              
           //
           // Check whether AMI_IP_AVAIL_PROTOCOL is installed
           //
@@ -743,6 +751,7 @@ Tcp6DriverBindingSupported (
                            NULL,
                            (void **)&gAmiIpAvailProtocol    // AptioV Server Override : Added to resolve the build error with GCC compiler.
                            );
+          
            //
            // If AMI_IP_AVAIL_PROTOCOL is not available, no IPvx drivers are loaded so TCP driver is not supported
            //

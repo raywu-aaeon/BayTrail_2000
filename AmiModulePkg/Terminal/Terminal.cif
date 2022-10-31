@@ -14,5 +14,4 @@
 "InitTerminalStrings.c"	
 [parts]
 "TerminalAmiSerial Protocol"
-"Terminal Setup Includes"
 <endComponent>

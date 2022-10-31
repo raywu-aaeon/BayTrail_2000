@@ -27,8 +27,6 @@
 [LibraryClasses]
  
 [Protocols]
-  gAmiUsbSmmProtocolGuid
-  gEmul6064TrapProtocolGuid
  
 [BuildOptions] 
   *_*_*_CC_FLAGS = /D _OUTSIDE_SMM_

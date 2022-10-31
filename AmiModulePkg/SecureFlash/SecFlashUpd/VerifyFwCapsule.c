@@ -1,7 +1,7 @@
 //*************************************************************************
 //*************************************************************************
 //**                                                                     **
-//**        (C)Copyright 1985-2015, American Megatrends, Inc.            **
+//**        (C)Copyright 1985-2013, American Megatrends, Inc.            **
 //**                                                                     **
 //**                       All Rights Reserved.                          **
 //**                                                                     **
@@ -27,18 +27,18 @@
 // Statements that include other files
 #include "Efi.h"
 #include "Pei.h"
-#include "Token.h"
+#include "token.h"
 #include <AmiPeiLib.h>
 #include <Hob.h>
 #include <RomLayout.h>
 #include <Ffs.h>
+#include <Ppi/ReadOnlyVariable.h>
 #include <FlashUpd.h>
 #include <PPI/CryptoPPI.h>
-//#include <PPI/FwVersion.h>
-#include <Ppi/FwVersion.h> 
+#include <PPI/FwVersion.h>
 #include <Protocol/Hash.h>
 #include "AmiCertificate.h"
-#include <Protocol/AmiDigitalSignature.h>
+#include <BaseCryptLib.h>
 
 //----------------------------------------------------------------------------
 // Function Externs 
@@ -51,7 +51,7 @@ typedef struct {
     EFI_FFS_FILE_HEADER FfsHdr;
     EFI_COMMON_SECTION_HEADER SecHdr;
     EFI_GUID            SectionGuid;
-    UINT8               FwCapHdr[0];
+    UINT8                FwCapHdr[0];
 } AMI_FFS_COMMON_SECTION_HEADER;
 
 typedef struct _FID_SECTION {
@@ -61,18 +61,18 @@ typedef struct _FID_SECTION {
 
 //----------------------------------------------------------------------------
 // Local Variables
-static EFI_GUID FWCapsuleGuid    = APTIO_FW_CAPSULE_GUID;
-static EFI_GUID FWkeyGuid        = PR_KEY_GUID;
-static EFI_GUID FwCapFfsGuid     = AMI_FW_CAPSULE_FFS_GUID;
+static EFI_GUID FwCapFfsGuid = AMI_FW_CAPSULE_FFS_GUID;
 static EFI_GUID FwCapSectionGuid = AMI_FW_CAPSULE_SECTION_GUID;
-static EFI_GUID FidSectionGuid   = \
+static EFI_GUID FidSectionGuid = \
     { 0x2EBE0275, 0x6458, 0x4AF9, 0x91, 0xed, 0xD3, 0xF4, 0xED, 0xB1, 0x00, 0xAA };
 
-const UINT8 *FwBadKey = "$BAD";
 const UINT8 *FidSignature = "$FID";
 
 EFI_PEI_SERVICES  **gPeiServices;
 static AMI_CRYPT_DIGITAL_SIGNATURE_PPI *gpAmiSigPPI=NULL;
+
+static EFI_GUID gFWCapsuleGuid              = APTIO_FW_CAPSULE_GUID;
+static EFI_GUID gFWkeyGuid                  = PR_KEY_GUID;
 
 static UINT8 gHashDB[SHA256_DIGEST_SIZE];
 // Allocate Hash Descr table
@@ -112,8 +112,9 @@ CHAR8       CoreMinorVersion[3];
 CHAR8       ProjectMajorVersion[3];
 CHAR8       ProjectMinorVersion[3];
 */
+    *FailedVTask = Ver;
 // Project ID, Major, Minor rev    
-PEI_TRACE((-1, gPeiServices, "OrgBiosTag=%s,NewBiosTag=%s\nPrjMajVer=%02d, NewMajVer=%s\nPrjMinorVer=%02d, NewMinorVer=%s\n",
+PEI_TRACE((-1, gPeiServices, "\nOrgBiosTag=%s,NewBiosTag=%s\nPrjMajVer=%02X, NewMajVer=%s\nPrjMinorVer=%02X, NewMinorVer=%s\n",
 FwVersionData->BiosTag, strProjectId,
 PROJECT_MAJOR_VERSION, FwVersionData->ProjectMajorVersion,
 PROJECT_MINOR_VERSION, FwVersionData->ProjectMinorVersion
@@ -126,10 +127,10 @@ PROJECT_MINOR_VERSION, FwVersionData->ProjectMinorVersion
 #if (defined(REFLASH_INTERACTIVE) && REFLASH_INTERACTIVE==1)
         return TRUE;
 #else    
-    return FALSE;
+        return FALSE;
 #endif    
 #endif
-
+        
     *FailedVTask = 0;
     return TRUE;
 }
@@ -171,7 +172,7 @@ BOOLEAN GetFidData(
                 return TRUE;
             }
 //        }
-    } while( SearchPointer++ < (UINT8*)((UINTN)pFV+Size));
+    } while( SearchPointer++ < (UINT8*)((UINT32)pFV+Size));
 
     return FALSE;
 }
@@ -201,9 +202,7 @@ VerifyFwRevision (
     EFI_PHYSICAL_ADDRESS    FvAddress;
     FW_VERSION             *FwVersionData;
 
-    *FailedVTask = Ver;
-
-    Area = (ROM_AREA *)((UINTN)FWCapsuleHdr+FWCapsuleHdr->RomLayoutOffset);
+    Area = (ROM_AREA *)(UINTN)((UINT32)FWCapsuleHdr+FWCapsuleHdr->RomLayoutOffset);
     for (Area; Area->Size != 0; Area++) {
         if (!(Area->Attributes & ROM_AREA_FV_SIGNED)) 
             continue;
@@ -245,7 +244,7 @@ EFI_STATUS FindCapHdrFFS(
     AMI_FFS_COMMON_SECTION_HEADER *FileSection;
     APTIO_FW_CAPSULE_HEADER *pFwCapHdr;
 
-    SearchPointer = (UINT32 *)((UINT8 *)pCapsule - sizeof(AMI_FFS_COMMON_SECTION_HEADER) + FWCAPSULE_MAX_PAYLOAD_SIZE);
+    SearchPointer = (UINT32 *)((UINT8 *)pCapsule - sizeof(AMI_FFS_COMMON_SECTION_HEADER) + FLASH_SIZE);
     Signature = FwCapFfsGuid.Data1;
 
     do {
@@ -258,7 +257,7 @@ EFI_STATUS FindCapHdrFFS(
                 // just a sanity check - Cap Size must match the Section size
                 if(((*(UINT32 *)FileSection->FfsHdr.Size) & 0xffffff) >=
                         pFwCapHdr->CapHdr.HeaderSize + sizeof(AMI_FFS_COMMON_SECTION_HEADER) &&
-                    !guidcmp((EFI_GUID*)&pFwCapHdr->CapHdr.CapsuleGuid, &FWCapsuleGuid)
+                    !guidcmp((EFI_GUID*)&pFwCapHdr->CapHdr.CapsuleGuid, &gFWCapsuleGuid)
                 ){
                     *pFfsData = (UINT8*)pFwCapHdr;
                         return EFI_SUCCESS;
@@ -297,7 +296,7 @@ EFI_STATUS HashFwRomMapImage (
 
     UINTN    i, RomMap_size, max_num_elem, num_elem;
 
-    RomAreaTbl = (ROM_AREA *)((UINTN)FWCapsuleHdr+FWCapsuleHdr->RomLayoutOffset);
+    RomAreaTbl = (ROM_AREA *)(UINTN)((UINT32)FWCapsuleHdr+FWCapsuleHdr->RomLayoutOffset);
 
     RomMap_size = FWCapsuleHdr->RomImageOffset-FWCapsuleHdr->RomLayoutOffset;
     max_num_elem = RomMap_size/sizeof(ROM_AREA);
@@ -305,7 +304,7 @@ EFI_STATUS HashFwRomMapImage (
 // assume max size of RomMap array = RomMap_size/sizeof(ROM_AREA);
 // or better yet ...calculate exact number
     num_elem = 0;
-    for (i=0; i < max_num_elem && RomAreaTbl[i].Size != 0; i++ )
+    for (i=0; i < max_num_elem, RomAreaTbl[i].Size != 0; i++ )
     {
         if (RomAreaTbl[i].Attributes & ROM_AREA_FV_SIGNED)
             num_elem++;
@@ -319,19 +318,19 @@ EFI_STATUS HashFwRomMapImage (
         Status = (*gPeiServices)->AllocatePool(gPeiServices, i*2, &gAddrList);
         ASSERT_PEI_ERROR (gPeiServices, Status);
         if(EFI_ERROR(Status)) return Status;
-        gLenList = (UINTN*)((UINTN)gAddrList + i);
+        gLenList = (UINTN*)((UINT8*)gAddrList + i);
     }
     num_elem = 0;
-    for(i=0; i < max_num_elem && num_elem < gHashNumElem && RomAreaTbl[i].Size != 0; i++)
+    for(i=0; i < max_num_elem, num_elem < gHashNumElem, RomAreaTbl[i].Size != 0; i++)
     {
         if (!(RomAreaTbl[i].Attributes & ROM_AREA_FV_SIGNED)) 
             continue;
     // sanity check for buffer overruns
         if(RomAreaTbl[i].Offset > RomSize ||
-           ((UINT64)RomAreaTbl[i].Offset + RomAreaTbl[i].Size > RomSize))
+           (UINT64)RomAreaTbl[i].Offset + RomAreaTbl[i].Size > RomSize)
             return EFI_SECURITY_VIOLATION;
     // RomArea only holds offsets within a payload
-        gAddrList[num_elem] = (UINTN)Payload + RomAreaTbl[i].Offset;
+        gAddrList[num_elem] = (UINTN)((UINTN)Payload + RomAreaTbl[i].Offset);
         gLenList[num_elem] = RomAreaTbl[i].Size;
 
         num_elem++;
@@ -389,31 +388,18 @@ EFI_STATUS VerifyFwCertPkcs7 (
     IN OUT UINT32               *FailedVTask
 ){
     EFI_STATUS              Status;
-    UINT8                  *Pkcs7Cert, *pDigest, *TrustCert;
-    UINTN                   Pkcs7Cert_len, DigestLen, CertSize;
+    UINT8                  *Pkcs7Cert, *pDigest;
+    UINTN                   Pkcs7Cert_len, DigestLen;
 
-    EFI_CERT_X509_SHA256     HashCert;
 //
 // 1. Validate Root Key
 //
-    if( FailedVTask==NULL )
-        return EFI_SECURITY_VIOLATION; 
-
     *FailedVTask = Key;
 
-    if( PubKeyHndl==NULL || PubKeyHndl->Blob==NULL)
+    if( PubKeyHndl->Blob==NULL)
         return EFI_SECURITY_VIOLATION; 
 
-    if(!guidcmp(&PubKeyHndl->AlgGuid, &gEfiCertX509Guid)) {
-        TrustCert = PubKeyHndl->Blob;
-        CertSize  = PubKeyHndl->BlobSize;
-    } else
-    // potentially a TimeStamped Hash of x509 tbs certificate data
-    if(!guidcmp(&PubKeyHndl->AlgGuid, &gEfiCertSha256Guid)) {
-        MemCpy(HashCert.ToBeSignedHash, PubKeyHndl->Blob, SHA256_DIGEST_SIZE);
-        TrustCert = (UINT8*)&HashCert;
-        CertSize = sizeof(EFI_CERT_X509_SHA256);
-    } else
+    if(guidcmp(&PubKeyHndl->AlgGuid, &gEfiCertX509Guid))
         return EFI_UNSUPPORTED;
 
 // 2. Verify Signing Cert Signature
@@ -430,12 +416,14 @@ EFI_STATUS VerifyFwCertPkcs7 (
     DigestLen = SHA256_DIGEST_SIZE;
     Pkcs7Cert = (UINT8*)&FWCapsuleHdr->FWCert.SignCert.CertData; 
     Pkcs7Cert_len = FWCapsuleHdr->FWCert.SignCert.Hdr.Hdr.dwLength-sizeof(WIN_CERTIFICATE_UEFI_GUID_1);
-
-    return gpAmiSigPPI->VerifyPkcs7Sig( gpAmiSigPPI,
+    Status = gpAmiSigPPI->VerifyPkcs7Sig( gpAmiSigPPI,
                      Pkcs7Cert, Pkcs7Cert_len,           // Pkcs7Cert
-                     TrustCert, CertSize,
+                     PubKeyHndl->Blob, PubKeyHndl->BlobSize, // TrustCert
                      &pDigest, &DigestLen               // In/OutData
                      );
+    PEI_TRACE((-1, gPeiServices, "Verify Pkcs7 Certificate Sig : %r\n", Status));
+
+    return Status;
 }
 
 //<AMI_PHDR_START>
@@ -485,7 +473,7 @@ EFI_STATUS VerifyFwCertRsa2048Sha256 (
     PubKeyHndl.BlobSize =  DEFAULT_RSA_KEY_MODULUS_LEN;
     PubKeyHndl.AlgGuid = gEfiCertRsa2048Guid;
     PubKeyHndl.Blob = (UINT8*)FWCapsuleHdr->FWCert.SignCert.CertData.PublicKey;
-    Status = gpAmiSigPPI->VerifyKey(gpAmiSigPPI, &FWkeyGuid, &PubKeyHndl); 
+    Status = gpAmiSigPPI->VerifyKey(gpAmiSigPPI, &gFWkeyGuid, &PubKeyHndl); 
     PEI_TRACE((-1, gPeiServices, "Compare Platform and SignCert Keys : %r\n", Status));
 //  Skip the RootCert key checking if SignCert Key and PR Key are a Match
     if(EFI_ERROR(Status)) {
@@ -493,12 +481,13 @@ EFI_STATUS VerifyFwCertRsa2048Sha256 (
 // 1.1 Compare Platform Root with Capsule's Key from a Root Key store
 //
         for (pRootCert = &FWCapsuleHdr->FWCert.RootCert; 
-             (UINTN)pRootCert < ((UINT64)(UINTN)&FWCapsuleHdr->FWCert+FWCapsuleHdr->FWCert.SignCert.Hdr.Hdr.dwLength) &&
-                 pRootCert->PublicKey[0]!=0;
-             pRootCert++) 
+            (UINT8*)pRootCert < 
+                (UINT8*)&FWCapsuleHdr->FWCert+FWCapsuleHdr->FWCert.SignCert.Hdr.Hdr.dwLength, 
+                pRootCert->PublicKey[0]!=0;
+            pRootCert++) 
         {
             PubKeyHndl.Blob = (UINT8*)pRootCert->PublicKey;
-            Status = gpAmiSigPPI->VerifyKey(gpAmiSigPPI, &FWkeyGuid, &PubKeyHndl); 
+            Status = gpAmiSigPPI->VerifyKey(gpAmiSigPPI, &gFWkeyGuid, &PubKeyHndl); 
             PEI_TRACE((-1, gPeiServices, "Compare Platform and RootCert Keys : %r\n", Status));
             if (EFI_ERROR(Status)) continue;        
     
@@ -516,7 +505,7 @@ EFI_STATUS VerifyFwCertRsa2048Sha256 (
                 Addr = (UINT8*)&FWCapsuleHdr->FWCert.SignCert;
                 Size = sizeof(AMI_CERTIFICATE_RSA2048_SHA256);
             }
-
+    
             Status = gpAmiSigPPI->Hash(gpAmiSigPPI,&gEfiHashAlgorithmSha256Guid, 1,&Addr,(const UINTN*)&Size, gHashDB); 
             if (EFI_ERROR(Status)) break;
         
@@ -539,8 +528,11 @@ EFI_STATUS VerifyFwCertRsa2048Sha256 (
 
     pSig = (void*)FWCapsuleHdr->FWCert.SignCert.CertData.Signature; 
     PubKeyHndl.Blob = (UINT8*)FWCapsuleHdr->FWCert.SignCert.CertData.PublicKey;
+    Status = gpAmiSigPPI->VerifySig(gpAmiSigPPI, &PubKeyHndl, &HashHndl, pSig, DEFAULT_RSA_SIG_LEN, Flags); 
+    PEI_TRACE((-1, gPeiServices, "Verify Sign Certificate Sig : %r\n", Status));
+    if (EFI_ERROR(Status)) return Status;      
 
-    return gpAmiSigPPI->VerifySig(gpAmiSigPPI, &PubKeyHndl, &HashHndl, pSig, DEFAULT_RSA_SIG_LEN, Flags); 
+    return Status;
 }
 
 //**********************************************************************
@@ -586,7 +578,7 @@ EFI_STATUS VerifyFwCertRsa2048Sha256 (
 //**********************************************************************
 EFI_STATUS 
 VerifyFwImage(
-  IN CONST EFI_PEI_SERVICES  **PeiServices,
+  IN EFI_PEI_SERVICES  **PeiServices,
   IN OUT VOID          **pCapsule,
   IN OUT UINT32         *pCapsuleSize,
   IN OUT UINT32         *FailedVTask
@@ -599,100 +591,85 @@ VerifyFwImage(
 
     gPeiServices = PeiServices; 
 
-    PEI_TRACE((-1, PeiServices, "\nValidating FW Capsule (size %X)...\n", *pCapsuleSize));
+    PEI_TRACE((-1, PeiServices, "\nValidate FW Capsule ...\n"));
 
-    // Predefined bit mask of checks to perform on Aptio FW Capsule
+// Predefined bit mask of checks to perform on Aptio FW Capsule
     *FailedVTask = Cap;
 
     Status = (*PeiServices)->LocatePpi(PeiServices, &gAmiDigitalSignaturePPIGuid, 0, NULL, &gpAmiSigPPI);
     if(EFI_ERROR(Status)) return Status;
 
-    // ignore Verification if FwKey is not detected in the FW.
+    // ignore Verification if FwKey is not detected in FW.
     // Works with unsigned Aptio.ROM image or Signed ROM with embedded sig.
     PubKeyHndl.BlobSize =  0;
     PubKeyHndl.Blob = NULL;
-    Status = gpAmiSigPPI->GetKey(gpAmiSigPPI, &FWkeyGuid, &PubKeyHndl);
-    PEI_TRACE((-1, PeiServices, "Get Platform FW Key (%r), %X (%d bytes)\n", Status, (*(UINT32*)PubKeyHndl.Blob), PubKeyHndl.BlobSize));
+    Status = gpAmiSigPPI->GetKey(gpAmiSigPPI, &gFWkeyGuid, &PubKeyHndl);
+    PEI_TRACE((-1, PeiServices, "Get Root Cert Key (%r),0x%8X (%d bytes)\n", Status,  (*(UINT32*)PubKeyHndl.Blob), PubKeyHndl.BlobSize));
     if(EFI_ERROR(Status)) {
-#if (defined(REFLASH_INTERACTIVE) && REFLASH_INTERACTIVE==1)
-        if(Status == EFI_NOT_FOUND)
+        if(Status == EFI_NOT_FOUND) 
             return EFI_SUCCESS;
-#endif
-        *FailedVTask = Key;
-         return Status;
-    }
-    // FW Capsule presence check
-    if(*pCapsule == NULL)
         return EFI_SECURITY_VIOLATION;
+    }
 
     FWCapsuleHdr = *pCapsule;
     Payload = (UINT8*)*pCapsule;
-
+    RomSize = (UINTN)*pCapsuleSize;
+// FW Capsule presence check
 // verify Capsule Mailbox points to FW_CAPSULE hdr
-    if(!guidcmp((EFI_GUID*)&FWCapsuleHdr->CapHdr.CapsuleGuid, &FWCapsuleGuid)) 
+    if(guidcmp((EFI_GUID*)&FWCapsuleHdr->CapHdr.CapsuleGuid, &gFWCapsuleGuid))
     {
-        // Update Payload to point to beginning of Bios ROM
-        Payload = (UINT8*)((UINTN)FWCapsuleHdr + FWCapsuleHdr->RomImageOffset);
-        if ((UINTN)Payload < (UINTN)FWCapsuleHdr)
-          return EFI_SECURITY_VIOLATION;
-    }
-    else
-    {
-// looking FwCap hdr inside BIOS.ROM
+// looking FwCap hder inside BIOS.ROM
         if(EFI_ERROR(FindCapHdrFFS(Payload, (UINT8**)&FWCapsuleHdr)))
             return EFI_SECURITY_VIOLATION;
     }
-    RomSize = FWCapsuleHdr->CapHdr.CapsuleImageSize - FWCapsuleHdr->RomImageOffset;
-    PEI_TRACE((-1, PeiServices, "FW Capsule Hdr offs 0x%X\nGUID: %g\nPayload Size: 0x%X\n",
-               ((UINTN)FWCapsuleHdr-(UINTN)*pCapsule), &(FWCapsuleHdr->CapHdr.CapsuleGuid), RomSize));
+    PEI_TRACE((-1, PeiServices, "FW Capsule Hdr Detected...\n"));
 
-    // Aptio FW Capsule only supporting WIN_CERT_TYPE_EFI_GUID 
-    // More Hdr fields sanity checks for buffer overruns
-    if((RomSize > FWCAPSULE_MAX_PAYLOAD_SIZE) ||
-       (RomSize > *pCapsuleSize) ||
-       (FWCapsuleHdr->FWCert.SignCert.Hdr.Hdr.wCertificateType != WIN_CERT_TYPE_EFI_GUID) ||
-       (FWCapsuleHdr->CapHdr.CapsuleImageSize > FWCAPSULE_IMAGE_SIZE) || 
-       (FWCapsuleHdr->CapHdr.HeaderSize > FWCapsuleHdr->CapHdr.CapsuleImageSize) ||
+// Aptio FW Capsule only supporting WIN_CERT_TYPE_EFI_GUID 
+    if(FWCapsuleHdr->FWCert.SignCert.Hdr.Hdr.wCertificateType != WIN_CERT_TYPE_EFI_GUID)
+            return EFI_SECURITY_VIOLATION;
+
+// Applied for FwCapsules with Hdr on top of the Payload
+    if( (UINT8*)*pCapsule ==(UINT8*) FWCapsuleHdr) {
+        if(FWCapsuleHdr->CapHdr.CapsuleImageSize > *pCapsuleSize)
+            return EFI_SECURITY_VIOLATION;
+        // Update pFwCapsule to point to beginning of Bios ROM
+        Payload = (UINT8*)((UINT32)FWCapsuleHdr + FWCapsuleHdr->RomImageOffset);
+        RomSize = (FWCapsuleHdr->CapHdr.CapsuleImageSize - FWCapsuleHdr->RomImageOffset);
+    }
+// More Hdr fields checks for buffer overruns
+    if((RomSize > *pCapsuleSize) ||
+       (FWCapsuleHdr->RomImageOffset > 0x8000/*FWCAPSULE_MAX_HDR_SIZE*/) || // 32k is a MAX possible FwCap Hdr size       
        (FWCapsuleHdr->CapHdr.HeaderSize > FWCapsuleHdr->RomImageOffset) ||
-       (FWCapsuleHdr->RomImageOffset > (FWCAPSULE_IMAGE_SIZE-FWCAPSULE_MAX_PAYLOAD_SIZE)) || // 16k is a MAX possible FwCap Hdr size
        (FWCapsuleHdr->RomLayoutOffset > FWCapsuleHdr->RomImageOffset) ||
-       ((UINT64)FWCapsuleHdr->FWCert.SignCert.Hdr.Hdr.dwLength + offsetof(APTIO_FW_CAPSULE_HEADER, FWCert) >
-         FWCapsuleHdr->RomLayoutOffset)
+       (FWCapsuleHdr->FWCert.SignCert.Hdr.Hdr.dwLength + offsetof(APTIO_FW_CAPSULE_HEADER, FWCert) > 
+        FWCapsuleHdr->RomLayoutOffset )
     )
         return EFI_SECURITY_VIOLATION;
 
-    // If dummy FWkey - skip integrity check - only test the Capsule's structure 
-    if(*((UINT32*)(PubKeyHndl.Blob)) == *(UINT32*)FwBadKey) {
-        *FailedVTask = Key;
-        PEI_TRACE((-1, PeiServices, "Dummy FW Key detected. Skip image verification...\n"));
-    } else 
-    {
-// Begin Authentication
-        if(!guidcmp((EFI_GUID*)&FWCapsuleHdr->FWCert.SignCert.Hdr.CertType, &gEfiCertPkcs7Guid))
-            Status = VerifyFwCertPkcs7(FWCapsuleHdr, Payload, RomSize, &PubKeyHndl, FailedVTask);
-        else
-            Status = VerifyFwCertRsa2048Sha256(FWCapsuleHdr, Payload, RomSize, FailedVTask);
+    if(!guidcmp((EFI_GUID*)&FWCapsuleHdr->FWCert.SignCert.Hdr.CertType, &gEfiCertPkcs7Guid))
+        Status = VerifyFwCertPkcs7(FWCapsuleHdr, Payload, RomSize, &PubKeyHndl, FailedVTask);
+    else
+        Status = VerifyFwCertRsa2048Sha256(FWCapsuleHdr, Payload, RomSize, FailedVTask);
 
-        PEI_TRACE((-1, gPeiServices, "Verify Sign Certificate Sig : %r\n", Status));
-        if (EFI_ERROR(Status)) return Status;
+    if (EFI_ERROR(Status))
+        return Status;
 
-        *FailedVTask = 0;
+    *FailedVTask = Ver;
 // Local PEI $FID is linked with CspLib. extern FW_VERSION   FwVersionData;
-// Find $FID in new Fw FVs. Any instance found should do for us. Use RomMap from Capsule's Hdr
+// Find $FID in new Fw FVs. Any found should do for us. Use RomMap from Capsule's Hdr
 // compare local BB and Main $Fid BIOS Major/Minor revs with New one.
-        Status = VerifyFwRevision(FWCapsuleHdr, Payload, FailedVTask);
-        PEI_TRACE((-1, PeiServices, "FW Revision test %r (FailedVTask = %x)\n", Status, *FailedVTask));
-    }
+    Status = VerifyFwRevision(FWCapsuleHdr, Payload, FailedVTask);
+    PEI_TRACE((-1, PeiServices, "FW Revision test %r (FailedTask = %x)\n", Status, FailedVTask));
 
     *pCapsule = (UINT32*)Payload;
-    *pCapsuleSize = (UINT32)RomSize;
+    *pCapsuleSize = RomSize;
 
     return Status;
 }
 //*************************************************************************
 //*************************************************************************
 //**                                                                     **
-//**        (C)Copyright 1985-2015, American Megatrends, Inc.            **
+//**        (C)Copyright 1985-2013, American Megatrends, Inc.            **
 //**                                                                     **
 //**                       All Rights Reserved.                          **
 //**                                                                     **

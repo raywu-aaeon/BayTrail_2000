@@ -4,5 +4,5 @@
 	LocalRoot = "AmiModulePkg\Include\Ppi\"
 	RefName = "TpmDevice_PPI"
 [files]
-"TpmDevice.h"	
+"TpmDevice.h"
 <endComponent>

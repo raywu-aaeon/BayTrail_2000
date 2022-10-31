@@ -8,7 +8,7 @@ End
 
 TOKEN
 	Name  = "AMI_DEBUG_MINOR_VERSION"
-	Value  = "02"
+	Value  = "00"
 	TokenType = Integer
 	TargetEQU = Yes
 	TargetH = Yes
@@ -16,7 +16,7 @@ End
 
 TOKEN
 	Name  = "AMI_DEBUG_BUILD"
-	Value  = "0020"
+	Value  = "0001"
 	TokenType = Integer
 	TargetEQU = Yes
 	TargetH = Yes

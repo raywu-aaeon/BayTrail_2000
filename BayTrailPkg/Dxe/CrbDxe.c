@@ -61,7 +61,7 @@
 // Constant, Macro and Type Definition(s)
 //---------------------------------------------------------------------------
 // Constant Definition(s)
-#define KBC_DATA_PORT   0x60 //EIP177963
+
 // Macro Definition(s)
 
 // Type Definition(s)
@@ -344,26 +344,6 @@ CrbDxeInit (
   )
 {
     EFI_STATUS              Status = EFI_SUCCESS;
-    
-//EIP177963 >>	
-    InitAmiLib(ImageHandle,SystemTable);
-    
-#if KBC_SUPPORT && Recovery_SUPPORT && NPCE791x_SUPPORT
-    {
-    UINTN	Data,i;
-    EFI_BOOT_MODE BootMode;
-    
-    BootMode = GetBootMode();
-
-     if ( BootMode == BOOT_IN_RECOVERY_MODE ){
-        // Clear KBC buffer for Ctrl+home recovery
-        for(i=0;i<=0x10000;i++){
-            Data = IoRead8(KBC_DATA_PORT);
-        }
-     }
-    }
-#endif
-//EIP177963 <<
 //EIP137196 >>
     Status = gBS->InstallMultipleProtocolInterfaces(
                     &ImageHandle,

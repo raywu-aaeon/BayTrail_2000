@@ -2,7 +2,7 @@
 //*****************************************************************//
 //*****************************************************************//
 //**                                                             **//
-//**         (C)Copyright 2015, American Megatrends, Inc.        **//
+//**         (C)Copyright 2010, American Megatrends, Inc.        **//
 //**                                                             **//
 //**                     All Rights Reserved.                    **//
 //**                                                             **//
@@ -24,10 +24,15 @@
 //*****************************************************************//
 //*****************************************************************//
 //*****************************************************************//
-/** @file AMIPostMgr.h
-    AMI post manager protocol related code
-
-**/
+//<AMI_FHDR_START>
+//----------------------------------------------------------------------------
+//
+// Name:		AMIPostMgr.h
+//
+// Description:	AMI post manager protocol related code
+//
+//----------------------------------------------------------------------------
+//<AMI_FHDR_END>
 
 #ifndef _AMI_POSTMGR_H_
 #define	_AMI_POSTMGR_H_
@@ -240,10 +245,8 @@ TSE_POST_STATUS_IN_BOOT_TIME_OUT,		// Witing for Boot timeout
 TSE_POST_STATUS_ENTERING_TSE,			// Entering TSE
 TSE_POST_STATUS_IN_TSE,					// Inside TSE
 TSE_POST_STATUS_IN_BBS_POPUP,			// Inside BBS Poupup
-TSE_POST_STATUS_PROCEED_TO_BOOT,		// Outside TSE and Booting or in Shell
-TSE_POST_STATUS_IN_FRONT_PAGE,    		//Inside Front Page
-TSE_POST_STATUS_NO_BOOT_OPTION_FOUND,   	//No boot options found
-TSE_POST_STATUS_ALL_BOOT_OPTIONS_FAILED    	//All Boot Options failed
+TSE_POST_STATUS_PROCEED_TO_BOOT,			// Outside TSE and Booting or in Shell
+TSE_POST_STATUS_IN_FRONT_PAGE    //Inside Front Page
 }TSE_POST_STATUS;
 
 typedef
@@ -326,30 +329,19 @@ typedef struct _AMI_POST_MANAGER_PROTOCOL
     AMI_POST_MANAGER_DISPLAY_MENU		DisplayPostMenu;
     AMI_POST_MANAGER_DISPLAY_MSG_BOX_EX		DisplayMsgBoxEx;
     AMI_POST_MANAGER_DRAW_PROGRESS_BOX		DisplayProgress;
-    AMI_POST_MANAGER_GET_ATTRIBUTE		GetAttribute;	
+    AMI_POST_MANAGER_GET_ATTRIBUTE		GetAttribute;	//EIP-41838: New interface to get the attribute value
     AMI_POST_MANAGER_DISPLAY_TEXT_BOX       DisplayTextBox;
 }
 AMI_POST_MANAGER_PROTOCOL;
 
 extern EFI_GUID	gAmiPostManagerProtocolGuid;
 
-#define TSE_INVALIDATE_BGRT_STATUS_PROTOCOL_GUID \
-   { 0x73905351, 0xeb4d, 0x4637, 0xa8, 0x3b, 0xd1, 0xbf, 0x6c, 0x1c, 0x48, 0xeb }
-
-typedef EFI_STATUS (EFIAPI *INVALIDATE_BGRT_STATUS) (void);
-typedef struct _TSE_INVALIDATE_BGRT_STATUS_PROTOCOL
-{
-	INVALIDATE_BGRT_STATUS 	InvalidateBgrtStatusByProtocol;
-}TSE_INVALIDATE_BGRT_STATUS_PROTOCOL;
-
-extern EFI_GUID	gTSEInvalidateBgrtStatusProtocolGuid;
-
 #endif /* _AMI_POSTMGR_H_ */
 
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2015, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2010, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **

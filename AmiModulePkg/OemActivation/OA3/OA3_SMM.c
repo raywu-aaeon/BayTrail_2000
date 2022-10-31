@@ -1,7 +1,7 @@
 //****************************************************************************
 //****************************************************************************
 //**                                                                        **
-//**             (C)Copyright 1985-2015, American Megatrends, Inc.          **
+//**             (C)Copyright 1985-2012, American Megatrends, Inc.          **
 //**                                                                        **
 //**                          All Rights Reserved.                          **
 //**                                                                        **
@@ -19,11 +19,14 @@
 //
 // $Date: $
 //*****************************************************************************
-/** @file OA3_SMM.c
-    This part of code allows to update ACPI in the OS Runtime through 
-    the SW SMI for OEM Activation without rebooting the system.
-
-**/
+//<AMI_FHDR_START>
+//
+// Name: OA3_SMM.c
+//
+// Description: This part of code allows to update ACPI in the OS Runtime through 
+//              the SW SMI for OEM Activation without rebooting the system.
+//
+//<AMI_FHDR_END>
 //*****************************************************************************
 
 
@@ -33,21 +36,103 @@
 #include <Protocol/SmmSwDispatch2.h>
 #include <Protocol/SmmControl2.h>
 #include <Protocol/SmmCpu.h>
-#include <Library/AmiBufferValidationLib.h>
+#include <AmiHobs.h>
 
 
-/**
-    This function calculates a checksum of table starting at 
-    TblStart of length BytesCount and returns the checksum value.
+//---------------------------------------------------------------------------
 
-    @param 
-        *TblStart   - Starting address of the memory area to checksum.
-        BytesCount  - Length in bytes of the memory area to checksum.
+static EFI_PHYSICAL_ADDRESS gTsegAddress_ = 0;
+static UINT32 gTsegSize_ = 0;
 
-    @retval 
-        Checksum value starting from TblStart and ending at TblStart + BytesCount.
+//---------------------------------------------------------------------------
 
-**/
+
+//<AMI_PHDR_START>
+//--------------------------------------------------------------------------
+//
+// Procedure:   GetTsegVar
+// 
+// Description: This function stores TSEG address and size. 
+//
+// Input:   VOID
+//
+// Output:  VOID
+//
+//--------------------------------------------------------------------------
+//<AMI_PHDR_END>
+
+VOID GetTsegVar(VOID)
+{
+    EFI_STATUS Status;
+    EFI_GUID CpuInfoHobGuid = AMI_CPUINFO_HOB_GUID;
+    EFI_GUID HobListGuid = HOB_LIST_GUID;
+    CPUINFO_HOB *CpuInfoHob = (CPUINFO_HOB*)GetEfiConfigurationTable(pST,&HobListGuid);
+    
+    if (CpuInfoHob == NULL) 
+        return;
+
+    Status = FindNextHobByGuid(&CpuInfoHobGuid,&CpuInfoHob); 
+    if (EFI_ERROR(Status))
+        return;
+
+    gTsegAddress_ = CpuInfoHob->TsegAddress;
+    gTsegSize_ = CpuInfoHob->TsegSize;
+}
+
+
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure: CheckAddressRange
+//
+// Description: Check address range to avoid TSEG area.
+//
+// Input: 
+//  Address - starting address
+//  Range   - length of the area
+//
+// Output: 
+//  EFI_SUCCESS             - Access granted
+//  EFI_SECURITY_VIOLATION  - Access denied!
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
+
+EFI_STATUS CheckAddressRange( IN UINT8 *Address, IN UINTN Range )
+{
+    // if TSEG variables are not initialized then do not validate the access.
+    if ( gTsegAddress_ == 0 || gTsegSize_ == 0 )
+        return EFI_SUCCESS;
+
+    if ( ((EFI_PHYSICAL_ADDRESS)Address >= gTsegAddress_) && 
+         ((EFI_PHYSICAL_ADDRESS)Address <= (gTsegAddress_ + gTsegSize_)) )
+        return EFI_SECURITY_VIOLATION;
+
+    if ( (((EFI_PHYSICAL_ADDRESS)Address + Range) >= gTsegAddress_) && 
+         (((EFI_PHYSICAL_ADDRESS)Address + Range) <= (gTsegAddress_ + gTsegSize_)) )
+        return EFI_SECURITY_VIOLATION;
+
+    return EFI_SUCCESS;
+}
+
+
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name: ChsumTbl
+//
+// Description: This function calculates a checksum of table starting at 
+//  TblStart of length BytesCount and returns the checksum value.
+//
+// Input:   
+//  *TblStart   - Starting address of the memory area to checksum.
+//  BytesCount  - Length in bytes of the memory area to checksum.
+//
+// Output:
+//  Checksum value starting from TblStart and ending at TblStart + BytesCount.
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT8 ChsumTbl( IN UINT8* TblStart, IN UINT32 BytesCount )
 {
@@ -60,14 +145,19 @@ UINT8 ChsumTbl( IN UINT8* TblStart, IN UINT32 BytesCount )
 }
 
 
-/**
-    This function will update ACPI table for OA3.
-
-    @param ProductKey - pointer to the Product Key
-
-    @retval EFI_STATUS
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure: Oa3UpdateAcpiTable
+//
+// Description: This function will update ACPI table for OA3.
+//
+// Input: ProductKey - pointer to the Product Key
+//
+// Output: EFI_STATUS
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 EFI_STATUS Oa3UpdateAcpiTable( IN UINT8 *ProductKey )
 {
@@ -83,7 +173,7 @@ EFI_STATUS Oa3UpdateAcpiTable( IN UINT8 *ProductKey )
     if (ProductKey == NULL)
         return EFI_INVALID_PARAMETER;
 
-    Status = AmiValidateMemoryBuffer((VOID*)ProductKey, sizeof(MsdmTable->Data));
+    Status = CheckAddressRange(ProductKey, sizeof(MsdmTable->Data));
     if (EFI_ERROR(Status))
         return Status;
     
@@ -133,7 +223,7 @@ EFI_STATUS Oa3UpdateAcpiTable( IN UINT8 *ProductKey )
 
         // Validate ACPI header's length. Check a range to avoid SMM
         Ptr = (UINT8*)AcpiHdr + AcpiHdr->Length;
-        Status = AmiValidateMemoryBuffer((VOID*)Ptr, sizeof(EFI_PHYSICAL_ADDRESS));
+        Status = CheckAddressRange(Ptr, sizeof(EFI_PHYSICAL_ADDRESS));
         if (EFI_ERROR(Status))
             return Status;
         
@@ -157,25 +247,31 @@ EFI_STATUS Oa3UpdateAcpiTable( IN UINT8 *ProductKey )
 }
 
 
-/**
-    Calling the SMI Interface
-    The caller will write AL (the value 0xee) to the SMI Command Port as 
-    defined in the ACPI FADT.
-    The SMI handler will update the callers' buffer(s) and return.
-
-    @param 
-        DispatchHandle
-        DispatchContext
-
-    @retval VOID
-
-    @note  
- The function will clear the carry bit if it is successful (CF = 0). 
- If the function is unsuccessful, it will set the carry bit and set the 
- error code in the AH register as indicated by the error table below.
- The function returns the following data in the provided parameter block. 
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure: SwSmiOa3Function
+//
+// Description:
+// Calling the SMI Interface
+// The caller will write AL (the value 0xee) to the SMI Command Port as 
+// defined in the ACPI FADT.
+// The SMI handler will update the callers' buffer(s) and return.
+//
+// Input: 
+//  DispatchHandle
+//  DispatchContext
+//
+// Output: VOID
+//
+// Notes:
+// The function will clear the carry bit if it is successful (CF = 0). 
+// If the function is unsuccessful, it will set the carry bit and set the 
+// error code in the AH register as indicated by the error table below.
+// The function returns the following data in the provided parameter block. 
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 EFI_STATUS SwSmiOa3Function( 
     IN EFI_HANDLE DispatchHandle,
@@ -213,16 +309,21 @@ EFI_STATUS SwSmiOa3Function(
 }
 
 
-/**
-    Registration of the SMI function
-
-    @param 
-        ImageHandle - Image handle
-        SystemTable - Pointer to the system table
-
-    @retval EFI_STATUS
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure: InSmmFunction
+//
+// Description: Registration of the SMI function
+//
+// Input: 
+//  ImageHandle - Image handle
+//  SystemTable - Pointer to the system table
+//
+// Output: EFI_STATUS
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 EFI_STATUS InSmmFunction(
     IN EFI_HANDLE ImageHandle, 
@@ -255,34 +356,56 @@ EFI_STATUS InSmmFunction(
 }
 
 
-/**
-    This function is the entry point of the module.
-
-    @param 
-        ImageHandle  - Image handle
-        *SystemTable - Pointer to the system table
-
-    @retval EFI_STATUS
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:   OA3_SMM_EntryPoint
+//
+// Description: This function is the entry point of the module.
+//
+// Input:       
+//  ImageHandle  - Image handle
+//  *SystemTable - Pointer to the system table
+//
+// Output:      EFI_STATUS
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 EFI_STATUS EFIAPI OA3_SMM_EntryPoint(
     IN EFI_HANDLE        ImageHandle,
     IN EFI_SYSTEM_TABLE  *SystemTable )
 {
     EFI_STATUS Status;
+    EFI_OA3_MSDM_STRUCTURE MsdmVariable;
+    EFI_GUID AmiGlobalVariableGuid = AMI_GLOBAL_VARIABLE_GUID;
+    UINTN  Size = sizeof(EFI_OA3_MSDM_STRUCTURE);
     
     InitAmiLib(ImageHandle, SystemTable);
 
-    // Install the SMI handler
-    Status = InitSmmHandler( 
-         ImageHandle, 
-         SystemTable, 
-         InSmmFunction, 
-         NULL 
-     );
-    TRACE((TRACE_ALWAYS,"OEM Activation: InitSmmHandler Status=%r\n",Status));
-    ASSERT_EFI_ERROR(Status);
+    // Get TSEG address and TSEG size
+    GetTsegVar();
+
+    // Check if OA3 MSDM variable does exist
+    Status = pRS->GetVariable(
+        EFI_OA3_MSDM_VARIABLE,
+        &AmiGlobalVariableGuid,
+        NULL,
+        &Size,
+        &MsdmVariable
+    );
+    if (!EFI_ERROR(Status)) {
+
+        // then install the SMI handler
+        Status = InitSmmHandler( 
+            ImageHandle, 
+            SystemTable, 
+            InSmmFunction, 
+            NULL 
+        );
+        TRACE((TRACE_ALWAYS,"OEM Activation: InitSmmHandler Status=%r\n",Status));
+        ASSERT_EFI_ERROR(Status);
+    }
 
     return Status;
 }
@@ -291,7 +414,7 @@ EFI_STATUS EFIAPI OA3_SMM_EntryPoint(
 //****************************************************************************
 //****************************************************************************
 //**                                                                        **
-//**             (C)Copyright 1985-2015, American Megatrends, Inc.          **
+//**             (C)Copyright 1985-2012, American Megatrends, Inc.          **
 //**                                                                        **
 //**                          All Rights Reserved.                          **
 //**                                                                        **

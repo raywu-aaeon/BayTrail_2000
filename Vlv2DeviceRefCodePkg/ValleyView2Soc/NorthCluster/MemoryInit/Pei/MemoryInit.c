@@ -92,7 +92,7 @@ EFI_GUID gEfiSmmPeiSmramMemoryReserveGuid = EFI_SMM_PEI_SMRAM_MEMORY_RESERVE;
 #define NB_MAX_TOLUD_3G         0x400
 #define NB_MAX_TOLUD_3_25G      0x300
 #define NB_MAX_TOLUD_3_5G       0x200
-//#define MemoryCeilingVariable   L"MemCeil." //EIP202736
+#define MemoryCeilingVariable   L"MemCeil."
   //AMI_OVERRIDE - EIP126704  Select dynamic or fixed mmio size.<<
 
 CHAR16    EfiMemoryConfigVariable[] = L"MemoryConfig";
@@ -245,8 +245,6 @@ ASSERT_EFI_ERROR (Status);
 #endif
 
   switch (PlatformInfo->BoardId) {
-    case BOARD_ID_KRSIP_MRB:
-    case BOARD_ID_KRSIP_INTERPOSER:
     case BOARD_ID_CVH:
       CurrentMrcData.currentPlatform = PLAT_SV_DDR3L_ALPINE_VALLEY;
       CurrentMrcData.DDRType = DDRType_DDR3L;
@@ -276,7 +274,6 @@ ASSERT_EFI_ERROR (Status);
       }
       break;
     case BOARD_ID_BB_RVP:
-    case BOARD_ID_MINNOW2:
     case BOARD_ID_BL_RVP_DDR3L:
       CurrentMrcData.currentPlatform = PLAT_EV_DDR3L_BAY_TRAIL;
       CurrentMrcData.DDRType = DDRType_DDR3L;
@@ -330,6 +327,31 @@ ASSERT_EFI_ERROR (Status);
       Input_Struct.tFAW = 30;  
   }
 
+  //Crestview Hills DDR3L memdown
+  if (PlatformInfo->BoardId == BOARD_ID_CVH) {
+      Input_Struct.Rank_En[0][0] = 1;          /**<  [Channel][Rank] Ranks Present with MAX_RANKS defined in Imemory.h */
+      Input_Struct.Rank_En[0][1] = 0;          /**<  [Channel][Rank] Ranks Present with MAX_RANKS defined in Imemory.h */
+      Input_Struct.Rank_En[1][0] = 1;          /**<  [Channel][Rank] Ranks Present with MAX_RANKS defined in Imemory.h */
+      Input_Struct.Rank_En[1][1] = 0;          /**<  [Channel][Rank] Ranks Present with MAX_RANKS defined in Imemory.h */
+      Input_Struct.DIMM_DWidth[0][0] = 0x1;    /**<  [Channel][Slot] DIMM0 DRAM device data width 00:x8, 01:x16, 02:x32*/
+      Input_Struct.DIMM_DWidth[1][0] = 0x1;    /**<  [Channel][Slot] DIMM0 DRAM device data width 00:x8, 01:x16, 02:x32*/
+      Input_Struct.DIMM_Density[0][0] = 0x2;   /**< [Channel][Slot] DIMM0 DRAM device data density  00:1Gbit, 01:2Gbit,02:4Gbit,03:8Gbit*/
+      Input_Struct.DIMM_Density[1][0] = 0x2;   /**< [Channel][Slot] DIMM0 DRAM device data density  00:1Gbit, 01:2Gbit,02:4Gbit,03:8Gbit*/
+      Input_Struct.DRAM_Speed = 0x2;           /**< 00:800, 01:1066, 02:1333, 03:1600 */ 
+      Input_Struct.DRAM_Type = 0x1;            /**< 00:DDR3, 01:DDR3L, 02:DDR3U, 04:LPDDR2, 05:LPDDR3, 06:DDR4 */ 
+      Input_Struct.DIMM_MemDown = 0x1;         /**< 0:DIMM, 1:Memory Down */    
+      Input_Struct.DIMM_BusWidth[0][0] = 3;    /**< [Channel][Slot] 000:8 bits; 01:16bits, 02:32bits, 03:64bits */
+      Input_Struct.DIMM_BusWidth[1][0] = 3;    /**< [Channel][Slot] 000:8 bits; 01:16bits, 02:32bits, 03:64bits */
+      Input_Struct.DIMM_Sides[0][0] = 0;       /**< [Channel][Slot] ranks per dimm 00:1rank, 01:2ranks, 02:3ranks, 03:4ranks */
+      Input_Struct.DIMM_Sides[1][0] = 0;       /**< [Channel][Slot] ranks per dimm 00:1rank, 01:2ranks, 02:3ranks, 03:4ranks */
+      Input_Struct.tCL = 9;                    /**< actual CL */ 
+      Input_Struct.tRP_tRCD = 9;               /**< TRP and tRCD in dram clk - 5:12.5ns, 6:15ns, 7:*/ 
+      Input_Struct.tWR = 10;                   /**< in dram clk  */ 
+      Input_Struct.tWTR = 5;                   /**< in dram clk  */  
+      Input_Struct.tRRD = 5;                   /**< in dram clk  */  
+      Input_Struct.tRTP = 5;                   /**< in dram clk  */ 
+      Input_Struct.tFAW = 30;                  /**< in dram clk  */  
+  }
 
   //Baytrail 25x27 4 Layers Memory Down Design
   //1 Channel, Single Rank, Memory Speed 1066Mhz, Device Width x16, Device Density 4Gbit
@@ -865,7 +887,7 @@ SetOemMrcData (
   CHAR16		gSetupVariable[]	= L"Setup";
   SETUP_DATA          		        SetupData;
   UINTN                             VariableSize;
-  //UINT32                            MemoryCeiling; //EIP202736
+  UINT32                            MemoryCeiling;
   //AMI_OVERRIDE - EIP126704  Select dynamic or fixed mmio size.<<
 #if SMM_SUPPORT
   UINT8 Data8 = 0xFF;
@@ -937,13 +959,8 @@ SetOemMrcData (
                                  &VariableSize,
                                  &SetupData);
   if(!EFI_ERROR(Status)) { 
-//EIP186458 >>
-   if(SetupData.ApertureSize > 2)  SetupData.MaxTolud = SetupData.MaxTolud2;
-//EIP186458 <<
 	switch (SetupData.MaxTolud)
 	{
-	//EIP202736 >>
-	/*
       case 0: //DYNAMIC
     	  //
     	  // Get the memory ceiling
@@ -980,29 +997,18 @@ SetOemMrcData (
     			  OemMrcData->MmioSize = NB_MAX_TOLUD_1G;
     		  } 
     	  }
-//EIP153365 >>
-    	  if (SetupData.ApertureSize > 2) {
-    		  if (OemMrcData->MmioSize < NB_MAX_TOLUD_2_5G) {
-    			  OemMrcData->MmioSize = NB_MAX_TOLUD_2_5G;
-    		  }
-    	  }
-//EIP153365 <<		  
     	  break;
   	  case 1: OemMrcData->MmioSize = NB_MAX_TOLUD_1G; break; //MAX_TOLUD_1G
   	  case 2: OemMrcData->MmioSize = NB_MAX_TOLUD_1_25G; break; //MAX_TOLUD_1.25G
   	  case 3: OemMrcData->MmioSize = NB_MAX_TOLUD_1_5G; break; //MAX_TOLUD_1.5G
   	  case 4: OemMrcData->MmioSize = NB_MAX_TOLUD_1_75G; break; //MAX_TOLUD_1.75G
-	  */
   	  case 5: OemMrcData->MmioSize = NB_MAX_TOLUD_2G; break; //MAX_TOLUD_2G
   	  case 6: OemMrcData->MmioSize = NB_MAX_TOLUD_2_25G; break; //MAX_TOLUD_2.25G
   	  case 7: OemMrcData->MmioSize = NB_MAX_TOLUD_2_5G; break; //MAX_TOLUD_2.5G
   	  case 8: OemMrcData->MmioSize = NB_MAX_TOLUD_2_75G; break; //MAX_TOLUD_2.75G
   	  case 9: OemMrcData->MmioSize = NB_MAX_TOLUD_3G; break; //MAX_TOLUD_3G
-	  /*
   	  case 10:  OemMrcData->MmioSize = NB_MAX_TOLUD_3_25G; break; //MAX_TOLUD_3.25G
   	  case 11:  OemMrcData->MmioSize = NB_MAX_TOLUD_3_5G; break; //MAX_TOLUD_3.5G
-	  */
-	  //EIP202736 <<
   	  default:  break;
 	}
 	if(OemMrcData->MmioSize < 0x400) OemMrcData->MmioSize = 0x400; 

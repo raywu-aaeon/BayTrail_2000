@@ -1,7 +1,7 @@
 //*************************************************************************
 //*************************************************************************
 //**                                                                     **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.            **
+//**        (C)Copyright 1985-2013, American Megatrends, Inc.            **
 //**                                                                     **
 //**                       All Rights Reserved.                          **
 //**                                                                     **
@@ -12,7 +12,7 @@
 //*************************************************************************
 //*************************************************************************
 /** @file
-  Driver Binding functions implementation for for UefiPxeBc Driver.
+  Driver Binding functions implementationfor for UefiPxeBc Driver.
 
   Copyright (c) 2007 - 2013, Intel Corporation. All rights reserved.<BR>
 
@@ -268,10 +268,10 @@ PxeBcDestroyIp4Children (
            );
 
     if (Private->Snp != NULL) { 
-      //
+	  //
       // AMI PORTING START : Bug 16042431 - X4-4: UEFI pxe install causes system reboot.
-      //
-      /*
+	  //
+	  /*
       //
       // Close SNP from the child virtual handle
       //
@@ -281,10 +281,10 @@ PxeBcDestroyIp4Children (
              This->DriverBindingHandle,
              Private->Ip4Nic->Controller
              );
-      */
-      //
-      // AMI PORTING END : Bug 16042431 - X4-4: UEFI pxe install causes system reboot.
-      //
+	  */
+	  //
+	  // AMI PORTING END : Bug 16042431 - X4-4: UEFI pxe install causes system reboot.
+	  //
              
       gBS->UninstallProtocolInterface (
              Private->Ip4Nic->Controller,
@@ -318,17 +318,7 @@ PxeBcDestroyIp6Children (
   IN PXEBC_PRIVATE_DATA           *Private
   )
 {
- //  
- // AMI PORTING START : Fix for Ipv6 address changes every boot for particular port.
- //
- CHAR16                           IAID[]=L"_IAIDPXE",TempBuffer[30];
- CHAR16                          *MacString;
- EFI_STATUS                       Status;	
- //  
- // AMI PORTING END : Fix for Ipv6 address changes every boot for particular port.
- //
-
- ASSERT(Private != NULL);
+  ASSERT(Private != NULL);
 
   if (Private->Ip6Child != NULL) {
     //
@@ -422,37 +412,7 @@ PxeBcDestroyIp6Children (
       Private->Dhcp6Child
       );
   }
-  
-  //  
-  // AMI PORTING START : Fix for Ipv6 address changes every boot for particular port.
-  // 
-  //
-  // Get the mac string, it's the name of various variable
-  //
-  Status = NetLibGetMacString (Private->Controller, This->ImageHandle, &MacString);     
-  ASSERT (Status == EFI_SUCCESS);  
-  //
-  // Copy the MAC string to temporary buffer.
-  //
-  StrCpy(TempBuffer,MacString);
-  //
-  // Append IAIDPXE string to the MAC string as same variable name(MAC address)
-  // was used in Ip6 driver.
-  //
-  StrCat(TempBuffer,IAID); 
-  //
-  // Destroy the SetVariable created in start function for IAID.
-  //
-  gRT->SetVariable (
-                    TempBuffer,
-                    &gEfiNetworkStackSetupGuid,
-                    (EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS),
-                    0,
-                    NULL
-                   );
-  //  
-  // AMI PORTING END : Fix for Ipv6 address changes every boot for particular port.
-  //
+
   if (Private->Ip6Nic != NULL) {
     //
     // Close PxeBcPrivate from the parent Nic handle and destroy the virtual handle.
@@ -475,10 +435,10 @@ PxeBcDestroyIp6Children (
            NULL
            );
     if (Private->Snp != NULL) {
-      //
-      // AMI PORTING START : Bug 16042431 - X4-4: UEFI pxe install causes system reboot.
-      //
-      /*
+	  //
+	  // AMI PORTING START : Bug 16042431 - X4-4: UEFI pxe install causes system reboot.
+	  //
+	  /*
       //
       // Close SNP from the child virtual handle
       //
@@ -488,10 +448,10 @@ PxeBcDestroyIp6Children (
              This->DriverBindingHandle,
              Private->Ip6Nic->Controller
              );
-     */
-      //
-      // AMI PORTING END : Bug 16042431 - X4-4: UEFI pxe install causes system reboot.
-      //
+	  */
+	  //
+	  // AMI PORTING END : Bug 16042431 - X4-4: UEFI pxe install causes system reboot.
+	  //
       gBS->UninstallProtocolInterface (
              Private->Ip6Nic->Controller,
              &gEfiSimpleNetworkProtocolGuid,
@@ -770,8 +730,8 @@ PxeBcCreateIp4Children (
     }
 
     //
-    // AMI PORTING START : Bug 16042431 - X4-4: UEFI pxe install causes system reboot.
-    //
+	// AMI PORTING START : Bug 16042431 - X4-4: UEFI pxe install causes system reboot.
+	//
     /*//
     // Open SNP on the child handle BY_DRIVER. It will prevent any additionally 
     // layering to perform the experiment.
@@ -787,9 +747,9 @@ PxeBcCreateIp4Children (
     if (EFI_ERROR (Status)) {
       goto ON_ERROR;
     }*/
-    //
-    // AMI PORTING END : Bug 16042431 - X4-4: UEFI pxe install causes system reboot.
-    //
+	//
+	// AMI PORTING END : Bug 16042431 - X4-4: UEFI pxe install causes system reboot.
+	//
   }
 
   //
@@ -864,17 +824,8 @@ PxeBcCreateIp6Children (
   PXEBC_PRIVATE_PROTOCOL          *Id;
   //EFI_SIMPLE_NETWORK_PROTOCOL     *Snp;           // AMI PORTING : Bug 16042431 - X4-4: UEFI pxe install causes system reboot.     
   UINTN                           Index;
-  //  
-  // AMI PORTING START : Fix for Ipv6 address changes every boot for particular port.
-  //
-  UINT32                          *IaId;  
-  CHAR16						   IAID[]=L"_IAIDPXE",TempBuffer[30];
-  CHAR16                          *MacString;
-  //  
-  // AMI PORTING END : Fix for Ipv6 address changes every boot for particular port.
-  //
 
-  if (Private->Ip6Nic != NULL)  {
+  if (Private->Ip6Nic != NULL) {
     //
     // Already created before.
     //
@@ -914,53 +865,16 @@ PxeBcCreateIp6Children (
   if (EFI_ERROR (Status)) {
     goto ON_ERROR;
   }
-  
-  
-  //  
-  // AMI PORTING START : Fix for Ipv6 address changes every boot for particular port.
+
   //
-  Status = NetLibGetMacString (ControllerHandle, This->ImageHandle, &MacString);     
-  ASSERT(Status == EFI_SUCCESS);
+  // Generate a random IAID for the Dhcp6 assigned address.
   //
-  // Copy the MAC string to temporary buffer.
-  //
-  StrCpy(TempBuffer,MacString);
-  //
-  // Append IAIDPXE string to the MAC string as same variable name(MAC address)
-  // was used in Ip6 driver.
-  //
-  StrCat(TempBuffer,IAID);
-  //
-  // Check whether variable is already available. If it is available use same IAID 
-  // otherwise create IAID.
-  //
-  Status = GetVariable2 (TempBuffer, &gEfiNetworkStackSetupGuid, (VOID**)&IaId, NULL);
-  if(Status == EFI_NOT_FOUND) {
-    //
-    // Generate a random IAID for the Dhcp6 assigned address.
-    //
-    Private->IaId = NET_RANDOM (NetRandomInitSeed ());   
-    if (Private->Snp != NULL) {
-      for (Index = 0; Index < Private->Snp->Mode->HwAddressSize; Index++) {
-        Private->IaId |= (Private->Snp->Mode->CurrentAddress.Addr[Index] << ((Index << 3) & 31));
-      }  
-    }
-    //
-    // Store the newly created IAID in NVRAM
-    //
-    Status = gRT->SetVariable (
-                          TempBuffer,
-                          &gEfiNetworkStackSetupGuid,
-                          (EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS),
-                          sizeof(UINT32),
-                          &Private->IaId
-                          );   
-  } else if (Status == EFI_SUCCESS) {
-    Private->IaId = *IaId;     
+  Private->IaId = NET_RANDOM (NetRandomInitSeed ());
+  if (Private->Snp != NULL) {
+    for (Index = 0; Index < Private->Snp->Mode->HwAddressSize; Index++) {
+      Private->IaId |= (Private->Snp->Mode->CurrentAddress.Addr[Index] << ((Index << 3) & 31));
+    }  
   }
-  //  
-  // AMI PORTING END : Fix for Ipv6 address changes every boot for particular port.
-  //
 
   //
   // Create Mtftp6 child and open Mtftp6 protocol for PxeBc->Mtftp.
@@ -1139,7 +1053,7 @@ PxeBcCreateIp6Children (
     if (EFI_ERROR (Status)) {
       goto ON_ERROR;
     }
-    //
+	//
     // AMI PORTING START : Bug 16042431 - X4-4: UEFI pxe install causes system reboot.
     /*//
     // Open SNP on the child handle BY_DRIVER. It will prevent any additionally 
@@ -1156,9 +1070,9 @@ PxeBcCreateIp6Children (
     if (EFI_ERROR (Status)) {
       goto ON_ERROR;
     }*/
-    //
-    // AMI PORTING END : Bug 16042431 - X4-4: UEFI pxe install causes system reboot.
-    //
+	//
+	// AMI PORTING END : Bug 16042431 - X4-4: UEFI pxe install causes system reboot.
+	//
   }
 
   //
@@ -1226,13 +1140,14 @@ PxeBcDriverEntryPoint (
   //
   // AMI PORTING START.
   //
+  EFI_GUID	          NetworkStackGuid = NETWORK_STACK_GUID;
   UINTN               VarSize;
   EFI_STATUS          Status; 
 
   VarSize = sizeof (NETWORK_STACK);
 
   Status= gRT->GetVariable(L"NetworkStackVar", 
-                   &gEfiNetworkStackSetupGuid, 
+                   &NetworkStackGuid, 
                    NULL, 
                    &VarSize, 
                    &NetworkStackSetupData);
@@ -1245,7 +1160,6 @@ PxeBcDriverEntryPoint (
     NetworkStackSetupData.Ipv4Pxe = 1;
     NetworkStackSetupData.Ipv6Pxe = 1;
     NetworkStackSetupData.PxeBootWaitTime = 0;
-    NetworkStackSetupData.MediaDetectCount = MIN_MEDIA_DETECT_COUNT;
   }
   //
   // AMI PORTING END.
@@ -1353,8 +1267,8 @@ PxeBcSupported (
     if (NetworkStackSetupData.Ipv4Pxe == 0 || EFI_ERROR (Status))  return EFI_UNSUPPORTED;
   } else {
     //
-    // Check whether PxeIpv6 is disabled in setup if so return EFI_UNSUPPORTED.
-    //
+	// Check whether PxeIpv6 is disabled in setup if so return EFI_UNSUPPORTED.
+	//
     if (NetworkStackSetupData.Ipv6Pxe == 0 || EFI_ERROR (Status))  return EFI_UNSUPPORTED;
   }
 

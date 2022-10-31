@@ -7,5 +7,4 @@
 "GraphicsConsole.inf"
 [files]
 "GraphicsConsole.sdl"	
-"GraphicsConsole.chm"	
 <endComponent>

@@ -106,9 +106,6 @@ typedef struct _KEY_WAITING_RECORD{
 
 #define MAX_KEY_ALLOWED 32
 
-#define PCI_CFG_ADDR(bus,dev,func,reg) \
-    ((VOID*)(UINTN) (PcdGet64 (PcdPciExpressBaseAddress) + ((bus) << 20) + ((dev) << 15) + ((func) << 12) + reg))
-
 typedef struct
 {
     AMI_EFI_KEY_DATA KeyData[MAX_KEY_ALLOWED + 1];

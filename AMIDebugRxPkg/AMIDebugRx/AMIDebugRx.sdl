@@ -9,19 +9,38 @@ TOKEN
 	Master = Yes
 End
 
+PATH
+	Name  = "AMI_DEBUG_RX_DIR"
+	Path  = "AMIDebugRxPkg\AMIDebugRx"
+End
+
+TOKEN
+	Name  = "Build_AMIDebugRx"
+	Value  = "1"
+	Help  = "Switch for building AMIDebugRx eModule"
+	TokenType = Boolean
+End
+
+TOKEN
+	Name  = "PLATFORM_NAME"
+	Value  = "AMIDebugRx"
+	TokenType = Expression
+	TargetDSC = Yes
+	Token = "Build_AMIDebugRx" "=" "1"
+End
+
 TOKEN
 	Name  = "PeiDebugger_SUPPORT"
 	Value  = "1"
-	Help  = "Main switch to enable Pei Debugger support in Project."
+	Help  = "Can be changed only if debugger/USBRedirction module is present. Main switch to enable Pei Debugger support in Project."
 	TokenType = Boolean
 	TargetMAK = Yes
-	TargetH = Yes
 End
 
 TOKEN
 	Name  = "USB_DEBUG_TRANSPORT"
 	Value  = "1"
-	Help  = "Do Not Change this SDL Token. Main token switch to enable the USB Debug Port interface\installation into the project."
+	Help  = "Can be changed only if debugger/USBRedirction module is present. Main token switch to enable the USB Debug Port interface\installation into the project.\Disable this switch if Serial or Generic USB Cable interface is desired."
 	TokenType = Boolean
 	TargetMAK = Yes
 	TargetH = Yes
@@ -30,7 +49,6 @@ End
 TOKEN
 	Name  = "REDIRECTION_ONLY_MODE"
 	Value  = "1"
-	Help  = "Do Not Change this SDL Token. Used for AMI Debug for UEFI Internally."
 	TokenType = Integer
 	TargetEQU = Yes
 	TargetMAK = Yes
@@ -63,7 +81,6 @@ TOKEN
 	TokenType = Boolean
 	TargetMAK = Yes
 	TargetH = Yes
-	Token = "PeiDebugger_SUPPORT" "=" "1"
 End
 
 TOKEN
@@ -74,91 +91,29 @@ TOKEN
 	TargetMAK = Yes
 	TargetH = Yes
 	Token = "DEBUG_PORT_DETECTION_MODE" "=" "1"
-	Token = "PeiDebugger_SUPPORT" "=" "1"
 End
 
-TOKEN
-	Name  = "DBG_WRITE_IO_80_SUPPORT"
-	Value  = "1"
-	Help  = "Token switch to 1:Enable\0:Disable the port 80 checkpoints from AMIDebugRx\Debugger modules."
-	TokenType = Boolean
-	TargetMAK = Yes
-	TargetH = Yes
+LibraryMapping
+	Class  = "NULL"
+	Instance  = "AMIDebugRx.DxeDebugStatusCodeLib"
+	Override  = "AmiModulePkg.StatusCodeDxe"
 End
 
-TOKEN
-	Name  = "AMI_DEBUG_RX_IN_S3_SUPPORT"
-	Value  = "1"
-	Help  = "SDL token to have AMI Debug RX support in S3 Resume."
-	TokenType = Boolean
-	TargetMAK = Yes
-	TargetH = Yes
+LibraryMapping
+	Class  = "NULL"
+	Instance  = "AMIDebugRx.DxeDebugStatusCodeLib"
+	Override  = "AmiModulePkg.StatusCodeSmm"
 End
 
-TOKEN
-	Name  = "S3_BASE_MEMORY_SIZE"
-	Value  = "0x400000"
-	Help  = "Number of bytes for S3 resume base memory."
-	TokenType = Integer
-	TargetH = Yes
-	Range  = "0x40000 = 256K, increase/decrease it in units of 0x1000 = 4K"
-	Token = "AMI_DEBUG_RX_IN_S3_SUPPORT" "=" "1"
+LibraryMapping
+	Class  = "NULL"
+	Instance  = "AMIDebugRx.DebuggerLib"
+	Override  = "AmiModulePkg.StatusCodeDxe"
 End
 
-TOKEN
-	Name  = "DbgSMIReadHdl"
-	Value  = "96"
-	Help  = "SMM handle 60h used to move to B2 port.This is the SMI handle used by debugger to read the memory in SMM"
-	TokenType = Integer
-	TargetEQU = Yes
-	TargetMAK = Yes
-	TargetH = Yes
-End
-
-TOKEN
-	Name  = "DBG_PERFORMANCE_RECORDS"
-	Value  = "1"
-	Help  = "SDL token to have Debugger Performance Records added"
-	TokenType = Boolean
-	TargetMAK = Yes
-	TargetH = Yes
-	Token = "PerformanceMeasurement_SUPPORT" "=" "1"
-End
-
-TOKEN
-	Name  = "SMM_DEBUG_SUPPORT"
-	Value  = "1"
-	Help  = "Main token switch to enable the SMM Debug support."
-	TokenType = Boolean
-	TargetMAK = Yes
-	TargetH = Yes
-End
-
-PATH
-	Name  = "AMI_DEBUG_RX_DIR"
-	Path  = "AMIDebugRxPkg\AMIDebugRx"
-End
-
-MODULE
-	Help  = "Includes AMIDebugRx.mak to Project"
-	File  = "AMIDebugRx.mak"
-End
-
-ELINK
-	Name  = "$(AMI_DEBUG_RX_DIR)\AMIDebugRx.sd"
-	Parent  = "SETUP_DEFINITIONS"
-	InvokeOrder = AfterParent
-End
-
-ELINK
-	Name  = "$(AMI_DEBUG_RX_DIR)\AMIDebugRx.uni"
-	Parent  = "SetupStringFiles"
-	InvokeOrder = AfterParent
-End
-
-ELINK
-	Name  = "$(BUILD_DIR)\AMIDebugRx.sdb"
-	Parent  = "SETUP_SDBS"
-	InvokeOrder = AfterParent
+LibraryMapping
+	Class  = "NULL"
+	Instance  = "AMIDebugRx.PeiDebugStatusCodeLib"
+	Override  = "AmiModulePkg.StatusCodePei"
 End
 

@@ -39,11 +39,10 @@
 #ifndef _TCG_COMMON_H_
 #define _TCG_COMMON_H_
 
-#include <UEFI.h>
-#include "AmiTcg\TcgPc.h"
-#include "AmiTcg\TcgEfiTpm.h"
-#include "AmiTcg\Sha.h"
-#include "AmiTcg\Tpm20.h"
+#include <Efi.h>
+#include "TcgPc.h"
+#include "TcgEfiTpm.h"
+#include "Sha1.h"
 #include <HOB.h>
 #include "TcgMisc.h"
 
@@ -63,24 +62,6 @@
 #define END_OF_HOB_LIST( Hob )  (GET_HOB_TYPE( Hob ) ==\
                                  EFI_HOB_TYPE_END_OF_HOB_LIST)
 
-#define TCGPASSTHROUGH( cb, in, out ) \
-    TcgCommonPassThrough(  \
-        cb, \
-        sizeof (in) / sizeof (*(in)), \
-        (in), \
-        sizeof (out) / sizeof (*(out)), \
-        (out) \
-        )
-
-#define TCMPASSTHROUGH( cb, in, out ) \
-    TcmCommonPassThrough(  \
-        cb, \
-        sizeof (in) / sizeof (*(in)), \
-        (in), \
-        sizeof (out) / sizeof (*(out)), \
-        (out) \
-        )
-
 extern
 UINT16
 __stdcall TcgCommonH2NS (
@@ -95,30 +76,19 @@ VOID* GetHob (
     IN UINT16 Type,
     IN VOID   *HobStart  );
 
-EFI_STATUS GetNextGuidHob (
+BOOLEAN CompareGuid (
+    EFI_GUID *G1,
+    EFI_GUID *G2 );
+
+EFI_STATUS TcgGetNextGuidHob ( //EIP146351_146352
     IN OUT VOID          **HobStart,
     IN EFI_GUID          * Guid,
     OUT VOID             **Buffer,
     OUT UINTN*BufferSize OPTIONAL );
 
-EFI_STATUS TcgGetNextGuidHob(
-    IN OUT VOID          **HobStart,
-    IN EFI_GUID          * Guid,
-    OUT VOID             **Buffer,
-    OUT UINTN            *BufferSize OPTIONAL );
-
 extern
 EFI_STATUS
 __stdcall TcgCommonPassThrough (
-    IN VOID                    *CallbackContext,
-    IN UINT32                  NoInputBuffers,
-    IN TPM_TRANSMIT_BUFFER     *InputBuffers,
-    IN UINT32                  NoOutputBuffers,
-    IN OUT TPM_TRANSMIT_BUFFER *OutputBuffers );
-
-extern
-EFI_STATUS
-__stdcall TcmCommonPassThrough (
     IN VOID                    *CallbackContext,
     IN UINT32                  NoInputBuffers,
     IN TPM_TRANSMIT_BUFFER     *InputBuffers,
@@ -133,14 +103,14 @@ __stdcall TcgCommonCopyMem (
     IN VOID  *Src,
     IN UINTN Len );
 
+extern
 EFI_STATUS
-__stdcall TcgCommonLogEvent(
+__stdcall TcgCommonLogEvent (
     IN VOID          *CallbackContext,
     IN TCG_PCR_EVENT *EvtLog,
     IN OUT UINT32    *TableSize,
     IN UINT32        MaxSize,
-    IN TCG_PCR_EVENT *NewEntry, 
-    IN UINT8         HashAlgorithm );
+    IN TCG_PCR_EVENT *NewEntry );
 
 extern
 EFI_STATUS
@@ -207,7 +177,7 @@ __stdcall SHA1HashAll (
     IN VOID            *CallbackContext,
     IN VOID            *HashData,
     IN UINTN           HashDataLen,
-    OUT UINT8          *Digest
+    OUT TCG_DIGEST     *Digest
     );
 
 EFI_STATUS EfiLibGetSystemConfigurationTable(
@@ -218,58 +188,5 @@ extern
 BOOLEAN
 __stdcall AutoSupportType (
     );
-
-#pragma pack(push,1)
-
-typedef union {
-  UINT8 sha1[SHA1_DIGEST_SIZE];
-  UINT8 sha256[SHA256_DIGEST_SIZE];
-} TPM_COMM_DIGEST_UNION;
-
-typedef struct{
-  UINT16                  HashAlgId;
-  TPM_COMM_DIGEST_UNION   Digest;
-}TPM_COMM_DIGEST;
-
-#define   HASH_ALG_COUNT         2 
-
-typedef struct {
-  UINT32            Count;
-  TPM_COMM_DIGEST   Digests[HASH_ALG_COUNT];
-}TPM_COMM_DIGEST_LIST;
-
-typedef struct {
-    TPMI_DH_PCR                pcrHandle;
-    TPM_COMM_DIGEST_LIST       DigestValue;
-} PCR_Extend_In;
-
-typedef struct {
-    TPMI_ST_COMMAND_TAG       Tag;
-    UINT32                    CommandSize;
-    TPM_CC                    CommandCode;
-    PCR_Extend_In             inputParameters;
-    UINT32                    authorizationSize;
-    TPMS_AUTH_SESSION_COMMAND pwapAuth;
-} TPM2_PCRExtend_cmd_t;
-
-typedef struct {
-    TPMI_ST_COMMAND_TAG         Tag;
-    UINT32                      RespondSize;
-    TPM_RC                      ResponseCode;
-    UINT32                      parameterSize;
-    TPMS_AUTH_SESSION_RESPONSE  pwapAuth;
-} TPM2_PCRExtend_res_t;
-
-EFI_STATUS
-__stdcall SHA2HashAll(
-    IN  VOID            *CallbackContext,
-    IN  VOID            *HashData,
-    IN  UINTN           HashDataLen,
-    OUT UINT8           *Digest
-);
-
-
-#pragma pack(pop)
-
 
 #endif

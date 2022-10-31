@@ -25,12 +25,6 @@
 // 1     11/23/10 2:00a Davidhsieh
 //
 //**********************************************************************
-
-
-/** @file AmiPpmPolicy.h
-		Header file for the AmiPpmPolicy.
-	
-**/
 #ifndef _AMI_PPM_POLICY_H_
 #define _AMI_PPM_POLICY_H_
 

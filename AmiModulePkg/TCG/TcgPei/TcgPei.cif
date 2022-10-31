@@ -1,0 +1,12 @@
+<component>
+	name = "TcgPei"
+	category = ModulePart
+	LocalRoot = "AmiModulePkg\TCG\TcgPei\"
+	RefName = "TcgPei"
+[files]
+[parts]
+"TcgPeiAfterMem"
+"TcgPlatformSetupPeiPolicy"
+[INF]
+"TcgPei.inf"
+<endComponent>

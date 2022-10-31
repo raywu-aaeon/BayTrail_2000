@@ -5,7 +5,6 @@
 	RefName = "AmiTcgIncludes"
 [files]
 "sha1.h"	
-"sha.h"	
 "TcgCommon.h"	
 "TpmLib.h"	
 "tcg.h"	

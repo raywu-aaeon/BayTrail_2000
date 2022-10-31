@@ -1,7 +1,7 @@
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2012, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **
@@ -12,9 +12,28 @@
 //**********************************************************************
 //**********************************************************************
 
+//**********************************************************************
+// $Header: /Alaska/SOURCE/Modules/CSM/Generic/csm.sd 18    12/23/11 2:42p Olegi $
+//
+// $Revision: 18 $
+//
+// $Date: 12/23/11 2:42p $
+//**********************************************************************
+
+//**********************************************************************
+//<AMI_FHDR_START>
+//
+// Name:	CSM.SD
+//
+// Description:	CSM Setup data definitions
+//
+//<AMI_FHDR_END>
+//**********************************************************************
+
 #ifdef SETUP_DATA_DEFINITION
 	UINT8	CsmSupport;
 	UINT8	ExpansionCardText;
+	UINT8	I19Trap;
 	UINT8	ZipEmulation;
 	UINT8	KeepGA20Active;
 	UINT8	BootOptionFilter;
@@ -43,6 +62,14 @@
 		help        = STRING_TOKEN(STR_CSM_OPROM_DISPLAY_MODE_HELP),\
 		option text = STRING_TOKEN(STR_CSM_OPROM_DISPLAY_FORCE_BIOS),	value = 1, flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;\
 		option text = STRING_TOKEN(STR_CSM_OPROM_DISPLAY_KEEP_CURRENT),	value = 0, flags = 0;\
+	endoneof;
+
+#define CSM_CHECKBOX_I19TRAP\
+	oneof varid  = SETUP_DATA.I19Trap,\
+		prompt      = STRING_TOKEN(STR_CSM_I19_TRAP),\
+		help        = STRING_TOKEN(STR_CSM_I19_TRAP_HELP),\
+		option text = STRING_TOKEN(STR_CSM_I19_TRAP_IMMEDIATE),	value = 1, flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;\
+		option text = STRING_TOKEN(STR_CSM_I19_TRAP_POSTPONED),	value = 0, flags = 0;\
 	endoneof;
 
 
@@ -112,9 +139,8 @@
         oneof varid = SETUP_DATA.OldOpRom,\
             prompt  = STRING_TOKEN(STR_OLD_OPROM_LAUNCH_POLICY),\
             help    = STRING_TOKEN(STR_OLD_OPROM_LAUNCH_POLICY_HELP),\
-            option text = STRING_TOKEN(STR_OPROM_POLICY_DISABLE),  value = 0, flags = RESET_REQUIRED;\
             option text = STRING_TOKEN(STR_OPROM_POLICY_UEFI_ONLY),  value = 1, flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;\
-            option text = STRING_TOKEN(STR_OPROM_POLICY_LEGACY_ONLY),  value = 2, flags = RESET_REQUIRED;\
+            option text = STRING_TOKEN(STR_OPROM_POLICY_LEGACY_ONLY),  value = 0, flags = RESET_REQUIRED;\
         endoneof;
 
 #endif //#ifdef CONTROL_DEFINITION
@@ -122,6 +148,7 @@
 #ifdef CONTROLS_WITH_DEFAULTS
 	CSM_ONEOF_KEEPGA20ACTIVE
 	CSM_ONEOF_EXPANSIONCARDTEXT
+	CSM_CHECKBOX_I19TRAP
 	CSM_ONEOF_ZIPEMULATION
 	CSM_POLICY_BOOT_OPTION_FILTER
 	CSM_POLICY_PXE_OPROM
@@ -193,6 +220,7 @@ suppressif ideqval SETUP_DATA.CsmSupport == 0;
 
 	CSM_ONEOF_KEEPGA20ACTIVE
 	CSM_ONEOF_EXPANSIONCARDTEXT
+	CSM_CHECKBOX_I19TRAP
 
 	SEPARATOR
 	CSM_POLICY_BOOT_OPTION_FILTER
@@ -227,7 +255,7 @@ endform;
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2012, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **

@@ -58,10 +58,7 @@
 [Depex]
   gEfiPeiReadOnlyVariable2PpiGuid AND
   gEfiPeiMemoryDiscoveredPpiGuid
-
-[Guids]
-  gAmiGlobalVariableGuid  
-  
+    
 #DEPENDENCY_START
 #    EFI_PEI_READ_ONLY_VARIABLE_PPI_GUID AND
 #    EFI_PEI_PERMANENT_MEMORY_INSTALLED_PPI

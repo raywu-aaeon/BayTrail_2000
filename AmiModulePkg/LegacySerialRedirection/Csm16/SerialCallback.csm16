@@ -4,17 +4,24 @@
 ;****************************************************************************
 ;****************************************************************************
 ;**                                                                        **
-;**             (C)Copyright 1985-2014, American Megatrends, Inc.          **
+;**             (C)Copyright 1985-2012, American Megatrends, Inc.          **
 ;**                                                                        **
 ;**                          All Rights Reserved.                          **
 ;**                                                                        **
-;**              5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093      **
+;**                 5555 Oakbrook Pkwy, Suite 200, Norcross, GA 30093      **
 ;**                                                                        **
 ;**                          Phone (770)-246-8600                          **
 ;**                                                                        **
 ;****************************************************************************
 ;****************************************************************************
 
+;****************************************************************************
+; $Header: /Alaska/SOURCE/Modules/Legacy Serial Redirection/SerialCallback.ASM 1     5/03/10 1:53a Rameshr $
+;
+; $Revision: 1 $
+;
+; $Date: 5/03/10 1:53a $
+;****************************************************************************
 
 ;----------------------------------------------------------------------------
 ;       INCLUDE FILES
@@ -48,6 +55,20 @@ SerialCallBackApiModuleStart LABEL BYTE
 ;----------------------------------------------------------------------------
 ;<AMI_PHDR_END>
 SerialCallbackCsm16Api  PROC FAR PUBLIC
+; Adjust current IP so that the data offsets are valid
+        call    $+3                     ; Push curent IP
+        pop     bx                      ; Get current IP in BX
+        shr     bx, 4
+        mov     ax, cs                  ; Always x000h
+        add     ax, bx                  ; New CS
+        push    ax
+        mov     ax, OFFSET newSerialOffset
+        sub     ax, OFFSET SerialCallBackApiModuleStart
+        push    ax
+       ;; push    newSerialOffset-SerialCallBackApiModuleStart
+        retf                            ; Execute from new CS:IP
+
+newSerialOffset:
         push    bp
         mov     bp, sp
         mov     dx,  ss:[bp+42h]    ; Serial Port Address
@@ -146,11 +167,11 @@ END
 ;****************************************************************************
 ;****************************************************************************
 ;**                                                                        **
-;**             (C)Copyright 1985-2014, American Megatrends, Inc.          **
+;**             (C)Copyright 1985-2012, American Megatrends, Inc.          **
 ;**                                                                        **
 ;**                          All Rights Reserved.                          **
 ;**                                                                        **
-;**              5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093      **
+;**                 5555 Oakbrook Pkwy, Suite 200, Norcross, GA 30093      **
 ;**                                                                        **
 ;**                          Phone (770)-246-8600                          **
 ;**                                                                        **

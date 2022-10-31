@@ -12,11 +12,23 @@
 //**********************************************************************
 //**********************************************************************
 
+//**********************************************************************
+// $Header: /Alaska/BIN/Modules/ACPI/Template/Core/mptable.h 7     5/08/09 1:16p Yakovlevs $
+//
+// $Revision: 7 $
+//
+// $Date: 5/08/09 1:16p $
+//**********************************************************************
 
-/** @file mptable.h
-    Header file for MP table builder
-
-**/
+//<AMI_FHDR_START>
+//----------------------------------------------------------------------------
+//
+// Name:	Mptable.h
+//
+// Description:	Header file for MP table builder
+//
+//----------------------------------------------------------------------------
+//<AMI_FHDR_END>
 
 #ifndef __MPTABLE__H__
 #define __MPTABLE__H__
@@ -27,7 +39,7 @@ extern "C" {
 //------------------------ Include files ------------------------------
 #include <Protocol/PciRootBridgeIo.h>
 #include <Protocol/PciIo.h>
-#include <Token.h>
+#include <token.h>
 
 //------------------------ Type declarations --------------------------
 #define MP_TABLE_MAX_BUS_ENTRIES        0xFF //from 0 to 0xFE, FF reserved means no parent bus
@@ -76,15 +88,19 @@ extern "C" {
 
 #pragma pack(1)
 
-/**
-    This structure represents MP table floating pointer format
-    as defined in MPS specification v1.4
-
-**/
+//<AMI_THDR_START>
+//----------------------------------------------------------------------------
+// Name: MP_FLOATING_POINTER
+//
+// Description: This structure represents MP table floating pointer format
+// as defined in MPS specification v1.4
+//
+//----------------------------------------------------------------------------
+//<AMI_THDR_END>
 
 typedef struct _MP_FOATING_POINTER
 {
-    UINT32  Signature; 
+    UINT32  Signature;
     UINT32  PhysicalAddresPointer;
     UINT8   Length;
     UINT8   VersionNumber;
@@ -94,11 +110,15 @@ typedef struct _MP_FOATING_POINTER
     UINT8   Reserved[3];
 } MP_FLOATING_POINTER;
 
-/**
-    This structure represents MP configuration table header format
-    as defined in MPS specification v1.4
-
-**/
+//<AMI_THDR_START>
+//----------------------------------------------------------------------------
+// Name: MP_CONFIGURATION_TABLE_HEADER
+//
+// Description: This structure represents MP configuration table header format
+// as defined in MPS specification v1.4
+//
+//----------------------------------------------------------------------------
+//<AMI_THDR_END>
 
 typedef struct _MP_CONFIGURATION_TABLE_HEADER
 {
@@ -117,11 +137,15 @@ typedef struct _MP_CONFIGURATION_TABLE_HEADER
     UINT8   Reserved;
 } MP_CONFIGURATION_TABLE_HEADER;
 
-/**
-    This structure represents MP configuration table CPU entry format
-    as defined in MPS specification v1.4
-
-**/
+//<AMI_THDR_START>
+//----------------------------------------------------------------------------
+// Name: MP_TABLE_CPU_ENTRY
+//
+// Description: This structure represents MP configuration table CPU entry format
+// as defined in MPS specification v1.4
+//
+//----------------------------------------------------------------------------
+//<AMI_THDR_END>
 
 typedef struct _MP_TABLE_CPU_ENTRY
 {
@@ -139,11 +163,15 @@ typedef struct _MP_TABLE_CPU_ENTRY
     UINT32  Reserved[2];
 } MP_TABLE_CPU_ENTRY;
 
-/**
-    This structure represents MP configuration table bus entry format
-    as defined in MPS specification v1.4
-
-**/
+//<AMI_THDR_START>
+//----------------------------------------------------------------------------
+// Name: MP_TABLE_BUS_ENTRY
+//
+// Description: This structure represents MP configuration table bus entry format
+// as defined in MPS specification v1.4
+//
+//----------------------------------------------------------------------------
+//<AMI_THDR_END>
 
 typedef struct _MP_TABLE_BUS_ENTRY
 {
@@ -152,11 +180,15 @@ typedef struct _MP_TABLE_BUS_ENTRY
     UINT8   BusTypeString[6];
 } MP_TABLE_BUS_ENTRY;
 
-/**
-    This structure represents MP configuration table IO APIC entry format
-    as defined in MPS specification v1.4
-
-**/
+//<AMI_THDR_START>
+//----------------------------------------------------------------------------
+// Name: MP_TABLE_IO_APIC_ENTRY
+//
+// Description: This structure represents MP configuration table IO APIC entry format
+// as defined in MPS specification v1.4
+//
+//----------------------------------------------------------------------------
+//<AMI_THDR_END>
 
 typedef struct _MP_TABLE_IO_APIC_ENTRY
 {
@@ -179,11 +211,15 @@ typedef union
     } PciBusIrq;
 } SOURCE_IRQ;
 
-/**
-    This structure represents MP configuration table interrupt assingment
-    entry format as defined in MPS specification v1.4
-
-**/
+//<AMI_THDR_START>
+//----------------------------------------------------------------------------
+// Name: MP_TABLE_INT_ASSIGN_ENTRY
+//
+// Description: This structure represents MP configuration table interrupt assingment
+// entry format as defined in MPS specification v1.4
+//
+//----------------------------------------------------------------------------
+//<AMI_THDR_END>
 
 typedef struct _MP_TABLE_INT_ASSIGN_ENTRY
 {
@@ -196,11 +232,15 @@ typedef struct _MP_TABLE_INT_ASSIGN_ENTRY
     UINT8   DestIoApicItin;
 } MP_TABLE_INT_ASSIGN_ENTRY;
 
-/**
-    This structure represents MP table local interrupt assingment
-    entry format as defined in MPS specification v1.4
-
-**/
+//<AMI_THDR_START>
+//----------------------------------------------------------------------------
+// Name: MP_TABLE_LOCAL_INT_ASSIGN_ENTRY
+//
+// Description: This structure represents MP table local interrupt assingment
+// entry format as defined in MPS specification v1.4
+//
+//----------------------------------------------------------------------------
+//<AMI_THDR_END>
 
 typedef struct _MP_TABLE_LOCAL_INT_ASSIGN_ENTRY
 {
@@ -218,11 +258,15 @@ typedef struct _MP_TABLE_LOCAL_INT_ASSIGN_ENTRY
     UINT8   DestLocalApicItin;
 } MP_TABLE_LOCAL_INT_ASSIGN_ENTRY;
 
-/**
-    This structure represents MP table system address map extended
-    entry format as defined in MPS specification v1.4
-
-**/
+//<AMI_THDR_START>
+//----------------------------------------------------------------------------
+// Name: MP_EX_TABLE_SYS_ADDRESS_MAP_ENTRY
+//
+// Description: This structure represents MP table system address map extended
+// entry format as defined in MPS specification v1.4
+//
+//----------------------------------------------------------------------------
+//<AMI_THDR_END>
 
 typedef struct _MP_EX_TABLE_SYS_ADDRESS_MAP_ENTRY
 {
@@ -234,11 +278,15 @@ typedef struct _MP_EX_TABLE_SYS_ADDRESS_MAP_ENTRY
     UINT64 AddressLength;
 } MP_EX_TABLE_SYS_ADDRESS_MAP_ENTRY;
 
-/**
-    This structure represents MP table bus hierarchy extended
-    entry format as defined in MPS specification v1.4
-
-**/
+//<AMI_THDR_START>
+//----------------------------------------------------------------------------
+// Name: MP_EX_TABLE_BUS_HIERARCHY_ENTRY
+//
+// Description: This structure represents MP table bus hierarchy extended
+// entry format as defined in MPS specification v1.4
+//
+//----------------------------------------------------------------------------
+//<AMI_THDR_END>
 
 typedef struct _MP_EX_TABLE_BUS_HIERARCHY_ENTRY
 {
@@ -250,11 +298,15 @@ typedef struct _MP_EX_TABLE_BUS_HIERARCHY_ENTRY
     UINT8 Reserved[3];
 } MP_EX_TABLE_BUS_HIERARCHY_ENTRY;
 
-/**
-    This structure represents MP table compatibility bus address modifier 
-    extended entry format as defined in MPS specification v1.4
-
-**/
+//<AMI_THDR_START>
+//----------------------------------------------------------------------------
+// Name: MP_EX_TABLE_COMPAT_BUS_ADDRESS_MODIFIER_ENTRY
+//
+// Description: This structure represents MP table compatibility bus address modifier 
+// extended entry format as defined in MPS specification v1.4
+//
+//----------------------------------------------------------------------------
+//<AMI_THDR_END>
 
 typedef struct _MP_EX_TABLE_COMPAT_BUS_ADDRESS_MODIFIER_ENTRY
 {
@@ -267,10 +319,21 @@ typedef struct _MP_EX_TABLE_COMPAT_BUS_ADDRESS_MODIFIER_ENTRY
 
 //----------------------- Additional structures -----------------------
 
-/**
-    PCI bus description data structure
- 
-**/
+//<AMI_THDR_START>
+//----------------------------------------------------------------------------
+// Name: BUS_INFO
+//
+// Description: PCI bus description data structure
+//
+// Fields: Name             Type                    Description
+//----------------------------------------------------------------------------
+// BusId                UINT8                      Bus Id number
+// ParentBusId          UINT8                      Parent bus Id number
+// BusType              UINT8                      Bus type number
+// Flags                UINT8                      Bus flags
+// 
+//----------------------------------------------------------------------------
+//<AMI_THDR_END>
 
 typedef struct _BUS_INFO
 {
@@ -280,11 +343,15 @@ typedef struct _BUS_INFO
     UINT8   Flags;
 } BUS_INFO;
 
-/**
-    This structure represents ACPI address space descriptor
-    format as defined in ACPI specification v3.0
-
-**/
+//<AMI_THDR_START>
+//----------------------------------------------------------------------------
+// Name: ACPI_ADDRESS_SPACE_DESC
+//
+// Description: This structure represents ACPI address space descriptor
+// format as defined in ACPI specification v3.0
+//
+//----------------------------------------------------------------------------
+//<AMI_THDR_END>
 
 typedef struct _ACPI_ADDRESS_SPACE_DESC
 {
@@ -300,10 +367,19 @@ typedef struct _ACPI_ADDRESS_SPACE_DESC
 	UINT64	AddressLength;
 } ACPI_ADDRESS_SPACE_DESC;
 
-/**
-    Device interrupt destination description data structure
- 
-**/
+//<AMI_THDR_START>
+//----------------------------------------------------------------------------
+// Name: IO_APIC_DEST
+//
+// Description: Device interrupt destination description data structure
+//
+// Fields: Name             Type                    Description
+//----------------------------------------------------------------------------
+// IoApicItin           UINT8                      IO APIC pin number
+// IoApicId             UINT8                      IO APIC Id
+// 
+//----------------------------------------------------------------------------
+//<AMI_THDR_END>
 
 typedef struct _IO_APIC_DEST
 {
@@ -312,10 +388,21 @@ typedef struct _IO_APIC_DEST
 } IO_APIC_DEST;
 
 #if AmiBoardInfo_SUPPORT == 0
-/**
-    PCI interrupt routing description data structure
- 
-**/
+//<AMI_THDR_START>
+//----------------------------------------------------------------------------
+// Name: PCI_IRQ_APIC_ROUTE
+//
+// Description: PCI interrupt routing description data structure
+//
+// Fields: Name             Type                    Description
+//----------------------------------------------------------------------------
+// PciBusNumber         UINT8                      PCI bus number
+// DeviceNumber         UINT8                      PCI device number
+// Intn                 IO_APIC_DEST               Interrupt destination
+// Reserved             UINT8
+// 
+//----------------------------------------------------------------------------
+//<AMI_THDR_END>
 
 typedef struct _PCI_IRQ_APIC_ROUTE
 {
@@ -327,10 +414,22 @@ typedef struct _PCI_IRQ_APIC_ROUTE
 #endif
 
 
-/**
-    IO APIC description data structure
- 
-**/
+//<AMI_THDR_START>
+//----------------------------------------------------------------------------
+// Name: IO_APIC_INFO
+//
+// Description: IO APIC description data structure
+//
+// Fields: Name             Type                    Description
+//----------------------------------------------------------------------------
+// IoApicId               UINT8               IO APIC Id
+// IoApicVersion          UINT8               IO APIC version
+// IoApicFlags            UINT8               IO APIC flags
+// MaxRedirectionEntries  UINT8               Max number of redirection entries supported by IO APIC
+// IoApicAddress          UINT32              IO APIC address in memory
+// 
+//----------------------------------------------------------------------------
+//<AMI_THDR_END>
 
 typedef struct _IO_APIC_INFO
 {

@@ -1,9 +1,10 @@
 <component>
-	name = "FwKey framework"
+	name = "Platform FW Key"
 	category = ModulePart
 	LocalRoot = "Keys\FW\"
 	RefName = "FWKey"
 [files]
 "FWkey.sdl"	
 "FWKey.mak"	
+"FWkeyFileStatement.txt"	
 <endComponent>

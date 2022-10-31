@@ -1,7 +1,7 @@
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2014 American Megatrends, Inc.          **
+//**        (C)Copyright 1985-2013 American Megatrends, Inc.          **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **
@@ -12,11 +12,15 @@
 //**********************************************************************
 //**********************************************************************
 
-/** @file
-  AmiCertificate.h
-  AMI FW Certificate defines and data structures
-**/
-
+//**********************************************************************
+//<AMI_FHDR_START>
+//
+// Name:  AmiCertificate.h
+//
+// Description:	AMI FW Certificate defines and data structures
+//
+//<AMI_FHDR_END>
+//**********************************************************************
 #ifndef __AMI_CERTIFICATE_H__
 #define __AMI_CERTIFICATE_H__
 
@@ -46,38 +50,28 @@
 //#define APTIO_FW_CAPSULE_GUID \
 //    { 0xc50e4b4a, 0x302, 0x41fe, 0x9b, 0x99, 0x43, 0xde, 0x77, 0x7, 0x6, 0x3f }
 
-///
-/// Aptio FW Capsule with extended header fields.
-///4A3CA68B-7723-48FB-803D-578CC1FEC44D
-///
+// FW Capsule with extended header fields.
+//4A3CA68B-7723-48FB-803D-578CC1FEC44D
 #define APTIO_FW_CAPSULE_GUID \
     { 0x4A3CA68B, 0x7723, 0x48FB, 0x80, 0x3d, 0x57, 0x8c, 0xc1, 0xfe, 0xc4, 0x4d }
 
-///
-///3FEEC852-F14C-4E7F-97FD-4C3A8C5BBECC
-/// Key format: Raw 256 byte N-Modulus of RSA2048 Key
-///
+//3FEEC852-F14C-4E7F-97FD-4C3A8C5BBECC
+// Key format: Raw 256 byte N-Modulus of RSA2048 Key
 #define PR_KEY_FFS_FILE_RAW_GUID \
     { 0x3FEEC852, 0xF14C, 0x4E7F, 0x97, 0xFD, 0x4C, 0x3A, 0x8C, 0x5B, 0xBE, 0xCC }
 
-///
-/// 5B85965C-455D-4CC6-9C4C-7F086967D2B0
-/// Key format: SHA256 hash of 256 byte N-Modulus of RSA2048 Key
-///
+// 5B85965C-455D-4CC6-9C4C-7F086967D2B0
+// Key format: SHA256 hash of 256 byte N-Modulus of RSA2048 Key
 #define PR_KEY_FFS_FILE_SHA256_GUID \
     { 0x05B85965C, 0x455D, 0x4CC6, 0x9C, 0x4C, 0x7F, 0x08, 0x69, 0x67, 0xD2, 0xB0 }
 
-///
-/// 3A666558-43E3-4D25-9169-DB81F5DB42E1
-/// Key format: x509 ASN.1 DER containing RSA2048 Public Key
-///
+// 3A666558-43E3-4D25-9169-DB81F5DB42E1
+// Key format: x509 ASN.1 DER containing RSA2048 Public Key
 #define PR_KEY_FFS_FILE_X509_GUID \
     { 0x3A666558, 0x43E3, 0x4D25, 0x91, 0x69, 0xdb, 0x81, 0xf5, 0xdb, 0x42, 0xe1 }
 
-///
-/// APTIO Platform Fw Root Signing key identifier
-/// {4E0F9BD4-E338-4B26-843E-BD3AD9B2837B}
-///
+// APTIO Platform Fw Root Signing key identifier
+// {4E0F9BD4-E338-4B26-843E-BD3AD9B2837B}
 #define PR_KEY_GUID \
     { 0x4E0F9BD4, 0xE338, 0x4B26, 0x84, 0x3E, 0xBD, 0x3A, 0xD9, 0xB2, 0x83, 0x7B }
 
@@ -96,27 +90,21 @@
 //#define AMI_PB_KEY_RSA2048_GUID \
 //    { 0x04627B9B, 0x385E, 0x4744, 0x90, 0x21, 0xE6, 0x63, 0x19, 0xF2, 0x03, 0x94 }
 
-///
-/// AMI APTIO 4 Signature Owner id.
-/// An identifier which identifies the agent which added the signature to the list.
-///
+// AMI APTIO 4 Signature Owner id.
+// An identifier which identifies the agent which added the signature to the list.
 #define AMI_APTIO_SIG_OWNER_GUID \
     { 0x26DC4851, 0x195F, 0x4AE1, 0x9A, 0x19, 0xFB, 0xF8, 0x83, 0xBB, 0xB3, 0x5E }
 
-///
-///Platform FwKey GUIDed HOB
-///Header HobGUID = PR_KEY_GUID
-///
+//Platform FwKey GUIDed HOB
+//Header HobGUID = PR_KEY_GUID
 typedef struct {
-    EFI_HOB_GUID_TYPE   Header;
+	EFI_HOB_GUID_TYPE   Header;
     EFI_GUID            KeyGuid;
-    EFI_PHYSICAL_ADDRESS KeyAddress;
-    UINT32              KeySize;
+	EFI_PHYSICAL_ADDRESS KeyAddress;
+	UINT32				KeySize;
 } FW_KEY_HOB;
 
-///
-/// Modified version of Win Uefi Cert. CertData is not defined in here
-///
+// Modified version of Win Uefi Cert. CertData is not defined in here
 typedef struct {
   WIN_CERTIFICATE   Hdr;
   EFI_GUID          CertType;
@@ -124,22 +112,25 @@ typedef struct {
 //    EFI_CERT_BLOCK_RSA_2048_SHA256  CertData;
 } WIN_CERTIFICATE_UEFI_GUID_1;
 
-///
-/// Certificate which encapsulates the UEFI RSA2048_SHA256 digital signature.
-///
-/// The WIN_CERTIFICATE_UEFI_GUID structure is derived from
-/// WIN_CERTIFICATE and encapsulate the information needed to  
-/// implement the digital signature algorithm
-/// Hdr.Hdr.wRevision = 0x0200
-/// Hdr.Hdr.wCertificateType = 0x0EF1; WIN_CERT_TYPE_EFI_GUID
-/// Hdr.CertType = EFI_CERT_TYPE_RSA2048_SHA256_GUID;
-///
-/// Fields: Name     Type        Description
-///----------------------------------------------------------------------------
-/// Hdr      WIN_CERTIFICATE_UEFI_GUID   encapsulate the information needed to implement the digital signature algorithm 
-/// CertData  EFI_CERT_BLOCK_RSA_2048_SHA256    Signature and Public key
-///----------------------------------------------------------------------------
-///
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name:        AMI_CERTIFICATE_RSA2048_SHA256
+//
+// Description:    Certificate which encapsulates the UEFI RSA2048_SHA256 digital signature.
+//
+// The WIN_CERTIFICATE_UEFI_GUID structure is derived from
+// WIN_CERTIFICATE and encapsulate the information needed to  
+// implement the digital signature algorithm
+// Hdr.Hdr.wRevision = 0x0200
+// Hdr.Hdr.wCertificateType = 0x0EF1; WIN_CERT_TYPE_EFI_GUID
+// Hdr.CertType = EFI_CERT_TYPE_RSA2048_SHA256_GUID;
+//
+// Fields: Name     Type        Description
+//----------------------------------------------------------------------------
+// Hdr      WIN_CERTIFICATE_UEFI_GUID   encapsulate the information needed to implement the digital signature algorithm 
+// CertData  EFI_CERT_BLOCK_RSA_2048_SHA256    Signature and Public key
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
 typedef struct {
     WIN_CERTIFICATE_UEFI_GUID_1      Hdr;        // 24
     EFI_CERT_BLOCK_RSA_2048_SHA256   CertData;   // 16+256+256
@@ -178,7 +169,7 @@ typedef struct {
 //----------------------------------------------------------------------------
 //  CapHdr           EFI_CAPSULE_HEADER  UEFI 2.0 Capsule Hdr. Use APTIO_FW_CAPSULE_2_GUID
 //  RomImageOffset   UINT16              offset within the Fw Capsule header to the FW image
-//  RomLayoutOffset  UINT16              offset to the FW descriptor table used for signature calculation
+//  RomLayoutOffset  UINT16              offset to the FW discriptor table used for signature calculation
 //  FWCert           FW_CERTIFICATE      Certificate block. Format may change based on WIN_CERTIFICATE header Type.
 //                                       Hdr.CertType = EFI_CERT_TYPE_RSA2048_SHA256_GUID;
 //                                       Hdr.CertType = EFI_CERT_TYPE_PKCS7_GUID; 
@@ -219,7 +210,7 @@ typedef struct {
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2014 American Megatrends, Inc.          **
+//**        (C)Copyright 1985-2013 American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **

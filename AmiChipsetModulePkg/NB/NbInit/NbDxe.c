@@ -44,14 +44,7 @@
 #include <Library/UefiLib.h>	// (P051313A+)
 #include <Nb.h>
 #include <Library/NbPolicy.h>
-//EIP201856>>
-#include <PciBus.h>
-#if CSM_SUPPORT
-#include <Protocol/LegacyBiosExt.h>
-#endif
 
-VOID		*mCsmOpromPolicyRegs;
-//EIP201856<<
 
 // Produced Protocols
 
@@ -68,58 +61,6 @@ VOID ReadyToBootFunction(
     VOID                      *Context
 );
 // (P051313A+)<<
-
-//EIP201856>>
-#if defined CSM_SUPPORT && CSM_SUPPORT == 1
-//<AMI_PHDR_START>
-//----------------------------------------------------------------------------
-//
-// Procedure:   VgaOpRomCallback
-//
-// Description: Determine if execute this PCI VGA option Rom.
-//
-// Input:       Event   - Event of callback
-//              Context - Context of callback.
-//
-// Output:      None
-//----------------------------------------------------------------------------
-//<AMI_PHDR_END>
-VOID VgaOpRomCallback (
-	IN EFI_EVENT    Event,
-	IN VOID         *Context
-)
-{
-    EFI_STATUS                  Status;
-    EFI_HANDLE                  Handle;
-    UINTN                       Size = sizeof(EFI_HANDLE);
-    CSM_PLATFORM_POLICY_DATA    *CsmOpromPolicyData;
-    EFI_PCI_IO_PROTOCOL         *PciIo;
-    PCI_DEV_INFO                *Device;
-
-    TRACE((-1, "NbDxe: VgaOpRomCallback() Entry\n"));
-
-    Status = pBS->LocateHandle(ByRegisterNotify, NULL, mCsmOpromPolicyRegs, &Size, &Handle);
-    if (EFI_ERROR(Status)) return;
-
-    Status = pBS->HandleProtocol(Handle, &gOpromStartEndProtocolGuid, &CsmOpromPolicyData);
-    if (EFI_ERROR(Status)) return;
-
-    if(CsmOpromPolicyData == NULL) return; //post-process OpROM callback
-    if(CsmOpromPolicyData->PciIo == NULL) return; // OEM Service ROM
-
-    PciIo = CsmOpromPolicyData->PciIo;
-    Device = (PCI_DEV_INFO*)PciIo;
-    if ((Device->Type == tPciDevice) && \
-    	(Device->Class.BaseClassCode == PCI_CL_DISPLAY) && \
-    	(Device->Address.Addr.Bus != 0)) {
-    	CsmOpromPolicyData->ExecuteThisRom = FALSE;  //this attritube default is TRUE
-    	TRACE((-1, "NbDxe: ExecuteThisRom is setted FALSE.\n"));
-    }
-
-    TRACE((-1, "NbDxe: VgaOpRomCallback() Exit\n"));
-}
-#endif // CSM_SUPPORT
-//EIP201856<<
 
 //<AMI_PHDR_START>
 //----------------------------------------------------------------------------
@@ -144,10 +85,7 @@ NbDxeInit(
 )
 {
     EFI_STATUS          Status = EFI_SUCCESS;
-//EIP201856>>
-    NB_SETUP_DATA       VlvPolicyData;
-    EFI_EVENT		CsmOpromPolicyEvent = NULL;
-//EIP201856<<
+    //NB_SETUP_DATA       VlvPolicyData;
     EFI_EVENT           ReadyToBootEvent;
 
     InitAmiLib(ImageHandle, SystemTable);
@@ -155,27 +93,11 @@ NbDxeInit(
     //Report Progress code
     PROGRESS_CODE(DXE_NB_INIT);
 
-//EIP201856>>
-    // Get the value of the NB Setup data.
-    GetNbSetupData((VOID*)pRS, &VlvPolicyData, FALSE);
-//EIP201856<<
+    // Get the value of the SB Setup data.
+    //GetNbSetupData((VOID*)pRS, &VlvPolicyData, FALSE);
 
     Status = NbDxeBoardInit(ImageHandle, SystemTable);
 
-//EIP201856>>
-#if defined CSM_SUPPORT && CSM_SUPPORT == 1
-    if (VlvPolicyData.PrimaryDisplay == 0) {
-        Status = RegisterProtocolCallback (
-       			&gOpromStartEndProtocolGuid,
-            		VgaOpRomCallback,
-            		NULL,
-            		&CsmOpromPolicyEvent,
-            		&mCsmOpromPolicyRegs
-            		);
-    }
-#endif // CSM_SUPPORT
-//EIP201856<<
-        
     // (P051313A+)>>
     // Create a ReadyToBoot Event
     Status = EfiCreateEventReadyToBootEx (

@@ -194,17 +194,17 @@ TOKEN
 	TargetH = Yes
 End
 #P20120624 <<
-#EIP205591 >>
+
 #CSP20140329_22 >>
 TOKEN
 	Name  = "NB_PCI_DEVICES_SSID_TABLE"
-	Value  = "{NB_BUS_DEV_FUN, 0x22128086}, {AMI_IGD_BUS_DEV_FUN, 0x22128086}, {-1, -1}" 
+	Value  = "{NB_BUS_DEV_FUN, -1}, {AMI_IGD_BUS_DEV_FUN, -1}, {-1, -1}" 
 	Help  = "List of PCI device's Sub-System ID in the following format:\{Device#1 Bus/Device/Function, Device#1 Sub-ID}, {Device#2 Bus/Device/Function, Device#2 Sub-ID}...\The format of the PCI bus/device/function is followed by EFI_PCI_CONFIGURATION_ADDRESS.\If the value of Sub-ID is -1, that means BIOS will use PCI Vendor-ID and Device-ID instead.\The last structure {-1, -1} is end of the table, don't remove it!"
 	TokenType = Expression
 	TargetH = Yes
 End
 #CSP20140329_22 <<
-#EIP205591 <<
+
 #EIP130719 >>
 TOKEN
 	Name  = "SALVE_ADDRESS"
@@ -488,52 +488,7 @@ TOKEN
 	Value  = "1"
 	TokenType = Boolean
 End
-#EIP202736 >>
-TOKEN
-	Name  = "DEFAULT_MAX_TOLUD"
-	Value  = "9"
-	Help  = "The default setting of SETUP_DATA.MaxTolud. 5: 2GB / 6: 2.25GB / 7: 2.5GB / 8: 2.75GB / 9: 3GB."
-	TokenType = Integer
-	TargetH = Yes
-	Token = "MEMORYCEILING_DEFAULT" "=" "0xC0000000"
-End
 
-TOKEN
-	Name  = "DEFAULT_MAX_TOLUD"
-	Value  = "8"
-	Help  = "The default setting of SETUP_DATA.MaxTolud. 5: 2GB / 6: 2.25GB / 7: 2.5GB / 8: 2.75GB / 9: 3GB."
-	TokenType = Integer
-	TargetH = Yes
-	Token = "MEMORYCEILING_DEFAULT" "=" "0xB0000000"
-End
-
-TOKEN
-	Name  = "DEFAULT_MAX_TOLUD"
-	Value  = "7"
-	Help  = "The default setting of SETUP_DATA.MaxTolud. 5: 2GB / 6: 2.25GB / 7: 2.5GB / 8: 2.75GB / 9: 3GB."
-	TokenType = Integer
-	TargetH = Yes
-	Token = "MEMORYCEILING_DEFAULT" "=" "0xA0000000"
-End
-
-TOKEN
-	Name  = "DEFAULT_MAX_TOLUD"
-	Value  = "6"
-	Help  = "The default setting of SETUP_DATA.MaxTolud. 5: 2GB / 6: 2.25GB / 7: 2.5GB / 8: 2.75GB / 9: 3GB."
-	TokenType = Integer
-	TargetH = Yes
-	Token = "MEMORYCEILING_DEFAULT" "=" "0x90000000"
-End
-
-TOKEN
-	Name  = "DEFAULT_MAX_TOLUD"
-	Value  = "5"
-	Help  = "The default setting of SETUP_DATA.MaxTolud. 5: 2GB / 6: 2.25GB / 7: 2.5GB / 8: 2.75GB / 9: 3GB."
-	TokenType = Integer
-	TargetH = Yes
-	Token = "MEMORYCEILING_DEFAULT" "=" "0x80000000"
-End
-#EIP202736 <<
 PATH
 	Name  = "NB_LIBRARY_DIR"
 	Path  = "AmiChipsetModulePkg/Library"
@@ -611,14 +566,6 @@ ELINK
 	Disable = Yes #EIP146215
 End
 #// (EIP129308+)<<
-
-#EIP176554 >>
-ELINK
-	Name  = "HobLib"
-	Parent  = "AMI_CSP_LIBRARIES"
-	InvokeOrder = AfterParent
-End
-#EIP176554 <<
 
 INFComponent
         Name  = "LegacyRegion2OnLegacyRegionThunk"
@@ -795,10 +742,3 @@ PCIDEVICE
 	Token = "CSM_SUPPORT" "=" "1"
 End
 #EIP128872 <<
-#//<EIP221643+> >>>
-ELINK
-	Name  = '{L"MemoryConfig", {0x10ba6bbe, 0xa97e, 0x41c3, 0x9a, 0x07, 0x60, 0x7a, 0xd9, 0xbd, 0x60, 0xe5}},'
-	Parent  = "BlockS3VariablesList"
-	InvokeOrder = AfterParent
-End
-#//<EIP221643+> <<<

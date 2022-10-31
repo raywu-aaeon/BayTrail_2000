@@ -1,7 +1,7 @@
 //*************************************************************************
 //*************************************************************************
 //**                                                                     **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.            **
+//**        (C)Copyright 1985-2012, American Megatrends, Inc.            **
 //**                                                                     **
 //**                       All Rights Reserved.                          **
 //**                                                                     **
@@ -84,17 +84,6 @@ typedef enum {
 	F0000_64K   // 0F0000-0FFFFF
 } SHADOW_BIOS_RANGE;
 
-//EIP176554 >>
-typedef struct {
-	UINT8     ChannelNumber;  //< Zero based channel number.
-	UINT8     DimmNumber;     //< Zero based DIMM number.
-	UINT8     Rank;           //< Zero based rank number.
-	UINT8     Bank;           //< Zero based bank number.
-	UINT16    Cas;            //< Zero based CAS number.
-	UINT16    Ras;            //< Zero based RAS number.
-} NB_ADDRESS_DECODE;
-//EIP176554 <<
-
 EFI_STATUS
 NbProgramPamRegisters (
     IN EFI_BOOT_SERVICES    *gBS,
@@ -131,28 +120,7 @@ NbRuntimeShadowRamWriteExt (
     IN SHADOW_BIOS_RANGE  Range
 );
 
-UINT32 NBGetTsegBase (
-    VOID
-);
-
-//EIP176554 >>
-BOOLEAN NbCheckVtdSupport (
-    VOID
-);
-
-BOOLEAN NbIsDualChannel (
-    IN UINT8              MemoryChannelType
-);
-
-EFI_STATUS NbLockPavpc (
-    IN BOOLEAN            MODE
-);
-
-EFI_STATUS NbGetDimmLocInfo (
-    IN CONST UINTN        MemoryAddr,
-    OUT NB_ADDRESS_DECODE *NbAddressDecode
-);
-//EIP176554 <<
+UINT32 NBGetTsegBase ( VOID );
 
 #ifdef __cplusplus
 }
@@ -163,7 +131,7 @@ EFI_STATUS NbGetDimmLocInfo (
 //*************************************************************************
 //*************************************************************************
 //**                                                                     **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.            **
+//**        (C)Copyright 1985-2012, American Megatrends, Inc.            **
 //**                                                                     **
 //**                       All Rights Reserved.                          **
 //**                                                                     **

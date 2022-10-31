@@ -24,10 +24,15 @@
 //*****************************************************************//
 //*****************************************************************//
 //*****************************************************************//
-/** @file setupdata.h
-    Header file for setup data
-
-**/
+//<AMI_FHDR_START>
+//----------------------------------------------------------------------------
+//
+// Name:		setupdata.h
+//
+// Description:	Header file for setup data
+//
+//----------------------------------------------------------------------------
+//<AMI_FHDR_END>
 
 #ifndef _SETUPDATA_H_
 #define	_SETUPDATA_H_
@@ -85,16 +90,15 @@ typedef struct _PAGE_ID_INFO PAGE_ID_INFO;
 #define	CONTROL_TYPE_ACTION			0x001B
 #define	CONTROL_TYPE_RESET			0x001C
 #define CONTROL_TYPE_RULE			0x001D
-#define CONTROL_TYPE_REF2           0x001E 
+#define CONTROL_TYPE_REF2           0x001E // EIP 80426:When restoring settings, avoid accessing the varstore for text controls
 #define CONTROL_TYPE_SLIDE			0x001F
-#define WARN_IF		0x0020
 
 // Used in Edit.c
 #ifndef	IFR_PASSWORD_OP
 #define IFR_PASSWORD_OP             0x08
 #endif
 
-#if BUILD_OS != BUILD_OS_LINUX
+#if !TSE_GNUC_BUILD_SUPPORT
 #pragma warning( disable : 4201 )
 #endif
 
@@ -147,8 +151,7 @@ struct _PAGE_FLAGS		//Structure containing the attributes global to a page
 	UINT32  PageModal : 1;          //TRUE Controls whether the page is Modal
 	UINT32  PageDynamic : 1;          //TRUE Controls whether the page is Dynamic
     UINT32 	PageStdMap : 1;         // set 0 if Form map is not found otherwise set 1
-	UINT32	PageRefreshID : 1;			//TRUE Controls whether the page is having RefreshID 
-	UINT32 	Reserved : 24;			//0		Reserved for future use
+	UINT32 	Reserved : 25;			//0		Reserved for future use
 };
 
 struct _CONTROL_LIST	//Structure containing the offsets of all the control data
@@ -189,10 +192,9 @@ struct _CONTROL_FLAGS			//Structure containing the attributes for a specific con
     UINT32  ControlEvaluateDefault : 1; // FALSE If set Default is obtained by expression evaluation
 	UINT32	Reserved1 : 1;		//0		Reserved for future use
 	UINT32	ControlRefresh : 8;	//0		Refresh timer (in 0.1s intervals) (0 = refresh disabled) 
-	UINT32	RefreshID : 1;				//TRUE or FALSE to denote RefreshID status
-	UINT32	ControlRWEvaluate : 1; // set 0 if read/write expression is not found otherwise set 1
-	UINT32	ControlReconnect : 1;	//FALSE	Whether or not changing a value requires a system reconnect
-	UINT32	Reserved2 : 13;		//0		Reserved for future use
+	UINT32	RefreshID : 1;			//TRUE or FALSE to denote RefreshID status	
+   UINT32	ControlRWEvaluate : 1; // set 0 if read/write expression is not found otherwise set 1
+	UINT32	Reserved2 : 14;		//0		Reserved for future use
 };
 
 struct _CONTROL_INFO		//Structure containing control data
@@ -210,8 +212,10 @@ struct _CONTROL_INFO		//Structure containing control data
             UINT16	ControlKey;				// Varies	Variable unique identifier same as QuestionID in UEFI2.1
             UINT16  DevicePathId;			// Device Path as specified by VarStoreDevicePath nested within the scope of this question.
             UINT8	DefaultStoreCount;		// Constant No of Defaults (n) values other than Optimal and Failsafe for that control.
+//EIP# 55762
 			UINT8	Reserved[1]; 			// Reserved space for use in future.
             UINT16  DestQuestionID;         // This is for EFI_IFR_REFX support
+//EIP# 55762
         };
 	};
 	UINT16			ControlType;			//Varies	Type of the control on the page
@@ -221,10 +225,7 @@ struct _CONTROL_INFO		//Structure containing control data
 	UINT16			ControlHelp;			//Varies	Token for help string for this control
 	UINT16			ControlLabel;			//Varies	One-based label number that this control is 'linked to'
 	UINT16			ControlIndex;			//Varies	Zero-based control number from the label, not formset
-	union{
 	UINT16			ControlLabelCount;		//Varies	number of opcodes associated with this control's label
-	UINT16 			PageIdIndex;
-	};
 	union {
 	VOID *			ControlPtr;				//Varies	Pointer to control data in HII
 	UINT64	res1;

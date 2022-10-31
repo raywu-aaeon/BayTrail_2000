@@ -1,22 +1,35 @@
-//**********************************************************************
-//**********************************************************************
-//**                                                                  **
-//**        (C)Copyright 1985-2016, American Megatrends, Inc.         **
-//**                                                                  **
-//**                       All Rights Reserved.                       **
-//**                                                                  **
-//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093        **
-//**                                                                  **
-//**                       Phone: (770)-246-8600                      **
-//**                                                                  **
-//**********************************************************************
-//**********************************************************************
+//****************************************************************************
+//****************************************************************************
+//**                                                                        **
+//**             (C)Copyright 1985-2008, American Megatrends, Inc.          **
+//**                                                                        **
+//**                          All Rights Reserved.                          **
+//**                                                                        **
+//**                 5555 Oakbrook Pkwy, Norcross, GA 30093                 **
+//**                                                                        **
+//**                          Phone (770)-246-8600                          **
+//**                                                                        **
+//****************************************************************************
+//****************************************************************************
 
-/** @file SysKbc.c
-    AMI USB keyboard driver data conversion and presentation
-    routines, KBC is present
+//****************************************************************************
+// $Header: /Alaska/SOURCE/Modules/USB/ALASKA/RT/syskbc.c 30    8/27/12 5:08a Roberthsu $
+//
+// $Revision: 30 $
+//
+// $Date: 8/27/12 5:08a $
+//****************************************************************************
 
-**/
+//<AMI_FHDR_START>
+//-----------------------------------------------------------------------------
+//
+//  Name:           SysKbc.c
+//
+//  Description:    AMI USB keyboard driver data conversion and presentation
+//                  routines, KBC is present
+//
+//-----------------------------------------------------------------------------
+//<AMI_FHDR_END>
 
 #include "AmiDef.h"
 #include "UsbDef.h"
@@ -27,9 +40,10 @@ extern USB_GLOBAL_DATA *gUsbData;
 
 extern      UINT8 aTypematicRateDelayTable[];
 extern      EFI_EMUL6064KBDINPUT_PROTOCOL* gKbdInput;
-extern      EFI_EMUL6064MSINPUT_PROTOCOL*       gMsInput;
 extern      EFI_EMUL6064TRAP_PROTOCOL* gEmulationTrap;
 extern      void USBKB_LEDOn();
+
+UINT8   IsKbcAccessBlocked=FALSE;		//(EIP29733+)
 
 UINT8   aStaticSet2ToSet1ScanCode[133]  =
         {   0x000,0x0E5,0x0F5,0x006,0x016,0x026,0x01E,0x03D,    //; 00h - 07h
@@ -135,16 +149,21 @@ UINT8   aScanCodeLengthTable_4545[4]    = {0x04, 0x05, 0x04, 0x05};
 UINT8   aScanCodeLengthTable_6800[4]    = {0x06, 0x08, 0x00, 0x00};
 
 
-/**
-    This routine checks the input buffer free bit and waits till
-    it is set by the keyboard controller
-
-    @param VOID
-
-    @retval USB_SUCCESS If Input buffer is Empty
-    @retval USB_ERROR If Input buffer is Full 
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        KBC_WaitForInputBufferToBeFree
+//
+// Description: This routine checks the input buffer free bit and waits till
+//              it is set by the keyboard controller
+//
+// Input:       Nothing
+//
+// Output:      USB_SUCCESS - If Input buffer is Empty
+//              USB_ERROR - If Input buffer is Full 
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT8
 KBC_WaitForInputBufferToBeFree ()
@@ -171,16 +190,21 @@ KBC_WaitForInputBufferToBeFree ()
 }
 
 
-/**
-    This routine checks the output buffer full bit and waits till
-    it is set by the keyboard controller
-
-    @param VOID
-
-    @retval USB_SUCCESS If OutPut buffer is Full
-    @retval USB_ERROR If Output buffer Empty
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        KBC_WaitForOutputBufferToBeFilled
+//
+// Description: This routine checks the output buffer full bit and waits till
+//              it is set by the keyboard controller
+//
+// Input:       Nothing
+//
+// Output:      USB_SUCCESS - If OutPut buffer is Full
+//              USB_ERROR - If Output buffer Empty
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT8
 KBC_WaitForOutputBufferToBeFilled ()
@@ -206,15 +230,20 @@ KBC_WaitForOutputBufferToBeFilled ()
 }
 
 
-/**
-    This routine till the keyboard controller sends a data byte
-
-    @param Nothing
-
-    @retval Status USB_SUCCESS 
-        - USB_ERROR
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        KBC_ReadDataByte
+//
+// Description:  This routine till the keyboard controller sends a data byte
+//
+// Input:       Nothing
+//
+// Output:      Status - USB_SUCCESS 
+//                     - USB_ERROR
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT8
 KBC_ReadDataByte (
@@ -232,16 +261,21 @@ KBC_ReadDataByte (
 }
 
 
-/**
-    This routine sends the command byte to the keyboard
-    controller
-
-    @param bCmd Command byte
-
-    @retval Status USB_SUCCESS
-        - USB_ERROR
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        KBC_WriteCommandByte
+//
+// Description: This routine sends the command byte to the keyboard
+//              controller
+//
+// Input:       IN UNIT8   bCmd - Command byte
+//
+// Output:      Status - USB_SUCCESS
+//                     - USB_ERROR
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT8
 KBC_WriteCommandByte (
@@ -260,15 +294,20 @@ KBC_WriteCommandByte (
 }
 
 
-/**
-    This routine sends the sub-command byte to the keyboard
-    controller
-
-    @param bCmd    Sub-command byte
-
-    @retval VOID
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        KBC_WriteSubCommandByte
+//
+// Description: This routine sends the sub-command byte to the keyboard
+//              controller
+//
+// Input:       bCmd    Sub-command byte
+//
+// Output:      Nothing
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 VOID
 KBC_WriteSubCommandByte (UINT8  bCmd)
@@ -278,17 +317,22 @@ KBC_WriteSubCommandByte (UINT8  bCmd)
 }
 
 
-/**
-    This routine sends a command and receives the response byte
-    for that command
-
-    @param bCmd Command to be sent
-        In UINT8              *Data - Data to be Read
-
-    @retval Status USB_SUCCESS
-        - USB_ERROR
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        KBC_ReadKeyboardControllerData
+//
+// Description: This routine sends a command and receives the response byte
+//              for that command
+//
+// Input:       IN UINT8              bCmd - Command to be sent
+//              In UINT8              *Data - Data to be Read
+//
+// Output:      Status - USB_SUCCESS
+//                     - USB_ERROR
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT8
 KBC_ReadKeyboardControllerData (
@@ -308,17 +352,22 @@ KBC_ReadKeyboardControllerData (
     return Status;
 }
 
-/**
-    This routine writes a data byte to the keyboard controller
-    by first sending a command byte first
-
-    @param bCmd Command to be sent
-    @param bData Data to be sent
-
-    @retval Status USB_SUCCESS
-        USB_ERROR
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        KBC_WriteKeyboardControllerData
+//
+// Description: This routine writes a data byte to the keyboard controller
+//              by first sending a command byte first
+//
+// Input:       IN UINT8   bCmd  - Command to be sent
+//              IN UINT8   bData - Data to be sent
+//
+// Output:      Status - USB_SUCCESS
+//                       USB_ERROR
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT8
 KBC_WriteKeyboardControllerData (
@@ -341,17 +390,21 @@ KBC_WriteKeyboardControllerData (
 }
 
 
-/**
-    This routine updates LEDs on Legacy keyboard
-
-    @param LED state data
-
-    @retval EFI_SUCCESS
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        SYSKBC_UpdateLEDState
+//
+// Description: This routine updates LEDs on Legacy keyboard
+//
+// Input:       LED state data
+//
+// Output:      Nothing
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 EFI_STATUS
-EFIAPI
 SYSKBC_UpdateLEDState (
     EFI_EMUL6064KBDINPUT_PROTOCOL* pThis,
     UINT8 bData
@@ -439,15 +492,19 @@ SYSKBC_GetAndStoreCCB()
         gEmulationTrap->TrapEnable(gEmulationTrap);
 }
 
-/**
-    This routine is called to enable or disable the mouse
-    interface
-
-    @param VOID
-
-    @retval VOID
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   USBMSUpdateMouseInterface
+//
+// Description: This routine is called to enable or disable the mouse
+//              interface
+//
+// Input:   None
+//
+// Output:  None
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 /*
 void USBMSUpdateMouseInterface()
 {
@@ -466,16 +523,21 @@ void USBMSUpdateMouseInterface()
 }
 */
 
-/**
-    This routine is called to send the mouse data to the KB
-    controller
-
-    @param VOID
-
-    @retval 0xFF data processed
-        0 data not processed
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        USBMSSendMouseData
+//
+// Description: This routine is called to send the mouse data to the KB
+//              controller
+//
+// Input:       Nothing
+//
+// Output:      0xFF data processed
+//              0 data not processed
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT8 USBMSSendMouseData()
 {
@@ -500,16 +562,11 @@ UINT8 USBMSSendMouseData()
     if (gUsbData->fpMouseInputBufferHeadPtr == gUsbData->fpMouseInputBufferTailPtr) {
         return 0;
     }
-   
-    if ((gUsbData->bCCB & CCB_MOUSE_DISABLED) || 
-        !(gUsbData->bCCB & CCB_MOUSE_INTRPT)) {
+    if (gUsbData->bCCB & 0x20) {
         gUsbData->fpMouseInputBufferHeadPtr = &gUsbData->aMouseInputBuffer[0];
         gUsbData->fpMouseInputBufferTailPtr = &gUsbData->aMouseInputBuffer[0];
         return 0;
     }
-
-    ebda[0x26] &= ~7;
-    
 #if USB_MOUSE_UPDATE_EBDA_DATA
 	for (; index<packageSize; index++) {
 		ebda[0x28+index] = USBMouse_GetFromMouseBuffer();
@@ -518,7 +575,6 @@ UINT8 USBMSSendMouseData()
 #endif
     bData = USBMouse_GetFromMouseBuffer();
     KBC_WriteKeyboardControllerData(0xD3, bData);   // Send the last byte of data
-    KBC_WaitForOutputBufferToBeFilled();
 
     //
     // Flag indicates data from USB mouse
@@ -536,15 +592,19 @@ UINT8 USBMSSendMouseData()
 }
 
 
-/**
-    This routine puts a byte into the mouse input buffer.
-    Mouse input buffer pointers are also updated
-
-    @param bData   - Byte to be put in the mouse input buffer
-
-    @retval VOID
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   USBMouse_SendToMouseBuffer
+//
+// Description: This routine puts a byte into the mouse input buffer.
+//              Mouse input buffer pointers are also updated
+//
+// Input:   bData   - Byte to be put in the mouse input buffer
+//
+// Output:  None
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 void
 USBMouse_SendToMouseBuffer(UINT8 bData)
 {
@@ -562,15 +622,19 @@ USBMouse_SendToMouseBuffer(UINT8 bData)
     }
 }
 
-/**
-    This routine retrieves a byte from the mouse input buffer.
-    Mouse input buffer pointers are also updated
-
-    @param VOID
-
-    @retval bData Byte to be taken from the mouse input buffer
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   USBMouse_GetFromMouseBuffer
+//
+// Description: This routine retrieves a byte from the mouse input buffer.
+//              Mouse input buffer pointers are also updated
+//
+// Input:   None
+//
+// Output:  bData   - Byte to be taken from the mouse input buffer
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT8 USBMouse_GetFromMouseBuffer   ()
 {
@@ -591,18 +655,23 @@ UINT8 USBMouse_GetFromMouseBuffer   ()
 }
 
 
-/**
-    This routine is invoked periodically (every 8msec) to send
-    USB keyboard and mouse data to the keyboard controller
-    or to the keyboard controller emulation code
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        SYSKBC_SendKBCData
+//
+// Description: This routine is invoked periodically (every 8msec) to send
+//              USB keyboard and mouse data to the keyboard controller
+//              or to the keyboard controller emulation code
+//
+// Input:       Nothing
+//
+// Output:      Nothing
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
-    @param VOID
-
-    @retval VOID
-
-**/
-
-EFI_STATUS
+void
 SYSKBC_SendKBCData()
 {
     UINT8       bCmd = 0,
@@ -617,9 +686,7 @@ SYSKBC_SendKBCData()
 	UINT8       Temp;
 
     //Is KBC access allowed?
-    if (gUsbData->IsKbcAccessBlocked) {
-        return EFI_NOT_READY;	
-    }
+    if(IsKbcAccessBlocked) return;		//(EIP29733+)
 //  USBKBC_CheckAutoRepeat();
 
     //
@@ -702,7 +769,7 @@ SYSKBC_SendKBCData()
     }
 
     if(bFlag) {
-        USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_8, "USBKBC_SendKBCData: Scan Code Buffer Empty \n");
+        USB_DEBUG (DEBUG_LEVEL_8, "USBKBC_SendKBCData: Scan Code Buffer Empty \n");
         //
         // Check whether the scan code buffer is empty
         //
@@ -714,13 +781,13 @@ SYSKBC_SendKBCData()
         // Get pointer to the HC driver
         // Scan code buffer is empty. Stop the key repeat by stopping repeat TD
         //
-        USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_8, "HCDDisableKeyRepeat \n");
+        USB_DEBUG (DEBUG_LEVEL_8, "HCDDisableKeyRepeat \n");
         USBKeyRepeat(NULL, 1);  // Disable Key repeat
 
         if(gEmulationTrap) {
  	        gEmulationTrap->TrapEnable(gEmulationTrap);
         }
-        return EFI_SUCCESS;
+        return;
     }
 
     for (;;) {
@@ -740,7 +807,7 @@ SYSKBC_SendKBCData()
                 break;
             }
         } while (bTemp1 & BIT1);
-        USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_8, "USBKBC_SendKBCData: bFlag %x\n",bFlag);
+        USB_DEBUG (DEBUG_LEVEL_8, "USBKBC_SendKBCData: bFlag %x\n",bFlag);
         if (bFlag == 3) break;
         //
         // Update the data transmit order
@@ -758,18 +825,15 @@ SYSKBC_SendKBCData()
         //
         // Get the CCB
         //
-        if ((gEmulationTrap == NULL) || (gUsbData->bCCB & CCB_MOUSE_DISABLED) || 
-            !(gUsbData->bCCB & CCB_MOUSE_INTRPT) || ((bCmd & 1) == 0)) {
-            Status = KBC_WriteCommandByte(0x20);      // Send command to KBC
-            if (Status == USB_SUCCESS) {
-                Status = KBC_ReadDataByte(&Temp);    // Get data from KBC
-                if (EFI_ERROR(Status)) {
-                    goto enableRepeat_Exit;
-                }
-                gUsbData->bCCB = Temp;
-            } else {
-                goto enableRepeat_Exit ;
+        Status = KBC_WriteCommandByte(0x20);      // Send command to KBC
+        if (Status == USB_SUCCESS) {
+            Status = KBC_ReadDataByte(&Temp);    // Get data from KBC
+            if (EFI_ERROR(Status)) {
+                goto enableRepeat_Exit;
             }
+            gUsbData->bCCB = Temp;
+        } else {
+            goto enableRepeat_Exit ;
         }
         
         //
@@ -792,12 +856,7 @@ SYSKBC_SendKBCData()
                         goto enableRepeat_Exit; 
                     }
                 KBC_WriteKeyboardControllerData(bCmd , bTemp);
-                KBC_WaitForOutputBufferToBeFilled();
-                USBKeyRepeat(NULL, 2);  // Enable Key repeat
-                if (gEmulationTrap) { 
-                    gEmulationTrap->TrapEnable(gEmulationTrap);
-                }
-                return EFI_SUCCESS;
+                goto enableRepeat_Exit;
             }
             bTemp   = 0xFF;
         } else {
@@ -838,7 +897,7 @@ SYSKBC_SendKBCData()
 */
             if(gEmulationTrap) 
 		        gEmulationTrap->TrapEnable(gEmulationTrap);
-            return EFI_SUCCESS;
+            return;
         #else
             bTemp   = 0xFF;
         #endif
@@ -862,162 +921,108 @@ SYSKBC_SendKBCData()
 
 enableRepeat_Exit:
     USBKeyRepeat(NULL, 2);  // Enable Key repeat
-    if (gEmulationTrap) { 
+    if(gEmulationTrap) 
         gEmulationTrap->TrapEnable(gEmulationTrap);
-    }		
-    return EFI_NOT_READY;	
+    return;
 }
 
-
-/**
-    This routine sends the Keyboard Data to Controller.
-
-    @param This - pointer to the Emulation Protocol
-    @param Data - Data buffer
-    @param Count   - Data buffer Length
-    
-    @retval EFI_SUCCESS
-
-**/
-
-EFI_STATUS
-EFIAPI
-SYSKBC_KbdInput_Send(
-    IN EFI_EMUL6064KBDINPUT_PROTOCOL* This,
-    IN UINT8* Data,
-    IN UINT32 Count
+EFI_STATUS SYSKBC_KbdInput_Send(EFI_EMUL6064KBDINPUT_PROTOCOL* pThis,
+  IN UINT8* data,
+  IN UINT32 count
  )
 {
-    EFI_STATUS  Status;
+    //UINT8* fPtrEnd    = gUsbData->aKBCCharacterBufferStart +
+    //          sizeof (gUsbData->aKBCCharacterBufferStart);
+    UINT8* fPtr = data+count-1;
+    //
 
-    if (Count == 0) {
-        return EFI_SUCCESS;
+    SYSKBC_SendKBCData();
+    //
+    // Put data back to charackter buffer where it was taken from just before a call
+    // TODO: clean this bad hack.
+    //
+    for(;count!=0;--count)
+    {
+        //
+        // Check for buffer end condition
+        //
+        if(gUsbData->fpKBCCharacterBufferTail == gUsbData->aKBCCharacterBufferStart)
+            gUsbData->fpKBCCharacterBufferTail = gUsbData->aKBCCharacterBufferStart+
+                sizeof (gUsbData->aKBCCharacterBufferStart)-1;
+        else
+            --(gUsbData->fpKBCCharacterBufferTail);
+        *(gUsbData->fpKBCCharacterBufferTail) = *fPtr-- ;
     }
-
-    do {
-        Status=SYSKBC_SendKBCData();
-        Count--;
-    } while (Count != 0 && Status == EFI_SUCCESS);
-
-    return Status;
-
-}
-
-/**
-    This routine sends the Mouse Data to Controller.
-
-    @param This - Pointer to the Emulation Protocol
-    @param Data - Ps2 mouse Data
-
-    @retval EFI_SUCCESS
-
-**/
-
-EFI_STATUS
-EFIAPI
-SYSKBC_MouseInput_Send(
-    IN EFI_EMUL6064MSINPUT_PROTOCOL*   This,
-    IN PS2MouseData*                   Data
-)
-{
-    return SYSKBC_SendKBCData();
-}
-
-
-/**
-    This routine sends the Mouse Data to Local Mouse Buffer 
-
-    @param Data - Ps2 mouse Data
-
-    @retval EFI_SUCCESS
-
-**/
-
-EFI_STATUS
-SendMouseData(
-    IN PS2MouseData* Data
-)
-{
-    UINT8   *TempHeadPtr = gUsbData->fpMouseInputBufferHeadPtr;
-    UINT8   PacketSize = gUsbData->bMouseStatusFlag & MOUSE_4BYTE_DATA_BIT_MASK ? 4 :3;
-
-
-    //Before adding data check if there is atleast three/four byte difference between head and tail
-    if (gUsbData->fpMouseInputBufferTailPtr != gUsbData->fpMouseInputBufferHeadPtr) {
-        
-        // Check if 3/4 bytes are added to the Headptr, will it overwrite the TailPtr or not
-        if ((TempHeadPtr + PacketSize) > (gUsbData->aMouseInputBuffer + sizeof(gUsbData->aMouseInputBuffer))) {
-            TempHeadPtr = gUsbData->aMouseInputBuffer;
-        }
-        
-        if ((TempHeadPtr <= gUsbData->fpMouseInputBufferTailPtr) && ((TempHeadPtr + PacketSize) >= gUsbData->fpMouseInputBufferTailPtr)){
-            return EFI_SUCCESS;
-        }
-        
-    }
-
-    USBMouse_SendToMouseBuffer(Data->flags);    // Send status byte
-    USBMouse_SendToMouseBuffer(Data->x);        // Send X-axis information
-    USBMouse_SendToMouseBuffer(Data->y);        // Send Y-axis information
-
-    //
-    // Check for 4-byte mouse data and send the 4th dummy data if needed
-    //
-    if (gUsbData->bMouseStatusFlag & MOUSE_4BYTE_DATA_BIT_MASK) {
-        USBMouse_SendToMouseBuffer(0);
-    }
-    //
-    // Set flag to indicate mouse data ready
-    //
-    //gUsbData->bMouseStatusFlag |= MOUSE_DATA_READY_BIT_MASK;
 
     return EFI_SUCCESS;
 }
 
-/**
-    This routine Get the KBC SCAN code transalation value
-
-    @param This - Pointer to the Emulation Protocol
-    
-    @retval EFI_SUCCESS or EFI_ERROR
-
-**/
-
-EFI_STATUS
-EFIAPI
-SYSKBC_GetTranslation(
-    IN EFI_EMUL6064KBDINPUT_PROTOCOL* This,
-    OUT KBC_KBDTRANSLATION* OutTrans 
-)
+EFI_STATUS SYSKBC_MouseInput_Send(EFI_EMUL6064MSINPUT_PROTOCOL* pThis,
+ PS2MouseData* data
+ )
 {
-    static BOOLEAN IsCcbLoaded = FALSE;
-    
-    if (!IsCcbLoaded) {
-        IsCcbLoaded = TRUE;
+//USB_DEBUG(DEBUG_LEVEL_3, "md: %d %d %d\n", bData, bData1, bData2);
+    if (gUsbData->fpMouseInputBufferHeadPtr == gUsbData->fpMouseInputBufferTailPtr)
+    {
+
+        USBMouse_SendToMouseBuffer(data->flags);    // Send status byte
+        USBMouse_SendToMouseBuffer(data->x);    // Send X-axis information
+        USBMouse_SendToMouseBuffer(data->y);    // Send Y-axis information
+
+        //
+        // Check for 4-byte mouse data and send the 4th dummy data if needed
+        //
+        //if(gUsbData->bMouseStatusFlag & MOUSE_4BYTE_DATA_BIT_MASK)
+        //{
+        //    USBMouse_SendToMouseBuffer(0);
+        //}
+        //
+        // Set flag to indicate mouse data ready
+        //
+        //gUsbData->bMouseStatusFlag |= MOUSE_DATA_READY_BIT_MASK;
+    }
+
+    SYSKBC_SendKBCData();
+
+    return EFI_SUCCESS;
+}
+
+EFI_STATUS SYSKBC_GetTranslation(
+        EFI_EMUL6064KBDINPUT_PROTOCOL* p,
+        OUT KBC_KBDTRANSLATION* outTrans )
+{
+    static BOOLEAN isCCBLoaded =FALSE;
+    if(!isCCBLoaded){
+        isCCBLoaded = TRUE;
         SYSKBC_GetAndStoreCCB();
     }
-    
-    *OutTrans = (gUsbData->bCCB & CCB_TRANSLATE_SCAN_CODE_BIT_MASK) != 0?
+    *outTrans = (gUsbData->bCCB & CCB_TRANSLATE_SCAN_CODE_BIT_MASK) != 0?
         KBC_KBDTRANS_PCXT : KBC_KBDTRANS_AT;
-
     return EFI_SUCCESS;
 }
 
-/**
-    This routine converts the USB keyboard input data into
-    IBM PC format scan code
-
-    @param fpDevInfo   Pointer to the device info. structure
-        fpBuffer    Pointer to the 8byte USB keyboard data
-
-    @retval VOID
-
-    @note  The format of the 8byte USB keyboard data is as follows:
-  Byte                     Description
-  Byte 0      Contains modifier key bits like SHIFT, CTRL, ALT etc
-  Byte 1      Reserved
-  Byte 2 - 7      Keycode (1-6) of the keys pressed
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        USBKB_Scanner
+//
+// Description: This routine converts the USB keyboard input data into
+//              IBM PC format scan code
+//
+// Input:       fpDevInfo   Pointer to the device info. structure
+//              fpBuffer    Pointer to the 8byte USB keyboard data
+//
+// Output:      Nothing
+//
+// Notes:   The format of the 8byte USB keyboard data is as follows:
+//----------------------------------------------------------------------------
+//  Byte                     Description
+//----------------------------------------------------------------------------
+//  Byte 0      Contains modifier key bits like SHIFT, CTRL, ALT etc
+//  Byte 1      Reserved
+//  Byte 2 - 7      Keycode (1-6) of the keys pressed
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 void
 USBKB_Scanner (
@@ -1078,7 +1083,7 @@ USBKB_Scanner (
             // its 6 key code bytes
             //
             if(*fptBuffer == 1) {   // Keyboard error roll over (overrun) ?
-//              USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_5, "USBKB_Scanner:  Overrun condition occur\n");
+//              USB_DEBUG (DEBUG_LEVEL_5, "USBKB_Scanner:  Overrun condition occur\n");
                 //
                 // Check the space availability for the overrun code in the
                 // character buffer
@@ -1261,23 +1266,28 @@ UKS_ProcessNextCharacter:
     goto    UKS_ProcessNextCharacter;
 UKS_BreakCodeGenCompleted:
     gUsbData->bBreakCodeDeviceID &= ~((UINT8)(gUsbData->bCurrentDeviceID));
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_7, "USBKB_Scanner:  End\n");
+    USB_DEBUG (DEBUG_LEVEL_7, "USBKB_Scanner:  End\n");
 }
 
 
-/**
-    This routine generates the make/break code for th key
-    pressed depending on the make/break flag
-
-    @param bCodeGenFlag    Flag indicating whether it is a make or
-        break code sequence
-        bKeyCode        USB key code for the key pressed
-        wWorkOffset     Offset into the buffers which has the
-        code we are processing
-
-    @retval 0xFFFF on success , 0 on error
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        USBKB_GenerateScanCode
+//
+// Description: This routine generates the make/break code for th key
+//              pressed depending on the make/break flag
+//
+// Input:       bCodeGenFlag    Flag indicating whether it is a make or
+//                              break code sequence
+//              bKeyCode        USB key code for the key pressed
+//              wWorkOffset     Offset into the buffers which has the
+//                              code we are processing
+//
+// Output:      0xFFFF -on success , 0 on error
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 void
 USBKB_GenerateScanCode (
@@ -1294,7 +1304,7 @@ USBKB_GenerateScanCode (
     UINT8       ScanCodeCount;          //(EIP102150+)
     UINT16      i=0;					//(EIP102150+)
 
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_7, "USBKB_GenerateScanCode:  bKeyCode %x:\n",bKeyCode);
+USB_DEBUG (DEBUG_LEVEL_7, "USBKB_GenerateScanCode:  bKeyCode %x:\n",bKeyCode);
 
     //
     // Set the flag to indicate that make code is generated
@@ -1321,7 +1331,7 @@ USBKB_GenerateScanCode (
     // Convert the USB key code into scan code (Set 2)
     //
     bMakeCode   = USBKB_ConvertUSBKeyCodeToScanCodeSet2(bKeyCode);
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_8, "USBKB_GenerateScanCode:  bMakeCode %x:\n",bMakeCode);
+    USB_DEBUG (DEBUG_LEVEL_8, "USBKB_GenerateScanCode:  bMakeCode %x:\n",bMakeCode);
 
     //
     // Save the make code in the temporary variable
@@ -1378,7 +1388,7 @@ USBKB_GenerateScanCode (
     if(bScanNum == 3)
     {
         USBTrap_ProcessScanCodeSet3();
-        USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_7, "USBKB_GenerateScanCode:  Return 1.\n");
+        USB_DEBUG (DEBUG_LEVEL_7, "USBKB_GenerateScanCode:  Return 1.\n");
         return;
     }
 #endif
@@ -1397,21 +1407,21 @@ USBKB_GenerateScanCode (
         //
         if(gUsbData->wUSBKBC_StatusFlag & KBC_MK_BRK_CODE_BIT_MASK)
         {
-            USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_5, "USBKB_GenerateScanCode:  Return 2.\n");
+            USB_DEBUG (DEBUG_LEVEL_5, "USBKB_GenerateScanCode:  Return 2.\n");
             return;
         }
 //
 // It is not a break code check whether it is for auto repeat
 // Compare old key code and the current key code
 //
+
                                         //(EIP102150+)>
         ScanCodeCount = (UINT8)(gUsbData->fpKBCScanCodeBufferPtr - 
                          (UINT8*)gUsbData->aKBCScanCodeBufferStart); 
-        for (i = 0; i < ScanCodeCount; i++) {
-			if ((gUsbData->aKBCDeviceIDBufferStart[i] & gUsbData->bCurrentDeviceID) &&
-               (gUsbData->bCurrentUSBKeyCode == gUsbData->aKBCScanCodeBufferStart[i])) {
-            	return;
-			}
+        for(i = 0; i < ScanCodeCount;i++)
+        {
+            if(gUsbData->bCurrentUSBKeyCode == gUsbData->aKBCScanCodeBufferStart[i])
+                return;
         }
                                         //<(EIP102150+)
 //
@@ -1504,7 +1514,7 @@ USBKB_GenerateScanCode (
         wTemp       = (UINT16)(wScanCode & 0xFF);
         if(!wTemp)
         {
-        USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_7, "USBKB_GenerateScanCode:  Extended Key Pressed\n");
+        USB_DEBUG (DEBUG_LEVEL_7, "USBKB_GenerateScanCode:  Extended Key Pressed\n");
 
 /*---
  It is a numeric key pad key. It can have
@@ -1553,18 +1563,17 @@ USBKB_GenerateScanCode (
                                                 KB_NUM_LOCK_BIT_MASK)
                 {
                                         //(EIP102150+)> 
-					fPointer    = aScanCodeLengthTable_4446;
-					if (!(gUsbData->wUSBKBC_StatusFlag & KBC_MK_BRK_CODE_BIT_MASK)) {
-	                    ScanCodeCount = (UINT8)(gUsbData->fpKBCScanCodeBufferPtr - 
-	                                     (UINT8*)gUsbData->aKBCScanCodeBufferStart); 
-	                    for (i = 0; i < ScanCodeCount; i++) {
-	                        if ((gUsbData->aKBCDeviceIDBufferStart[i] & gUsbData->bCurrentDeviceID) &&
-								(gUsbData->bCurrentUSBKeyCode == gUsbData->aKBCScanCodeBufferStart[i])) {
-	    						fPointer    = aScanCodeLengthTable_2223;
-	                            break;
-	       				    }
-	                    }
-					}
+                        fPointer    = aScanCodeLengthTable_4446;
+                        ScanCodeCount = (UINT8)(gUsbData->fpKBCScanCodeBufferPtr - 
+                                         (UINT8*)gUsbData->aKBCScanCodeBufferStart); 
+                        for(i = 0; i < ScanCodeCount; i++)
+                        {
+                            if(gUsbData->bCurrentUSBKeyCode == gUsbData->aKBCScanCodeBufferStart[i]){
+        						fPointer    = aScanCodeLengthTable_2223;
+                                break;
+           				    }
+                        }
+                        
                                         //<(EIP102150+)
                 }
                 else
@@ -1710,7 +1719,7 @@ USBKB_GenerateScanCode (
                     USBKB_GenerateType2MakeCode();
                     gUsbData->bSet2ScanCode    = bTemp;
                     USBKB_GenerateType2MakeCode();
-                    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_5, "USBKB_GenerateScanCode:  Return 5.\n");
+                    USB_DEBUG (DEBUG_LEVEL_5, "USBKB_GenerateScanCode:  Return 5.\n");
                     return;
 
                 }
@@ -1719,7 +1728,7 @@ USBKB_GenerateScanCode (
                     USBKB_GenerateType2BreakCode();
                     gUsbData->bSet2ScanCode    = 0x12;
                     USBKB_GenerateType2BreakCode();
-                    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_5, "USBKB_GenerateScanCode:  Return 6.\n");
+                    USB_DEBUG (DEBUG_LEVEL_5, "USBKB_GenerateScanCode:  Return 6.\n");
                     return;
                 }
             }
@@ -1738,11 +1747,11 @@ UKGSC_ProcessRegularKey:
             if((gUsbData->wUSBKBC_StatusFlag & KBC_MK_BRK_CODE_BIT_MASK ) == 0)
             {
                 USBKB_GenerateType1MakeCode();
-                USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_7, "USBKB_GenerateScanCode:  Return 7.\n");
+                USB_DEBUG (DEBUG_LEVEL_7, "USBKB_GenerateScanCode:  Return 7.\n");
                 return;
             }
             USBKB_GenerateType1BreakCode();
-            USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_7, "USBKB_GenerateScanCode:  Return 8.\n");
+            USB_DEBUG (DEBUG_LEVEL_7, "USBKB_GenerateScanCode:  Return 8.\n");
             return;
         }
 
@@ -1778,16 +1787,14 @@ UKGSC_ProcessRegularKey:
             if(gUsbData->bUSBKBShiftKeyStatus & KB_NUM_LOCK_BIT_MASK)
                                         //(EIP102150+)> 
             {
-				if (!(gUsbData->wUSBKBC_StatusFlag & KBC_MK_BRK_CODE_BIT_MASK)) {
-	                ScanCodeCount = (UINT8)(gUsbData->fpKBCScanCodeBufferPtr - 
-	                                 (UINT8*)gUsbData->aKBCScanCodeBufferStart); 
-	                for (i = 0; i < ScanCodeCount; i++) {
-						if ((gUsbData->aKBCDeviceIDBufferStart[i] & gUsbData->bCurrentDeviceID) &&
-	                       (gUsbData->bCurrentUSBKeyCode == gUsbData->aKBCScanCodeBufferStart[i])) { 
-	    					goto UKGSC_KeyCombination1;
-	                    } 
-	                }
-				}
+                ScanCodeCount = (UINT8)(gUsbData->fpKBCScanCodeBufferPtr - 
+                                 (UINT8*)gUsbData->aKBCScanCodeBufferStart); 
+                for(i = 0; i < ScanCodeCount; i++)
+                {
+                    if(gUsbData->bCurrentUSBKeyCode == gUsbData->aKBCScanCodeBufferStart[i]){ 
+    					goto UKGSC_KeyCombination1;
+                    } 
+                }
                 goto UKGSC_KeyCombination2; 
             }
                                         //<(EIP102150+)
@@ -1816,7 +1823,7 @@ UKGSC_KeyCombination3:
                      }
                      gUsbData->bSet2ScanCode   = bTemp;    // Restore current code (xx)
                      USBKB_GenerateType2MakeCode();         // 0E0h, xx
-                     USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_5, "USBKB_GenerateScanCode:  Return 9.\n");
+                 USB_DEBUG (DEBUG_LEVEL_5, "USBKB_GenerateScanCode:  Return 9.\n");
                      return;
                 }
                 else
@@ -1832,13 +1839,13 @@ UKGSC_KeyCombination3:
                         gUsbData->bSet2ScanCode = 0x12; // Save current scan code (xx)
                         USBKB_GenerateType2MakeCode();      // 0E0h, 12h
                     }
-                    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_5, "USBKB_GenerateScanCode:  Return 10.\n");
+                USB_DEBUG (DEBUG_LEVEL_5, "USBKB_GenerateScanCode:  Return 10.\n");
                     return;
             }
         }
         else
         {
-            USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_7, "USBKB_GenerateScanCode:  Notnumeric key\n");
+        USB_DEBUG (DEBUG_LEVEL_7, "USBKB_GenerateScanCode:  Notnumeric key\n");
             //
             // Check and process extended key press
             //
@@ -1870,7 +1877,7 @@ UKGSC_KeyCombination1:
                 //
                 if (gUsbData->bSet2ScanCode != SLASH_KEY)
                 {
-                    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_7, "USBKB_GenerateScanCode:  Regular Key.\n");
+                    USB_DEBUG (DEBUG_LEVEL_7, "USBKB_GenerateScanCode:  Regular Key.\n");
                     goto UKGSC_ProcessRegularKey;
                 }
                 //
@@ -1889,16 +1896,21 @@ UKGSC_KeyCombination1:
 }
 
 
-/**
-    This routine is used to update the LED state between the
-    USB & PS/2 keyboard
-
-    @param bFlag   Indicates how the LED local variables are adjusted
-
-    @retval VOID
-
-    @note  This routine is not executed during EFI phase
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        USBKB_UpdateLEDState
+//
+// Description: This routine is used to update the LED state between the
+//              USB & PS/2 keyboard
+//
+// Input:       bFlag   Indicates how the LED local variables are adjusted
+//
+// Output:      Nothing
+//
+// NOTE:        This routine is not executed during EFI phase
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 void
 USBKB_UpdateLEDState (UINT8 bFlag)
@@ -1964,26 +1976,10 @@ USBKB_UpdateLEDState (UINT8 bFlag)
         return;
     }
 
-    if (gUsbData->dUSBStateFlag & USB_FLAG_RUNNING_UNDER_OS) {
-        bHStatus = (UINT8)(gUsbData->bUSBKBShiftKeyStatus & 0x70);
-        bLStatus = (UINT8)(gUsbData->KbShiftKeyStatusUnderOs & 0x70);
-        if (bHStatus == bLStatus) {
-            return;
-        }
-         gUsbData->bUSBKBShiftKeyStatus &=
-                    ~ (KB_CAPS_LOCK_BIT_MASK +
-                    KB_NUM_LOCK_BIT_MASK +
-                    KB_SCROLL_LOCK_BIT_MASK);
-
-        gUsbData->bUSBKBShiftKeyStatus |= bLStatus;
-        USBKB_LEDOn();
-        return;
-    }
-
     //
     // Get the current PS/2 keyboard LED state
     //
-    //USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_5, "USBKB_UpdateLEDState :  [0:417] = %x\n", *fPtr);
+//      USB_DEBUG(DEBUG_LEVEL_5, "USBKB_UpdateLEDState :  [0:417] = %x\n", *fPtr);
     bLStatus = (UINT8)(((*fPtr) & 0x70) >> 1);
     bHStatus = (UINT8)((gUsbData->bUSBKBShiftKeyStatus) & 0x70);
     if(bLStatus & 0x08)
@@ -2003,23 +1999,27 @@ USBKB_UpdateLEDState (UINT8 bFlag)
     return;
 }
 
-/**
-    This routine updates the keyboard LED status for all the
-    USB keyboards present in the sytem
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        USBKB_LEDOn
+//
+// Description: This routine updates the keyboard LED status for all the
+//              USB keyboards present in the sytem
+//
+// Input:       Nothing
+//
+// Output:      Nothing
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
-    @param VOID
-
-    @retval VOID
-
-**/
-
-VOID
-USBKB_LEDOn(
-)
+void
+USBKB_LEDOn()
 {
-    UINT8           LByte;
-    UINT8           Count;
-    DEV_INFO*       DevInfo;
+    UINT8           bLByte,
+                    bCount;
+    DEV_INFO*       fpDevInfo;
 
     //
     // Set the LED update progress status
@@ -2029,21 +2029,21 @@ USBKB_LEDOn(
     //
     // Get the current USB LED status
     //
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_7, "USBKB_LEDOn: LedStatus %x\n",gUsbData->bUSBKBShiftKeyStatus);
+    USB_DEBUG(DEBUG_LEVEL_7, "USBKB_LEDOn: LedStatus %x\n",gUsbData->bUSBKBShiftKeyStatus);
     //
     // Form the byte to be transmitted to the USB keyboard
     //
-    LByte = (UINT8)(((gUsbData->bUSBKBShiftKeyStatus) >> 4) & 0x07);
-    USB_DEBUG(DEBUG_INFO,DEBUG_LEVEL_4, "USBKB_LEDOn: LedStatus %x, bLByte %x\n",
-                    gUsbData->bUSBKBShiftKeyStatus, LByte);
+    bLByte = (UINT8)(((gUsbData->bUSBKBShiftKeyStatus) >> 4) & 0x07);
+    USB_DEBUG(DEBUG_LEVEL_4, "USBKB_LEDOn: LedStatus %x, bLByte %x\n",
+                    gUsbData->bUSBKBShiftKeyStatus, bLByte);
 
     //
     // Update LED status in every USB keyboard on the system
     //
-    for (Count = 0; Count < USB_DEV_HID_COUNT; Count++) {
-        DevInfo = gUsbData->aUSBKBDeviceTable[Count];
-		if (DevInfo) {
-			UsbKbdSetLed(DevInfo, LByte);
+    for (bCount = 0; bCount < USB_DEV_HID_COUNT; bCount++) {
+        fpDevInfo = gUsbData->aUSBKBDeviceTable[bCount];
+		if (fpDevInfo) {
+			UsbKbdSetLed(fpDevInfo, bLByte);
 		}
     }
 
@@ -2053,14 +2053,19 @@ USBKB_LEDOn(
     gUsbData->bUSBKBC_ExtStatusFlag &= ~(KBCEXT_LED_UPDATE_IN_PROGRESS_BIT);
 }
 
-/**
-    Converts the set 2 scan code to set 1 scan code
-
-    @param bScanCode   Set 2 scan code
-
-    @retval Set 1 scan code
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        USBKB_ConvertSet2CodeToSet1Code
+//
+// Description: Converts the set 2 scan code to set 1 scan code
+//
+// Input:       bScanCode   Set 2 scan code
+//
+// Output:      Set 1 scan code
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT8
 USBKB_ConvertSet2CodeToSet1Code(UINT8   bScanCode)
@@ -2071,15 +2076,20 @@ USBKB_ConvertSet2CodeToSet1Code(UINT8   bScanCode)
 }
 
 
-/**
-    Converts the set 2 scan code to set 3/1 scan code
-
-    @param bScanCode  Set 2 scan code
-        bConvTable  Pointer to the code set conversion table
-
-    @retval Set 1/3 scan code
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        USBKB_ConvertScanCodeBetweenCodeSet
+//
+// Description: Converts the set 2 scan code to set 3/1 scan code
+//
+// Input:        bScanCode  Set 2 scan code
+//              bConvTable  Pointer to the code set conversion table
+//
+// Output:      Set 1/3 scan code
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>UINT8
 
 UINT8
 USBKB_ConvertScanCodeBetweenCodeSet(
@@ -2099,22 +2109,27 @@ USBKB_ConvertScanCodeBetweenCodeSet(
 }
 
 
-/**
-    This routine generates the type 1 make code for the byte
-    in the variable bSet2ScanCode
-
-    @param VOID
-
-    @retval VOID
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        USBKB_GenerateType1MakeCode
+//
+// Description: This routine generates the type 1 make code for the byte
+//              in the variable bSet2ScanCode
+//
+// Input:       bSet2ScanCode - Byte containing the scan code
+//
+// Output:      Nothing
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 void
 USBKB_GenerateType1MakeCode()
 {
     UINT8       bValue =0;
 
-//  USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_5, "USBKB_GenerateType1MakeCode");
+//  USB_DEBUG (DEBUG_LEVEL_5, "USBKB_GenerateType1MakeCode");
 #if     USB_KBC_EMULATION
     bValue      = USBTrap_GetCurrentScanCodeSetNumber();
 #endif
@@ -2133,22 +2148,27 @@ USBKB_GenerateType1MakeCode()
 }
 
 
-/**
-    This routine generates the type 1 break code for the byte
-    in the variable bSet2ScanCode
-
-    @param bSet2ScanCode - Byte containing the scan code
-
-    @retval Nothing
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        USBKB_GenerateType1BreakCode
+//
+// Description: This routine generates the type 1 break code for the byte
+//      in the variable bSet2ScanCode
+//
+// Input:       bSet2ScanCode - Byte containing the scan code
+//
+// Output:      Nothing
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 void
 USBKB_GenerateType1BreakCode()
 {
     UINT8       bValue =0;
 
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_8, "USBKB_GenerateType1BreakCode \n");
+    USB_DEBUG (DEBUG_LEVEL_8, "USBKB_GenerateType1BreakCode \n");
 
 #if     USB_KBC_EMULATION
     bValue      = USBTrap_GetCurrentScanCodeSetNumber();
@@ -2171,15 +2191,20 @@ USBKB_GenerateType1BreakCode()
 }
 
 
-/**
-    This routine generates the type 2 make code for the byte
-    in the variable bSet2ScanCode
-
-    @param VOID
-
-    @retval VOID
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        USBKB_GenerateType2MakeCode
+//
+// Description: This routine generates the type 2 make code for the byte
+//              in the variable bSet2ScanCode
+//
+// Input:       bSet2ScanCode - Byte containing the scan code
+//
+// Output:      Nothing
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 void
 USBKB_GenerateType2MakeCode()
@@ -2189,15 +2214,20 @@ USBKB_GenerateType2MakeCode()
 }
 
 
-/**
-    This routine generates the type 2 break code for the byte
-    in the variable bSet2ScanCode
-
-    @param VOID
-
-    @retval VOID
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        USBKB_GenerateType2BreakCode
+//
+// Description: This routine generates the type 2 break code for the byte
+//              in the variable bSet2ScanCode
+//
+// Input:       bSet2ScanCode - Byte containing the scan code
+//
+// Output:      Nothing
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 void
 USBKB_GenerateType2BreakCode()
@@ -2207,14 +2237,19 @@ USBKB_GenerateType2BreakCode()
 }
 
 
-/**
-    Returns the current scan code set number
-
-    @param VOID
-
-    @retval Scan code set number (1, 2 or 3)
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        USBTrap_GetCurrentScanCodeSetNumber
+//
+// Description: Returns the current scan code set number
+//
+// Input:       Nothing
+//
+// Output:      Scan code set number (1, 2 or 3)
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT8
 USBTrap_GetCurrentScanCodeSetNumber()
@@ -2228,15 +2263,20 @@ USBTrap_GetCurrentScanCodeSetNumber()
 }
 
 
-/**
-    Returns the overrun code depending on the current
-    scan code set
-
-    @param VOID
-
-    @retval Overrun code
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        USBTrap_GetOverrunCode
+//
+// Description: Returns the overrun code depending on the current
+//              scan code set
+//
+// Input:       Nothing
+//
+// Output:      Overrun code
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT8
 USBTrap_GetOverrunCode()
@@ -2245,16 +2285,21 @@ USBTrap_GetOverrunCode()
 }
 
 
-/**
-    This routine discards the top character in the scan
-    code buffer, keyboard status flag buffer and device ID
-    buffer
-
-    @param fPointer        Points to the keyboard status flag buffer
-
-    @retval VOID
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        USBKB_DiscardCharacter
+//
+// Description: This routine discards the top character in the scan
+//              code buffer, keyboard status flag buffer and device ID
+//              buffer
+//
+// Input:       fPointer        Points to the keyboard status flag buffer
+//
+// Output:      Nothing
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 void
 USBKB_DiscardCharacter (UINT8* fPointer)
@@ -2304,17 +2349,22 @@ USBKB_DiscardCharacter (UINT8* fPointer)
 }
 
 
-/**
-    Checks whether the key pressed is a extended key
-
-    @param bScanCode   Set 2 scan code for the key pressed
-
-    @retval 0 Key pressed matches the numeric key pad key
-        <> 0 It is not a numeric key pad key
-        Set 3 scan code for the key pressed
-        (if set 3 is chosen)
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        USBKB_CheckForExtendedKey
+//
+// Description: Checks whether the key pressed is a extended key
+//
+// Input:       bScanCode   Set 2 scan code for the key pressed
+//
+// Output:      0 Key pressed matches the numeric key pad key
+//              <> 0 It is not a numeric key pad key
+//              Set 3 scan code for the key pressed
+//              (if set 3 is chosen)
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT16
 USBKB_CheckForExtendedKey (UINT8 bScanCode)
@@ -2346,17 +2396,22 @@ USBKB_CheckForExtendedKey (UINT8 bScanCode)
 }
 
 
-/**
-    Checks whether the key pressed is from numeric key pad
-
-    @param bScanCode   Set 2 scan code for the key pressed
-
-    @retval 0 Key pressed matches the numeric key pad key
-        <> 0 It is not a numeric key pad key
-        Set 3 scan code for the key pressed
-        (if set 3 is chosen)
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        USBKB_CheckForNumericKeyPadKey
+//
+// Description: Checks whether the key pressed is from numeric key pad
+//
+// Input:       bScanCode   Set 2 scan code for the key pressed
+//
+// Output:      0 Key pressed matches the numeric key pad key
+//              <> 0 It is not a numeric key pad key
+//              Set 3 scan code for the key pressed
+//              (if set 3 is chosen)
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT16
 USBKB_CheckForNumericKeyPadKey (UINT8 bScanCode)
@@ -2387,17 +2442,22 @@ USBKB_CheckForNumericKeyPadKey (UINT8 bScanCode)
 }
 
 
-/**
-    This routine checks whether the character buffer can hold
-    'N'+1 character
-
-    @param bCount  Space needed in the buffer (in characters)
-
-    @retval 0 If buffer is full
-        <> 0 If buffer is not full
-
-**/
-
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        USBKBC_CheckCharacterBufferFull
+//
+// Description: This routine checks whether the character buffer can hold
+//              'N'+1 character
+//
+// Input:       bCount  Space needed in the buffer (in characters)
+//
+// Output:       0 If buffer is full
+//              <> 0 If buffer is not full
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
+//TODO: There is  a more  efficient algorithm
 UINT8
 USBKBC_CheckCharacterBufferFull (UINT8 bCount)
 {
@@ -2419,15 +2479,20 @@ USBKBC_CheckCharacterBufferFull (UINT8 bCount)
 }
 
 
-/**
-    This routine gets a character from the character buffer.
-    Character buffer pointers are also updated
-
-    @param VOID
-
-    @retval Character taken from the character buffer
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        USBKBC_GetFromCharacterBuffer
+//
+// Description: This routine gets a character from the character buffer.
+//              Character buffer pointers are also updated
+//
+// Input:       Nothing
+//
+// Output:      Character taken from the character buffer
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT8
 USBKBC_GetFromCharacterBuffer()
@@ -2451,15 +2516,20 @@ USBKBC_GetFromCharacterBuffer()
 }
 
 
-/**
-    This routine puts a character into the character buffer.
-    Character buffer pointers are also updated
-
-    @param Nothing
-
-    @retval VOID
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        USBKBC_SendToCharacterBuffer
+//
+// Description: This routine puts a character into the character buffer.
+//              Character buffer pointers are also updated
+//
+// Input:       Nothing
+//
+// Output:      Nothing
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 void
 USBKBC_SendToCharacterBuffer (UINT8 bChar)
@@ -2483,15 +2553,20 @@ USBKBC_SendToCharacterBuffer (UINT8 bChar)
 }
 
 
-/**
-    This routine converts the USB keycode into scan code set
-    2 scan code. Conversion is accomplished using a static table.
-
-    @param bKeyCode    USB Key code
-
-    @retval Set 2 scan code for the key
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        USBKB_ConvertUSBKeyCodeToScanCodeSet2
+//
+// Description: This routine converts the USB keycode into scan code set
+//              2 scan code. Conversion is accomplished using a static table.
+//
+// Input:       bKeyCode    USB Key code
+//
+// Output:      Set 2 scan code for the key
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT8
 USBKB_ConvertUSBKeyCodeToScanCodeSet2 (UINT8 bKeyCode)
@@ -2500,17 +2575,22 @@ USBKB_ConvertUSBKeyCodeToScanCodeSet2 (UINT8 bKeyCode)
 }
 
 
-/**
-    This routine checks whether any of the modifier keys, like
-    shift, control or alternate keys, are pressed
-
-    @param bScanCode   Scan code set 2 scan code
-
-    @retval 0 None of the modifier keys are pressed
-        Modifier key is pressed
-        High Byte, Low Byte = Modifier key identifier
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        USBKB_CheckModifierKeyPress
+//
+// Description: This routine checks whether any of the modifier keys, like
+//              shift, control or alternate keys, are pressed
+//
+// Input:       bScanCode   Scan code set 2 scan code
+//
+// Output:      0 None of the modifier keys are pressed
+//              Modifier key is pressed
+//              High Byte, Low Byte = Modifier key identifier
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT16
 USBKB_CheckModifierKeyPress (UINT8 bScanCode)
@@ -2565,44 +2645,52 @@ USBKB_CheckModifierKeyPress (UINT8 bScanCode)
 }
 
 
-/**
-    This routine will read the CCB from the keyboard controller
-    and store it in a local variable
-
-    @param VOID
-
-    @retval VOID
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        USBKBC_GetAndStoreCCB
+//
+// Description: This routine will read the CCB from the keyboard controller
+//              and store it in a local variable
+//
+// Input:       Nothing
+//
+// Output:      Nothing
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 void
 USBKBC_GetAndStoreCCB()
 {
     KBC_KBDTRANSLATION tr;
 
-    //ASSERT(gKbdInput);
-
-    if (gKbdInput == NULL) {
-        return;
-    }
+    ASSERT(gKbdInput);
     //
     // CCB is internal buisness of KBC relted code
     // USB code only need to know about translation type
     //
-    gKbdInput->GetTranslation(gKbdInput,&tr);
+    VERIFY_EFI_ERROR(
+        gKbdInput->GetTranslation(gKbdInput,&tr));
+    // TODO: remove CCB; current CCB calculation is a patch.
     gUsbData->bCCB = tr == KBC_KBDTRANS_PCXT? 0x40 : 0;
     return ;
 }
 
-/**
-    This routine will check the repeat counter and repeat rate
-    and perform the auto repeat appropriately
-
-    @param VOID
-
-    @retval VOID
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        USBKBC_CheckAutoRepeat
+//
+// Description: This routine will check the repeat counter and repeat rate
+//              and perform the auto repeat appropriately
+//
+// Input:       Nothing
+//
+// Output:      Nothing
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 void
 USBKBC_CheckAutoRepeat()
@@ -2613,7 +2701,7 @@ USBKBC_CheckAutoRepeat()
     UINT8   i;
 
     if(ScanCodeCount){ 
-        USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_7, "USBKBC_CheckAutoRepeat: \n");
+        USB_DEBUG (DEBUG_LEVEL_7, "USBKBC_CheckAutoRepeat: \n");
 
         //
         // Update repeat counter
@@ -2652,107 +2740,67 @@ USBKBC_CheckAutoRepeat()
 
 
 VOID
-SysKbcAutoRepeat(
-    HC_STRUC* HcStruc
-)
+SysKbcAutoRepeat(HC_STRUC* fpHcStruc)
 {
-    UINT8           BreakCodeDeviceId;
-    UINT8           DevAddr;
-    UINT8           *KbInputBuffer;
-    DEV_INFO        *DevInfo;
-    PS2MouseData    MouseData;
-    EFI_STATUS      EfiStatus;
-    UINT8           DummyData;
-    static UINT8    Buffer[64];
-    UINT32          Count = 1;
+    UINT8           bLByte,
+                    bDevAddr;
+    UINT8           *fPtr;
+    DEV_INFO        *fpDevInfo;
+
+    gUsbData->fpSavedHCStruc   = fpHcStruc;
 
     USBKB_UpdateLEDState(0x0);
-    
-    BreakCodeDeviceId = gUsbData->bBreakCodeDeviceID;
-    
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_8, "USBKBDpih: BreakCodeID %x \n", BreakCodeDeviceId);
+    bLByte  = gUsbData->bBreakCodeDeviceID;
+    USB_DEBUG (DEBUG_LEVEL_8, "USBKBDpih: BreakCodeID %x \n",bLByte);
 
-    if (BreakCodeDeviceId) {
-        DevAddr = 1;
+    if(bLByte) {
+        bDevAddr = 1;
 
-        while (!(BreakCodeDeviceId & 1)) {
-            BreakCodeDeviceId >>= 1;
-            ++DevAddr;
+        while(!(bLByte & 1)) {
+            bLByte  >>= 1;
+            ++bDevAddr;
         }
-        DevInfo = USB_GetDeviceInfoStruc(
+        fpDevInfo = USB_GetDeviceInfoStruc(
                         USB_SRCH_DEV_ADDR,
                         (DEV_INFO*)0,
-                        DevAddr,
-                        HcStruc);
-        ASSERT(DevInfo != NULL);
-        if (DevInfo == NULL) {
-            return;
-        }
+                        bDevAddr,
+                        fpHcStruc);
+        ASSERT(fpDevInfo != NULL);
+        if (fpDevInfo == NULL) return;
 
-        KbInputBuffer = gUsbData->aKBInputBuffer;
-        *KbInputBuffer = 0;
-        ++KbInputBuffer;
-        *KbInputBuffer = 0;
-        --KbInputBuffer;
+        fPtr = gUsbData->aKBInputBuffer;
+        *fPtr = 0;
+        ++fPtr;
+        *fPtr = 0;
+        --fPtr;
 
-        USBKB_Scanner(DevInfo, KbInputBuffer);
+        USBKB_Scanner(fpDevInfo, fPtr);
     }
 
     USBKBC_CheckAutoRepeat();
-    if (gUsbData->fpKBCCharacterBufferTail != gUsbData->fpKBCCharacterBufferHead) {
-        // Get the Data from aKBInputBuffer Local Buffer
-		*Buffer = *gUsbData->fpKBCCharacterBufferTail;
-        //Optimization: Enable the code below; it must be more efficient
-        //      UINT8  *p;
-        //      for( p = Buffer; gUsbData->fpKBCCharacterBufferTail != gUsbData->fpKBCCharacterBufferHead;
-        //              ++Count)
-        //      *p++ = USBKBC_GetFromCharacterBuffer();
-
-        if (gKbdInput->Send == SYSKBC_KbdInput_Send) {
-
-            // USB driver Emulation function already working on the aKBInputBuffer buffer
-            // So we don't need to remove the data from aKBInputBuffer incase if data send
-            // Successfully 
-            EfiStatus = gKbdInput->Send(gKbdInput, Buffer, Count);
-        } else {
-            // Other Emulation drivers doesn't use the aKBInputBuffer.
-            // So remove the data from aKBInputBuffer if the data sent successfully.
-            EfiStatus = gKbdInput->Send(gKbdInput, Buffer, Count);
-
-		    if (!EFI_ERROR(EfiStatus)) {
-			    *Buffer = USBKBC_GetFromCharacterBuffer();
-		    }
-        }
-
+    if(gUsbData->fpKBCCharacterBufferTail != gUsbData->fpKBCCharacterBufferHead)  {
+        static UINT8    buffer[64];
+        UINT32  c = 1;
+		EFI_STATUS EfiStatus;
+        //if((gUsbData->wUSBKBC_StatusFlag &
+        //      KBC_PASSWORD_FLAG_BIT_MASK) == 0)
+		*buffer = *gUsbData->fpKBCCharacterBufferTail;
+        //TODO: Enable the code below; it must be more efficient
+    //      UINT8  *p;
+    //      for( p = buffer; gUsbData->fpKBCCharacterBufferTail != gUsbData->fpKBCCharacterBufferHead;
+    //              ++c)
+    //          *p++ = USBKBC_GetFromCharacterBuffer();
+        EfiStatus = gKbdInput->Send(gKbdInput,buffer,c);
+		if (!EFI_ERROR(EfiStatus)) {
+			*buffer = USBKBC_GetFromCharacterBuffer();
+		}
+        //TODO: remove CCB from USBKBD
         USBKBC_GetAndStoreCCB();
-        USBKeyRepeat(NULL, 2);  
-    } else if (gUsbData->fpMouseInputBufferHeadPtr !=
-                        gUsbData->fpMouseInputBufferTailPtr) {
-
-        // Get the Mouse data Packet from aMouseInputBuffer buffer
-        MouseData.flags = *gUsbData->fpMouseInputBufferTailPtr;
-        MouseData.x = *(gUsbData->fpMouseInputBufferTailPtr + 1);
-        MouseData.y = *(gUsbData->fpMouseInputBufferTailPtr + 2);
-
-        if (gMsInput->Send == SYSKBC_MouseInput_Send) {
-
-            // USB driver Emulation function already working on the aMouseInputBuffer buffer
-            // So we don't need to remove the data from aMouseInputBuffer incase if data send
-            // Successfully 
-            EfiStatus = gMsInput->Send(gMsInput, &MouseData);
-        } else {
-            // Other Emulation drivers doesn't use the aMouseInputBuffer.
-            // So remove the data from aMouseInputBuffer if the data sent successfully.
-            EfiStatus = gMsInput->Send(gMsInput, &MouseData);
-            if (!EFI_ERROR(EfiStatus)) {
-                DummyData = USBMouse_GetFromMouseBuffer();
-                DummyData = USBMouse_GetFromMouseBuffer();
-                DummyData = USBMouse_GetFromMouseBuffer();
-		    }
-        }
-
         USBKeyRepeat(NULL, 2);  // Enable Key repeat
-
+    } else if(gUsbData->fpMouseInputBufferHeadPtr !=
+                        gUsbData->fpMouseInputBufferTailPtr ) {
+        SYSKBC_SendKBCData();
+        //BKeyRepeat(NULL, 2);  // Enable Key repeat
     } else if(gUsbData->fpKBCScanCodeBufferPtr != gUsbData->aKBCScanCodeBufferStart ) {
         USBKeyRepeat(NULL, 2);  // Enable Key repeat
     } else {
@@ -2780,16 +2828,16 @@ void InitSysKbc(
     *ppMouse = &theMsInput;
 }
 
-//**********************************************************************
-//**********************************************************************
-//**                                                                  **
-//**        (C)Copyright 1985-2016, American Megatrends, Inc.         **
-//**                                                                  **
-//**                       All Rights Reserved.                       **
-//**                                                                  **
-//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093        **
-//**                                                                  **
-//**                       Phone: (770)-246-8600                      **
-//**                                                                  **
-//**********************************************************************
-//**********************************************************************
+//****************************************************************************
+//****************************************************************************
+//**                                                                        **
+//**             (C)Copyright 1985-2008, American Megatrends, Inc.          **
+//**                                                                        **
+//**                          All Rights Reserved.                          **
+//**                                                                        **
+//**                 5555 Oakbrook Pkwy, Norcross, GA 30093                 **
+//**                                                                        **
+//**                          Phone (770)-246-8600                          **
+//**                                                                        **
+//****************************************************************************
+//****************************************************************************

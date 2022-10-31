@@ -1,7 +1,7 @@
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2012, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **
@@ -25,6 +25,8 @@
 #include <NetworkStackSetup.h>
 
 NETWORK_STACK  	mNetworkStackData;
+EFI_GUID  	mNetworkStackGuid = NETWORK_STACK_GUID;
+
 
 
 //<AMI_PHDR_START>
@@ -55,7 +57,7 @@ EFI_STATUS InitNetworkStackVar (
   InitAmiLib(ImageHandle,SystemTable);
 
   Size = sizeof(NETWORK_STACK);
-  Status = pRS->GetVariable(L"NetworkStackVar",&gEfiNetworkStackSetupGuid, NULL, &Size, &mNetworkStackData);
+  Status = pRS->GetVariable(L"NetworkStackVar",&mNetworkStackGuid, NULL, &Size, &mNetworkStackData);
 
   if (Status == EFI_NOT_FOUND) {
 
@@ -64,8 +66,8 @@ EFI_STATUS InitNetworkStackVar (
                     0);
 
     pRS->SetVariable(
-         L"NetworkStackVar",&gEfiNetworkStackSetupGuid,
-         EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS,
+         L"NetworkStackVar",&mNetworkStackGuid,
+         EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS,
          sizeof(NETWORK_STACK), &mNetworkStackData
      );
 
@@ -78,7 +80,7 @@ EFI_STATUS InitNetworkStackVar (
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2012, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **

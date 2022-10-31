@@ -1,19 +1,19 @@
 #**********************************************************************
 #**********************************************************************
-#**                                                                  **
-#**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
-#**                                                                  **
-#**                       All Rights Reserved.                       **
-#**                                                                  **
-#** 5555 Oakbrook Parkway, Suite 200, Norcross,GA 30093              **
-#**                                                                  **
-#**                       Phone: (770)-246-8600                      **
-#**                                                                  **
+#**                                                                 **
+#**        (C)Copyright 1985-2012, American Megatrends, Inc. 		**
+#**                                                                 **
+#**                       All Rights Reserved.                      **
+#**                                                                 **
+#** 5555 Oakbrook Parkway, Suite 200, Norcross,GA 30093				**
+#**                                                                 **
+#**                       Phone: (770)-246-8600                     **
+#**                                                                 **
 #**********************************************************************
 #**********************************************************************
 
 ## @file
-#   This library provides hooks to detect FlUpdate and Fw capsule Image verification 
+#   This librray provides hooks to detect FlUpdate and Fw capsule Image verification 
 ##
 
 [Defines]
@@ -32,7 +32,7 @@
 #  VALID_ARCHITECTURES           = IA32
 #
 
-[Sources]
+[Sources.IA32]
 FwCapsuleInfo.c
 VerifyFwCapsule.c
 
@@ -41,8 +41,8 @@ VerifyFwCapsule.c
   AmiCompatibilityPkg/AmiCompatibilityPkg.dec
   AmiCryptoPkg/AmiCryptoPkg.dec
   
-[LibraryClasses]
- AmiPeiLib
+#[LibraryClasses]
+#  PeiCryptLib
 
 [Guids]
 gEfiCertSha256Guid
@@ -52,11 +52,8 @@ gEfiCertX509Guid
 gEfiHashAlgorithmSha256Guid
 
 [Ppis]
-gAmiDigitalSignaturePPIGuid
-gEfiPeiReadOnlyVariable2PpiGuid
-
-[Depex]
-gAmiDigitalSignaturePPIGuid
+  gAmiDigitalSignaturePPIGuid
+  gPeiReadOnlyVariablePpiGuid
 
 #[BuildOptions.IA32]
 #*_*_IA32_CC_FLAGS = -DPEI_BUILD 

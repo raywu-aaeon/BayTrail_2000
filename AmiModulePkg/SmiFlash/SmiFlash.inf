@@ -38,21 +38,22 @@
 [Packages]
   AmiCompatibilityPkg/AmiCompatibilityPkg.dec
   MdePkg/MdePkg.dec
+#-  AmiCryptoPkg/AmiCryptoPkg.dec
+#-  IntelFrameworkPkg/IntelFrameworkPkg.dec
+#-  IntelFrameworkModulePkg/IntelFrameworkModulePkg.dec
 
 [LibraryClasses]
   AmiDxeLib
   UefiDriverEntryPoint
   FlashLib
-  AmiBufferValidationLib
-  
+  SpiFlashLib
+
 [Protocols]
   gEfiSmmBase2ProtocolGuid
   gEfiSmmSwDispatch2ProtocolGuid
   gFlashSmmProtocolGuid
   gEfiFirmwareVolume2ProtocolGuid
   gEfiSmmAccess2ProtocolGuid
-  gAmiUsbSmmProtocolGuid
-  gEmul6064TrapProtocolGuid
 
 [Depex.common.DXE_SMM_DRIVER]
  #TRUE

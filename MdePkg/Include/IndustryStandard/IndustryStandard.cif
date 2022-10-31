@@ -29,7 +29,6 @@
 "Pci.h"	
 "PciCodeId.h"	
 "PciExpress21.h"	
-"PciExpress30.h"	
 "PeImage.h"	
 "Sal.h"	
 "Scsi.h"	

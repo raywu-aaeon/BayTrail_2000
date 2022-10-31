@@ -1,8 +1,0 @@
-<component>
-	name = "IndustryStandard"
-	category = ModulePart
-	LocalRoot = "AmiModulePkg\Include\IndustryStandard\"
-	RefName = "AmiModulePkg.IndustryStandard"
-[files]
-"AmiAtaAtapi.h"	
-<endComponent>

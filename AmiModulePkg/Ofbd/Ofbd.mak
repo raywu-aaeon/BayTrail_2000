@@ -1,7 +1,7 @@
 #*************************************************************************
 #*************************************************************************
 #**                                                                     **
-#**        (C)Copyright 1985-2016, American Megatrends, Inc.            **
+#**        (C)Copyright 1985-2013, American Megatrends, Inc.            **
 #**                                                                     **
 #**                       All Rights Reserved.                          **
 #**                                                                     **
@@ -28,7 +28,7 @@
 #
 # Name:	Ofbd.mak
 #
-# Description:	Make file for create Ofbd module inf file
+# Description:	Make file for the Ofbd.obj
 #
 #<AMI_FHDR_END>
 #*************************************************************************
@@ -45,7 +45,7 @@ $(BUILD_DIR)/OfbdFuncInc.h : $(OFBD_FUNC_INCLUDE_FILES1)
 #----------------------------------------------------------------------------
 #           02. Create OfbdFuncElinks header file
 #----------------------------------------------------------------------------
-$(BUILD_DIR)/OfbdFuncElinks.h :  $(BUILD_DIR)/Token.mak
+$(BUILD_DIR)/OfbdFuncElinks.h :  $(BUILD_DIR)/token.mak
 	$(ECHO) \
 "// Don't delete this line$(EOL)\
 #define OFBD_INIT_FUNC_LIST $(OFBD_INIT_FUNC_LIST)$(EOL)\
@@ -57,12 +57,12 @@ $(BUILD_DIR)/OfbdFuncElinks.h :  $(BUILD_DIR)/Token.mak
 #----------------------------------------------------------------------------
 #           03. Create Ofbd module inf file
 #----------------------------------------------------------------------------
-$(BUILD_DIR)/Ofbd.inf : $(BUILD_DIR)/Token.h $(OFBD_DIR)/Ofbd.mak 
+$(BUILD_DIR)/Ofbd.inf : $(BUILD_DIR)/token.h $(OFBD_DIR)/Ofbd.mak 
 	$(ECHO)  \
 " #**********************************************************************$(EOL)\
 #**********************************************************************$(EOL)\
 #**                                                                  **$(EOL)\
-#**        (C)Copyright 1985-2016, American Megatrends, Inc.         **$(EOL)\
+#**        (C)Copyright 1985-2013, American Megatrends, Inc.         **$(EOL)\
 #**                                                                  **$(EOL)\
 #**                       All Rights Reserved.                       **$(EOL)\
 #**                                                                  **$(EOL)\
@@ -95,13 +95,14 @@ $(EOL)\
 $(EOL)\
 [Packages] $(EOL)\
   MdePkg/MdePkg.dec$(EOL)\
+  IntelFrameworkPkg/IntelFrameworkPkg.dec$(EOL)\
+  IntelFrameworkModulePkg/IntelFrameworkModulePkg.dec$(EOL)\
   AmiCompatibilityPkg/AmiCompatibilityPkg.dec$(EOL)\
   AmiModulePkg/AmiModulePkg.dec$(EOL)\
   $(subst $(SPACE),$(EOL)$(SPACE),$(AMI_OFBD_PACKAGES))$(EOL)\
   $(EOL)\
 [LibraryClasses]$(EOL)\
   AmiDxeLib$(EOL)\
-  FlashLib$(EOL)\
   UefiLib$(EOL)\
   UefiDriverEntryPoint$(EOL)\
   $(subst $(SPACE),$(EOL)$(SPACE),$(AMI_OFBD_LIBRARIES))$(EOL)\
@@ -122,7 +123,7 @@ $(EOL)\
 #**********************************************************************$(EOL)\
 #**********************************************************************$(EOL)\
 #**                                                                  **$(EOL)\
-#**        (C)Copyright 1985-2016, American Megatrends, Inc.         **$(EOL)\
+#**        (C)Copyright 1985-2013, American Megatrends, Inc.         **$(EOL)\
 #**                                                                  **$(EOL)\
 #**                       All Rights Reserved.                       **$(EOL)\
 #**                                                                  **$(EOL)\
@@ -131,13 +132,13 @@ $(EOL)\
 #**                       Phone: (770)-246-8600                      **$(EOL)\
 #**                                                                  **$(EOL)\
 #**********************************************************************$(EOL)\
-#**********************************************************************$(EOL)\
-$(EOL)"\
+#**********************************************************************$(EOL)"\
+  $(EOL)\
 > $(BUILD_DIR)/Ofbd.inf
 #*************************************************************************
 #*************************************************************************
 #**                                                                     **
-#**        (C)Copyright 1985-2016, American Megatrends, Inc.            **
+#**        (C)Copyright 1985-2013, American Megatrends, Inc.            **
 #**                                                                     **
 #**                       All Rights Reserved.                          **
 #**                                                                     **

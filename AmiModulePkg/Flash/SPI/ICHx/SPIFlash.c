@@ -70,8 +70,6 @@
 #define     SPI_OPCODE_TYPE_READ_WITH_ADDRESS   0x2
 #define     SPI_OPCODE_TYPE_WRITE_WITH_ADDRESS  0x3
 #endif
-
-#define FLASH_DEVICE_BASE 0xFFFFFFFF - FLASH_SIZE + 1               // [ EIP358409 ]
 //----------------------------------------------------------------------------
 // Module level global data
 extern UINT16       gFlashId;
@@ -135,14 +133,6 @@ VOID
 CommonSpiDeviceVirtualFixup (
     EFI_RUNTIME_SERVICES    *pRS
 );
-
-// [ EIP358409 ]+>>>
-VOID
-SpiBlockProtectUpdate (
-    IN volatile UINT8           *pBlockAddress,
-    IN UINT8                    bStatusData
-);
-// [ EIP358409 ]+<<<
 //----------------------------------------------------------------------------
 // Local Variables
 FLASH_PART mCommonSpiFlash ={
@@ -638,78 +628,6 @@ SerialFlashDiscoveryForQuadRead (VOID)
 #endif  // #if SPI_INITIALIZE_WITH_VSCC == 1
     return EFI_UNSUPPORTED;
 }
-
-// [ EIP358409 ]+>>>
-//<AMI_PHDR_START>
-//----------------------------------------------------------------------------
-//
-// Procedure:   RemoveWriteStatusOpcode
-//
-// Description:
-//
-// Input:
-//
-// Output:
-//
-//----------------------------------------------------------------------------
-//<AMI_PHDR_END>
-VOID
-RemoveWriteStatusOpcode (
-    IN OUT  FLASH_INFO      *FlashInfo
-)
-{
-    FlashInfo->WriteStatus.Opcode = FlashInfo->ReadId.Opcode;
-	FlashInfo->WriteStatus.OpcodeType = FlashInfo->ReadId.OpcodeType;
-	
-	//Program first DWORD of opcode commands
-    *((volatile UINT32*)( gSPIBASE + R_RCRB_SPI_OPMENU + 0 )) = (UINT32)
-        // Write Byte
-        ( (FlashInfo->Write.Opcode << (SPI_OPCODE_WRITE_INDEX * 8)) | \
-        // Read Data
-          (FlashInfo->Read.Opcode << (SPI_OPCODE_READ_INDEX * 8)) | \
-        // Erase 64k Sector
-          (FlashInfo->Erase.Opcode << (SPI_OPCODE_ERASE_INDEX * 8)) | \
-        // Read Device Status Reg
-          (FlashInfo->ReadStatus.Opcode << (SPI_OPCODE_READ_S_INDEX * 8)) );
-
-    //Program second DWORD of Opcode commands
-    *((volatile UINT32*)( gSPIBASE + R_RCRB_SPI_OPMENU + 4 )) = (UINT32)
-        // Read device ID
-      ((FlashInfo->ReadId.Opcode << ((SPI_OPCODE_READ_ID_INDEX - 4) * 8)) | \
-        // Write Status Register
-       (FlashInfo->WriteStatus.Opcode << \
-                                    ((SPI_OPCODE_WRITE_S_INDEX - 4) * 8)) | \
-        // Write Status Enable Register
-       (FlashInfo->WriteStatusEnable.Opcode << \
-                                    ((SPI_OPCODE_WRITE_S_E_INDEX - 4) * 8)));
-
-    //Program opcode types
-    *((volatile UINT16*)( gSPIBASE + R_RCRB_SPI_OPTYPE )) = (UINT16)
-        // write with address.
-        (FlashInfo->Write.OpcodeType << (SPI_OPCODE_WRITE_INDEX * 2) | \
-        // read with address.
-         FlashInfo->Read.OpcodeType << (SPI_OPCODE_READ_INDEX * 2) | \
-        // write with address.
-         FlashInfo->Erase.OpcodeType << (SPI_OPCODE_ERASE_INDEX * 2) | \
-        // read w/o no adress.
-         FlashInfo->ReadStatus.OpcodeType << (SPI_OPCODE_READ_S_INDEX * 2) | \
-        // read with address.
-         FlashInfo->ReadId.OpcodeType << (SPI_OPCODE_READ_ID_INDEX * 2) | \
-        // write w/o address.
-         FlashInfo->WriteStatus.OpcodeType << (SPI_OPCODE_WRITE_S_INDEX * 2) | \
-        // write w/o address.
-         FlashInfo->WriteStatusEnable.OpcodeType << \
-                                    (SPI_OPCODE_WRITE_S_E_INDEX * 2));
-
-    //set up the prefix opcodes for commands
-    *((volatile UINT16*)( gSPIBASE + R_RCRB_SPI_PREOP )) = (UINT16)
-        ( ( FlashInfo->WriteStatusEnable.Opcode << 8 ) | \
-                                    ( FlashInfo->WriteEnable.Opcode ) );
-    
-    return ;
-}
-// [ EIP358409 ]+<<<
-
 //<AMI_PHDR_START>
 //----------------------------------------------------------------------------
 //
@@ -729,7 +647,6 @@ ReinitializeSpiEnvironment (
 )
 {
     UINT32	Buffer32;	// EIP137034
-	UINT8   *BlockAddress;
 
 #if defined SPI_INITIALIZE_WITH_VSCC && SPI_INITIALIZE_WITH_VSCC == 1
     // Program UPPER/LOWER VSCC register.
@@ -796,14 +713,6 @@ ReinitializeSpiEnvironment (
     Buffer32 |= 0x00;
     *((volatile UINT32*)(gSPIBASE + 0xfc)) = Buffer32;
 // EIP137034 <<
-
-// [ EIP358409 ]+>>>
-	//Update SPI status register to make SPI device writable
-	BlockAddress = (UINT8*)FLASH_DEVICE_BASE;
-	SpiBlockProtectUpdate (BlockAddress, 0);
-	//Remove SPI write status Opcode from Opmenu
-	RemoveWriteStatusOpcode(FlashInfo);	
-// [ EIP358409 ]+<<<
 }
 //<AMI_PHDR_START>
 //----------------------------------------------------------------------------

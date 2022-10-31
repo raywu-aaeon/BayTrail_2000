@@ -1,7 +1,7 @@
 #**********************************************************************
 #**********************************************************************
 #**                                                                  **
-#**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+#**        (C)Copyright 1985-2012, American Megatrends, Inc.         **
 #**                                                                  **
 #**                       All Rights Reserved.                       **
 #**                                                                  **
@@ -37,13 +37,12 @@ AmiDxeLib
 UefiDriverEntryPoint
 
 [Packages]
-MdePkg/MdePkg.dec
-IntelFrameworkPkg/IntelFrameworkPkg.dec
-AmiCompatibilityPkg/AmiCompatibilityPkg.dec
-AmiNetworkPkg/AmiNetworkPkg.dec
-
-[Guids]
- gEfiNetworkStackSetupGuid
+MdePkg\MdePkg.dec
+IntelFrameworkPkg\IntelFrameworkPkg.dec
+AmiCompatibilityPkg\AmiCompatibilityPkg.dec
+ AmiNetworkPkg/AmiNetworkPkg.dec
 
 [Depex]
   TRUE
+
+

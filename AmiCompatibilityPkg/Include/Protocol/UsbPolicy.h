@@ -1,21 +1,34 @@
+//****************************************************************************
+//****************************************************************************
+//**                                                                        **
+//**             (C)Copyright 1985-2010, American Megatrends, Inc.          **
+//**                                                                        **
+//**                          All Rights Reserved.                          **
+//**                                                                        **
+//**              5555 Oakbrook Pkwy, Suite 200 Norcross, GA 30093          **
+//**                                                                        **
+//**                          Phone (770)-246-8600                          **
+//**                                                                        **
+//****************************************************************************
+//****************************************************************************
+
 //**********************************************************************
-//**********************************************************************
-//**                                                                  **
-//**        (C)Copyright 1985-2016, American Megatrends, Inc.         **
-//**                                                                  **
-//**                       All Rights Reserved.                       **
-//**                                                                  **
-//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093        **
-//**                                                                  **
-//**                       Phone: (770)-246-8600                      **
-//**                                                                  **
-//**********************************************************************
+// $Header: /Alaska/SOURCE/Modules/USB/ALASKA/Protocol/UsbPolicy.h 20    9/04/12 8:01a Wilsonlee $
+//
+// $Revision: 20 $
+//
+// $Date: 9/04/12 8:01a $
 //**********************************************************************
 
-/** @file UsbPolicy.h
-    Protocol used for USB policy definitions
-
-**/
+//<AMI_FHDR_START>
+//----------------------------------------------------------------------------
+//
+//  Name:           UsbPolicy.h
+//
+//  Description:    Protocol used for USB policy definitions
+//
+//----------------------------------------------------------------------------
+//<AMI_FHDR_END>
 
 #ifndef _AMIUSB_POLICY_PROTOCOL_H_
 #define _AMIUSB_POLICY_PROTOCOL_H_
@@ -72,7 +85,6 @@ typedef struct {
 	UINT8	PowerGoodDeviceNumDelay;
 	UINT8	UsbHiSpeedSupport;
     UINT8   UsbMassDriverSupport;		//(EIP99882+)
-    UINT8   UsbS5WakeupSupport;
 } USB_SUPPORT_SETUP;
 #endif
 
@@ -104,44 +116,10 @@ typedef struct{
 #define SETUP_DATA_HOTPLUG_AUTO		3
 #define SETUP_DATA_RESETDELAY_20S	1
 
-#define USB_HC_UHCI                 0x10
-#define USB_HC_OHCI                 0x20
-#define USB_HC_EHCI                 0x30
-#define USB_HC_XHCI                 0x40
-
 #ifndef VFRCOMPILE
-typedef struct _USB_POLICY_PROTOCOL EFI_USB_POLICY_PROTOCOL;
-
-typedef struct {
-  UINT8                         Type;
-  EFI_DEVICE_PATH_PROTOCOL      *Device;
-  EFI_HANDLE                    HwSmiHandle;
-} AMI_USB_HW_SMI_HC_CONTEXT;
-
-typedef struct{
-	UINT8	                        HcCount;
-    AMI_USB_HW_SMI_HC_CONTEXT       **HcContext;    
-} AMI_USB_HW_SMI_HC_TABLE;
-
-
-typedef struct{
-    UINT16  Vid;
-    UINT16  Did;
-    UINT8   Config;
-} USB_DEV_CONFIG_INFO;
-
-typedef
-EFI_STATUS
-(EFIAPI *AMI_USB_DEV_CONFIG_INFO)(
-    IN EFI_USB_POLICY_PROTOCOL  *This,
-    OUT VOID                    *ConfigData
-);
-
 typedef struct _USB_POLICY_PROTOCOL {
-	USB_SUPPORT_SETUP	        *UsbDevPlcy;
-    AMI_USB_HW_SMI_HC_TABLE     AmiUsbHwSmiHcTable;
-    AMI_USB_DEV_CONFIG_INFO     UsbDevConfigNumPolicy;
-};
+	USB_SUPPORT_SETUP	*UsbDevPlcy;
+} EFI_USB_POLICY_PROTOCOL;
 #endif
 
 #define EMULATION_FAKE_INTERFACE	1
@@ -152,16 +130,6 @@ typedef struct {
 	UINT8	UsbMassDevNum;
 	UINT8	IsInteractionAllowed;
 } USB_MASS_DEV_NUM;
-#endif
-
-#ifndef TYPEDEF_USB_CONTROLLER_NUM
-#define TYPEDEF_USB_CONTROLLER_NUM
-typedef struct {
-    UINT8   UhciNum;
-    UINT8   OhciNum;
-    UINT8   EhciNum;
-    UINT8   XhciNum;
-} USB_CONTROLLER_NUM;
 #endif
 
 typedef struct {
@@ -183,16 +151,16 @@ typedef struct {
 
 #endif
 
-//**********************************************************************
-//**********************************************************************
-//**                                                                  **
-//**        (C)Copyright 1985-2016, American Megatrends, Inc.         **
-//**                                                                  **
-//**                       All Rights Reserved.                       **
-//**                                                                  **
-//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093        **
-//**                                                                  **
-//**                       Phone: (770)-246-8600                      **
-//**                                                                  **
-//**********************************************************************
-//**********************************************************************
+//****************************************************************************
+//****************************************************************************
+//**                                                                        **
+//**             (C)Copyright 1985-2010, American Megatrends, Inc.          **
+//**                                                                        **
+//**                          All Rights Reserved.                          **
+//**                                                                        **
+//**              5555 Oakbrook Pkwy, Suite 200 Norcross, GA 30093          **
+//**                                                                        **
+//**                          Phone (770)-246-8600                          **
+//**                                                                        **
+//****************************************************************************
+//****************************************************************************

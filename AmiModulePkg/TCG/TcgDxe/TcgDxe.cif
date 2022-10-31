@@ -1,0 +1,10 @@
+<component>
+	name = "TcgDxe"
+	category = ModulePart
+	LocalRoot = "AmiModulePkg\TCG\TcgDxe\"
+	RefName = "TcgDxe"
+[INF]
+"TcgDxe.inf"
+[parts]
+"TcgPlatformSetupPolicy"
+<endComponent>

@@ -157,15 +157,32 @@ LibraryMapping
 End
 
 ELINK
-	Name  = "BlockReportFvBB"
-	Parent  = "PeiProcessFvBeforePublishing"
+	Name  = "BlockReportFvBB,"
+	Parent  = "ProcessFvBeforePublishing"
 	InvokeOrder = AfterParent
 End
-#CSP20140330_22 <<
 
 LibraryMapping
 	Class  = "NULL"
 	Instance  = "AmiModulePkg.BlockReportFvBBLib"
-	Override  = "AmiModulePkg.RomLayoutPei"
+	Override  = "MdeModulePkg.DxeIpl"
 End
 
+LibraryMapping
+	Class  = "NULL"
+	Instance  = "AmiModulePkg.BlockReportFvBBLib"
+	Override  = "MdeModulePkg.PeiMain"
+End
+
+LibraryMapping
+	Class  = "NULL"
+	Instance  = "AmiModulePkg.BlockReportFvBBLib"
+	Override  = "AmiModulePkg.PeiRamBootPei"
+End
+
+LibraryMapping
+	Class  = "NULL"
+	Instance  = "AmiModulePkg.BlockReportFvBBLib"
+	Override  = "AmiModulePkg.PHashDPei"
+End
+#CSP20140330_22 <<

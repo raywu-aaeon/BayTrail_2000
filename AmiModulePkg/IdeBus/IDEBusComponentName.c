@@ -1,27 +1,33 @@
-//***********************************************************************
-//***********************************************************************
-//**                                                                   **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.          **
-//**                                                                   **
-//**                       All Rights Reserved.                        **
-//**                                                                   **
-//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093         **
-//**                                                                   **
-//**                       Phone: (770)-246-8600                       **
-//**                                                                   **
-//***********************************************************************
-//***********************************************************************
-
-/** @file IDEBusComponentName.c
-    Component Name Protocol Member Functions for IDE Bus.
-
-**/
-
-//---------------------------------------------------------------------------
-
+//**********************************************************************
+//**********************************************************************
+//**                                                                  **
+//**        (C)Copyright 1985-2012, American Megatrends, Inc.         **
+//**                                                                  **
+//**                       All Rights Reserved.                       **
+//**                                                                  **
+//**         5555 Oakbrook Pkwy, Suite 200, Norcross, GA 30093        **
+//**                                                                  **
+//**                       Phone: (770)-246-8600                      **
+//**                                                                  **
+//**********************************************************************
+//**********************************************************************
+// $Header: /Alaska/SOURCE/Core/Modules/IdeBus/IDEBusComponentName.c 17    10/11/10 11:29a Krishnakumarg $
+//
+// $Revision: 17 $
+//
+// $Date: 10/11/10 11:29a $
+//**********************************************************************
+//<AMI_FHDR_START>
+//----------------------------------------------------------------------------
+//
+// Name: IDEBusComponentName.c
+//
+// Description:	Component Name Protocol Member Functions for IDE Bus.
+//
+//----------------------------------------------------------------------------
+//<AMI_FHDR_END>
 #include "IdeBus.h"
-
-//---------------------------------------------------------------------------
+#include <Protocol\IdeBusBoard.h>
 
 //
 //External variables
@@ -34,21 +40,18 @@ extern EFI_GUID                     gSecurityModeProtocolGuid;
 extern BOOLEAN LanguageCodesEqual(
     CONST CHAR8* LangCode1, CONST CHAR8* LangCode2 );
 
-EFI_STATUS
-IdeBusCtlDriverName (
-    IN  EFI_COMPONENT_NAME_PROTOCOL *This,
-    IN  CHAR8                       *Language,
-    OUT CHAR16                      **DriverName
-);
+EFI_STATUS IdeBusCtlDriverName (
+    IN EFI_COMPONENT_NAME_PROTOCOL *This,
+    IN CHAR8                       *Language,
+    OUT CHAR16                     **DriverName );
 
-EFI_STATUS
-IdeBusCtlGetControllerName (
-    IN  EFI_COMPONENT_NAME_PROTOCOL *This,
-    IN  EFI_HANDLE                  ControllerHandle,
-    IN  EFI_HANDLE ChildHandle      OPTIONAL,
-    IN  CHAR8                       *Language,
-    OUT CHAR16                      **ControllerName
-);
+EFI_STATUS IdeBusCtlGetControllerName (
+    IN EFI_COMPONENT_NAME_PROTOCOL *This,
+    IN EFI_HANDLE                  ControllerHandle,
+    IN EFI_HANDLE ChildHandle      OPTIONAL,
+    IN CHAR8                       *Language,
+    OUT CHAR16                     **ControllerName );
+
 
 CHAR16                      *gIdeBusDriverName     = L"AMI IDE BUS Driver";
 CHAR16                      *gIdeBusControllerName = L"PCI IDE Mass Storage Device";
@@ -60,36 +63,42 @@ EFI_COMPONENT_NAME_PROTOCOL gIdeBusControllerDriverName = {
     LANGUAGE_CODE_ENGLISH
 };
 
-/**
-    Retrieves a Unicode string that is the user readable name of
-    the EFI Driver.
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// FUNCTION:  IdeBusCtlDriverName
+//
+// DESCRIPTION: Retrieves a Unicode string that is the user readable name of
+//              the EFI Driver.
+//
+//
+// PARAMETERS:
+//    This       - A pointer to the EFI_COMPONENT_NAME_PROTOCOL instance.
+//    Language   - A pointer to a three character ISO 639-2 language identifier.
+//                 This is the language of the driver name that that the caller
+//                 is requesting, and it must match one of the languages specified
+//                 in SupportedLanguages.  The number of languages supported by a
+//                 driver is up to the driver writer.
+//    DriverName - A pointer to the Unicode string to return.  This Unicode string
+//                 is the name of the driver specified by This in the language
+//                 specified by Language.
+//
+// RETURN:
+//    EFI_SUCCES            - The Unicode string for the Driver specified by This
+//                            and the language specified by Language was returned
+//                            in DriverName.
+//    EFI_INVALID_PARAMETER - Language is NULL.
+//    EFI_INVALID_PARAMETER - DriverName is NULL.
+//    EFI_UNSUPPORTED       - The driver specified by This does not support the
+//                            language specified by Language.
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
-    @param This       - A pointer to the EFI_COMPONENT_NAME_PROTOCOL instance.
-    @param Language   - A pointer to a three character ISO 639-2 language identifier.
-        This is the language of the driver name that that the caller
-        is requesting, and it must match one of the languages specified
-        in SupportedLanguages.  The number of languages supported by a
-        driver is up to the driver writer.
-    @param DriverName - A pointer to the Unicode string to return.  This Unicode string
-        is the name of the driver specified by This in the language
-        specified by Language.
-
-    @retval EFI_SUCCES The Unicode string for the Driver specified by This
-            and the language specified by Language was returned
-            in DriverName.
-    @retval EFI_INVALID_PARAMETER Language is NULL.
-    @retval EFI_INVALID_PARAMETER DriverName is NULL.
-    @retval EFI_UNSUPPORTED The driver specified by This does not support the
-            language specified by Language.
-
-**/
-
-EFI_STATUS
-IdeBusCtlDriverName (
-    IN  EFI_COMPONENT_NAME_PROTOCOL *This,
-    IN  CHAR8                       *Language,
-    OUT CHAR16                      **DriverName
-)
+EFI_STATUS IdeBusCtlDriverName(
+    IN EFI_COMPONENT_NAME_PROTOCOL *This,
+    IN CHAR8                       *Language,
+    OUT CHAR16                     **DriverName )
 {
     //
     //Supports only English
@@ -104,59 +113,65 @@ IdeBusCtlDriverName (
     return EFI_SUCCESS;
 }
 
-/**
-    Retrieves a Unicode string that is the user readable name of
-    the controller that is being managed by an EFI Driver.
-
-    @param This - A pointer to the EFI_COMPONENT_NAME_PROTOCOL instance.
-    @param ControllerHandle - The handle of a controller that the driver specified by
-        This is managing.  This handle specifies the controller
-        whose name is to be returned.
-    @param ChildHandle  - The handle of the child controller to retrieve the name
-        of.  This is an optional parameter that may be NULL.  It
-        will be NULL for device drivers.  It will also be NULL
-        for a bus drivers that wish to retrieve the name of the
-        bus controller.  It will not be NULL for a bus driver
-        that wishes to retrieve the name of a child controller.
-    @param Language - A pointer to a three character ISO 639-2 language
-        identifier.  This is the language of the controller name
-        that that the caller is requesting, and it must match one
-        of the languages specified in SupportedLanguages.  The
-        number of languages supported by a driver is up to the
-        driver writer.
-    @param ControllerName   - A pointer to the Unicode string to return.  This Unicode
-        string is the name of the controller specified by
-        ControllerHandle and ChildHandle in the language
-        specified by Language from the point of view of the
-        driver specified by This.
-
-    @retval EFI_SUCCESS The Unicode string for the user readable name in the
-            language specified by Language for the driver
-            specified by This was returned in DriverName.
-    @retval EFI_INVALID_PARAMETER ControllerHandle is not a valid EFI_HANDLE.
-    @retval EFI_INVALID_PARAMETER ChildHandle is not NULL and it is not a valid
-            EFI_HANDLE.
-    @retval EFI_INVALID_PARAMETER Language is NULL.
-    @retval EFI_INVALID_PARAMETER ControllerName is NULL.
-    @retval EFI_UNSUPPORTED The driver specified by This is not currently
-            managing the controller specified by
-            ControllerHandle and ChildHandle.
-    @retval EFI_UNSUPPORTED The driver specified by This does not support the
-            language specified by Language.
-
-**/
-EFI_STATUS
-IdeBusCtlGetControllerName (
-    IN  EFI_COMPONENT_NAME_PROTOCOL *This,
-    IN  EFI_HANDLE                  Controller,
-    IN  EFI_HANDLE ChildHandle      OPTIONAL,
-    IN  CHAR8                       *Language,
-    OUT CHAR16                      **ControllerName
-)
+//---------------------------------------------------------------------------
+//<AMI_PHDR_START>
+//
+// FUNCTION:  IdeBusCtlGetControllerName
+//
+// DESCRIPTION: Retrieves a Unicode string that is the user readable name of
+//              the controller that is being managed by an EFI Driver.
+//
+// PARAMETERS:
+//    This             - A pointer to the EFI_COMPONENT_NAME_PROTOCOL instance.
+//    ControllerHandle - The handle of a controller that the driver specified by
+//                       This is managing.  This handle specifies the controller
+//                       whose name is to be returned.
+//    ChildHandle      - The handle of the child controller to retrieve the name
+//                       of.  This is an optional parameter that may be NULL.  It
+//                       will be NULL for device drivers.  It will also be NULL
+//                       for a bus drivers that wish to retrieve the name of the
+//                       bus controller.  It will not be NULL for a bus driver
+//                       that wishes to retrieve the name of a child controller.
+//    Language         - A pointer to a three character ISO 639-2 language
+//                       identifier.  This is the language of the controller name
+//                       that that the caller is requesting, and it must match one
+//                       of the languages specified in SupportedLanguages.  The
+//                       number of languages supported by a driver is up to the
+//                       driver writer.
+//    ControllerName   - A pointer to the Unicode string to return.  This Unicode
+//                       string is the name of the controller specified by
+//                       ControllerHandle and ChildHandle in the language
+//                       specified by Language from the point of view of the
+//                       driver specified by This.
+//
+// RETURNS:
+//    EFI_SUCCESS           - The Unicode string for the user readable name in the
+//                            language specified by Language for the driver
+//                            specified by This was returned in DriverName.
+//    EFI_INVALID_PARAMETER - ControllerHandle is not a valid EFI_HANDLE.
+//    EFI_INVALID_PARAMETER - ChildHandle is not NULL and it is not a valid
+//                            EFI_HANDLE.
+//    EFI_INVALID_PARAMETER - Language is NULL.
+//    EFI_INVALID_PARAMETER - ControllerName is NULL.
+//    EFI_UNSUPPORTED       - The driver specified by This is not currently
+//                            managing the controller specified by
+//                            ControllerHandle and ChildHandle.
+//    EFI_UNSUPPORTED       - The driver specified by This does not support the
+//                            language specified by Language.
+//
+//<AMI_PHDR_END>
+//---------------------------------------------------------------------------
+EFI_STATUS IdeBusCtlGetControllerName(
+    IN EFI_COMPONENT_NAME_PROTOCOL *This,
+    IN EFI_HANDLE                  Controller,
+    IN EFI_HANDLE ChildHandle      OPTIONAL,
+    IN CHAR8                       *Language,
+    OUT CHAR16                     **ControllerName )
 {
     EFI_STATUS                          Status;
-    AMI_IDE_BUS_PROTOCOL                *IdeBusInterface;
+    IDE_BUS_PROTOCOL                    *IdeBusInterface;
     EFI_BLOCK_IO_PROTOCOL               *BlkIo;
+    SECURITY_PROTOCOL                   *IdeSecurityInterface;
     UINTN                               j, InfoCount;
     EFI_OPEN_PROTOCOL_INFORMATION_ENTRY *pInfo;
 
@@ -181,6 +196,7 @@ IdeBusCtlGetControllerName (
 
     if ( ChildHandle == NULL ) {
         *ControllerName = gIdeBusControllerName;
+        return EFI_SUCCESS;
     } else {
         //
         // Make sure the CHILD handle is really a child of controller
@@ -225,30 +241,48 @@ IdeBusCtlGetControllerName (
                                     EFI_OPEN_PROTOCOL_GET_PROTOCOL );
 
         if ( EFI_ERROR( Status )) {
-            return EFI_UNSUPPORTED;
+            //
+            //If BLKIO protocol is not installed, maybe Securitymode protocol is installed.
+            //
+            Status = pBS->OpenProtocol( ChildHandle,
+                                        &gSecurityModeProtocolGuid,
+                                        (VOID**)&IdeSecurityInterface,
+                                        gIdeBusDriverBinding.DriverBindingHandle,
+                                        Controller,
+                                        EFI_OPEN_PROTOCOL_GET_PROTOCOL );
+
+            //
+            //Return Error.
+            //
+            if ( EFI_ERROR( Status )) {
+                return EFI_UNSUPPORTED;
+            }
+
+            IdeBusInterface = IdeSecurityInterface->BusInterface;
+        }
+        else {
+            IdeBusInterface = ((IDE_BLOCK_IO*)BlkIo)->IdeBusInterface;
         }
 
-        IdeBusInterface = ((IDE_BLOCK_IO*)BlkIo)->IdeBusInterface;
-        
         if ( IdeBusInterface->IdeDeviceHandle != ChildHandle ) {
             return EFI_UNSUPPORTED;
         }
 
         *ControllerName = IdeBusInterface->IdeDevice.UDeviceName->UnicodeString;
+        return EFI_SUCCESS;
     }
-    return EFI_SUCCESS;
 }
 
-//***********************************************************************
-//***********************************************************************
-//**                                                                   **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.          **
-//**                                                                   **
-//**                       All Rights Reserved.                        **
-//**                                                                   **
-//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093         **
-//**                                                                   **
-//**                       Phone: (770)-246-8600                       **
-//**                                                                   **
-//***********************************************************************
-//***********************************************************************
+//**********************************************************************
+//**********************************************************************
+//**                                                                  **
+//**        (C)Copyright 1985-2012, American Megatrends, Inc.         **
+//**                                                                  **
+//**                       All Rights Reserved.                       **
+//**                                                                  **
+//**         5555 Oakbrook Pkwy, Suite 200, Norcross, GA 30093        **
+//**                                                                  **
+//**                       Phone: (770)-246-8600                      **
+//**                                                                  **
+//**********************************************************************
+//**********************************************************************

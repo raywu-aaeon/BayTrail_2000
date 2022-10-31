@@ -21,6 +21,7 @@
 
 [Sources]
   AcpiCore.c	
+  mptable.c	
   Aml.c	
   AmlChild.c	
   AmlNamespace.c	
@@ -30,28 +31,29 @@
   AcpiSdt.c	
   AcpiSdtPrivate.h
   mptable.h  
-  
-[Sources.IA32, Sources.X64]
-  mptable.c	
-  
+
 [Packages]
   AmiCompatibilityPkg/AmiCompatibilityPkg.dec
   MdePkg/MdePkg.dec
-
+  IntelFrameworkPkg/IntelFrameworkPkg.dec
   AmiModulePkg/AmiModulePkg.dec
   
 [LibraryClasses]
   AmiDxeLib
   UefiDriverEntryPoint
-  AmiAcpiLib
+  AmiCspLib
+  AmiSdlLib
+  AmiAcpiCpuLib
 
 [Protocols]
   gEfiAcpiTableProtocolGuid       ## PRODUCED
   gEfiAcpiSdtProtocolGuid         ## PRODUCED
+  gEfiSioProtocolGuid		        ## CONSUMES
+  gEfiDevicePathProtocolGuid		## CONSUMES
+  gEfiCpuArchProtocolGuid   ## CONSUMES
     
 [Depex]
-##  gEfiCpuArchProtocolGuid AND
-  gAmiBoardInfo2ProtocolGuid 
+  gAmiBoardInfo2ProtocolGuid
   
 
 #[BuildOptions.X64] 

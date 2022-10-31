@@ -4,5 +4,5 @@
 	LocalRoot = "AmiModulePkg\Include\Protocol\"
 	RefName = "AmiTpmClearOnRollbackProtocol"
 [files]
-"AmiTpmClearOnRollbackProtocol.h"	
+"AmiTpmClearOnRollbackProtocol.h"
 <endComponent>

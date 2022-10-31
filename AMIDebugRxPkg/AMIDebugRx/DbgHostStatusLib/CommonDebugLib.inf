@@ -1,6 +1,6 @@
 #*************************************************************************
 #**                                                                     **
-#**        (C)Copyright 1985-2014, American Megatrends, Inc.            **
+#**        (C)Copyright 1985-2012, American Megatrends, Inc.            **
 #**                                                                     **
 #**                       All Rights Reserved.                          **
 #**                                                                     **
@@ -31,14 +31,14 @@
   AMIDebugRxPkg/AMIDebugRxPkg.dec
 
 [LibraryClasses]
+  BaseLib
+  IoLib
+  DebugLib
   HobLib
-  
-[Pcd]
-  gEfiMdePkgTokenSpaceGuid.PcdPciExpressBaseAddress
   
 #*************************************************************************
 #**                                                                     **
-#**        (C)Copyright 1985-2014, American Megatrends, Inc.            **
+#**        (C)Copyright 1985-2012, American Megatrends, Inc.            **
 #**                                                                     **
 #**                       All Rights Reserved.                          **
 #**                                                                     **

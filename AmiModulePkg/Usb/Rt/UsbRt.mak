@@ -1,7 +1,7 @@
 #**********************************************************************
 #**********************************************************************
 #**                                                                  **
-#**        (C)Copyright 1985-2016, American Megatrends, Inc.         **
+#**        (C)Copyright 1985-2008, American Megatrends, Inc.         **
 #**                                                                  **
 #**                       All Rights Reserved.                       **
 #**                                                                  **
@@ -11,6 +11,15 @@
 #**                                                                  **
 #**********************************************************************
 #**********************************************************************
+
+#**********************************************************************
+# $Header: /Alaska/SOURCE/Modules/USB/ALASKA/rt/usbrt.mak 23    8/29/12 8:41a Ryanchou $
+#
+# $Revision: 23 $
+#
+# $Date: 8/29/12 8:41a $
+#
+#****************************************************************************
 
 #**********************************************************************
 #<AMI_FHDR_START>
@@ -48,107 +57,54 @@ USB_RT_SOURCES := \
   ../$(USBRT_DIR)/Xhci.c$(EOL)\
   ../$(UHCD_DIR)/UsbPort.c$(EOL)
   
-USB_RT_PACKAGES := \
-  MdePkg/MdePkg.dec$(EOL)\
-  IntelFrameworkPkg/IntelFrameworkPkg.dec$(EOL)\
-  AmiCompatibilityPkg/AmiCompatibilityPkg.dec$(EOL)\
-  AmiModulePkg/AmiModulePkg.dec$(EOL)
-  
-USB_RT_LIBRARYCLASSES := \
-  BaseMemoryLib$(EOL)\
-  AmiDxeLib$(EOL)\
-  UefiDriverEntryPoint$(EOL)\
-  DebugLib$(EOL)\
-  IoLib$(EOL)\
-  TimerLib$(EOL)
-  
-USB_RT_PROTOCOLS := \
-  gEfiUsbProtocolGuid$(EOL)
-  
-USB_RT_SMM_SOURCES := ../$(UHCD_DIR)/UsbSb.c$(EOL)
-USB_RT_SMM_PROTOCOLS := \
-  gAmiUsbSmmProtocolGuid$(EOL)\
-  gEfiUsbPolicyProtocolGuid$(EOL)\
-  gEfiSmmUsbDispatch2ProtocolGuid$(EOL)\
-  gEfiSmmSwDispatch2ProtocolGuid$(EOL)\
-  gEfiSmmPeriodicTimerDispatch2ProtocolGuid$(EOL)\
-  gEfiSmmGpiDispatch2ProtocolGuid$(EOL)\
-  gEmul6064MsInputProtocolGuid$(EOL)\
-  gEmul6064TrapProtocolGuid$(EOL)\
-  gEmul6064KbdInputProtocolGuid$(EOL)
-USB_RT_SMM_DEPEX := \
-  gEfiUsbProtocolGuid AND$(EOL)\
-  gEfiSmmBase2ProtocolGuid AND$(EOL)\
-  gEfiSmmSwDispatch2ProtocolGuid$(EOL)
-USB_RT_SMM_LIBRARYCLASSES := \
-  AmiBufferValidationLib$(EOL)\
-  SmmServicesTableLib$(EOL)\
-  AmiUsbSmmGlobalDataValidationLib$(EOL)
-
-USB_RT_DXE_SOURCES :=$(EOL)
-USB_RT_DXE_PROTOCOLS :=$(EOL)
-USB_RT_DXE_DEPEX := \
-  gEfiUsbProtocolGuid$(EOL)
-USB_RT_DXE_LIBRARYCLASSES :=$(EOL)
-
-ifeq ($(USB_ACPI_ENABLE_WORKAROUND),1)
-USB_RT_SMM_PROTOCOLS += \
-  gEfiAcpiEnDispatchProtocolGuid$(EOL)
-ifeq ($(AmiChipsetPkg_SUPPORT), 1)
-USB_RT_SMM_PACKAGES := \
-  AmiChipsetPkg/AmiChipsetPkg.dec$(EOL)
-endif
-endif
-
 ifneq ($(USB_RT_SOURCES_LIST),"")
 USB_RT_SOURCES += $(patsubst %,../%,$(subst $(SPACE),$(EOL)$(SPACE),$(USB_RT_SOURCES_LIST)))$(EOL)
 endif
   
-ifneq ($(USB_RT_PACKAGES_LIST),"")
-USB_RT_PACKAGES += $(patsubst %,%,$(subst $(SPACE),$(EOL)$(SPACE),$(USB_RT_PACKAGES_LIST)))$(EOL)
-endif
+USB_RT_PACKAGES := \
+  MdePkg/MdePkg.dec$(EOL)\
+  IntelFrameworkPkg/IntelFrameworkPkg.dec$(EOL)\
+  AmiCompatibilityPkg/AmiCompatibilityPkg.dec$(EOL)\
+  AmiModulePkg/AmiModulePkg.dec$(EOL)\
+  AmiChipsetPkg/AmiChipsetPkg.dec$(EOL) #EIP148801
   
-ifneq ($(USB_RT_LIBRARYCLASSES_LIST),"")
-USB_RT_LIBRARYCLASSES += $(patsubst %,%,$(subst $(SPACE),$(EOL)$(SPACE),$(USB_RT_LIBRARYCLASSES_LIST)))$(EOL)
+USB_RT_PROTOCOLS := \
+  gEfiUsbProtocolGuid$(EOL)
+
+ifeq ($(USB_RUNTIME_DRIVER_IN_SMM),1)
+USB_RT_MODULE_TYPE = DXE_SMM_DRIVER
+USB_RT_SOURCES += ../$(UHCD_DIR)/UsbSb.c$(EOL)
+#EIP148801 >>
+USB_RT_PROTOCOLS += \
+  gAmiUsbSmmProtocolGuid$(EOL)\
+  gEfiSmmUsbDispatch2ProtocolGuid$(EOL)\
+  gEfiSmmSwDispatch2ProtocolGuid$(EOL)\
+  gEfiSmmPeriodicTimerDispatch2ProtocolGuid$(EOL)\
+  gEfiSmmGpiDispatch2ProtocolGuid$(EOL)\
+  gEfiSmmPowerButtonDispatchProtocolGuid$(EOL)\
+  gEfiSmmSxDispatchProtocolGuid$(EOL)\
+  gEmul6064MsInputProtocolGuid$(EOL)\
+  gEmul6064TrapProtocolGuid$(EOL)\
+  gEmul6064KbdInputProtocolGuid$(EOL)
+#EIP148801 <<
+USB_RT_DEPEX := \
+  gEfiUsbProtocolGuid AND$(EOL)\
+  gEfiSmmBase2ProtocolGuid AND$(EOL)\
+  gEfiSmmSwDispatch2ProtocolGuid$(EOL)
+else
+USB_RT_MODULE_TYPE = DXE_DRIVER
+USB_RT_DEPEX := \
+	gEfiUsbProtocolGuid $(EOL)
 endif
 
-ifneq ($(USB_RT_PROTOCOLS_LIST),"")
-USB_RT_PROTOCOLS += $(patsubst %,%,$(subst $(SPACE),$(EOL)$(SPACE),$(USB_RT_PROTOCOLS_LIST)))$(EOL)
+ifeq ($(USB_ACPI_ENABLE_WORKAROUND),1)
+USB_RT_PROTOCOLS += \
+  gEfiAcpiEnDispatchProtocolGuid$(EOL)
+USB_RT_PACKAGES += \
+  AmiChipsetPkg/AmiChipsetPkg.dec$(EOL)
 endif
 
-ifneq ($(USB_RT_SMM_SOURCES_LIST),"")
-USB_RT_SMM_SOURCES += $(patsubst %,../%,$(subst $(SPACE),$(EOL)$(SPACE),$(USB_RT_SMM_SOURCES_LIST)))$(EOL)
-endif
-  
-ifneq ($(USB_RT_SMM_PACKAGES_LIST),"")
-USB_RT_SMM_PACKAGES += $(patsubst %,%,$(subst $(SPACE),$(EOL)$(SPACE),$(USB_RT_SMM_PACKAGES_LIST)))$(EOL)
-endif
-  
-ifneq ($(USB_RT_SMM_LIBRARYCLASSES_LIST),"")
-USB_RT_SMM_LIBRARYCLASSES += $(patsubst %,%,$(subst $(SPACE),$(EOL)$(SPACE),$(USB_RT_SMM_LIBRARYCLASSES_LIST)))$(EOL)
-endif
-
-ifneq ($(USB_RT_SMM_PROTOCOLS_LIST),"")
-USB_RT_SMM_PROTOCOLS += $(patsubst %,%,$(subst $(SPACE),$(EOL)$(SPACE),$(USB_RT_SMM_PROTOCOLS_LIST)))$(EOL)
-endif
-
-ifneq ($(USB_RT_DXE_SOURCES_LIST),"")
-USB_RT_DXE_SOURCES += $(patsubst %,../%,$(subst $(SPACE),$(EOL)$(SPACE),$(USB_RT_DXE_SOURCES_LIST)))$(EOL)
-endif
-  
-ifneq ($(USB_RT_DXE_PACKAGES_LIST),"")
-USB_RT_DXE_PACKAGES += $(patsubst %,%,$(subst $(SPACE),$(EOL)$(SPACE),$(USB_RT_DXE_PACKAGES_LIST)))$(EOL)
-endif
-  
-ifneq ($(USB_RT_DXE_LIBRARYCLASSES_LIST),"")
-USB_RT_DXE_LIBRARYCLASSES += $(patsubst %,%,$(subst $(SPACE),$(EOL)$(SPACE),$(USB_RT_DXE_LIBRARYCLASSES_LIST)))$(EOL)
-endif
-
-ifneq ($(USB_RT_DXE_PROTOCOLS_LIST),"")
-USB_RT_DXE_PROTOCOLS += $(patsubst %,%,$(subst $(SPACE),$(EOL)$(SPACE),$(USB_RT_DXE_PROTOCOLS_LIST)))$(EOL)
-endif
-
-Prepare : $(BUILD_DIR)/UsbDevDriverElinks.h $(BUILD_DIR)/UsbRtSmm.inf $(BUILD_DIR)/UsbRtDxe.inf
+Prepare : $(BUILD_DIR)/UsbDevDriverElinks.h $(BUILD_DIR)/UsbRt.inf
 
 $(BUILD_DIR)/UsbDevDriverElinks.h :
 	$(ECHO) \
@@ -157,86 +113,46 @@ $(BUILD_DIR)/UsbDevDriverElinks.h :
 #define USB_DEV_DELAYED_DRIVER $(USB_DEV_DELAYED_DRIVER_LIST)$(EOL)\
 #define USB_DEV_DRIVER $(USB_DEV_DRIVER_LIST)$(EOL)\
 #define KBD_BUFFER_CHECK_ELINK_LIST $(CheckKeyBoardBufferForSpecialChars)$(EOL)\
-#define USB_HID_TYPE_CHECK_ELINK_LIST $(UsbHidTypeCheckFunctions)$(EOL)\
-#define USB_HID_BUFFER_CHECK_ELINK_LIST $(UsbHidBufferCheckFunctions)$(EOL)\
-#define EHCI_GET_ROOT_HUB_PORT_SPEED_ELINK_LIST $(EhciGetRootHubPortSpeedFunctions)$(EOL)\
 // Don't delete this line$(EOL)"\
 > $(BUILD_DIR)/UsbDevDriverElinks.h
 
-$(BUILD_DIR)/UsbRtSmm.inf : $(BUILD_DIR)/Token.h $(USBRT_DIR)/UsbRt.mak
+$(BUILD_DIR)/UsbRt.inf : $(BUILD_DIR)/Token.h $(USBRT_DIR)/UsbRt.mak
 	$(ECHO) \
 "[Defines]$(EOL)\
   INF_VERSION                    = 0x00010005$(EOL)\
-  BASE_NAME                      = UsbRtSmm$(EOL)\
+  BASE_NAME                      = UsbRt$(EOL)\
   FILE_GUID                      = 04EAAAA1-29A1-11d7-8838-00500473D4EB$(EOL)\
-  MODULE_TYPE                    = DXE_SMM_DRIVER$(EOL)\
+  MODULE_TYPE                    = $(USB_RT_MODULE_TYPE)$(EOL)\
   VERSION_STRING                 = 1.0$(EOL)\
   PI_SPECIFICATION_VERSION       = 0x00010014$(EOL)\
   ENTRY_POINT                    = USBDriverEntryPoint$(EOL)\
 $(EOL)\
 [Sources]$(EOL)\
-  $(USB_RT_SOURCES)\
-  $(USB_RT_SMM_SOURCES)\
+	$(USB_RT_SOURCES)\
 $(EOL)\
 [Packages]$(EOL)\
-  $(USB_RT_PACKAGES)\
-  $(USB_RT_SMM_PACKAGES)\
+	$(USB_RT_PACKAGES)\
 $(EOL)\
 [LibraryClasses]$(EOL)\
-  $(USB_RT_LIBRARYCLASSES)\
-  $(USB_RT_SMM_LIBRARYCLASSES)\
+  AmiDxeLib$(EOL)\
+  UefiDriverEntryPoint$(EOL)\
 $(EOL)\
 [Protocols]$(EOL)\
   $(USB_RT_PROTOCOLS)\
-  $(USB_RT_SMM_PROTOCOLS)\
 $(EOL)\
 [Depex]$(EOL)\
-  $(USB_RT_SMM_DEPEX)\
+  $(USB_RT_DEPEX)\
 $(EOL)\
 [BuildOptions]$(EOL)\
   MSFT:*_*_*_CC_FLAGS = /D USB_RT_DRIVER$(EOL)\
-  GCC:*_*_*_CC_FLAGS = -DUSB_RT_DRIVER$(EOL)"\
-> $(BUILD_DIR)/UsbRtSmm.inf
-
-$(BUILD_DIR)/UsbRtDxe.inf : $(BUILD_DIR)/Token.h $(USBRT_DIR)/UsbRt.mak
-	$(ECHO) \
-"[Defines]$(EOL)\
-  INF_VERSION                    = 0x00010005$(EOL)\
-  BASE_NAME                      = UsbRtDxe$(EOL)\
-  FILE_GUID                      = 171F43DC-C4D9-47a6-9641-65DDCDD5AA30$(EOL)\
-  MODULE_TYPE                    = DXE_DRIVER$(EOL)\
-  VERSION_STRING                 = 1.0$(EOL)\
-  PI_SPECIFICATION_VERSION       = 0x00010014$(EOL)\
-  ENTRY_POINT                    = USBDriverEntryPoint$(EOL)\
-$(EOL)\
-[Sources]$(EOL)\
-  $(USB_RT_SOURCES)\
-  $(USB_RT_DXE_SOURCES)\
-$(EOL)\
-[Packages]$(EOL)\
-  $(USB_RT_PACKAGES)\
-  $(USB_RT_DXE_PACKAGES)\
-$(EOL)\
-[LibraryClasses]$(EOL)\
-  $(USB_RT_LIBRARYCLASSES)\
-  $(USB_RT_DXE_LIBRARYCLASSES)\
-$(EOL)\
-[Protocols]$(EOL)\
-  $(USB_RT_PROTOCOLS)\
-  $(USB_RT_DXE_PROTOCOLS)\
-$(EOL)\
-[Depex]$(EOL)\
-  $(USB_RT_DXE_DEPEX)\
-$(EOL)\
-[BuildOptions]$(EOL)\
-  MSFT:*_*_*_CC_FLAGS = /D USB_RT_DRIVER /D USB_RT_DXE_DRIVER$(EOL)\
-  GCC:*_*_*_CC_FLAGS = -DUSB_RT_DRIVER -DUSB_RT_DXE_DRIVER$(EOL)"\
-> $(BUILD_DIR)/UsbRtDxe.inf
+  *_ARMGCC_ARM_CC_FLAGS= -DUSB_RT_DRIVER$(EOL)\
+  *_ARMLINUXGCC_ARM_CC_FLAGS= -DUSB_RT_DRIVER$(EOL)"\
+> $(BUILD_DIR)/UsbRt.inf
 
 #**********************************************************************
 #**********************************************************************
 #**                                                                  **
-#**        (C)Copyright 1985-2016, American Megatrends, Inc.         **
+#**        (C)Copyright 1985-2008, American Megatrends, Inc.         **
 #**                                                                  **
 #**                       All Rights Reserved.                       **
 #**                                                                  **

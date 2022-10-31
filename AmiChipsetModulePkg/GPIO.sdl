@@ -2648,34 +2648,10 @@ TOKEN
 	Name  = "================== Bayley Bay Fab3 Update ================="
 	TokenType = Expression
 End
-#EIP205592 >>
-TOKEN
-	Name  = "NC_GPIO_000"
-	Value  = "$(GPIO_NC_OFFSET)+$(GPIO_FUNC2)+$(GPIO_PULL_NONE)"
-	TokenType = Integer
-	TargetH = Yes
-	Token = "BOARD_USE_SEL" "=" "3"
-End
-
-TOKEN
-	Name  = "NC_GPIO_001"
-	Value  = "$(GPIO_NC_OFFSET)+$(GPIO_FUNC2)+$(GPIO_PULL_NONE)"
-	TokenType = Integer
-	TargetH = Yes
-	Token = "BOARD_USE_SEL" "=" "3"
-End
-
-TOKEN
-	Name  = "NC_GPIO_002"
-	Value  = "$(GPIO_NC_OFFSET)+$(GPIO_FUNC2)+$(GPIO_PULL_NONE)"
-	TokenType = Integer
-	TargetH = Yes
-	Token = "BOARD_USE_SEL" "=" "3"
-End
 
 TOKEN
 	Name  = "NC_GPIO_003"
-	Value  = "$(GPIO_NC_OFFSET)+$(IS_GPI)+$(GPIO_PULL_NONE)"
+	Value  = "$(GPIO_NC_OFFSET)+$(IS_GPI)+$(GPIO_PULL_DOWN)"
 	TokenType = Integer
 	TargetH = Yes
 	Token = "BOARD_USE_SEL" "=" "3"
@@ -2683,7 +2659,7 @@ End
 
 TOKEN
 	Name  = "NC_GPIO_004"
-	Value  = "$(GPIO_NC_OFFSET)+$(IS_GPI)+$(GPIO_PULL_NONE)"
+	Value  = "$(GPIO_NC_OFFSET)+$(IS_GPI)+$(GPIO_PULL_DOWN)"
 	TokenType = Integer
 	TargetH = Yes
 	Token = "BOARD_USE_SEL" "=" "3"
@@ -2691,7 +2667,7 @@ End
 
 TOKEN
 	Name  = "NC_GPIO_005"
-	Value  = "$(GPIO_NC_OFFSET)+$(IS_GPI)+$(GPIO_PULL_NONE)"
+	Value  = "$(GPIO_NC_OFFSET)+$(IS_GPI)+$(GPIO_PULL_DOWN)"
 	TokenType = Integer
 	TargetH = Yes
 	Token = "BOARD_USE_SEL" "=" "3"
@@ -2707,7 +2683,7 @@ End
 
 TOKEN
 	Name  = "NC_GPIO_013"
-	Value  = "$(GPIO_NC_OFFSET)+$(IS_GPI)+$(GPIO_PULL_NONE)"
+	Value  = "$(GPIO_NC_OFFSET)+$(IS_GPI)+$(GPIO_FUNC1)+$(GPIO_PULL_NONE)"
 	TokenType = Integer
 	TargetH = Yes
 	Token = "BOARD_USE_SEL" "=" "3"
@@ -2715,12 +2691,12 @@ End
 
 TOKEN
 	Name  = "NC_GPIO_014"
-	Value  = "$(GPIO_NC_OFFSET)+$(IS_GPI)+$(GPIO_PULL_NONE)"
+	Value  = "$(GPIO_NC_OFFSET)+$(IS_GPI)+$(GPIO_FUNC1)+$(GPIO_PULL_NONE)"
 	TokenType = Integer
 	TargetH = Yes
 	Token = "BOARD_USE_SEL" "=" "3"
 End
-#EIP205592 <<
+
 TOKEN
 	Name  = "NC_GPIO_015"
 	Value  = "$(GPIO_NC_OFFSET)+$(IS_GPO)+$(GPIO_PULL_DOWN)"
@@ -3484,15 +3460,7 @@ TOKEN
 	TargetH = Yes
 	Token = "BOARD_USE_SEL" "=" "3"
 End
-#EIP205592 >>
-TOKEN
-	Name  = "SUS_GPIO_043"
-	Value  = "$(GPIO_SUS_OFFSET)+$(IS_GPI)+$(GPIO_PULL_DOWN)"
-	TokenType = Integer
-	TargetH = Yes
-	Token = "BOARD_USE_SEL" "=" "3"
-End
-#EIP205592 <<
+
 TOKEN
 	Name  = " "
 	TokenType = Integer

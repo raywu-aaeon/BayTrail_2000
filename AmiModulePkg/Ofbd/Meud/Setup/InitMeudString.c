@@ -25,9 +25,13 @@
 // 
 // 
 //**********************************************************************
-/** @file InitMeudString.c
-
-**/
+//<AMI_FHDR_START>
+//
+// Name:	InitMeudString.c
+//
+// Description:
+//
+//<AMI_FHDR_END>
 //**********************************************************************
 #include "Efi.h"
 #include "Token.h"
@@ -44,9 +48,6 @@
 #endif
 #include <Setup.h>
 #include <Protocol/HiiConfigAccess.h>
-#if defined MEFwUpdLcl_SUPPORT && MEFwUpdLcl_SUPPORT == 1
-#include <Protocol/MeFwUpdLclProtocol.h>
-#endif
 
 extern EFI_GUID guidHII;
 #if EFI_SPECIFICATION_VERSION>0x20000
@@ -63,17 +64,21 @@ EFI_STATUS MeudSetupCallbackFunction(
   OUT EFI_HII_CALLBACK_PACKET       **Packet );
 EFI_FORM_CALLBACK_PROTOCOL MEUDSetupCallBack = { NULL,NULL,MEUDSetupCallbackFunction };
 #endif
-/**
-    TSE Callbeck Function.
-    To make ME enter Disable Mode.
-
-        
-    @param VOID
-
-          
-    @retval VOID
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:	MEUDSetupCallbackFunction
+//
+// Description:	TSE Callbeck Function.
+//              To make ME enter Disable Mode.
+//
+// Input:
+//      VOID
+//
+// Output: 
+//      VOID
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 #if EFI_SPECIFICATION_VERSION>0x20000
 EFI_STATUS MEUDSetupCallbackFunction(
     EFI_HII_HANDLE HiiHandle, 
@@ -88,44 +93,37 @@ EFI_STATUS MEUDSetupCallbackFunction(
     OUT EFI_HII_CALLBACK_PACKET       **Packet )
 #endif
 {
-    CALLBACK_PARAMETERS *Callback;
+	    CALLBACK_PARAMETERS *Callback;
 
-	Callback = GetCallbackParameters();
-	if ((Callback->Action == EFI_BROWSER_ACTION_RETRIEVE) ||
-	    (Callback->Action == EFI_BROWSER_ACTION_FORM_OPEN) ||
-	    (Callback->Action == EFI_BROWSER_ACTION_FORM_CLOSE) ||
-	    (Callback->Action == EFI_BROWSER_ACTION_DEFAULT_STANDARD) ||
-	    (Callback->Action == EFI_BROWSER_ACTION_DEFAULT_MANUFACTURING))
-	    return EFI_SUCCESS;
+	    Callback = GetCallbackParameters();
+	    if ((Callback->Action == EFI_BROWSER_ACTION_RETRIEVE) ||
+	        (Callback->Action == EFI_BROWSER_ACTION_FORM_OPEN) ||
+	        (Callback->Action == EFI_BROWSER_ACTION_FORM_CLOSE) ||
+	        (Callback->Action == EFI_BROWSER_ACTION_DEFAULT_STANDARD) ||
+	        (Callback->Action == EFI_BROWSER_ACTION_DEFAULT_MANUFACTURING))
+	        return EFI_SUCCESS;
 
     TRACE((-1,"[ME Update] In Setup Callback item !! KeyValue = %x \n",Key));
 
-#if defined MEFwUpdLcl_SUPPORT && MEFwUpdLcl_SUPPORT == 1
-{
-    EFI_STATUS                  Status;
-    static EFI_GUID             MeFwUpdLclProtocolGuid = ME_FW_UPD_LOCAL_PROTOCOL_GUID;
-    ME_FW_UPDATE_LOCAL_PROTOCOL *MeFwUpdProtocol = NULL;
-    Status = pBS->LocateProtocol (&MeFwUpdLclProtocolGuid, \
-                                        NULL, (VOID **) &MeFwUpdProtocol);
-    if (!EFI_ERROR(Status)) MeFwUpdProtocol->HmrfpoEnable(MeFwUpdProtocol);
-}
-#else
-    IoWrite8( 0xB2, Disable_ME_SW_SMI );
-#endif
+    IoWrite8(0xB2, Disable_ME_SW_SMI);
 
     return EFI_SUCCESS ;
 }
-/**
-    Register a Setup Item CallBack Info.
-
-        
-    @param HiiHandle 
-    @param Class 
-
-         
-    @retval VOID
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:	InitMEUDInfo
+//
+// Description:	Register a Setup Item CallBack Info.
+//
+// Input:
+//      IN EFI_HII_HANDLE   HiiHandle
+//      IN UINT16           Class
+//
+// Output:
+//      VOID
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS InitMEUDInfo(EFI_HII_HANDLE HiiHandle, UINT16 Class)
 {
 

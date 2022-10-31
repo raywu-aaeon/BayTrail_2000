@@ -1,48 +1,65 @@
-
-  //***********************************************************************
-  //***********************************************************************
-  //**                                                                   **
-  //**        (C)Copyright 1985-2014, American Megatrends, Inc.          **
-  //**                                                                   **
-  //**                       All Rights Reserved.                        **
-  //**                                                                   **
-  //**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093         **
-  //**                                                                   **
-  //**                       Phone: (770)-246-8600                       **
-  //**                                                                   **
-  //***********************************************************************
-  //***********************************************************************
-
-/** @file IdeHPA.c
-    Host Protection Area Support
-
-**/
-
-//---------------------------------------------------------------------------
+//**********************************************************************
+//**********************************************************************
+//**                                                                  **
+//**        (C)Copyright 1985-2012, American Megatrends, Inc.         **
+//**                                                                  **
+//**                       All Rights Reserved.                       **
+//**                                                                  **
+//**         5555 Oakbrook Pkwy, Suite 200, Norcross, GA 30093        **
+//**                                                                  **
+//**                       Phone: (770)-246-8600                      **
+//**                                                                  **
+//**********************************************************************
+//**********************************************************************
+//**********************************************************************
+// $Header: /Alaska/SOURCE/Core/Modules/IdeBus/IdeHPA.c 6     10/11/10 11:31a Krishnakumarg $
+//
+// $Revision: 6 $
+//
+// $Date: 10/11/10 11:31a $
+//**********************************************************************
+//<AMI_FHDR_START>
+//----------------------------------------------------------------------------
+//
+// Name: IdeHPA.c
+//
+// Description:	Host Protection Area Support
+//
+//----------------------------------------------------------------------------
+//<AMI_FHDR_END>
 
 #include "IdeBus.h"
 
+extern EFI_GUID gHPAProtocolGuid;
+
+//<AMI_PHDR_START>
 //---------------------------------------------------------------------------
+//
+// Procedure:	InstallHPAInterface
+//
+// Description:	Checks whether Host Protected Area feature is supported or not.
+//				If Supported, installs HPAProtocol.
+//
+// Input:
+//		IDE_BUS_PROTOCOL			*IdeBusInterface,
+//
+// Output:
+//	EFI_STATUS  : EFI_UNSUPPORTED/EFI_SUCCESS/EFI_OUT_OF_RESOURCES
+//
+// Modified:
+//
+// Referrals: IdeBusStart
+//
+// Notes:
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
-
-
-/**
-    Checks whether Host Protected Area feature is supported or not.
-    If Supported, installs HpaProtocol.
-
-    @param AMI_IDE_BUS_PROTOCOL			*IdeBusInterface,
-
-    @retval EFI_STATUS  : EFI_UNSUPPORTED/EFI_SUCCESS/EFI_OUT_OF_RESOURCES
-
-**/
-
-EFI_STATUS
-InstallHpaInterface (
-    IN  AMI_IDE_BUS_PROTOCOL    *IdeBusInterface
-)
+EFI_STATUS InstallHPAInterface(
+    IN IDE_BUS_PROTOCOL *IdeBusInterface )
 {
-    EFI_STATUS              Status;
-    AMI_HDD_HPA_INTERFACE   *HpaInterface;
+    EFI_STATUS    Status;
+    HPA_INTERFACE *HPAInterface;
 
     //
     //Check if HPA is supported or not
@@ -55,90 +72,111 @@ InstallHpaInterface (
     //Install the Interface
     //
     Status = pBS->AllocatePool( EfiBootServicesData,
-                                sizeof(AMI_HDD_HPA_INTERFACE),
-                                (VOID**)&HpaInterface );
+                                sizeof(HPA_INTERFACE),
+                                (VOID**)&HPAInterface );
 
     if ( EFI_ERROR( Status ))  {
-        pBS->FreePool( HpaInterface );
+        pBS->FreePool( HPAInterface );
         return Status;
     }
 
-    HpaInterface->IdeBusInterface     = IdeBusInterface;
-    IdeBusInterface->HpaInterface     = HpaInterface;
-    HpaInterface->GetNativeMaxAddress = GetNativeMaxAddress;
-    HpaInterface->SetMaxAddress       = SetMaxAddress;
-    HpaInterface->HpaDisabledLastLBA  = HpaDisabledLastLBA;
-    HpaInterface->SetMaxPassword      = SetMaxPassword;
-    HpaInterface->SetMaxLock          = SetMaxLock;
-    HpaInterface->SetMaxUnLock        = SetMaxUnLock;
-    HpaInterface->SetMaxFreezeLock    = SetMaxFreezeLock;
+    HPAInterface->IdeBusInterface     = IdeBusInterface;
+    IdeBusInterface->HPAInterface     = HPAInterface;
+    HPAInterface->GetNativeMaxAddress = GetNativeMaxAddress;
+    HPAInterface->SetMaxAddress       = SetMaxAddress;
+    HPAInterface->HPADisabledLastLBA  = HPADisabledLastLBA;
+    HPAInterface->SetMaxPassword      = SetMaxPassword;
+    HPAInterface->SetMaxLock          = SetMaxLock;
+    HPAInterface->SetMaxUnLock        = SetMaxUnLock;
+    HPAInterface->SetMaxFreezeLock    = SetMaxFreezeLock;
 
     Status = pBS->InstallMultipleProtocolInterfaces(
         &(IdeBusInterface->IdeDeviceHandle),
-        &gAmiHddHpaProtocolGuid, HpaInterface,
+        &gHPAProtocolGuid, HPAInterface,
         NULL );
 
     if ( EFI_ERROR( Status )) {
-        pBS->FreePool( HpaInterface );
+        pBS->FreePool( HPAInterface );
         return Status;
     }
 
     return EFI_SUCCESS;
 }
 
-/**
-    Uninstall Hpa Protocol
-
-    @param AMI_IDE_BUS_PROTOCOL *IdeBusInterface,
-
-    @retval EFI_STATUS
-
-**/
-EFI_STATUS
-StopHpaInterface (
-    IN  AMI_IDE_BUS_PROTOCOL    *IdeBusInterface
-)
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:	StopHPAInterface
+//
+// Description:	Uninstall HPA Protocol
+//
+// Input:
+//		IDE_BUS_PROTOCOL			*IdeBusInterface,
+//
+// Output:
+//	EFI_STATUS
+//
+// Modified:
+//
+// Referrals: IdeBusStop
+//
+// Notes:
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
+EFI_STATUS StopHPAInterface(
+    IN IDE_BUS_PROTOCOL *IdeBusInterface )
 {
-    EFI_STATUS  Status;
+    EFI_STATUS Status;
 
-    if ( IdeBusInterface->HpaInterface == NULL ) {
+    if ( IdeBusInterface->HPAInterface == NULL ) {
         return EFI_SUCCESS;
     }
 
     Status = pBS->UninstallMultipleProtocolInterfaces(
         IdeBusInterface->IdeDeviceHandle,
-        &gAmiHddHpaProtocolGuid, IdeBusInterface->HpaInterface,
+        &gHPAProtocolGuid, IdeBusInterface->HPAInterface,
         NULL );
 
     if ( Status == EFI_SUCCESS ) {
-        pBS->FreePool( IdeBusInterface->HpaInterface );
-        IdeBusInterface->HpaInterface = NULL;
+        pBS->FreePool( IdeBusInterface->HPAInterface );
+        IdeBusInterface->HPAInterface = NULL;
     }
     return Status;
 }
 
-/**
-    Returns the Native Max LBA address supported by the device
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:	GetNativeMaxAddress
+//
+// Description:	Returns the Native Max LBA address supported by the device
+//
+// Input:
+//	IN      IDE_HPA_INTERFACE			*This,
+//	OUT	UINT64						*LBA
+//
+// Output:			LBA : Returns Native MAX LBA address.
+//					EFI_STATUS  : EFI_SUCCESS/EFI_DEVICE_ERROR
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
-    @param  This 
-    @retval OUT UINT64  *LBA
-
-    @retval LBA : Returns Native MAX LBA address.
-    @retval EFI_STATUS  : EFI_SUCCESS/EFI_DEVICE_ERROR
-
-**/
-
-EFI_STATUS
-GetNativeMaxAddress (
-    IN  AMI_HDD_HPA_PROTOCOL    *This,
-    OUT UINT64                  *LBA
-)
+EFI_STATUS GetNativeMaxAddress(
+    IN IDE_HPA_INTERFACE *This,
+    OUT UINT64           *LBA )
 {
     EFI_STATUS       Status;
     UINT8            ReadNativeMaxAddressCmd = READ_NATIVE_MAX_ADDRESS;
-    AMI_IDE_BUS_PROTOCOL *IdeBusInterface = ((AMI_HDD_HPA_INTERFACE*)This)->IdeBusInterface;
-    UINT32           dData = 0;
-    UINT8            bData = 0;
+    IDE_BUS_PROTOCOL *IdeBusInterface        = ((HPA_INTERFACE*)This)->IdeBusInterface;
+    UINT32           dData;
+    UINT8            bData;
 
     *LBA = 0;
 
@@ -175,8 +213,8 @@ GetNativeMaxAddress (
         //
         IdeWriteByte( IdeBusInterface->PciIO,
                       IdeBusInterface->IdeDevice.Regs.ControlBlock.DeviceControlReg,
-                      IDE_HOB | IDE_NIEN );
-
+                      HOB | nIEN );
+        dData = 0;
         IdeReadByte( IdeBusInterface->PciIO,
                      IdeBusInterface->IdeDevice.Regs.CommandBlock.LBAHighReg,
                      &bData );
@@ -204,7 +242,7 @@ GetNativeMaxAddress (
         //
         IdeWriteByte( IdeBusInterface->PciIO,
                       IdeBusInterface->IdeDevice.Regs.ControlBlock.DeviceControlReg,
-                      IDE_NIEN );
+                      nIEN );
     }
 
     //
@@ -237,37 +275,46 @@ GetNativeMaxAddress (
     dData <<= 8;
     dData  |= bData;                             // LBA 7:0
 
-    *LBA= (UINT32) *LBA | dData;
+    ((UINT32) *LBA) |= dData;
 
     return EFI_SUCCESS;
 }
 
-/**
-    Set the Max LBA address
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:	SetMaxAddress
+//
+// Description:	Set the Max LBA address
+//
+// Input:
+//	IN      IDE_HPA_INTERFACE			*This,
+//	OUT     UINT64						LBA,
+//	IN      BOOLEAN						Volatile
+//
+// Output:
+//	EFI_STATUS  :
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:	if Volatile = TRUE, Values will not be preserved across resets.
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
-    @param  This 
-    @param  UINT64  LBA,
-    @param  Volatile 
-
-    @retval EFI_STATUS  :
-
-    @note  if Volatile = TRUE, Values will not be preserved across resets.
-
-**/
-
-EFI_STATUS
-SetMaxAddress (
-    IN  AMI_HDD_HPA_PROTOCOL    *This,
-    OUT UINT64                  LBA,
-    IN  BOOLEAN                 Volatile
-)
+EFI_STATUS SetMaxAddress(
+    IN IDE_HPA_INTERFACE *This,
+    OUT UINT64           LBA,
+    IN BOOLEAN           Volatile )
 {
     EFI_STATUS       Status;
     UINT32           dData;
     UINT32           Cmd;
     UINT64           NativeMaxLBA;
     UINT8            bData;
-    AMI_IDE_BUS_PROTOCOL    *IdeBusInterface    =   ((AMI_HDD_HPA_INTERFACE*)This)->IdeBusInterface;
+    IDE_BUS_PROTOCOL *IdeBusInterface = ((HPA_INTERFACE*)This)->IdeBusInterface;
     BOOLEAN          Ext48BitSupport  = FALSE;
 
 
@@ -294,7 +341,7 @@ SetMaxAddress (
         //		Enable HOB
         IdeWriteByte( IdeBusInterface->PciIO,
                       IdeBusInterface->IdeDevice.Regs.ControlBlock.DeviceControlReg,
-                      IDE_HOB | IDE_NIEN );
+                      HOB | nIEN );
         //get Bits 47:24 from LBA to dData
         dData = (UINT32)Shr64(LBA, 24);
 
@@ -317,7 +364,7 @@ SetMaxAddress (
         //Reset HOB
         IdeWriteByte( IdeBusInterface->PciIO,
                       IdeBusInterface->IdeDevice.Regs.ControlBlock.DeviceControlReg,
-                      IDE_NIEN );
+                      nIEN );
     }
 
     //
@@ -370,26 +417,35 @@ SetMaxAddress (
 }
 
 
-/**
-    Returns the valid last LBA # when HPA is disabled.
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:	HPADisabledLastLBA
+//
+// Description:	Returns the valid last LBA # when HPA is disabled.
+//
+// Input:
+//	IN      IDE_HPA_INTERFACE			*This,
+//	OUT	    UINT64						*LBA
+//
+// Output:
+//	EFI_STATUS  : EFI_SUCCESS
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:	The LBA returned will be the maximum valid LBA number an OS can make use of.
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
-    @param This 
-    @param  UINT64  *LBA
-
-    @retval EFI_STATUS  : EFI_SUCCESS
-
-    @note  The LBA returned will be the maximum valid LBA number an OS can make use of.
-
-**/
-
-EFI_STATUS
-HpaDisabledLastLBA (
-    IN  AMI_HDD_HPA_PROTOCOL    *This,
-    OUT UINT64                  *LBA
-)
+EFI_STATUS HPADisabledLastLBA(
+    IN IDE_HPA_INTERFACE *This,
+    OUT UINT64           *LBA )
 {
-    BOOLEAN Ext48BitSupport = FALSE;
-    AMI_IDE_BUS_PROTOCOL    *IdeBusInterface    =   ((AMI_HDD_HPA_INTERFACE*)This)->IdeBusInterface;
+    BOOLEAN Ext48BitSupport           = FALSE;
+    IDE_BUS_PROTOCOL *IdeBusInterface = ((HPA_INTERFACE*)This)->IdeBusInterface;
 
     //
     //Check for 48 Bit Mode Support
@@ -410,32 +466,40 @@ HpaDisabledLastLBA (
     return EFI_SUCCESS;
 }
 
-/**
-    Sets the Password
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:	SetMaxPassword
+//
+// Description:	Sets the Password
+//
+// Input:
+//	IN      IDE_HPA_INTERFACE			*This,
+//	IN	    UINT8						*PasswordBuffer, (32 Bytes of Password)
+//
+// Output:
+//	EFI_STATUS  : EFI_UNSUPPORTED/EFI_SUCCESS/EFI_DEVICE_ERROR
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:	READ NATIVE MAX ADDRESS should not have immediatley PRECEEDED this command.
+//			To take care of this situation, a Dummy Identify Device Command will be given before
+//			issuing a SET MAX PASSWORD command
+//			Once the device is locked, it should be unlocked with the password before
+//			issuing any SETMAXADDRESS.
+//			After issuing this command device will be in UNLOCKED state.
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
-        
-    @param This 
-    @param PasswordBuffer (32 Bytes of Password)
-
-    @retval EFI_STATUS  : EFI_UNSUPPORTED/EFI_SUCCESS/EFI_DEVICE_ERROR
-
-    @note  READ NATIVE MAX ADDRESS should not have immediately PRECEEDED this command.
-            To take care of this situation, a Dummy Identify Device Command will be given before
-            issuing a SET MAX PASSWORD command
-            Once the device is locked, it should be unlocked with the password before
-            issuing any SETMAXADDRESS.
-            After issuing this command device will be in UNLOCKED state.
-
-**/
-
-EFI_STATUS
-SetMaxPassword (
-    IN  AMI_HDD_HPA_PROTOCOL    *This,
-    IN  UINT8                   *PasswordBuffer
-)
+EFI_STATUS SetMaxPassword(
+    IN IDE_HPA_INTERFACE *This,
+    IN UINT8             *PasswordBuffer )
 {
-    EFI_STATUS              Status;
-    AMI_IDE_BUS_PROTOCOL    *IdeBusInterface = ((AMI_HDD_HPA_INTERFACE*)This)->IdeBusInterface;
+    EFI_STATUS       Status;
+    IDE_BUS_PROTOCOL *IdeBusInterface = ((HPA_INTERFACE*)This)->IdeBusInterface;
 
     //
     //Check for HPA feature set security extensions are implemented or not?
@@ -454,26 +518,35 @@ SetMaxPassword (
     return Status;
 }
 
-/**
-    Locks the device from accepting commands except UNLOCK and FREEZELOCK
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:	SetMaxLock
+//
+// Description:	Locks the device from accepting commands except UNLOCK and FREEZELOCK
+//
+// Input:
+//	IN      IDE_HPA_INTERFACE			*This,
+//
+// Output:
+//	EFI_STATUS  : EFI_UNSUPPORTED/EFI_SUCCESS/EFI_DEVICE_ERROR
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:	READ NATIVE MAX ADDRESS should not have immediatley PRECEED this command.
+//			To take care of this situation, a Dummy Identify Device Command will be given before
+//			issuing a SET MAX LOCK/UNLOCK command
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
-    @param This 
-
-    @retval EFI_STATUS  : EFI_UNSUPPORTED/EFI_SUCCESS/EFI_DEVICE_ERROR
-
-    @note   READ NATIVE MAX ADDRESS should not have immediately PRECEED this command.
-            To take care of this situation, a Dummy Identify Device Command will be given before
-            issuing a SET MAX LOCK/UNLOCK command
-
-**/
-
-EFI_STATUS
-SetMaxLock (
-    IN  AMI_HDD_HPA_PROTOCOL *This
-)
+EFI_STATUS SetMaxLock(
+    IN IDE_HPA_INTERFACE *This )
 {
-    EFI_STATUS              Status;
-    AMI_IDE_BUS_PROTOCOL    *IdeBusInterface = ((AMI_HDD_HPA_INTERFACE*)This)->IdeBusInterface;
+    EFI_STATUS       Status;
+    IDE_BUS_PROTOCOL *IdeBusInterface = ((HPA_INTERFACE*)This)->IdeBusInterface;
 
     //Check for HPA feature set security extensions are implemented or not? AND
     //Check whether SET MAX PASSWORD command has been issued before or not?
@@ -495,28 +568,37 @@ SetMaxLock (
     return Status;
 }
 
-/**
-    Unlocks the device and allows it to accept all SET MAX commands
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:	SetMaxUnLock
+//
+// Description:	Unlocks the device and allows it to accept all SET MAX commands
+//
+// Input:
+//	IN      IDE_HPA_INTERFACE			*This,
+//	IN	    UINT8						*PasswordBuffer
+//
+// Output:
+//	EFI_STATUS  : EFI_UNSUPPORTED/EFI_SUCCESS/EFI_DEVICE_ERROR
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:	READ NATIVE MAX ADDRESS should not have immediatley PRECEED this command.
+//			To take care of this situation, a Dummy Identify Device Command will be given before
+//			issuing a SET MAX LOCK/UNLOCK command
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
-    @param This 
-    @param PasswordBuffer 
-
-    @retval EFI_STATUS  : EFI_UNSUPPORTED/EFI_SUCCESS/EFI_DEVICE_ERROR
-
-    @note   READ NATIVE MAX ADDRESS should not have immediately PRECEED this command.
-            To take care of this situation, a Dummy Identify Device Command will be given before
-            issuing a SET MAX LOCK/UNLOCK command
-
-**/
-
-EFI_STATUS
-SetMaxUnLock (
-    IN  AMI_HDD_HPA_PROTOCOL    *This,
-    IN  UINT8                   *PasswordBuffer
-)
+EFI_STATUS SetMaxUnLock(
+    IN IDE_HPA_INTERFACE *This,
+    IN UINT8             *PasswordBuffer )
 {
-    EFI_STATUS              Status;
-    AMI_IDE_BUS_PROTOCOL    *IdeBusInterface = ((AMI_HDD_HPA_INTERFACE*)This)->IdeBusInterface;
+    EFI_STATUS       Status;
+    IDE_BUS_PROTOCOL *IdeBusInterface = ((HPA_INTERFACE*)This)->IdeBusInterface;
 
     //Check for HPA feature set security extensions are implemented or not? AND
     //Check whether SET MAX PASSWORD command has been issued before or not?
@@ -530,27 +612,36 @@ SetMaxUnLock (
     return Status;
 }
 
-/**
-    Locks all SET MAX ADDRESS/PASSWORD/LOCK/UNLOCK command until
-    next power cycle. GetNativeMaxAddress is allowed.
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:	SetMaxFreezeLock
+//
+// Description:	Locks all SET MAX ADDRESS/PASSWORD/LOCK/UNLOCK command untill
+//				next power cycle. GetNativeMaxAddress is allowed.
+//
+// Input:
+//	IN      IDE_HPA_INTERFACE			*This,
+//
+// Output:
+//	EFI_STATUS  : EFI_UNSUPPORTED/EFI_SUCCESS/EFI_DEVICE_ERROR
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:	READ NATIVE MAX ADDRESS should not have immediatley PRECEED this command.
+//			To take care of this situation, a Dummy Identify Device Command will be given before
+//			issuing a SET MAX FREEZELOCK command
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
-    @param This 
-
-    @retval EFI_STATUS  : EFI_UNSUPPORTED/EFI_SUCCESS/EFI_DEVICE_ERROR
-
-    @note   READ NATIVE MAX ADDRESS should not have immediately PRECEED this command.
-            To take care of this situation, a Dummy Identify Device Command will be given before
-            issuing a SET MAX FREEZELOCK command
-
-**/
-
-EFI_STATUS
-SetMaxFreezeLock (
-    IN  AMI_HDD_HPA_PROTOCOL    *This
-)
+EFI_STATUS SetMaxFreezeLock(
+    IN IDE_HPA_INTERFACE *This )
 {
-    EFI_STATUS              Status;
-    AMI_IDE_BUS_PROTOCOL    *IdeBusInterface = ((AMI_HDD_HPA_INTERFACE*)This)->IdeBusInterface;
+    EFI_STATUS       Status;
+    IDE_BUS_PROTOCOL *IdeBusInterface = ((HPA_INTERFACE*)This)->IdeBusInterface;
 
     //Check for HPA feature set security extensions are implemented or not? AND
     //Check whether SET MAX PASSWORD command has been issued before or not?
@@ -572,29 +663,38 @@ SetMaxFreezeLock (
     return Status;
 }
 
-/**
-    Sets the Password to Lock/Unlock use of SETMAXADDRESS command
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:	IssueSetMaxPasswordCmd
+//
+// Description:	Sets the Password to Lock/Unlock use of SETMAXADDRESS command
+//
+// Input:
+//	IN      IDE_HPA_INTERFACE			*This,
+//	IN	BOOLEAN						LockUnLock (TRUE : LOCK, FALSE :UNLOCK
+//
+// Output:
+//	EFI_STATUS  : EFI_UNSUPPORTED/EFI_SUCCESS/EFI_DEVICE_ERROR
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:	READ NATIVE MAX ADDRESS should not have immediatley PRECEED this command.
+//			To take care of this situation, a Dummy Identify Device Command will be given before
+//			issuing a SET MAX LOCK/UNLOCK command
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
-    @param This 
-    @param LockUnLock (TRUE : LOCK, FALSE :UNLOCK
-
-    @retval EFI_STATUS  : EFI_UNSUPPORTED/EFI_SUCCESS/EFI_DEVICE_ERROR
-
-    @note   READ NATIVE MAX ADDRESS should not have immediately PRECEED this command.
-            To take care of this situation, a Dummy Identify Device Command will be given before
-            issuing a SET MAX LOCK/UNLOCK command
-
-**/
-
-EFI_STATUS
-IssueSetMaxPasswordCmd (
-    AMI_IDE_BUS_PROTOCOL    *IdeBusInterface,
-    UINT8                   *PasswordBuffer,
-    UINT8                   Cmd
-)
+EFI_STATUS IssueSetMaxPasswordCmd(
+    IDE_BUS_PROTOCOL *IdeBusInterface,
+    UINT8            *PasswordBuffer,
+    UINT8            Cmd )
 {
-    EFI_STATUS  Status;
-    UINT8       *Buffer;
+    EFI_STATUS Status;
+    UINT8      *Buffer;
 
     //Issues Identify Device Command
     //Allocate 512 Bytes
@@ -633,17 +733,16 @@ IssueSetMaxPasswordCmd (
 }
 
 
-  //***********************************************************************
-  //***********************************************************************
-  //**                                                                   **
-  //**        (C)Copyright 1985-2014, American Megatrends, Inc.          **
-  //**                                                                   **
-  //**                       All Rights Reserved.                        **
-  //**                                                                   **
-  //**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093         **
-  //**                                                                   **
-  //**                       Phone: (770)-246-8600                       **
-  //**                                                                   **
-  //***********************************************************************
-  //***********************************************************************
-
+//**********************************************************************
+//**********************************************************************
+//**                                                                  **
+//**        (C)Copyright 1985-2012, American Megatrends, Inc.         **
+//**                                                                  **
+//**                       All Rights Reserved.                       **
+//**                                                                  **
+//**         5555 Oakbrook Pkwy, Suite 200, Norcross, GA 30093        **
+//**                                                                  **
+//**                       Phone: (770)-246-8600                      **
+//**                                                                  **
+//**********************************************************************
+//**********************************************************************

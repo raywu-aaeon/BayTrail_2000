@@ -12,15 +12,25 @@
 //**********************************************************************
 //**********************************************************************
 
+//**********************************************************************
+// $Header: /Alaska/BIN/Modules/ACPI/Template/Core/AcpiSdtPrivate.h 2     5/14/11 2:15p Yakovlevs $
+//
+// $Revision: 2 $
+//
+// $Date: 5/14/11 2:15p $
+//**********************************************************************
 
 
-
-
-/** @file AcpiSdtPrivate.h
-    ACPI SDT protocol Private data Definitions.
-
-**/
-
+//**********************************************************************
+//<AMI_FHDR_START>
+//
+// Name: AcpiSdtPrivate.h
+//
+// Description:	
+//  ACPI SDT protocol Private data Definitions.
+//
+//<AMI_FHDR_END>
+//**********************************************************************
 
 #ifndef _ACPI_SDT_H_
 #define _ACPI_SDT_H_
@@ -256,14 +266,14 @@ struct _EFI_AML_NODE_LIST {
 #define EFI_AML_HANDLE_SIGNATURE SIGNATURE_32 ('E', 'A', 'H', 'S')
 #define EFI_AML_ROOT_HANDLE_SIGNATURE SIGNATURE_32 ('E', 'A', 'R', 'H')
 
-/**
-    AML Handle Entry definition.
-
-    Signature must be set to EFI_AML_HANDLE_SIGNATURE or EFI_AML_ROOT_HANDLE_SIGNATURE
-    Buffer is the ACPI node buffer pointer, the first/second bytes are opcode.
-    This buffer should not be freed.
-    Size is the total size of this ACPI node buffer.
-**/
+//
+// AML Handle Entry definition.
+//
+//  Signature must be set to EFI_AML_HANDLE_SIGNATURE or EFI_AML_ROOT_HANDLE_SIGNATURE
+//  Buffer is the ACPI node buffer pointer, the first/second bytes are opcode.
+//         This buffer should not be freed.
+//  Size is the total size of this ACPI node buffer.
+//
 typedef struct {
     UINT32                  Signature;
     UINT8                   *Buffer;

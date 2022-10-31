@@ -1,0 +1,10 @@
+<component>
+	name = "AmiTcgOemlib"
+	category = ModulePart
+	LocalRoot = "AmiModulePkg\TCG\AmiTcgOemlib\"
+	RefName = "AmiTcgOemlib"
+[files]
+"AmiTcgOemlib.sdl"	
+[INF]
+"AmiTcgOemlib.inf"	
+<endComponent>

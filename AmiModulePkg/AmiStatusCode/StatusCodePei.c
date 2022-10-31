@@ -34,7 +34,6 @@
 #include <Token.h> 
 #include <Ppi/ReportStatusCodeHandler.h> 
 #include <Library/PlatformHookLib.h>
-#include <Library/HobLib.h>
 #define INITIAL_RSC_PEI_ENTRIES 8
 
 
@@ -88,6 +87,44 @@ CreateRscHandlerCallbackPacket (
   *NumberOfEntries = 0;
 
   return NumberOfEntries;
+}
+
+#define GET_GUID_HOB_DATA(HobStart) \
+  (VOID*)((UINT8*)(HobStart) + sizeof (EFI_HOB_GUID_TYPE))
+
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   GetFirstGuidHob
+//
+// Description: Returns the first instance of the matched GUID HOB among the 
+//              whole HOB list.
+//
+// Input:
+//      IN EFI_GUID *Guid - The GUID to match with in the HOB list.
+//
+// Output:
+//      VOID* Pointer po first matched Hob (NULL - if not found)
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
+VOID *
+GetFirstGuidHob (
+  IN EFI_GUID         *Guid
+  )
+{
+
+  VOID      *HobList = NULL;
+  EFI_STATUS        Status;
+  CONST EFI_PEI_SERVICES **PeiServices;
+
+  PeiServices = GetPeiServicesTablePointer ();
+  
+  Status = (*PeiServices)->GetHobList (PeiServices, &HobList);
+  if (EFI_ERROR(Status)) return NULL;
+  Status = FindNextHobByGuid (Guid, (VOID**)&HobList);
+  if (EFI_ERROR(Status)) return NULL;
+  else return HobList;
+  
 }
 
 //<AMI_PHDR_START>

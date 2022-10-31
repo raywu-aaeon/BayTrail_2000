@@ -1,7 +1,7 @@
 //*************************************************************************
 //*************************************************************************
 //**                                                                     **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.            **
+//**        (C)Copyright 1985-2012, American Megatrends, Inc.            **
 //**                                                                     **
 //**                       All Rights Reserved.                          **
 //**                                                                     **
@@ -55,11 +55,6 @@
 
 #include "VlvAccess.h" //CSP20140329_22
 #include "MchRegs.h" //CSP20140329_22
-//EIP176554 >>
-#include <Guid/MemoryConfigData.h>
-#include <Library/HobLib.h>
-#include <MemoryInit/Src32/Mrc.h>
-//EIP176554 <<
 
 // Produced Protocols
 
@@ -590,113 +585,10 @@ CheckPeiFvCopyToRam (
 }
 // (EIP129308+)<<
 
-//EIP176554 >>
-/**
-    Check if the system supports Vtd function or not
-
-    @param  VOID
-
-    @retval TRUE    Vtd is supported 
-    @retval FALSE   Vtd is not supported
-
-**/
-BOOLEAN NbCheckVtdSupport (
-    VOID
-)
-{
-    return  FALSE;   
-}
-
-/**
-    Check if the system is Dual Channel or not
-
-    @param MemoryChannelType  0:Symmetric, 1:Interleave, 2:Single
-
-    @retval TRUE  It is Dual Channel
-    @retval FALSE It is not Dual Channel
-
-**/
-BOOLEAN NbIsDualChannel (
-    IN UINT8              MemoryChannelType 
-)
-{
-    UINT8                           Channel;
-    EFI_PEI_HOB_POINTERS            GuidHob;
-    EFI_GUID                        EfiMemoryConfigDataGuid = EFI_MEMORY_CONFIG_DATA_GUID;
-    MRC_PARAMS_SAVE_RESTORE         *MrcParamsHob;
-    UINT8                           Count;
-
-    GuidHob.Raw = GetHobList ();
-    if (GuidHob.Raw != NULL) {
-      GuidHob.Raw = GetNextGuidHob (&EfiMemoryConfigDataGuid, GuidHob.Raw);
-      if (GuidHob.Raw != NULL) {
-        MrcParamsHob = GET_GUID_HOB_DATA (GuidHob.Guid);
-        Count = 0;
-        for (Channel = 0; Channel < MAX_CHANNELS_TOTAL; Channel++) {
-          if (MrcParamsHob->Channel[Channel].DimmPresent[0] == 1) {
-              Count ++;
-          }
-        }
-        if (Count == 2) {
-          return TRUE;
-        }
-      }
-    }
-
-    return  FALSE;
-}
-
-/**
-    Lock and unlock Pavpc
-
-    @param Mode               TRUE: Lock Pavpc; FALSE: Unlock Pavpc
-
-    @retval EFI_UNSUPPORTED   This function is not supported
-    @retval EFI_SUCCESS       Success to lock/unlock Pavpc
-
-**/
-EFI_STATUS NbLockPavpc (
-    IN BOOLEAN            Mode
-)
-{
-    if (Mode == TRUE) {
-      //
-      // Lock PAVPC Register
-      //
-      McD2PciCfg16Or (0x74, 0x4);
-    } else {
-      //
-      // Unlock PAVPC Register
-      //
-      McD2PciCfg16And (0x74, ~0x4);
-    }
-
-    return EFI_SUCCESS;
-}
-
-/**
-    Get the information of the DIMM location indicated by MemoryAddr
-
-    @param MemoryAddr         The system address to convert
-    @param NbAddressDecode    Pointer to the buffer used to store NB_ADDRESS_DECODE
-
-    @retval EFI_UNSUPPORTED   This function is not supported
-    @retval EFI_SUCCESS       Success to get the information of DIMM location
-
-**/
-EFI_STATUS NbGetDimmLocInfo (
-    IN CONST UINTN        MemoryAddr,
-    OUT NB_ADDRESS_DECODE *NbAddressDecode
-)
-{
-    return EFI_UNSUPPORTED;
-}
-//EIP176554 <<
-
 //*************************************************************************
 //*************************************************************************
 //**                                                                     **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.            **
+//**        (C)Copyright 1985-2012, American Megatrends, Inc.            **
 //**                                                                     **
 //**                       All Rights Reserved.                          **
 //**                                                                     **

@@ -1,7 +1,7 @@
 //****************************************************************************
 //****************************************************************************
 //**                                                                        **
-//**             (C)Copyright 1985-2015, American Megatrends, Inc.          **
+//**             (C)Copyright 1985-2012, American Megatrends, Inc.          **
 //**                                                                        **
 //**                          All Rights Reserved.                          **
 //**                                                                        **
@@ -19,10 +19,13 @@
 //
 // $Date: $
 //****************************************************************************
-/** @file OA2.h
-    OA2 Header file.
-
-**/
+//<AMI_FHDR_START>
+//
+// Name:  OA2.h
+//
+// Description: OA2 Header file.
+//
+//<AMI_FHDR_END>
 //****************************************************************************
 
 #ifndef __SLP_SUPPORT__H__
@@ -54,25 +57,30 @@ extern "C" {
 
 #pragma pack (1)
 
-/**
-    This structure comes out of the document:
-    OEM Activation version 2.0 for M$ Windows Vista (tm) Operating System.
-
- Fields:   
-  Name           Type    Description
-  ------------------------------------------------------------------
-  StructType     UINT32  0x00000000 = PubKey Structure.
-  LicensingData  UINT32  Length, in bytes, of OEM pub key struct (156).
-  bType          UINT8   Public Key Type [PUBLICKEYBLOB (6)].
-  bVersion       UINT8   Version, currently 2 (7/27/2006).
-  Reserved       UINT16  Zero.
-  aiKeyAlg       UINT32  Key Algorithm. [CALG_RSA_SIGN (0x00002400)].
-  Magic          UINT32  bytes: 'RSA1'.
-  BitLen         UINT32  1024 converted to hex.
-  Pubexp         UINT32  Exponent of Public Key, usually 257 converted to hex.
-  Modulus        UINT8   Array. Modulus, modulues of the public key 128 bytes.
-
-**/
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+//
+// Name: OEM_PUBLIC_KEY_STRUCTURE
+//
+// Description: This structure comes out of the document:
+// OEM Activation version 2.0 for M$ Windows Vista (tm) Operating System.
+//
+// Fields:   
+//  Name           Type    Description
+//  ------------------------------------------------------------------
+//  StructType     UINT32  0x00000000 = PubKey Structure.
+//  LicensingData  UINT32  Length, in bytes, of OEM pub key struct (156).
+//  bType          UINT8   Public Key Type [PUBLICKEYBLOB (6)].
+//  bVersion       UINT8   Version, currently 2 (7/27/2006).
+//  Reserved       UINT16  Zero.
+//  aiKeyAlg       UINT32  Key Algorithm. [CALG_RSA_SIGN (0x00002400)].
+//  Magic          UINT32  bytes: 'RSA1'.
+//  BitLen         UINT32  1024 converted to hex.
+//  Pubexp         UINT32  Exponent of Public Key, usually 257 converted to hex.
+//  Modulus        UINT8   Array. Modulus, modulues of the public key 128 bytes.
+//
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
 
 typedef struct {
     UINT32  StructType;
@@ -87,23 +95,28 @@ typedef struct {
     UINT8   Modulus[128];
 } OEM_PUBLIC_KEY_STRUCTURE;
 
-/**
-    This structure comes out of the document:
-    OEM Activation version 2.0 for M$ Windows Vista (tm) Operating System.
-
- Fields:   
-  Name            Type    Description
-  ------------------------------------------------------------------
-  StructType      UINT32  0x00000001 = Windows marker structure
-  LicensingData   UINT32  Length, in bytes of Windows Marker (182)
-  dwVersion       UINT32  Version of the Windows Marker (0x0002000)
-  sOEMID          UINT8   The OEMID value from XSDT and RSDT (must match). (6 bytes)
-  sOEMTABLEID     UINT8   the OEMTABLEID from XSDT and RSDT (must match). (8 bytes)
-  sWindowsFlag    UINT8   'WINDOWS ' (notice trailing space, not null terminated). (8 bytes)
-  Reserved        UINT8   Reserved for future use. (20 bytes)
-  Signature       UINT8   SHA256 Signature from the Windows Marker. (128 bytes)
-
-**/
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+//
+// Name: WINDOWS_MARKER_STRUCTURE
+//
+// Description: This structure comes out of the document:
+// OEM Activation version 2.0 for M$ Windows Vista (tm) Operating System.
+//
+// Fields:   
+//  Name            Type    Description
+//  ------------------------------------------------------------------
+//  StructType      UINT32  0x00000001 = Windows marker structure
+//  LicensingData   UINT32  Length, in bytes of Windows Marker (182)
+//  dwVersion       UINT32  Version of the Windows Marker (0x0002000)
+//  sOEMID          UINT8   The OEMID value from XSDT and RSDT (must match). (6 bytes)
+//  sOEMTABLEID     UINT8   the OEMTABLEID from XSDT and RSDT (must match). (8 bytes)
+//  sWindowsFlag    UINT8   'WINDOWS ' (notice trailing space, not null terminated). (8 bytes)
+//  Reserved        UINT8   Reserved for future use. (20 bytes)
+//  Signature       UINT8   SHA256 Signature from the Windows Marker. (128 bytes)
+//
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
 
 typedef struct {
     UINT32  StructType;
@@ -116,18 +129,23 @@ typedef struct {
     UINT8   Signature[128];
 } WINDOWS_MARKER_STRUCTURE;
 
-/**
-    This structure comes out of the document:
-    OEM Activation version 2.0 for M$ Windows Vista (tm) Operating System.
-
- Fields:      
-  Name       Type                         Description
-  ------------------------------------------------------------------
-  Header      EFI_ACPI_DESCRIPTION_HEADER Common ACPI table header
-  PubKey      OEM_PUBLIC_KEY_STRUCTURE    See above for description
-  WinMarker   WINDOWS_MARKER_STRUCTURE    See above for description
-
-**/
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+//
+// Name: EFI_ACPI_SLP
+//
+// Description: This structure comes out of the document:
+// OEM Activation version 2.0 for M$ Windows Vista (tm) Operating System.
+//
+// Fields:      
+//  Name       Type                         Description
+//  ------------------------------------------------------------------
+//  Header      EFI_ACPI_DESCRIPTION_HEADER Common ACPI table header
+//  PubKey      OEM_PUBLIC_KEY_STRUCTURE    See above for description
+//  WinMarker   WINDOWS_MARKER_STRUCTURE    See above for description
+//
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
 
 typedef struct {
     ACPI_HDR Header;
@@ -147,7 +165,7 @@ typedef struct {
 //****************************************************************************
 //****************************************************************************
 //**                                                                        **
-//**             (C)Copyright 1985-2015, American Megatrends, Inc.          **
+//**             (C)Copyright 1985-2012, American Megatrends, Inc.          **
 //**                                                                        **
 //**                          All Rights Reserved.                          **
 //**                                                                        **

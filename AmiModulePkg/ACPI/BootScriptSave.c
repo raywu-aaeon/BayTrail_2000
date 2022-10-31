@@ -21,11 +21,16 @@
 //**********************************************************************
 
 
-/** @file BootScriptSave.c
-    Save Mem/Io/Pci/Smbus/etc into a table. The script will
-    be executed on a S3 resume.
-
-**/
+//<AMI_FHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:	BootScriptSave.c
+//
+// Description:	Save Mem/Io/Pci/Smbus/etc into a table. The script will
+//	be executed on a S3 resume.
+//
+//---------------------------------------------------------------------------
+//<AMI_FHDR_END>
 #if PI_SPECIFICATION_VERSION>=0x0001000A
 #include <Protocol/S3SaveState.h>
 #include <Protocol/S3SmmSaveState.h>
@@ -71,27 +76,21 @@ typedef EFI_STATUS (*GENERIC_OPCODE_FUNC) (
 static EFI_GUID gEfiBootScriptSaveGuid = EFI_BOOT_SCRIPT_SAVE_PROTOCOL_GUID;
 static EFI_GUID gTableDataVarGuid = { 0x4bafc2b4, 0x2dc, 0x4104, 0xb2, 0x36, 0xd6, 0xf1, 0xb9, 0x8d, 0x9e, 0x84};
 
-/**
-    Internal Structure with information about boot script collected
- 
-**/
+
 typedef struct {
-	VOID *TableBottom;///< Pointer to the bottom (beginning) of the BootScript table
-	VOID *TablePtr;///< Pointer to the next free position
-	UINTN TableSize;///< Size of the table
-    UINTN NumTableEntries;///< Number of BootScropt entries in the table
-    BOOLEAN WasClosed;///< Signals that Close table was already closed
+	VOID *TableBottom;
+	VOID *TablePtr;
+	UINTN TableSize;
+    UINTN NumTableEntries;
+    BOOLEAN WasClosed;
 } TABLE_INFO;
 
 #if PI_SPECIFICATION_VERSION>=0x0001000A
-/**
-    Structure with information on where to put next boot script
- 
-**/
+
 typedef struct {
-   BOOLEAN  IsItInsert;///< Signals, that BootScript should be inserted, and not just added to the end of the table.
-   BOOLEAN  BeforeOrAfter;/// Insert before or after Position.
-   UINTN    Position;///< Position to insert.
+   BOOLEAN  IsItInsert;
+   BOOLEAN  BeforeOrAfter;
+   UINTN    Position;
 } BOOT_SCRIPT_INSERT_INFO;
 
 BOOT_SCRIPT_INSERT_INFO gInsertInfo = {FALSE, FALSE, 0};
@@ -100,21 +99,25 @@ BOOT_SCRIPT_INSERT_INFO gInsertInfo = {FALSE, FALSE, 0};
 
 TABLE_INFO *gTableInfo = NULL;
 
-/**
-    Initialize first table.
-
-        
-    @param Table 
-
-         
-    @retval TRUE if new table was created.
-
-    @note  
-  Return True if successful table creation, otherwise return false.
-    Need valid table info even if table fails, because functions may
-    attempt to write to the boot script without a table being created.
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+// Procedure: NewTable
+//
+// Description:	Initialize first table.
+//
+// Input:
+//	IN UINT16 Table
+//
+// Output:
+//	BOOLEAN	- TRUE if new table created.
+//
+// Notes:
+//  Return True if successful table creation, otherwise return false.
+//    Need valid table info even if table fails, because functions may
+//    attempt to write to the boot script without a table being created.
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 BOOLEAN NewTable()
 {
     EFI_STATUS Status;
@@ -135,17 +138,25 @@ BOOLEAN NewTable()
 }
 
 
-/**
-    Inits Boot Script Structure.
-
-        
-    @param IsItSmm 
-
-         
-    @retval EFI_SATUS Status of the operation.
-
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+// Procedure: InitBootScriptStructure
+//
+// Description:	Updates Table pointer Before each Write operation.
+//
+// Input:
+//	IN UINT16 Table
+//
+// Output:
+//	EFI_SATUS	- Status of the operation.
+//
+// Notes:
+//  Return True if successful table creation, otherwise return false.
+//    Need valid table info even if table fails, because functions may
+//    attempt to write to the boot script without a table being created.
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 EFI_STATUS InitBootScriptStructure(BOOLEAN IsItSmm)
 {
@@ -167,7 +178,7 @@ EFI_STATUS InitBootScriptStructure(BOOLEAN IsItSmm)
             Status = pBS->AllocatePages(AllocateMaxAddress, EfiReservedMemoryType, EFI_SIZE_TO_PAGES(sizeof(TABLE_INFO)),
                             &TableInfo);
 
-            gTableInfo = (TABLE_INFO *)(UINTN)TableInfo;
+            gTableInfo = (TABLE_INFO *) TableInfo;
 
             ASSERT_EFI_ERROR(Status);
             if(EFI_ERROR(Status)) return EFI_OUT_OF_RESOURCES;
@@ -186,19 +197,23 @@ EFI_STATUS InitBootScriptStructure(BOOLEAN IsItSmm)
     return Status;
 }
 #if PI_SPECIFICATION_VERSION>=0x0001000A
-/**
-    Founds position and, based on Size, allocates space for Entry, 
-    that has to be incerted, in table based on parameters in 
-    gInsertInfo structure.
-
-        
-    @param Size size of entry to allocate in table.
-
-         
-    @retval Pointer to allocated entry in table.
-
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+// Procedure: InsertPositionInBootScript
+//
+// Description:	Found position and, based on Size, allocate space for Entry, 
+//              that has to be incerted, in table based on parameters in 
+//              gInsertInfo structure.
+//
+// Input:
+//	IN UINTN Size - Size of entry to allocate in table.
+//
+// Output:
+//	VOID * - Pointer to allocated entry in table.
+//
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID* InsertPositionInBootScript (UINTN Size)
 {
     TABLE_INFO  *Info = gTableInfo;
@@ -231,32 +246,36 @@ VOID* InsertPositionInBootScript (UINTN Size)
     
 }
 #endif
-/**
-    Allocate Entry from table. If not enough space, create
-    larger table and return entry.
-
-        
-    @param Size size of entry to allocate in table.
-
-         
-    @retval Pointer to allocated entry in table.
-
-    @note  
-  Here is the control flow of this function:
-	1. Does the BootScript table exist. If no return 0.
-	2. Does table contain max entries? If so assert.
-  3. Enough space in the table for the boot script call? If yes, go to step 8.
-  ---Create table---
-  4. Get Size of table needed for entry. (A multiple of INIT_TABLE_SIZE.)
-  5. Allocate new table.
-  6. Copy old table 
-  7. Free old table.
-  8. Update gTableInfo data.
-  ------------------
-  9. Adjust allocation pointer to allocate new space.
-  10. Return newly allocated space.
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+// Procedure: AllocTableEntry
+//
+// Description:	Allocate Entry from table. If not enough space, create
+//	larger table and return entry.
+//
+// Input:
+//	IN UINT32 Size - Size of entry to allocate in table.
+//
+// Output:
+//	VOID * - Pointer to allocated entry in table.
+//
+// Notes:
+//  Here is the control flow of this function:
+//	1. Does the BootScript table exist. If no return 0.
+//	2. Does table contain max entries? If so assert.
+//  3. Enough space in the table for the boot script call? If yes, go to step 8.
+//  ---Create table---
+//  4. Get Size of table needed for entry. (A multiple of INIT_TABLE_SIZE.)
+//  5. Allocate new table.
+//  6. Copy old table 
+//  7. Free old table.
+//  8. Update gTableInfo data.
+//  ------------------
+//  9. Adjust allocation pointer to allocate new space.
+//  10. Return newly allocated space.
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 VOID * AllocTableEntry(IN UINTN Size)
 {
@@ -357,26 +376,31 @@ VOID * AllocTableEntry(IN UINTN Size)
 	return TempPtr;
 }
 
-/**
-    Write to boot script table an IoWrite.
-
-        
-    @param This - Pointer to this protocol
-    @param va_list	variable arglist
-
-    @retval 
-        EFI_STATUS, based on result
-
-    @note  
-  Here is the control flow of this function:
-	1. Get variable argument list from stack.
-  2. Validate argument list. If invalid return EFI_INVALID_PARAMETER;
-  3. Allocate entry from table.  If no room in table, return EFI_OUT_OF_RESOURCES.
-  4. Fill fixed table entries.
-  5. Add data to end of fixed table.
-	6. Return EFI_SUCCESS.
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure: BootScriptIoWrite
+//
+// Description:	Write to boot script table an IoWrite.
+//
+// Input:
+//	IN EFI_BOOT_SCRIPT_SAVE_PROTOCOL	*This
+//	IN va_list							arglist
+//
+// Output:
+//	EFI_STATUS
+//
+// Notes:
+//  Here is the control flow of this function:
+//	1. Get variable argument list from stack.
+//  2. Validate argument list. If invalid return EFI_INVALID_PARAMETER;
+//  3. Allocate entry from table.  If no room in table, return EFI_OUT_OF_RESOURCES.
+//  4. Fill fixed table entries.
+//  5. Add data to end of fixed table.
+//	6. Return EFI_SUCCESS.
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS BootScriptIoWrite (
 	IN EFI_BOOT_SCRIPT_SAVE_PROTOCOL	*This,
 	IN va_list							arglist
@@ -416,26 +440,30 @@ EFI_STATUS BootScriptIoWrite (
 	return EFI_SUCCESS;
 }
 
-/**
-    Write to boot script table a IoReadWrite.
-
-        
-    @param This - Pointer to this protocol
-    @param va_list	variable arglist
-
-    @retval 
-        EFI_STATUS, based on result
-
-
-    @note  
-  Here is the control flow of this function:
-	1. Get variable argument list from stack.
-  2. Validate argument list. If invalid return EFI_INVALID_PARAMETER;
-  3. Allocate entry from table.  If no room in table, return EFI_OUT_OF_RESOURCES.
-  4. Fill fixed table entries.
-	5. Return EFI_SUCCESS.
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure: BootScriptIoReadWrite
+//
+// Description:	Write to boot script table a IoReadWrite.
+//
+// Input:
+//	IN EFI_BOOT_SCRIPT_SAVE_PROTOCOL	*This
+//	IN va_list							arglist
+//
+// Output:
+//	EFI_STATUS
+//
+// Notes:
+//  Here is the control flow of this function:
+//	1. Get variable argument list from stack.
+//  2. Validate argument list. If invalid return EFI_INVALID_PARAMETER;
+//  3. Allocate entry from table.  If no room in table, return EFI_OUT_OF_RESOURCES.
+//  4. Fill fixed table entries.
+//	5. Return EFI_SUCCESS.
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS BootScriptIoReadWrite (
 	IN EFI_BOOT_SCRIPT_SAVE_PROTOCOL	*This,
 	va_list								arglist
@@ -481,26 +509,31 @@ EFI_STATUS BootScriptIoReadWrite (
 	return EFI_SUCCESS;
 }
 
-/**
-    Write to boot script table an MemWrite.
-
-        
-    @param This - Pointer to this protocol
-    @param va_list	variable arglist
-
-    @retval 
-        EFI_STATUS, based on result
-
-    @note  
-  Here is the control flow of this function:
-	1. Get variable argument list from stack.
-  2. Validate argument list. If invalid return EFI_INVALID_PARAMETER;
-  3. Allocate entry from table.  If no room in table, return EFI_OUT_OF_RESOURCES.
-  4. Fill fixed table entries.
-  5. Add data to end of fixed table.
-	6. Return EFI_SUCCESS.
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure: BootScriptMemWrite
+//
+// Description:	Write to boot script table an MemWrite.
+//
+// Input:
+//	IN EFI_BOOT_SCRIPT_SAVE_PROTOCOL	*This
+//	IN va_list							arglist
+//
+// Output:
+//	EFI_STATUS
+//
+// Notes:
+//  Here is the control flow of this function:
+//	1. Get variable argument list from stack.
+//  2. Validate argument list. If invalid return EFI_INVALID_PARAMETER;
+//  3. Allocate entry from table.  If no room in table, return EFI_OUT_OF_RESOURCES.
+//  4. Fill fixed table entries.
+//  5. Add data to end of fixed table.
+//	6. Return EFI_SUCCESS.
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS BootScriptMemWrite (
 	IN EFI_BOOT_SCRIPT_SAVE_PROTOCOL	*This,
 	va_list								arglist
@@ -546,25 +579,30 @@ EFI_STATUS BootScriptMemWrite (
 	return EFI_SUCCESS;
 }
 
-/**
-    Write to boot script table an MemReadWrite.
-
-        
-    @param This - Pointer to this protocol
-    @param va_list	variable arglist
-
-    @retval 
-        EFI_STATUS, based on result
-
-    @note  
-  Here is the control flow of this function:
-	1. Get variable argument list from stack.
-  2. Validate argument list. If invalid return EFI_INVALID_PARAMETER;
-  3. Allocate entry from table.  If no room in table, return EFI_OUT_OF_RESOURCES.
-  4. Fill fixed table entries.
-	5. Return EFI_SUCCESS.
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure: BootScriptMemReadWrite
+//
+// Description:	Write to boot script table an MemReadWrite.
+//
+// Input:
+//	IN EFI_BOOT_SCRIPT_SAVE_PROTOCOL	*This
+//	IN va_list							arglist
+//
+// Output:
+//	EFI_STATUS
+//
+// Notes:
+//  Here is the control flow of this function:
+//	1. Get variable argument list from stack.
+//  2. Validate argument list. If invalid return EFI_INVALID_PARAMETER;
+//  3. Allocate entry from table.  If no room in table, return EFI_OUT_OF_RESOURCES.
+//  4. Fill fixed table entries.
+//	5. Return EFI_SUCCESS.
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS BootScriptMemReadWrite (
 	IN EFI_BOOT_SCRIPT_SAVE_PROTOCOL *This,
 	va_list arglist
@@ -615,26 +653,31 @@ EFI_STATUS BootScriptMemReadWrite (
 	return EFI_SUCCESS;
 }
 
-/**
-    Write to boot script table an PciWrite.
-
-        
-    @param This - Pointer to this protocol
-    @param va_list	variable arglist
-
-    @retval 
-        EFI_STATUS, based on result
-
-    @note  
-  Here is the control flow of this function:
-	1. Get variable argument list from stack.
-  2. Validate argument list. If invalid return EFI_INVALID_PARAMETER;
-  3. Allocate entry from table.  If no room in table, return EFI_OUT_OF_RESOURCES.
-  4. Fill fixed table entries.
-  5. Add data to end of fixed table.
-	6. Return EFI_SUCCESS.
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure: BootScriptPciWrite
+//
+// Description:	Write to boot script table an PciWrite.
+//
+// Input:
+//	IN EFI_BOOT_SCRIPT_SAVE_PROTOCOL	*This
+//	IN va_list							arglist
+//
+// Output:
+//	EFI_STATUS
+//
+// Notes:
+//  Here is the control flow of this function:
+//	1. Get variable argument list from stack.
+//  2. Validate argument list. If invalid return EFI_INVALID_PARAMETER;
+//  3. Allocate entry from table.  If no room in table, return EFI_OUT_OF_RESOURCES.
+//  4. Fill fixed table entries.
+//  5. Add data to end of fixed table.
+//	6. Return EFI_SUCCESS.
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS BootScriptPciWrite (
 	IN EFI_BOOT_SCRIPT_SAVE_PROTOCOL *This,
 	va_list arglist
@@ -696,25 +739,30 @@ EFI_STATUS BootScriptPciWrite (
 	return EFI_SUCCESS;
 }
 
-/**
-    Write to boot script table an PciReadWrite.
-
-        
-    @param This 
-        IN va_list							arglist
-
-    @retval 
-        EFI_STATUS
-
-    @note  
-  Here is the control flow of this function:
-	1. Get variable argument list from stack.
-  2. Validate argument list. If invalid return EFI_INVALID_PARAMETER;
-  3. Allocate entry from table.  If no room in table, return EFI_OUT_OF_RESOURCES.
-  4. Fill fixed table entries.
-	5. Return EFI_SUCCESS.
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure: BootScriptPciReadWrite
+//
+// Description:	Write to boot script table an PciReadWrite.
+//
+// Input:
+//	IN EFI_BOOT_SCRIPT_SAVE_PROTOCOL	*This
+//	IN va_list							arglist
+//
+// Output:
+//	EFI_STATUS
+//
+// Notes:
+//  Here is the control flow of this function:
+//	1. Get variable argument list from stack.
+//  2. Validate argument list. If invalid return EFI_INVALID_PARAMETER;
+//  3. Allocate entry from table.  If no room in table, return EFI_OUT_OF_RESOURCES.
+//  4. Fill fixed table entries.
+//	5. Return EFI_SUCCESS.
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS BootScriptPciReadWrite (
 	IN EFI_BOOT_SCRIPT_SAVE_PROTOCOL *This,
 	va_list arglist
@@ -777,17 +825,22 @@ EFI_STATUS BootScriptPciReadWrite (
 	return EFI_SUCCESS;
 }
 
-/**
-    Write to boot script table an SmbusExecute.
-
-        
-    @param This - Pointer to this protocol
-    @param va_list	variable arglist
-
-    @retval 
-        EFI_STATUS, based on result
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure: BootScriptSmbusExecute
+//
+// Description:	Write to boot script table an SmbusExecute.
+//
+// Input:
+//	IN EFI_BOOT_SCRIPT_SAVE_PROTOCOL	*This
+//	IN va_list							arglist
+//
+// Output:
+//	EFI_STATUS
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS BootScriptSmbusExecute (
 	IN EFI_BOOT_SCRIPT_SAVE_PROTOCOL *This,
 	va_list arglist
@@ -818,17 +871,22 @@ EFI_STATUS BootScriptSmbusExecute (
 	return EFI_SUCCESS;
 }
 
-/**
-    Write to boot script table an Stall.
-
-        
-    @param This - Pointer to this protocol
-    @param va_list	variable arglist
-
-    @retval 
-        EFI_STATUS, based on result
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure: BootScriptStall
+//
+// Description:	Write to boot script table an Stall.
+//
+// Input:
+//	IN EFI_BOOT_SCRIPT_SAVE_PROTOCOL	*This
+//	IN va_list							arglist
+//
+// Output:
+//	EFI_STATUS
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS BootScriptStall (
 	IN EFI_BOOT_SCRIPT_SAVE_PROTOCOL *This,
 	va_list arglist
@@ -848,17 +906,22 @@ EFI_STATUS BootScriptStall (
 	return EFI_SUCCESS;
 }
 
-/**
-    Write to boot script table a IoPoll.
-
-        
-    @param This - Pointer to this protocol
-    @param va_list	variable arglist
-
-    @retval 
-        EFI_STATUS, based on result
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure: BootScriptIoPoll
+//
+// Description:	Write to boot script table a IoPoll.
+//
+// Input:
+//	IN EFI_BOOT_SCRIPT_SAVE_PROTOCOL	*This
+//	IN va_list							arglist
+//
+// Output:
+//	EFI_STATUS
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS BootScriptIoPoll (
 	IN EFI_BOOT_SCRIPT_SAVE_PROTOCOL *This,
 	va_list arglist
@@ -904,17 +967,22 @@ EFI_STATUS BootScriptIoPoll (
 	return EFI_SUCCESS;
 }
 
-/**
-    Write to boot script table a MemPoll.
-
-        
-    @param This - Pointer to this protocol
-    @param va_list	variable arglist
-
-    @retval 
-        EFI_STATUS, based on result
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure: BootScriptMemPoll
+//
+// Description:	Write to boot script table a MemPoll.
+//
+// Input:
+//	IN EFI_BOOT_SCRIPT_SAVE_PROTOCOL	*This
+//	IN va_list							arglist
+//
+// Output:
+//	EFI_STATUS
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS BootScriptMemPoll (
 	IN EFI_BOOT_SCRIPT_SAVE_PROTOCOL *This,
 	va_list arglist
@@ -964,25 +1032,30 @@ EFI_STATUS BootScriptMemPoll (
 	return EFI_SUCCESS;
 }
 
-/**
-    Write to boot script table an PciPoll.
-
-        
-    @param This - Pointer to this protocol
-    @param va_list	variable arglist
-
-    @retval 
-        EFI_STATUS, based on result
-
-    @note  
-  Here is the control flow of this function:
-	1. Get variable argument list from stack.
-  2. Validate argument list. If invalid return EFI_INVALID_PARAMETER;
-  3. Allocate entry from table.  If no room in table, return EFI_OUT_OF_RESOURCES.
-  4. Fill fixed table entries.
-	5. Return EFI_SUCCESS.
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure: BootScriptPciPoll
+//
+// Description:	Write to boot script table an PciPoll.
+//
+// Input:
+//	IN EFI_BOOT_SCRIPT_SAVE_PROTOCOL	*This
+//	IN va_list							arglist
+//
+// Output:
+//	EFI_STATUS
+//
+// Notes:
+//  Here is the control flow of this function:
+//	1. Get variable argument list from stack.
+//  2. Validate argument list. If invalid return EFI_INVALID_PARAMETER;
+//  3. Allocate entry from table.  If no room in table, return EFI_OUT_OF_RESOURCES.
+//  4. Fill fixed table entries.
+//	5. Return EFI_SUCCESS.
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS BootScriptPciPoll (
 	IN EFI_BOOT_SCRIPT_SAVE_PROTOCOL *This,
 	va_list arglist
@@ -1040,17 +1113,22 @@ EFI_STATUS BootScriptPciPoll (
 	return EFI_SUCCESS;
 }
 
-/**
-    Write to boot script table an Dispatch.
-
-        
-    @param This - Pointer to this protocol
-    @param va_list	variable arglist
-
-    @retval 
-        EFI_STATUS, based on result
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure: BootScriptDispatch
+//
+// Description:	Write to boot script table an Dispatch.
+//
+// Input:
+//	IN EFI_BOOT_SCRIPT_SAVE_PROTOCOL	*This
+//	IN va_list							arglist
+//
+// Output:
+//	EFI_STATUS
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS BootScriptDispatch (
 	IN EFI_BOOT_SCRIPT_SAVE_PROTOCOL *This,
 	va_list arglist
@@ -1074,17 +1152,22 @@ EFI_STATUS BootScriptDispatch (
 //    return EFI_UNSUPPORTED;
 }
 #if PI_SPECIFICATION_VERSION>=0x0001000A
-/**
-    Write to boot script table an Dispatch2.
-
-        
-    @param This - Pointer to this protocol
-    @param va_list	variable arglist
-
-    @retval 
-        EFI_STATUS, based on result
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure: SaveStateDispatch2
+//
+// Description:	Write to boot script table an Dispatch2.
+//
+// Input:
+//	IN EFI_BOOT_SCRIPT_SAVE_PROTOCOL	*This
+//	IN va_list							arglist
+//
+// Output:
+//	EFI_STATUS
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS SaveStateDispatch2 (
 	IN EFI_BOOT_SCRIPT_SAVE_PROTOCOL *This,
 	va_list arglist
@@ -1105,17 +1188,22 @@ EFI_STATUS SaveStateDispatch2 (
 	return EFI_SUCCESS;
 }
 
-/**
-    Write to boot script table an Information entry.
-
-        
-    @param This - Pointer to this protocol
-    @param va_list	variable arglist
-
-    @retval 
-        EFI_STATUS, based on result
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure: SaveStateInformation
+//
+// Description:	Write to boot script table an Information entry.
+//
+// Input:
+//	IN EFI_BOOT_SCRIPT_SAVE_PROTOCOL	*This
+//	IN va_list							arglist
+//
+// Output:
+//	EFI_STATUS
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS SaveStateInformation (
 	IN EFI_BOOT_SCRIPT_SAVE_PROTOCOL *This,
 	va_list arglist
@@ -1138,26 +1226,31 @@ EFI_STATUS SaveStateInformation (
 	return EFI_SUCCESS;
 }
 
-/**
-    Write to boot script table an PciWrite.
-
-        
-    @param This - Pointer to this protocol
-    @param va_list	variable arglist
-
-    @retval 
-        EFI_STATUS, based on result
-
-    @note  
-  Here is the control flow of this function:
-	1. Get variable argument list from stack.
-  2. Validate argument list. If invalid return EFI_INVALID_PARAMETER;
-  3. Allocate entry from table.  If no room in table, return EFI_OUT_OF_RESOURCES.
-  4. Fill fixed table entries.
-  5. Add data to end of fixed table.
-	6. Return EFI_SUCCESS.
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure: SaveStatePciCfg2Write
+//
+// Description:	Write to boot script table an PciWrite.
+//
+// Input:
+//	IN EFI_BOOT_SCRIPT_SAVE_PROTOCOL	*This
+//	IN va_list							arglist
+//
+// Output:
+//	EFI_STATUS
+//
+// Notes:
+//  Here is the control flow of this function:
+//	1. Get variable argument list from stack.
+//  2. Validate argument list. If invalid return EFI_INVALID_PARAMETER;
+//  3. Allocate entry from table.  If no room in table, return EFI_OUT_OF_RESOURCES.
+//  4. Fill fixed table entries.
+//  5. Add data to end of fixed table.
+//	6. Return EFI_SUCCESS.
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS SaveStatePciCfg2Write (
 	IN EFI_BOOT_SCRIPT_SAVE_PROTOCOL *This,
 	va_list arglist
@@ -1220,25 +1313,30 @@ EFI_STATUS SaveStatePciCfg2Write (
 	return EFI_SUCCESS;
 }
 
-/**
-    Write to boot script table an PciReadWrite.
-
-        
-    @param This - Pointer to this protocol
-    @param va_list	variable arglist
-
-    @retval 
-        EFI_STATUS, based on result
-
-    @note  
-  Here is the control flow of this function:
-	1. Get variable argument list from stack.
-  2. Validate argument list. If invalid return EFI_INVALID_PARAMETER;
-  3. Allocate entry from table.  If no room in table, return EFI_OUT_OF_RESOURCES.
-  4. Fill fixed table entries.
-	5. Return EFI_SUCCESS.
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure: SaveStatePciCfg2ReadWrite
+//
+// Description:	Write to boot script table an PciReadWrite.
+//
+// Input:
+//	IN EFI_BOOT_SCRIPT_SAVE_PROTOCOL	*This
+//	IN va_list							arglist
+//
+// Output:
+//	EFI_STATUS
+//
+// Notes:
+//  Here is the control flow of this function:
+//	1. Get variable argument list from stack.
+//  2. Validate argument list. If invalid return EFI_INVALID_PARAMETER;
+//  3. Allocate entry from table.  If no room in table, return EFI_OUT_OF_RESOURCES.
+//  4. Fill fixed table entries.
+//	5. Return EFI_SUCCESS.
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS SaveStatePciCfg2ReadWrite (
 	IN EFI_BOOT_SCRIPT_SAVE_PROTOCOL *This,
 	va_list arglist
@@ -1303,17 +1401,22 @@ EFI_STATUS SaveStatePciCfg2ReadWrite (
 	return EFI_SUCCESS;
 }
 
-/**
-    Write to boot script table a PI 1.1 IoPoll.
-
-        
-    @param This - Pointer to this protocol
-    @param va_list	variable arglist
-
-    @retval 
-        EFI_STATUS, based on result
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure: SaveStateIoPoll
+//
+// Description:	Write to boot script table a PI 1.1 IoPoll.
+//
+// Input:
+//	IN EFI_BOOT_SCRIPT_SAVE_PROTOCOL	*This
+//	IN va_list							arglist
+//
+// Output:
+//	EFI_STATUS
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS SaveStateIoPoll (
 	IN EFI_BOOT_SCRIPT_SAVE_PROTOCOL *This,
 	va_list arglist
@@ -1361,17 +1464,22 @@ EFI_STATUS SaveStateIoPoll (
 	return EFI_SUCCESS;
 }
 
-/**
-    Write to boot script table a MemPoll (PI 1.1).
-
-        
-    @param This - Pointer to this protocol
-    @param va_list	variable arglist
-
-    @retval 
-        EFI_STATUS, based on result
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure: SaveStateMemPoll
+//
+// Description:	Write to boot script table a MemPoll (PI 1.1).
+//
+// Input:
+//	IN EFI_BOOT_SCRIPT_SAVE_PROTOCOL	*This
+//	IN va_list							arglist
+//
+// Output:
+//	EFI_STATUS
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS SaveStateMemPoll (
 	IN EFI_BOOT_SCRIPT_SAVE_PROTOCOL *This,
 	va_list arglist
@@ -1425,25 +1533,30 @@ EFI_STATUS SaveStateMemPoll (
 	return EFI_SUCCESS;
 }
 
-/**
-    Write to boot script table an PciPoll (PI 1.1).
-
-        
-    @param This - Pointer to this protocol
-    @param va_list	variable arglist
-
-    @retval 
-        EFI_STATUS, based on result
-
-    @note  
-  Here is the control flow of this function:
-	1. Get variable argument list from stack.
-  2. Validate argument list. If invalid return EFI_INVALID_PARAMETER;
-  3. Allocate entry from table.  If no room in table, return EFI_OUT_OF_RESOURCES.
-  4. Fill fixed table entries.
-	5. Return EFI_SUCCESS.
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure: SaveStatePciCfgPoll
+//
+// Description:	Write to boot script table an PciPoll (PI 1.1).
+//
+// Input:
+//	IN EFI_BOOT_SCRIPT_SAVE_PROTOCOL	*This
+//	IN va_list							arglist
+//
+// Output:
+//	EFI_STATUS
+//
+// Notes:
+//  Here is the control flow of this function:
+//	1. Get variable argument list from stack.
+//  2. Validate argument list. If invalid return EFI_INVALID_PARAMETER;
+//  3. Allocate entry from table.  If no room in table, return EFI_OUT_OF_RESOURCES.
+//  4. Fill fixed table entries.
+//	5. Return EFI_SUCCESS.
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS SaveStatePciCfgPoll (
 	IN EFI_BOOT_SCRIPT_SAVE_PROTOCOL *This,
 	va_list arglist
@@ -1503,25 +1616,30 @@ EFI_STATUS SaveStatePciCfgPoll (
 	return EFI_SUCCESS;
 }
 
-/**
-    Write to boot script table an PciPoll Cfg2 (PI 1.1).
-
-        
-    @param This - Pointer to this protocol
-    @param va_list	variable arglist
-
-    @retval 
-        EFI_STATUS, based on result
-
-    @note  
-  Here is the control flow of this function:
-	1. Get variable argument list from stack.
-  2. Validate argument list. If invalid return EFI_INVALID_PARAMETER;
-  3. Allocate entry from table.  If no room in table, return EFI_OUT_OF_RESOURCES.
-  4. Fill fixed table entries.
-	5. Return EFI_SUCCESS.
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure: SaveStatePciCfg2Poll
+//
+// Description:	Write to boot script table an PciPoll Cfg2 (PI 1.1).
+//
+// Input:
+//	IN EFI_BOOT_SCRIPT_SAVE_PROTOCOL	*This
+//	IN va_list							arglist
+//
+// Output:
+//	EFI_STATUS
+//
+// Notes:
+//  Here is the control flow of this function:
+//	1. Get variable argument list from stack.
+//  2. Validate argument list. If invalid return EFI_INVALID_PARAMETER;
+//  3. Allocate entry from table.  If no room in table, return EFI_OUT_OF_RESOURCES.
+//  4. Fill fixed table entries.
+//	5. Return EFI_SUCCESS.
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS SaveStatePciCfg2Poll (
 	IN EFI_BOOT_SCRIPT_SAVE_PROTOCOL *This,
 	va_list arglist
@@ -1610,19 +1728,24 @@ GENERIC_OPCODE_FUNC OpCodeFuncs[] =
     BootScriptPciPoll,          //0x82 -> 
 };
 
-/**
-    All boot script functions (except close table) call this function.
-    This function passes argument list to appropriate function.
-
-        
-    @param This Pointer to this protocol
-    @param OpCode Boot Script opcode.
-        ...
-
-    @retval 
-        EFI_STATUS, based on result.
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure: EfiBootScriptWrite
+//
+// Description:	All boot script functions (except close table) call this function.
+//	This function passes argument list to appropriate function.
+//
+// Input:
+//	IN EFI_BOOT_SCRIPT_SAVE_PROTOCOL	*This
+//	IN UINT16							OpCode
+//	...
+//
+// Output:
+//	EFI_STATUS
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS EfiBootScriptWrite (
 	IN EFI_BOOT_SCRIPT_SAVE_PROTOCOL	*This,
 	IN UINT16							TableName,
@@ -1668,29 +1791,35 @@ EXIT_BOOT_SCRIPT_WRITE:
 	return Status;
 }
 
-/**
-    Save table in runtime closing table and return pointer to table.
-
-        
-    @param This Pointer to this protocol.
-	@param TableName Table to close.
-    @param Address Pointer to a table on return.
-
-    @retval 
-        EFI_STATUS
-
-    @note  
-  Here is the control flow of this function:
-	1. Allocate table entry for BOOT_SCRIPT_TABLE_END. If no entry, return EFI_OUT_OF_RESOURCES.
-  2. Fill table.
-  3. Allocate space for new table in Runtime.
-  4. Copy table to new table.
-  5. Set *Address to Runtime Table.
-  6. Free old table.
-  7. Create a initial table to start over if more Scripts are added.
-  8. Return EFI_SUCCESS.
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure: EfiBootScriptCloseTable
+//
+// Description:	Save table in runtime closing table and return pointer to table.
+//
+// Input:
+//	IN EFI_BOOT_SCRIPT_SAVE_PROTOCOL	*This
+//	OUT EFI_PHYSICAL_ADDRESS			*Address
+//
+// Output:
+//	EFI_STATUS
+//
+// Referrals:
+//
+// Notes:
+//  Here is the control flow of this function:
+//	1. Allocate table entry for BOOT_SCRIPT_TABLE_END. If no entry, return EFI_OUT_OF_RESOURCES.
+//  2. Fill table.
+//  3. Allocate space for new table in Runtime.
+//  4. Copy table to new table.
+//  5. Set *Address to Runtime Table.
+//  6. Free old table.
+//  7. Create a initial table to start over if more Scripts are added.
+//  8. Return EFI_SUCCESS.
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS EfiBootScriptCloseTable (
 	IN EFI_BOOT_SCRIPT_SAVE_PROTOCOL	*This,
 	IN UINT16							TableName,
@@ -1745,19 +1874,24 @@ VOID ClearInsertInfo()
     gInsertInfo.Position = -1;
     return;
 }
-/**
-    This function is used to store an OpCode to be replayed as part 
-    of the S3 resume boot path. 
-
-        
-    @param This Pointer to the S3 Save State Protocol
-    @param OpCode Opcode to save
-        ...
-
-    @retval 
-        EFI_STATUS, based on result.
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure: SaveStateWrite
+//
+// Description:	This function is used to store an OpCode to be replayed as part 
+//              of the S3 resume boot path. 
+//
+// Input:
+//	IN EFI_BOOT_SCRIPT_SAVE_PROTOCOL	*This
+//	IN UINT16							OpCode
+//	...
+//
+// Output:
+//	EFI_STATUS
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS SaveStateWrite(
    IN CONST EFI_S3_SAVE_STATE_PROTOCOL  *This,
    IN       UINT16                      OpCode,
@@ -1806,25 +1940,30 @@ EXIT_BOOT_SCRIPT_WRITE:
 	va_end(arglist);
 	return Status;
 }
-/**
-    This function is used to store an OpCode to be replayed as part 
-    of the S3 resume boot path. The opcode is stored before (TRUE) 
-    or after (FALSE) the position in the boot script table specified 
-    by Position. If Position is NULL or points to NULL then the new 
-    opcode is inserted at the beginning of the table (if TRUE) or end 
-    of the table (if FALSE).
-
-        
-    @param This Pointer to the S3 Save State Protocol
-    @param BeforeOrAfter where to insert
-    @param Position optional position 
-    @param OpCode Boot Script Opcode
-        ...
-
-    @retval 
-        EFI_STATUS, based on result
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure: SaveStateInsert
+//
+// Description:	This function is used to store an OpCode to be replayed as part 
+//              of the S3 resume boot path. The opcode is stored before (TRUE) 
+//              or after (FALSE) the position in the boot script table specified 
+//              by Position. If Position is NULL or points to NULL then the new 
+//              opcode is inserted at the beginning of the table (if TRUE) or end 
+//              of the table (if FALSE).
+//
+// Input:
+//	IN EFI_BOOT_SCRIPT_SAVE_PROTOCOL	*This
+//  IN BOOLEAN                          BeforeOrAfter
+//  IN OUT EFI_S3_BOOT_SCRIPT_POSITION  *Position OPTIONAL
+//	IN UINT16							OpCode
+//	...
+//
+// Output:
+//	EFI_STATUS
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS SaveStateInsert(
    IN CONST EFI_S3_SAVE_STATE_PROTOCOL  *This,
    IN       BOOLEAN                     BeforeOrAfter,
@@ -1893,22 +2032,26 @@ EXIT_BOOT_SCRIPT_WRITE:
 	return Status;
 }
 
-/**
-    Find a label within the boot script table and, if not present, 
-    optionally create it.
-
-        
-    @param This Pointer to the S3 Save State Protocol
-    @param BeforeOrAfter where to insert
-    @param CreateIfNotFound create a new label if not found
-    @param Position optional position 
-    @param Label pointer to label
-
-
-    @retval 
-        EFI_STATUS
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure: SaveStateLabel
+//
+// Description:	Find a label within the boot script table and, if not present, 
+//              optionally create it.
+//
+// Input:
+//	IN EFI_BOOT_SCRIPT_SAVE_PROTOCOL	*This
+//  IN BOOLEAN                          BeforeOrAfter
+//  IN BOOLEAN                          CreateIfNotFound
+//  IN OUT EFI_S3_BOOT_SCRIPT_POSITION  *Position OPTIONAL
+//	IN CONST  CHAR8                     *Label
+//
+// Output:
+//	EFI_STATUS
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS SaveStateLabel(
    IN CONST  EFI_S3_SAVE_STATE_PROTOCOL      *This,
    IN        BOOLEAN                         BeforeOrAfter,
@@ -1992,20 +2135,25 @@ EFI_STATUS SaveStateLabel(
     return EFI_SUCCESS;    
 }
 
-/**
-    Compare two positions in the boot script table and return their 
-    relative position.
-
-        
-    @param This Pointer to the S3 Save State Protocol
-    @param Position1 first position to compare
-    @param Position2 second position to compare
-    @param RelativePosition on rerturn Relative Position
-
-    @retval 
-        EFI_STATUS, based on result
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure: SaveStateCompare
+//
+// Description:	Compare two positions in the boot script table and return their 
+//              relative position.
+//
+// Input:
+//	IN EFI_BOOT_SCRIPT_SAVE_PROTOCOL	        *This
+//  IN EFI_S3_BOOT_SCRIPT_POSITION              Position1
+//  IN EFI_S3_BOOT_SCRIPT_POSITION              Position2
+//  OUT UINTN                                   *RelativePosition
+//
+// Output:
+//	EFI_STATUS
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS SaveStateCompare(
    IN CONST EFI_S3_SAVE_STATE_PROTOCOL          *This,
    IN       EFI_S3_BOOT_SCRIPT_POSITION         Position1,
@@ -2048,17 +2196,22 @@ EFI_S3_SAVE_STATE_PROTOCOL gS3SaveStateProtocol={
     SaveStateCompare
 };
 
-/**
-    Initialize table, if not done yet, and install protocols in SMM.
-
-        
-    @param ImageHandle Image handle
-    @param SystemTable pointer to system table
-
-    @retval 
-        EFI_STATUS, based on result.
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure: InitBootScriptSmm
+//
+// Description:	Initialize table, if not done yet, and install protocols in SMM.
+//
+// Input:
+//	IN EFI_HANDLE ImageHandle
+//	IN EFI_SYSTEM_TABLE *SystemTable
+//
+// Output:
+//	EFI_STATUS
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 EFI_STATUS InitBootScriptSmm(
 	IN EFI_HANDLE ImageHandle,
@@ -2099,17 +2252,22 @@ EFI_STATUS InitBootScriptSmm(
 #endif
 //PI 1.1 --
 
-/**
-    Initialize table and install protocols.
-
-        
-	@param ImageHandle Image handle
-    @param SystemTable pointer to system table
-
-    @retval 
-        EFI_STATUS, based on result.
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure: InitBootScript
+//
+// Description:	Initialize table and install protocols.
+//
+// Input:
+//	IN EFI_HANDLE ImageHandle
+//	IN EFI_SYSTEM_TABLE *SystemTable
+//
+// Output:
+//	EFI_STATUS
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS InitBootScriptDxe(
 	IN EFI_HANDLE ImageHandle,
 	IN EFI_SYSTEM_TABLE *SystemTable
@@ -2141,18 +2299,23 @@ EFI_STATUS InitBootScriptDxe(
 
     return Status;
 }
-/**
-    Initialize table and install protocols.
-    Called twice - in and outside SMM.
-
-        
-    @param ImageHandle Image handle
-    @param SystemTable pointer to system table
-
-    @retval 
-        EFI_STATUS, based on result.
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure: InitBootScript
+//
+// Description:	Initialize table and install protocols.
+//              Called twice - in and outside SMM.
+//
+// Input:
+//	IN EFI_HANDLE ImageHandle
+//	IN EFI_SYSTEM_TABLE *SystemTable
+//
+// Output:
+//	EFI_STATUS
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS InitBootScript(
 	IN EFI_HANDLE ImageHandle,
 	IN EFI_SYSTEM_TABLE *SystemTable

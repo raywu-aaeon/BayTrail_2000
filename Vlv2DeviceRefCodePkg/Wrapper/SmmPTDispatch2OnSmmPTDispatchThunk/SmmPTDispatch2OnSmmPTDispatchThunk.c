@@ -57,17 +57,9 @@ SmmPeriodicTimerDispatch2UnRegister(
     IN       EFI_HANDLE									DispatchHandle
 );
 
-EFI_STATUS
-EFIAPI
-SmmPeriodicTimerDispatch2GetNextShorterInterval(
-    IN CONST EFI_SMM_PERIODIC_TIMER_DISPATCH2_PROTOCOL  *This,
-    IN OUT UINT64                                       **SmiTickInterval
-);
-
 EFI_SMM_PERIODIC_TIMER_DISPATCH2_PROTOCOL gSmmPeriodicTimerDispatch2 = {
     SmmPeriodicTimerDispatch2Register,
-    SmmPeriodicTimerDispatch2UnRegister,
-    SmmPeriodicTimerDispatch2GetNextShorterInterval
+    SmmPeriodicTimerDispatch2UnRegister
 };
 
 EFI_SMM_PERIODIC_TIMER_DISPATCH_PROTOCOL	*mSmmPeriodicTimerDispatch;
@@ -286,19 +278,3 @@ SmmPeriodicTimerDispatch2ThunkMain(
     return Status;
 }
 
-EFI_STATUS
-EFIAPI
-SmmPeriodicTimerDispatch2GetNextShorterInterval(
-    IN CONST EFI_SMM_PERIODIC_TIMER_DISPATCH2_PROTOCOL  *This,
-    IN OUT UINT64                                       **SmiTickInterval
-)
-{
-    EFI_STATUS                                      Status;
-
-    Status = mSmmPeriodicTimerDispatch->GetNextShorterInterval(
-                 mSmmPeriodicTimerDispatch,
-                 SmiTickInterval
-                 );
-
-    return Status;
-}

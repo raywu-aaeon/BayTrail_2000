@@ -1,0 +1,12 @@
+<component>
+	name = "AmiTcgBinaries"
+	category = ModulePart
+	LocalRoot = "AmiModulePkg\TCG\AmiTcgBinaries\"
+	RefName = "AmiTcgBinaries"
+[files]
+"TcgBins.sdl"	
+[INF]
+"AmiLegx16Bin.inf"
+"AmiTpm32Bin.inf"
+"AmiMpTpmBin.inf"
+<endComponent>

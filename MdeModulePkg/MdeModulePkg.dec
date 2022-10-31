@@ -4,7 +4,7 @@
 # It also provides the defintions(including PPIs/PROTOCOLs/GUIDs and library classes)
 # and libraries instances, which are used for those modules.
 #
-# Copyright (c) 2007 - 2014, Intel Corporation. All rights reserved.<BR>
+# Copyright (c) 2007 - 2013, Intel Corporation. All rights reserved.<BR>
 # This program and the accompanying materials are licensed and made available under 
 # the terms and conditions of the BSD License that accompanies this distribution.  
 # The full text of the license may be found at
@@ -20,7 +20,7 @@
   DEC_SPECIFICATION              = 0x00010005
   PACKAGE_NAME                   = MdeModulePkg
   PACKAGE_GUID                   = BA0D78D6-2CAF-414b-BD4D-B6762A894288
-  PACKAGE_VERSION                = 0.93
+  PACKAGE_VERSION                = 0.92
 
 [Includes]
   Include
@@ -110,10 +110,6 @@
   ## Hob guid for Pcd DataBase
   #  Include/Guid/PcdDataBaseHobGuid.h
   gPcdDataBaseHobGuid            = { 0xEA296D92, 0x0B69, 0x423C, { 0x8C, 0x28, 0x33, 0xB4, 0xE0, 0xA9, 0x12, 0x68 }}
-
-  ## Guid for PCD DataBase signature.
-  # Include/Guid/PcdDataBaseSignatureGuid.h
-  gPcdDataBaseSignatureGuid = { 0x3c7d193c, 0x682c, 0x4c14, { 0xa6, 0x8f, 0x55, 0x2d, 0xea, 0x4f, 0x43, 0x7e }}
 
   ## Guid for EDKII implementation GUIDed opcodes
   #  Include/Guid/MdeModuleHii.h
@@ -522,11 +518,15 @@
   #  for a dynamic PCD used in PEI phase.
   gEfiMdeModulePkgTokenSpaceGuid.PcdMaxPeiPcdCallBackNumberPerPcdEntry|0x08|UINT32|0x0001000f
 
+  ## VPD type PCD allow developer point an absoluted physical address PcdVpdBaseAddress
+  #  to store PCD value.
+  #
+  gEfiMdeModulePkgTokenSpaceGuid.PcdVpdBaseAddress|0x0|UINT32|0x00010010
+
   ## Maximum number of FV is supported by PeiCore's dispatching.
   gEfiMdeModulePkgTokenSpaceGuid.PcdPeiCoreMaxFvSupported|6|UINT32|0x00010030
 
-  ## Maximum File count in every FV is supported by PeiCore's dispatching.
-  #  PeiCore supported File type includes PEIM, Combined PEIM and FV.
+  ## Maximum PEIM count in every FV is supported by PeiCore's dispatching.
   gEfiMdeModulePkgTokenSpaceGuid.PcdPeiCoreMaxPeimPerFv|32|UINT32|0x00010031
 
   ## Maximum stack size for PeiCore.
@@ -604,11 +604,6 @@
   gEfiMdeModulePkgTokenSpaceGuid.PcdProgressCodeS3SuspendEnd|0x03078001|UINT32|0x30001033
 
 [PcdsFixedAtBuild,PcdsPatchableInModule]
-  ## VPD type PCD allow developer point an absoluted physical address PcdVpdBaseAddress
-  #  to store PCD value.
-  #
-  gEfiMdeModulePkgTokenSpaceGuid.PcdVpdBaseAddress|0x0|UINT32|0x00010010
-
   ## Maximun number of performance log entries during PEI phase.
   gEfiMdeModulePkgTokenSpaceGuid.PcdMaxPeiPerformanceLogEntries|40|UINT8|0x0001002f
 
@@ -666,9 +661,6 @@
   #  boundary as close to the top of memory as feasible.
   #
   gEfiMdeModulePkgTokenSpaceGuid.PcdMaxEfiSystemTablePointerAddress|0x0|UINT64|0x30001027
-
-  ## This PCD specifies whether to shadow PEIM on S3 boot path after memory is ready. 
-  gEfiMdeModulePkgTokenSpaceGuid.PcdShadowPeimOnS3Boot|FALSE|BOOLEAN|0x30001028
 
   ## Default OEM ID for ACPI table creation, its length must be 0x6 bytes to follow ACPI specification.
   gEfiMdeModulePkgTokenSpaceGuid.PcdAcpiDefaultOemId|"INTEL "|VOID*|0x30001034
@@ -878,14 +870,6 @@
 
   ## This PCD specified whether the S.M.A.R.T feature of attached ATA hard disks are enabled.
   gEfiMdeModulePkgTokenSpaceGuid.PcdAtaSmartEnable|TRUE|BOOLEAN|0x00010065
-
-  ## This PCD specifies whether full PCI enumeration is disabled.
-  gEfiMdeModulePkgTokenSpaceGuid.PcdPciDisableBusEnumeration|FALSE|BOOLEAN|0x10000048
-
-  ## Disk I/O - Number of Data Buffer block
-  # Define the size in block of the pre-allocated buffer. It provide better
-  # performance for large Disk I/O requests
-  gEfiMdeModulePkgTokenSpaceGuid.PcdDiskIoDataBufferBlockNum|64|UINT32|0x30001039
 
 [PcdsPatchableInModule]
   ## Specify  memory size with page number for PEI code when 

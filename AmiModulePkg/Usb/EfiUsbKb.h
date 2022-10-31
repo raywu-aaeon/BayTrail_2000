@@ -1,21 +1,35 @@
-//**********************************************************************
-//**********************************************************************
-//**                                                                  **
-//**        (C)Copyright 1985-2016, American Megatrends, Inc.         **
-//**                                                                  **
-//**                       All Rights Reserved.                       **
-//**                                                                  **
-//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093        **
-//**                                                                  **
-//**                       Phone: (770)-246-8600                      **
-//**                                                                  **
-//**********************************************************************
-//**********************************************************************
+//****************************************************************************
+//****************************************************************************
+//**                                                                        **
+//**             (C)Copyright 1985-2008, American Megatrends, Inc.          **
+//**                                                                        **
+//**                          All Rights Reserved.                          **
+//**                                                                        **
+//**                 5555 Oakbrook Pkwy, Norcross, GA 30093                 **
+//**                                                                        **
+//**                          Phone (770)-246-8600                          **
+//**                                                                        **
+//****************************************************************************
+//****************************************************************************
 
-/** @file EfiUsbKb.h
-    AMI USB keyboard driver header file
+//****************************************************************************
+// $Header: /Alaska/SOURCE/Modules/USB/ALASKA/efiusbkb.h 18    3/20/12 10:32p Wilsonlee $
+//
+// $Revision: 18 $
+//
+// $Date: 3/20/12 10:32p $
+//
+//****************************************************************************
 
-**/
+//<AMI_FHDR_START>
+//----------------------------------------------------------------------------
+//
+//  Name:           EfiUsbKb.h
+//
+//  Description:    AMI USB keyboard driver header file
+//
+//----------------------------------------------------------------------------
+//<AMI_FHDR_END>
 
 #ifndef _AMI_USB_KB_H
 #define _AMI_USB_KB_H
@@ -23,7 +37,7 @@
 
 #include "AmiDef.h"
 #include "UsbDef.h"
-#include <Protocol/AmiKeycode.h>
+#include <Protocol/AmiKeycode.h>    // Available starting from Core 4.6.3
 #include <UsbKbd.h>
 
 #define USBKB_DRIVER_VERSION 2
@@ -37,22 +51,19 @@ EFI_STATUS  UninstallUsbKeyboard(EFI_DRIVER_BINDING_PROTOCOL  *This,
 
 										//(EIP38434+)>
 EFI_STATUS 	InstallUSBAbsMouse(EFI_HANDLE Controller,DEV_INFO   *pDevInfo); 
-EFI_STATUS UninstallUSBAbsMouse(EFI_DRIVER_BINDING_PROTOCOL  *This,
-    EFI_HANDLE, UINTN NumberOfChildren, EFI_HANDLE *Children);
+EFI_STATUS UninstallUSBAbsMouse(IN EFI_HANDLE Controller); 
  
 EFI_STATUS InstallUSBMouse(EFI_HANDLE Controller,EFI_USB_IO_PROTOCOL *UsbIo,DEV_INFO *DevInfo);
 EFI_STATUS UninstallUSBMouse(EFI_DRIVER_BINDING_PROTOCOL  *This,
     EFI_HANDLE, UINTN numberOfChildren, EFI_HANDLE *children  );
 
 EFI_STATUS  UsbHidInit(EFI_HANDLE  ImageHandle,EFI_HANDLE  ServiceHandle);	
-EFI_STATUS  EFIAPI SupportedUSBHid(EFI_DRIVER_BINDING_PROTOCOL  *This,
+EFI_STATUS  SupportedUSBHid(EFI_DRIVER_BINDING_PROTOCOL  *This,
     EFI_HANDLE, EFI_DEVICE_PATH_PROTOCOL *dp);
-EFI_STATUS  EFIAPI InstallUSBHid(EFI_DRIVER_BINDING_PROTOCOL  *This,
+EFI_STATUS  InstallUSBHid(EFI_DRIVER_BINDING_PROTOCOL  *This,
     EFI_HANDLE, EFI_DEVICE_PATH_PROTOCOL *dp);
-EFI_STATUS  EFIAPI UninstallUSBHid(EFI_DRIVER_BINDING_PROTOCOL  *This,
+EFI_STATUS  UninstallUSBHid(EFI_DRIVER_BINDING_PROTOCOL  *This,
     EFI_HANDLE, UINTN numberOfChildren, EFI_HANDLE *children  );
-EFI_STATUS CreateKeyBuffer(KEY_BUFFER *KeyBuffer, UINT8 MaxKey, UINT32 KeySize);
-EFI_STATUS DestroyKeyBuffer(KEY_BUFFER *KeyBuffer);
 										//<(EIP38434+)
 
 #define USB_KB_DEV_SIGNATURE  EFI_SIGNATURE_32('u','k','b','d')
@@ -70,6 +81,8 @@ typedef struct {
 	EFI_EVENT							KeyRepeatEvent;
 	EFI_EVENT							ReadyToBootEvent;
 
+	KEY_BUFFER							KeyCodeBuffer;
+    KEY_BUFFER							UsbKeyBuffer;
 	KEY_BUFFER							EfiKeyBuffer;
 
 	UINT32								ShiftState;
@@ -89,6 +102,16 @@ typedef struct {
 	UINT32					ShiftState;
 	EFI_KEY_TOGGLE_STATE	ToggleState;
 } EFI_KEY_MAP;
+
+typedef struct {
+    EFI_INPUT_KEY	Key;
+    EFI_KEY_STATE	KeyState;
+    EFI_KEY			EfiKey;
+    UINT8			EfiKeyIsValid;
+    UINT8			PS2ScanCode;
+    UINT8			PS2ScanCodeIsValid;
+	UINT32			ShiftStateEx;
+} USB_EFI_KEY_DATA;
 
 typedef struct {
 	DLINK						Link;	//MUST BE THE FIRST FIELD
@@ -131,7 +154,6 @@ UsbKbdSimpleInReadKeyStroke (
   );
 
 EFI_STATUS
-EFIAPI
 UsbKbdSimpleInExReset (
   IN  EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL  *This,
   IN  BOOLEAN                 ExtendedVerification
@@ -145,14 +167,12 @@ UsbKbdSimpleInExReadKeyStrokeEx (
   );
 
 EFI_STATUS
-EFIAPI
 UsbKbdSimpleInExSetState (
     IN EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL *This,
     IN EFI_KEY_TOGGLE_STATE *KeyToggleState
 );
 
 EFI_STATUS
-EFIAPI
 UsbKbdSimpleInExRegisterKeyNotify (
     IN EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL *This,
     IN EFI_KEY_DATA *KeyData,
@@ -161,75 +181,62 @@ UsbKbdSimpleInExRegisterKeyNotify (
 );
 
 EFI_STATUS
-EFIAPI
 UsbKbdSimpleInExUnregisterKeyNotify (
     IN EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL *This,
     IN EFI_HANDLE NotificationHandle
   );
 
 EFI_STATUS
-EFIAPI
-UsbKbdKeycodeInReset(
-  IN  AMI_EFIKEYCODE_PROTOCOL  *This,
+UsbKbdKeycodeInReset (
+  IN  EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL  *This,
   IN  BOOLEAN                 ExtendedVerification
-);
+  );
 
-EFI_STATUS
-EFIAPI
+EFI_STATUS 
 UsbKbdKeycodeInReadEfiKey(
     IN AMI_EFIKEYCODE_PROTOCOL *This,
     OUT AMI_EFI_KEY_DATA *KeyData
 );
 
 EFI_STATUS
-EFIAPI
-UsbKbdKeycodeInSetState(
-    IN AMI_EFIKEYCODE_PROTOCOL *This,
+UsbKbdKeycodeInSetState (
+    IN EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL *This,
     IN EFI_KEY_TOGGLE_STATE *KeyToggleState
 );
 
 EFI_STATUS
-EFIAPI
-UsbKbdKeycodeInRegisterKeyNotify(
-    IN AMI_EFIKEYCODE_PROTOCOL *This,
+UsbKbdKeycodeInRegisterKeyNotify (
+    IN EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL *This,
     IN EFI_KEY_DATA *KeyData,
     IN EFI_KEY_NOTIFY_FUNCTION KeyNotificationFunction,
     OUT EFI_HANDLE *NotifyHandle
 );
 
 EFI_STATUS
-EFIAPI
-UsbKbdKeycodeInUnregisterKeyNotify(
-    IN AMI_EFIKEYCODE_PROTOCOL *This,
+UsbKbdKeycodeInUnregisterKeyNotify (
+    IN EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL *This,
     IN EFI_HANDLE NotificationHandle
-);
-
-VOID
-EFIAPI
-UsbKbdWaitForKey(
-  IN  EFI_EVENT               Event,
-  IN  VOID                    *Context
   );
 
 VOID
 EFIAPI
-KeyRepeatCallback(
-    EFI_EVENT   Event, 
-    VOID        *Context
-);
+UsbKbdWaitForKey (
+  IN  EFI_EVENT               Event,
+  IN  VOID                    *Context
+  );
 
 #endif
 
-//**********************************************************************
-//**********************************************************************
-//**                                                                  **
-//**        (C)Copyright 1985-2016, American Megatrends, Inc.         **
-//**                                                                  **
-//**                       All Rights Reserved.                       **
-//**                                                                  **
-//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093        **
-//**                                                                  **
-//**                       Phone: (770)-246-8600                      **
-//**                                                                  **
-//**********************************************************************
-//**********************************************************************
+//****************************************************************************
+//****************************************************************************
+//**                                                                        **
+//**             (C)Copyright 1985-2008, American Megatrends, Inc.          **
+//**                                                                        **
+//**                          All Rights Reserved.                          **
+//**                                                                        **
+//**                 5555 Oakbrook Pkwy, Norcross, GA 30093                 **
+//**                                                                        **
+//**                          Phone (770)-246-8600                          **
+//**                                                                        **
+//****************************************************************************
+//****************************************************************************

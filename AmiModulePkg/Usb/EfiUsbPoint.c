@@ -1,21 +1,35 @@
-//**********************************************************************
-//**********************************************************************
-//**                                                                  **
-//**        (C)Copyright 1985-2016, American Megatrends, Inc.         **
-//**                                                                  **
-//**                       All Rights Reserved.                       **
-//**                                                                  **
-//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093        **
-//**                                                                  **
-//**                       Phone: (770)-246-8600                      **
-//**                                                                  **
-//**********************************************************************
-//**********************************************************************
+//****************************************************************************
+//****************************************************************************
+//**                                                                        **
+//**             (C)Copyright 1985-2011, American Megatrends, Inc.          **
+//**                                                                        **
+//**                          All Rights Reserved.                          **
+//**                                                                        **
+//**                 5555 Oakbrook Pkwy, Norcross, GA 30093                 **
+//**                                                                        **
+//**                          Phone (770)-246-8600                          **
+//**                                                                        **
+//****************************************************************************
+//****************************************************************************
 
-/** @file EfiUsbPoint.c
-    EFI USB Absolute pointer Driver
+//****************************************************************************
+// $Header: /Alaska/SOURCE/Modules/USB/ALASKA/efiusbpoint.c 3     11/23/11 4:46a Roberthsu $
+//
+// $Revision: 3 $
+//
+// $Date: 11/23/11 4:46a $
+//
+//****************************************************************************
 
-**/
+//<AMI_FHDR_START>
+//----------------------------------------------------------------------------
+//
+//  Name:           EfiusbAbs.C
+//
+//  Description:    EFI USB Absolute pointer Driver
+//
+//----------------------------------------------------------------------------
+//<AMI_FHDR_END>
 
 #include "AmiDef.h"
 #include "UsbDef.h"
@@ -25,12 +39,14 @@
 
 #if USB_DEV_POINT                       //(EIP66231) 
 
-#include <Protocol/AbsolutePointer.h>
+#include <Protocol/AbsPointerProtocol.h>
 #define USB_ABSOLUTE_MOUSE_DRIVER_VERSION 1
 
 #define USB_ABSOLUTE_MOUSE_DEV_SIGNATURE   EFI_SIGNATURE_32('u','a','b','s')
 #define USB_ABSOLUTE_MOUSE_DEV_FROM_ABSOLUTE_PROTOCOL(a) \
     CR(a, USB_ABSOLUTE_MOUSE_DEV, AbsolutePointerProtocol, USB_ABSOLUTE_MOUSE_DEV_SIGNATURE)
+
+EFI_GUID    gEfiAbsolutePointerProtocolGuid=EFI_ABSOLUTE_POINTER_PROTOCOL_GUID;
 
 typedef struct
 {
@@ -39,24 +55,29 @@ typedef struct
     EFI_ABSOLUTE_POINTER_STATE      State;
     EFI_ABSOLUTE_POINTER_MODE       Mode;
     BOOLEAN                         StateChanged;
-    VOID                            *DevInfo;
 } USB_ABSOLUTE_MOUSE_DEV;
 
-VOID EFIAPI UsbAbsMouseWaitForInput (EFI_EVENT, VOID*);
-EFI_STATUS UpdateUsbAbsMouseData(USB_ABSOLUTE_MOUSE_DEV      *,ABS_MOUSE*);
+static VOID
+UsbAbsMouseWaitForInput (
+  IN  EFI_EVENT               Event,
+  IN  VOID                    *Context
+  );
+
+static EFI_STATUS
+UpdateUsbAbsMouseData (
+  IN  ABS_MOUSE              *Data
+  );
 
 //
 // ABS Protocol
 //
-EFI_STATUS
-EFIAPI
+static EFI_STATUS
 GetAbsMouseState(
   IN   EFI_ABSOLUTE_POINTER_PROTOCOL  *This,
   OUT  EFI_ABSOLUTE_POINTER_STATE     *AbsState
 );
 
-EFI_STATUS
-EFIAPI
+static EFI_STATUS
 UsbAbsMouseReset(
   IN EFI_ABSOLUTE_POINTER_PROTOCOL      *This,
   IN BOOLEAN                            ExtendedVerification
@@ -64,354 +85,350 @@ UsbAbsMouseReset(
 
 extern USB_GLOBAL_DATA *gUsbData;
 
-/**
-    Installs ABSOLUTEPointerProtocol interface on a given controller.
+USB_ABSOLUTE_MOUSE_DEV         *UsbAbsMouseDevice=0;
+static int                      gAbsMouseRefCount=0;
 
-    @param Controller - controller handle to install interface on.
-
-    @retval VOID
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Name:        InstallUSBAbsMouse
+//
+// Description: Installs ABSOLUTEPointerProtocol interface on a given controller.
+//
+// Input:       Controller - controller handle to install interface on.
+//
+// Output:      None
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 EFI_STATUS
 InstallUSBAbsMouse(
-    EFI_HANDLE      Controller,
-    DEV_INFO        *DevInfo
+    EFI_HANDLE Controller,
+    DEV_INFO   *pDevInfo
 )
 {
-    EFI_STATUS                      Status;
-    USB_ABSOLUTE_MOUSE_DEV          *UsbAbsMs;
+    EFI_STATUS Status;
+    int RefCount;
 
-    Status = gBS->AllocatePool(EfiBootServicesData,
+    ATOMIC( RefCount = gAbsMouseRefCount++ );
+
+    if (RefCount == 0){
+        VERIFY_EFI_ERROR(
+            Status = gBS->AllocatePool(
+            EfiBootServicesData,
             sizeof(USB_ABSOLUTE_MOUSE_DEV),
-            &UsbAbsMs);
+            &UsbAbsMouseDevice));
+
+        EfiZeroMem(UsbAbsMouseDevice, sizeof(USB_ABSOLUTE_MOUSE_DEV));
+
+        //
+        // Initialize UsbABSDevice
+        //
+        UsbAbsMouseDevice->Signature = USB_ABSOLUTE_MOUSE_DEV_SIGNATURE;
+
+        UsbAbsMouseDevice->AbsolutePointerProtocol.GetState = GetAbsMouseState;
+        UsbAbsMouseDevice->AbsolutePointerProtocol.Reset = UsbAbsMouseReset;
+        UsbAbsMouseDevice->AbsolutePointerProtocol.Mode = &UsbAbsMouseDevice->Mode;
+
+        UsbAbsMouseDevice->Mode.Attributes = EFI_ABSP_SupportsPressureAsZ;
+
+        UsbAbsMouseDevice->Mode.AbsoluteMinX = 0;
+        UsbAbsMouseDevice->Mode.AbsoluteMinY = 0;
+        UsbAbsMouseDevice->Mode.AbsoluteMinZ = 0;
+        UsbAbsMouseDevice->Mode.AbsoluteMaxX = pDevInfo->Hidreport.wAbsMaxX;
+        UsbAbsMouseDevice->Mode.AbsoluteMaxY = pDevInfo->Hidreport.wAbsMaxY;
+        UsbAbsMouseDevice->Mode.AbsoluteMaxZ = 0;
+
+        EfiZeroMem (&UsbAbsMouseDevice->State, sizeof(EFI_ABSOLUTE_POINTER_STATE));
+        UsbAbsMouseDevice->StateChanged = FALSE;
+
+        UsbAbsMouseReset(NULL, FALSE);
         
-    ASSERT(Status == EFI_SUCCESS);
-
-    if (EFI_ERROR(Status)) {
-        return Status;
-    }
-
-    gBS->SetMem(UsbAbsMs, sizeof(USB_ABSOLUTE_MOUSE_DEV), 0);
-
-    //
-    // Initialize UsbABSDevice
-    //
-    UsbAbsMs->Signature = USB_ABSOLUTE_MOUSE_DEV_SIGNATURE;
-
-    UsbAbsMs->AbsolutePointerProtocol.GetState = GetAbsMouseState;
-    UsbAbsMs->AbsolutePointerProtocol.Reset = UsbAbsMouseReset;
-    UsbAbsMs->AbsolutePointerProtocol.Mode = &UsbAbsMs->Mode;
-    UsbAbsMs->Mode.Attributes = EFI_ABSP_SupportsPressureAsZ;
-
-    UsbAbsMs->Mode.AbsoluteMinX = 0;
-    UsbAbsMs->Mode.AbsoluteMinY = 0;
-    UsbAbsMs->Mode.AbsoluteMinZ = 0;
-    UsbAbsMs->Mode.AbsoluteMaxX = DevInfo->HidReport.AbsMaxX;
-    UsbAbsMs->Mode.AbsoluteMaxY = DevInfo->HidReport.AbsMaxY;
-    UsbAbsMs->Mode.AbsoluteMaxZ = 0;
-
-    UsbAbsMs->DevInfo = DevInfo;
-
-    gBS->SetMem(&UsbAbsMs->State, sizeof(EFI_ABSOLUTE_POINTER_STATE), 0);
-    gBS->SetMem(&DevInfo->AbsMouseData, sizeof(ABS_MOUSE), 0);
-
-    UsbAbsMs->StateChanged = FALSE;
-    
-    Status = gBS->CreateEvent (
+        VERIFY_EFI_ERROR(
+            Status = gBS->CreateEvent (
             EFI_EVENT_NOTIFY_WAIT,
             EFI_TPL_NOTIFY,
             UsbAbsMouseWaitForInput,
-            UsbAbsMs,
-            &((UsbAbsMs->AbsolutePointerProtocol).WaitForInput)
-            );
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_4, "ABS event is created, status = %r\n", Status);
-        
-    ASSERT(Status == EFI_SUCCESS);
+            UsbAbsMouseDevice,
+            &((UsbAbsMouseDevice->AbsolutePointerProtocol).WaitForInput)
+            ));
+
+        USB_DEBUG(DEBUG_LEVEL_4, "ABS event is created, status = %r\n", Status);
+    }
     //
     // Install protocol interfaces for the USB ABS device
     //
-    Status = gBS->InstallProtocolInterface(
+    VERIFY_EFI_ERROR(
+        Status = gBS->InstallProtocolInterface(
         &Controller,
         &gEfiAbsolutePointerProtocolGuid,
         EFI_NATIVE_INTERFACE,
-        &UsbAbsMs->AbsolutePointerProtocol);
+        &UsbAbsMouseDevice->AbsolutePointerProtocol));
 
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_4, "ABS protocol is installed, status = %r\n", Status);
-    
-    ASSERT(Status == EFI_SUCCESS);
+    USB_DEBUG(DEBUG_LEVEL_4, "ABS protocol is installed, status = %r\n", Status);
 	
 	return Status;
 }
 
 
-/**
-    Uninstalls ABSOLUTEPointerProtocol interface.
-
-    @param Controller - controller handle.
-
-    @retval VOID
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Name:        UninstallUSBAbsMouse
+//
+// Description: Uninstalls ABSOLUTEPointerProtocol interface.
+//
+// Input:       Controller - controller handle.
+//
+// Output:      None
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 EFI_STATUS
 UninstallUSBAbsMouse(
-    EFI_DRIVER_BINDING_PROTOCOL *This,
-    EFI_HANDLE Controller,
-    UINTN NumberOfChildren,
-    EFI_HANDLE *Children
+    IN EFI_HANDLE Controller
 )
 {
-    USB_ABSOLUTE_MOUSE_DEV          *UsbAbsMs;
-    EFI_ABSOLUTE_POINTER_PROTOCOL   *AbsPointer = NULL;
     EFI_STATUS Status;
+    int RefCount;
 
-    Status = gBS->OpenProtocol(Controller,
-                                &gEfiAbsolutePointerProtocolGuid,
-                                &AbsPointer,
-                                This->DriverBindingHandle,
-                                Controller,
-                                EFI_OPEN_PROTOCOL_GET_PROTOCOL);
-    if (EFI_ERROR(Status)) {
-        return Status;
-    }
-
-    UsbAbsMs = USB_ABSOLUTE_MOUSE_DEV_FROM_ABSOLUTE_PROTOCOL(AbsPointer);
-
-    Status = gBS->UninstallProtocolInterface(
+    VERIFY_EFI_ERROR(
+        Status = gBS->UninstallProtocolInterface(
             Controller,
             &gEfiAbsolutePointerProtocolGuid,
-            &UsbAbsMs->AbsolutePointerProtocol);
-    
-    if (EFI_ERROR(Status)) {
+            &UsbAbsMouseDevice->AbsolutePointerProtocol));
+    if(EFI_ERROR(Status))
         return Status;
+
+    ATOMIC( RefCount = --gAbsMouseRefCount );
+    if (RefCount == 0) {
+        VERIFY_EFI_ERROR(
+            gBS->CloseEvent (
+            (UsbAbsMouseDevice->AbsolutePointerProtocol).WaitForInput));
+
+        gBS->FreePool(UsbAbsMouseDevice);
+        UsbAbsMouseDevice = 0;
     }
-
-    Status = gBS->CloseEvent(
-            (UsbAbsMs->AbsolutePointerProtocol).WaitForInput);
-            
-    ASSERT(Status == EFI_SUCCESS);
-
-    if (EFI_ERROR(Status)) {
-        return Status;
-    }
-
-    gBS->FreePool(UsbAbsMs);
-    
     return Status;
 }
 
 
 
 
-/**
-    This routine is a part of ABSOLUTEPointerProtocol implementation;
-    it resets USB ABS.
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Name:        UsbAbsMouseReset
+//
+// Description: This routine is a part of ABSOLUTEPointerProtocol implementation;
+//              it resets USB ABS.
+//
+// Input:       This - A pointer to the EFI_ABSOLUTE_POINTER_PROTOCOL instance.
+//              ExtendedVerification - Indicates that the driver may perform
+//              a more exhaustive verification operation of the device during
+//              reset.
+//
+// Output:      EFI_SUCCESS or EFI_DEVICE_ERROR
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
-    @param This - A pointer to the EFI_ABSOLUTE_POINTER_PROTOCOL instance.
-        ExtendedVerification - Indicates that the driver may perform
-        a more exhaustive verification operation of the device during
-        reset.
-
-    @retval EFI_SUCCESS or EFI_DEVICE_ERROR
-
-**/
-
-EFI_STATUS
-EFIAPI
+static EFI_STATUS
 UsbAbsMouseReset(
     IN EFI_ABSOLUTE_POINTER_PROTOCOL    *This,
     IN BOOLEAN                          ExtendedVerification
   )
 {
-    USB_ABSOLUTE_MOUSE_DEV          *UsbAbsMs;
-    DEV_INFO                        *DevInfo;
-    EFI_TPL                         OldTpl;
 
-    OldTpl = gBS->RaiseTPL(TPL_NOTIFY);
-
-    UsbAbsMs = USB_ABSOLUTE_MOUSE_DEV_FROM_ABSOLUTE_PROTOCOL(This);
-    DevInfo = (DEV_INFO*)UsbAbsMs->DevInfo;
-
-    if (!(DevInfo->Flag & DEV_INFO_DEV_PRESENT)) {
-        gBS->RestoreTPL(OldTpl);
-        return EFI_DEVICE_ERROR;
-    }
-
-    gBS->SetMem(&UsbAbsMs->State, sizeof(EFI_ABSOLUTE_POINTER_STATE), 0);
+    EfiZeroMem (
+            &UsbAbsMouseDevice->State,
+            sizeof(EFI_ABSOLUTE_POINTER_STATE)
+            );
+    UsbAbsMouseDevice->StateChanged = FALSE;
     
-    UsbAbsMs->StateChanged = FALSE;
+    EfiZeroMem (&gUsbData->AbsMouseData, 10 * sizeof(ABS_MOUSE));
 
-    gBS->SetMem(&DevInfo->AbsMouseData, sizeof(ABS_MOUSE), 0);
-
-    gBS->RestoreTPL(OldTpl);
-    
     return EFI_SUCCESS;
 }
 
 
-/**
-    This routine is a part of ABSOLUTEPointerProtocol implementation;
-    it retrieves the current state of a pointer device.
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Name:        GetAbsMouseState
+//
+// Description: This routine is a part of ABSOLUTEPointerProtocol implementation;
+//              it retrieves the current state of a pointer device.
+//
+// Input:       This - A pointer to the EFI_ABSOLUTE_POINTER_PROTOCOL instance.
+//              ABSState - A pointer to the state information on the pointer
+//              device. Type EFI_ABSOLUTE_POINTER_STATE is defined as follows:
+//                typedef struct {
+//                    INT32 RelativeMovementX;
+//                    INT32 RelativeMovementY;
+//                    INT32 RelativeMovementZ;
+//                    BOOLEAN LeftButton;
+//                    BOOLEAN RightButton;
+//                } EFI_ABSOLUTE_POINTER_STATE;
+//
+// Output:      EFI_SUCCESS      - The state of the pointer device was returned
+//                                 in ABSState.
+//              EFI_NOT_READY    - The state of the pointer device has not changed
+//                                 since the last call to GetABSState().
+//              EFI_DEVICE_ERROR - A device error occurred while attempting to
+//                                 retrieve the pointer device’s current state.
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
-    @param This - A pointer to the EFI_ABSOLUTE_POINTER_PROTOCOL instance.
-        ABSState - A pointer to the state information on the pointer
-        device. Type EFI_ABSOLUTE_POINTER_STATE is defined as follows:
-        typedef struct {
-        INT32 RelativeMovementX;
-        INT32 RelativeMovementY;
-        INT32 RelativeMovementZ;
-        BOOLEAN LeftButton;
-        BOOLEAN RightButton;
-        } EFI_ABSOLUTE_POINTER_STATE;
-
-    @retval EFI_SUCCESS The state of the pointer device was returned
-        in ABSState.
-    @retval EFI_NOT_READY The state of the pointer device has not changed
-        since the last call to GetABSState().
-    @retval EFI_DEVICE_ERROR A device error occurred while attempting to
-        retrieve the pointer device’s current state.
-**/
-
-EFI_STATUS
-EFIAPI
+static EFI_STATUS
 GetAbsMouseState(
     EFI_ABSOLUTE_POINTER_PROTOCOL  *This,
     EFI_ABSOLUTE_POINTER_STATE     *AbsMouseState
 )
 {
-    USB_ABSOLUTE_MOUSE_DEV          *UsbAbsMs;
-    DEV_INFO                        *DevInfo;
-    EFI_TPL                         OldTpl;
-
     if (AbsMouseState == NULL) {
         return EFI_INVALID_PARAMETER;
     }
 
-    OldTpl = gBS->RaiseTPL(TPL_NOTIFY);
+    UpdateUsbAbsMouseData (&gUsbData->AbsMouseData[0]);
 
-    UsbAbsMs = USB_ABSOLUTE_MOUSE_DEV_FROM_ABSOLUTE_PROTOCOL(This);
-    DevInfo = (DEV_INFO*)UsbAbsMs->DevInfo;
-
-    if (!(DevInfo->Flag & DEV_INFO_DEV_PRESENT)) {
-        gBS->RestoreTPL(OldTpl);
-        return EFI_DEVICE_ERROR;
-    }
-
-    UpdateUsbAbsMouseData(UsbAbsMs, &DevInfo->AbsMouseData);
-
-    if (UsbAbsMs->StateChanged == FALSE) {
-        gBS->RestoreTPL(OldTpl);
+    if (UsbAbsMouseDevice->StateChanged == FALSE) {
         return EFI_NOT_READY;
     }
 
-    gBS->CopyMem(AbsMouseState, &UsbAbsMs->State, sizeof(EFI_ABSOLUTE_POINTER_STATE));
-    
-    UsbAbsMs->StateChanged = FALSE;
-
-    gBS->RestoreTPL(OldTpl);
+    EfiCopyMem(
+        AbsMouseState,
+        &UsbAbsMouseDevice->State,
+        sizeof(EFI_ABSOLUTE_POINTER_STATE)
+    );
+    UsbAbsMouseDevice->StateChanged = FALSE;
 
     return EFI_SUCCESS;
 }
 
 
-/**
-    This routine updates current AbsMouse data.
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Name:        UpdateUsbAbsMouseData
+//
+// Description: This routine updates current AbsMouse data.
+//
+// Input:       Data* - pointer to the data area to be updated.
+//
+// Output:      EFI_SUCCESS
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
-    @param Data* - pointer to the data area to be updated.
-
-    @retval EFI_SUCCESS
-
-**/
-
-EFI_STATUS
+static EFI_STATUS
 UpdateUsbAbsMouseData (
-    USB_ABSOLUTE_MOUSE_DEV          *UsbAbsMs,
-    ABS_MOUSE                       *AbsData
+    ABS_MOUSE *AbsData
 )
 {
-    if (UsbAbsMs->State.CurrentX != (UINT64)AbsData->Xcoordinate ||
-        UsbAbsMs->State.CurrentY != (UINT64)AbsData->Ycoordinate ||
-        UsbAbsMs->State.CurrentZ != (UINT64)AbsData->Pressure ||
-        UsbAbsMs->State.ActiveButtons != (UINT32)AbsData->ButtonStauts) {
-        UsbAbsMs->StateChanged=TRUE;
+    if(UsbAbsMouseDevice->State.CurrentX != (UINT64)AbsData->Xcoordinate ||
+        UsbAbsMouseDevice->State.CurrentY != (UINT64)AbsData->Ycoordinate ||
+        UsbAbsMouseDevice->State.CurrentZ != (UINT64)AbsData->Pressure ||
+        UsbAbsMouseDevice->State.ActiveButtons != (UINT32)AbsData->ButtonStauts) {
+            UsbAbsMouseDevice->StateChanged=TRUE;
     } else {
-        UsbAbsMs->StateChanged=FALSE;
+            UsbAbsMouseDevice->StateChanged=FALSE;
     }
 
-    if (UsbAbsMs->StateChanged) {
-        UsbAbsMs->State.ActiveButtons = (UINT32)AbsData->ButtonStauts;
-        UsbAbsMs->State.CurrentX = (UINT64)AbsData->Xcoordinate;
-        UsbAbsMs->State.CurrentY = (UINT64)AbsData->Ycoordinate;
-        UsbAbsMs->State.CurrentZ = (UINT64)AbsData->Pressure; 
-        UsbAbsMs->Mode.AbsoluteMaxX= (UINT64)AbsData->Max_X; 
-        UsbAbsMs->Mode.AbsoluteMaxY= (UINT64)AbsData->Max_Y;  
+    if(UsbAbsMouseDevice->StateChanged) {
+        UsbAbsMouseDevice->State.ActiveButtons = (UINT32)AbsData->ButtonStauts;
+        UsbAbsMouseDevice->State.CurrentX = (UINT64)AbsData->Xcoordinate;
+        UsbAbsMouseDevice->State.CurrentY = (UINT64)AbsData->Ycoordinate;
+        UsbAbsMouseDevice->State.CurrentZ = (UINT64)AbsData->Pressure; 
+        UsbAbsMouseDevice->Mode.AbsoluteMaxX= (UINT64)AbsData->Max_X; 
+        UsbAbsMouseDevice->Mode.AbsoluteMaxY= (UINT64)AbsData->Max_Y;  
     }
 
     return EFI_SUCCESS;
 }
 
 
-/**
-    Event notification function for AbsMouseOLUTE_POINTER.WaitForInput
-    event. Signal the event if there is input from AbsMouse.
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Name:        UsbAbsMouseWaitForInput
+//
+// Description: Event notification function for AbsMouseOLUTE_POINTER.WaitForInput
+//              event. Signal the event if there is input from AbsMouse.
+//
+// Input:       Event - event to signal in case of AbsMouse activity
+//              Context - data to pass along with the event.
+//
+// Output:      None
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
-    @param Event - event to signal in case of AbsMouse activity
-        Context - data to pass along with the event.
-
-    @retval VOID
-
-**/
-
-VOID
+static VOID
 EFIAPI
 UsbAbsMouseWaitForInput (
     EFI_EVENT   Event,
     VOID        *Context
-)
+    )
 {
-    USB_ABSOLUTE_MOUSE_DEV          *UsbAbsMs;
-    DEV_INFO                        *DevInfo;
-    EFI_TPL                         OldTpl;
 
-    OldTpl = gBS->RaiseTPL(TPL_NOTIFY);
-
-    UsbAbsMs = (USB_ABSOLUTE_MOUSE_DEV*)(Context);
-    DevInfo = (DEV_INFO*)UsbAbsMs->DevInfo;
-
-    if (!(DevInfo->Flag & DEV_INFO_DEV_PRESENT)) {
-        gBS->RestoreTPL(OldTpl);
-        return;
-    }
-    
     //
     // Someone is waiting on the AbsMouse event, if there's
     // input from AbsMouse, signal the event
     //
-    if (UsbAbsMs->State.CurrentX != (UINT64)DevInfo->AbsMouseData.Xcoordinate ||
-       UsbAbsMs->State.CurrentY != (UINT64)DevInfo->AbsMouseData.Ycoordinate ||
-       UsbAbsMs->State.CurrentZ != (UINT64)DevInfo->AbsMouseData.Pressure ||
-       UsbAbsMs->State.ActiveButtons != (UINT32)DevInfo->AbsMouseData.ButtonStauts) {
+    if(UsbAbsMouseDevice->State.CurrentX != (UINT64)gUsbData->AbsMouseData[0].Xcoordinate ||
+       UsbAbsMouseDevice->State.CurrentY != (UINT64)gUsbData->AbsMouseData[0].Ycoordinate ||
+       UsbAbsMouseDevice->State.CurrentZ != (UINT64)gUsbData->AbsMouseData[0].Pressure ||
+       UsbAbsMouseDevice->State.ActiveButtons != (UINT32)gUsbData->AbsMouseData[0].ButtonStauts) {
         gBS->SignalEvent(Event);
     }
-
-    gBS->RestoreTPL(OldTpl);
 
     return;
 }
 
+
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        UsbAbsMsStop
+//
+// Description: Stops USB ABS device
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
+
+EFI_STATUS
+UsbAbsMsStop (
+    EFI_DRIVER_BINDING_PROTOCOL *This,
+    EFI_HANDLE Controller,
+    UINTN NumberOfChildren,
+    EFI_HANDLE *Children
+)
+{
+    EFI_STATUS Status;
+
+    Status = UninstallUSBAbsMouse(Controller);
+    VERIFY_EFI_ERROR(
+        gBS->CloseProtocol (
+        Controller, &gEfiUsbIoProtocolGuid,
+        This->DriverBindingHandle, Controller));
+    return Status;
+}
+
 #endif
 
-//**********************************************************************
-//**********************************************************************
-//**                                                                  **
-//**        (C)Copyright 1985-2016, American Megatrends, Inc.         **
-//**                                                                  **
-//**                       All Rights Reserved.                       **
-//**                                                                  **
-//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093        **
-//**                                                                  **
-//**                       Phone: (770)-246-8600                      **
-//**                                                                  **
-//**********************************************************************
-//**********************************************************************
+//****************************************************************************
+//****************************************************************************
+//**                                                                        **
+//**             (C)Copyright 1985-2011, American Megatrends, Inc.          **
+//**                                                                        **
+//**                          All Rights Reserved.                          **
+//**                                                                        **
+//**                 5555 Oakbrook Pkwy, Norcross, GA 30093                 **
+//**                                                                        **
+//**                          Phone (770)-246-8600                          **
+//**                                                                        **
+//****************************************************************************
+//****************************************************************************

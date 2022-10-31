@@ -1,21 +1,35 @@
-//**********************************************************************
-//**********************************************************************
-//**                                                                  **
-//**        (C)Copyright 1985-2016, American Megatrends, Inc.         **
-//**                                                                  **
-//**                       All Rights Reserved.                       **
-//**                                                                  **
-//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093        **
-//**                                                                  **
-//**                       Phone: (770)-246-8600                      **
-//**                                                                  **
-//**********************************************************************
-//**********************************************************************
+//****************************************************************************
+//****************************************************************************
+//**                                                                        **
+//**             (C)Copyright 1985-2008, American Megatrends, Inc.          **
+//**                                                                        **
+//**                          All Rights Reserved.                          **
+//**                                                                        **
+//**                 5555 Oakbrook Pkwy, Norcross, GA 30093                 **
+//**                                                                        **
+//**                          Phone (770)-246-8600                          **
+//**                                                                        **
+//****************************************************************************
+//****************************************************************************
 
-/** @file EfiUsbMs.c
-    EFI USB Mouse Driver
+//****************************************************************************
+// $Header: /Alaska/SOURCE/Modules/USB/ALASKA/efiusbms.c 22    9/19/11 9:31a Lavanyap $
+//
+// $Revision: 22 $
+//
+// $Date: 9/19/11 9:31a $
+//
+//****************************************************************************
 
-**/
+//<AMI_FHDR_START>
+//----------------------------------------------------------------------------
+//
+//  Name:           EFIUSBMS.C
+//
+//  Description:    EFI USB Mouse Driver
+//
+//----------------------------------------------------------------------------
+//<AMI_FHDR_END>
 
 #include "AmiDef.h"
 #include "UsbDef.h"
@@ -27,10 +41,7 @@
 #define USBMS_DRIVER_VERSION 2
 
 #define USB_MOUSE_DEV_SIGNATURE   EFI_SIGNATURE_32('u','m','o','u')
-
-#ifndef CR
 #define CR(record, TYPE, field, signature) _CR(record, TYPE, field) 
-#endif
 #define USB_MOUSE_DEV_FROM_MOUSE_PROTOCOL(a,b) \
     CR(a, USB_MOUSE_DEV, b, USB_MOUSE_DEV_SIGNATURE)
 
@@ -48,14 +59,13 @@ typedef struct
     EFI_USB_IO_PROTOCOL             *UsbIo;
 } USB_MOUSE_DEV;
 
-VOID
-EFIAPI
+static VOID
 UsbMouseWaitForInput (
   IN  EFI_EVENT               Event,
   IN  VOID                    *Context
   );
 
-EFI_STATUS
+static EFI_STATUS
 UpdateUsbMouseData (
     EFI_SIMPLE_POINTER_PROTOCOL  *This, 
 	EFI_SIMPLE_POINTER_STATE	*State
@@ -64,15 +74,13 @@ UpdateUsbMouseData (
 //
 // Mouse Protocol
 //
-EFI_STATUS
-EFIAPI
+static EFI_STATUS
 GetMouseState(
   IN   EFI_SIMPLE_POINTER_PROTOCOL  *This,
   OUT  EFI_SIMPLE_POINTER_STATE     *MouseState
 );
 
-EFI_STATUS
-EFIAPI
+static EFI_STATUS
 UsbMouseReset(
   IN EFI_SIMPLE_POINTER_PROTOCOL    *This,
   IN BOOLEAN                        ExtendedVerification
@@ -86,14 +94,19 @@ EFI_SIMPLE_POINTER_STATE        MsState;
 
 
 
-/**
-    Initialize USB mouse device and all private data structures.
-
-    @param VOID
-
-    @retval EFI_SUCCESS or EFI_ERROR
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        InitUSBMouse
+//
+// Description: Initialize USB mouse device and all private data structures.
+//
+// Input:       None
+//
+// Output:      EFI_SUCCESS or EFI_ERROR
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 EFI_STATUS
 InitUSBMouse()
@@ -104,14 +117,19 @@ InitUSBMouse()
     return EFI_SUCCESS;
 }  
 
-/**
-    Installs SimplePointerProtocol interface on a given controller.
-
-    @param Controller - controller handle to install interface on.
-
-    @retval VOID
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Name:        InstallUSBMouse
+//
+// Description: Installs SimplePointerProtocol interface on a given controller.
+//
+// Input:       Controller - controller handle to install interface on.
+//
+// Output:      None
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID
 InstallUSBMouse(
     EFI_HANDLE Controller,
@@ -122,14 +140,11 @@ InstallUSBMouse(
     USB_MOUSE_DEV       *UsbMouse; 
     EFI_STATUS Status;
 
-    Status = gBS->AllocatePool(EfiBootServicesData, sizeof(USB_MOUSE_DEV),
-                    &UsbMouse);
-    
-    ASSERT(Status == EFI_SUCCESS);
-
-    if (EFI_ERROR(Status)) {
-        return;
-    }
+    VERIFY_EFI_ERROR(
+        Status = gBS->AllocatePool(
+        EfiBootServicesData,
+        sizeof(USB_MOUSE_DEV),
+        &UsbMouse));
 
     EfiZeroMem(UsbMouse, sizeof(USB_MOUSE_DEV));
 
@@ -149,44 +164,46 @@ InstallUSBMouse(
     UsbMouse->Mode.RightButton = TRUE;
     UsbMouse->Mode.ResolutionX = 8;
     UsbMouse->Mode.ResolutionY = 8;
-    UsbMouse->Mode.ResolutionZ = 1; 
+    UsbMouse->Mode.ResolutionZ = 8; 
 
     UsbMouse->UsbIo = UsbIo;
-    UsbMouse->Endpoint = DevInfo->IntInEndpoint;
+    UsbMouse->Endpoint = DevInfo->bIntEndpoint;
 
     UsbMouseReset(NULL, FALSE);
  
-    Status = gBS->CreateEvent (
+    VERIFY_EFI_ERROR(
+        Status = gBS->CreateEvent (
         EFI_EVENT_NOTIFY_WAIT,
         EFI_TPL_NOTIFY,
         UsbMouseWaitForInput,
         UsbMouse,
         &((UsbMouse->SimplePointerProtocol).WaitForInput)
-        );
-    
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_4, "Mouse event is created, status = %r\n", Status);
-    
-    ASSERT(Status == EFI_SUCCESS);
+        ));
+
+    USB_DEBUG(DEBUG_LEVEL_4, "Mouse event is created, status = %r\n", Status);
 
     //
     // Install protocol interfaces for the USB mouse device
     //
-    Status = gBS->InstallProtocolInterface(
+    VERIFY_EFI_ERROR(
+        Status = gBS->InstallProtocolInterface(
         &Controller,
         &gEfiSimplePointerProtocolGuid,
         EFI_NATIVE_INTERFACE,
-        &UsbMouse->SimplePointerProtocol);
+        &UsbMouse->SimplePointerProtocol));
 
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_4, "Mouse protocol is installed, status = %r\n", Status);
-    
-    ASSERT(Status == EFI_SUCCESS);
-    
+    USB_DEBUG(DEBUG_LEVEL_4, "Mouse protocol is installed, status = %r\n", Status);
 }
 
-/**
-    Stops USB mouse device
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        UninstallUSBMouse
+//
+// Description: Stops USB mouse device
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 EFI_STATUS
 UninstallUSBMouse (
@@ -201,7 +218,7 @@ UninstallUSBMouse (
     USB_MOUSE_DEV       *UsbMouse = 0; 
  
 
-    Status = gBS->OpenProtocol(Controller,
+    Status = pBS->OpenProtocol( Controller,
                                 &gEfiSimplePointerProtocolGuid,
                                 (VOID **)&SimplePoint,
                                 This->DriverBindingHandle,
@@ -209,46 +226,47 @@ UninstallUSBMouse (
                                 EFI_OPEN_PROTOCOL_GET_PROTOCOL); 
 
     UsbMouse = USB_MOUSE_DEV_FROM_MOUSE_PROTOCOL(SimplePoint,SimplePointerProtocol);
-    
-    Status = gBS->UninstallProtocolInterface(Controller, &gEfiSimplePointerProtocolGuid,
-                        &UsbMouse->SimplePointerProtocol);
-    
-    if (EFI_ERROR(Status)) {
+    VERIFY_EFI_ERROR(
+        Status = gBS->UninstallProtocolInterface(
+            Controller,
+            &gEfiSimplePointerProtocolGuid,
+            &UsbMouse->SimplePointerProtocol));
+    if(EFI_ERROR(Status))
         return Status;
-    }
 
-    Status = gBS->CloseEvent(
-            (UsbMouse->SimplePointerProtocol).WaitForInput);
-    
-    ASSERT(Status == EFI_SUCCESS);
+        VERIFY_EFI_ERROR(
+            gBS->CloseEvent (
+            (UsbMouse->SimplePointerProtocol).WaitForInput));
 
-    if (EFI_ERROR(Status)) {
-        return Status;
-    }
-    
-    gBS->FreePool(UsbMouse);
-    
+
+        gBS->FreePool(UsbMouse);
+        UsbMouse = 0;
+
     return Status;
 } 
 
 
 /************ SimplePointer Protocol implementation routines*************/
 
-/**
-    This routine is a part of SimplePointerProtocol implementation;
-    it resets USB mouse.
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Name:        UsbMouseReset
+//
+// Description: This routine is a part of SimplePointerProtocol implementation;
+//              it resets USB mouse.
+//
+// Input:       This - A pointer to the EFI_SIMPLE_POINTER_PROTOCOL instance.
+//              ExtendedVerification - Indicates that the driver may perform
+//              a more exhaustive verification operation of the device during
+//              reset.
+//
+// Output:      EFI_SUCCESS or EFI_DEVICE_ERROR
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
-    @param This - A pointer to the EFI_SIMPLE_POINTER_PROTOCOL instance.
-        ExtendedVerification - Indicates that the driver may perform
-        a more exhaustive verification operation of the device during
-        reset.
-
-    @retval EFI_SUCCESS or EFI_DEVICE_ERROR
-
-**/
-
-EFI_STATUS
-EFIAPI
+static EFI_STATUS
 UsbMouseReset(
     IN EFI_SIMPLE_POINTER_PROTOCOL    *This,
     IN BOOLEAN                        ExtendedVerification
@@ -266,63 +284,63 @@ UsbMouseReset(
 }
 
 
-/**
-    This routine is a part of SimplePointerProtocol implementation;
-    it retrieves the current state of a pointer device.
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Name:        GetMouseState
+//
+// Description: This routine is a part of SimplePointerProtocol implementation;
+//              it retrieves the current state of a pointer device.
+//
+// Input:       This - A pointer to the EFI_SIMPLE_POINTER_PROTOCOL instance.
+//              MouseState - A pointer to the state information on the pointer
+//              device. Type EFI_SIMPLE_POINTER_STATE is defined as follows:
+//                typedef struct {
+//                    INT32 RelativeMovementX;
+//                    INT32 RelativeMovementY;
+//                    INT32 RelativeMovementZ;
+//                    BOOLEAN LeftButton;
+//                    BOOLEAN RightButton;
+//                } EFI_SIMPLE_POINTER_STATE;
+//
+// Output:      EFI_SUCCESS      - The state of the pointer device was returned
+//                                 in MouseState.
+//              EFI_NOT_READY    - The state of the pointer device has not changed
+//                                 since the last call to GetMouseState().
+//              EFI_DEVICE_ERROR - A device error occurred while attempting to
+//                                 retrieve the pointer device’s current state.
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
-    @param This - A pointer to the EFI_SIMPLE_POINTER_PROTOCOL instance.
-        MouseState - A pointer to the state information on the pointer
-        device. Type EFI_SIMPLE_POINTER_STATE is defined as follows:
-        typedef struct {
-        INT32 RelativeMovementX;
-        INT32 RelativeMovementY;
-        INT32 RelativeMovementZ;
-        BOOLEAN LeftButton;
-        BOOLEAN RightButton;
-        } EFI_SIMPLE_POINTER_STATE;
-
-    @retval EFI_SUCCESS The state of the pointer device was returned
-        in MouseState.
-    @retval EFI_NOT_READY The state of the pointer device has not changed
-        since the last call to GetMouseState().
-    @retval EFI_DEVICE_ERROR A device error occurred while attempting to
-        retrieve the pointer device’s current state.
-**/
-
-EFI_STATUS
-EFIAPI
+static EFI_STATUS
 GetMouseState(
     EFI_SIMPLE_POINTER_PROTOCOL  *This,
     EFI_SIMPLE_POINTER_STATE     *MouseState
 )
 {
-    EFI_TPL OldTpl;
-    EFI_STATUS  Status;
-    
     if (MouseState == NULL) {
         return EFI_INVALID_PARAMETER;
     }
 
-    OldTpl = gBS->RaiseTPL(TPL_NOTIFY);
-    
-    Status = UpdateUsbMouseData(This,MouseState);
-
-    gBS->RestoreTPL(OldTpl);
-
-    return Status;
+    return UpdateUsbMouseData(This,MouseState);
 }
 
 
-/**
-    This routine updates current mouse data.
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Name:        UpdateUsbMouseData
+//
+// Description: This routine updates current mouse data.
+//
+// Input:       Data* - pointer to the data area to be updated.
+//
+// Output:      EFI_SUCCESS
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
-    @param Data* - pointer to the data area to be updated.
-
-    @retval EFI_SUCCESS
-
-**/
-
-EFI_STATUS
+static EFI_STATUS
 UpdateUsbMouseData (
     EFI_SIMPLE_POINTER_PROTOCOL  *This,
 	EFI_SIMPLE_POINTER_STATE	*State
@@ -351,10 +369,6 @@ UpdateUsbMouseData (
             0,  // Timeout
             &UsbStatus
         );
-
-	    if (EFI_ERROR(Status)) {
-		    return EFI_DEVICE_ERROR;
-	    }
     
         gUsbData->MouseData.ButtonStatus = MouseData[0];
     
@@ -411,18 +425,23 @@ UpdateUsbMouseData (
 }
 
 
-/**
-    Event notification function for SIMPLE_POINTER.WaitForInput
-    event. Signal the event if there is input from mouse.
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Name:        UsbMouseWaitForInput
+//
+// Description: Event notification function for SIMPLE_POINTER.WaitForInput
+//              event. Signal the event if there is input from mouse.
+//
+// Input:       Event - event to signal in case of mouse activity
+//              Context - data to pass along with the event.
+//
+// Output:      None
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
-    @param Event - event to signal in case of mouse activity
-        Context - data to pass along with the event.
-
-    @retval VOID
-
-**/
-
-VOID
+static VOID
 EFIAPI
 UsbMouseWaitForInput (
     EFI_EVENT   Event,
@@ -447,10 +466,15 @@ UsbMouseWaitForInput (
 
 
 
-/**
-    Initialize USB Mouse driver
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        UsbMsInit
+//
+// Description: Initialize USB Mouse driver
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 CHAR16*
 UsbMsGetControllerName(
@@ -461,16 +485,16 @@ UsbMsGetControllerName(
     return 0;
 }
 
-//**********************************************************************
-//**********************************************************************
-//**                                                                  **
-//**        (C)Copyright 1985-2016, American Megatrends, Inc.         **
-//**                                                                  **
-//**                       All Rights Reserved.                       **
-//**                                                                  **
-//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093        **
-//**                                                                  **
-//**                       Phone: (770)-246-8600                      **
-//**                                                                  **
-//**********************************************************************
-//**********************************************************************
+//****************************************************************************
+//****************************************************************************
+//**                                                                        **
+//**             (C)Copyright 1985-2008, American Megatrends, Inc.          **
+//**                                                                        **
+//**                          All Rights Reserved.                          **
+//**                                                                        **
+//**                 5555 Oakbrook Pkwy, Norcross, GA 30093                 **
+//**                                                                        **
+//**                          Phone (770)-246-8600                          **
+//**                                                                        **
+//****************************************************************************
+//****************************************************************************

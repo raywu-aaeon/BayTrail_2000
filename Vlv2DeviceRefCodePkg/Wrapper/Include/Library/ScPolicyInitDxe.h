@@ -35,7 +35,7 @@ Intel Corporation.
 #include <Setup.h>
 #include <Library/SbPolicy.h>
 #include <Token.h>
-#include <Library/SbHdaVerbTableLib.h>  //EIP176554
+#include <AzaliaVerbTable.h>
 
 ///
 /// Functions

@@ -62,7 +62,7 @@ extern BOOLEAN              SerialMouseDetection;
 #define UART_PORT_MAX_BAUD_RATE         115400
 #define UART_MIN_BAUD_RATE              50
 
-#define UART_DEFAULT_RECEIVE_FIFO_DEPTH 16
+#define UART_DEFAULT_RECEIVE_FIFO_DEPTH 1
 #define UART_MAX_RECEIVE_FIFO_DEPTH     16
 #define UART_MIN_TIMEOUT                1           // 1 uS
 #define UART_MAX_TIMEOUT                100000000   // 100 seconds
@@ -600,7 +600,7 @@ EFI_STATUS EFIAPI SerialIoSupported (
 {
     ACPI_HID_DEVICE_PATH    *acpiDP=NULL;
  
-    EFI_STATUS              Status;
+    EFI_STATUS              Status=EFI_UNSUPPORTED;
     EFI_PCI_IO_PROTOCOL     *PciIo=NULL;
     UINT8                   RevisionId[4];
     UINT64                  CommandReg=0; 
@@ -805,12 +805,12 @@ EFI_STATUS EFIAPI SerialIoSupported (
     }
 
 Error:
-//EIP212613 >>
-	if( Status == EFI_ALREADY_STARTED || Status == EFI_ACCESS_DENIED ) {
-	    return Status;
-	}
-	return EFI_UNSUPPORTED;
-//EIP212613 <<
+    if( Status != (EFI_ALREADY_STARTED || EFI_ACCESS_DENIED) ) {
+        return EFI_UNSUPPORTED;
+    } else { 
+        return Status;
+    }
+
 }
 
 //**********************************************************************

@@ -1,7 +1,7 @@
 //*************************************************************************
 //*************************************************************************
 //**                                                                     **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.            **
+//**        (C)Copyright 1985-2013, American Megatrends, Inc.            **
 //**                                                                     **
 //**                       All Rights Reserved.                          **
 //**                                                                     **
@@ -14,7 +14,7 @@
 /** @file
   This implementation of EFI_PXE_BASE_CODE_PROTOCOL and EFI_LOAD_FILE_PROTOCOL.
 
-  Copyright (c) 2007 - 2014, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2007 - 2013, Intel Corporation. All rights reserved.<BR>
 
   This program and the accompanying materials
   are licensed and made available under the terms and conditions of the BSD License
@@ -41,10 +41,9 @@ UINTN   TftpBlockSize = 0;
 //
 // AMI Macro defines for delay
 //
-#define ONE_MS            1000          // 1000us = 1 milli second
-#define HUNDRED_MS       (100*ONE_MS)    // 100 milli seconds
-#define FIVE_HUNDRED_MS  (500*ONE_MS)   // 500 milli seconds
-#define ONE_SECOND       (1000*ONE_MS)   // 1000ms = 1 second
+#define ONE_MS        1000          // 1000us = 1 milli second
+#define HUNDRED_MS    (100*ONE_MS)    // 100 milli seconds
+#define ONE_SECOND    (1000*ONE_MS)   // 1000ms = 1 second
 //
 // AMI PORTING END : Added to support PXE abort using ESC key.
 //
@@ -196,7 +195,7 @@ EfiPxeBcStart (
     // Print PXE start message.
     //
     AsciiPrint ("\n>>Start PXE over IPv6");
-
+	
     //
     // AMI PORTING START : Added to support the PXE abort using ESC key.
     //
@@ -209,7 +208,7 @@ EfiPxeBcStart (
             return Status;
         }
     } // if (NetworkStackSetupData.PxeBootWaitTime)
-    //
+	//
     // AMI PORTING END : Added to support the PXE abort using ESC key.
     //
 
@@ -234,35 +233,12 @@ EfiPxeBcStart (
     // PXE over IPv6 starts here, initialize the fields and list header.
     //
     Private->Ip6Policy                          = PXEBC_IP6_POLICY_MAX;
-	//
-	// AMI PORTING STARTS.
-	// 
-#if (NET_PKG_AMI_PORTING_ENABLE == 1)
-	Private->ProxyOffer.Dhcp6.Packet.Offer.Size = PXEBC_CACHED_DHCP6_PACKET_MAX_SIZE;
-	Private->DhcpAck.Dhcp6.Packet.Ack.Size      = PXEBC_CACHED_DHCP6_PACKET_MAX_SIZE;
-	Private->PxeReply.Dhcp6.Packet.Ack.Size     = PXEBC_CACHED_DHCP6_PACKET_MAX_SIZE;
-#else
-  Private->ProxyOffer.Dhcp6.Packet.Offer.Size = PXEBC_DHCP6_PACKET_MAX_SIZE;
-  Private->DhcpAck.Dhcp6.Packet.Ack.Size      = PXEBC_DHCP6_PACKET_MAX_SIZE;
-  Private->PxeReply.Dhcp6.Packet.Ack.Size     = PXEBC_DHCP6_PACKET_MAX_SIZE;
-
-#endif	// NET_PKG_AMI_PORTING_ENABLE
-	//
-	// AMI PORTING ENDS
-	// 
+    Private->ProxyOffer.Dhcp6.Packet.Offer.Size = PXEBC_DHCP6_PACKET_MAX_SIZE;
+    Private->DhcpAck.Dhcp6.Packet.Ack.Size      = PXEBC_DHCP6_PACKET_MAX_SIZE;
+    Private->PxeReply.Dhcp6.Packet.Ack.Size     = PXEBC_DHCP6_PACKET_MAX_SIZE;
 
     for (Index = 0; Index < PXEBC_OFFER_MAX_NUM; Index++) {
-	//
-	// AMI PORTING STARTS.
-	// 
-#if (NET_PKG_AMI_PORTING_ENABLE == 1)
-	Private->OfferBuffer[Index].Dhcp6.Packet.Offer.Size = PXEBC_CACHED_DHCP6_PACKET_MAX_SIZE;
-#else
-	Private->OfferBuffer[Index].Dhcp6.Packet.Offer.Size = PXEBC_DHCP6_PACKET_MAX_SIZE;
-#endif	// NET_PKG_AMI_PORTING_ENABLE
-	//
-	// AMI PORTING STARTS.
-	//	  
+      Private->OfferBuffer[Index].Dhcp6.Packet.Offer.Size = PXEBC_DHCP6_PACKET_MAX_SIZE;
     }
 
     //
@@ -296,7 +272,7 @@ EfiPxeBcStart (
             return Status;
         }
     } // if (NetworkStackSetupData.PxeBootWaitTime)
-    //
+	//
     // AMI PORTING END : Added to support the PXE abort using ESC key.
     //
 
@@ -320,29 +296,12 @@ EfiPxeBcStart (
     //
     // PXE over IPv4 starts here, initialize the fields.
     //
-	
-	//
-	// AMI PORTING STARTS.
-	//
-#if (NET_PKG_AMI_PORTING_ENABLE == 1)
-	Private->ProxyOffer.Dhcp4.Packet.Offer.Size = PXEBC_CACHED_DHCP4_PACKET_MAX_SIZE;
-	Private->DhcpAck.Dhcp4.Packet.Ack.Size      = PXEBC_CACHED_DHCP4_PACKET_MAX_SIZE;
-	Private->PxeReply.Dhcp4.Packet.Ack.Size     = PXEBC_CACHED_DHCP4_PACKET_MAX_SIZE;
-#else
     Private->ProxyOffer.Dhcp4.Packet.Offer.Size = PXEBC_DHCP4_PACKET_MAX_SIZE;
     Private->DhcpAck.Dhcp4.Packet.Ack.Size      = PXEBC_DHCP4_PACKET_MAX_SIZE;
     Private->PxeReply.Dhcp4.Packet.Ack.Size     = PXEBC_DHCP4_PACKET_MAX_SIZE;
-#endif	// NET_PKG_AMI_PORTING_ENABLE
-	//
-	// AMI PORITNG ENDS.
-	//
 
     for (Index = 0; Index < PXEBC_OFFER_MAX_NUM; Index++) {
-#if (NET_PKG_AMI_PORTING_ENABLE == 1)
-	  Private->OfferBuffer[Index].Dhcp4.Packet.Offer.Size = PXEBC_CACHED_DHCP4_PACKET_MAX_SIZE;
-#else
       Private->OfferBuffer[Index].Dhcp4.Packet.Offer.Size = PXEBC_DHCP4_PACKET_MAX_SIZE;
-#endif	// NET_PKG_AMI_PORTING_ENABLE
     }
 
     PxeBcSeedDhcp4Packet (&Private->SeedPacket, Private->Udp4Read);
@@ -392,18 +351,18 @@ EfiPxeBcStart (
   //
   // If PcdTftpBlockSize is set to non-zero, override the default value.
   //
-  //
-  // AMI PORTING START : Remove PCD.
-  //
-  //  if (PcdGet64 (PcdTftpBlockSize) != 0) {
-  //    Private->BlockSize   = (UINTN) PcdGet64 (PcdTftpBlockSize);
-  //  }
+//
+// AMI PORTING START : Remove PCD.
+//
+//  if (PcdGet64 (PcdTftpBlockSize) != 0) {
+//    Private->BlockSize   = (UINTN) PcdGet64 (PcdTftpBlockSize);
+//  }
     if (TftpBlockSize != 0) {
         Private->BlockSize   = (UINTN)TftpBlockSize;
     }
-   //
-   // AMI PORTING END : Remove PCD.
-   //
+//
+// AMI PORTING END : Remove PCD.
+//
 
   //
   // Create event for UdpRead/UdpWrite timeout since they are both blocking API.
@@ -545,10 +504,6 @@ EfiPxeBcStop (
   Private->BootFileSize = 0;
   Private->SolicitTimes = 0;
   Private->ElapsedTime  = 0;
-  ZeroMem (&Private->StationIp, sizeof (EFI_IP_ADDRESS));
-  ZeroMem (&Private->SubnetMask, sizeof (EFI_IP_ADDRESS));
-  ZeroMem (&Private->GatewayIp, sizeof (EFI_IP_ADDRESS));
-  ZeroMem (&Private->ServerIp, sizeof (EFI_IP_ADDRESS));
 
   //
   // Reset the mode data.
@@ -816,7 +771,7 @@ EfiPxeBcDiscover (
       if (Index != Info->IpCnt) {
         //
         // It's invalid if the first server doesn't accecpt any response
-        // but any of the other servers does accept any response.
+        // and meanwhile any of the rest servers accept any reponse.
         //
         Status = EFI_INVALID_PARAMETER;
         goto ON_EXIT;
@@ -2224,7 +2179,7 @@ EfiPxeBcSetStationIP (
     CopyMem (&Private->SubnetMask ,NewSubnetMask, sizeof (EFI_IP_ADDRESS));
   }
 
-  Status = PxeBcFlushStationIp (Private, NewStationIp, NewSubnetMask);
+  Status = PxeBcFlushStaionIp (Private, NewStationIp, NewSubnetMask);
 ON_EXIT:
   return Status;
 }
@@ -2505,13 +2460,6 @@ EfiPxeLoadFile (
   BOOLEAN                     UsingIpv6;
   EFI_STATUS                  Status;
   BOOLEAN                     MediaPresent;
-  //
-  // AMI PORTING START : Fix for adding Media Detect Time.
-  //
-  UINTN                       NoofIterations;
-  //
-  // AMI PORTING END : Fix for adding Media Detect Time.
-  //
 
   VirtualNic = PXEBC_VIRTUAL_NIC_FROM_LOADFILE (This);
   Private    = VirtualNic->Private;
@@ -2553,42 +2501,7 @@ EfiPxeLoadFile (
   //
   AsciiPrint ("\n>>Checking Media Presence......");
   MediaPresent = TRUE;
-  //
-  // AMI PORTING START : Fix for adding Media Detect Time.
-  //
-
-  //
-  // Number of iterations to check if media is found in a controller.
-  //
-  NoofIterations = NetworkStackSetupData.MediaDetectCount; 
-  while (TRUE) {
-
-    Status = NetLibDetectMedia (Private->Controller, &MediaPresent);
-      
-    //
-    // Check whether NoofIterations equal to one if yes break from the loop.
-    //
-    if(NoofIterations-- <= MIN_MEDIA_DETECT_COUNT) {
-        break;
-    }
-        
-    if (!MediaPresent) {
-      //
-      // Give delay for 500 ms.  
-      //
-      gBS->Stall (FIVE_HUNDRED_MS);
-
-    } else {
-        //
-        // Media is found so break from the loop.
-        //
-        break;
-    }
-  }
-
-  //
-  // AMI PORTING END : Fix for adding Media Detect Time.
-  //
+  Status = NetLibDetectMedia (Private->Controller, &MediaPresent);
   if (!MediaPresent) {
     AsciiPrint ("\n>>No Media Present......");
     return EFI_NO_MEDIA;

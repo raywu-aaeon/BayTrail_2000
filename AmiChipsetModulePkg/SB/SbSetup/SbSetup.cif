@@ -8,5 +8,4 @@
 "Sb.uni"
 "SbSetup.c"
 "SbSetup.sdl"	
-"SbSetupEmmcMid.txt"     #EIP 177820 (show eMMC storage infomation)
 <endComponent>

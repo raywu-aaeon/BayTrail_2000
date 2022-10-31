@@ -142,48 +142,6 @@ EFI_STATUS AmiSdlPciGetHostBridges(AMI_SDL_PCI_DEV_INFO ***HostBridgesBuffer, UI
 // <AMI_PHDR_START>
 //-------------------------------------------------------------------------
 //
-// Procedure: AmiSdlFindRbBySegBus()
-//
-// Description: Finds Root Bridge SDL record by PCI Segment and Bus Number
-//
-// Input: UINT32                Segment     PCI Segment Number
-//
-// Input: UINT8                 Bus         PCI Bus Number
-//
-// Output: AMI_SDL_PCI_DEV_INFO *Record     Pointer at AMI_SDL_PCI_DEV_INFO structure 
-//                                          of a RootBridge record matching with search criteria.
-//
-// Output: UINTN                *Index      Pointer to Index that will be updated. 
-//
-// Notes:
-//-------------------------------------------------------------------------
-// <AMI_PHDR_END>
-EFI_STATUS AmiSdlFindRbBySegBus(IN UINT32 Segment, IN UINT8 Bus, OUT AMI_SDL_PCI_DEV_INFO **Record, OUT UINTN *Index){
-    UINTN                   i;
-    AMI_SDL_PCI_DEV_INFO    *dev;
-    EFI_STATUS              Status;
-//-----------------
-    if(Record==NULL || Index==NULL) return EFI_INVALID_PARAMETER;
-
-    Status=AmiSdlInitBoardInfo();
-    if(EFI_ERROR(Status)) return Status;
-
-    for(i=0; i<gSdlPciData->PciDevCount; i++){
-        dev=&gSdlPciData->PciDevices[i];
-        if(dev->PciDevFlags.Bits.RootBridgeType) {
-            if((dev->PciSegment == Segment) && (dev->Bus == Bus )){
-                *Record=dev;
-                *Index=i;
-                return EFI_SUCCESS;
-            }
-        }
-    }
-    return EFI_NOT_FOUND;
-}
-
-// <AMI_PHDR_START>
-//-------------------------------------------------------------------------
-//
 // Procedure: AmiSdlFindIndexRecord()
 //
 // Description: Find Index of given Record 
@@ -435,7 +393,10 @@ EFI_STATUS AmiSdlReserveCspResources(EFI_HANDLE ImgHandle){
 		//if all non existet space, Memory and IO has been converted to MMIO
 		//we don't want to hang on ERROR Status here
 		if(Res->Attributes==-1){
-			Status=DxeSvc->AddIoSpace(Res->ResType,Res->ResBase,Res->ResLength);
+//TODO: Switch following code when AMI Sdl will generate correct output.
+//			Status=DxeSvc->AddIoSpace(Res->ResType,Res->ResBase,Res->ResLength);
+			Status=DxeSvc->AddIoSpace( EfiGcdIoTypeIo,Res->ResBase,Res->ResLength);
+//TODO: end
 			TRACE((TRACE_ALWAYS, "GCD: AddI/O"));
 		} else {
 			//Some attempt to optimize region caching
@@ -625,6 +586,11 @@ EFI_STATUS AmiSdlReadFfsSdlData(
 			if (SectionType==EFI_SECTION_FREEFORM_SUBTYPE_GUID){
             	EFI_GUID	*secguid;
            	//----------------------------
+				//TODO:
+				//NOTE: The pointer returned by this function can't be passed to FreePool.
+				//Since SDL data is never freed in the current implementation, that's OK.
+				//May require modification in the future.
+
             	//Compare Section GUID, to find correct one..
             	secguid=(EFI_GUID*)AmiData;
         			
@@ -635,22 +601,14 @@ EFI_STATUS AmiSdlReadFfsSdlData(
        			}
         		
        			//Update 
+				AmiData = (EFI_GUID*)AmiData + 1;
 				DataSize -= sizeof(EFI_GUID);
-				// ReadSection returns pointer to a section GUID, which caller of this function does not want to see.
-				// We could've just returned (EFI_GUID*)AmiData + 1 to the caller,
-				// but this pointed can't be used to free the pool (can't be passed to FreePool).
-				// Copy section data into a new buffer
-				AmiData = Malloc(DataSize);
-				if (AmiData == NULL) Status = EFI_OUT_OF_RESOURCES;
-				else MemCpy(AmiData,secguid+1,DataSize);
-				pBS->FreePool(secguid);
 			}
 				
-        	if (HandleBuffer!=NULL) pBS->FreePool(HandleBuffer);
-        	if (!EFI_ERROR(Status)){
-                *SdlAddress = (UINT8*)AmiData;
-                *SdlDataSize=DataSize;
-        	}
+        	*SdlAddress = (UINT8*)AmiData;
+        	*SdlDataSize=DataSize;
+        		
+        	if(HandleBuffer!=NULL)pBS->FreePool(HandleBuffer);
         	return Status;
         }//for [j]
     }//for [i]

@@ -154,7 +154,7 @@
 //------------------------------------------------------------------------------
 #ifndef  _TCGMISC_H   //To Avoid this header get compiled twice
 #define  _TCGMISC_H
-#include <UEFI.h>
+#include <EFI.h>
 
 #define EV_SPECIFICATION_IDENTIFIER        (UINT32)0x000000012
 //--------------------AMI_PORTING----------------------------------------------
@@ -173,17 +173,12 @@
 #define EFI_TCG_LOG_HOB_GUID \
     {0x5f7d4e0e, 0x3d6d, 0x42bc, 0xa9, 0x42, 0xe, 0x91, 0xe8, 0x3e, 0x3c, 0x31}
 
-#define EFI_TCG_TREE_LOG_HOB_GUID \
-    {0x711e7d64, 0x1131, 0x494b, 0xa2, 0xd1, 0x84, 0x80, 0x6c, 0xd7, 0x2d, 0x53}
-
 #define AMI_TCG_EFI_OS_VARIABLE_GUID \
     {0xa8a2093b, 0xfefa, 0x43c1, 0x8e, 0x62, 0xce, 0x52, 0x68, 0x47, 0x26, 0x5e}
 
 #define AMI_TCG_RESETVAR_HOB_GUID \
     {0xa8a2093b, 0xfefa, 0x43c1, 0x8e, 0x62, 0xce, 0x52, 0x68, 0x47, 0x26, 0x5e}
 
-#define AMI_TCG_MANUFACTURING_MODE_HOB_GUID \
-    {0x5d7f83ee, 0x88e5, 0x4ea8, 0xbe, 0xe8, 0x23, 0x79, 0xa6, 0x3c, 0xff, 0x8}
 
 #define AMI_TCG_CONFIRMATION_FLAGS_GUID \
     {0x7d3dceee, 0xcbce, 0x4ea7, 0x87, 0x09, 0x6e, 0x55, 0x2f, 0x1e, 0xdb, 0xde}
@@ -196,11 +191,9 @@
 
 #define TCG_EFI_GLOBAL_VARIABLE_GUID \
     { \
-        0x135902e7, 0x9709, 0x4b41, 0x8f, 0xd2, 0x40, 0x69, 0xda, 0xf0, 0x54,\
-        0x6a \
+        0x8BE4DF61, 0x93CA, 0x11d2, 0xAA, 0x0D, 0x00, 0xE0, 0x98, 0x03, 0x2B,\
+        0x8C \
     }
-#define TCG_VARIABLE_GUID \
-    {0x9868b77b, 0x607e, 0x4cb7, 0xa6, 0xce, 0xe1, 0xd5, 0x29, 0xd4, 0x41, 0x64}
 
 #define EFI_TCM_MPDriver_GUID \
     { 0x3EB9F0D3, 0x40D0, 0x435b, 0xB6, 0x92, 0x80, 0x91, 0x51, 0x80, 0x7F,\
@@ -223,38 +216,10 @@
     0xe9db0d58, 0xd48d, 0x47f6, 0x9c, 0x6e, 0x6f, 0x40, 0xe8, 0x6c, 0x7b, 0x41 \
   }
 
-#define TPM20_HOB_GUID \
-  { \
-    0x7cea4f7e, 0x2052, 0x46ed, 0xbe, 0xfd, 0xe2, 0x2a, 0x44, 0xdc, 0x65, 0xe7 \
-  }
-
 #define FAST_BOOT_VARIABLE_GUID \
     { 0xb540a530, 0x6978, 0x4da7, 0x91, 0xcb, 0x72, 0x7, 0xd7, 0x64, 0xd2, 0x62 }
 
-#define AMI_PROTOCOL_INTERNAL_HLXE_GUID \
-    { 0x78092548, 0x48cf, 0x449b, 0x9b, 0xdb, 0xf6, 0x38, 0x49, 0x85, 0x64,\
-      0x60}
 
-#define NVRAM_HOB_GUID \
-    { 0xc0ec00fd, 0xc2f8, 0x4e47, { 0x90, 0xef, 0x9c, 0x81, 0x55, 0x28, 0x5b, 0xec } }
-
-#define NVRAM_MODE_MANUFACTORING 1
-
-#pragma pack (1)
-
-typedef struct {
-    EFI_PHYSICAL_ADDRESS NvramAddress;
-    EFI_PHYSICAL_ADDRESS BackupAddress;
-    UINT32 NvramSize;
-    UINT32 HeaderLength;
-    UINT32 NvramMode;
-} Manufac_HOB;
-
-typedef struct {
-   UINT8 Tpm20DeviceState;
-   UINT8 InterfaceType;
-   UINT8 Reserved;
-} Tpm20DeviceHob;
 
 typedef struct
 {
@@ -272,6 +237,7 @@ typedef struct _mem_in
     UINTN  size;        //Memory block Size
 } mem_in;
 
+#pragma pack (1)
 typedef struct tdVendorInfoStruct
 {
     UINT8 *TCGBIOSVENDOR[6];
@@ -677,16 +643,6 @@ typedef struct _PERSISTENT_BIOS_TPM_MANAGEMENT_FLAGS_PROTOCOL
     READ_PERSISTENT_BIOS_TPM_FLAGS                 ReadBiosTpmflags;
     SET_PERSISTENT_BIOS_TPM_FLAGS                  SetBiosTpmflags;
 } PERSISTENT_BIOS_TPM_MANAGEMENT_FLAGS_PROTOCOL;
-
-EFI_STATUS
-EFIAPI
-CrbSubmitCmd(
-  IN      UINT8     *InputBuffer,
-  IN      UINT32     InputBufferSize,
-  OUT     UINT8     *OutputBuffer,
-  OUT     UINT32    *OutputBufferSize);
-
-BOOLEAN isTpm20CrbPresent();
 
 
 #define MA_FUNCTION_INIT   0x01

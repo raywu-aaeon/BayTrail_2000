@@ -1,0 +1,10 @@
+<component>
+	name = "TcgDxeplatform"
+	category = ModulePart
+	LocalRoot = "AmiModulePkg\TCG\TcgDxeplatform\"
+	RefName = "TcgDxeplatform"
+[files]
+"TcgDxeplatform.sdl"	
+[INF]
+"TcgDxeplatform.inf"
+<endComponent>

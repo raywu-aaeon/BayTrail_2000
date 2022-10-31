@@ -1,78 +1,111 @@
-//***********************************************************************
-//***********************************************************************
-//**                                                                   **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.          **
-//**                                                                   **
-//**                       All Rights Reserved.                        **
-//**                                                                   **
-//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093         **
-//**                                                                   **
-//**                       Phone: (770)-246-8600                       **
-//**                                                                   **
-//***********************************************************************
-//***********************************************************************
-
-/** @file Atapi.c
-    Supports ATAPI devices
-
-**/
-
+//**********************************************************************
+//**********************************************************************
+//**                                                                  **
+//**        (C)Copyright 1985-2012, American Megatrends, Inc.         **
+//**                                                                  **
+//**                       All Rights Reserved.                       **
+//**                                                                  **
+//**         5555 Oakbrook Pkwy, Suite 200, Norcross, GA 30093        **
+//**                                                                  **
+//**                       Phone: (770)-246-8600                      **
+//**                                                                  **
+//**********************************************************************
+//**********************************************************************
+// $Header: /Alaska/SOURCE/Core/Modules/IdeBus/Atapi.c 23    8/16/12 3:24a Rajeshms $
+//
+// $Revision: 23 $
+//
+// $Date: 8/16/12 3:24a $
+//**********************************************************************
+//<AMI_FHDR_START>
 //---------------------------------------------------------------------------
+//
+// Name: ATAPI.C
+//
+// Description:	Supports ATAPI devices
+//
+//---------------------------------------------------------------------------
+//<AMI_FHDR_END>
+
 
 #include "IdeBus.h"
-
-//---------------------------------------------------------------------------
+#include <Protocol\IdeBusBoard.h>
 
 //
 //External variables
 //
 extern PLATFORM_IDE_PROTOCOL    *gPlatformIdeProtocol;
 
-/**
-    Issues ATAPI Reset command.
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:	AtapiReset
+//
+// Description:	Issues ATAPI Reset command.
+//
+// Input:
+//	IN EFI_BLOCK_IO_PROTOCOL				*This,
+//	IN BOOLEAN					ExtendedVerification
+//
+// Output:
+//		EFI_STATUS
+//
+// Modified:
+//
+// Referrals: IssueAtapiReset, InitIdeBlockIO
+//
+// Notes:
+//
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
-    @param This 
-    @param ExtendedVerification 
-
-    @retval EFI_STATUS
-
-**/
-
-EFI_STATUS
-AtapiReset (
-    IN  EFI_BLOCK_IO_PROTOCOL   *This,
-    IN  BOOLEAN                 ExtendedVerification
-)
+EFI_STATUS AtapiReset(
+    IN EFI_BLOCK_IO_PROTOCOL *This,
+    IN BOOLEAN               ExtendedVerification )
 {
     return EFI_SUCCESS;
 }
 
-/**
-    Read from the Atapi Device
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:	AtapiBlkRead
+//
+// Description:	Read from the Atapi Device
+//
+// Input:
+//	IN EFI_BLOCK_IO_PROTOCOL            *This,
+//	IN UINT32                                           MediaId,
+//	IN EFI_LBA                                          LBA,
+//	IN UINTN                                            BufferSize,
+//	OUT VOID                                            *Buffer
+//
+// Output:
+//		EFI_STATUS
+//
+// Modified:
+//
+// Referrals: AtapiReadWritePio, InitIdeBlockIO
+//
+// Notes:
+//
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
-    @param This 
-    @param MediaId 
-    @param EFI_LBA  LBA,
-    @param BufferSize 
-    @param Buffer 
-
-    @retval EFI_STATUS
-
-**/
-
-EFI_STATUS
-AtapiBlkRead (
-    IN  EFI_BLOCK_IO_PROTOCOL   *This,
-    IN  UINT32                  MediaId,
-    IN  EFI_LBA                 LBA,
-    IN  UINTN                   BufferSize,
-    OUT VOID                    *Buffer
-)
+EFI_STATUS AtapiBlkRead(
+    IN EFI_BLOCK_IO_PROTOCOL *This,
+    IN UINT32                MediaId,
+    IN EFI_LBA               LBA,
+    IN UINTN                 BufferSize,
+    OUT VOID                 *Buffer )
 {
     UINTN              DataN;
     EFI_STATUS         Status;
-    AMI_IDE_BUS_PROTOCOL   *IdeBusInterface = ((IDE_BLOCK_IO*)This)->IdeBusInterface;
+    IDE_BUS_PROTOCOL   *IdeBusInterface = ((IDE_BLOCK_IO*)This)->IdeBusInterface;
     EFI_BLOCK_IO_MEDIA *BlkMedia = This->Media;
+    ATAPI_DEVICE       *AtapiDevice = IdeBusInterface->IdeDevice.AtapiDevice;
     UINTN              BufferAddress;
 
     //
@@ -104,7 +137,7 @@ AtapiBlkRead (
     // properly aligned the buffer address should be divisible by IoAlign  
     // with no remainder. 
     // 
-    BufferAddress =(UINTN) Buffer;
+    (VOID *)BufferAddress = Buffer;
     if((BlkMedia->IoAlign > 1 ) && (BufferAddress % BlkMedia->IoAlign)) {
         return EFI_INVALID_PARAMETER;
     }
@@ -155,32 +188,43 @@ AtapiBlkRead (
     return Status;
 }
 
-/**
-    Write to the Atapi Device
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:	AtapiBlkWrite
+//
+// Description:	Write to the Atapi Device
+//
+// Input:
+//	IN EFI_BLOCK_IO_PROTOCOL                        *This,
+//	IN UINT32                                       MediaId,
+//	IN EFI_LBA                                      LBA,
+//	IN UINTN                                        BufferSize,
+//	OUT VOID                                        *Buffer
+//
+// Output:
+//		EFI_STATUS
+//
+// Modified:
+//
+// Referrals: AtapiReadWritePio, InitIdeBlockIO
+//
+// Notes:
+//
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
-        
-    @param This 
-    @param MediaId 
-    @param EFI_LBA  LBA,
-    @param BufferSize 
-    @param Buffer 
-
-    @retval EFI_STATUS
-
-**/
-
-EFI_STATUS
-AtapiBlkWrite (
-    IN  EFI_BLOCK_IO_PROTOCOL   *This,
-    IN  UINT32                  MediaId,
-    IN  EFI_LBA                 LBA,
-    IN  UINTN                   BufferSize,
-    IN  VOID                    *Buffer
-)
+EFI_STATUS AtapiBlkWrite(
+    IN EFI_BLOCK_IO_PROTOCOL *This,
+    IN UINT32                MediaId,
+    IN EFI_LBA               LBA,
+    IN UINTN                 BufferSize,
+    IN VOID                  *Buffer )
 {
     UINTN              DataN;
     EFI_STATUS         Status;
-    AMI_IDE_BUS_PROTOCOL   *IdeBusInterface = ((IDE_BLOCK_IO*)This)->IdeBusInterface;
+    IDE_BUS_PROTOCOL   *IdeBusInterface = ((IDE_BLOCK_IO*)This)->IdeBusInterface;
     EFI_BLOCK_IO_MEDIA *BlkMedia = This->Media;
     UINTN              BufferAddress;
 
@@ -213,7 +257,7 @@ AtapiBlkWrite (
     // properly aligned the buffer address should be divisible by IoAlign  
     // with no remainder. 
     // 
-    BufferAddress =(UINTN) Buffer;
+    (VOID *)BufferAddress = Buffer;
     if((BlkMedia->IoAlign > 1 ) && (BufferAddress % BlkMedia->IoAlign)) {
         return EFI_INVALID_PARAMETER;
     }
@@ -266,47 +310,68 @@ AtapiBlkWrite (
     return Status;
 }
 
-/**
-    Flush the cache
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:	AtapiBlkFlush
+//
+// Description:	Flush the cache
+//
+// Input:
+//	IN EFI_BLOCK_IO_PROTOCOL                        *This,
+//
+// Output:
+//		EFI_STATUS
+//
+// Modified:
+//
+// Referrals: InitIdeBlockIO
+//
+// Notes:
+//
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
-    @param This 
-
-    @retval EFI_STATUS
-
-**/
-
-EFI_STATUS
-AtapiBlkFlush (
-    IN  EFI_BLOCK_IO_PROTOCOL   *This
-)
+EFI_STATUS AtapiBlkFlush(
+    IN EFI_BLOCK_IO_PROTOCOL *This )
 {
     return EFI_SUCCESS;
 }
 
-/**
-    Detects whether a Media is present in the ATAPI Removable device or not.
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:	DetectAtapiMedia
+//
+// Description:	Detects whether a Media is present in the ATAPI Removable device or not.
+//
+// Input:
+//	IDE_BUS_INIT_PROTOCOL			*IdeBusInitInterface
+//
+// Output:
+//	EFI_STATUS
+//
+// Modified:
+//
+// Referrals: InitIdeBlockIO
+//
+// Notes:
+//	1. Issue Read Capacity command for CDROM or Read Format command for other ATAPI devices.
+//	2. If step 1  is successfull, update last LBA, Block Size, Read/Write capable, Media ID
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
-    @param IDE_BUS_INIT_PROTOCOL			*IdeBusInitInterface
-
-    @retval EFI_STATUS
-
-    @note  
-	1. Issue Read Capacity command for CDROM or Read Format command for other ATAPI devices.
-	2. If step 1  is successful, update last LBA, Block Size, Read/Write capable, Media ID
-
-**/
-
-EFI_STATUS
-DetectAtapiMedia (
-    IN  OUT AMI_IDE_BUS_PROTOCOL    *IdeBusInterface
-)
+EFI_STATUS DetectAtapiMedia(
+    IN OUT IDE_BUS_PROTOCOL *IdeBusInterface )
 {
-    UINT8               *InputData, *PacketBuffer, LoopCount;
-    ATAPI_DEVICE        *AtapiDevice    =   IdeBusInterface->IdeDevice.AtapiDevice;
-    EFI_BLOCK_IO_MEDIA  *BlkMedia       =   IdeBusInterface->IdeBlkIo->BlkIo.Media;
-    EFI_STATUS          Status;
-    UINT16              ByteCount       =   256, Data16;
-    BOOLEAN             ReadCapacity    =   FALSE;
+    UINT8              *InputData, *PacketBuffer, LoopCount;
+    ATAPI_DEVICE       *AtapiDevice    = IdeBusInterface->IdeDevice.AtapiDevice;
+    EFI_BLOCK_IO_MEDIA *BlkMedia       = IdeBusInterface->IdeBlkIo->BlkIo.Media;
+    EFI_STATUS         Status          ;
+    UINT16             ByteCount       = 256, Data16;
+    BOOLEAN            ReadCapacity    = FALSE;
 
     PROGRESS_CODE( DXE_REMOVABLE_MEDIA_DETECT );
 
@@ -474,27 +539,38 @@ DetectAtapiMedia (
     return Status;
 }
 
-/**
-    Issues Atapi Inquiry Command and returns the DATA.
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:	AtapiInquiryData
+//
+// Description:	Issues Atapi Inquiry Command and returns the DATA.
+//
+// Input:
+//	IDE_BUS_INIT_PROTOCOL			*IdeBusInitInterface
+//	UINT8							*InquiryData,
+//	UINT32							*InquiryDataSize
+//
+// Output:
+//	EFI_STATUS
+//
+// Modified:
+//
+// Referrals: InitIdeBlockIO
+//
+// Notes:
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
-    @param IDE_BUS_INIT_PROTOCOL    *IdeBusInitInterface
-    @param UINT8    *InquiryData,
-    @param UINT32   *InquiryDataSize
-
-    @retval EFI_STATUS
-
-**/
-
-EFI_STATUS
-AtapiInquiryData (
-    IN  AMI_IDE_BUS_PROTOCOL    *IdeBusInterface,
-    OUT UINT8                   *InquiryData,
-    IN  OUT UINT16              *InquiryDataSize
-)
+EFI_STATUS AtapiInquiryData(
+    IN IDE_BUS_PROTOCOL *IdeBusInterface,
+    OUT UINT8           *InquiryData,
+    IN OUT UINT16       *InquiryDataSize )
 {
-    EFI_STATUS      Status;
-    UINT8           *PacketBuffer;
-    ATAPI_DEVICE    *AtapiDevice = IdeBusInterface->IdeDevice.AtapiDevice;
+    EFI_STATUS   Status;
+    UINT8        *PacketBuffer;
+    ATAPI_DEVICE *AtapiDevice = IdeBusInterface->IdeDevice.AtapiDevice;
 
 
     Status = pBS->AllocatePool( EfiBootServicesData, 16, (VOID**)&PacketBuffer );
@@ -515,45 +591,54 @@ AtapiInquiryData (
     return Status;
 }
 
-/**
-    Read/Write data from/to the ATAPI device
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:	AtapiReadWritePio
+//
+// Description:	Read/Write data from/to the ATAPI device
+//
+// Input:
+//	IN IDE_BUS_PROTOCOL				*IdeBusInterface,
+//	VOID                                                    *Buffer,
+//	UINTN							ByteCount,
+//	UINT64							LBA,
+//	UINT8							ReadWriteCommand,
+//	BOOLEAN							READWRITE
+//
+// Output:
+//		EFI_STATUS
+//
+// Modified:
+//
+// Referrals: AtapiBlkRead, AtapiBlkWrite
+//
+// Notes:
+//	1. Prepare ATAPI Command Packet
+//	2. Check for errors. If Media_Change, detect the new atapi media if present and return status accordingly.
+//	3. Read/write data if the command packet is issues successfully.
+//	4. Repeat from step 1 untill all data has been read/written.
+//
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
-        
-    @param IdeBusInterface 
-    @param VOID *Buffer,
-    @param UINTN    ByteCount,
-    @param UINT64   LBA,
-    @param UINT8    ReadWriteCommand,
-    @param BOOLEAN  READWRITE
-
-    @retval EFI_STATUS
-
-    @note  
-	1. Prepare ATAPI Command Packet
-	2. Check for errors. If Media_Change, detect the new atapi media if present and return status accordingly.
-	3. Read/write data if the command packet is issues successfully.
-	4. Repeat from step 1 until all data has been read/written.
-
-**/
-
-EFI_STATUS
-AtapiReadWritePio (
-    IN  AMI_IDE_BUS_PROTOCOL    *IdeBusInterface,
-    IN  OUT VOID                *Buffer,
-    IN  UINTN                   ByteCount,
-    IN  UINT64                  LBA,
-    IN  UINT8                   ReadWriteCommand,
-    IN  BOOLEAN                 READWRITE
-)
+EFI_STATUS AtapiReadWritePio(
+    IN IDE_BUS_PROTOCOL *IdeBusInterface,
+    IN OUT VOID         *Buffer,
+    IN UINTN            ByteCount,
+    IN UINT64           LBA,
+    IN UINT8            ReadWriteCommand,
+    IN BOOLEAN          READWRITE )
 {
-    EFI_STATUS      Status;
-    INTN            TotalNumberofBlocks;
-    INTN            TransferLength;
-    UINT16          BytesRead;
-    UINTN           BytesRemainingTobeRead;
-    ATAPI_DEVICE    *AtapiDevice    =   IdeBusInterface->IdeDevice.AtapiDevice;
-    VOID            *TempBuffer =   Buffer;
-    IO_REGS         Regs        =   IdeBusInterface->IdeDevice.Regs;
+    EFI_STATUS   Status;
+    INTN         TotalNumberofBlocks;
+    INTN         TransferLength;
+    UINT16       BytesRead;
+    UINTN        BytesRemainingTobeRead;
+    ATAPI_DEVICE *AtapiDevice = IdeBusInterface->IdeDevice.AtapiDevice;
+    VOID         *TempBuffer  = Buffer;
+    IO_REGS      Regs         = IdeBusInterface->IdeDevice.Regs;
 
     //
     //Disable Interrupt
@@ -632,7 +717,7 @@ AtapiReadWritePio (
                     Status = DetectAtapiMedia( IdeBusInterface );
 
                     // This may happen during initial power-up also. If ReinstallProtocol  needs to be done,
-                    // then differentiate between power-up and other cases.
+                    // then differentiate between power-up nad other cases.
                     if ( Status == EFI_SUCCESS ) {
                         return EFI_MEDIA_CHANGED;    // Return Media Change
                     }
@@ -644,7 +729,7 @@ AtapiReadWritePio (
             //place, a small delay is enough.
             Status = WaitforBitSet( IdeBusInterface->PciIO,
                                     Regs.CommandBlock.StatusReg,
-                                    IDE_DRQ,
+                                    DRQ,
                                     DRQ_SET_TIMEOUT );
 
             if ( EFI_ERROR( Status )) {
@@ -663,7 +748,7 @@ AtapiReadWritePio (
             //
             //Update pointer
             //
-            TempBuffer = (UINT8*)(TempBuffer) + BytesRead;       
+            (UINT8*) TempBuffer    += BytesRead;
             BytesRemainingTobeRead -= BytesRead;
         }   while ( BytesRemainingTobeRead );
 
@@ -681,27 +766,39 @@ AtapiReadWritePio (
     return EFI_SUCCESS;
 }
 
-/**
-    Issues the ATAPI command and reads the data
-
-    @param  IdeBusInterface 
-    @param  UINT8   *PacketBuffer,
-    @param  UINT8   *Buffer,
-    @param  ByteCount 
-
-    @retval EFI_STATUS
-
-**/
-EFI_STATUS
-GeneralAtapiCommandAndData (
-    IN  AMI_IDE_BUS_PROTOCOL    *IdeBusInterface,
-    UINT8                       *PacketBuffer,
-    UINT8                       *Buffer,
-    IN  OUT     UINT16          *ByteCount
-)
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:	GeneralAtapiCommandAndData
+//
+// Description:	Issues the ATAPI cammand and reads the data
+//
+// Input:
+//	IN IDE_BUS_PROTOCOL				*IdeBusInterface,
+//	UINT8                           *PacketBuffer,
+//	UINT8                           *Buffer,
+//	IN OUT UINT16					*ByteCount
+//
+// Output:
+//		EFI_STATUS
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
+EFI_STATUS GeneralAtapiCommandAndData(
+    IN IDE_BUS_PROTOCOL *IdeBusInterface,
+    UINT8               *PacketBuffer,
+    UINT8               *Buffer,
+    IN OUT UINT16       *ByteCount )
 {
-    EFI_STATUS  Status;
-    IO_REGS     Regs    =   IdeBusInterface->IdeDevice.Regs;
+    EFI_STATUS Status;
+    IO_REGS    Regs = IdeBusInterface->IdeDevice.Regs;
 
     Status = IssueAtapiPacketCommand( IdeBusInterface,
                                       (UINT16*)PacketBuffer,
@@ -727,7 +824,7 @@ GeneralAtapiCommandAndData (
         //
         Status = WaitforBitSet( IdeBusInterface->PciIO,
                                 Regs.CommandBlock.StatusReg,
-                                IDE_DRQ,
+                                DRQ,
                                 DRQ_TIMEOUT );
 
         if ( EFI_ERROR( Status )) {
@@ -751,34 +848,44 @@ GeneralAtapiCommandAndData (
     }
 }
 
-/**
-    Issues ATAPI Packet command and send the packet.
-
-    @param  IdeBusInterface 
-    @param  UINT16  *PacketBuffer,		// Pointer to packet
-    @param  UINT16  ByteCount		    // Byte count Limit
-
-    @retval EFI_STATUS
-
-    @note   The Packet Command and the packet are sent. Error is not analyzed in this
-            Routine. Once the packet is sent successfully, EFI_SUCCESS is returned.
-            It is the callers responsibility to check the status.
-
-**/
-EFI_STATUS
-IssueAtapiPacketCommand (
-    IN  AMI_IDE_BUS_PROTOCOL    *IdeBusInterface,
-    IN  UINT16                  *PacketBuffer,
-    IN  UINT8                   Features,
-    IN  UINT16                  ByteCount
-)
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:	IssueAtapiPacketCommand
+//
+// Description:	Issues ATAPI Packet command and send the packet.
+//
+// Input:
+//	IN IDE_BUS_PROTOCOL				*IdeBusInterface,
+//	UINT16							*PacketBuffer,		// Pointer to packet
+//	UINT16							ByteCount		    // Byte count Limit
+//
+// Output:
+//		EFI_STATUS
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:	The Packet Command and the packet are sent. Error is not analysed in this
+//			Routine. Once the packet is sent successfully, EFI_SUCCESS is returned.
+//			It is the callers responsibilty to check the status.
+//
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
+EFI_STATUS IssueAtapiPacketCommand(
+    IN IDE_BUS_PROTOCOL *IdeBusInterface,
+    IN UINT16           *PacketBuffer,
+    IN UINT8            Features,
+    IN UINT16           ByteCount )
 {
-    IDE_DEVICE_INTERFACE    *IdeDevice  =   &(IdeBusInterface->IdeDevice);
-    IO_REGS                 Regs        =   IdeBusInterface->IdeDevice.Regs;
-    UINT8                   Data8;
-    UINT16                  Data16;
-    EFI_STATUS              Status;
-    ATAPI_DEVICE            *AtapiDevice    =   IdeBusInterface->IdeDevice.AtapiDevice;
+    IDE_DEVICE_INTERFACE *IdeDevice = &(IdeBusInterface->IdeDevice);
+    IO_REGS              Regs       = IdeBusInterface->IdeDevice.Regs;
+    UINT8                Data8;
+    UINT16               Data16;
+    EFI_STATUS           Status;
+    ATAPI_DEVICE         *AtapiDevice = IdeBusInterface->IdeDevice.AtapiDevice;
 
     //
     //	Select the drive
@@ -791,7 +898,7 @@ IssueAtapiPacketCommand (
     //
     Status = WaitforBitClear( IdeBusInterface->PciIO,
                               Regs.ControlBlock.AlternateStatusReg,
-                              IDE_BSY | IDE_DRQ,
+                              BSY | DRQ,
                               gPlatformIdeProtocol->AtaPiBusyClearTimeout );
 
     if ( EFI_ERROR( Status )) {
@@ -826,7 +933,7 @@ IssueAtapiPacketCommand (
                   PACKET_COMMAND );
 
     //	Wait for 400nsec before reading the status. To accomplish it, read ATL_STATUS and ignore the result.
-    //	Assumption is, this call will take at least 400nsec to complete.
+    //	Assumption is, this call will take atleast 400nsec to complete.
     IdeReadByte( IdeBusInterface->PciIO,
                  Regs.ControlBlock.AlternateStatusReg,
                  &Data8 );
@@ -836,7 +943,7 @@ IssueAtapiPacketCommand (
     Data16 = 30;
     Status = WaitforBitClear( IdeBusInterface->PciIO,
                               Regs.ControlBlock.AlternateStatusReg,
-                              IDE_BSY,
+                              BSY,
                               (UINT32) Data16 );
 
     if ( EFI_ERROR( Status )) {
@@ -847,7 +954,7 @@ IssueAtapiPacketCommand (
     //
     Status = WaitforBitSet( IdeBusInterface->PciIO,
                             Regs.CommandBlock.StatusReg,
-                            IDE_DRQ,
+                            DRQ,
                             (UINT32) Data16 );
 
     if ( EFI_ERROR( Status )) {
@@ -863,32 +970,41 @@ IssueAtapiPacketCommand (
     return Status;
 }
 
-/**
-    Issues ATAPI Reset command
-
-        
-    @param IdeBusInterface 
-    @param IN BOOLEAN   TESTUNITREADY
-
-    @retval EFI_STATUS
-
-    @note  
-    If TESTUNITREADY is TRUE, after ATAPI Reset, TestUnitReady command is issued.
-    Generally after DEVICE RESET command, ATAPI device respond to and command with
-    POWER ON RESET OCCURRED and followed by MEDIA CHANGE.
-
-**/
-EFI_STATUS
-IssueAtapiReset (
-    IN  AMI_IDE_BUS_PROTOCOL    *IdeBusInterface,
-    IN  BOOLEAN                 TESTUNITREADY
-)
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:	IssueAtapiReset
+//
+// Description:	Issues ATAPI Reset command
+//
+// Input:
+//	IN IDE_BUS_PROTOCOL				*IdeBusInterface
+//	IN BOOLEAN						TESTUNITREADY
+//
+// Output:
+//		EFI_STATUS
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//	If TESTUNITREADY is TRUE, after ATAPI Reset, TestUnitReady command is issued.
+//	Generally after DEVICE RESET command, ATAPI device respond to and command with
+//	POWER ON RESET OCCURRED and followed by MEDIA CHANGE.
+//
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
+EFI_STATUS IssueAtapiReset(
+    IN IDE_BUS_PROTOCOL *IdeBusInterface,
+    IN BOOLEAN          TESTUNITREADY )
 
 {
-    IDE_DEVICE_INTERFACE    *IdeDevice  =   &(IdeBusInterface->IdeDevice);
-    IO_REGS                 Regs        =   IdeBusInterface->IdeDevice.Regs;
-    UINT8                   Data8;
-    EFI_STATUS              Status;
+    IDE_DEVICE_INTERFACE *IdeDevice = &(IdeBusInterface->IdeDevice);
+    IO_REGS              Regs       = IdeBusInterface->IdeDevice.Regs;
+    UINT8                Data8;
+    EFI_STATUS           Status;
 
     PROGRESS_CODE( DXE_REMOVABLE_MEDIA_RESET );
 
@@ -923,7 +1039,7 @@ IssueAtapiReset (
     //
     Status = WaitforBitClear( IdeBusInterface->PciIO,
                               Regs.CommandBlock.StatusReg,
-                              IDE_BSY,
+                              BSY,
                               gPlatformIdeProtocol->AtaPiResetCommandTimeout );
 
     if ( EFI_ERROR( Status )) {
@@ -948,31 +1064,41 @@ IssueAtapiReset (
     return EFI_SUCCESS;
 }
 
-/**
-    Handle Atapi error if any.
-
-    @param IdeBusInterface 
-
-    @retval EFI_STATUS
-
-    @note   If DF and CHK bits are not set, return EFI_SUCCESS. If either
-            one of the bits are set, analyze the error and return appropriate
-            error message.
-
-**/
-EFI_STATUS
-HandleAtapiError (
-    IN  AMI_IDE_BUS_PROTOCOL    *IdeBusInterface
-)
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:	HandleAtapiError
+//
+// Description:	Handle Atapi error if any.
+//
+// Input:
+//	IN IDE_BUS_PROTOCOL				*IdeBusInterface
+//
+// Output:
+//		EFI_STATUS
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:	If DF and CHK bits are not set, return EFI_SUCCESS. If either
+//			one of the bits are set, analyse the error and return appropraite
+//			error message.
+//
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
+EFI_STATUS HandleAtapiError(
+    IN IDE_BUS_PROTOCOL *IdeBusInterface )
 {
-    IDE_DEVICE_INTERFACE    *IdeDevice  =   &(IdeBusInterface->IdeDevice);
-    IO_REGS                 Regs        =   IdeBusInterface->IdeDevice.Regs;
-    ATAPI_DEVICE            *AtapiDevice    =   IdeBusInterface->IdeDevice.AtapiDevice;
-    UINT8                   Data8;
-    EFI_STATUS              Status;
-    UINT8                   *SenseData;
-    UINT8                   *SensePacket;
-    UINT16                  BytesRead;
+    IDE_DEVICE_INTERFACE *IdeDevice   = &(IdeBusInterface->IdeDevice);
+    IO_REGS              Regs         = IdeBusInterface->IdeDevice.Regs;
+    ATAPI_DEVICE         *AtapiDevice = IdeBusInterface->IdeDevice.AtapiDevice;
+    UINT8                Data8;
+    EFI_STATUS           Status;
+    UINT8                *SenseData;
+    UINT8                *SensePacket;
+    UINT16               BytesRead;
 
     //
     //Select the drive
@@ -993,7 +1119,7 @@ HandleAtapiError (
     //
     Status = WaitforBitClear( IdeBusInterface->PciIO,
                               Regs.CommandBlock.StatusReg,
-                              IDE_BSY,
+                              BSY,
                               gPlatformIdeProtocol->AtaPiBusyClearTimeout );
 
     IdeBusInterface->AtapiSenseDataLength = 0;
@@ -1012,7 +1138,7 @@ HandleAtapiError (
     //
     //Check for DF
     //
-    if ( Data8 & IDE_DF ) {
+    if ( Data8 & DF ) {
         AtapiDevice->Atapi_Status = DEVICE_ERROR;
         return EFI_DEVICE_ERROR;
     }
@@ -1020,7 +1146,7 @@ HandleAtapiError (
     //
     //Check for CHK
     //
-    if ( Data8 & IDE_CHK ) {
+    if ( Data8 & CHK ) {
         AtapiDevice->Atapi_Status = DEVICE_ERROR;
         Status = pBS->AllocatePool( EfiBootServicesData,
                                     256,
@@ -1065,7 +1191,7 @@ HandleAtapiError (
         //
         Status = WaitforBitClear( IdeBusInterface->PciIO,
                                   Regs.CommandBlock.StatusReg,
-                                  IDE_BSY,
+                                  BSY,
                                   gPlatformIdeProtocol->AtaPiBusyClearTimeout );
 
         if ( EFI_ERROR( Status )) {
@@ -1084,14 +1210,14 @@ HandleAtapiError (
         //
         //Check for DF and CHK
         //
-        if ( Data8 & (IDE_DF | IDE_CHK)) {
+        if ( Data8 & (DF | CHK)) {
             goto exit_HandleAtapiError_with_Reset;
         }
 
         //
         //Check if DRQ asserted, else DEVICE error
         //
-        if ( !(Data8 & IDE_DRQ)) {
+        if ( !(Data8 & DRQ)) {
             goto exit_HandleAtapiError_with_Reset;
         }
 
@@ -1106,7 +1232,7 @@ HandleAtapiError (
         AtapiDevice->Atapi_Status = DEVICE_ERROR;
 
         //
-        // Store the SenseData which would be used by ScsiPassThruAtapi PassThru Interface.
+        // Store the SenseData whcih would be used by ScsiPassThruAtapi PassThru Interface.
         //
         pBS->CopyMem( IdeBusInterface->AtapiSenseData, SenseData, BytesRead);
         IdeBusInterface->AtapiSenseDataLength = (UINT8)BytesRead;
@@ -1154,27 +1280,39 @@ exit_HandleAtapiError_with_Reset:
     return EFI_SUCCESS;
 }
 
-/**
-    Issues Start/Stop unit Command
-
-    @param  IdeBusInterface 
-
-    @retval EFI_STATUS  EFI_SUCCESS : If Media is accessible
-    @retval EFI_NO_MEDIA
-    @retval EFI_MEDIA_CHANGED
-    @retval EFI_DEVICE_ERROR
-
-**/
-EFI_STATUS
-TestUnitReady (
-    IN  AMI_IDE_BUS_PROTOCOL    *IdeBusInterface
-)
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:	TestUnitReady
+//
+// Description:	Issues Start/Stop unit Command
+//
+// Input:
+//	IN IDE_BUS_PROTOCOL				*IdeBusInterface,
+//
+// Output:
+//		EFI_STATUS			EFI_SUCCESS               : If Media is accessible
+//							EFI_NO_MEDIA
+//							EFI_MEDIA_CHANGED
+//							EFI_DEVICE_ERROR
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
+EFI_STATUS TestUnitReady(
+    IN IDE_BUS_PROTOCOL *IdeBusInterface )
 {
-    EFI_STATUS      Status;
-    UINT8           *Packet;
-    ATAPI_DEVICE    *AtapiDevice    =   IdeBusInterface->IdeDevice.AtapiDevice;
-    UINT16          ByteCount   =   0;
-    UINT16          LoopCount;
+    EFI_STATUS   Status;
+    UINT8        *Packet;
+    ATAPI_DEVICE *AtapiDevice = IdeBusInterface->IdeDevice.AtapiDevice;
+    UINT16       ByteCount    = 0;
+    UINT16       LoopCount;
 
 
     Status = pBS->AllocatePool( EfiBootServicesData, 16, (VOID**)&Packet );
@@ -1212,24 +1350,36 @@ TestUnitReady (
     return Status;
 }
 
-/**
-    Find the ODD device Type and return it
-
-    @param IdeBusInterface 
-
-    @retval OUT UINT16  *OddType
-
-**/
-EFI_STATUS
-GetOddType (
-    IN  AMI_IDE_BUS_PROTOCOL    *IdeBusInterface,
-    IN  OUT UINT16              *OddType
-)
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:	GetOddType
+//
+// Description:	Find the ODD device Type and return it
+//
+// Input:
+//	IN IDE_BUS_PROTOCOL				*IdeBusInterface,
+//
+// Output:
+//	OUT UINT16						*OddType
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
+EFI_STATUS GetOddType(
+    IN IDE_BUS_PROTOCOL *IdeBusInterface,
+    IN OUT UINT16       *OddType )
 {
-    EFI_STATUS  Status;
-    UINT8       *PacketBuffer;
-    UINT8       *ProfileData;
-    UINT16      ProfileDataSize = 16;
+    EFI_STATUS   Status;
+    UINT8        *PacketBuffer;
+    UINT8        *ProfileData;
+    UINT16       ProfileDataSize = 16;
 
     Status = pBS->AllocatePool( EfiBootServicesData, 16, (VOID**)&PacketBuffer );
 
@@ -1245,7 +1395,7 @@ GetOddType (
     ZeroMemory( PacketBuffer, 16 );
     PacketBuffer[0] = ATAPI_GET_CONFIGURATION;
     //
-    // Get the Feature Descriptor.
+    // Get the Feature Discriptor.
     //
     PacketBuffer[1] = FEATURE_DISCRIPTOR;
     //
@@ -1253,7 +1403,7 @@ GetOddType (
     //
     PacketBuffer[3] = GET_PROFILE_LIST;
     //
-    // Response Data Size
+    // Responce Data Size
     //
     PacketBuffer[8] = 0x10;
 
@@ -1276,19 +1426,25 @@ GetOddType (
     return Status;
 }
 
-/**
-    Find the ODD Loading Type information and return it
-
-    @param IdeBusInterface 
-
-    @retval OUT UINT16  *OddLoadingType
-
-**/
-EFI_STATUS
-GetOddLoadingType (
-    IN  AMI_IDE_BUS_PROTOCOL    *IdeBusInterface,
-    IN  OUT UINT8               *OddLoadingType
-)
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:	GetOddLoadingType
+//
+// Description:	Find the ODD Loading Type information and return it
+//
+// Input:
+//	IN IDE_BUS_PROTOCOL				*IdeBusInterface,
+//
+// Output:
+//	OUT UINT16						*OddLoadingType
+//
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
+EFI_STATUS GetOddLoadingType(
+    IN IDE_BUS_PROTOCOL *IdeBusInterface,
+    IN OUT UINT8        *OddLoadingType )
 {
     EFI_STATUS   Status;
     UINT8        *PacketBuffer;
@@ -1309,7 +1465,7 @@ GetOddLoadingType (
     ZeroMemory( PacketBuffer, 16 );
     PacketBuffer[0] = ATAPI_GET_CONFIGURATION;
     //
-    // Get the Feature Descriptor.
+    // Get the Feature Discriptor.
     //
     PacketBuffer[1] = FEATURE_DISCRIPTOR;
     //
@@ -1317,7 +1473,7 @@ GetOddLoadingType (
     //
     PacketBuffer[3] = GET_REMOVEABLE_MEDIUM_FEATURE;
     //
-    // Response Data Size
+    // Responce Data Size
     //
     PacketBuffer[8] = 0x10;
 
@@ -1340,22 +1496,34 @@ GetOddLoadingType (
 }
 
 
-/**
-    Check for CHK bit. If set Issue ATAPI reset.
-
-    @param IdeBusInterface 
-
-    @retval EFI_STATUS
-
-**/
-EFI_STATUS
-CheckCHKonEntry (
-    IN  AMI_IDE_BUS_PROTOCOL    *IdeBusInterface
-)
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:	CheckCHKonEntry
+//
+// Description:	Check for CHK bit. If set Issue ATAPI reset.
+//
+// Input:
+//	IN IDE_BUS_PROTOCOL				*IdeBusInterface,
+//
+// Output:
+//		EFI_STATUS
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
+EFI_STATUS CheckCHKonEntry(
+    IN IDE_BUS_PROTOCOL *IdeBusInterface )
 {
-    IO_REGS                 Regs    =   IdeBusInterface->IdeDevice.Regs;
-    IDE_DEVICE_INTERFACE    *IdeDevice  =   &(IdeBusInterface->IdeDevice);
-    UINT8                   Data8;
+    IO_REGS              Regs         = IdeBusInterface->IdeDevice.Regs;
+    IDE_DEVICE_INTERFACE *IdeDevice   = &(IdeBusInterface->IdeDevice);
+    UINT8                Data8;
 
     //    
     //Select the drive
@@ -1376,29 +1544,41 @@ CheckCHKonEntry (
                  Regs.ControlBlock.AlternateStatusReg,
                  &Data8 );
 
-    if ( Data8 & IDE_CHK ) {
+    if ( Data8 & CHK ) {
         return (IssueAtapiReset( IdeBusInterface, TRUE ));
     }
 
     return EFI_SUCCESS;
 }
 
-/**
-    Read data from the data port based on Byte count value
-
-    @param IdeBusInterface 
-    @param AtapiCommand 
-    @param BytesRead 
-
-    @retval EFI_STATUS
-
-**/
-EFI_STATUS
-ReadAtapiData (
-    IN  AMI_IDE_BUS_PROTOCOL    *IdeBusInterface,
-    OUT void                    *Data,
-    OUT UINT16                  *BytesRead
-)
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:	ReadAtapiData
+//
+// Description:	Read data from the data port based on Byte count value
+//
+// Input:
+//	IN IDE_BUS_PROTOCOL				*IdeBusInterface,
+//	OUT UINT8							AtapiCommand
+//	OUT UINT16							*BytesRead
+//
+// Output:
+//		EFI_STATUS
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
+EFI_STATUS ReadAtapiData(
+    IN IDE_BUS_PROTOCOL *IdeBusInterface,
+    OUT void            *Data,
+    OUT UINT16          *BytesRead )
 {
     IO_REGS    Regs = IdeBusInterface->IdeDevice.Regs;
     UINT8      Data8;
@@ -1422,23 +1602,34 @@ ReadAtapiData (
     return Status;
 }
 
-/**
-    Write data to the data port based on Byte count value
-
-        
-    @param IdeBusInterface 
-    @param AtapiCommand 
-    @param BytesRead 
-
-    @retval EFI_STATUS
-
-**/
-EFI_STATUS
-WriteAtapiData (
-    IN  AMI_IDE_BUS_PROTOCOL    *IdeBusInterface,
-    OUT void                    *Data,
-    OUT UINT16                  *BytesRead
-)
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:	WriteAtapiData
+//
+// Description:	Write data to the data port based on Byte count value
+//
+// Input:
+//	IN IDE_BUS_PROTOCOL					*IdeBusInterface,
+//	OUT UINT8							AtapiCommand
+//	OUT UINT16							*BytesRead
+//
+// Output:
+//		EFI_STATUS
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
+EFI_STATUS WriteAtapiData(
+    IN IDE_BUS_PROTOCOL *IdeBusInterface,
+    OUT void            *Data,
+    OUT UINT16          *BytesRead )
 {
     IO_REGS    Regs = IdeBusInterface->IdeDevice.Regs;
     UINT8      Data8;
@@ -1462,17 +1653,16 @@ WriteAtapiData (
     return Status;
 }
 
-//***********************************************************************
-//***********************************************************************
-//**                                                                   **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.          **
-//**                                                                   **
-//**                       All Rights Reserved.                        **
-//**                                                                   **
-//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093         **
-//**                                                                   **
-//**                       Phone: (770)-246-8600                       **
-//**                                                                   **
-//***********************************************************************
-//***********************************************************************
-
+//**********************************************************************
+//**********************************************************************
+//**                                                                  **
+//**        (C)Copyright 1985-2012, American Megatrends, Inc.         **
+//**                                                                  **
+//**                       All Rights Reserved.                       **
+//**                                                                  **
+//**         5555 Oakbrook Pkwy, Suite 200, Norcross, GA 30093        **
+//**                                                                  **
+//**                       Phone: (770)-246-8600                      **
+//**                                                                  **
+//**********************************************************************
+//**********************************************************************

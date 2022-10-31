@@ -4,8 +4,5 @@
 	LocalRoot = "Vlv2DeviceRefCodePkg\Wrapper\AcpiAslWrap\"
 	RefName = "Vlv2DeviceRefCodePkg.AcpiAslWrap"
 [files]
-"PlatformEc.asl"
-"OemDptfAsl.txt" #EIP174562
-"Dummy.asl" #EIP174562
-"DsdtAslW7.txt" #EIP180243
+"PlatformEc.asl"	
 <endComponent>

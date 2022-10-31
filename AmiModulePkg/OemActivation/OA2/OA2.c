@@ -1,7 +1,7 @@
 //****************************************************************************
 //****************************************************************************
 //**                                                                        **
-//**             (C)Copyright 1985-2015, American Megatrends, Inc.          **
+//**             (C)Copyright 1985-2012, American Megatrends, Inc.          **
 //**                                                                        **
 //**                          All Rights Reserved.                          **
 //**                                                                        **
@@ -19,15 +19,19 @@
 //
 // $Date: $
 //****************************************************************************
-/** @file OA2.c
-    Updated the XSDT with the SLIC OEM Activation ACPI Table.
- 
-**/
+//<AMI_FHDR_START>
+//
+// Name:  OA2.c
+//
+// Description:
+//  Updated the XSDT with the SLIC OEM Activation ACPI Table.
+// 
+//<AMI_FHDR_END>
 //****************************************************************************
 
 
 //---------------------------------------------------------------------------
-#include <Token.h>
+
 #include <AmiDxeLib.h>
 #include <Protocol/AcpiTable.h>
 #include <AmiHobs.h>
@@ -36,19 +40,24 @@
 //---------------------------------------------------------------------------
 
 
-/**
-    This fills the PubKey and Marker structures of SLIC table.
-
-    @param 
-        *FfsGuid    - Pointer to GUID of the FFS file to read
-        *Address    - Address of the buffer to read data into
-        Size        - Size of the buffer
-
-         
-    @retval EFI_SUCCESS Successful
-    @retval EFI_NOT_FOUND Couldn't find the binaries
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:   LocateAndLoadRawData
+//
+// Description: This fills the PubKey and Marker structures of SLIC table.
+//
+// Input:       
+//  *FfsGuid    - Pointer to GUID of the FFS file to read
+//  *Address    - Address of the buffer to read data into
+//  Size        - Size of the buffer
+//
+// Output:
+//  EFI_STATUS    - Successful
+//  EFI_NOT_FOUND - Couldn't find the binaries
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 EFI_STATUS LocateAndLoadRawData(
     IN EFI_GUID *FfsGuid,
@@ -103,14 +112,19 @@ EFI_STATUS LocateAndLoadRawData(
 }
 
 
-/**
-    This function preserves the Marker and PubKey binaries.
-
-    @param VOID
-
-    @retval EFI_STATUS based on result
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:   PreserveSlicBinaries
+//
+// Description: This function preserves the the Marker and PubKey binaries.
+//
+// Input:       VOID
+//
+// Output:      EFI_STATUS
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 EFI_STATUS PreserveSlicBinaries(VOID)
 {
@@ -139,7 +153,7 @@ EFI_STATUS PreserveSlicBinaries(VOID)
 
                 // Find Public Key and Marker binaries in the Recovery image
                 Status = EFI_NOT_FOUND;
-                for (Addr = RecoveryHob->Address + FV_MAIN_OFFSET ; Addr < RecoveryHob->Address + FLASH_SIZE; Addr++ ) { //(EIP219701+)
+                for ( Addr = RecoveryHob->Address; Addr < RecoveryHob->Address + FLASH_SIZE; Addr++ ) {
 
                     // Find the Public Key binary GUID
                     if ( !MemCmp((UINT8*)Addr, &PubKeyGuid, sizeof(EFI_GUID)) )
@@ -153,7 +167,7 @@ EFI_STATUS PreserveSlicBinaries(VOID)
                     if ( RecPubKeyPtr != NULL && RecMarkerPtr != NULL ) {
 
                         // Find Public Key and Marker binaries in the BIOS firmware
-                        for ( Addr = FLASH_DEVICE_BASE_ADDRESS + FV_MAIN_OFFSET; Addr < FLASH_UPPER_ADDRESS; Addr++ ) { //(EIP219701)
+                        for ( Addr = FLASH_DEVICE_BASE_ADDRESS; Addr < FLASH_UPPER_ADDRESS; Addr++ ) {
         
                             // Find the Public Key binary GUID
                             if ( !MemCmp((UINT8*)Addr, &PubKeyGuid, sizeof(EFI_GUID)) )
@@ -193,16 +207,19 @@ EFI_STATUS PreserveSlicBinaries(VOID)
 }
 
 
-/**
-    This function publish SLIC table in the ACPI.
-
-    @param VOID
-
-    @retval EFI_SUCCESS - SLIC table has been published
-	@retval EFI_NOT_FOUND - SLP Public Key Binaries or Marker or AcpiTableProtocol was Not Found
-	@retval other EFI_ERROR - Unable to publish Acpi Table
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:   PublishSlicTable
+//
+// Description: This function publish SLIC table in the ACPI.
+//
+// Input:       VOID
+//
+// Output:      EFI_STATUS
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 EFI_STATUS PublishSlicTable(VOID)
 {
@@ -283,17 +300,21 @@ EFI_STATUS PublishSlicTable(VOID)
 }
 
 
-/**
-    This function is the entry point of the eModule.
-
-    @param 
-        ImageHandle  - Image handle
-        *SystemTable - Pointer to the system table
-
-    @retval EFI_SUCCESS - Slic Table was published (and preserved if we are in recovery mode)
-	@retval EFI_ERROR - Slic table was not published for some reasons. 
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:   OA2_EntryPoint
+//
+// Description: This function is the entry point of the eModule.
+//
+// Input:       
+//  ImageHandle  - Image handle
+//  *SystemTable - Pointer to the system table
+//
+// Output:      EFI_STATUS
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 EFI_STATUS OA2_EntryPoint(
     IN EFI_HANDLE        ImageHandle,
@@ -316,7 +337,7 @@ EFI_STATUS OA2_EntryPoint(
 //****************************************************************************
 //****************************************************************************
 //**                                                                        **
-//**             (C)Copyright 1985-2015, American Megatrends, Inc.          **
+//**             (C)Copyright 1985-2012, American Megatrends, Inc.          **
 //**                                                                        **
 //**                          All Rights Reserved.                          **
 //**                                                                        **

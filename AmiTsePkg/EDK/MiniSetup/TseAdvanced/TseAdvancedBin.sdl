@@ -14,46 +14,33 @@ PATH
 End
 
 ELINK
-	Name  = "$(TSE_ADVANCED_DIR)/TseAdvanced$(ARCH).lib"
+	Name  = "$(TSE_ADVANCED_DIR)\TseAdvanced$(ARCH).lib"
 	Parent  = "MINISETUPLIB"
 	Priority  = 50
 	InvokeOrder = AfterParent
 End
 
 ELINK
-	Name  = "$(BUILD_DIR)/FixedTseLiteLocal.lib"
+	Name  = "$(BUILD_DIR)\FixedTseLiteLocal.lib"
 	Parent  = "MINISETUPLIB"
 	Priority  = 40
 	InvokeOrder = AfterParent
 End
 
 ELINK
-	Name  = "$(TSE_ADVANCED_DIR)\AdvancedImages/TseAdvancedImages$(ARCH).lib"
-	Parent  = "MINISETUPLIB"
-	Priority  = 60
-	InvokeOrder = AfterParent
-End
-
-ELINK
-	Name  = "$(TSE_ADVANCED_DIR)/AddDelBootDrvOpts.sd"
+	Name  = "$(TSE_ADVANCED_DIR)\AddDelBootDrvOpts.sd"
 	Parent  = "SETUP_DEFINITIONS"
 	InvokeOrder = AfterParent
 End
 
 ELINK
-	Name  = "$(TSE_ADVANCED_DIR)/AddDelBootDrvOpts.uni"
+	Name  = "$(TSE_ADVANCED_DIR)\AddDelBootDrvOpts.uni"
 	Parent  = "SetupStringFiles"
 	InvokeOrder = AfterParent
 End
 
 ELINK
 	Name  = "TseAdvancedBin"
-	Parent  = "ADDITIONAL_AMITSE_LibraryClasses"
-	InvokeOrder = AfterParent
-End
-
-ELINK
-	Name  = "TseAdvancedImagesBin"
 	Parent  = "ADDITIONAL_AMITSE_LibraryClasses"
 	InvokeOrder = AfterParent
 End
@@ -70,21 +57,8 @@ INFComponent
 	Package  = "AmiTsePkg"
 End
 
-INFComponent
-	Name  = "TseAdvancedImagesBin"
-	File  = "AdvancedImages/AdvancedImagesBin.inf"
-	Package  = "AmiTsePkg"
-End
-
-
 LibraryMapping
 	Class  = "TseAdvancedBin"
 	Instance  = "AmiTsePkg.TseAdvancedBin"
-#	Arch  = "X64"
-End
-
-LibraryMapping
-	Class  = "TseAdvancedImagesBin"
-	Instance  = "AmiTsePkg.TseAdvancedImagesBin"
 #	Arch  = "X64"
 End

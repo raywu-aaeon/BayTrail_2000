@@ -1,0 +1,18 @@
+<component>
+	name = "SynTCGAslVar"
+	category = eModule
+	LocalRoot = "AmiModulePkg\SynTCGAslVar"
+	RefName = "SynTCGAslVar"
+[INF]
+SynTCGAslVarDxe.inf
+SynTCGAslVarSMM.inf
+SynTcgAml.inf
+[files]
+"SynTCGAslVar.sdl"	
+"SynTCGAslVar.h"	
+"SynTCGAslVar.c"		
+"tcg_ppi1_2.asl"	
+"SynTCGAslVarLib.c"	
+"SynTCGAslVarSMM.c"
+"SynTcgAslVar.mak"
+<endComponent>

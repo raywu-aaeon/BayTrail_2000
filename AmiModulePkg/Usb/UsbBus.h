@@ -1,40 +1,49 @@
-//**********************************************************************
-//**********************************************************************
-//**                                                                  **
-//**        (C)Copyright 1985-2016, American Megatrends, Inc.         **
-//**                                                                  **
-//**                       All Rights Reserved.                       **
-//**                                                                  **
-//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093        **
-//**                                                                  **
-//**                       Phone: (770)-246-8600                      **
-//**                                                                  **
-//**********************************************************************
-//**********************************************************************
+//****************************************************************************
+//****************************************************************************
+//**                                                                        **
+//**             (C)Copyright 1985-2008, American Megatrends, Inc.          **
+//**                                                                        **
+//**                          All Rights Reserved.                          **
+//**                                                                        **
+//**                 5555 Oakbrook Pkwy, Norcross, GA 30093                 **
+//**                                                                        **
+//**                          Phone (770)-246-8600                          **
+//**                                                                        **
+//****************************************************************************
+//****************************************************************************
 
-/** @file UsbBus.h
-    AMI USB bus driver header file
+//****************************************************************************
+// $Header: /Alaska/SOURCE/Modules/USB/ALASKA/usbbus.h 14    9/04/12 6:15a Ryanchou $
+//
+// $Revision: 14 $
+//
+// $Date: 9/04/12 6:15a $
+//
+//****************************************************************************
 
-**/
+//<AMI_FHDR_START>
+//----------------------------------------------------------------------------
+//
+//  Name:           UsbBus.h
+//
+//  Description:    AMI USB bus driver header file
+//
+//----------------------------------------------------------------------------
+//<AMI_FHDR_END>
 
 #ifndef _USBBUS_INC_
 #define _USBBUS_INC_
 
 #include "Tree.h"
-#include "Rt/UsbDef.h"
+#include "UsbDef.h"
 #include <Protocol/UsbHc.h>
 #include <Protocol/UsbIo.h>
 #include <Protocol/DevicePath.h>
-#if USB_IAD_PROTOCOL_SUPPORT
-#include <Protocol/AmiUsbIad.h>
-#endif
 
 
 #define USB_MAXLANID          16
 #define USB_MAXCHILDREN       8
 #define USB_MAXCONTROLLERS    4
-
-#define USB_US_LAND_ID   0x0409
 
 #pragma pack(push, 1)
 
@@ -48,6 +57,11 @@ typedef struct {
   UINT8  desctype;
   UINT16 langID[1];
 } lang_table_t;
+
+typedef struct {
+    UINT8   address;
+    EFI_USB_ENDPOINT_DESCRIPTOR* desc;
+} endpoint_t;
 
 #pragma pack(pop)
 
@@ -72,23 +86,6 @@ typedef struct _USBBUS_HC_T {
 
 #define COMPRESS_EP_ADR(a)              ( a & 0xF )
 
-#if USB_IAD_PROTOCOL_SUPPORT
-
-typedef struct _USBIAD_DATA_T {
-    EFI_HANDLE  Handle;
-    UINTN       DataSize;
-} USBIAD_DATA_T;
-
-typedef struct _IAD_DETAILS {
-    UINT8       ConfigIndex;
-    AMI_USB_INTERFACE_ASSOCIATION_DESCRIPTOR    *Descriptor;
-    EFI_HANDLE              IadHandle;
-    AMI_USB_IAD_PROTOCOL    Iad;
-    USBIAD_DATA_T           *Data;
-} IAD_DETAILS;
-
-#endif
-
 typedef struct _DEVGROUP_T {
     int                                 type;
     EFI_HANDLE                          handle; // handle of the controller
@@ -97,12 +94,9 @@ typedef struct _DEVGROUP_T {
     DEV_INFO                            *dev_info;
     HC_STRUC                            *hc_info;
     lang_table_t                        *lang_table;
-    EFI_USB_STRING_DESCRIPTOR           *ManufacturerStrDesc;
-    EFI_USB_STRING_DESCRIPTOR           *ProductStrDesc;
-    EFI_USB_STRING_DESCRIPTOR           *SerialNumberStrDesc;
     EFI_USB_DEVICE_DESCRIPTOR           dev_desc;
     EFI_USB_CONFIG_DESCRIPTOR           **configs;
-    EFI_USB_ENDPOINT_DESCRIPTOR*        endpoints[0x20];
+    endpoint_t                          endpoints[0x20];
     EFI_USB_ENDPOINT_DESCRIPTOR*        a2endpoint[0x20];
     int                                 endpoint_count;
 
@@ -110,13 +104,7 @@ typedef struct _DEVGROUP_T {
     int                                 config_count;
     int                                 f_DevDesc;
     TREENODE_T                          node;
-#if USB_IAD_PROTOCOL_SUPPORT
-    UINT8                               iad_count;
-    IAD_DETAILS                         *iad_details;
-#endif
 } DEVGROUP_T;
-
-#define USB_MAX_ALT_IF 16
 
 typedef struct _USBDEV_T {
     int                                 type;
@@ -128,33 +116,28 @@ typedef struct _USBDEV_T {
     //UINT8                             toggle; //toggle param for bulk transfer
     CHAR16*                             name;
     int                                 f_connected; //was ConnectControllers successful?
-    int                                 first_endpoint[USB_MAX_ALT_IF];
-    int                                 end_endpoint[USB_MAX_ALT_IF];
-    EFI_USB_INTERFACE_DESCRIPTOR*       descIF[USB_MAX_ALT_IF];
-    UINT32                              LoadedAltIfMap;
+    int                                 first_endpoint;
+    int                                 end_endpoint;
+    EFI_USB_INTERFACE_DESCRIPTOR*       descIF;
     UINT8                               speed;
     EFI_USB_IO_PROTOCOL                 io;
     TREENODE_T                          node;
 	int									async_endpoint;
 } USBDEV_T;
 
-EFI_STATUS 
-EFIAPI
-UsbBusSupported (
+
+
+EFI_STATUS UsbBusSupported (
   EFI_DRIVER_BINDING_PROTOCOL     *pThis,
   EFI_HANDLE                      controller,
   EFI_DEVICE_PATH_PROTOCOL        * );
 
-EFI_STATUS
-EFIAPI
-UsbBusStart (
+EFI_STATUS UsbBusStart (
   EFI_DRIVER_BINDING_PROTOCOL     *pThis,
   EFI_HANDLE                      controller,
   EFI_DEVICE_PATH_PROTOCOL        * );
 
-EFI_STATUS
-EFIAPI
-UsbBusStop (
+EFI_STATUS UsbBusStop (
   EFI_DRIVER_BINDING_PROTOCOL     *pThis,
   EFI_HANDLE                      controller,
   UINTN                           NumberOfChildren,
@@ -163,8 +146,6 @@ UsbBusStop (
 EFI_STATUS UsbBusInit(EFI_HANDLE  ImageHandle,EFI_HANDLE  ServiceHandle);
 
 USBDEV_T* UsbIo2Dev(EFI_USB_IO_PROTOCOL* p);
-DEVGROUP_T* UsbDevGetGroup(USBDEV_T* Dev);
-DEV_INFO* FindDevStruc(EFI_HANDLE Controller);
 
 UINT8*
 UsbSmiGetDescriptor(
@@ -187,16 +168,6 @@ UsbSmiControlTransfer (
     UINT16      Length
 );
 
-UINT32
-UsbSmiIsocTransfer(
-    HC_STRUC    *HcStruc,
-    DEV_INFO    *DevInfo,
-    UINT8       XferDir,
-    UINT8       *Buffer,
-    UINT32      Length,
-    UINT8       *Async
-);
-
 UINT8
 UsbResetAndReconfigDev(
     HC_STRUC*   HostController,
@@ -207,18 +178,6 @@ UINT8
 UsbDevDriverDisconnect(
     HC_STRUC*   HostController,
     DEV_INFO*   Device
-);
-
-UINT8
-UsbSmiActivatePolling (
-    HC_STRUC* HostController,
-    DEV_INFO* DevInfo 
-);
-
-UINT8
-UsbSmiDeactivatePolling (
-    HC_STRUC* HostController,
-    DEV_INFO* DevInfo 
 );
 
 #define GETBIT(bitarray,value,bit) \
@@ -237,16 +196,16 @@ EFI_STATUS RemoveDevInfo(DEV_INFO* pDevInfo);
 
 #endif //_USBBUS_INC_
 
-//**********************************************************************
-//**********************************************************************
-//**                                                                  **
-//**        (C)Copyright 1985-2016, American Megatrends, Inc.         **
-//**                                                                  **
-//**                       All Rights Reserved.                       **
-//**                                                                  **
-//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093        **
-//**                                                                  **
-//**                       Phone: (770)-246-8600                      **
-//**                                                                  **
-//**********************************************************************
-//**********************************************************************
+//****************************************************************************
+//****************************************************************************
+//**                                                                        **
+//**             (C)Copyright 1985-2008, American Megatrends, Inc.          **
+//**                                                                        **
+//**                          All Rights Reserved.                          **
+//**                                                                        **
+//**                 5555 Oakbrook Pkwy, Norcross, GA 30093                 **
+//**                                                                        **
+//**                          Phone (770)-246-8600                          **
+//**                                                                        **
+//****************************************************************************
+//****************************************************************************

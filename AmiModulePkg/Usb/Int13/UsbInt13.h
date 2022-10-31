@@ -1,16 +1,25 @@
-//**********************************************************************
-//**********************************************************************
-//**                                                                  **
-//**        (C)Copyright 1985-2016, American Megatrends, Inc.         **
-//**                                                                  **
-//**                       All Rights Reserved.                       **
-//**                                                                  **
-//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093        **
-//**                                                                  **
-//**                       Phone: (770)-246-8600                      **
-//**                                                                  **
-//**********************************************************************
-//**********************************************************************
+//****************************************************************************
+//****************************************************************************
+//**                                                                        **
+//**             (C)Copyright 1985-2008, American Megatrends, Inc.          **
+//**                                                                        **
+//**                          All Rights Reserved.                          **
+//**                                                                        **
+//**                 5555 Oakbrook Pkwy, Norcross, GA 30093                 **
+//**                                                                        **
+//**                          Phone (770)-246-8600                          **
+//**                                                                        **
+//****************************************************************************
+//****************************************************************************
+
+//****************************************************************************
+// $Header: /Alaska/SOURCE/Modules/USB/ALASKA/Int13/UsbInt13.h 9     1/06/12 1:01a Rajeshms $
+//
+// $Revision: 9 $
+//
+// $Date: 1/06/12 1:01a $
+//
+//****************************************************************************
 
 #ifndef __UI13_HEADER__
 #define __UI13_HEADER__
@@ -19,15 +28,20 @@
 
 #pragma pack(1)
 
-/** @file UsbInt13.h
-    Definitions and structures for USB INT13
+//<AMI_FHDR_START>
+//---------------------------------------------------------------------------
+//
+//  Name:           UINT13.H
+//  Description:    Definitions and structures for USB INT13
+//
+//---------------------------------------------------------------------------
+//<AMI_FHDR_END>
 
-**/
-
-VOID    EFIAPI ReadyToBootNotify(EFI_EVENT, VOID*);
-EFI_STATUS  EFIAPI InstallUsbLegacyBootDevices(VOID);
-EFI_STATUS  EFIAPI UsbInstallLegacyDevice(USB_MASS_DEV*);
-EFI_STATUS  EFIAPI UsbUninstallLegacyDevice(USB_MASS_DEV*);
+VOID        AmiUsbNotifyCallback (EFI_EVENT, VOID*);
+VOID        ReadyToBootNotify(EFI_EVENT, VOID*);
+EFI_STATUS  InstallUsbLegacyBootDevices (VOID);
+EFI_STATUS  UsbInstallLegacyDevice (USB_MASS_DEV*);
+EFI_STATUS  UsbUninstallLegacyDevice (USB_MASS_DEV*);
 
 #define     USBDEVS_MAX_ENTRIES 16
 
@@ -35,15 +49,15 @@ typedef struct _USBMASS_INT13_DEV {
     UINT8   Handle;
     UINT8   BbsEntryNo;
     UINT8   DevBaidType;
-    UINT16  NumHeads;
-    UINT16  LBANumHeads;
+    UINT8   NumHeads;
+    UINT8   LBANumHeads;
     UINT16  NumCylinders;
     UINT16  LBANumCyls;
     UINT8   NumSectors;
     UINT8   LBANumSectors;
     UINT16  BytesPerSector;
     UINT8   MediaType;
-    UINT64  LastLBA;
+    UINT32  LastLBA;
     UINT8   BpbMediaDesc;
     UINT8   DeviceNameString[64];
 } USBMASS_INT13_DEV;
@@ -77,16 +91,16 @@ EFI_STATUS InitializeHotplugDevices();
 
 #endif
 
-//**********************************************************************
-//**********************************************************************
-//**                                                                  **
-//**        (C)Copyright 1985-2016, American Megatrends, Inc.         **
-//**                                                                  **
-//**                       All Rights Reserved.                       **
-//**                                                                  **
-//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093        **
-//**                                                                  **
-//**                       Phone: (770)-246-8600                      **
-//**                                                                  **
-//**********************************************************************
-//**********************************************************************
+//****************************************************************************
+//****************************************************************************
+//**                                                                        **
+//**             (C)Copyright 1985-2008, American Megatrends, Inc.          **
+//**                                                                        **
+//**                          All Rights Reserved.                          **
+//**                                                                        **
+//**                 5555 Oakbrook Pkwy, Norcross, GA 30093                 **
+//**                                                                        **
+//**                          Phone (770)-246-8600                          **
+//**                                                                        **
+//****************************************************************************
+//****************************************************************************

@@ -1,7 +1,7 @@
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2012, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **
@@ -13,9 +13,15 @@
 //**********************************************************************
 
 //**********************************************************************
+// $Header: /Alaska/SOURCE/Core/Modules/NVRAM/NVRAMRead.c 29    11/29/12 5:10p Felixp $
+//
+// $Revision: 29 $
+//
+// $Date: 11/29/12 5:10p $
+//**********************************************************************
 //<AMI_FHDR_START>
 //
-// Name:	NvramRead.c
+// Name:	NVRAMRead.c
 //
 // Description:	NVRAM data area access API
 //
@@ -541,7 +547,7 @@ VOID* NvFindVariable(
     
     return NULL;
 }
-//<AMI_PHDR_START>
+
 //----------------------------------------------------------------------------
 // Procedure:   NvFindVariableByNvar
 //
@@ -807,7 +813,7 @@ EFI_STATUS NvGetNextVariableNvar(
             
             if (!pNvar) return EFI_INVALID_PARAMETER;
         }
-        if (Runtime && !(pNvar->flags & NVRAM_FLAG_RUNTIME) ) return EFI_INVALID_PARAMETER;
+        
         pNvar=NvGetNextValid(pNvar,pInfo);
     }
     
@@ -1027,11 +1033,6 @@ EFI_STATUS NvGetNextVariableName2(
     UINT32 i;
     EFI_STATUS Status;
     NVAR* Nvar;
-    CHAR16 OrgName; 
-
-    OrgName = VariableName[0];
-    // Preserve first letter of passed Var name, for the case when NvGetNameFromNvar returns EFI_BUFFER_TOO_SMALL right 
-    // after setting first letter of name to 0 for search in the next Varstore 
 
     if (VariableName[0]==0 && LastInfoIndex) *LastInfoIndex=0;
     
@@ -1048,10 +1049,6 @@ EFI_STATUS NvGetNextVariableName2(
                         break;
                 if (j==i) break;
                 Nvar=NvGetNextValid(Nvar,&pInfo[i]);
-                if ( Runtime ){
-                    while (Nvar && !(Nvar->flags & NVRAM_FLAG_RUNTIME))
-                        Nvar=NvGetNextValid(Nvar,&pInfo[i]);
-                }
             }
             if (!Nvar)
             {
@@ -1063,13 +1060,9 @@ EFI_STATUS NvGetNextVariableName2(
         if (!EFI_ERROR(Status))
         {
             if (LastInfoIndex) *LastInfoIndex=i;
-            Status = NvGetNameFromNvar(
+            return NvGetNameFromNvar(
                 Nvar, VariableName, VariableNameSize, VendorGuid, &pInfo[i]
             );
-            if (EFI_ERROR(Status)) {
-                VariableName[0] = OrgName; //Restore first letter in case it was set to 0 before going to new Varstore
-            }
-            return Status;
         }
         
         //When variable with VariableName/VendorGuid
@@ -1221,7 +1214,7 @@ BOOLEAN IsMainNvramStoreValid(
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2012, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **

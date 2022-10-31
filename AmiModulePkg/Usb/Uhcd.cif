@@ -20,6 +20,5 @@
 "EfiUsbHid.c"	
 "ComponentName.c"	
 "UsbMisc.c"	
-"ComponentName.h"
-"AmiUsbSmartCardReader.h"
+"ComponentName.h"	
 <endComponent>

@@ -1,7 +1,7 @@
 //****************************************************************************
 //****************************************************************************
 //**                                                                        **
-//**             (C)Copyright 1985-2016, American Megatrends, Inc.          **
+//**             (C)Copyright 1985-2010, American Megatrends, Inc.          **
 //**                                                                        **
 //**                          All Rights Reserved.                          **
 //**                                                                        **
@@ -12,48 +12,41 @@
 //****************************************************************************
 //****************************************************************************
 
-/** @file Uhci.c
-    AMI USB UHCI driver
+//****************************************************************************
+// $Header: /Alaska/SOURCE/Modules/USB/ALASKA/RT/uhci.c 86    8/29/12 8:17a Ryanchou $
+//
+// $Revision: 86 $
+//
+// $Date: 8/29/12 8:17a $
+//****************************************************************************
 
-**/
+//<AMI_FHDR_START>
+//-----------------------------------------------------------------------------
+//
+//  Name:           Uhci.c
+//
+//  Description:    AMI USB UHCI driver
+//
+//-----------------------------------------------------------------------------
+//<AMI_FHDR_END>
 
 #include "AmiDef.h"
 #include "UsbDef.h"
 #include "AmiUsb.h"
-#include "UsbKbd.h"
-#if !USB_RT_DXE_DRIVER
-#include <Library/AmiBufferValidationLib.h>
-#endif
-
-#if UHCI_SUPPORT
 
 extern  VOID*       USB_MemAlloc (UINT16);
 extern  UINT8       USB_MemFree  (VOID _FAR_ *,  UINT16);
 extern  UINT8       USBCheckPortChange (HC_STRUC*, UINT8, UINT8);
 extern  UINT8       USB_InstallCallBackFunction (CALLBACK_FUNC);
 
+extern  UINT32      ReadPCIConfig(UINT16, UINT8);
 extern  VOID        WordWritePCIConfig(UINT16, UINT8, UINT16);
-
-UINT32  HcReadPciReg(HC_STRUC*, UINT32);
-VOID    HcWritePciReg(HC_STRUC*, UINT32, UINT32);
-VOID    HcWordWritePciReg(HC_STRUC*, UINT32, UINT16);
-UINT32  HcReadHcMem(HC_STRUC*, UINT32);
-VOID    HcWriteHcMem(HC_STRUC*, UINT32, UINT32);
-VOID    HcClearHcMem(HC_STRUC*, UINT32, UINT32);
-VOID    HcSetHcMem(HC_STRUC*, UINT32, UINT32);
-UINT32  HcReadOpReg(HC_STRUC*, UINT32);
-VOID    HcWriteOpReg(HC_STRUC*, UINT32, UINT32);
-VOID    HcClearOpReg(HC_STRUC*, UINT32, UINT32);
-VOID    HcSetOpReg(HC_STRUC*, UINT32, UINT32);
-UINT8   HcByteReadHcIo(HC_STRUC*, UINT32);
-VOID    HcByteWriteHcIo(HC_STRUC*, UINT32, UINT8);
-UINT16  HcWordReadHcIo(HC_STRUC*, UINT32);
-VOID    HcWordWriteHcIo(HC_STRUC*, UINT32, UINT16);
-UINT32  HcDwordReadHcIo(HC_STRUC*, UINT32);
-VOID    HcDwordWriteHcIo(HC_STRUC*, UINT32, UINT32);
-UINT8	HcDmaMap(HC_STRUC*, UINT8, UINT8*, UINT32, UINT8**, VOID**);
-UINT8	HcDmaUnmap(HC_STRUC*, VOID*);
-
+extern  UINT8       ByteReadIO(UINT16);
+extern  VOID        ByteWriteIO(UINT16, UINT8);
+extern  UINT16      WordReadIO(UINT16);
+extern  VOID        WordWriteIO(UINT16, UINT16);
+extern  UINT32      DwordReadIO(UINT16);
+extern  VOID        DwordWriteIO(UINT16, UINT32);
 extern  VOID        FixedDelay(UINTN);
 extern  DEV_INFO*   USB_GetDeviceInfoStruc(UINT8, DEV_INFO*, UINT8, HC_STRUC*);
 extern  UINT8       USBLogError(UINT16);
@@ -76,19 +69,18 @@ UINT8   UHCI_EnumeratePorts (HC_STRUC*);
 UINT8   UHCI_DisableInterrupts (HC_STRUC*);
 UINT8   UHCI_EnableInterrupts (HC_STRUC*);
 UINT8   UHCI_ProcessInterrupt(HC_STRUC*);
-UINT32  UHCI_GetRootHubStatus (HC_STRUC*, UINT8, BOOLEAN);
+UINT8   UHCI_GetRootHubStatus (HC_STRUC*,UINT8);
 UINT8   UHCI_DisableRootHub (HC_STRUC*,UINT8);
 UINT8   UHCI_EnableRootHub (HC_STRUC*,UINT8);
 UINT8   UHCI_ResetRootHub (HC_STRUC*,UINT8);
 UINT16  UHCI_ControlTransfer (HC_STRUC*,DEV_INFO*,UINT16,UINT16,UINT16,UINT8*,UINT16);
 UINT32  UHCI_BulkTransfer (HC_STRUC*,DEV_INFO*,UINT8,UINT8*,UINT32);
-UINT16  UHCI_InterruptTransfer (HC_STRUC*, DEV_INFO*, UINT8, UINT16, UINT8*, UINT16);
+UINT16  UHCI_InterruptTransfer (HC_STRUC*,DEV_INFO*,UINT8*,UINT16);
 UINT8   UHCI_DeactivatePolling (HC_STRUC*,DEV_INFO*);
 UINT8   UHCI_ActivatePolling (HC_STRUC*,DEV_INFO*);
 UINT8   UHCI_DisableKeyRepeat (HC_STRUC*);
 UINT8   UHCI_EnableKeyRepeat (HC_STRUC*);
 UINT8   UHCI_GlobalSuspend (HC_STRUC*);	//(EIP54018+)
-UINT8   UhciSmiControl(HC_STRUC*, BOOLEAN);
 
 UINT8   UhciProcessQh (HC_STRUC*, UHCI_QH*);
 UINT8   UhciProcessTd (HC_STRUC*, UHCI_TD*);
@@ -104,242 +96,205 @@ VOID    UhciInitQh (UHCI_QH*);
 BOOLEAN UhciIsHalted(HC_STRUC*);
 UINT8   UhciTranslateInterval(UINT8);
 
-UHCI_TD*
-UhciAllocGeneralTds (
-	IN UINT8		DeviceAddr,
-	IN BOOLEAN		LowSpeed,
-	IN UINT8		PacketId,
-	IN UINT8        EndpointAddr,
-	IN UINT16		MaxPacket,
-	IN BOOLEAN		ShortPacket,
-    IN OUT UINTN    *BufferAddr,
-    IN OUT UINT32   *Length,
-    IN OUT UINT8    *DataToggle
-);
-
-VOID
-UhciFreeTds (
-	IN UHCI_TD	*FirstTd
-);
-
-VOID
-UhciActivateTds (
-	IN UHCI_TD	*FirstTd,
-	IN UINT8	DataToggle
-);
-
 extern  USB_GLOBAL_DATA *gUsbData;
-extern  BOOLEAN gCheckUsbApiParameter;
 
-UINT8   UhciRootHubQhCallBack(HC_STRUC*, DEV_INFO*, UINT8*, UINT8*, UINT16);
-UINT8   UhciRepeatQhCallback (HC_STRUC*, DEV_INFO*, UINT8*, UINT8*, UINT16);
-UINT8   UhciPollingQhCallback (HC_STRUC*, DEV_INFO*, UINT8*, UINT8*, UINT16);
+UINT8   UhciRootHubQhCallBack(HC_STRUC*, DEV_INFO*, UINT8*, UINT8*);
+UINT8   UhciRepeatQhCallback (HC_STRUC*, DEV_INFO*, UINT8*, UINT8*);
+UINT8   UhciPollingQhCallback (HC_STRUC*, DEV_INFO*, UINT8*, UINT8*);
 
-/**
-    This function fills the host controller driver routine pointers
-
-    @param 
-        fpHCDHeader     Ptr to the host controller header structure
-
-    @retval 
-        USB_SUCCESS = Success, USB_ERROR = Failure
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:    UHCI_FillHCDEntries
+//
+// Description:
+//  This function fills the host controller driver routine pointers
+//
+// Input:
+//  fpHCDHeader     Ptr to the host controller header structure
+//
+// Output:
+//  USB_SUCCESS = Success, USB_ERROR = Failure
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT8
-UHCI_FillHCDEntries(
-    HCD_HEADER *HcdHeader
-)
+UHCI_FillHCDEntries(HCD_HEADER *fpHCDHeader)
 {
     //
     // Fill the routines here
     //
-    HcdHeader->pfnHCDStart                = UHCI_Start;
-    HcdHeader->pfnHCDStop                 = UHCI_Stop;
-    HcdHeader->pfnHCDEnumeratePorts       = UHCI_EnumeratePorts;
-    HcdHeader->pfnHCDDisableInterrupts    = UHCI_DisableInterrupts;
-    HcdHeader->pfnHCDEnableInterrupts     = UHCI_EnableInterrupts;
-    HcdHeader->pfnHCDProcessInterrupt     = UHCI_ProcessInterrupt;
-    HcdHeader->pfnHCDGetRootHubStatus     = UHCI_GetRootHubStatus;
-    HcdHeader->pfnHCDDisableRootHub       = UHCI_DisableRootHub;
-    HcdHeader->pfnHCDEnableRootHub        = UHCI_EnableRootHub;
-    HcdHeader->pfnHCDControlTransfer      = UHCI_ControlTransfer;
-    HcdHeader->pfnHCDBulkTransfer         = UHCI_BulkTransfer;
-    HcdHeader->pfnHCDInterruptTransfer    = UHCI_InterruptTransfer;
-    HcdHeader->pfnHCDDeactivatePolling    = UHCI_DeactivatePolling;
-    HcdHeader->pfnHCDActivatePolling      = UHCI_ActivatePolling;
-    HcdHeader->pfnHCDDisableKeyRepeat     = UHCI_DisableKeyRepeat;
-    HcdHeader->pfnHCDEnableKeyRepeat      = UHCI_EnableKeyRepeat;
-    HcdHeader->pfnHCDEnableEndpoints      = USB_EnableEndpointsDummy;
-    HcdHeader->pfnHCDInitDeviceData       = USB_InitDeviceDataDummy;
-    HcdHeader->pfnHCDDeinitDeviceData     = USB_DeinitDeviceDataDummy;
-    HcdHeader->pfnHCDResetRootHub         = UHCI_ResetRootHub;
-    HcdHeader->pfnHCDClearEndpointState	= 0;	//(EIP54283+)
-    HcdHeader->pfnHCDGlobalSuspend        = UHCI_GlobalSuspend;	//(EIP54018+)
-    HcdHeader->pfnHCDSmiControl           = UhciSmiControl;
-
-    USB_InstallCallBackFunction(UhciPollingQhCallback);
-    USB_InstallCallBackFunction(UhciRepeatQhCallback);
-    USB_InstallCallBackFunction(UhciRootHubQhCallBack);
+    fpHCDHeader->pfnHCDStart                = UHCI_Start;
+    fpHCDHeader->pfnHCDStop                 = UHCI_Stop;
+    fpHCDHeader->pfnHCDEnumeratePorts       = UHCI_EnumeratePorts;
+    fpHCDHeader->pfnHCDDisableInterrupts    = UHCI_DisableInterrupts;
+    fpHCDHeader->pfnHCDEnableInterrupts     = UHCI_EnableInterrupts;
+    fpHCDHeader->pfnHCDProcessInterrupt     = UHCI_ProcessInterrupt;
+    fpHCDHeader->pfnHCDGetRootHubStatus     = UHCI_GetRootHubStatus;
+    fpHCDHeader->pfnHCDDisableRootHub       = UHCI_DisableRootHub;
+    fpHCDHeader->pfnHCDEnableRootHub        = UHCI_EnableRootHub;
+    fpHCDHeader->pfnHCDControlTransfer      = UHCI_ControlTransfer;
+    fpHCDHeader->pfnHCDBulkTransfer         = UHCI_BulkTransfer;
+    fpHCDHeader->pfnHCDInterruptTransfer    = UHCI_InterruptTransfer;
+    fpHCDHeader->pfnHCDDeactivatePolling    = UHCI_DeactivatePolling;
+    fpHCDHeader->pfnHCDActivatePolling      = UHCI_ActivatePolling;
+    fpHCDHeader->pfnHCDDisableKeyRepeat     = UHCI_DisableKeyRepeat;
+    fpHCDHeader->pfnHCDEnableKeyRepeat      = UHCI_EnableKeyRepeat;
+    fpHCDHeader->pfnHCDEnableEndpoints      = USB_EnableEndpointsDummy;
+    fpHCDHeader->pfnHCDInitDeviceData       = USB_InitDeviceDataDummy;
+    fpHCDHeader->pfnHCDDeinitDeviceData     = USB_DeinitDeviceDataDummy;
+	fpHCDHeader->pfnHCDResetRootHub         = UHCI_ResetRootHub;
+	fpHCDHeader->pfnHCDClearEndpointState	= 0;	//(EIP54283+)
+	fpHCDHeader->pfnHCDGlobalSuspend        = UHCI_GlobalSuspend;	//(EIP54018+)
 
     return  USB_SUCCESS;
 }
 
-/**
-    This API function is called to start a UHCI host controller. The input to the
-    routine is the pointer to the HC structure that defines this host controller
-
-    @param 
-        fpHCStruc   Ptr to the host controller structure
-
-    @retval 
-  Status: USB_SUCCESS = Success, USB_ERROR = Failure
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:     UHCI_Start
+//
+// Description:
+//  This API function is called to start a UHCI host controller. The input to the
+//  routine is the pointer to the HC structure that defines this host controller
+//
+// Input:
+//  fpHCStruc   Ptr to the host controller structure
+//
+// Output:
+//  Status: USB_SUCCESS = Success, USB_ERROR = Failure
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT8
-UHCI_Start(
-    HC_STRUC*   HcStruc
-)
+UHCI_Start (HC_STRUC*   fpHCStruc)
 {
-    UINT16  IoAddr;
+    UINT16  wIOAddr;
     UINT16  LegSupReg;
     UINT16  Index;
-    EFI_STATUS  EfiStatus;
-
-    EfiStatus = UsbHcStrucValidation(HcStruc);
-    
-    if (EFI_ERROR(EfiStatus)) {
-        return USB_ERROR;
-    }
-    
-#if !USB_RT_DXE_DRIVER
-    EfiStatus = AmiValidateMmioBuffer((VOID*)HcStruc->fpFrameList, 0x1000);
-    if (EFI_ERROR(EfiStatus)) {
-        return USB_ERROR;
-    }
-#endif
 
 /*
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "Enabling IO/BM for UHCI HC %02X\n", HcStruc->wBusDevFuncNum);
+USB_DEBUG(DEBUG_LEVEL_3, "Enabling IO/BM for UHCI HC %02X\n", fpHCStruc->wBusDevFuncNum);
     //
     // Enable IO access and Bus Mastering
     //
-    HcWordWritePciReg(HcStruc, 4, BIT0 + BIT2);
+    WordWritePCIConfig((UINT16)fpHCStruc->wBusDevFuncNum, 4, BIT0 + BIT2);
 */
     //
     // Set number of root hub ports present
     //
-    HcStruc->bNumPorts = 2;
+    fpHCStruc->bNumPorts = 2;
 
     //
     // Get the I/O base address for the host controller
     //
-    IoAddr = (UINT16)HcReadPciReg(HcStruc, USB_IO_BASE_ADDRESS);
+    wIOAddr = (UINT16)ReadPCIConfig((UINT16)fpHCStruc->wBusDevFuncNum, USB_IO_BASE_ADDRESS);
 
     //
     // Mask the low order two bits and store the value in HCStruc
     //
-    IoAddr = (UINT16)(IoAddr & (~(BIT0+BIT1)));
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_4, "HC I/O Address : %X\n", IoAddr);
-    HcStruc->BaseAddress = IoAddr;
+    wIOAddr = (UINT16)(wIOAddr & (~(BIT0+BIT1)));
+    USB_DEBUG(DEBUG_LEVEL_4, "HC I/O Address : %X\n", wIOAddr);
+    fpHCStruc->BaseAddress = wIOAddr;
 
-    HcStruc->wAsyncListSize = UHCI_FRAME_LIST_SIZE;
+    fpHCStruc->wAsyncListSize   = UHCI_FRAME_LIST_SIZE;
 
     //
     // Disable hardware interrupt generation by programming legacy registers
     //
-    LegSupReg = (UINT16)HcReadPciReg(HcStruc, USB_UHCI_REG_LEGSUP);
+    LegSupReg = (UINT16)ReadPCIConfig((UINT16)fpHCStruc->wBusDevFuncNum, USB_UHCI_REG_LEGSUP);
 
     //
     // Disable generation of SMI/IRQ and clear status bits
     //
     LegSupReg = (UINT16)(LegSupReg & (~BIT4));
-    HcWordWritePciReg(HcStruc, USB_UHCI_REG_LEGSUP, LegSupReg);
+    WordWritePCIConfig((UINT16)fpHCStruc->wBusDevFuncNum, USB_UHCI_REG_LEGSUP, LegSupReg);
 
     //
     // Disable the interrupts (to aVOID spurious interrupts)
     //
-    UHCI_DisableInterrupts(HcStruc);
+    UHCI_DisableInterrupts(fpHCStruc);
 
     //
     // Disable the host controller root hub ports
     //
-    UHCI_DisableHCPorts(HcStruc);
+    UHCI_DisableHCPorts(fpHCStruc);
 
     //
     // Check whether HC is already stopped
     //
-    if (!UhciIsHalted(HcStruc)) {
+    if (!UhciIsHalted(fpHCStruc)) {
         //
         // HC is still running. Stop it by programming HC run bit
         //
-        HcByteWriteHcIo(HcStruc, UHCI_COMMAND_REG,
-            HcByteReadHcIo(HcStruc, UHCI_COMMAND_REG) & ~UHC_HOST_CONTROLLER_RUN);
+        ByteWriteIO ((UINT16)(wIOAddr + UHCI_COMMAND_REG),
+            ByteReadIO((UINT16)(wIOAddr + UHCI_COMMAND_REG)) & ~UHC_HOST_CONTROLLER_RUN);
 
         //
         // Check whether the host controller is halted (check for 50 ms)
         //
         for (Index = 0; Index < 500; Index++) {
-            if ((HcByteReadHcIo(HcStruc, UHCI_STATUS_REG)) & UHC_HC_HALTED) {
+            if ((ByteReadIO((UINT16)(wIOAddr + UHCI_STATUS_REG))) & UHC_HC_HALTED) {
                 break;
             }
             FixedDelay(100);      // 100 us delay
         }
     }
-    ASSERT((HcByteReadHcIo(HcStruc, UHCI_STATUS_REG)) & UHC_HC_HALTED);
-    if (!((HcByteReadHcIo(HcStruc, UHCI_STATUS_REG)) & UHC_HC_HALTED)) {
+    ASSERT((ByteReadIO((UINT16)(wIOAddr + UHCI_STATUS_REG))) & UHC_HC_HALTED);
+    if (!((ByteReadIO((UINT16)(wIOAddr + UHCI_STATUS_REG))) & UHC_HC_HALTED)) {
         return USB_ERROR;
     }
 
     //
     // Reset the host controller
     //
-    HcByteWriteHcIo(HcStruc, UHCI_COMMAND_REG, UHC_GLOBAL_RESET);
+    ByteWriteIO((UINT16)(wIOAddr + UHCI_COMMAND_REG), UHC_GLOBAL_RESET);
 	
     FixedDelay(10 * 1000);    // Recommended 10msec delay, UHCI Spec, p.12, GRESET description
 	
-    HcByteWriteHcIo(HcStruc, UHCI_COMMAND_REG, 0);
+    ByteWriteIO((UINT16)(wIOAddr + UHCI_COMMAND_REG), 0);
 
     //
     // Memory has been allocated in AMIUHCD
     //
-    if (!HcStruc->fpFrameList) {
+    if (!fpHCStruc->fpFrameList) {
         return USB_ERROR;
     }
 
-    USB_InitFrameList(HcStruc, UHCI_TERMINATE);
+    USB_InitFrameList (fpHCStruc, UHCI_TERMINATE);
 
     //
     // Program frame list pointer to the HC
     //
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_4, "Frame list pointer : %x\n", HcStruc->fpFrameList);
-    HcDwordWriteHcIo(HcStruc, UHCI_FRAME_LIST_BASE, (UINT32)(UINTN)HcStruc->fpFrameList);
+    USB_DEBUG(DEBUG_LEVEL_4, "Frame list pointer : %x\n", fpHCStruc->fpFrameList);
+    DwordWriteIO((UINT16)(wIOAddr + UHCI_FRAME_LIST_BASE), (UINT32)(UINTN)fpHCStruc->fpFrameList);
 
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_6, "UHCI_StartTDSchedule\n");
+    USB_DEBUG(DEBUG_LEVEL_6, "UHCI_StartTDSchedule\n");
 
     //
     // Start the TD schedule
     //
-    if (UHCI_StartTDSchedule(HcStruc) != USB_SUCCESS) {
+    if (UHCI_StartTDSchedule(fpHCStruc) != USB_SUCCESS)
         return USB_ERROR;
-    }
 
-#if !USB_RT_DXE_DRIVER
+#if USB_RUNTIME_DRIVER_IN_SMM
     //
     // Enable hardware interrupt generation by programming legacy registers
     //
-    if (!(HcStruc->dHCFlag & HC_STATE_EXTERNAL)) {
-        LegSupReg = (UINT16)HcReadPciReg(HcStruc, USB_UHCI_REG_LEGSUP);
+    if (!(fpHCStruc->dHCFlag & HC_STATE_EXTERNAL)) {
+        LegSupReg = (UINT16)ReadPCIConfig(fpHCStruc->wBusDevFuncNum, USB_UHCI_REG_LEGSUP);
         // Enable generation of SMI/IRQ
         LegSupReg = (UINT16)(LegSupReg | BIT4) & ~BIT13;
-        HcWordWritePciReg(HcStruc, USB_UHCI_REG_LEGSUP, LegSupReg);
+        WordWritePCIConfig((UINT16)fpHCStruc->wBusDevFuncNum, USB_UHCI_REG_LEGSUP, LegSupReg);
     }
 #endif
     //
     // Start the host controller by setting the run and configure bit
     //
-    HcWordWriteHcIo(HcStruc, UHCI_COMMAND_REG,
+    WordWriteIO((UINT16)(wIOAddr + UHCI_COMMAND_REG),
         UHC_HOST_CONTROLLER_RUN |
         UHC_CONFIGURE_FLAG |
         UHC_MAX_PACKET_64_BYTE);
@@ -348,213 +303,182 @@ UHCI_Start(
     // Enable interrupt generation
     //
 //  WordWriteIO((UINT16)(wIOAddr + UHCI_INTERRUPT_ENABLE), (UHC_IOC_ENABLE | UHC_TIMEOUT_CRC_ENABLE));
-    HcWordWriteHcIo(HcStruc, UHCI_INTERRUPT_ENABLE, UHC_IOC_ENABLE);
+    WordWriteIO((UINT16)(wIOAddr + UHCI_INTERRUPT_ENABLE), UHC_IOC_ENABLE);
 
-    HcStruc->dHCFlag |= HC_STATE_RUNNING;
+    fpHCStruc->dHCFlag |= HC_STATE_RUNNING;
 
-    // Set USB_FLAG_DRIVER_STARTED flag when HC is running.
-    if (!(gUsbData->dUSBStateFlag & USB_FLAG_DRIVER_STARTED)) {
-        gUsbData->dUSBStateFlag |= USB_FLAG_DRIVER_STARTED;
-    }
-
-#if !USB_RT_DXE_DRIVER
+#if USB_RUNTIME_DRIVER_IN_SMM
     //
     // Register the USB HW SMI handler
     //
-    if (!(HcStruc->dHCFlag & HC_STATE_IRQ)) {
-        if (!(HcStruc->dHCFlag & HC_STATE_EXTERNAL)) {
-            UsbInstallHwSmiHandler(HcStruc);
-        } else {
-            USBSB_InstallUsbIntTimerHandler();
-    	}
-    }
+    if (!(fpHCStruc->dHCFlag & HC_STATE_EXTERNAL)) {
+        UsbInstallHwSmiHandler(fpHCStruc);
+    } else {
+        USBSB_InstallUsbIntTimerHandler();
+	}
 #endif
 
     return USB_SUCCESS;
 }
 
 
-/**
-    This API function is called to stop the UHCI controller. The input to the
-    routine is the pointer to the HC structure that defines this host controller.
-
-    @param 
-        fpHCStruc   Ptr to the host controller structure
-
-    @retval 
-  Status: USB_SUCCESS = Success, USB_ERROR = Failure
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:    UHCI_Stop
+//
+// Description:
+//  This API function is called to stop the UHCI controller. The input to the
+//  routine is the pointer to the HC structure that defines this host controller.
+//
+// Input:
+//  fpHCStruc   Ptr to the host controller structure
+//
+// Output:
+//  Status: USB_SUCCESS = Success, USB_ERROR = Failure
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT8
-UHCI_Stop(
-    HC_STRUC* HcStruc
-)
+UHCI_Stop (HC_STRUC* fpHCStruc)
 {
-    UINT16      LegSupReg;
-    UINT16      Index;
-    EFI_STATUS  EfiStatus;
-
-    EfiStatus = UsbHcStrucValidation(HcStruc);
-    
-    if (EFI_ERROR(EfiStatus)) {
-        return USB_ERROR;
-    }
-
-    if (!(HcStruc->dHCFlag & HC_STATE_RUNNING)) {
-        return USB_ERROR;
-    }
+	UINT16	wIOAddr = (UINT16)fpHCStruc->BaseAddress;
+    UINT16  LegSupReg;
+    UINT16  Index;
 
     //
     // Disable hardware interrupt generation by programming legacy registers
     //
-    if (!(HcStruc->dHCFlag & HC_STATE_EXTERNAL)) {
-        LegSupReg = (UINT16)HcReadPciReg(HcStruc, USB_UHCI_REG_LEGSUP);
+    if (!(fpHCStruc->dHCFlag & HC_STATE_EXTERNAL)) {
+        LegSupReg = (UINT16)ReadPCIConfig((UINT16)fpHCStruc->wBusDevFuncNum, USB_UHCI_REG_LEGSUP);
 
         //
         // Disable generation of SMI/IRQ and clear status bits
         //
         LegSupReg = (UINT16)(LegSupReg & ~(BIT4));
-        HcWordWritePciReg(HcStruc, USB_UHCI_REG_LEGSUP, LegSupReg);
+        WordWritePCIConfig((UINT16)fpHCStruc->wBusDevFuncNum, USB_UHCI_REG_LEGSUP, LegSupReg);
     }
 
     //
     // Disable the host controller interrupt generation
     //
-    UHCI_DisableInterrupts(HcStruc);
+    UHCI_DisableInterrupts (fpHCStruc);
 
 	// Disconnect all devices	
-	USB_DisconnectDevice(HcStruc, HcStruc->bHCNumber | BIT7, 1);
-	USB_DisconnectDevice(HcStruc, HcStruc->bHCNumber | BIT7, 2);
+	USB_DisconnectDevice(fpHCStruc, fpHCStruc->bHCNumber | BIT7, 1);
+	USB_DisconnectDevice(fpHCStruc, fpHCStruc->bHCNumber | BIT7, 2);
 
     //
     // Stop the host controller
     //
-    if (!UhciIsHalted(HcStruc)) {
+    if (!UhciIsHalted(fpHCStruc)) {
         //
         // Clear HC run bit
         //
-        HcByteWriteHcIo(HcStruc, UHCI_COMMAND_REG,
-            HcByteReadHcIo(HcStruc, UHCI_COMMAND_REG) & ~(UHC_HOST_CONTROLLER_RUN));
+        ByteWriteIO ((UINT16)(wIOAddr + UHCI_COMMAND_REG),
+            ByteReadIO((UINT16)(wIOAddr + UHCI_COMMAND_REG)) & ~(UHC_HOST_CONTROLLER_RUN));
 
         //
         // Check whether the host controller is halted (check for 50 ms)
         //
         for (Index = 0; Index < 500; Index++) {
-            if ((HcByteReadHcIo(HcStruc, UHCI_STATUS_REG)) & UHC_HC_HALTED) {
+            if ((ByteReadIO((UINT16)(wIOAddr + UHCI_STATUS_REG))) & UHC_HC_HALTED) {
                 break;
             }
             FixedDelay(100);      // 100 us delay
         }
     }
-    ASSERT((HcByteReadHcIo(HcStruc, UHCI_STATUS_REG)) & UHC_HC_HALTED);
+    ASSERT((ByteReadIO((UINT16)(wIOAddr + UHCI_STATUS_REG))) & UHC_HC_HALTED);
 
     // Reset the host controller
-    HcByteWriteHcIo(HcStruc, UHCI_COMMAND_REG, UHC_GLOBAL_RESET);
+    ByteWriteIO((UINT16)(wIOAddr + UHCI_COMMAND_REG), UHC_GLOBAL_RESET);
 	// Recommended 10msec delay, UHCI Spec, p.12, GRESET description
     FixedDelay(10 * 1000);
-    HcByteWriteHcIo(HcStruc, UHCI_COMMAND_REG, 0);
+    ByteWriteIO((UINT16)(wIOAddr + UHCI_COMMAND_REG), 0);
 
     //
     // Clear the frame list pointers
     //
-    USB_InitFrameList(HcStruc, UHCI_TERMINATE);
+    USB_InitFrameList (fpHCStruc, UHCI_TERMINATE);
 
     //
     // Disable and free the TD schedule data structures
     //
-    UHCI_StopTDSchedule(HcStruc);
+    UHCI_StopTDSchedule (fpHCStruc);
 
     //
     // Set the HC state to stopped
     //
-    HcStruc->dHCFlag &= ~(HC_STATE_RUNNING);
-
-    CheckBiosOwnedHc();
+    fpHCStruc->dHCFlag  &= ~(HC_STATE_RUNNING);
 
     return USB_SUCCESS;
 }
 
 
-/**
-    This API function is called to enumerate the root hub ports in the UHCI
-    controller. The input to the routine is the pointer to the HC structure
-    that defines this host controller
-
-    @param 
-        fpHCStruc   Ptr to the host controller structure
-
-    @retval 
-  Status: USB_SUCCESS = Success, USB_ERROR = Failure
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:    UHCI_EnumeratePorts
+//
+// Description:
+//  This API function is called to enumerate the root hub ports in the UHCI
+//  controller. The input to the routine is the pointer to the HC structure
+//  that defines this host controller
+//
+// Input:
+//  fpHCStruc   Ptr to the host controller structure
+//
+// Output:
+//  Status: USB_SUCCESS = Success, USB_ERROR = Failure
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT8
-UHCI_EnumeratePorts(
-    HC_STRUC* HcStruc
-)
+UHCI_EnumeratePorts(HC_STRUC* fpHCStruc)
 {
-    UINT8       HcNumber;
-    EFI_STATUS  EfiStatus;
+    UINT8       bHCNumber;
+    UINT16      wIOAddr, wPortAddr;
 
-    EfiStatus = UsbHcStrucValidation(HcStruc);
-    
-    if (EFI_ERROR(EfiStatus)) {
-        return USB_ERROR;
-    }
-
-    if (!(HcStruc->dHCFlag & HC_STATE_RUNNING)) {
-        return USB_ERROR;
-    }
-
-	if (UhciIsHalted(HcStruc)) {
-		return USB_ERROR;
-	}
+    wIOAddr = (UINT16)fpHCStruc->BaseAddress;
 
 //(USB0061+)>
     //
     // Check whether USB host controllers are accessible to aVOID system 
     // hang in ports enumeration.
     //
-    if (HcByteReadHcIo(HcStruc, 0) == 0xFF) {
-        return USB_ERROR;
-    }
+    if (ByteReadIO(wIOAddr) == 0xFF) return USB_ERROR;
 //<(USB0061+)
     //
     // Check whether enumeration is already began
     //
-    if (gUsbData->bEnumFlag == TRUE) {
-        return USB_SUCCESS;
-    }
+    if(gUsbData->bEnumFlag == TRUE) return USB_SUCCESS;
 
     gUsbData->bEnumFlag = TRUE;
-    HcNumber = (UINT8)(HcStruc->bHCNumber | BIT7);
+    bHCNumber = (UINT8)(fpHCStruc->bHCNumber | BIT7);
 										//(EIP61385)>
     //
     // Process Port#1 and clear Port#1 status bit
     //
-	if ((HcWordReadHcIo(HcStruc, UHCI_PORT1_CONTROL) & (UHC_CONNECT_STATUS_CHANGE | 
+    wPortAddr = wIOAddr + UHCI_PORT1_CONTROL;
+	if ((WordReadIO(wPortAddr) & (UHC_CONNECT_STATUS_CHANGE | 
 		UHC_CONNECT_STATUS)) == UHC_CONNECT_STATUS_CHANGE) {
-		 HcWordWriteHcIo(HcStruc, UHCI_PORT1_CONTROL, UHC_CONNECT_STATUS_CHANGE);
+		 WordWriteIO(wPortAddr, UHC_CONNECT_STATUS_CHANGE);
 	}
-    
-    USBCheckPortChange(HcStruc, HcNumber, 1);
-    
-    HcWordWriteHcIo(HcStruc, UHCI_PORT1_CONTROL, 
-        HcWordReadHcIo(HcStruc, UHCI_PORT1_CONTROL));
+    USBCheckPortChange(fpHCStruc, bHCNumber, 1);
+    WordWriteIO(wPortAddr, WordReadIO(wPortAddr));
 
     //
     // Process Port#2 and clear Port#2 status bit
     //
-	if ((HcWordReadHcIo(HcStruc, UHCI_PORT2_CONTROL) & (UHC_CONNECT_STATUS_CHANGE | 
+    wPortAddr = wIOAddr + UHCI_PORT2_CONTROL;
+	if ((WordReadIO(wPortAddr) & (UHC_CONNECT_STATUS_CHANGE | 
 		UHC_CONNECT_STATUS)) == UHC_CONNECT_STATUS_CHANGE) {
-		 HcWordWriteHcIo(HcStruc, UHCI_PORT2_CONTROL, UHC_CONNECT_STATUS_CHANGE);
+		 WordWriteIO(wPortAddr, UHC_CONNECT_STATUS_CHANGE);
 	}
-    
-    USBCheckPortChange(HcStruc, HcNumber, 2);
-    
-    HcWordWriteHcIo(HcStruc, UHCI_PORT2_CONTROL, 
-        HcWordReadHcIo(HcStruc, UHCI_PORT2_CONTROL));
+    USBCheckPortChange(fpHCStruc, bHCNumber, 2);
+    WordWriteIO(wPortAddr, WordReadIO(wPortAddr));
 										//<(EIP61385)
     gUsbData->bEnumFlag = FALSE;
 
@@ -562,97 +486,99 @@ UHCI_EnumeratePorts(
 }
 
 
-/**
-    This API function is called to disable the interrupts generated by the UHCI
-    host controller. The input to the routine is the pointer to the HC structure
-    that defines this host controller.
-
-    @param 
-        fpHCStruc   Ptr to the host controller structure
-
-    @retval 
-  Status: USB_SUCCESS = Success, USB_ERROR = Failure
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:    UHCI_DisableInterrupts
+//
+// Description:
+//  This API function is called to disable the interrupts generated by the UHCI
+//  host controller. The input to the routine is the pointer to the HC structure
+//  that defines this host controller.
+//
+// Input:
+//  fpHCStruc   Ptr to the host controller structure
+//
+// Output:
+//  Status: USB_SUCCESS = Success, USB_ERROR = Failure
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT8
-UHCI_DisableInterrupts(
-    HC_STRUC* HcStruc
-)
+UHCI_DisableInterrupts (HC_STRUC* fpHCStruc)
 {
-    UINT8   IntEnReg;
-    EFI_STATUS  EfiStatus;
+    UINT8   IntEnReg;    
+    UINT16  IoAddr = (UINT16)fpHCStruc->BaseAddress;
 
-    EfiStatus = UsbHcStrucValidation(HcStruc);
-    
-    if (EFI_ERROR(EfiStatus)) {
-        return USB_ERROR;
-    }
-
-    IntEnReg = HcByteReadHcIo(HcStruc, UHCI_INTERRUPT_ENABLE);
+    IntEnReg = ByteReadIO((UINT16)(IoAddr + UHCI_INTERRUPT_ENABLE));
     IntEnReg &= ~(UHC_IOC_ENABLE);
-    HcByteWriteHcIo(HcStruc, UHCI_INTERRUPT_ENABLE, IntEnReg);
+    ByteWriteIO((UINT16)(IoAddr + UHCI_INTERRUPT_ENABLE), IntEnReg);
 
-    return USB_SUCCESS;
+    return  USB_SUCCESS;
 }
 
 
-/**
-    This function enables the HC interrupts
-
-    @param 
-        fpHCStruc   Pointer to the HCStruc structure
-
-    @retval 
-        USB_SUCCESS of USB_ERROR
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:    UHCI_EnableInterrupts
+//
+// Description:
+//  This function enables the HC interrupts
+//
+// Input:
+//  fpHCStruc   Pointer to the HCStruc structure
+//
+// Output:
+//  USB_SUCCESS of USB_ERROR
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT8
-UHCI_EnableInterrupts(
-    HC_STRUC* HcStruc
-)
+UHCI_EnableInterrupts (HC_STRUC* fpHCStruc)
 {
     return USB_SUCCESS;
 }
 
 
-/**
-    This function is called when the USB interrupt bit is set. This function
-    will parse through the TDs and QHs to find out completed TDs and call
-    their respective callback functions.
-
-    @param 
-        fpHCStruc   Pointer to the HCStruc structure
-
-         
-    @retval USB_ERROR Need more Interrupt processing
-    @retval USB_SUCCESS No interrupts pending
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:    UHCI_ProcessInterrupt
+//
+// Description:
+//  This function is called when the USB interrupt bit is set. This function
+//  will parse through the TDs and QHs to find out completed TDs and call
+//  their respective callback functions.
+//
+// Input:
+//  fpHCStruc   Pointer to the HCStruc structure
+//
+// Output:
+//  USB_ERROR - Need more Interrupt processing
+//  USB_SUCCESS - No interrupts pending
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT8
 UHCI_ProcessInterrupt(
     HC_STRUC    *HcStruc
 )
 {
+    UINT16  IoPort = (UINT16)HcStruc->BaseAddress;
 	UINT16  LegSupReg = 0;
     UINT16  UsbSts = 0;
-    EFI_STATUS  EfiStatus;
-
-    EfiStatus = UsbHcStrucValidation(HcStruc);
-    
-    if (EFI_ERROR(EfiStatus)) {
-        return USB_ERROR;
-    }
 
 	if (!(HcStruc->dHCFlag & HC_STATE_RUNNING)) {
 		return USB_ERROR;
 	}
 
-#if !USB_RT_DXE_DRIVER
+#if USB_RUNTIME_DRIVER_IN_SMM
 	if (!(HcStruc->dHCFlag & HC_STATE_EXTERNAL)) {
-		LegSupReg = (UINT16)HcReadPciReg(HcStruc, USB_UHCI_REG_LEGSUP);
+		LegSupReg = (UINT16)ReadPCIConfig(HcStruc->wBusDevFuncNum, USB_UHCI_REG_LEGSUP);
 		if (!(LegSupReg & BIT4)) {
 			return USB_ERROR;
 		}
@@ -663,187 +589,165 @@ UHCI_ProcessInterrupt(
     // Check whether the controller is still under BIOS control
     // Read the frame list base address and compare with stored value
     //
-    if (((UINTN)HcDwordReadHcIo(HcStruc, UHCI_FRAME_LIST_BASE) & 0xFFFFF000) != 
+    if (((UINTN)DwordReadIO(IoPort + UHCI_FRAME_LIST_BASE) & 0xFFFFF000) != 
         (UINTN)HcStruc->fpFrameList) {
-#if !USB_RT_DXE_DRIVER
+#if USB_RUNTIME_DRIVER_IN_SMM
         if (!(HcStruc->dHCFlag & HC_STATE_EXTERNAL)) {
 			// Disable the SMI on IRQ enable bit
-			HcWordWritePciReg(HcStruc, USB_UHCI_REG_LEGSUP, LegSupReg & ~BIT4);
+			WordWritePCIConfig(HcStruc->wBusDevFuncNum, USB_UHCI_REG_LEGSUP, LegSupReg & ~BIT4);
 		}
 #endif
         return USB_ERROR; // Control is not with us anymore
     }
 
-    UsbSts = HcWordReadHcIo(HcStruc, UHCI_STATUS_REG);
+    UsbSts = WordReadIO(IoPort + UHCI_STATUS_REG);
 
 	if (UsbSts & UHC_HC_HALTED) {
 		return USB_ERROR;
 	}
 
     if (UsbSts & UHC_USB_INTERRUPT) {
-		HcWordWriteHcIo(HcStruc, UHCI_STATUS_REG, UsbSts);
+		WordWriteIO(IoPort + UHCI_STATUS_REG, UsbSts);
         UhciProcessFrameList(HcStruc);
-    }
-    if (HcStruc->dHCFlag & HC_STATE_EXTERNAL) {
-        UhciRootHubQhCallBack(HcStruc, NULL, NULL, NULL, 0);
     }
 
     return  USB_SUCCESS;
 }
 
 
-/**
-    This function returns the port connect status for the root hub port
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:    UHCI_GetRootHubStatus
+//
+// Description:
+//  This function returns the port connect status for the root hub port
+//
+// Input:
+//  pHCStruc    Pointer to HCStruc of the host controller
+//  bPortNum    Port in the HC whose status is requested
+//
+// Output:
+//  NewPortNum  Port in the HC that can possibly replace bPortNum
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
-    @param 
-        pHCStruc    Pointer to HCStruc of the host controller
-        bPortNum    Port in the HC whose status is requested
-
-    @retval 
-        NewPortNum  Port in the HC that can possibly replace bPortNum
-
-**/
-
-UINT32
-UHCI_GetRootHubStatus(
-    HC_STRUC*   HcStruc,
-    UINT8       PortNum,
-    BOOLEAN     ClearChangeBits
-)
+UINT8
+UHCI_GetRootHubStatus (HC_STRUC* fpHCStruc, UINT8 bPortNum)
 {
-    UINT32  PortStatus;
-    UINT16  PortTemp;
-    UINT16  PortStatusOffset = (PortNum << 1) + UHCI_PORT1_CONTROL - 2;
-    EFI_STATUS  EfiStatus;
+    UINT16  wPortAddr, wPortStatus, wPortTemp;
 
-    EfiStatus = UsbHcStrucValidation(HcStruc);
-    
-    if (EFI_ERROR(EfiStatus)) {
-        return USB_ERROR;
-    }
-
-    PortStatus = USB_PORT_STAT_DEV_OWNER;
+    wPortStatus = USB_PORT_STAT_DEV_OWNER;
+    wPortAddr = (UINT16)((bPortNum<<1)+UHCI_PORT1_CONTROL-2+fpHCStruc->BaseAddress);
 
     //
     // Read the port status
     //
-    PortTemp = HcWordReadHcIo(HcStruc, PortStatusOffset);
-	USB_DEBUG(DEBUG_INFO, 3, "UHCI port[%d] status: %04x\n", PortNum, PortTemp);
+    wPortTemp = WordReadIO(wPortAddr);
+	USB_DEBUG(3, "UHCI port[%d] status: %04x\n", bPortNum, wPortTemp);
 
     //
     // Check for port connect status
     //
-    if (PortTemp & UHC_CONNECT_STATUS) {
-        PortStatus |= USB_PORT_STAT_DEV_CONNECTED;
+    if (wPortTemp & UHC_CONNECT_STATUS) {
+        wPortStatus |= USB_PORT_STAT_DEV_CONNECTED;
 
         //
         // Identify the speed of the device (full or low speed)
         //
-        if (PortTemp & UHC_LOW_SPEED_ATTACHED) {
-            PortStatus |= USB_PORT_STAT_DEV_LOWSPEED;
+        if (wPortTemp & UHC_LOW_SPEED_ATTACHED) {
+            wPortStatus |= USB_PORT_STAT_DEV_LOWSPEED;
         }
         else {
-            PortStatus |= USB_PORT_STAT_DEV_FULLSPEED;
+            wPortStatus |= USB_PORT_STAT_DEV_FULLSPEED;
         }
 
-		if (PortTemp & UHC_PORT_ENABLE) {
-			PortStatus |= USB_PORT_STAT_DEV_ENABLED;
+		if (wPortTemp & UHC_PORT_ENABLE) {
+			wPortStatus |= USB_PORT_STAT_DEV_ENABLED;
 		}
     }
 
     //
     // Check for connect status change
     //
-    if (PortTemp & UHC_CONNECT_STATUS_CHANGE) {
-        PortStatus |= USB_PORT_STAT_DEV_CONNECT_CHANGED;
-        if (ClearChangeBits == TRUE) {
-            HcWordWriteHcIo(HcStruc, PortStatusOffset, UHC_CONNECT_STATUS_CHANGE);     //(EIP61385+)
-        }
-    }
-    if (PortTemp & UHC_PORT_RESET) {
-        PortStatus |= USB_PORT_STAT_DEV_RESET;
-    }
-    if (PortTemp & UHC_PORT_SUSPEND) {
-        PortStatus |= USB_PORT_STAT_DEV_SUSPEND;
-    }
-    if (PortTemp & UHC_PORT_ENABLE_CHANGE) {
-        PortStatus |= USB_PORT_STAT_DEV_ENABLE_CHANGED;
+    if (wPortTemp & UHC_CONNECT_STATUS_CHANGE) {
+        wPortStatus |= USB_PORT_STAT_DEV_CONNECT_CHANGED;
+		WordWriteIO(wPortAddr, UHC_CONNECT_STATUS_CHANGE);		//(EIP61385+)
     }
 
-    return PortStatus;
+    return  (UINT8)wPortStatus;
 }
 
 
-/**
-    This function disables the root hub of the UHCI controller.
-
-    @param 
-        fpHCStruc   Pointer to HCStruc of the host controller
-        bPortNum    Root port to be disabled
-
-    @retval 
-        USB_SUCCESS or USB_ERROR
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:    UHCI_DisableRootHub
+//
+// Description:
+//  This function disables the root hub of the UHCI controller.
+//
+// Input:
+//  fpHCStruc   Pointer to HCStruc of the host controller
+//  bPortNum    Root port to be disabled
+//
+// Output:
+//  USB_SUCCESS or USB_ERROR
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT8
-UHCI_DisableRootHub(
-    HC_STRUC*   HcStruc,
-    UINT8       PortNum
-)
+UHCI_DisableRootHub (HC_STRUC* fpHCStruc,UINT8 bPortNum)
 {
-    UINT16  PortStatusOffset = (PortNum << 1) + UHCI_PORT1_CONTROL - 2;
-    EFI_STATUS  EfiStatus;
-
-    EfiStatus = UsbHcStrucValidation(HcStruc);
-    
-    if (EFI_ERROR(EfiStatus)) {
-        return USB_ERROR;
-    }
+    UINT16 wPortAddr =
+        (UINT16)(fpHCStruc->BaseAddress + (bPortNum << 1) + UHCI_PORT1_CONTROL - 2);
     //
     // Reset the enable bit
     //
-    HcWordWriteHcIo(HcStruc, PortStatusOffset,
-        (UINT16)(HcWordReadHcIo(HcStruc, PortStatusOffset) & (~UHC_PORT_ENABLE)));
+    WordWriteIO(
+        wPortAddr,
+        (UINT16)(WordReadIO(wPortAddr) & (~UHC_PORT_ENABLE)));
 
     return USB_SUCCESS;
 }
 
 
-/**
-    This function enables the root hub port specified
-
-    @param 
-        fpHCStruc   Pointer to HCStruc of the host controller
-        bPortNum    Root port to be enabled
-
-    @retval 
-        USB_SUCCESS or USB_ERROR
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:    UHCI_EnableRootHub
+//
+// Description:
+//  This function enables the root hub port specified
+//
+// Input:
+//  fpHCStruc   Pointer to HCStruc of the host controller
+//  bPortNum    Root port to be enabled
+//
+// Output:
+//  USB_SUCCESS or USB_ERROR
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT8
 UHCI_EnableRootHub (
     HC_STRUC    *HcStruc,
     UINT8       PortNum)
 {
-	UINT16  PortStatus;
-    UINT16  PortStatusOffset = (PortNum << 1) + UHCI_PORT1_CONTROL - 2;
-    EFI_STATUS  EfiStatus;
+	UINT16 PortStatus;
+    UINT16 PortAddr =
+        (UINT16)(HcStruc->BaseAddress + (PortNum << 1) + UHCI_PORT1_CONTROL - 2);
 
-    EfiStatus = UsbHcStrucValidation(HcStruc);
-    
-    if (EFI_ERROR(EfiStatus)) {
-        return USB_ERROR;
-    }
-    
-	PortStatus = HcWordReadHcIo(HcStruc, PortStatusOffset);
+	PortStatus = WordReadIO(PortAddr);
 
     //
     // Set the enable & reset bit, preserve Connect Status Change bit
     //
 	PortStatus &= ~(UHC_CONNECT_STATUS_CHANGE | UHC_PORT_ENABLE_CHANGE);
-    HcWordWriteHcIo(HcStruc, PortStatusOffset, PortStatus | UHC_PORT_RESET);
+    WordWriteIO(PortAddr, PortStatus | UHC_PORT_RESET);
 
     //
     // Wait for 10ms
@@ -853,22 +757,22 @@ UHCI_EnableRootHub (
     //
     // Clear the reset bit and set the enable, preserve Connect Status Change bit
     //
-	PortStatus = HcWordReadHcIo(HcStruc, PortStatusOffset);
+	PortStatus = WordReadIO(PortAddr);
 	PortStatus &= ~(UHC_CONNECT_STATUS_CHANGE | UHC_PORT_ENABLE_CHANGE);
-    HcWordWriteHcIo(HcStruc, PortStatusOffset, PortStatus & (~UHC_PORT_RESET));
+    WordWriteIO(PortAddr, PortStatus & (~UHC_PORT_RESET));
 
     // Wait 1 ms for stabilize the port status
     FixedDelay(1 * 1000);        // 1 ms delay
 
     // Clear Connect Status Change bit and Port Enable Change bit
-    HcWordWriteHcIo(HcStruc, PortStatusOffset, HcWordReadHcIo(HcStruc, PortStatusOffset));
+    WordWriteIO(PortAddr, WordReadIO(PortAddr));
 
     //
     // Set the enable bit
     //
-    PortStatus = HcWordReadHcIo(HcStruc, PortStatusOffset);
+    PortStatus = WordReadIO(PortAddr);
     PortStatus &= ~(UHC_CONNECT_STATUS_CHANGE | UHC_PORT_ENABLE_CHANGE);
-    HcWordWriteHcIo(HcStruc, PortStatusOffset, PortStatus | UHC_PORT_ENABLE);
+    WordWriteIO(PortAddr, PortStatus | UHC_PORT_ENABLE);
 
     //
     // Wait for 100ms
@@ -878,17 +782,23 @@ UHCI_EnableRootHub (
     return USB_SUCCESS;
 }
 
-/**
-    This function resets the UHCI HC root hub port
-
-    @param 
-        HcStruc   Pointer to HCStruc of the host controller
-        PortNum    Root port to be enabled
-
-    @retval 
-        USB_SUCCESS or USB_ERROR
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:    UHCI_ResetRootHub
+//
+// Description:
+//  This function resets the UHCI HC root hub port
+//
+// Input:
+//  HcStruc   Pointer to HCStruc of the host controller
+//  PortNum    Root port to be enabled
+//
+// Output:
+//  USB_SUCCESS or USB_ERROR
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT8
 UHCI_ResetRootHub (
@@ -899,10 +809,16 @@ UHCI_ResetRootHub (
 }
 
 
-/**
-    This function suspend the UHCI HC.
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Name:        UHCI_GlobalSuspend
+//
+// Description: 
+//  This function suspend the UHCI HC.
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT8
 UHCI_GlobalSuspend(
@@ -910,45 +826,31 @@ UHCI_GlobalSuspend(
 )
 {
 
-    UINT16      UhciCommand;
-    UINT16      UhciStatus;
-    UINT32      i;
-    EFI_STATUS  EfiStatus;
+    UINT16	IoAddr = (UINT16)HcStruc->BaseAddress;
+    UINT16  UhciCommand;
+    UINT16  UhciStatus;
+    UINT32  i;
 
-    EfiStatus = UsbHcStrucValidation(HcStruc);
-    
-    if (EFI_ERROR(EfiStatus)) {
-        return USB_ERROR;
-    }
-
-    if (!(HcStruc->dHCFlag & HC_STATE_RUNNING)) {
-        return USB_ERROR;
-    }
-
-	if (UhciIsHalted(HcStruc)) {
-		return USB_ERROR;
-	}
-
-    UhciCommand = HcWordReadHcIo(HcStruc, UHCI_COMMAND_REG);
+    UhciCommand = WordReadIO(IoAddr + UHCI_COMMAND_REG);
     UhciCommand &= ~UHC_HOST_CONTROLLER_RUN;
-    HcWordWriteHcIo(HcStruc, UHCI_COMMAND_REG, UhciCommand);
+    WordWriteIO(IoAddr + UHCI_COMMAND_REG, UhciCommand);
     for (i = 0; i < 1024; i++) {
-        UhciStatus = HcWordReadHcIo(HcStruc, UHCI_STATUS_REG);
+        UhciStatus = WordReadIO(IoAddr + UHCI_STATUS_REG);
         if (UhciStatus & UHC_HC_HALTED) {
             break;
         }
         FixedDelay(1 * 1000);
     }
     
-    HcWordWriteHcIo(HcStruc, UHCI_INTERRUPT_ENABLE, UHC_RESUME_ENABLE);
+    WordWriteIO((UINT16)(IoAddr + UHCI_INTERRUPT_ENABLE), UHC_RESUME_ENABLE);
     
-    UhciStatus = HcWordReadHcIo(HcStruc, UHCI_STATUS_REG);
+    UhciStatus = WordReadIO(IoAddr + UHCI_STATUS_REG);
     UhciStatus |= 0x1F;
-    HcWordWriteHcIo(HcStruc, UHCI_STATUS_REG, UhciStatus);
+    WordWriteIO(IoAddr + UHCI_STATUS_REG, UhciStatus);
   
-    UhciCommand = HcWordReadHcIo(HcStruc, UHCI_COMMAND_REG);
+    UhciCommand = WordReadIO(IoAddr + UHCI_COMMAND_REG);
     UhciCommand |= UHC_ENTER_SUSPEND;
-    HcWordWriteHcIo(HcStruc, UHCI_COMMAND_REG, UhciCommand);
+    WordWriteIO(IoAddr + UHCI_COMMAND_REG, UhciCommand);
     FixedDelay(50 * 1000);
     
     HcStruc->dHCFlag &= ~(HC_STATE_RUNNING);
@@ -956,60 +858,24 @@ UHCI_GlobalSuspend(
     
     return  USB_SUCCESS;
 }
-
-UINT8
-UhciSmiControl(
-    HC_STRUC* HcStruc,
-    BOOLEAN Enable
-)
-{
-    UINT16      LegSupReg;
-    EFI_STATUS  EfiStatus;
-
-    EfiStatus = UsbHcStrucValidation(HcStruc);
-    
-    if (EFI_ERROR(EfiStatus)) {
-        return USB_ERROR;
-    }
-
-    if (!(HcStruc->dHCFlag & HC_STATE_RUNNING)) {
-        return USB_ERROR;
-    }
-    
-    if (HcStruc->HwSmiHandle == NULL) {
-        return USB_SUCCESS;
-    }
-
-    LegSupReg = (UINT16)HcReadPciReg(HcStruc, USB_UHCI_REG_LEGSUP);
-
-    if (Enable == TRUE) {
-        //
-        // Eisable generation of SMI/IRQ and clear status bits
-        //
-        LegSupReg = (UINT16)(LegSupReg | BIT4) & ~BIT13;
-        HcWordWritePciReg(HcStruc, USB_UHCI_REG_LEGSUP, LegSupReg);
-    } else {
-        //
-        // Disable generation of SMI/IRQ and clear status bits
-        //
-        LegSupReg = (UINT16)(LegSupReg & ~(BIT4));
-        HcWordWritePciReg(HcStruc, USB_UHCI_REG_LEGSUP, LegSupReg);
-    }
-
-    return USB_SUCCESS;
-}
                                         
-/**
-    This function execites a transfer and waits for the completion of 
-    the transfer, and returns the transfer results.
-
-    @param 
-        Pointers to the first data TD and last data TD in the TD list
-
-    @retval 
-        Return value is the size of transferred data, Bytes
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        UhciExecuteTransfer
+//
+// Description:
+//  This function execites a transfer and waits for the completion of 
+//  the transfer, and returns the transfer results.
+//
+// Input:
+//  Pointers to the first data TD and last data TD in the TD list
+//
+// Output:
+//  Return value is the size of transferred data, Bytes
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT32
 UhciExecuteTransfer (
@@ -1036,124 +902,95 @@ UhciExecuteTransfer (
     UhciProcessQh(HcStruc, TransferQh);
     
     if (TransferQh->ActiveFlag) {
-        USB_DEBUG(DEBUG_ERROR, DEBUG_LEVEL_3, "UHCI Time-Out\n");
+        USB_DEBUG (DEBUG_LEVEL_3, "UHCI Time-Out\n");
     }
 
     return TransferQh->BytesTransferred;
 }
  
-/**
-    This function executes a device request command transaction on the USB. One
-    setup packet is generated containing the device request parameters supplied
-    by the caller.  The setup packet may be followed by data in or data out packets
-    containing data sent from the host to the device or vice-versa. This function
-    will not return until the request either completes successfully or completes in
-    error (due to time out, etc.)
-
-    @param 
-        fpHCStruc   Pointer to HCStruc of the host controller
-        pDevInfo    DeviceInfo structure (if available else 0)
-        wRequest    Request type (low byte)
-        Bit 7   : Data direction
-        0 = Host sending data to device
-        1 = Device sending data to host
-        Bit 6-5 : Type
-        00 = Standard USB request
-        01 = Class specific
-        10 = Vendor specific
-        11 = Reserved
-        Bit 4-0 : Recipient
-        00000 = Device
-        00001 = Interface
-        00010 = Endpoint
-        00100 - 11111 = Reserved
-        Request code, a one byte code describing
-        the actual device request to be executed
-        (ex: Get Configuration, Set Address etc)
-        wIndex      wIndex request parameter (meaning varies)
-        wValue      wValue request parameter (meaning varies)
-        fpBuffer    Buffer containing data to be sent to the
-        device or buffer to be used to receive data
-        wLength     wLength request parameter, number of bytes
-        of data to be transferred in or out
-        of the host controller
-
-
-    @retval 
-        Number of bytes transferred: 0 - Failure, <>0 - Success
-
-
-    @note  
-  Do not use USB_SUCCESS or USB_ERROR as returned values
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:    UHCI_ControlTransfer
+//
+// Description:
+//  This function executes a device request command transaction on the USB. One
+//  setup packet is generated containing the device request parameters supplied
+//  by the caller.  The setup packet may be followed by data in or data out packets
+//  containing data sent from the host to the device or vice-versa. This function
+//  will not return until the request either completes successfully or completes in
+//  error (due to time out, etc.)
+//
+// Input:
+//      fpHCStruc   Pointer to HCStruc of the host controller
+//      pDevInfo    DeviceInfo structure (if available else 0)
+//      wRequest    Request type (low byte)
+//              Bit 7   : Data direction
+//                  0 = Host sending data to device
+//                  1 = Device sending data to host
+//              Bit 6-5 : Type
+//                  00 = Standard USB request
+//                  01 = Class specific
+//                  10 = Vendor specific
+//                  11 = Reserved
+//              Bit 4-0 : Recipient
+//                  00000 = Device
+//                  00001 = Interface
+//                  00010 = Endpoint
+//                  00100 - 11111 = Reserved
+//              Request code, a one byte code describing
+//              the actual device request to be executed
+//              (ex: Get Configuration, Set Address etc)
+//      wIndex      wIndex request parameter (meaning varies)
+//      wValue      wValue request parameter (meaning varies)
+//      fpBuffer    Buffer containing data to be sent to the
+//              device or buffer to be used to receive data
+//      wLength     wLength request parameter, number of bytes
+//              of data to be transferred in or out
+//              of the host controller
+//
+//
+// Output:
+//  Number of bytes transferred: 0 - Failure, <>0 - Success
+//
+//
+// Notes:
+//  Do not use USB_SUCCESS or USB_ERROR as returned values
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT16
 UHCI_ControlTransfer (
-    HC_STRUC    *HcStruc,
-    DEV_INFO    *DevInfo,
-    UINT16      Request,
-    UINT16      Index,
-    UINT16      Value,
-    UINT8       *Buffer,
-    UINT16      Length
-)
+    HC_STRUC    *fpHCStruc,
+    DEV_INFO    *fpDevInfo,
+    UINT16      wRequest,
+    UINT16      wIndex,
+    UINT16      wValue,
+    UINT8       *fpBuffer,
+    UINT16      wLength)
 {
-    UINT16      Packet;
-    UINT32      Temp;
-    UINT32      Data;
+    UINT16      wTemp;
+    UINT32      dTemp;
+    UINT32      dValue;
 
-    DEV_REQ     *DevReq;
+    DEV_REQ     *fpDevReq;
     UHCI_TD     *SetupTd = NULL;
-    UHCI_TD     *DataTds = NULL;
+    UHCI_TD     *DataTDs = NULL;
     UHCI_TD     *StatusTd = NULL;
     UHCI_TD     *LastTd = NULL;
     UHCI_TD     *CurrentTd = NULL;
     UHCI_QH     *CtrlQh;
-    UINT16      NumDataTds = 0;
+    UINT16      NumDataTDs = 0;
     UINT16      BytesRemaining;
     UINT16      BytesTransferred;
     UINT8       DataToggle;
-    UINT8       *BufPhyAddr = NULL;
-    VOID        *BufferMapping = NULL;
-    EFI_STATUS  EfiStatus = EFI_SUCCESS;
 
-    EfiStatus = UsbHcStrucValidation(HcStruc);
-    
-    if (EFI_ERROR(EfiStatus)) {
-        return 0;
-    }
-
-    EfiStatus = UsbDevInfoValidation(DevInfo);
-
-    if (EFI_ERROR(EfiStatus)) {
-        return 0;
-    }
-
-#if !USB_RT_DXE_DRIVER
-    if (gCheckUsbApiParameter) {
-        if (Length != 0) {
-            EfiStatus = AmiValidateMemoryBuffer((VOID*)Buffer, Length);
-            if (EFI_ERROR(EfiStatus)) {
-                USB_DEBUG(DEBUG_ERROR, 3, "Uhci ControlTransfer Invalid Pointer, Buffer is in SMRAM.\n");
-                return 0;
-            }
-        }
-        gCheckUsbApiParameter = FALSE;
-    }
-#endif
-
-    if (!(HcStruc->dHCFlag & HC_STATE_RUNNING)) {
-        return 0;
-    }
-
-	if (UhciIsHalted(HcStruc)) {
+	if (UhciIsHalted(fpHCStruc)) {
 		return 0;
 	}
     
-    if (!VALID_DEVINFO(DevInfo)) {
-        return 0;
-    }
+    if (!VALID_DEVINFO(fpDevInfo)) return 0;
 
     gUsbData->bLastCommandStatus &= ~( USB_CONTROL_STALLED );
     gUsbData->dLastCommandStatusExtended = 0;
@@ -1162,18 +999,18 @@ UHCI_ControlTransfer (
     // Allocate TDs for control setup and control status packets
     //
     SetupTd = USB_MemAlloc(GET_MEM_BLK_COUNT_STRUC(UHCI_TD));
-    if (SetupTd == NULL) {
+    if(SetupTd == NULL) {
         return 0;
     }
 
     //
     // Build the device request in the data area of the control setup TD
     //
-    DevReq = (DEV_REQ*)SetupTd->aDataArea;
-    DevReq->wRequestType  = Request;
-    DevReq->wValue        = Value;
-    DevReq->wIndex        = Index;
-    DevReq->wDataLength   = Length;
+    fpDevReq = (DEV_REQ*)SetupTd->aDataArea;
+    fpDevReq->wRequestType  = wRequest;
+    fpDevReq->wValue        = wValue;
+    fpDevReq->wIndex        = wIndex;
+    fpDevReq->wDataLength   = wLength;
 
     //
     // dTemp will contain the device address and endpoint shifted and ready to go
@@ -1181,7 +1018,7 @@ UHCI_ControlTransfer (
     // 10:0] = Dev. Addr & Endpoint
     // [18:8] = Dev. Addr & Endpoint
     //
-    Temp = ((UINT32)(DevInfo->bDeviceAddress)) << 8;
+    dTemp = ((UINT32)(fpDevInfo->bDeviceAddress)) << 8;
 
     //
     // Fill in various fields in the control setup TD.
@@ -1200,21 +1037,21 @@ UHCI_ControlTransfer (
     //
     // 11/01/10 for HI/LO/FULL
     //
-    Data = (((UINT32)DevInfo->bEndpointSpeed) & 1) << 26;
+    dValue = (((UINT32)fpDevInfo->bEndpointSpeed) & 1) << 26;
 										//(EIP34448)>
-    Data |= (UINT32)(UHCI_TD_THREE_ERRORS | UHCI_TD_ACTIVE);
+	dValue |= (UINT32)(UHCI_TD_THREE_ERRORS | UHCI_TD_ACTIVE);
 										//<(EIP34448)
 
-    SetupTd->dControlStatus = Data;
+    SetupTd->dControlStatus = dValue;
 
-    Data = Temp |
+    dValue = dTemp |
         ((UINT32)UHCI_TD_SETUP_PACKET |
         ((UINT32)(sizeof(DEV_REQ) - 1) << 21));
 
     //
     // Set PID=Setup, and MaxLen
     //
-    SetupTd->dToken         = Data;
+    SetupTd->dToken         = dValue;
     SetupTd->pBufferPtr     = (UINT32)(UINTN)SetupTd->aDataArea;
     SetupTd->dCSReload      = 0;
     SetupTd->bActiveFlag   = 1;
@@ -1235,62 +1072,62 @@ UHCI_ControlTransfer (
     // pCallback will be set to point to the UHCI_ControlTDCallback routine.
     // ActiveFlag field will be set to TRUE.
     //
-    if (Length) {
-        NumDataTds = Length / DevInfo->wEndp0MaxPacket;
-        if (Length % DevInfo->wEndp0MaxPacket) {
-            NumDataTds++;
+    if(wLength) {
+        NumDataTDs = wLength / fpDevInfo->wEndp0MaxPacket;
+        if (wLength % fpDevInfo->wEndp0MaxPacket) {
+            NumDataTDs++;
         }
 
-        DataTds = USB_MemAlloc(GET_MEM_BLK_COUNT(NumDataTds * sizeof(UHCI_TD)));
-        if (DataTds == NULL) {
+        DataTDs = USB_MemAlloc(GET_MEM_BLK_COUNT(NumDataTDs * sizeof(UHCI_TD)));
+        if (DataTDs == NULL) {
             USB_MemFree(SetupTd, GET_MEM_BLK_COUNT_STRUC(UHCI_TD));
             return 0;
         }
 
-        CurrentTd = DataTds;
+        CurrentTd = DataTDs;
 
         DataToggle  = 1;
-        BytesRemaining = Length;
+        BytesRemaining = wLength;
  
         //
         // Allocate one more TD to be used either for more data or for TD Status
         //
-        HcDmaMap(HcStruc, (UINT8)(Request & BIT7), Buffer, Length, 
-			                &BufPhyAddr, &BufferMapping);
         do {
             //
             // 11/01/10 for HI/LO/FULL
             //
-            Data = (((UINT32)(DevInfo->bEndpointSpeed) & 1) << 26);
-            Data = Data |
+            dValue = (((UINT32)(fpDevInfo->bEndpointSpeed) & 1) << 26);
+            dValue = dValue |
                 (UINT32)(UHCI_TD_THREE_ERRORS | UHCI_TD_ACTIVE);
-            if(Request & BIT7) {
-                Data |= UHCI_TD_SHORT_PACKET_DETECT;
+            if(wRequest & BIT7) {
+                dValue |= UHCI_TD_SHORT_PACKET_DETECT;
             }
-            CurrentTd->dControlStatus = Data;
-            CurrentTd->pBufferPtr = (UINT32)(UINTN)BufPhyAddr;
-            Packet = (UINT16)((BytesRemaining > (DevInfo->wEndp0MaxPacket)) ?
-                                DevInfo->wEndp0MaxPacket : BytesRemaining);
+            CurrentTd->dControlStatus = dValue;
+            CurrentTd->pBufferPtr = (UINT32)(UINTN)fpBuffer;
+            wTemp = (UINT16)((BytesRemaining > (fpDevInfo->wEndp0MaxPacket)) ?
+                                fpDevInfo->wEndp0MaxPacket : BytesRemaining);
             //
             // Packet size is valid
             //
-            BytesRemaining = (UINT16)(BytesRemaining - Packet);
-            BufPhyAddr = BufPhyAddr + Packet;
-            --Packet;
+            BytesRemaining = (UINT16)(BytesRemaining - wTemp);
+            fpBuffer = fpBuffer + wTemp;
+            --wTemp;
 
             //
             // [18:8]=Dev. addr & endp
             //
-            Data = Temp | (((UINT32)Packet) << 21);
-            Data = (Data & 0xFFFFFF00) | UHCI_TD_OUT_PACKET;
+            dValue = dTemp | (((UINT32)wTemp) << 21);
+            dValue = (dValue & 0xFFFFFF00) | UHCI_TD_OUT_PACKET;
 
-            if (Request & BIT7) {
-                Data = (Data & 0xFFFFFF00) | UHCI_TD_IN_PACKET;
+            if(wRequest & BIT7)
+            {
+                dValue = (dValue & 0xFFFFFF00) | UHCI_TD_IN_PACKET;
             }
-            if (DataToggle & 1) {
-                Data = Data | UHCI_TD_DATA_TOGGLE;  // Make packet into a data 1
+            if(DataToggle & 1)
+            {
+                dValue = dValue | UHCI_TD_DATA_TOGGLE;  // Make packet into a data 1
             }
-            CurrentTd->dToken = Data;
+            CurrentTd->dToken = dValue;
             CurrentTd->dCSReload = 0;
             CurrentTd->bActiveFlag = 1;
 
@@ -1322,20 +1159,21 @@ UHCI_ControlTransfer (
     LastTd->pLinkPtr = (UINT32)((UINTN)StatusTd | UHCI_VERTICAL_FLAG);
     LastTd = StatusTd;
     StatusTd->pLinkPtr  = UHCI_TERMINATE;
-    Data = (((UINT32)(DevInfo->bEndpointSpeed) & 1) << 26);
+    dValue = (((UINT32)(fpDevInfo->bEndpointSpeed) & 1) << 26);
 										//(EIP34448)>
-    Data = Data | (UINT32)(UHCI_TD_THREE_ERRORS | UHCI_TD_ACTIVE);
+    dValue = dValue | (UINT32)(UHCI_TD_THREE_ERRORS | UHCI_TD_ACTIVE);
 										//<(EIP34448)
-    StatusTd->dControlStatus = Data;
-    Data = Temp;
-    Data = (Data & 0xFFFFFF00) | (UINT32)UHCI_TD_OUT_PACKET;
-    if ((Request & BIT7) == 0) {
-        Data = (Data & 0xFFFFFF00) | (UINT32)UHCI_TD_IN_PACKET;
+    StatusTd->dControlStatus = dValue;
+    dValue = dTemp;
+    dValue = (dValue & 0xFFFFFF00) | (UINT32)UHCI_TD_OUT_PACKET;
+    if((wRequest & BIT7) == 0)
+    {
+        dValue = (dValue & 0xFFFFFF00) | (UINT32)UHCI_TD_IN_PACKET;
     }
-    Data |= (UHCI_TD_DATA_TOGGLE | ((UINT32)UHCI_TD_ACTUAL_LENGTH << 21));
-    StatusTd->dToken = Data;
-    Data = (UINT32)(UINTN)StatusTd->aDataArea;
-    StatusTd->pBufferPtr = Data;
+    dValue |= (UHCI_TD_DATA_TOGGLE | ((UINT32)UHCI_TD_ACTUAL_LENGTH << 21));
+    StatusTd->dToken = dValue;
+    dValue = (UINT32)(UINTN)StatusTd->aDataArea;
+    StatusTd->pBufferPtr = dValue;
     StatusTd->dCSReload = 0;
     StatusTd->bActiveFlag = 1;
     //
@@ -1355,7 +1193,7 @@ UHCI_ControlTransfer (
     CtrlQh->FirstTd = SetupTd;
 
     // Wait till transfer complete
-    BytesTransferred = UhciExecuteTransfer(HcStruc, CtrlQh);
+    BytesTransferred = UhciExecuteTransfer(fpHCStruc, CtrlQh);
 
     // Calculate the transferred length
     BytesTransferred -= (((SetupTd->dControlStatus & UHCI_TD_ACTUAL_LENGTH) + 1) & 0x7FF);
@@ -1366,16 +1204,13 @@ UHCI_ControlTransfer (
 
     if (CtrlQh->CurrentTd->dControlStatus & UHCI_TD_STALLED ){
         gUsbData->bLastCommandStatus |= USB_CONTROL_STALLED;
+        // TODO: return the correct transferred length.
         BytesTransferred = 0;
     }
 
-    if (Length) {
-        HcDmaUnmap(HcStruc, BufferMapping);
-    }
-
     USB_MemFree(SetupTd, GET_MEM_BLK_COUNT_STRUC(UHCI_TD));
-    if (DataTds) {
-        USB_MemFree(DataTds, GET_MEM_BLK_COUNT(NumDataTds * sizeof(UHCI_TD)));
+    if (DataTDs) {
+        USB_MemFree(DataTDs, GET_MEM_BLK_COUNT(NumDataTDs * sizeof(UHCI_TD)));
     }
     USB_MemFree(StatusTd, GET_MEM_BLK_COUNT_STRUC(UHCI_TD));
     USB_MemFree(CtrlQh, GET_MEM_BLK_COUNT_STRUC(UHCI_QH));
@@ -1384,19 +1219,25 @@ UHCI_ControlTransfer (
 }   // UHCI_ControlTransfer
 
 
-/**
-    This function creates a chain of two TDs for bulk data transfer. It fills
-    in the following fields in TD:
-    pLinkPtr - NextTd address
-    dToken   - All bits except length and data toggle
-
-    @param 
-        BulkDataTd0     1st TD in the chain
-        BulkDataTd1     2nd TD in the chain
-        TokenData       Data for dToken
-        NumBulkTds      # of bulk TDs
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        UHCI_InitBulkTdCommon
+//
+// Description:
+//  This function creates a chain of two TDs for bulk data transfer. It fills
+//  in the following fields in TD:
+//                  pLinkPtr - NextTd address
+//                  dToken   - All bits except length and data toggle
+//
+// Input:
+//  BulkDataTd0     1st TD in the chain
+//  BulkDataTd1     2nd TD in the chain
+//  TokenData       Data for dToken
+//  NumBulkTds      # of bulk TDs
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 VOID
 UHCI_InitBulkTdCommon (
@@ -1421,17 +1262,23 @@ UHCI_InitBulkTdCommon (
 }
 
 
-/**
-    This function initializes the fields in bulk data TD list that remain after
-  UHCI_InitBulkTdCommon:
-                  - Data buffer pointer
-                  - Data length
-                  - Data toggle (DAT0/DAT1)
-
-    @retval 
-        Pointer to the last TD in the chain
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        UHCI_InitBulkDataTds
+//
+// Description:
+//  This function initializes the fields in bulk data TD list that remain after
+//  UHCI_InitBulkTdCommon:
+//                  - Data buffer pointer
+//                  - Data length
+//                  - Data toggle (DAT0/DAT1)
+//
+// Output:
+//  Pointer to the last TD in the chain
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UHCI_TD*
 UHCI_InitBulkDataTds(
@@ -1497,32 +1344,38 @@ UHCI_InitBulkDataTds(
 }
 
 
-/**
-    This function executes a bulk transaction on the USB. The transfer may be
-    either DATA_IN or DATA_OUT packets containing data sent from the host to
-    the device or vice-versa. This function wil not return until the request
-    either completes successfully or completes with error (due to time out, etc.)
-
-    @param 
-        HcStruc     Pointer to HCStruc of the host controller
-        DevInfo     DeviceInfo structure (if available else 0)
-        XferDir     Transfer direction
-        Bit 7: Data direction
-        0 Host sending data to device
-        1 Device sending data to host
-        Bit 6-0 : Reserved
-        Buffer      Buffer containing data to be sent to the device or buffer to be
-        used to receive data value in Segment:Offset format
-        Length      Length request parameter, number of bytes of data to be transferred
-        in or out of the host controller
-
-    @retval 
-        Amount of data transferred
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        UHCI_BulkTransfer
+//
+// Description:
+//  This function executes a bulk transaction on the USB. The transfer may be
+//  either DATA_IN or DATA_OUT packets containing data sent from the host to
+//  the device or vice-versa. This function wil not return until the request
+//  either completes successfully or completes with error (due to time out, etc.)
+//
+// Input:
+//  HcStruc     Pointer to HCStruc of the host controller
+//  DevInfo     DeviceInfo structure (if available else 0)
+//  XferDir     Transfer direction
+//                  Bit 7: Data direction
+//                          0 Host sending data to device
+//                          1 Device sending data to host
+//                  Bit 6-0 : Reserved
+//  Buffer      Buffer containing data to be sent to the device or buffer to be
+//              used to receive data value in Segment:Offset format
+//  Length      Length request parameter, number of bytes of data to be transferred
+//              in or out of the host controller
+//
+// Output:
+//  Amount of data transferred
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT32
-UHCI_BulkTransfer(
+UHCI_BulkTransfer (
     HC_STRUC    *HcStruc,
     DEV_INFO    *DevInfo,
     UINT8       XferDir,
@@ -1549,48 +1402,14 @@ UHCI_BulkTransfer(
     UINT32      BytesTransferredNow;
     UINT32      Address;
     UINT32      Eps;
-    UINT8       *BufPhyAddr = NULL;
-    VOID        *BufferMapping = NULL;
-    EFI_STATUS  EfiStatus = EFI_SUCCESS;
-
-    EfiStatus = UsbHcStrucValidation(HcStruc);
-    
-    if (EFI_ERROR(EfiStatus)) {
-        return 0;
-    }
-
-    EfiStatus = UsbDevInfoValidation(DevInfo);
-
-    if (EFI_ERROR(EfiStatus)) {
-        return 0;
-    }
-
-#if !USB_RT_DXE_DRIVER
-    if (gCheckUsbApiParameter) {
-        EfiStatus = AmiValidateMemoryBuffer((VOID*)Buffer, Length);
-        if (EFI_ERROR(EfiStatus)) {
-            USB_DEBUG(DEBUG_ERROR, 3, "Uhci BulkTransfer Invalid Pointer, Buffer is in SMRAM.\n");
-            return 0;
-        }
-        gCheckUsbApiParameter = FALSE;
-    }
-#endif
-
-    if (!(HcStruc->dHCFlag & HC_STATE_RUNNING)) {
-        return 0;
-    }
 
 	if (UhciIsHalted(HcStruc)) {
 		return 0;
 	}
     
-    if (!VALID_DEVINFO( DevInfo)) {
-        return 0;
-    }
+    if ( !VALID_DEVINFO( DevInfo) ) return 0;
 
-    if (Length == 0) {
-        return 0;
-    }
+    if (Length == 0) return 0;
 
     // Clear HW source of error
     gUsbData->bLastCommandStatus &= ~(USB_BULK_STALLED | USB_BULK_TIMEDOUT );
@@ -1602,9 +1421,7 @@ UHCI_BulkTransfer(
     //
     MaxPkt = (XferDir & BIT7)? DevInfo->wBulkInMaxPkt : DevInfo->wBulkOutMaxPkt;
 
-    if (MaxPkt == 0) {
-        return 0;
-    }
+    if (MaxPkt == 0) return 0;
 
     Endp = (XferDir & BIT7)? DevInfo->bBulkInEndpoint : DevInfo->bBulkOutEndpoint;
 
@@ -1621,9 +1438,7 @@ UHCI_BulkTransfer(
     Data = (XferDir & BIT7)? Data | UHCI_TD_IN_PACKET : Data | UHCI_TD_OUT_PACKET;
 
     BulkQh = USB_MemAlloc(GET_MEM_BLK_COUNT_STRUC(UHCI_QH));
-    if (BulkQh == NULL) {
-        return 0;
-    }
+    if (BulkQh == NULL) return 0;
 
     BulkQh->Type = Bulk;
 
@@ -1638,8 +1453,6 @@ UHCI_BulkTransfer(
 
     UHCI_InitBulkTdCommon (BulkDataTd0, Data, NumBulkTDs);
 
-    HcDmaMap(HcStruc, XferDir, Buffer, Length, &BufPhyAddr, &BufferMapping);
-
     BulkDataTd1 = (UHCI_TD*)((UINTN)BulkDataTd0 + (NumBulkTDs * sizeof(UHCI_TD)));
 
     BulkDataTd = BulkDataTd0;
@@ -1647,7 +1460,7 @@ UHCI_BulkTransfer(
     BytesRemaining = Length;
     BytesTransferred = 0;
     BytesTransferredNow = 0;
-    Address = (UINT32)(UINTN)BufPhyAddr;
+    Address = (UINT32)(UINTN)Buffer;
     TransferError = 0;
     Eps = ((UINT32)(DevInfo->bEndpointSpeed) & 1) << 26;
 
@@ -1696,7 +1509,6 @@ UHCI_BulkTransfer(
     //
     // Deallocate memory and return the transferred data size
     //
-    HcDmaUnmap(HcStruc, BufferMapping);
     USB_MemFree(BulkDataTd0, GET_MEM_BLK_COUNT(NumAllocTDs * sizeof(UHCI_TD)));
     USB_MemFree(BulkQh, GET_MEM_BLK_COUNT_STRUC(UHCI_QH));
 
@@ -1705,94 +1517,62 @@ UHCI_BulkTransfer(
 
 
 
-/**
-    This function executes an interrupt transaction on the USB. The data transfer
-    direction is always DATA_IN. This function wil not return until the request
-    either completes successfully or completes in error (due to time out, etc.)
-
-    @param 
-        HcStruc   Pointer to HCStruc of the host controller
-        DevInfo   DeviceInfo structure (if available else 0)
-        EndpointAddress The destination USB device endpoint to which the device request 
-                    is being sent.
-        MaxPktSize  Indicates the maximum packet size the target endpoint is capable 
-        of sending or receiving.
-        fpBuffer    Buffer containing data to be sent to the device or buffer to be
-        used to receive data
-        wLength     wLength request parameter, number of bytes of data to be transferred
-
-    @retval 
-        Number of bytes transferred
-
-
-    @note  
-  DO NOT TOUCH THE LINK POINTER OF THE TDInterruptData. It is statically allocated
-  and linked with other items in the 1ms schedule
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:    UHCI_InterruptTransfer
+//
+// Description:
+//  This function executes an interrupt transaction on the USB. The data transfer
+//  direction is always DATA_IN. This function wil not return until the request
+//  either completes successfully or completes in error (due to time out, etc.)
+//
+// Input:
+//  fpHCStruc   Pointer to HCStruc of the host controller
+//  fpDevInfo   DeviceInfo structure (if available else 0)
+//  fpBuffer    Buffer containing data to be sent to the device or buffer to be
+//              used to receive data
+//  wLength     wLength request parameter, number of bytes of data to be transferred
+//
+// Output:
+//  Number of bytes transferred
+//
+//
+// Notes:
+//  DO NOT TOUCH THE LINK POINTER OF THE TDInterruptData. It is statically allocated
+//  and linked with other items in the 1ms schedule
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT16
 UHCI_InterruptTransfer(
-    HC_STRUC    *HcStruc,
-    DEV_INFO    *DevInfo,
-    UINT8       EndpointAddress,
-    UINT16      MaxPktSize,
-    UINT8       *Buffer,
-    UINT16      Length
-)
+    HC_STRUC    *fpHCStruc,
+    DEV_INFO    *fpDevInfo,
+    UINT8       *fpBuffer,
+    UINT16      wLength)
 {
-    UINT8		Endp;
+    UINT8		bEndp;
     UINT8       DataToggle;
-    UINT32		Temp;
-    UINT32      Value;
+    UINT16		wMaxPkt;
+    UINT32		dTemp, dValue;
     UHCI_QH     *IntQh;
 	UHCI_TD		*IntTd;
 	UINT32		BytesTransferred;
-    UINT8       *BufPhyAddr = NULL;
-    VOID        *BufferMapping = NULL;
-    EFI_STATUS  EfiStatus = EFI_SUCCESS;
 
-    EfiStatus = UsbHcStrucValidation(HcStruc);
-    
-    if (EFI_ERROR(EfiStatus)) {
-        return 0;
-    }
-
-    EfiStatus = UsbDevInfoValidation(DevInfo);
-
-    if (EFI_ERROR(EfiStatus)) {
-        return 0;
-    }
-
-#if !USB_RT_DXE_DRIVER
-    if (gCheckUsbApiParameter) {
-        EfiStatus = AmiValidateMemoryBuffer((VOID*)Buffer, Length);
-        if (EFI_ERROR(EfiStatus)) {
-            USB_DEBUG(DEBUG_ERROR, 3, "Uhci InterruptTransfer Invalid Pointer, Buffer is in SMRAM.\n");
-            return 0;
-        }
-        gCheckUsbApiParameter = FALSE;
-    }
-#endif
-
-    if (!(HcStruc->dHCFlag & HC_STATE_RUNNING)) {
-        return 0;
-    }
-
-	if (UhciIsHalted(HcStruc)) {
+	if (UhciIsHalted(fpHCStruc)) {
 		return 0;
 	}
     
-    if (!VALID_DEVINFO(DevInfo)) {
+    if( !VALID_DEVINFO( fpDevInfo) )
         return 0;
-    }
 
     gUsbData->dLastCommandStatusExtended = 0;
 
     //
     // Check for 0 length transfer (if so, exit)
     //
-    if (Length == 0) {
+    if(wLength == 0) {
         return 0;
     }
 
@@ -1809,19 +1589,20 @@ UHCI_InterruptTransfer(
     //
     // It is an interrupt IN transaction get appropriate size
     //
-    Endp = EndpointAddress & 0xF;
-	DataToggle = UsbGetDataToggle(DevInfo, EndpointAddress);
+    wMaxPkt = fpDevInfo->wIntMaxPkt;
+    bEndp = fpDevInfo->bIntEndpoint & 0xF;
+	DataToggle = UsbGetDataToggle(fpDevInfo, fpDevInfo->bIntEndpoint);
 
     //
     // Form device address and endpoint in proper order and bit position
     //
-    Temp = (UINT32)Endp << 7;
-    Temp = (Temp | (DevInfo->bDeviceAddress)) << 8; //[10:0] = Dev. Addr & Endpoint
+    dTemp = (UINT32)bEndp << 7;
+    dTemp = (dTemp | (fpDevInfo->bDeviceAddress)) << 8; //[10:0] = Dev. Addr & Endpoint
                                                         //[18:8] = Dev. Addr & Endpoint
     //
     // Fill in various fields in the interrupt data TD
     //
-    IntTd->dControlStatus = (((UINT32)(DevInfo->bEndpointSpeed) & 1) << 26) | 
+    IntTd->dControlStatus = (((UINT32)(fpDevInfo->bEndpointSpeed) & 1) << 26) | 
     							UHCI_TD_THREE_ERRORS | UHCI_TD_ACTIVE;
     //
     // Set the buffer pointer. Note that currently UHCI Interrupt Transfer
@@ -1829,19 +1610,17 @@ UHCI_InterruptTransfer(
     // parameter. Should this change in future, make a branch to use 
     // UHCI_TD_OUT_PACKET while constructing dToken.
     //
-    HcDmaMap(HcStruc, EndpointAddress & BIT7, Buffer, Length, 
-		&BufPhyAddr, &BufferMapping);
-	IntTd->pBufferPtr = (UINT32)(UINTN)BufPhyAddr;
-    Value = (UINT32)(Length - 1);
-    Value = ((Value << 21) | Temp) & 0xffffff00;
-	Value |= EndpointAddress & BIT7 ? UHCI_TD_IN_PACKET : 
+	IntTd->pBufferPtr = (UINT32)(UINTN)fpBuffer;
+    dValue = (UINT32)(wLength - 1);
+    dValue = ((dValue << 21) | dTemp) & 0xffffff00;
+	dValue |= fpDevInfo->bIntEndpoint & BIT7 ? UHCI_TD_IN_PACKET : 
 		UHCI_TD_OUT_PACKET;
 
-    if (DataToggle & 1) {
-        Value |= UHCI_TD_DATA_TOGGLE;  // Make packet into a data 1
+    if(DataToggle & 1) {
+        dValue |= UHCI_TD_DATA_TOGGLE;  // Make packet into a data 1
     }
 
-    IntTd->dToken = Value;
+    IntTd->dToken = dValue;
     IntTd->dCSReload = 0;
     IntTd->bActiveFlag = 1;
 
@@ -1855,16 +1634,14 @@ UHCI_InterruptTransfer(
     IntQh->CurrentTd = IntTd;
     IntQh->Type = Interrupt;
     IntQh->FirstTd = IntTd;
-    IntQh->Interval = UhciTranslateInterval(DevInfo->bPollInterval);
+    IntQh->Interval = UhciTranslateInterval(fpDevInfo->bPollInterval);
 
-    BytesTransferred = UhciExecuteTransfer(HcStruc, IntQh);
+    BytesTransferred = UhciExecuteTransfer(fpHCStruc, IntQh);
 
     gUsbData->dLastCommandStatusExtended =
         (IntQh->CurrentTd->dControlStatus & UHCI_TD_STATUS_FIELD) >> 17;
 
-    UsbUpdateDataToggle(DevInfo, EndpointAddress, IntQh->DataToggle);
-
-    HcDmaUnmap(HcStruc, BufferMapping);
+    UsbUpdateDataToggle(fpDevInfo, fpDevInfo->bIntEndpoint, IntQh->DataToggle);
 
     USB_MemFree(IntTd, GET_MEM_BLK_COUNT_STRUC(UHCI_TD));
     USB_MemFree(IntQh, GET_MEM_BLK_COUNT_STRUC(UHCI_QH));
@@ -1873,18 +1650,24 @@ UHCI_InterruptTransfer(
 }
 
 
-/**
-    This function de-activates the polling TD for the requested device. The
-    device may be a USB keyboard or USB hub
-
-    @param 
-        fpHCStruc   Pointer to the HC structure
-        fpDevInfo   Pointer to the device information structure
-
-    @retval 
-        USB_SUCCESS or USB_ERROR
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:    UHCI_DeactivatePolling
+//
+// Description:
+//  This function de-activates the polling TD for the requested device. The
+//  device may be a USB keyboard or USB hub
+//
+// Input:
+//  fpHCStruc   Pointer to the HC structure
+//  fpDevInfo   Pointer to the device information structure
+//
+// Output:
+//  USB_SUCCESS or USB_ERROR
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT8
 UHCI_DeactivatePolling (
@@ -1894,23 +1677,6 @@ UHCI_DeactivatePolling (
 {
     UHCI_QH     *PollQh;
     UINT8       DataToggle;
-    EFI_STATUS  EfiStatus;
-
-    EfiStatus = UsbHcStrucValidation(HcStruc);
-    
-    if (EFI_ERROR(EfiStatus)) {
-        return USB_ERROR;
-    }
-
-    EfiStatus = UsbDevInfoValidation(DevInfo);
-
-    if (EFI_ERROR(EfiStatus)) {
-        return USB_ERROR;
-    }
-
-    if (!(HcStruc->dHCFlag & HC_STATE_RUNNING)) {
-        return USB_ERROR;
-    }
 
 	if (UhciIsHalted(HcStruc)) {
 		return USB_ERROR;
@@ -1926,15 +1692,15 @@ UHCI_DeactivatePolling (
 
     DataToggle = (PollQh->FirstTd->dToken & UHCI_TD_DATA_TOGGLE)? 1 : 0;
     if (!(PollQh->FirstTd->dControlStatus & UHCI_TD_STATUS_FIELD)) {
-        UsbUpdateDataToggle(DevInfo, DevInfo->IntInEndpoint, DataToggle ^ 1);
+        UsbUpdateDataToggle(DevInfo, DevInfo->bIntEndpoint, DataToggle ^ 1);
     }
 
-    UhciFreeTds(PollQh->FirstTd);
+    USB_MemFree(PollQh->FirstTd, GET_MEM_BLK_COUNT_STRUC(UHCI_TD));
     USB_MemFree(PollQh, GET_MEM_BLK_COUNT_STRUC(UHCI_QH));
     DevInfo->fpPollTDPtr = NULL;
 
 	if (DevInfo->fpPollDataBuffer) {
-		USB_MemFree(DevInfo->fpPollDataBuffer, GET_MEM_BLK_COUNT(DevInfo->PollingLength)); 
+		USB_MemFree(DevInfo->fpPollDataBuffer, GET_MEM_BLK_COUNT(DevInfo->wIntMaxPkt)); 
     	DevInfo->fpPollDataBuffer = NULL;
 	}
 
@@ -1942,23 +1708,29 @@ UHCI_DeactivatePolling (
 }
 
 
-/**
-    This function activates the polling TD for the requested device. The device
-    may be a USB keyboard or USB hub
-
-    @param 
-        fpHCStruc   Pointer to the HC structure
-        fpDevInfo   Pointer to the device information structure
-
-    @retval 
-        USB_SUCCESS or USB_ERROR
-
-    @note  
-  For the keyboard device this routine allocates TDRepeat also, if it is not
-  already allocated. This routine allocate a polling TD and schedule it to 8ms
-  schedule for keyboards and to 1024ms schedule for hubs.
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:    UHCI_ActivatePolling
+//
+// Description:
+//  This function activates the polling TD for the requested device. The device
+//  may be a USB keyboard or USB hub
+//
+// Input:
+//  fpHCStruc   Pointer to the HC structure
+//  fpDevInfo   Pointer to the device information structure
+//
+// Output:
+//  USB_SUCCESS or USB_ERROR
+//
+// Notes:
+//  For the keyboard device this routine allocates TDRepeat also, if it is not
+//  already allocated. This routine allocate a polling TD and schedule it to 8ms
+//  schedule for keyboards and to 1024ms schedule for hubs.
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT8
 UHCI_ActivatePolling (
@@ -1967,28 +1739,6 @@ UHCI_ActivatePolling (
 {
     UHCI_TD     *PollTd;
     UHCI_QH     *PollQh;
-	BOOLEAN		LowSpeed;
-	UINT8		PacketId;
-	UINTN		BufferAddr;
-	UINT32		DataLen;
-	UINT8		DataToggle;
-    EFI_STATUS  EfiStatus;
-
-    EfiStatus = UsbHcStrucValidation(HcStruc);
-    
-    if (EFI_ERROR(EfiStatus)) {
-        return USB_ERROR;
-    }
-
-    EfiStatus = UsbDevInfoValidation(DevInfo);
-
-    if (EFI_ERROR(EfiStatus)) {
-        return USB_ERROR;
-    }
-
-    if (!(HcStruc->dHCFlag & HC_STATE_RUNNING)) {
-        return USB_ERROR;
-    }
 
 	if (UhciIsHalted(HcStruc)) {
 		return USB_ERROR;
@@ -1997,30 +1747,42 @@ UHCI_ActivatePolling (
     if( !VALID_DEVINFO(DevInfo) )
         return USB_ERROR;
 
-	DevInfo->fpPollDataBuffer = USB_MemAlloc(GET_MEM_BLK_COUNT(DevInfo->PollingLength));
+    //
+    // Allocate a TD for polling
+    //
+    PollTd = USB_MemAlloc(GET_MEM_BLK_COUNT_STRUC(UHCI_TD));
+    ASSERT(PollTd != NULL);
+    if (PollTd == NULL) return USB_ERROR;
+
+    //
+    // Set the packet PID & packet length
+    //
+    PollTd->pLinkPtr = UHCI_TERMINATE;
+	PollTd->dToken = DevInfo->bIntEndpoint & BIT7 ? UHCI_TD_IN_PACKET : UHCI_TD_OUT_PACKET;
+	if (UsbGetDataToggle(DevInfo, DevInfo->bIntEndpoint)) {
+    	PollTd->dToken |= UHCI_TD_DATA_TOGGLE;  // Make packet into a data 1
+	}
+    PollTd->dToken |= (UINT32)(DevInfo->wIntMaxPkt - 1) << 21; // Set PID=In, and MaxLen
+    PollTd->dToken |= ((UINT32)(DevInfo->bIntEndpoint & 0xF)) << 15;
+    PollTd->dToken |= ((UINT32)DevInfo->bDeviceAddress) << 8;
+
+	DevInfo->fpPollDataBuffer = USB_MemAlloc(GET_MEM_BLK_COUNT(DevInfo->wIntMaxPkt));
     if (DevInfo->fpPollDataBuffer == NULL) {
+        USB_MemFree(PollTd, GET_MEM_BLK_COUNT_STRUC(UHCI_TD));
         return USB_ERROR;
     }
 
-	LowSpeed = (DevInfo->bEndpointSpeed & 1) != 0;
-	PacketId = DevInfo->IntInEndpoint & BIT7 ? UHCI_TD_IN_PACKET : UHCI_TD_OUT_PACKET;
-	BufferAddr = (UINTN)DevInfo->fpPollDataBuffer;
-	DataLen = DevInfo->PollingLength;
-	DataToggle = UsbGetDataToggle(DevInfo, DevInfo->IntInEndpoint);
-
-	PollTd = UhciAllocGeneralTds(DevInfo->bDeviceAddress, LowSpeed, PacketId, 
-					DevInfo->IntInEndpoint & 0xF, DevInfo->IntInMaxPkt, TRUE, 
-					&BufferAddr, &DataLen, &DataToggle);
-	if (PollTd == NULL) {
-		USB_MemFree(DevInfo->fpPollDataBuffer, GET_MEM_BLK_COUNT(DevInfo->PollingLength));
-		return USB_ERROR;
-	}
+    PollTd->pBufferPtr = (UINT32)(UINTN)DevInfo->fpPollDataBuffer;
+    PollTd->dCSReload = (((UINT32)(DevInfo->bEndpointSpeed) & 1) << 26) | 
+        UHCI_TD_THREE_ERRORS | UHCI_TD_ACTIVE | UHCI_TD_INTERRUPT_ON_COMPLETE;
+    PollTd->dControlStatus= PollTd->dCSReload;
+    PollTd->bActiveFlag = 1;
 
     PollQh = USB_MemAlloc(GET_MEM_BLK_COUNT_STRUC(UHCI_QH));
     if (PollQh == NULL) {
-		USB_MemFree(DevInfo->fpPollDataBuffer, GET_MEM_BLK_COUNT(DevInfo->PollingLength));
-        UhciFreeTds(PollTd);
-        return USB_ERROR;
+        USB_MemFree(PollTd, GET_MEM_BLK_COUNT_STRUC(UHCI_TD));
+        USB_MemFree(DevInfo->fpPollDataBuffer, GET_MEM_BLK_COUNT(DevInfo->wIntMaxPkt));
+        return 0;
     }
 
     DevInfo->fpPollTDPtr = (UINT8*)PollQh;
@@ -2040,65 +1802,31 @@ UHCI_ActivatePolling (
     return USB_SUCCESS;
 }
 
-/**
-    This function disables the keyboard repeat rate logic
-
-    @param 
-        fpHCStruc   Pointer to the HCStruc structure
-
-    @retval 
-        USB_SUCCESS or USB_ERROR
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:    UHCI_DisableKeyRepeat
+//
+// Description:
+//  This function disables the keyboard repeat rate logic
+//
+// Input:
+//  fpHCStruc   Pointer to the HCStruc structure
+//
+// Output:
+//  USB_SUCCESS or USB_ERROR
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT8
 UHCI_DisableKeyRepeat (
     HC_STRUC    *HcStruc
 )
 {
-    UHCI_DESC_PTRS      *UhicDescPtrs;
-    UHCI_QH             *Qh;
-    EFI_STATUS          EfiStatus;
-    UINT8               *MemBlockEnd = gUsbData->fpMemBlockStart + (gUsbData->MemPages << 12);
-
-    EfiStatus = UsbHcStrucValidation(HcStruc);
-    
-    if (EFI_ERROR(EfiStatus)) {
-        return USB_ERROR;
-    }
-
-    if (!(HcStruc->dHCFlag & HC_STATE_RUNNING)) {
-        return USB_ERROR;
-    }
-
-	if (UhciIsHalted(HcStruc)) {
-		return USB_ERROR;
-	}
-
-    UhicDescPtrs = HcStruc->stDescPtrs.fpUHCIDescPtrs;
-
-    if (UhicDescPtrs == NULL) {
-        return USB_ERROR;
-    }
-
-    if (((UINT8*)UhicDescPtrs < gUsbData->fpMemBlockStart) ||
-        ((UINT8*)(UhicDescPtrs + sizeof(UHCI_DESC_PTRS)) > MemBlockEnd)) {
-        return USB_ERROR;
-    }
-
-    Qh = UhicDescPtrs->RepeatQh;
+    UHCI_QH *Qh = HcStruc->stDescPtrs.fpUHCIDescPtrs->RepeatQh;
 
     if (Qh == NULL) {
-        return USB_ERROR;
-    }
-
-    if (((UINT8*)Qh < gUsbData->fpMemBlockStart) ||
-        ((UINT8*)(Qh + sizeof(UHCI_DESC_PTRS)) > MemBlockEnd)) {
-        return USB_ERROR;
-    }
-
-    if (((UINT8*)Qh->FirstTd < gUsbData->fpMemBlockStart) ||
-        ((UINT8*)(Qh->FirstTd + sizeof(UHCI_TD)) > MemBlockEnd)) {
         return USB_ERROR;
     }
 
@@ -2112,61 +1840,31 @@ UHCI_DisableKeyRepeat (
 }
 
 
-/**
-    This function enables the keyboard repeat rate logic
-
-    @param 
-        fpHCStruc   Pointer to the HCStruc structure
-
-    @retval 
-        USB_SUCCESS or USB_ERROR
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:    UHCI_EnableKeyRepeat
+//
+// Description:
+//  This function enables the keyboard repeat rate logic
+//
+// Input:
+//  fpHCStruc   Pointer to the HCStruc structure
+//
+// Output:
+//  USB_SUCCESS or USB_ERROR
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT8
 UHCI_EnableKeyRepeat (
     HC_STRUC    *HcStruc
 )
 {
-    UHCI_DESC_PTRS      *UhicDescPtrs;
-    UHCI_QH             *Qh;
-    EFI_STATUS          EfiStatus;
-    UINT8               *MemBlockEnd = gUsbData->fpMemBlockStart + (gUsbData->MemPages << 12);
+    UHCI_QH *Qh = HcStruc->stDescPtrs.fpUHCIDescPtrs->RepeatQh;
 
-    EfiStatus = UsbHcStrucValidation(HcStruc);
-    
-    if (EFI_ERROR(EfiStatus)) {
-        return USB_ERROR;
-    }
-
-    if (!(HcStruc->dHCFlag & HC_STATE_RUNNING)) {
-        return USB_ERROR;
-    }
-
-	if (UhciIsHalted(HcStruc)) {
-		return USB_ERROR;
-	}
-
-    UhicDescPtrs = HcStruc->stDescPtrs.fpUHCIDescPtrs;
-
-    if (UhicDescPtrs == NULL) {
-        return USB_ERROR;
-    }
-
-    if (((UINT8*)UhicDescPtrs < gUsbData->fpMemBlockStart) ||
-        ((UINT8*)(UhicDescPtrs + sizeof(UHCI_DESC_PTRS)) > MemBlockEnd)) {
-        return USB_ERROR;
-    }
-
-    Qh = UhicDescPtrs->RepeatQh;
-
-    if (((UINT8*)Qh < gUsbData->fpMemBlockStart) ||
-        ((UINT8*)(Qh + sizeof(UHCI_DESC_PTRS)) > MemBlockEnd)) {
-        return USB_ERROR;
-    }
-
-    if (((UINT8*)Qh->FirstTd < gUsbData->fpMemBlockStart) ||
-        ((UINT8*)(Qh->FirstTd + sizeof(UHCI_TD)) > MemBlockEnd)) {
+    if (Qh == NULL) {
         return USB_ERROR;
     }
 
@@ -2183,49 +1881,62 @@ UHCI_EnableKeyRepeat (
 
 
 
-/**
-    This routine disables the UHCI HC root hub ports
-
-    @param 
-        fpHCStruc   Ptr to the host controller structure
-
-    @retval 
-  Status: USB_SUCCESS = Success, USB_ERROR = Failure
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:    UHCI_DisableHCPorts (fpHCStruc)
+//
+// Description:
+//  This routine disables the UHCI HC root hub ports
+//
+// Input:
+//  fpHCStruc   Ptr to the host controller structure
+//
+// Output:
+//  Status: USB_SUCCESS = Success, USB_ERROR = Failure
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT8
-UHCI_DisableHCPorts(
-    HC_STRUC* HcStruc
-)
+UHCI_DisableHCPorts (HC_STRUC* fpHCStruc)
 {
+    UINT16 wIOAddr = (UINT16)fpHCStruc->BaseAddress;
 
     //
     // Disable the root hub port 1
     //
-    HcByteWriteHcIo(HcStruc, UHCI_PORT1_CONTROL,
-                (UINT8)(HcByteReadHcIo(HcStruc, UHCI_PORT1_CONTROL) & (~UHC_PORT_ENABLE)));
+    ByteWriteIO((UINT16)(wIOAddr+UHCI_PORT1_CONTROL),
+                (UINT8)(ByteReadIO(
+                    (UINT16)(wIOAddr+UHCI_PORT1_CONTROL)) & (~UHC_PORT_ENABLE)));
     //
     // Disable the root hub port 2
     //
-    HcByteWriteHcIo(HcStruc, UHCI_PORT2_CONTROL,
-                (UINT8)(HcByteReadHcIo(HcStruc, UHCI_PORT2_CONTROL) & (~UHC_PORT_ENABLE)));
+    ByteWriteIO((UINT16)(wIOAddr+UHCI_PORT2_CONTROL),
+                (UINT8)(ByteReadIO(
+                    (UINT16)(wIOAddr+UHCI_PORT2_CONTROL)) & (~UHC_PORT_ENABLE)));
 
-    return USB_SUCCESS;
+    return  USB_SUCCESS;
 }
 
 
-/**
-    This routine will add the particular QH into the frame list
-
-    @param 
-        HcStruc     Pointerr to the host controller structure
-        NewQh       Address of the QH to be linked
-
-    @retval 
-        USB_SUCCESS/USB_ERROR
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:    UhciAddQhToFrameList
+//
+// Description:
+//  This routine will add the particular QH into the frame list
+//
+// Input:
+//  HcStruc     Pointerr to the host controller structure
+//  NewQh       Address of the QH to be linked
+//
+// Output:
+//  USB_SUCCESS/USB_ERROR
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT8
 UhciAddQhToFrameList (
@@ -2238,7 +1949,6 @@ UhciAddQhToFrameList (
     UINT32      LinkPtr;
     UHCI_QH     *Qh;
     BOOLEAN     ByInterval = FALSE;
-    EFI_STATUS  Status = EFI_SUCCESS;
 
     if (NewQh == NULL) {
         return USB_ERROR;
@@ -2269,12 +1979,6 @@ UhciAddQhToFrameList (
 
         while (!(LinkPtr & UHCI_TERMINATE)) {
             Qh = (UHCI_QH*)(LinkPtr & UHCI_POINTER_MASK);
-#if !USB_RT_DXE_DRIVER
-            Status = AmiValidateMemoryBuffer((VOID*)Qh, sizeof(UHCI_QH));
-            if (EFI_ERROR(Status)) {
-               return USB_ERROR;
-            }
-#endif
             if (Qh->Type <= NewQh->Type) {
                 if (ByInterval == FALSE ||
                     Qh->Interval <= NewQh->Interval) {
@@ -2287,12 +1991,6 @@ UhciAddQhToFrameList (
         if (Qh == NewQh) {
             continue;
         }
-#if !USB_RT_DXE_DRIVER
-        Status = AmiValidateMemoryBuffer((VOID*)PrevPtr, sizeof(UINT32));
-        if (EFI_ERROR(Status)) {
-            return USB_ERROR;
-        }
-#endif
         NewQh->pLinkPtr = *PrevPtr;
         *PrevPtr = (UINT32)((UINTN)NewQh | UHCI_QUEUE_HEAD);
     }
@@ -2300,17 +1998,23 @@ UhciAddQhToFrameList (
     return USB_SUCCESS;
 }
 
-/**
-    This routine will remove a QH from the the frame list
-
-    @param 
-        HcStruc     Pointerr to the host controller structure
-        RetiredQh   Address of the QH to be removed
-
-    @retval 
-        USB_SUCCESS/USB_ERROR
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:    UhciRemoveQhFromFrameList
+//
+// Description:
+//  This routine will remove a QH from the the frame list
+//
+// Input:
+//  HcStruc     Pointerr to the host controller structure
+//  RetiredQh   Address of the QH to be removed
+//
+// Output:
+//  USB_SUCCESS/USB_ERROR
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT8
 UhciRemoveQhFromFrameList (
@@ -2323,7 +2027,6 @@ UhciRemoveQhFromFrameList (
     UINT32      LinkPtr;
     UHCI_QH     *Qh;
     BOOLEAN     ByInterval = FALSE;
-    EFI_STATUS  Status = EFI_SUCCESS;
 
     if (RetiredQh == NULL) {
         return USB_ERROR;
@@ -2356,12 +2059,6 @@ UhciRemoveQhFromFrameList (
  
         while (!(LinkPtr & UHCI_TERMINATE)) {
             Qh = (UHCI_QH*)(LinkPtr & UHCI_POINTER_MASK);
-#if !USB_RT_DXE_DRIVER
-            Status = AmiValidateMemoryBuffer((VOID*)Qh, sizeof(UHCI_QH));
-            if (EFI_ERROR(Status)) {
-                return USB_ERROR;
-            }
-#endif
             if(Qh == RetiredQh) {
                 break;
             }
@@ -2372,12 +2069,6 @@ UhciRemoveQhFromFrameList (
         if (LinkPtr & UHCI_TERMINATE) {
             continue;
         }
-#if !USB_RT_DXE_DRIVER
-        Status = AmiValidateMemoryBuffer((VOID*)PrevPtr, sizeof(UINT32));
-        if (EFI_ERROR(Status)) {
-            return USB_ERROR;
-        }
-#endif
         *PrevPtr = RetiredQh->pLinkPtr;
     }
 
@@ -2385,17 +2076,23 @@ UhciRemoveQhFromFrameList (
     return USB_SUCCESS;
 }
 
-/**
-    This routine will start the TD schedule for the UHCI controller. After this
-    routine TD's can be scheduled for execution.
-
-    @param 
-        fpHCStruc   Pointer to the HC information structure
-
-    @retval 
-        USB_SUCCESS/USB_ERROR
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:    UHCI_StartTDSchedule (fpHCStruc)
+//
+// Description:
+//  This routine will start the TD schedule for the UHCI controller. After this
+//  routine TD's can be scheduled for execution.
+//
+// Input:
+//  fpHCStruc   Pointer to the HC information structure
+//
+// Output:
+//  USB_SUCCESS/USB_ERROR
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT8
 UHCI_StartTDSchedule (
@@ -2410,7 +2107,7 @@ UHCI_StartTDSchedule (
     //
     DescPtr = (UHCI_DESC_PTRS*) USB_MemAlloc (GET_MEM_BLK_COUNT_STRUC(UHCI_DESC_PTRS));
     if (DescPtr == NULL) {
-        USB_DEBUG(DEBUG_ERROR, DEBUG_LEVEL_4, "UHCI Descriptor struc alloc failed.\n");
+        USB_DEBUG(DEBUG_LEVEL_4, "UHCI Descriptor struc alloc failed.\n");
         return USB_ERROR;
     }
 
@@ -2428,10 +2125,6 @@ UHCI_StartTDSchedule (
     DescPtr->StaticQh->Type = Interrupt;
     DescPtr->StaticQh->Interval = 1;
     UhciAddQhToFrameList(HcStruc, DescPtr->StaticQh);
-
-	if (HcStruc->dHCFlag & HC_STATE_EXTERNAL) {
-		return USB_SUCCESS;
-	}
 
     DescPtr->RepeatQh = USB_MemAlloc(GET_MEM_BLK_COUNT(1 * sizeof(UHCI_QH) + 
                                          1 * sizeof(UHCI_TD)));
@@ -2463,7 +2156,7 @@ UHCI_StartTDSchedule (
     UhciInitQh(DescPtr->RepeatQh);
     DescPtr->RepeatQh->Type = Interrupt;
     DescPtr->RepeatQh->FirstTd = Td;
-    DescPtr->RepeatQh->Interval = REPEAT_INTERVAL;
+    DescPtr->RepeatQh->Interval = 8;
     DescPtr->RepeatQh->CallBackIndex = USB_InstallCallBackFunction(UhciRepeatQhCallback);
     DescPtr->RepeatQh->ActiveFlag = FALSE;
 
@@ -2472,10 +2165,13 @@ UHCI_StartTDSchedule (
     //
     UhciAddQhToFrameList(HcStruc, DescPtr->RepeatQh);
 
+
+#if USB_DEV_KBD
     //
     // Inform the common code that key repeat is implemented
     //
     USBKeyRepeat(HcStruc, 0);
+#endif
 
     //
     // Initialize the body of root hub TD.  It will run a interrupt
@@ -2527,21 +2223,27 @@ UHCI_StartTDSchedule (
 		gUsbData->RootHubHcStruc = HcStruc;
 	}
 
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_4, "TD's are scheduled\n");
+    USB_DEBUG(DEBUG_LEVEL_4, "TD's are scheduled\n");
 
     return USB_SUCCESS;
 }
 
-/**
-    This routine will stop the TD schedules and frees the data structures
-
-    @param 
-        fpHCStruc   Pointer to the HC information structure
-
-    @retval 
-        USB_SUCCESS/USB_ERROR
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:    UHCI_StopTDSchedule (fpHCStruc)
+//
+// Description:
+//  This routine will stop the TD schedules and frees the data structures
+//
+// Input:
+//  fpHCStruc   Pointer to the HC information structure
+//
+// Output:
+//  USB_SUCCESS/USB_ERROR
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT8
 UHCI_StopTDSchedule (
@@ -2550,7 +2252,6 @@ UHCI_StopTDSchedule (
 {
 	UINT8			i;
 	UHCI_DESC_PTRS	*DescPtrs = HcStruc->stDescPtrs.fpUHCIDescPtrs;
-    UINT8            *MemBlockEnd = gUsbData->fpMemBlockStart + (gUsbData->MemPages << 12);
     //
     // Free all the TD/QH data structures
     //
@@ -2558,35 +2259,11 @@ UHCI_StopTDSchedule (
         return USB_ERROR;
     }
 
-    if (((UINT8*)DescPtrs < gUsbData->fpMemBlockStart) ||
-        ((UINT8*)(DescPtrs + sizeof(UHCI_DESC_PTRS)) > MemBlockEnd)) {
-        return USB_ERROR;
-    }
-
-    if (((UINT8*)DescPtrs->StaticQh < gUsbData->fpMemBlockStart) ||
-        ((UINT8*)(DescPtrs->StaticQh + sizeof(UHCI_QH)) > MemBlockEnd)) {
-        return USB_ERROR;
-    }
-
-    if (((UINT8*)DescPtrs->RootHubQh < gUsbData->fpMemBlockStart) ||
-        ((UINT8*)(DescPtrs->RootHubQh + sizeof(UHCI_QH)) > MemBlockEnd)) {
-        return USB_ERROR;
-    }
-
-    if (((UINT8*)DescPtrs->RepeatQh < gUsbData->fpMemBlockStart) ||
-        ((UINT8*)(DescPtrs->RepeatQh + sizeof(UHCI_QH)) > MemBlockEnd)) {
-        return USB_ERROR;
-    }
-
     USB_MemFree (DescPtrs->StaticQh, GET_MEM_BLK_COUNT(sizeof(UHCI_QH)));
-	if (DescPtrs->RootHubQh) {
-    	USB_MemFree (DescPtrs->RootHubQh, 
-        	GET_MEM_BLK_COUNT(sizeof(UHCI_QH) + sizeof(UHCI_TD)));
-	}
-	if (DescPtrs->RepeatQh) {
-		USB_MemFree (DescPtrs->RepeatQh, 
-        	GET_MEM_BLK_COUNT(sizeof(UHCI_QH) + sizeof(UHCI_TD)));
-	}
+    USB_MemFree (DescPtrs->RootHubQh, 
+        GET_MEM_BLK_COUNT(sizeof(UHCI_QH) + sizeof(UHCI_TD)));
+	USB_MemFree (DescPtrs->RepeatQh, 
+        GET_MEM_BLK_COUNT(sizeof(UHCI_QH) + sizeof(UHCI_TD)));
  
     //
     // Finally free the descriptor pointer
@@ -2607,26 +2284,6 @@ UHCI_StopTDSchedule (
 				(HcStruc != gUsbData->HcTable[i])) {
 
 				DescPtrs = gUsbData->HcTable[i]->stDescPtrs.fpUHCIDescPtrs;
-                
-                if (((UINT8*)DescPtrs < gUsbData->fpMemBlockStart) ||
-                    ((UINT8*)(DescPtrs + sizeof(UHCI_DESC_PTRS)) > MemBlockEnd)) {
-                    return USB_ERROR;
-                }
-                if (((UINT8*)DescPtrs->RootHubQh < gUsbData->fpMemBlockStart) ||
-                    ((UINT8*)(DescPtrs->RootHubQh + sizeof(UHCI_QH)) > MemBlockEnd)) {
-                    return USB_ERROR;
-                }
-
-                if (((UINT8*)DescPtrs->RootHubQh->FirstTd < gUsbData->fpMemBlockStart) ||
-                    ((UINT8*)(DescPtrs->RootHubQh->FirstTd + sizeof(UHCI_TD)) > MemBlockEnd)) {
-                    return USB_ERROR;
-                }
-
-                if (((UINT8*)DescPtrs->RootHubQh->CurrentTd < gUsbData->fpMemBlockStart) ||
-                    ((UINT8*)(DescPtrs->RootHubQh->CurrentTd + sizeof(UHCI_TD)) > MemBlockEnd)) {
-                    return USB_ERROR;
-                }
-
 				DescPtrs->RootHubQh->FirstTd->dCSReload =
 						UHCI_TD_INTERRUPT_ON_COMPLETE |
 						UHCI_TD_ONE_ERROR |
@@ -2647,18 +2304,24 @@ UHCI_StopTDSchedule (
     return USB_SUCCESS;
 }
 
-/**
-    This function will check whether the QH is completed if so, it will call
-    the call back routine associated with the TDs present in the QH
-
-    @param 
-        HcStruc     HCStruc structure
-        Qh          Pointer to the QH
-
-    @retval 
-        USB_SUCCESS or USB_ERROR
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:    UhciProcessQh
+//
+// Description:
+//  This function will check whether the QH is completed if so, it will call
+//  the call back routine associated with the TDs present in the QH
+//
+// Input:
+//  HcStruc     HCStruc structure
+//  Qh          Pointer to the QH
+//
+// Output:
+//  USB_SUCCESS or USB_ERROR
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT8
 UhciProcessQh(
@@ -2668,7 +2331,6 @@ UhciProcessQh(
 {
     UHCI_TD     *Td;
     UINT16      Length;
-    EFI_STATUS	Status;
  
     if (Qh == NULL) {
         return USB_ERROR;
@@ -2695,15 +2357,15 @@ UhciProcessQh(
             return USB_ERROR;
         }
 
-        Length = (UINT16)((Td->dControlStatus + 1) & UHCI_TD_ACTUAL_LENGTH);
-        Qh->BytesTransferred += Length;
+        Length = (UINT16)(Td->dControlStatus & UHCI_TD_ACTUAL_LENGTH);
+        Qh->BytesTransferred += (Length + 1) & 0x7FF;
 
         if (Td->dControlStatus & UHCI_TD_STATUS_FIELD) {
             break;
         }
 
         Qh->DataToggle ^= 1;
-        Qh->ShortPacketDetected = (Length < (((Td->dToken >> 21) + 1) & 0x7FF));
+        Qh->ShortPacketDetected = (Length < (Td->dToken >> 21));
 
         if (Qh->ShortPacketDetected) {
             if (Qh->Type == Control) {
@@ -2721,48 +2383,43 @@ UhciProcessQh(
     }
 
     Qh->ActiveFlag = FALSE;
-    
     if (Qh->CallBackIndex == 0) {
         return USB_SUCCESS;
     }
-    
-    if ((Qh->CallBackIndex) && (Qh->CallBackIndex <= MAX_CALLBACK_FUNCTION)) {
-        if (gUsbData->aCallBackFunctionTable[Qh->CallBackIndex - 1 + CALLBACK_FUNCTION_START]) {
-            if ((gUsbData->aCallBackFunctionTable[Qh->CallBackIndex - 1 + CALLBACK_FUNCTION_START] != UhciRepeatQhCallback) && 
-                (gUsbData->aCallBackFunctionTable[Qh->CallBackIndex - 1 + CALLBACK_FUNCTION_START] != UhciRootHubQhCallBack)) {
-                Status = UsbDevInfoValidation(Qh->DevInfoPtr);
-                if (EFI_ERROR(Status)) {
-                    return USB_ERROR;
-                }
-            }
-            (*gUsbData->aCallBackFunctionTable[Qh->CallBackIndex - 1 + CALLBACK_FUNCTION_START])(
-                    HcStruc,
-                    (DEV_INFO*)Qh->DevInfoPtr,
-                    (UINT8*)Qh,
-                    0,
-                    0);
-        }
+
+    if (gUsbData->aCallBackFunctionTable[Qh->CallBackIndex - 1]) {
+        (*gUsbData->aCallBackFunctionTable[Qh->CallBackIndex - 1])(
+                HcStruc,
+                (DEV_INFO*)Qh->DevInfoPtr,
+                (UINT8*)Qh,
+                0);
     }
 
     return USB_SUCCESS;
 }
 
-/**
-    This function will check whether the TD is completed if so, it will call
-    the call back routine associated with this TD
-
-    @param 
-        HcStruc     HCStruc structure
-        Td          Pointer to the TD
-
-    @retval 
-        USB_SUCCESS or USB_ERROR
-
-    @note  
-  For any TD whose ActiveFlag is TRUE and its ControlStatus bit 23 is clear
-  (completed), process the TD by calling its callback routine, if one is present.
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:    UhciProcessTd
+//
+// Description:
+//  This function will check whether the TD is completed if so, it will call
+//  the call back routine associated with this TD
+//
+// Input:
+//  HcStruc     HCStruc structure
+//  Td          Pointer to the TD
+//
+// Output:
+//  USB_SUCCESS or USB_ERROR
+//
+// Notes:
+//  For any TD whose ActiveFlag is TRUE and its ControlStatus bit 23 is clear
+//  (completed), process the TD by calling its callback routine, if one is present.
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT8
 UhciProcessTd(
@@ -2786,7 +2443,7 @@ UhciProcessTd(
     }
 
     Td->bActiveFlag = 0;
-    if ((Td->bCallBackIndex) && (Td->bCallBackIndex <= MAX_CALLBACK_FUNCTION)) {
+    if (Td->bCallBackIndex) {
         //
         // Get the device address from the completed TD
         //
@@ -2794,12 +2451,11 @@ UhciProcessTd(
         DevInfo = USB_GetDeviceInfoStruc(USB_SRCH_DEV_ADDR, 0,
                         DevAddr, HcStruc);
 
-        if (gUsbData->aCallBackFunctionTable[Td->bCallBackIndex - 1 + CALLBACK_FUNCTION_START]) {
-            (*gUsbData->aCallBackFunctionTable[Td->bCallBackIndex - 1 + CALLBACK_FUNCTION_START])(
+        if (gUsbData->aCallBackFunctionTable[Td->bCallBackIndex - 1]) {
+            (*gUsbData->aCallBackFunctionTable[Td->bCallBackIndex - 1])(
                     HcStruc,
                     DevInfo,
                     (UINT8*)Td,
-                    0,
                     0);
         }
     }
@@ -2807,21 +2463,27 @@ UhciProcessTd(
     return USB_SUCCESS;
 }
 
-/**
-    This function will parse through frame list to find completed QH/TD
-    and invoke corresponding call back routine
-
-    @param 
-        HcStruc     HCStruc structure
-
-    @retval 
-        USB_SUCCESS or USB_ERROR
-
-    @note  
-  For any TD whose ActiveFlag is TRUE and its ControlStatus bit 23 is clear
-  (completed), process the TD by calling its call back routine, if one is present.
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:    UhciProcessFrameList
+//
+// Description:
+//  This function will parse through frame list to find completed QH/TD
+//  and invoke corresponding call back routine
+//
+// Input:
+//  HcStruc     HCStruc structure
+//
+// Output:
+//  USB_SUCCESS or USB_ERROR
+//
+// Notes:
+//  For any TD whose ActiveFlag is TRUE and its ControlStatus bit 23 is clear
+//  (completed), process the TD by calling its call back routine, if one is present.
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT8
 UhciProcessFrameList (
@@ -2829,27 +2491,14 @@ UhciProcessFrameList (
 )
 {
     UINT32  ListPtr;
-    EFI_STATUS  Status = EFI_SUCCESS;
 
     ListPtr = HcStruc->fpFrameList[0];
 
     while (!(ListPtr & UHCI_TERMINATE)) {
         if (ListPtr & UHCI_QUEUE_HEAD) {
-#if !USB_RT_DXE_DRIVER
-            Status = AmiValidateMemoryBuffer((VOID*)ListPtr, sizeof(UHCI_QH));
-            if (EFI_ERROR(Status)) {
-                return USB_ERROR;
-            }
-#endif
             UhciProcessQh(HcStruc, (UHCI_QH*)(ListPtr & UHCI_POINTER_MASK));
             ListPtr = ((UHCI_QH*)(ListPtr & UHCI_POINTER_MASK))->pLinkPtr;
         } else {
-#if !USB_RT_DXE_DRIVER
-            Status = AmiValidateMemoryBuffer((VOID*)ListPtr, sizeof(UHCI_TD));
-            if (EFI_ERROR(Status)) {
-               return USB_ERROR;
-            }
-#endif
             UhciProcessTd(HcStruc, (UHCI_TD*)(ListPtr & UHCI_POINTER_MASK));
             ListPtr = ((UHCI_TD*)(ListPtr & UHCI_POINTER_MASK))->pLinkPtr;
         }
@@ -2857,45 +2506,49 @@ UhciProcessFrameList (
 	return USB_SUCCESS;
 }
 
-/**
-    This function is called when TD256ms completes a transaction. This TD runs
-    a dummy interrupt transaction to a non-existant device address for the
-    purpose of generating a periodic timeout interrupt.  This periodic interrupt
-    may be used to check for new devices on the root hub etc.
-
-    @param 
-        fpHCStruc   Pointer to the HCStruc structure
-        fpDevInfo   NULL (pDevInfo is not valid)
-        fpTD        Pointer to the TD that completed
-        fpBuffer    Not used
-
-    @retval 
-        USB_SUCCESS or USB_ERROR
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:    UHCI_RootHubTDCallBack
+//
+// Description:
+//  This function is called when TD256ms completes a transaction. This TD runs
+//  a dummy interrupt transaction to a non-existant device address for the
+//  purpose of generating a periodic timeout interrupt.  This periodic interrupt
+//  may be used to check for new devices on the root hub etc.
+//
+// Input:
+//  fpHCStruc   Pointer to the HCStruc structure
+//  fpDevInfo   NULL (pDevInfo is not valid)
+//  fpTD        Pointer to the TD that completed
+//  fpBuffer    Not used
+//
+// Output:
+//  USB_SUCCESS or USB_ERROR
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT8
 UhciRootHubQhCallBack(
     HC_STRUC    *HcStruc,
     DEV_INFO    *DevInfo,
     UINT8       *Qh,
-    UINT8       *Buffer,
-    UINT16      DataLength
+    UINT8       *Buffer
 )
 {
     UINT8       Index;
     HC_STRUC    *Hc;
+    UINT16      IoPort;
+	UINT16		PortAddr;
     UHCI_QH     *RootHubQh;
-    UINT16      PortSc;
 
 	//
 	// First deactivate the TDRootHub so this callback function will not get
 	// reentered.
 	//
-	if (Qh != NULL) {
-        RootHubQh = (UHCI_QH*)Qh;
-        RootHubQh->FirstTd->bActiveFlag = 0;
-    }
+	RootHubQh = (UHCI_QH*)Qh;
+	RootHubQh->FirstTd->bActiveFlag = 0;
 
     for (Index = 0; Index < gUsbData->HcTableCount; Index++) {
         Hc = gUsbData->HcTable[Index];
@@ -2915,7 +2568,8 @@ UhciRootHubQhCallBack(
 		// Check whether the controller is still under BIOS control
 		// Read the frame list base address and compare with stored value
 		//
-		if ((HcDwordReadHcIo(HcStruc, UHCI_FRAME_LIST_BASE) & 0xFFFFF000) 
+		IoPort = (UINT16)Hc->BaseAddress;
+		if ((DwordReadIO(IoPort + UHCI_FRAME_LIST_BASE) & 0xFFFFF000) 
 			!= (UINT32)Hc->fpFrameList) {
 			continue;
 		}
@@ -2924,14 +2578,14 @@ UhciRootHubQhCallBack(
 		// Check whether USB host controllers are accessible to aVOID system 
 		// hang in ports enumeration.
 		//
-		if (HcByteReadHcIo(HcStruc, 0) == 0xFF) {
+		if (ByteReadIO(IoPort) == 0xFF) {
 			continue;
 		}
 
 		//
 		// Check whether enumeration is already began
 		//
-		if (gUsbData->bEnumFlag == FALSE) {
+		if(gUsbData->bEnumFlag == FALSE) {
 			gUsbData->bEnumFlag = TRUE;
 
 			//
@@ -2941,92 +2595,82 @@ UhciRootHubQhCallBack(
 			//
 			// Disable IOC, timeout & CRC interrupt
 			//
-			HcWordWriteHcIo(HcStruc, UHCI_INTERRUPT_ENABLE, 0);
+			WordWriteIO((UINT16)(IoPort + UHCI_INTERRUPT_ENABLE), 0);
 		
 			//
 			// Process Port#1 and clear Port#1 status bit
 			//
-			PortSc = HcWordReadHcIo(HcStruc, UHCI_PORT1_CONTROL);
-			if (PortSc & UHC_CONNECT_STATUS_CHANGE) {
-                // The interval with a minimum duration of 100 ms when 
-                // the USB System Software is notified of a connection detection.
-                if (PortSc & UHC_CONNECT_STATUS) {
-                    FixedDelay(USB_PORT_CONNECT_STABLE_DELAY_MS * 1000);
-                }
-                
+			PortAddr = IoPort + UHCI_PORT1_CONTROL;
+			if (WordReadIO(PortAddr) & UHC_CONNECT_STATUS_CHANGE) {
 				USBCheckPortChange(Hc, Hc->bHCNumber | BIT7, 1);
-				HcWordWriteHcIo(HcStruc, UHCI_PORT1_CONTROL, 
-                    HcWordReadHcIo(HcStruc, UHCI_PORT1_CONTROL));
+				WordWriteIO(PortAddr, WordReadIO(PortAddr));
 			}
 		
 			//
 			// Process Port#2 and clear Port#2 status bit
 			//
-			PortSc = HcWordReadHcIo(HcStruc, UHCI_PORT2_CONTROL);
-			if (PortSc & UHC_CONNECT_STATUS_CHANGE) {
-                // The interval with a minimum duration of 100 ms when 
-                // the USB System Software is notified of a connection detection.
-                if (PortSc & UHC_CONNECT_STATUS) {
-                    FixedDelay(USB_PORT_CONNECT_STABLE_DELAY_MS * 1000);
-                }
+			PortAddr = IoPort + UHCI_PORT2_CONTROL;
+			if (WordReadIO(PortAddr) & UHC_CONNECT_STATUS_CHANGE) {
 				USBCheckPortChange(Hc, Hc->bHCNumber | BIT7, 2);
-				HcWordWriteHcIo(HcStruc, UHCI_PORT2_CONTROL, 
-                    HcWordReadHcIo(HcStruc, UHCI_PORT2_CONTROL));
+				WordWriteIO(PortAddr, WordReadIO(PortAddr));
 			}
 
 			//
 			// Renable interrupts from the host controller
 			// Enable IOC, timeout & CRC interrupt
 			//
-			HcWordWriteHcIo(HcStruc, UHCI_INTERRUPT_ENABLE, (UINT16)(UHC_IOC_ENABLE));
+			WordWriteIO((UINT16)(IoPort + UHCI_INTERRUPT_ENABLE), (UINT16)(UHC_IOC_ENABLE));
 
 			gUsbData->bEnumFlag = FALSE;
 		}
     }
-    if (Qh != NULL) {
-        //
-        // Reactivate the TdRootHub
-        //
-        RootHubQh->FirstTd->dControlStatus	= RootHubQh->FirstTd->dCSReload;
-        RootHubQh->FirstTd->bActiveFlag = 1;
-        RootHubQh->pElementPtr = (UINT32)(UINTN)RootHubQh->FirstTd;
-        RootHubQh->CurrentTd = RootHubQh->FirstTd;
-        RootHubQh->ActiveFlag = TRUE;
-    }
+
+	//
+	// Reactivate the TdRootHub
+	//
+	RootHubQh->FirstTd->dControlStatus	= RootHubQh->FirstTd->dCSReload;
+	RootHubQh->FirstTd->bActiveFlag = 1;
+    RootHubQh->pElementPtr = (UINT32)(UINTN)RootHubQh->FirstTd;
+    RootHubQh->CurrentTd = RootHubQh->FirstTd;
+    RootHubQh->ActiveFlag = TRUE;
 
     return  USB_SUCCESS;
 }
 
 
-/**
-    This function is called when TdRepeat completes a transaction.  This TD
-    runs a dummy interrupt transaction to a non-existant device address for
-    the purpose of generating a periodic timeout interrupt which in turn is
-    used to generate keyboard repeat.
-
-    @param 
-        fpHCStruc   Pointer to the HCStruc structure
-        fpDevInfo   NULL (pDevInfo is not valid)
-        fpTD        Pointer to the TD that completed
-        fpBuffer    Not used
-
-    @retval 
-        USB_SUCCESS or USB_ERROR
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:    UHCI_RepeatTDCallback
+//
+// Description:
+//  This function is called when TdRepeat completes a transaction.  This TD
+//  runs a dummy interrupt transaction to a non-existant device address for
+//  the purpose of generating a periodic timeout interrupt which in turn is
+//  used to generate keyboard repeat.
+//
+// Input:
+//  fpHCStruc   Pointer to the HCStruc structure
+//  fpDevInfo   NULL (pDevInfo is not valid)
+//  fpTD        Pointer to the TD that completed
+//  fpBuffer    Not used
+//
+// Output:
+//  USB_SUCCESS or USB_ERROR
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT8
 UhciRepeatQhCallback(
     HC_STRUC    *HcStruc,
     DEV_INFO    *DevInfo,
     UINT8       *Qh,
-    UINT8       *Buffer,
-    UINT16      DataLength
-)
+    UINT8       *Buffer)
 {
     UHCI_QH *RepeatQh = (UHCI_QH*)Qh;
 
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_8, "Processing Repeat TD ...\n");
+    USB_DEBUG(DEBUG_LEVEL_8, "Processing Repeat TD ...\n");
     //
     // First deactivate the TdRepeat so this callback function will not get
     // re-entered.
@@ -3051,54 +2695,60 @@ UhciRepeatQhCallback(
 }
 
 
-/**
-    This function is called when a polling TD from the TD pool completes an
-    interrupt transaction to its assigned device.
-    This routine should process any data in the TD's data buffer, handle any
-    errors, and then copy the TD's CSReloadValue field into its control status
-    field to put the TD back into service.
-
-    @param 
-        fpHCStruc   Pointer to the HCStruc structure
-        fpDevInfo   NULL (pDevInfo is not valid)
-        fpTD        Pointer to the TD that completed
-
-    @retval 
-        USB_SUCCESS or USB_ERROR
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:    UHCI_PollingTDCallback
+//
+// Description:
+//  This function is called when a polling TD from the TD pool completes an
+//  interrupt transaction to its assigned device.
+//  This routine should process any data in the TD's data buffer, handle any
+//  errors, and then copy the TD's CSReloadValue field into its control status
+//  field to put the TD back into service.
+//
+// Input:
+//  fpHCStruc   Pointer to the HCStruc structure
+//  fpDevInfo   NULL (pDevInfo is not valid)
+//  fpTD        Pointer to the TD that completed
+//
+// Output:
+//  USB_SUCCESS or USB_ERROR
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT8
 UhciPollingQhCallback(
     HC_STRUC    *HcStruc,
     DEV_INFO    *DevInfo,
     UINT8       *Qh,
-    UINT8       *Buffer,
-    UINT16      DataLength
-)
+    UINT8       *Buffer)
 {
-    UHCI_QH     *PollQh = (UHCI_QH*)Qh;   
+    UHCI_QH *PollQh = (UHCI_QH*)Qh;
 
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_8, "Processing polling TD ...\n");
+    USB_DEBUG(DEBUG_LEVEL_8, "Processing polling TD ...\n");
+    //
+    // First deactivate the TdRepeat so this callback function will not get
+    // re-entered.
+    //
+    PollQh->FirstTd->bActiveFlag = 0;
 
-	UsbUpdateDataToggle(DevInfo, DevInfo->IntInEndpoint, 
+	UsbUpdateDataToggle(DevInfo, DevInfo->bIntEndpoint, 
+			//(PollQh->FirstTd->dToken & UHCI_TD_DATA_TOGGLE) ? 0 : 1);
 			PollQh->DataToggle);
 
-    if ((PollQh->CurrentTd->dControlStatus & UHCI_TD_STATUS_FIELD) == 0) {
-        if ((DevInfo->bCallBackIndex) && (DevInfo->bCallBackIndex <= MAX_CALLBACK_FUNCTION)) {
-            if (gUsbData->aCallBackFunctionTable[DevInfo->bCallBackIndex - 1 + CALLBACK_FUNCTION_START]) {
-                (*gUsbData->aCallBackFunctionTable[DevInfo->bCallBackIndex - 1 + CALLBACK_FUNCTION_START])(
-                        HcStruc,
-                        DevInfo,
-                        Qh,
-                        DevInfo->fpPollDataBuffer,
-                        PollQh->BytesTransferred);
-            }
-        }
+    if ((PollQh->FirstTd->dControlStatus & UHCI_TD_STATUS_FIELD) == 0) {
+        (*gUsbData->aCallBackFunctionTable[DevInfo->bCallBackIndex-1])(
+                HcStruc,
+                DevInfo,
+                Qh,
+                DevInfo->fpPollDataBuffer);
     }
 
-	UhciActivateTds(PollQh->FirstTd, PollQh->DataToggle);
-
+    PollQh->FirstTd->dToken ^= UHCI_TD_DATA_TOGGLE;
+    PollQh->FirstTd->dControlStatus = PollQh->FirstTd->dCSReload;
+    PollQh->FirstTd->bActiveFlag = 1;
     PollQh->pElementPtr = (UINT32)(UINTN)PollQh->FirstTd;
     PollQh->CurrentTd = PollQh->FirstTd;
     PollQh->BytesTransferred = 0;
@@ -3107,10 +2757,15 @@ UhciPollingQhCallback(
     return  USB_SUCCESS;
 }
 
-/**
-    This function check whether HC is halted.
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:   UhciInitQh
+//
+// Description: This function check whether HC is halted.
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 VOID
 UhciInitQh (
@@ -3130,23 +2785,33 @@ UhciInitQh (
     Qh->DevInfoPtr = NULL;
 }
 
-/**
-    This function check whether HC is halted.
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:   UhciIsHalted
+//
+// Description: This function check whether HC is halted.
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 BOOLEAN
 UhciIsHalted (
 	HC_STRUC	*HcStruc
 )
 {
-	return (HcByteReadHcIo(HcStruc, UHCI_STATUS_REG) & UHC_HC_HALTED) == UHC_HC_HALTED;
+	return (ByteReadIO((UINT16)(HcStruc->BaseAddress + UHCI_STATUS_REG)) & UHC_HC_HALTED) == UHC_HC_HALTED;
 }
 
-/**
-    This function calculates the polling rate.
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:   UhciTranslateInterval
+//
+// Description: This function calculates the polling rate.
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT8
 UhciTranslateInterval(
@@ -3164,156 +2829,17 @@ UhciTranslateInterval(
     return (1 << (BitCount - 1));
 }
 
-/**
 
-**/
-
-UHCI_TD*
-UhciAllocGeneralTds (
-	IN UINT8		DeviceAddr,
-	IN BOOLEAN		LowSpeed,
-	IN UINT8		PacketId,
-	IN UINT8        EndpointAddr,
-	IN UINT16		MaxPacket,
-	IN BOOLEAN		ShortPacket,
-    IN OUT UINTN    *BufferAddr,
-    IN OUT UINT32   *Length,
-    IN OUT UINT8    *DataToggle
-)
-{
-	UINT16		NumTds = 0;
-	UHCI_TD		*FirstTd = NULL;
-	UHCI_TD		*Td = NULL;
-	UINTN		Address = *BufferAddr;
-	UINT32		BytesRemaining = *Length;
-	UINT8		Toggle = *DataToggle;
-	UINT16		MaxLen = 0;
-
-	if (BytesRemaining == 0) {
-		return NULL;
-	}
-
-	NumTds = BytesRemaining / MaxPacket;
-	if (BytesRemaining % MaxPacket) {
-		NumTds++;
-	}
-
-	FirstTd = USB_MemAlloc(GET_MEM_BLK_COUNT(NumTds * sizeof(UHCI_TD)));
-	if (FirstTd == NULL) {
-		return NULL;
-	}
-	
-	for (Td = FirstTd;;) {
-		MaxLen = BytesRemaining > MaxPacket ? MaxPacket : BytesRemaining;
-
-		Td->pLinkPtr = UHCI_TERMINATE;
-		Td->dToken = (UINT32)PacketId | ((UINT32)DeviceAddr << 8) | 
-						((UINT32)EndpointAddr << 15) | ((MaxLen - 1) << 21);
-		if (Toggle) {
-			Td->dToken |= UHCI_TD_DATA_TOGGLE;
-		}
-
-		Td->pBufferPtr = (UINT32)Address;
-		Td->dCSReload = UHCI_TD_THREE_ERRORS | UHCI_TD_ACTIVE;
-		if (LowSpeed) {
-			Td->dCSReload |= UHCI_TD_LOW_SPEED_DEVICE;
-		}
-		if (ShortPacket) {
-			Td->dCSReload |= UHCI_TD_SHORT_PACKET_DETECT;
-		}
-		Td->dControlStatus = Td->dCSReload;
-		Td->bActiveFlag = 1;
-
-		BytesRemaining -= MaxLen;
-		Address += MaxLen;
-		Toggle ^= 1;
-
-		if (BytesRemaining == 0) {
-			break;
-		}
-
-		Td->pLinkPtr = (UINT32)(((UINTN)Td + sizeof(UHCI_TD)) | UHCI_VERTICAL_FLAG);
-		Td = (UHCI_TD*)((UINTN)Td->pLinkPtr & UHCI_POINTER_MASK);
-	}
-
-	Td->dCSReload |= UHCI_TD_INTERRUPT_ON_COMPLETE;
-	Td->dControlStatus = Td->dCSReload;
-
-	*Length = BytesRemaining;
-	*BufferAddr = Address;
-	*DataToggle = Toggle;
-	
-	return FirstTd;
-}
-
-/**
-
-**/
-
-VOID
-UhciFreeTds (
-	IN UHCI_TD	*FirstTd
-)
-{
-	UHCI_TD	*Td = FirstTd;
-	UINT16	NumTds = 0;
-
-	if (FirstTd == NULL) {
-		return;
-	}
-
-	while (Td) {
-		NumTds++;
-        Td = Td->pLinkPtr & UHCI_TERMINATE ?
-                NULL : (UHCI_TD*)((UINTN)Td->pLinkPtr & UHCI_POINTER_MASK);
-	}
-
-	USB_MemFree(FirstTd, GET_MEM_BLK_COUNT(NumTds * sizeof(UHCI_TD)));
-}
-
-/**
-
-**/
-
-VOID
-UhciActivateTds (
-	IN UHCI_TD	*FirstTd,
-	IN UINT8	DataToggle
-)
-{
-	UHCI_TD	*Td = FirstTd;
-	UINT8	Toogle = DataToggle;
-
-	if (FirstTd == NULL) {
-		return;
-	}
-
-	while (Td) {
-		Td->dToken &= ~UHCI_TD_DATA_TOGGLE;
-		if (Toogle) {
-			Td->dToken |= UHCI_TD_DATA_TOGGLE;
-		}
-    	Td->dControlStatus = Td->dCSReload;
-		Td->bActiveFlag = 1;
-
-		Toogle ^= 1;
-        Td = Td->pLinkPtr & UHCI_TERMINATE ?
-                NULL : (UHCI_TD*)((UINTN)Td->pLinkPtr & UHCI_POINTER_MASK);
-	}
-}
-
-#endif
-
-//**********************************************************************
-//**********************************************************************
-//**                                                                  **
-//**        (C)Copyright 1985-2016, American Megatrends, Inc.         **
-//**                                                                  **
-//**                       All Rights Reserved.                       **
-//**                                                                  **
-//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093        **
-//**                                                                  **
-//**                       Phone: (770)-246-8600                      **
-//**                                                                  **
-//**********************************************************************
-//**********************************************************************
+//****************************************************************************
+//****************************************************************************
+//**                                                                        **
+//**             (C)Copyright 1985-2010, American Megatrends, Inc.          **
+//**                                                                        **
+//**                          All Rights Reserved.                          **
+//**                                                                        **
+//**                 5555 Oakbrook Pkwy, Norcross, GA 30093                 **
+//**                                                                        **
+//**                          Phone (770)-246-8600                          **
+//**                                                                        **
+//****************************************************************************
+//****************************************************************************

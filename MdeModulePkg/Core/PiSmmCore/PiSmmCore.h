@@ -48,7 +48,6 @@
 #include <Library/SmmCorePlatformHookLib.h>
 #include <Library/PerformanceLib.h>
 #include <Library/TimerLib.h>
-#include <Library/HobLib.h>                                             // EIP288532
 
 #include "PiSmmCorePrivateData.h"
 

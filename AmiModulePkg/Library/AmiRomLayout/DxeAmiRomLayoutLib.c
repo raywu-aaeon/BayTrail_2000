@@ -93,7 +93,6 @@ EFI_STATUS AmiPublishFvArea(IN AMI_ROM_AREA *FvArea)
 
     if(FvArea != NULL)
     {
-        if (FvArea->Address == AMI_ROM_AREA_NOT_MEMORY_MAPPED) return EFI_NO_MAPPING;
         Status = gDS->ProcessFirmwareVolume((VOID*)(FvArea->Address), FvArea->Size, &FvHandle);
     }
     return Status;

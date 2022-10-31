@@ -1,0 +1,9 @@
+<component>
+	name = "TcgAsl"
+	category = ModulePart
+	LocalRoot = "AmiModulePkg\TCG\TcgAsl\"
+	RefName = "TcgAsl"
+[files]
+"tcg_ppi1_2.asl"	
+"tpm.asl"
+<endComponent>

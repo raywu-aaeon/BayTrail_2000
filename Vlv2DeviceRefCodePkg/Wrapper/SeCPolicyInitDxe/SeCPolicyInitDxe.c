@@ -589,12 +589,12 @@ SetPlatformSeCInfo(
         }
     }
 
-    if(mSeCInfo.FwUpdate != SeCInfo->FwUpdate && SeCInfo->SeCEnable == 1) { //EIP175761
+    if(mSeCInfo.FwUpdate != SeCInfo->FwUpdate) {
         HeciSetLocalFwUpdate((UINT8)SeCInfo->FwUpdate);
         mSeCInfo.FwUpdate = SeCInfo->FwUpdate;
     }
 
-    if(mSeCInfo.HmrfpoEnable != SeCInfo->HmrfpoEnable && SeCInfo->SeCEnable == 1) { //EIP175761
+    if(mSeCInfo.HmrfpoEnable != SeCInfo->HmrfpoEnable) {
         if(SeCInfo->HmrfpoEnable == 0) {
         } else {
             HmrfpoEnable();
@@ -724,7 +724,7 @@ Returns:
     UINT32  FWstatus;
     UINT32   WriteValue;
     UINT8   StallCount;
-    //UINTN  Index;
+    UINTN  Index;
     FWstatus    = 0;
     WriteValue  = 0;
     StallCount  = 0;
@@ -760,12 +760,11 @@ Returns:
     //
     // Hide SEC devices so we don't get a yellow bang in OS with disabled devices
     //
+    for(Index = 0; Index < 10; Index ++) {
+        DEBUG((EFI_D_ERROR, "wait %x\n", Index));
 
-//    for(Index = 0; Index < 10; Index ++) {
-//        DEBUG((EFI_D_ERROR, "wait %x\n", Index));
-
-//        gBS->Stall(1000000);
-//    }
+        gBS->Stall(1000000);
+    }
 //  gRT->ResetSystem (EfiResetWarm, EFI_SUCCESS, 0, NULL);
 //  DisableAllSECDevices ();
 
@@ -774,14 +773,6 @@ Returns:
     return EFI_SUCCESS;
 }
 
-EFI_STATUS
-HmrfpoDisableCallBack(
-    EFI_EVENT   Event,
-    VOID        *Context
-)
-{
-    return SeCHmrfpoDisable();
-}
 
 EFI_STATUS
 PerformCheckHMRFPO(
@@ -819,13 +810,7 @@ PerformCheckHMRFPO(
         if((SeCFirmwareStatus.r.SeCOperationMode == SEC_OPERATION_MODE_SECOVR_HECI_MSG) &&
                 (SEC_STATUS_SEC_STATE_ONLY(SeCStatus) == SEC_READY)
           ) {
-            EFI_EVENT HmrfpoDisableEvent;
-            //SeCHmrfpoDisable();
-            Status = EfiCreateEventReadyToBootEx(
-                        TPL_CALLBACK,
-                        HmrfpoDisableCallBack,
-                        NULL,
-                        &HmrfpoDisableEvent );
+            SeCHmrfpoDisable();
         }
     }
     return EFI_SUCCESS;

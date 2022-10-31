@@ -113,7 +113,7 @@
 #include <Protocol\PDiskInfo.h>
 #include <Protocol\BlockIo.h>
 #include <Protocol\PIDEController.h>
-#include <IndustryStandard/AmiAtaAtapi.h> //EIP180881
+#include <Protocol\PIDEBus.h>
 
 //---------------------------------------------------------------------------
 #define IsRestoreMemoryType(MemoryType) \

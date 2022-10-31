@@ -1,7 +1,7 @@
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2012, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **
@@ -11,10 +11,23 @@
 //**                                                                  **
 //**********************************************************************
 //**********************************************************************
-/** @file
-  This file contains the Graphics console driver that produces the Simple Text Out interface
 
-*/
+//**********************************************************************
+// $Header: $
+//
+// $Revision: $
+//
+// $Date: $
+//**********************************************************************
+//<AMI_FHDR_START>
+//
+// Name:  GraphicsConsole.c
+//
+// Description:  Graphics console driver that produces the Simple Text Out
+//		interface
+//
+//<AMI_FHDR_END>
+//**********************************************************************
 
 //-----------------------------------------------------------------------------
 #include "GraphicsConsole.h"
@@ -128,11 +141,8 @@ VOID GcInternalClearScreen (
 
 //-----------------------------------------------------------------------------
 // Globals
-/// Array that lists the current modes defined by the BIOS
 const TEXT_MODE TextModeArray[] = {GC_MODE_LIST};
-/// Value that defines the total number of text modes defined in the TextModeArray
 const INT32 MaxTextMode=(sizeof(TextModeArray)/sizeof(TEXT_MODE));
-/// Array of the colors that are used in the system
 const EFI_GRAPHICS_OUTPUT_BLT_PIXEL ColorArray[] = {			
 	{ GC_COLOR_BLACK       ,   0}, // case EFI_BLACK: 		// case EFI_BACKGROUND_BLACK >> 4
 	{ GC_COLOR_BLUE        ,   0}, // case EFI_BLUE : 		// case EFI_BACKGROUND_BLUE >> 4
@@ -154,8 +164,6 @@ const EFI_GRAPHICS_OUTPUT_BLT_PIXEL ColorArray[] = {
 
 //-----------------------------------------------------------------------------
 // Protocol implementation
-
-/// Protocol instance of the simple Text Output Protocol
 EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL	mGCProtocol	=
 	{
 	GCReset,
@@ -173,7 +181,7 @@ EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL	mGCProtocol	=
 
 //-----------------------------------------------------------------------------
 // Driver Binding Protocol
-/// Driver Binding protocol for the Graphics Console Driver
+
 EFI_DRIVER_BINDING_PROTOCOL gGraphicsConsoleDriverBindingProtocol = {
 	DriverBindingSupported,
 	DriverBindingStart,
@@ -186,12 +194,11 @@ EFI_DRIVER_BINDING_PROTOCOL gGraphicsConsoleDriverBindingProtocol = {
 
 //-----------------------------------------------------------------------------
 // Function Definitions
+#ifdef EFI_DEBUG
 #ifndef EFI_COMPONENT_NAME2_PROTOCOL_GUID //old Core
 #ifndef LANGUAGE_CODE_ENGLISH
-/// language code used to define english strings
 #define LANGUAGE_CODE_ENGLISH "eng"
 #endif
-/// function to verify if two language codes are equal
 static BOOLEAN LanguageCodesEqual(
     CONST CHAR8* LangCode1, CONST CHAR8* LangCode2
 ){
@@ -201,22 +208,32 @@ static BOOLEAN LanguageCodesEqual(
 }
 static EFI_GUID gEfiComponentName2ProtocolGuid = EFI_COMPONENT_NAME_PROTOCOL_GUID;
 #endif
-/// Driver Name used to identify the driver
+//Driver Name
 static UINT16 *gDriverName=L"AMI Graphic Console Driver";
 
-/**
-	This function is supposed to return the Controller name of the Handle that is passed in
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Name:  GraphicsConsoleGetControllerName
+//
+// Description: 
+//  EFI_COMPONENT_NAME_PROTOCOL GetControllerName function
+//
+// Input:       
+//  IN EFI_COMPONENT_NAME_PROTOCOL* This - pointer to protocol instance
+//  IN EFI_HANDLE Controller - controller handle
+//  IN EFI_HANDLE ChildHandle - child handle
+//  IN CHAR8* Language - pointer to language description
+//  OUT CHAR16** ControllerName - pointer to store pointer to controller name
+//
+// Output:      
+//      EFI_STATUS
+//          EFI_SUCCESS - controller name returned
+//          EFI_INVALID_PARAMETER - language undefined
+//          EFI_UNSUPPORTED - given language not supported
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
-	@param[in] This - pointer to protocol instance
-	@param[in] Controller - controller handle
-	@param[in] ChildHandle - child handle
-	@param[in] Language - pointer to language description
-	@param[out] ControllerName - pointer to store pointer to controller name
-
-	@retval EFI_SUCCESS - controller name returned
-	@retval EFI_INVALID_PARAMETER - language undefined
-	@retval EFI_UNSUPPORTED - given language not supported
-*/
 static EFI_STATUS GraphicsConsoleGetControllerName (
 		IN  EFI_COMPONENT_NAME2_PROTOCOL  *This,
 		IN  EFI_HANDLE                   ControllerHandle,
@@ -228,19 +245,27 @@ static EFI_STATUS GraphicsConsoleGetControllerName (
 	return EFI_UNSUPPORTED;
 }
 
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Name:   GraphicsConsoleGetDriverName
+//
+// Description: 
+//  EFI_COMPONENT_NAME_PROTOCOL GetDriverName function
+//
+// Input:       
+//  IN EFI_COMPONENT_NAME_PROTOCOL* This - pointer to protocol instance
+//  IN CHAR8* Language - pointer to language description
+//  OUT CHAR16** DriverName - pointer to store pointer to driver name
+//
+// Output:      
+//  EFI_STATUS
+//      EFI_SUCCESS - driver name returned
+//      EFI_INVALID_PARAMETER - language undefined
+//      EFI_UNSUPPORTED - given language not supported
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
-/**
-	This function is supposed to return the Driver name of this Driver
-
-	@param[in] This - pointer to EFI_COMPONENT_NAME2_PROTOCOL protocol instance
-	@param[in] Language - pointer to language description
-	@param[out] DriverName - pointer that will point to the Driver Name if return
-						value is EFI_SUCCESS
-
-	@retval EFI_SUCCESS - driver name returned
-	@retval EFI_INVALID_PARAMETER - language undefined
-	@retval EFI_UNSUPPORTED - given language not supported
-*/
 static EFI_STATUS GraphicsConsoleGetDriverName(
     IN  EFI_COMPONENT_NAME2_PROTOCOL  *This,
 	IN  CHAR8                        *Language,
@@ -265,19 +290,20 @@ static EFI_COMPONENT_NAME2_PROTOCOL gGraphicsConsole = {
   GraphicsConsoleGetControllerName,
   LANGUAGE_CODE_ENGLISH
 };
+#endif
 
 /**
   HII Database Protocol notification event handler.
 
-  This function registers the default font package when the HII Database Protocol is installed.
+  Register default font package when HII Database Protocol has been installed.
 
   @param[in] Event    Event whose notification function is being invoked.
   @param[in] Context  Pointer to the notification function's context.
-*/
+**/
 VOID EFIAPI RegisterFontPackage (IN EFI_EVENT Event, IN VOID *Context){
-/// Font File Guid
+///// Load Font Pack
 #define FONT_FFS_FILE_GUID { 0xdac2b117, 0xb5fb, 0x4964, { 0xa3, 0x12, 0xd, 0xcc, 0x77, 0x6, 0x1b, 0x9b } }
-/// Font File Section Guid
+// {A7FE7491-2C54-4F72-B80E-7649A8210193}
 #define FONT_FFS_FILE_SECTION_GUID { 0xa7fe7491, 0x2c54, 0x4f72, { 0xb8, 0xe, 0x76, 0x49, 0xa8, 0x21, 0x1, 0x93 } }
 
 static EFI_GUID FontFfsFileGuid = FONT_FFS_FILE_GUID;
@@ -325,18 +351,29 @@ extern UINT8 UsStdNarrowGlyphData[];
 }
 
 
-/**  
-	Entry point for the Graphics Console Module.  
-
-	This function performs two actions:
-	1) Installs a callback to register a font package
-	2) Installs the DriverBindingProtocol for the Graphics Console
-
-	@param[in] ImageHandle - driver image handle
-	@param[in] SystemTable - pointer to system table
-	
-	@retval EFI_SUCCESS - Driver binding protocol was installed
-*/
+//<AMI_PHDR_START>
+//-----------------------------------------------------------------------------
+// Name: GCEntryPoint
+//
+// Description:	
+//  Installs gGraphicsConsoleDriverBindingProtocol protocol
+//
+// Input:
+//	IN EFI_HANDLE ImageHandle - driver image handle
+//	IN EFI_SYSTEM_TABLE *SystemTable - pointer to system table
+//
+// Output:
+//	EFI_STATUS
+//      EFI_SUCCESS - Driver binding protocol was installed
+//
+// Modified:
+//
+// Referrals: InitAmiLib InstallMultipleProtocolInterfaces
+//
+// Notes:
+//
+//-----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 EFI_STATUS	EFIAPI GCEntryPoint (
 	IN EFI_HANDLE           ImageHandle,
@@ -367,22 +404,36 @@ EFI_STATUS	EFIAPI GCEntryPoint (
 	Status = pBS->InstallMultipleProtocolInterfaces (
 						&gGraphicsConsoleDriverBindingProtocol.DriverBindingHandle,
 						&gEfiDriverBindingProtocolGuid, &gGraphicsConsoleDriverBindingProtocol,
+#ifdef EFI_DEBUG
 						&gEfiComponentName2ProtocolGuid, &gGraphicsConsole,
+#endif
 						NULL);
 
 	return Status;
 }
 
-/**
-  Checks to see if this driver can be used
+//<AMI_PHDR_START>
+//-----------------------------------------------------------------------------
+// Name: DriverBindingSupported
+//
+// Description: 
+//  Checks to see if this driver can be used
+//
+// Input:
+//	IN EFI_DRIVER_BINDING_PROTOCOL *This - pointer to protocol instance
+//	IN EFI_HANDLE Controller - handle of controller to install driver on
+//	IN EFI_DEVICE_PATH_PROTOCOL *RemainingDevicePath - pointer to device path
+//
+// Output:
+//  EFI_STATUS
+//	    EFI_SUCCESS - Driver supports the Device
+//      EFI_NOT_SUPPORTED - Driver cannot support the Device 
+//
+// Notes:
+//
+//-----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
-	@param[in] This - pointer to protocol instance
-	@param[in] ControllerHandle - handle of controller to install driver on
-	@param[in] RemainingDevicePath - pointer to device path
-
-	@retval EFI_SUCCESS - Driver supports the Device
-	@retval EFI_NOT_SUPPORTED - Driver cannot support the Device 
-*/
 EFI_STATUS	DriverBindingSupported (
 	IN EFI_DRIVER_BINDING_PROTOCOL    *This,
 	IN EFI_HANDLE                     ControllerHandle,
@@ -424,16 +475,27 @@ EFI_STATUS	DriverBindingSupported (
 	return Status;
 }
 
-/**
-	This function grabs needed protocols and initializes the supported text modes
+//<AMI_PHDR_START>
+//-----------------------------------------------------------------------------
+// Name: DriverBindingStart
+//
+// Description: 
+//  This function grabs needed protocols and initializes the supported text modes
+//
+// Input:
+//	IN EFI_DRIVER_BINDING_PROTOCOL *This - pointer to protocol instance
+//	IN EFI_HANDLE Controller - handle of controller to install driver on
+//	IN EFI_DEVICE_PATH_PROTOCOL *RemainingDevicePath - pointer to device path
+//
+// Output:
+//  EFI_STATUS
+//	    EFI_SUCCESS - SimpleTextOut Protocol installed
+//      EFI_NOT_SUPPORTED - SimpleTextOut Protocol not installed
+//
+// Notes:
+//-----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
-	@param[in] This - pointer to protocol instance
-	@param[in] ControllerHandle - handle of controller to install driver on
-	@param[in] RemainingDevicePath - pointer to device path
-
-	@retval EFI_SUCCESS - SimpleTextOut Protocol installed
-	@retval EFI_NOT_SUPPORTED - SimpleTextOut Protocol not installed
-*/  
 EFI_STATUS	DriverBindingStart (
 	IN EFI_DRIVER_BINDING_PROTOCOL *This,
 	IN EFI_HANDLE                  ControllerHandle,
@@ -581,17 +643,29 @@ EFI_STATUS	DriverBindingStart (
 	return Status;
 }
 
-/**
-	Uninstalls the driver from given ControllerHandle.
+//<AMI_PHDR_START>
+//-----------------------------------------------------------------------------
+// Name: DriverBindingStop
+//
+// Description: 
+//  Uninstalls the driver from given ControllerHandle
+//
+// Input:
+//  IN EFI_DRIVER_BINDING_PROTOCOL *This - pointer to protocol instance
+//  IN EFI_HANDLE ControllerHandle - controller handle to uninstall driver from
+//  IN UINTN NumberOfChildren - number of children supported by this driver
+//  IN EFI_HANDLE *ChildHandleBuffer  - pointer to child handles buffer
+//
+// Output:
+//  EFI_STATUS
+//	    EFI_SUCCESS	- driver uninstalled from controller
+//      EFI_NOT_STARTED - driver was not started
+//		
+// Notes:
+//
+//-----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
-	@param[in] This - pointer to protocol instance
-	@param[in] ControllerHandle - controller handle to uninstall driver from
-	@param[in] NumberOfChildren - number of children supported by this driver
-	@param[in] ChildHandleBuffer  - pointer to child handles buffer
-
-	@retval EFI_SUCCESS	- driver uninstalled from controller
-	@retval EFI_NOT_STARTED - driver was not started
-*/
 EFI_STATUS	DriverBindingStop ( 
 	IN EFI_DRIVER_BINDING_PROTOCOL *This,
 	IN EFI_HANDLE                  ControllerHandle,
@@ -648,19 +722,27 @@ EFI_STATUS	DriverBindingStop (
 	return EFI_SUCCESS;
 }
 
-/**
-    Resets the text output device
+//<AMI_PHDR_START>
+//-----------------------------------------------------------------------------
+// Name: GCReset
+//
+// Description: 
+//  Resets the text output device
+//
+// Input:
+//	IN EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL *This - pointer to the protocol instance
+//	IN BOOLEAN ExtendedVerification - indicates that the driver should preform more
+//			exhausted verification of the device during reset
+//
+// Output:
+//  EFI_STATUS
+//	    EFI_SUCCESS	- device reset properly
+//	    EFI_DEVICE_ERROR - Device is not functioning properly
+//		
+// Notes:
+//-----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
-        
-    @param[in] This pointer to the protocol instance
-    @param[in] ExtendedVerification indicates that the driver should preform more
-        exhausted verification of the device during reset
-
-         
-    @retval EFI_SUCCESS device reset properly
-    @retval EFI_DEVICE_ERROR Device is not functioning properly
-		
-**/
 EFI_STATUS  GCReset(
 	IN EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL *This,
 	IN BOOLEAN                         ExtendedVerification
@@ -674,22 +756,30 @@ EFI_STATUS  GCReset(
 	return	EFI_SUCCESS;
 }
 
-/**
-    Writes a string to the output device and advances the cursor 
-    as necessary.
+//<AMI_PHDR_START>
+//-----------------------------------------------------------------------------
+// Name: GCOutputString
+//
+// Description: 
+//  Writes a string to the output device and advances the cursor 
+//	as necessary.
+//
+// Input:
+//	IN EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL *This - pointer to the protocol instance
+//	IN CHAR16 *String - pointer to string to be displayed to the screen
+//
+// Output:
+//  EFI_STATUS
+//	    EFI_SUCCESS	- device reset properly
+//	    EFI_DEVICE_ERROR - Device reported an Error while outputting a string
+//	    EFI_UNSUPPORTED - The output device's mode is not currently in a defined state
+//	    EFI_WARN_UNKNOWN_GLYPH - This warning code indicates that some of the 
+//          characters in the unicode string could not be rendered and were skipped
+//		
+// Notes:
+//-----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
-        
-    @param[in] This - pointer to the protocol instance
-    @param[in] String - pointer to string to be displayed to the screen
-
-         
-    @retval EFI_SUCCESS device reset properly
-    @retval EFI_DEVICE_ERROR Device reported an Error while outputting a string
-    @retval EFI_UNSUPPORTED The output device's mode is not currently in a defined state
-    @retval EFI_WARN_UNKNOWN_GLYPH This warning code indicates that some of the 
-        characters in the unicode string could not be rendered and were skipped
-		
-*/
 EFI_STATUS GCOutputString(
 	IN EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL *This,
 	IN CHAR16                          *String
@@ -804,16 +894,29 @@ EFI_STATUS GCOutputString(
 	return (UnknownGlyph) ? EFI_WARN_UNKNOWN_GLYPH : EFI_SUCCESS;
 }
 
-/**
-    Tests to see if the String has the glyphs that correspond to
-    each character in the string
+//<AMI_PHDR_START>
+//-----------------------------------------------------------------------------
+// Name: GCTestString
+//
+// Description: 
+//  Tests to see if the String has the glyphs that correspond to
+//	each character in the string
+//
+// Input: 
+//	IN EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL *This - pointer to the protocol instance
+//	IN CHAR16 *String - pointer to a string that needs to be tested
+//
+// Output:
+//  EFI_STATUS
+//	    EFI_SUCCESS - all characters can be drawn
+//	    EFI_UNSUPPORTED - there are characters that cannot be drawn
+//		
+// Notes:
+//	Uses the HII function TestString
+//
+//-----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
-    @param[in] This - pointer to the protocol instance
-    @param[in] String - pointer to a string that needs to be tested
-         
-    @retval EFI_SUCCESS all characters can be drawn
-    @retval EFI_UNSUPPORTED there are characters that cannot be drawn
-*/
 EFI_STATUS  GCTestString(
 	IN EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL *This,
 	IN CHAR16                          *String
@@ -855,19 +958,30 @@ EFI_STATUS  GCTestString(
 	return EFI_SUCCESS;
 }
 
-/**
-    Returns information for an available text mode that the output
-    device supports
+//<AMI_PHDR_START>
+//-----------------------------------------------------------------------------
+// Name: GCQueryMode
+//
+// Description: 
+//  Returns information for an available text mode that the output
+//	device supports
+//
+// Input: 
+//	IN EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL *This - pointer to the protocol instance
+//	IN UINTN ModeNum - The mode to return information on
+//	OUT UINTN *Col - the number of columns supported
+//	OUT UINTN *Row - the number of rows supported
+//
+// Output:
+//  EFI_STATUS
+//	    EFI_SUCCESS	- device reset properly
+//	    EFI_DEVICE_ERROR - Device reported an Error while outputting a string
+//	    EFI_UNSUPPORTED - The ModeNumber is not supported
+//		
+// Notes:
+//-----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
-    @param[in] This - pointer to the protocol instance
-    @param[in] ModeNum - The mode to return information on
-    @param[out] Col - the number of columns supported
-    @param[out] Row - the number of rows supported
-
-    @retval EFI_SUCCESS device reset properly
-    @retval EFI_DEVICE_ERROR Device reported an Error while outputting a string
-    @retval EFI_UNSUPPORTED The ModeNumber is not supported
-*/
 EFI_STATUS GCQueryMode(
 	IN  EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL *This,
 	IN  UINTN                           ModeNum,
@@ -897,16 +1011,27 @@ EFI_STATUS GCQueryMode(
 	return EFI_SUCCESS;
 }
 
-/**
-    Sets the text mode to the requested mode.  It checks to see if
-    it is a valid mode
+//<AMI_PHDR_START>
+//-----------------------------------------------------------------------------
+// Name: GCSetMode
+//
+// Description: 
+//  Sets the text mode to the requested mode.  It checks to see if
+//	it is a valid mode
+//
+// Input: 
+//	IN EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL *This - pointer to the protocol instance
+//	IN UINTN ModeNum - mode number to change to
+//
+// Output:
+//  EFI_STATUS
+//	    EFI_SUCCESS - the new mode is valid and has been set
+//	    EFI_UNSUPPORTED - the new mode is not valid
+//		
+// Notes:
+//-----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
-    @param[in] This - pointer to the protocol instance
-    @param[in] ModeNum - mode number to change to
-
-    @retval EFI_SUCCESS the new mode is valid and has been set
-    @retval EFI_UNSUPPORTED the new mode is not valid
-*/
 EFI_STATUS GCSetMode(
 	IN EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL *This,
 	IN UINTN                           ModeNum
@@ -979,16 +1104,27 @@ EFI_STATUS GCSetMode(
 	return EFI_SUCCESS;
 }
 
-/**
-    Sets the foreground color and background color for the screen
+//<AMI_PHDR_START>
+//-----------------------------------------------------------------------------
+// Name: GCSetAttribute
+//
+// Description: 
+//  Sets the foreground color and background color for the screen
+//
+// Input: 
+//	IN EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL *This - pointer to the protocol instance
+//	IN UINTN Attribute - the attributes to set
+//
+// Output:
+//  EFI_STATUS
+//	    EFI_SUCCESS - the attribute was changed successfully
+//	    EFI_DEVICE_ERROR - The device had an error
+//	    EFI_UNSUPPORTED - The attribute is not supported
+//		
+// Notes:
+//-----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
-    @param[in] This - pointer to the protocol instance
-    @param[in] Attribute - the attributes to set
-
-    @retval EFI_SUCCESS the attribute was changed successfully
-    @retval EFI_DEVICE_ERROR The device had an error
-    @retval EFI_UNSUPPORTED The attribute is not supported
-*/
 EFI_STATUS  GCSetAttribute(
 	IN EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL *This,
 	IN UINTN                           Attribute
@@ -1003,13 +1139,24 @@ EFI_STATUS  GCSetAttribute(
 	return EFI_SUCCESS;
 }
 
-/**
-    Clears the text screen
+//<AMI_PHDR_START>
+//-----------------------------------------------------------------------------
+// Name: GCClearScreen
+//
+// Description: 
+//  Clears the text screen
+//
+// Input: 
+//	IN EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL *This - pointer to the protocol instance
+//
+// Output:
+//  EFI_STATUS
+//	    EFI_SUCCESS - the screen was cleared
+//		
+// Notes:
+//-----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
-    @param[in] This - pointer to the protocol instance
-
-    @retval EFI_SUCCESS the screen was cleared
-*/
 EFI_STATUS  GCClearScreen(
 	IN EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL *This
 )
@@ -1030,18 +1177,28 @@ EFI_STATUS  GCClearScreen(
 	return EFI_SUCCESS;
 }
 
-/**
-    This function sets the position of the cursor
-
-    @param[in] This - pointer to the protocol instance
-    @param[in] Column - the new column
-    @param[in] Row - The new row
-
-    @retval EFI_SUCCESS the cursor position was changed
-    @retval EFI_DEVICE_ERROR The device had an error
-    @retval EFI_UNSUPPORTED The device is not in a valid text mode or the 
-        cursor position is not valid
-*/
+//<AMI_PHDR_START>
+//-----------------------------------------------------------------------------
+// Name: GCSetCursorPosition
+//
+// Description: 
+//  This function sets the position of the cursor
+//
+// Input: 
+//	IN EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL *This - pointer to the protocol instance
+//	IN UINTN Column - the new column
+//	IN UINTN Row - The new row
+//
+// Output:
+//  EFI_STATUS
+//	    EFI_SUCCESS - the cursor position was changed
+//	    EFI_DEVICE_ERROR - The device had an error
+//	    EFI_UNSUPPORTED - The device is not in a valid text mode or the 
+//	                      cursor position is not valid
+//		
+// Notes:
+//-----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS GCSetCursorPosition(
 	IN EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL *This,
 	IN UINTN                           Column,
@@ -1077,18 +1234,29 @@ EFI_STATUS GCSetCursorPosition(
 	return EFI_SUCCESS;
 }
 
-/**
-    Makes cursor invisible or visible
+//<AMI_PHDR_START>
+//-----------------------------------------------------------------------------
+// Name: GCEnableCursor
+//
+// Description: 
+//  Makes cursor invisible or visible
+//
+// Input: 
+//	IN EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL *This - pointer to the protocol instance
+//	IN BOOLEAN Visible - a boolean that if TRUE the cursor will be visible
+//	if FALSE the cursor will be invisible
+//
+// Output:
+//  EFI_STATUS
+//	    EFI_SUCCESS - the cursor visibility was set correctly
+//	    EFI_DEVICE_ERROR - The device had an error
+//	    EFI_UNSUPPORTED - The device does not support visibilty control
+//	                      for the cursor
+//		
+// Notes:
+//-----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
-    @param[in] This - pointer to the protocol instance
-    @param[in] Visible - a boolean that if TRUE the cursor will be visible
-        if FALSE the cursor will be invisible
-
-    @retval EFI_SUCCESS the cursor visibility was set correctly
-    @retval EFI_DEVICE_ERROR The device had an error
-    @retval EFI_UNSUPPORTED The device does not support visibilty control
-        for the cursor
-*/
 EFI_STATUS  GCEnableCursor(
 	IN EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL *This,
 	IN BOOLEAN                         Visible
@@ -1112,16 +1280,26 @@ EFI_STATUS  GCEnableCursor(
 	return EFI_SUCCESS;
 }
 
+//<AMI_PHDR_START>
+//-----------------------------------------------------------------------------
+// Name: GetColorFromAttribute
+//
+// Description: 
+//  Turns color attributes into Pixel values
+//
+// Input: 
+//	IN  UINT32 Attribute - The color to set
+//	OUT EFI_GRAPHICS_OUTPUT_BLT_PIXEL *Foreground - foreground color
+//	OUT EFI_GRAPHICS_OUTPUT_BLT_PIXEL *Background - background color
+//
+// Output:
+//  EFI_STATUS
+//      EFI_SUCCESS - valid colors returned
+//		
+// Notes:
+//-----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
-/**
-    Turns color attributes into Pixel values
-
-    @param[in] Attribute - The color to set
-    @param[out] Foreground - foreground color
-    @param[out] Background - background color
-
-    @retval EFI_SUCCESS valid colors returned
-*/
 EFI_STATUS GetColorFromAttribute(
     IN  UINT32                         Attribute, 
     OUT EFI_GRAPHICS_OUTPUT_BLT_PIXEL *Foreground, 
@@ -1140,14 +1318,24 @@ EFI_STATUS GetColorFromAttribute(
 	return EFI_SUCCESS;
 }
 
-/**
-    This function draws /hides the cursor in the current cursor position
+//<AMI_PHDR_START>
+//-----------------------------------------------------------------------------
+// Name: DrawCursor
+//
+// Description: 
+//  This function draws /hides the cursor in the current cursor position
+//
+// Input: 
+//	IN GC_DATA * GcData - Private data structure for SimpleTextOut interface
+//  IN BOOLEAN Visible - if TRUE - draws cursor, if FALSE - hides cursor
+//
+// Output:
+//  VOID
+//
+// Notes:
+//-----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
-    @param[in] GcData Private data structure for SimpleTextOut interface
-    @param[in] Visible if TRUE - draws cursor, if FALSE - hides cursor
-
-    @retval VOID
-*/
 VOID DrawCursor(
     IN GC_DATA *GcData, 
     IN BOOLEAN Visible
@@ -1186,15 +1374,25 @@ VOID DrawCursor(
     }                                   
 }
 
-/**
-    This is the function that makes the cursor blink. A timer event 
-    is created that will cause this function to be called
+//<AMI_PHDR_START>
+//-----------------------------------------------------------------------------
+// Name: BlinkCursorEvent
+//
+// Description: 
+//  This is the function that makes the cursor blink. A timer event 
+//	is created that will cause this function to be called
+//
+// Input: 
+//	IN EFI_EVENT Event - event that was triggered
+//  IN VOID *Context - pointer to the event context
+//
+// Output:
+//  VOID
+//		
+// Notes:
+//-----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
-    @param[in] Event - event that was triggered
-    @param[in] Context - pointer to the event context
-
-    @retval VOID
-*/
 VOID EFIAPI BlinkCursorEvent(
 	IN EFI_EVENT Event,
 	IN VOID      *Context
@@ -1221,22 +1419,37 @@ VOID EFIAPI BlinkCursorEvent(
 	}
 }
 
-/**
-    This function returns graphics mode number, correspondend with given
-    horizontal and vertical resolution. If either HorRes or VerRes are equal
-    to MAX_RES, the highest supported resolution will be returned.
+//<AMI_PHDR_START>
+//-----------------------------------------------------------------------------
+// Name: GetGraphicsModeNumber
+//
+// Description: 
+//  This function returns graphics mode number, correspondend with given
+//  horizontal and vertical resolution. If either HorRes or VerRes are equal
+//  to MAX_RES, the highest supported resolution will be returned.
+//
+// Input: 
+//	IN EFI_GRAPHICS_OUTPUT_PROTOCOL	*GraphicsOutput - pointer to Gop driver
+//  IN UINT32 HorRes - required horizontal resolution
+//  IN UINT32 VerRes - required vertical resolution
+//  OUT UINT32 *ModeNum - returned graphics mode number
+//  IN  BOOLEAN ExactMatch - TRUE indicates that only an exact match should
+//                           succeed. FALSE indicates that if a higher
+//                           resolution is supported, it can be substituted.
+//  OUT UINT32 *ActualHorRes - On return, holds the actual horizontal
+//                             resolution that was found to match
+//  OUT UINT32 *ActualVerRes - On return, holds the actual vertical
+//                             resolution that was found to match
+//      
+// Output: 
+//  EFI_STATUS
+//      EFI_SUCCESS - correct mode number returned
+//      EFI_NOT_FOUND - mode number not found for given resolution
+//		
+// Notes:
+//-----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
-    @param[in] GraphicsOutput - pointer to Gop driver
-    @param[in] HorRes - required horizontal resolution
-    @param[in] VerRes - required vertical resolution
-    @param[out] ModeNum - returned graphics mode number 
-    @param[in] ExactMatch - TRUE indicates that only an exact match should succeed. FALSE indicates that if a higher resolution is supported, it can be substituted.
-    @param[out] ActualHorRes OPTIONAL - On return, holds the actual horizontal resolution that was found to match
-    @param[out] ActualVerRes OPTIONAL - On return, holds the actual vertical resolution that was found to match
-
-    @retval EFI_SUCCESS correct mode number returned
-    @retval EFI_NOT_FOUND mode number not found for given resolution
-*/
 EFI_STATUS GetGraphicsModeNumber (
     IN  EFI_GRAPHICS_OUTPUT_PROTOCOL *GraphicsOutput, 
     IN  UINT32                       HorRes,
@@ -1303,15 +1516,25 @@ EFI_STATUS GetGraphicsModeNumber (
     return EFI_SUCCESS;
 }
 
+//<AMI_PHDR_START>
+//-----------------------------------------------------------------------------
+// Name: SetupGraphicsDevice
+//
+// Description: 
+//  This function fills array of supported text modes
+//
+// Input: 
+//	IN GC_DATA *Data - pointer to private protocol data structure
+//      
+// Output: 
+//  EFI_STATUS
+//      EFI_SUCCESS - function executed successfully
+//      EFI_UNSUPPORTED - no supported modes found
+//		
+// Notes:
+//-----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
-/**
-    This function fills array of supported text modes
-
-    @param[in] GcData pointer to private protocol data structure
-
-    @retval EFI_SUCCESS function executed successfully
-    @retval EFI_UNSUPPORTED no supported modes found
-*/
 EFI_STATUS SetupGraphicsDevice(
     IN GC_DATA *GcData
 )
@@ -1418,14 +1641,22 @@ EFI_STATUS SetupGraphicsDevice(
     return EFI_SUCCESS;
 }
 
+//<AMI_PHDR_START>
+//-----------------------------------------------------------------------------
+// Name: ScrollUp
+//
+// Description: 
+//  This function scrolls screen one row up and clears bottom row
+//
+// Input:       
+//  IN GC_DATA *GcData - pointer to private protocol data structure
+//      
+// Output:      
+//  VOID
+//
+//-----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
-/**
-    This function scrolls screen one row up and clears bottom row
-
-    @param[in] GcData - pointer to private protocol data structure
-
-    @retval VOID
-*/
 VOID ScrollUp(
     IN GC_DATA *GcData
 )
@@ -1456,14 +1687,22 @@ VOID ScrollUp(
                                 0);
 }
 
+//<AMI_PHDR_START>
+//-----------------------------------------------------------------------------
+// Name:    SaveCursorImage
+//
+// Description: 
+//  This function saves image under cursor to restore, when cursor moves
+//
+// Input:       
+//  IN GC_DATA *GcData - pointer to private protocol data structure
+//      
+// Output:      
+//  VOID
+//
+//-----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
-/**
-    This function saves image under cursor to restore, when cursor moves
-
-    @param[in] GcData - pointer to private protocol data structure
-      
-    @retval VOID
-*/
 VOID SaveCursorImage(
     IN GC_DATA *GcData
 )
@@ -1481,17 +1720,26 @@ VOID SaveCursorImage(
             NARROW_GLYPH_WIDTH * sizeof(EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
 }    
 
+//<AMI_PHDR_START>
+//-----------------------------------------------------------------------------
+// Name: ShiftCursor
+//
+// Description: 
+//  This function shifts cursor right to number of columns defined in Step
+//  If cursor reaches right edge of the screen it moves one line down, scrolling screen
+//  if nesessary
+//
+// Input: 
+//	IN GC_DATA *GcData - pointer to private protocol data structure
+//  IN UINT16 Step - number of columns to shift cursor right
+//      
+// Output: 
+//  VOID
+//		
+// Notes:
+//-----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
-/**
-    This function shifts cursor right to number of columns defined in Step
-    If cursor reaches right edge of the screen it moves one line down, scrolling screen
-    if nesessary
-
-    @param[in] GcData - pointer to private protocol data structure
-    @param[in] Step - number of columns to shift cursor right
-
-    @retval VOID
-*/
 VOID ShiftCursor(
     IN GC_DATA *GcData,
     IN UINT16  Step
@@ -1526,17 +1774,27 @@ VOID ShiftCursor(
     }
 }
 
+//<AMI_PHDR_START>
+//-----------------------------------------------------------------------------
+// Name:    GcUpdateBltBuffer
+//
+// Description: 
+//  This function is a porting hook to implement specific action on
+//  Blt buffer before put it on screen
+//
+// Input:       
+//  IN GC_DATA *GcData - pointer to internal structure
+//  IN UINT32 Width - width of passed buffer in pixels
+//  IN UINT32 Height - height of passed buffer in pixels
+//  IN OUT EFI_GRAPHICS_OUTPUT_BLT_PIXEL *BltBuffer - pointer to Blt buffer
+//              to perform action upon
+//      
+// Output:
+//  VOID
+//
+//-----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
-/**
-    This function is a porting hook to implement specific action on the Blt buffer before put it on screen
-               
-    @param[in] This - pointer to internal structure
-    @param[in] Width - width of passed buffer in pixels
-    @param[in] Height - height of passed buffer in pixels
-    @param[inout] BltBuffer - pointer to Blt buffer to perform action upon
-         
-    @retval VOID
-*/
 VOID GcUpdateBltBuffer (
 	IN     GC_DATA 			             *This,
 	IN     UINT32			             Width,
@@ -1547,15 +1805,23 @@ VOID GcUpdateBltBuffer (
     return;
 }
 
+//<AMI_PHDR_START>
+//-----------------------------------------------------------------------------
+// Name:    GcInternalClearScreen
+//
+// Description: 
+//  This function is a porting hook to implement specific action when
+//  clear screen operation is needed
+//
+// Input:       
+//  IN GC_DATA *This - pointer to private protocol data structure
+//      
+// Output:      
+//  VOID
+//
+//-----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
-/**
-    This function is a porting hook to implement specific action when
-    clear screen operation is needed
-
-    @param[in] This pointer to private protocol data structure
-               
-    @retval VOID
-*/
 VOID GcInternalClearScreen (
 	IN OUT GC_DATA *This
 )
@@ -1597,10 +1863,11 @@ VOID GcInternalClearScreen (
 	    (This->SimpleTextOut.Mode)->CursorRow = 0;
     }
 }
+
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2012, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **

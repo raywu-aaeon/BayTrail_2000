@@ -1,7 +1,7 @@
 #*************************************************************************
 #*************************************************************************
 #**                                                                     **
-#**        (C)Copyright 1985-2014, American Megatrends, Inc.            **
+#**        (C)Copyright 1985-2011, American Megatrends, Inc.            **
 #**                                                                     **
 #**                       All Rights Reserved.                          **
 #**                                                                     **
@@ -12,18 +12,28 @@
 #*************************************************************************
 #*************************************************************************
 
-#/** @file AmiCspLib.mak
-#    Make file for the CSP Library.
+#*************************************************************************
+# $Header: $
 #
-#    CSP library contains all library 
-#    functions related to chipset and CPU. The main idea for this library 
-#    is to consolidate porting hooks related to various components 
-#    (like CSM, SMM etc) in respective chipset files say NB, SB, CPU etc.  
-#    This library can be built us a LIB file or as various FFS files.  
-#    The MACROS and library init functions mask the actual implementation
-#    which is controlled by the SDL token
+# $Revision: $
 #
-#*/
+# $Date: $
+#*************************************************************************
+#<AMI_FHDR_START>
+#---------------------------------------------------------------------------
+# Name:     AmiCspLib.mak
+#
+# Description:  
+#   Make file for the CSP Library. CSP library contains all library 
+#   functions related to chipset and CPU. The main idea for this library is 
+#   to consolidate porting hooks related to various components 
+#   (like CSM, SMM etc) in respective chipset files say NB, SB, CPU etc.  
+#   This library can be built us a LIB file or as various FFS files.  
+#   The MACROS and library init functions mask the actual implementation
+#   which is controlled by the SDL token
+#
+#---------------------------------------------------------------------------
+#<AMI_FHDR_END>
 
 Prepare :  $(BUILD_DIR)/AmiCSPLibInc.h $(BUILD_DIR)/AmiCspLibPei.inf $(BUILD_DIR)/AmiCspLibDxe.inf
 
@@ -64,12 +74,7 @@ $(EOL)\
   $(EOL)\
 [LibraryClasses]$(EOL)\
   $(subst $(SPACE),$(EOL)$(SPACE),$(AMI_CSP_LIBRARIES))$(EOL)\
-  $(subst $(SPACE),$(EOL)$(SPACE),$(AMI_CSP_PEI_LIBRARIES))$(EOL)\
-[Pcd] $(EOL)\
-  gEfiMdePkgTokenSpaceGuid.PcdPciExpressBaseAddress$(EOL)\
-  gAmiChipsetModulePkgTokenSpaceGuid.PcdRcrbBaseAddress$(EOL)\
-  gAmiChipsetModulePkgTokenSpaceGuid.PcdGpioPortBaseAddress$(EOL)\
-  gAmiChipsetPkgTokenSpaceGuid.PcdAcpiIoPortBaseAddress$(EOL)"\
+  $(subst $(SPACE),$(EOL)$(SPACE),$(AMI_CSP_PEI_LIBRARIES))$(EOL)"\
 > $(BUILD_DIR)/AmiCspLibPei.inf
 
 $(BUILD_DIR)/AmiCspLibDxe.inf : $(BUILD_DIR)/token.h $(AmiCspLib_DIR)/AmiCspLib.mak
@@ -80,7 +85,7 @@ $(BUILD_DIR)/AmiCspLibDxe.inf : $(BUILD_DIR)/token.h $(AmiCspLib_DIR)/AmiCspLib.
   FILE_GUID                      = 94F399A7-C224-40AD-B695-FDF7EFDE4805$(EOL)\
   MODULE_TYPE                    = DXE_DRIVER$(EOL)\
   VERSION_STRING                 = 1.0$(EOL)\
-  LIBRARY_CLASS                  = AmiCspLib|DXE_DRIVER DXE_CORE DXE_RUNTIME_DRIVER UEFI_DRIVER SMM_CORE DXE_SMM_DRIVER UEFI_APPLICATION$(EOL)\
+  LIBRARY_CLASS                  = AmiCspLib|DXE_DRIVER DXE_CORE DXE_RUNTIME_DRIVER UEFI_DRIVER SMM_CORE DXE_SMM_DRIVER$(EOL)\
 $(EOL)\
 [Sources]$(EOL)\
   $(patsubst %,../%,$(subst $(SPACE),$(EOL)$(SPACE),$(AMI_CSP_DXE_SOURCES)))$(EOL)\
@@ -97,18 +102,13 @@ $(EOL)\
   $(EOL)\
 [LibraryClasses]$(EOL)\
   $(subst $(SPACE),$(EOL)$(SPACE),$(AMI_CSP_LIBRARIES))$(EOL)\
-  $(subst $(SPACE),$(EOL)$(SPACE),$(AMI_CSP_DXE_LIBRARIES))$(EOL)\
-[Pcd] $(EOL)\
-  gEfiMdePkgTokenSpaceGuid.PcdPciExpressBaseAddress$(EOL)\
-  gAmiChipsetModulePkgTokenSpaceGuid.PcdRcrbBaseAddress$(EOL)\
-  gAmiChipsetModulePkgTokenSpaceGuid.PcdGpioPortBaseAddress$(EOL)\
-  gAmiChipsetPkgTokenSpaceGuid.PcdAcpiIoPortBaseAddress$(EOL)"\
+  $(subst $(SPACE),$(EOL)$(SPACE),$(AMI_CSP_DXE_LIBRARIES))$(EOL)"\
 > $(BUILD_DIR)/AmiCspLibDxe.inf
 
 #**********************************************************************
 #**********************************************************************
 #**                                                                  **
-#**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+#**        (C)Copyright 1985-2011, American Megatrends, Inc.         **
 #**                                                                  **
 #**                       All Rights Reserved.                       **
 #**                                                                  **

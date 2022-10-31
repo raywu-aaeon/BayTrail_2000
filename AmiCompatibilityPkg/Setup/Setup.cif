@@ -5,15 +5,9 @@
 	RefName = "AmiCompatibilityPkg.Setup"
 [files]
 "Setup.sdl"	
-"Setup.mak"	
-"Setup.chm"
-"setupheader.txt"	
+"Setup.mak"
 "Setup.c"
-"SetupHiiAccess.c"
 "Setup.uni"
-"Setup.vfr"
-"SetupLibrary.c"
 "SetupPrivate.h"
-"SetupDefaults.c"
-"SetupDefaults.vfr"
+"Setup.vfr"
 <endComponent>

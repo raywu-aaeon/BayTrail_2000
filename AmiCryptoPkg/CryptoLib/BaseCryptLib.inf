@@ -7,15 +7,46 @@
   INF_VERSION                    = 0x00010005
   BASE_NAME                      = BaseCryptLib
   FILE_GUID                      = AA9E97DB-5F98-4043-A393-77995B7E0CED
-  MODULE_TYPE                    = DXE_DRIVER
+  MODULE_TYPE                    = DXE_RUNTIME_DRIVER
   VERSION_STRING                 = 1.0
-  LIBRARY_CLASS                  = BaseCryptLib|DXE_SMM_DRIVER DXE_DRIVER DXE_CORE UEFI_APPLICATION UEFI_DRIVER
+  LIBRARY_CLASS                  = BaseCryptLib|DXE_DRIVER DXE_CORE DXE_RUNTIME_DRIVER
+  CONSTRUCTOR                    = RuntimeCryptLibConstructor
 
 [Sources]
-BaseCryptLib.c
+CryptLibInit.c    
+BaseCryptLib.c    
+RSAKeyImport.c    
+Pkcs1_sigDecode.c  
+Memalloc.c    
+Scrtlib.c 
+TimeWrapper.c 
+wpa_debug.c   
+wpa_debug.h   
+Pkcs7.c   
+Pkcs7.h   
+includes.h    
+build_config.h    
+common.h  
+os.h  
+crypto.h  
+libtommath.h  
+bignum.c  
+bignum.h  
+asn1.c    
+asn1.h    
+rsa.c 
+rsa.h 
+md5.h
+md5.c
+sha1.h    
+sha1.c    
+sha256.c  
+sha256.h  
+x509v3.c  
+x509v3.h 
 
-[LibraryClasses]
-AmiCryptLib
+[Sources.Ia32]
+IA32math.c
 
 [Packages]
  MdePkg/MdePkg.dec
@@ -23,17 +54,14 @@ AmiCryptLib
  AmiCryptoPkg/AmiCryptoPkg.dec
 
 [BuildOptions.X64]
-MSFT:*_*_X64_CC_FLAGS     = /GL- /Od -DLTM_FAST
-GCC:*_*_X64_CC_FLAGS      = -DLTM_FAST
+*_*_X64_CC_FLAGS = /GL- /Od -DLTM_FAST /wd4002 /wd4267 /wd4090 /wd4334 
 
 [BuildOptions.IA32]
-MSFT:*_*_IA32_CC_FLAGS    = /GL- /Od
+*_*_IA32_CC_FLAGS = /GL- /Od /wd4002 /wd4267 /wd4090 /wd4334 
 
 #for build error, temporary use "_MSC_VER"
-#[BuildOptions.ARM]
-#DEBUG_ARMGCC_ARM_CC_FLAGS     = -DDEBUG_TRACE=1 -D_MSC_VER
-#RELEASE_ARMGCC_ARM_CC_FLAGS   = -D_MSC_VER
+[BuildOptions.ARM]
+DEBUG_ARMGCC_ARM_CC_FLAGS     = -DDEBUG_TRACE=1 -D_MSC_VER
+RELEASE_ARMGCC_ARM_CC_FLAGS   = -D_MSC_VER
 
-[BuildOptions.AARCH64]
-DEBUG_GCC_AARCH64_CC_FLAGS   = -DDEBUG_TRACE=1 -D_MSC_VER -D LTM_FAST
-RELEASE_GCC_AARCH64_CC_FLAGS = -D_MSC_VER -D LTM_FAST
+  

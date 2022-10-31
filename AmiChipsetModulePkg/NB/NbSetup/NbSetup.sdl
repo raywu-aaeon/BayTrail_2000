@@ -2,7 +2,7 @@
 #*************************************************************************
 #*************************************************************************
 #**                                                                     **
-#**        (C)Copyright 1985-2014, American Megatrends, Inc.            **
+#**        (C)Copyright 1985-2012, American Megatrends, Inc.            **
 #**                                                                     **
 #**                       All Rights Reserved.                          **
 #**                                                                     **
@@ -70,20 +70,6 @@ ELINK
 	InvokeOrder = AfterParent
 End
 
-#EIP179821 >>
-ELINK
-	Name  = "gEfiComponentName2ProtocolGuid"
-	Parent  = "AdditionalSetupProtocols"
-	InvokeOrder = AfterParent
-End
-
-ELINK
-	Name  = "gEfiSeCOperationProtocolGuid"
-	Parent  = "AdditionalSetupProtocols"
-	InvokeOrder = AfterParent
-End
-#EIP179821 <<
-
 ELINK
 	Name  = "SeCLib"
 	Parent  = "AdditionalSetupLibraryClasses"
@@ -111,7 +97,7 @@ End
 #*************************************************************************
 #*************************************************************************
 #**                                                                     **
-#**        (C)Copyright 1985-2014, American Megatrends, Inc.            **
+#**        (C)Copyright 1985-2012, American Megatrends, Inc.            **
 #**                                                                     **
 #**                       All Rights Reserved.                          **
 #**                                                                     **

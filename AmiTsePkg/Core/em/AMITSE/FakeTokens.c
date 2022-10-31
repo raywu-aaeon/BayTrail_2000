@@ -25,13 +25,17 @@
 //*****************************************************************//
 //*****************************************************************//
 //**********************************************************************
-/** @file FakeTokens.c
-    This file does not add any code. It has, all the string tokens that
-    are used by Minisetup, to fake the usage to strgather.exe. Add to
-    this list, the new string tokens that are defined in
-    AmiTSEStrstr.uni and to be used by Minisetup
-
-**/
+//<AMI_FHDR_START>
+//
+// Name:		faketokens.c
+//
+// Description:
+// This file does not add any code. It has, all the string tokens that
+// are used by Minisetup, to fake the usage to strgather.exe. Add to
+// this list, the new string tokens that are defined in
+// AmiTSEStrstr.uni and to be used by Minisetup
+//
+//<AMI_FHDR_END>
 //**********************************************************************
 
 
@@ -180,17 +184,6 @@ STRING_TOKEN(STR_NEW_PSWD_LABEL)
 STRING_TOKEN(STR_CONFIRM_NEW_PSWD_LABEL)
 STRING_TOKEN(STR_PSWD_CLR_LABEL)
 STRING_TOKEN(STR_FILE_SYSTEM_TO_SAVE_IMG)
-STRING_TOKEN(STR_TSE_CACHE_CHANGE_WARNING)
-STRING_TOKEN(STR_CANT_CHANGE_PASSWORD)
-STRING_TOKEN(STR_PARSING_ERROR)
-STRING_TOKEN(STR_NON_DEVICE_GROUP)
-STRING_TOKEN(STR_DISK_DEVICE_GROUP)
-STRING_TOKEN(STR_VIDEO_DEVICE_GROUP)
-STRING_TOKEN(STR_NETWORK_DEVICE_GROUP)
-STRING_TOKEN(STR_INPUT_DEVICE_GROUP)
-STRING_TOKEN(STR_ONBOARD_DEVICE_GROUP)
-STRING_TOKEN(STR_OTHER_DEVICE_GROUP)
-STRING_TOKEN(STR_DEVICE_GROUP_HELP)
 #endif
 
 

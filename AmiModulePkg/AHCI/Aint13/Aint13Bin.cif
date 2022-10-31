@@ -1,5 +1,5 @@
 <component>
-	name = "Ahci 16-bit Binary"
+	name = "AHCI 16-bit Binary"
 	category = ModulePart
 	LocalRoot = "AmiModulePkg\AHCI\Aint13\"
 	RefName = "AHCI_BINARY"

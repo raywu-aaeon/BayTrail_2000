@@ -85,9 +85,7 @@
 //#include <Tiano.h>
 //#include <PeiCore.h>
 #include <AmiLib.h>
-// "CorePeiMain.h" is a Duplicated file from "MdeModulePkg/Core/pei/PeiMain.h" 
-// to "Build" Directory when building process..
-#include <CorePeiMain.h>    
+#include "PeiMain.h"
 #include <Token.h>
 #include <PeiRamBoot.h>
 

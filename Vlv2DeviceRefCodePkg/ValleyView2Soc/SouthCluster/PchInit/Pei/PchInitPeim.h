@@ -60,9 +60,6 @@ Intel Corporation.
 #include "PlatformBaseAddresses.h"
 
 extern EFI_GUID               gS3ResumeDonePpiGuid;
-#include <Library/BaseMemoryLib.h>
-#include <Setup.h>
-#include <Ppi/ReadOnlyVariable2.h>
 EFI_STATUS
 EFIAPI
 PchSataInit (

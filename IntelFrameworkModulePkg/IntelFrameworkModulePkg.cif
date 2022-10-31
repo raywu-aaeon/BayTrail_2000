@@ -7,7 +7,6 @@
 "IntelFrameworkModulePkg.dec"	
 "IntelFrameworkModulePkg.sdl"	
 "License.txt"	
-"IntelFrameworkModulePkg.chm"	
 [parts]
 "IntelFrameworkModulePkg.Include"
 "IntelFrameworkModulePkg.LibraryInstances"

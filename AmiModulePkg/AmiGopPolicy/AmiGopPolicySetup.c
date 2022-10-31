@@ -1,7 +1,7 @@
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2016, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2012, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **
@@ -12,10 +12,21 @@
 //**********************************************************************
 //**********************************************************************
 
-/** @file AmiGopPolicySetup.c
-    AmiGopPolicy Setup Routines.
-
-*/
+//**********************************************************************
+// $Header: /Alaska/SOURCE/Modules/AmiGopPolicy/AmiGopPolicySetup.c 5     9/07/12 3:43a Josephlin $
+//
+// $Revision: 5 $
+//
+// $Date: 9/07/12 3:43a $
+//**********************************************************************
+//<AMI_FHDR_START>
+//
+// Name:        AmiGopPolicySetup.c
+//
+// Description: AmiGopPolicy Setup Routines.
+//
+//<AMI_FHDR_END>
+//**********************************************************************
 
 //----------------------------------------------------------------------
 // Include(s)
@@ -25,18 +36,16 @@
 #include <AmiLib.h>
 #include <AmiDxeLib.h>
 #include "AmiCspLib.h"
-#include <Pci.h>
 #include <Setup.h>
 #include <Token.h>
+#include "Pci.h"
 #include "AmiGopPolicy.h"
-#include <AmiGopPolicyLinks.h>
+#include <AmiGopPolicyElink.h>
 
-#include <Protocol/ComponentName.h>
-#include <Protocol/DevicePath.h>
-#include <Protocol/GraphicsOutput.h>
-#include <Protocol/DriverBinding.h>
-#include <Protocol/EdidDiscovered.h>
-#include <Protocol/PciIo.h>
+#include <Protocol\ComponentName.h>
+#include <Protocol\DevicePath.h>
+#include <Protocol\GraphicsOutput.h>
+#include <Protocol\DriverBinding.h>
 
 //----------------------------------------------------------------------
 // Constant, Macro and Type Definition(s)
@@ -63,88 +72,80 @@ typedef EFI_STATUS (OEM_GOP_SWITCH_HOOK) (
 // Function Prototype(s)
 
 BOOLEAN GetDriverName (
-    IN  EFI_HANDLE  DriverBindingHandle,
-    IN  UINT16      Length,
-    OUT CHAR16      *String
+  IN  EFI_HANDLE  DriverBindingHandle,
+  OUT CHAR8       *String
 );
 
 BOOLEAN GetDeviceName (
-    IN  EFI_HANDLE  DriverBindingHandle,
-    IN  EFI_HANDLE  ControllerHandle,
-    IN  EFI_HANDLE  ChildControllerHandle,
-    OUT CHAR16      *String
+  IN  EFI_HANDLE  DriverBindingHandle,
+  IN  EFI_HANDLE  ControllerHandle,
+  IN  EFI_HANDLE  ChildControllerHandle,
+  OUT CHAR8       *String
 );
 
 EFI_STATUS GetDriverBindingHandle (
-    IN  EFI_HANDLE  ControllerHandle,
-    OUT EFI_HANDLE  *DriverBindingHandle
+  IN  EFI_HANDLE  ControllerHandle,
+  OUT EFI_HANDLE  *DriverBindingHandle
 );
 
 EFI_STATUS GetDriverHandleBuffer (
-    IN  EFI_HANDLE  Controller,
-    OUT UINTN       *DriverHandleCount,
-    OUT EFI_HANDLE  **DriverHandleBuffer
+  IN  EFI_HANDLE  Controller,
+  OUT UINTN       *DriverHandleCount,
+  OUT EFI_HANDLE  **DriverHandleBuffer
 );
 
 EFI_STATUS GetDeviceHandlesManagedByDriver (
-    IN  EFI_HANDLE  DriverBindingHandle,
-    OUT UINTN       *ControllerHandleCount,
-    OUT EFI_HANDLE  **ControllerHandleBuffer
+  IN  EFI_HANDLE  DriverBindingHandle,
+  OUT UINTN       *ControllerHandleCount,
+  OUT EFI_HANDLE  **ControllerHandleBuffer
 );
 
 EFI_STATUS GetChildDeviceHandlesManagedByDriver (
-    IN  EFI_HANDLE  DriverBindingHandle,
-    IN  EFI_HANDLE  ControllerHandle,
-    OUT UINTN       *ChildControllerHandleCount,
-    OUT EFI_HANDLE  **ChildControllerHandleBuffer
-);
-
-EFI_STATUS GetEdidDiscoveredHandlesManagedByDriver (
-    IN  EFI_HANDLE  DriverBindingHandle,
-    IN  EFI_HANDLE  ControllerHandle
-);
-
-EFI_STATUS GetOutputDeviceHandlesManagedByDriver (
-    IN  EFI_HANDLE  DriverBindingHandle,
-    IN  EFI_HANDLE  ControllerHandle,
-    OUT UINTN       *OutputHandleCount,
-    OUT EFI_HANDLE  **OutputHandleBuffer
+  IN  EFI_HANDLE  DriverBindingHandle,
+  IN  EFI_HANDLE  ControllerHandle,
+  OUT UINTN       *ChildControllerHandleCount,
+  OUT EFI_HANDLE  **ChildControllerHandleBuffer
 );
 
 EFI_STATUS ConnectGopDevicePath (
-    IN  EFI_HANDLE                DriverBindingHandle,
-    IN  EFI_DEVICE_PATH_PROTOCOL  *pPath );
+  IN  EFI_HANDLE                DriverBindingHandle,
+  IN  EFI_DEVICE_PATH_PROTOCOL  *pPath );
 
 EFI_STATUS AmiGopDeviceCheck (
-    IN  EFI_HANDLE                ControllerHandle,
-    IN  EFI_HANDLE                DriverBindingHandle,
-    IN  EFI_PCI_IO_PROTOCOL       *PciIo
+    IN  EFI_HANDLE                  ControllerHandle,
+    IN  EFI_HANDLE                  DriverBindingHandle,
+    IN  EFI_PCI_IO_PROTOCOL         *PciIo
 );
 
 EFI_STATUS AmiDefaultGopDeviceCheck (
-    IN  EFI_HANDLE                ControllerHandle,
-    IN  EFI_HANDLE                DriverBindingHandle,
-    IN  EFI_PCI_IO_PROTOCOL       *PciIo );
+  IN  EFI_HANDLE                  ControllerHandle,
+  IN  EFI_HANDLE                  DriverBindingHandle,
+  IN  EFI_PCI_IO_PROTOCOL         *PciIo );
 
 EFI_STATUS AmiGopSwitchHook (
-    IN  EFI_HANDLE                ControllerHandle, 
-    IN  EFI_HANDLE                DriverBindingHandle,
-    IN  SETUP_DATA                *SetupData,
-    IN  EFI_DEVICE_PATH_PROTOCOL  *DevicePath
+    IN  EFI_HANDLE                  ControllerHandle, 
+    IN  EFI_HANDLE                  DriverBindingHandle,
+    IN  SETUP_DATA                  *SetupData,
+    IN  EFI_DEVICE_PATH_PROTOCOL    *DevicePath
 );
 
 EFI_STATUS AmiDefaultGopSwitchFunction (
-    IN  EFI_HANDLE                ControllerHandle,
-    IN  EFI_HANDLE                DriverBindingHandle,
-    IN  SETUP_DATA                *SetupData,
-    IN  EFI_DEVICE_PATH_PROTOCOL  *DevicePath );
+  IN  EFI_HANDLE                  ControllerHandle,
+  IN  EFI_HANDLE                  DriverBindingHandle,
+  IN  SETUP_DATA                  *SetupData,
+  IN  EFI_DEVICE_PATH_PROTOCOL    *DevicePath );
+
+EFI_STATUS
+IntelGopSwitchFunction (
+    IN  EFI_HANDLE                  ControllerHandle, 
+    IN  EFI_HANDLE                  DriverBindingHandle,
+    IN  SETUP_DATA                  *SetupData,
+    IN  EFI_DEVICE_PATH_PROTOCOL    *DevicePath );
 
 //----------------------------------------------------------------------
 // Variable and External Declaration(s)
 //----------------------------------------------------------------------
 // Variable Declaration(s)
-
-T_ITEM_LIST OutputHndList = { 0, 0, NULL };
 
 UINT16  sDeviceName[] = { 
         STRING_TOKEN(STR_GOP_DEVICE_NAME_0),
@@ -173,7 +174,7 @@ UINT16  sOutputName[] = {
 
 // GUID Definition(s)
 
-static EFI_GUID gAmiGopPolicyVariableGuid = AMI_GOP_POLICY_VARIABLE_GUID;    
+static EFI_GUID gEfiGlobalVariableGuid = EFI_GLOBAL_VARIABLE;
 static EFI_GUID gSetupGuid = SETUP_GUID;
 
 static EFI_GUID gAmiCsmThunkDriverGuid = { 0x2362ea9c, 0x84e5, 0x4dff, { 0x83, 0xbc, 0xb5, 0xac, 0xec, 0xb5, 0x7c, 0xbb } };
@@ -182,29 +183,33 @@ static EFI_GUID gAmiCsmThunkDriverGuid = { 0x2362ea9c, 0x84e5, 0x4dff, { 0x83, 0
 
 // External Declaration(s)
 
-extern OEM_GOP_DEVICE_CHECK OEM_GOP_DEVICE_CHECK_LIST EndOfOemGopDeviceCheckList;
-extern OEM_GOP_SWITCH_HOOK  OEM_GOP_SWITCH_HOOK_LIST  EndOfOemGopSwitchHookList;
+extern EFI_GUID gEfiComponentName2ProtocolGuid;
 
 // Function Definition(s)
 
 OEM_GOP_DEVICE_CHECK*   OemGopDeviceCheckList[] = {OEM_GOP_DEVICE_CHECK_LIST NULL};
 OEM_GOP_SWITCH_HOOK*    OemGopSwitchHookList[] = {OEM_GOP_SWITCH_HOOK_LIST NULL};
 
+//----------------------------------------------------------------------
 
-/**
-    Initializes AmiGopPolicy Setup String
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------
+//
+// Procedure:   InitAmiGopPolicyStrings
+//
+// Description: Initializes AmiGopPolicy Setup String
+//
+// Parameters:  HiiHandle - Handle to HII database
+//              Class - Indicates the setup class
+//
+// Returns:     None
+//
+// Notes:
+//
+//----------------------------------------------------------------------
+//<AMI_PHDR_END>
 
-    @param HiiHandle - Handle to HII database
-    @param Class - Indicates the setup class
-
-    @retval VOID
-
-    @note  None.
-
-**/
-
-VOID
-InitAmiGopPolicyStrings (
+VOID InitAmiGopPolicyStrings (
     IN EFI_HII_HANDLE   HiiHandle,
     IN UINT16           Class )
 {
@@ -233,12 +238,11 @@ InitAmiGopPolicyStrings (
     UINTN                       SetupSize;
     SETUP_DATA                  SetupData;
 
-    CHAR16                      String[0x40];
+    CHAR8                       String[0x40];
 
     UINTN                       Index = 0;
     UINTN                       SelectIndex = 0;
 
-    UINT32                      VarAttr;
 
     if (Class != ADVANCED_FORM_SET_CLASS) return;
 
@@ -248,11 +252,10 @@ InitAmiGopPolicyStrings (
     VariableSize = sizeof(AMI_GOP_POLICY_SETUP_DATA);
     Status = pRS->SetVariable (
                   L"AmiGopPolicySetupData",
-                  &gAmiGopPolicyVariableGuid,
-                  EFI_VARIABLE_BOOTSERVICE_ACCESS,
+                  &gSetupGuid,
+                  EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS,
                   VariableSize,
                   &AmiGopPolicySetupData );
-    if (EFI_ERROR(Status)) return;
 
     // Init String buffer
     pBS->SetMem(String, sizeof(String), 0);
@@ -280,21 +283,21 @@ InitAmiGopPolicyStrings (
         if (EFI_ERROR(Status)) continue;
 
         if (GetDeviceName(DriverBindingHandle, ControllerHandle, NULL, String)) {
-            InitString(HiiHandle, sDeviceName[Index], L"%s", String);
+            InitString(HiiHandle, sDeviceName[Index], L"%S", String);
             pBS->SetMem(String, sizeof(String), 0);
         }
 
-        if (GetDriverName(DriverBindingHandle, 0x40, String)) {
-            InitString(HiiHandle, sDriverName[Index], L"%s", String);
+        if (GetDriverName(DriverBindingHandle, String)) {
+            InitString(HiiHandle, sDriverName[Index], L"%S", String);
             pBS->SetMem(String, sizeof(String), 0);
         }
 
-        Status = GetOutputDeviceHandlesManagedByDriver (DriverBindingHandle, ControllerHandle, &ChildHandleCount, &ChildHandleBuffer);
+        Status = GetChildDeviceHandlesManagedByDriver (DriverBindingHandle, ControllerHandle, &ChildHandleCount, &ChildHandleBuffer);
         if (!EFI_ERROR(Status)) {
             VariableSize = 0;
             Status = GetEfiVariable (
                      L"AmiGopOutputDp",
-                     &gAmiGopPolicyVariableGuid,
+                     &gEfiGlobalVariableGuid,
                      NULL,
                      &VariableSize,
                      &AmiGopOutputDp);
@@ -312,8 +315,8 @@ InitAmiGopPolicyStrings (
                         Swprintf (ChildHandleDpVar, L"ChildHandleDpVar%01x", ChildHandleIndex);
                         Status = pRS->SetVariable (
                                       ChildHandleDpVar,
-                                      &gAmiGopPolicyVariableGuid,
-                                      EFI_VARIABLE_BOOTSERVICE_ACCESS,
+                                      &gEfiGlobalVariableGuid,
+                                      EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS,
                                       DPLength (ChildHandleDp),
                                       ChildHandleDp );
                         if (AmiGopOutputDp != NULL) {
@@ -322,7 +325,7 @@ InitAmiGopPolicyStrings (
                             }
                         }
                     }
-                    InitString(HiiHandle, sOutputName[ChildHandleIndex], L"%s", String);
+                    InitString(HiiHandle, sOutputName[ChildHandleIndex], L"%S", String);
                     pBS->SetMem(String, sizeof(String), 0);
                 }
             }
@@ -333,52 +336,55 @@ InitAmiGopPolicyStrings (
 
     // Update Gop Output Device Count
     SetupSize = sizeof(SETUP_DATA);
-    Status = pRS->GetVariable(L"Setup", &gSetupGuid, &VarAttr, &SetupSize, &SetupData);
+    Status = pRS->GetVariable(L"Setup", &gSetupGuid, NULL, &SetupSize, &SetupData);
     if (!EFI_ERROR(Status)) {
         SetupData.GopOutputSelect = (UINT8)SelectIndex;
-        pRS->SetVariable(L"Setup", &gSetupGuid, VarAttr, sizeof(SETUP_DATA), &SetupData);
+        Status = pRS->SetVariable(
+                      L"Setup",
+                      &gSetupGuid,
+                      EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS,
+                      sizeof(SETUP_DATA),
+                      &SetupData);
     }
 
     // Save AmiGopPolicySetupData on memory.
     AmiGopPolicySetupData.GopDeviceCount = (UINT8)Index;
     AmiGopPolicySetupData.GopOutputCount = (UINT8)ChildHandleIndex;
     VariableSize = sizeof(AMI_GOP_POLICY_SETUP_DATA);
-    pRS->SetVariable (
-         L"AmiGopPolicySetupData",
-         &gAmiGopPolicyVariableGuid,
-         EFI_VARIABLE_BOOTSERVICE_ACCESS,
-         VariableSize,
-         &AmiGopPolicySetupData );
-
-    if (ControllerHandleBuffer != NULL) pBS->FreePool(ControllerHandleBuffer);
-    if (ChildHandleBuffer != NULL) pBS->FreePool(ChildHandleBuffer);
-    if (AmiGopOutputDp != NULL) pBS->FreePool(AmiGopOutputDp);
+    Status = pRS->SetVariable (
+                  L"AmiGopPolicySetupData",
+                  &gSetupGuid,
+                  EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS,
+                  VariableSize,
+                  &AmiGopPolicySetupData );
 }
 
-/**
-    AmiGopSwitchFunction Callback
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------
+//
+// Procedure:   AmiGopSwitchCallback
+//
+// Description: None.
+//
+// Input:       None.
+//
+// Output:      None.
+//
+// Notes:       None.
+//
+//----------------------------------------------------------------------
+//<AMI_PHDR_END>
 
-    @param HiiHandle - Handle to HII database
-    @param Class - Indicates the setup class
-    @param SubClass - Indicates the setup sub class
-    @param Key - unique value that defines the type of data to expect in the callback function.
-
-    @retval EFI_SUCCESS - AmiGopSwitchFunction Callback function complete in SETUP
-
-    @note  None.
-
-**/
-
-EFI_STATUS
-AmiGopSwitchCallback (
+EFI_STATUS AmiGopSwitchCallback (
     IN EFI_HII_HANDLE           HiiHandle, 
     IN UINT16                   Class, 
     IN UINT16                   SubClass, 
     IN UINT16                   Key )
 {
-    EFI_STATUS                  Status;
+    EFI_STATUS                  Status = EFI_SUCCESS;
     SETUP_DATA                  *SetupData = NULL;
     UINTN                       SetupSize = sizeof(SETUP_DATA);
+    UINTN                       VariableSize = 0;
     CALLBACK_PARAMETERS         *CallbackParameters = NULL;
 
     UINTN                       ControllerHandleCount = 0;
@@ -390,6 +396,9 @@ AmiGopSwitchCallback (
 
     EFI_HANDLE                  DriverBindingHandle;
     EFI_DRIVER_BINDING_PROTOCOL *DriverBinding = NULL;
+
+    UINTN                       DriverHandleCount = 0;
+    EFI_HANDLE                  *DriverHandleBuffer = NULL;
 
     UINTN                       ChildHandleCount = 0;
     EFI_HANDLE                  *ChildHandleBuffer = NULL;
@@ -405,7 +414,7 @@ AmiGopSwitchCallback (
     UINTN                       GopHandleCount = 0;
     EFI_HANDLE                  *GopHandleBuffer = NULL;
     UINTN                       GopHandleIndex;
-    UINTN                       SizeOfInfo = 0;
+	UINTN                       SizeOfInfo = 0;
     UINT32                      Mode;
     UINT32                      MaxMode = 0;
     EFI_GRAPHICS_OUTPUT_MODE_INFORMATION *Info = NULL;
@@ -414,13 +423,22 @@ AmiGopSwitchCallback (
     // Get Setup Buffer
     //
     CallbackParameters = GetCallbackParameters();
-    if (CallbackParameters->Action != EFI_BROWSER_ACTION_CHANGED) return EFI_SUCCESS;
+
+#if ((TSE_BUILD >= 0x1224) && (EFI_SPECIFICATION_VERSION >= 0x2000A))
+    if (CallbackParameters->Action != EFI_BROWSER_ACTION_CHANGED) return Status;
+#else if ((TSE_BUILD > 0x1208) && (EFI_SPECIFICATION_VERSION >= 0x2000A))
+    if (CallbackParameters->Action != EFI_BROWSER_ACTION_CHANGING) return Status;
+#endif
 
     Status = pBS->AllocatePool (EfiBootServicesData, SetupSize, &SetupData);
     if(EFI_ERROR(Status)) return Status;
 
+#if defined(EFI_SPECIFICATION_VERSION) && EFI_SPECIFICATION_VERSION > 0x20000
     Status = HiiLibGetBrowserData (&SetupSize, SetupData, &gSetupGuid, L"Setup");
     if(EFI_ERROR(Status)) return Status;
+#else
+    SetupData = (SETUP_DATA*)CallbackParameters->Data->NvRamMap;
+#endif
 
     //
     // Get all drivers handles which has PCI IO Protocol
@@ -459,7 +477,7 @@ AmiGopSwitchCallback (
         //
         // Find out Current GOP Output Mode
         //
-        if (!EFI_ERROR(GetOutputDeviceHandlesManagedByDriver (DriverBindingHandle, ControllerHandle, &ChildHandleCount, &ChildHandleBuffer))) {
+        if (!EFI_ERROR(GetChildDeviceHandlesManagedByDriver (DriverBindingHandle, ControllerHandle, &ChildHandleCount, &ChildHandleBuffer))) {
             for (ChildHandleIndex = 0; ChildHandleIndex < ChildHandleCount; ChildHandleIndex++) {
                 Status = pBS->OpenProtocol (
                               ChildHandleBuffer[ChildHandleIndex],
@@ -483,7 +501,7 @@ AmiGopSwitchCallback (
         GopDevicePathLength = 0;
         Status = GetEfiVariable (
                  ChildHandleDpVar,
-                 &gAmiGopPolicyVariableGuid,
+                 &gEfiGlobalVariableGuid,
                  NULL,
                  &GopDevicePathLength,
                  &GopDevicePath);
@@ -496,8 +514,8 @@ AmiGopSwitchCallback (
             //
             Status = pRS->SetVariable (
                           L"AmiGopOutputDp",
-                          &gAmiGopPolicyVariableGuid,
-                          EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS,
+                          &gEfiGlobalVariableGuid,
+                          EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS,
                           DPLength(GopDevicePath),
                           GopDevicePath);
             if (EFI_ERROR(Status)) continue;
@@ -505,7 +523,7 @@ AmiGopSwitchCallback (
             //
             // Set GOP Output Mode
             //
-            Status = GetOutputDeviceHandlesManagedByDriver (DriverBindingHandle, ControllerHandle, &GopHandleCount, &GopHandleBuffer);
+            Status = GetChildDeviceHandlesManagedByDriver (DriverBindingHandle, ControllerHandle, &GopHandleCount, &GopHandleBuffer);
             if (!EFI_ERROR(Status)) {
                 for (GopHandleIndex = 0; GopHandleIndex < GopHandleCount; GopHandleIndex++) {
                     Status = pBS->OpenProtocol (
@@ -534,30 +552,25 @@ AmiGopSwitchCallback (
             }
         }
     }
-
-    if (SetupData != NULL) pBS->FreePool(SetupData);
-    if (ControllerHandleBuffer != NULL) pBS->FreePool(ControllerHandleBuffer);
-    if (ChildHandleBuffer != NULL) pBS->FreePool(ChildHandleBuffer);
-    if (GopDevicePath != NULL) pBS->FreePool(GopDevicePath);
-    if (GopHandleBuffer != NULL) pBS->FreePool(GopHandleBuffer);
+    pBS->FreePool(SetupData);
 
     return Status;
 }
 
-/**
-    Invoke AmiGopDeviceCheck eLink
-
-    @param ControllerHandle - the device controller handle be opened by its child device.
-    @param DriverBindingHandle - the handle of a driver which contains the binding protocol.
-    @param *PciIo - the PciIo protocol which was installed on ControllerHandle.
-
-    @retval EFI_SUCCESS - This VGA supports Display Switching function.
-
-    @note  Display Switching function may failed because the GOP
-           Driver is not supporting. Please contact VGA vendor to
-           check for this function supporting.
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------
+// Name:        AmiGopDeviceCheck
+//
+// Description: None.
+//
+// Input:       None.
+//
+// Output:      None.
+//
+// Notes:       None.
+//
+//----------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 EFI_STATUS
 AmiGopDeviceCheck (
@@ -576,20 +589,24 @@ AmiGopDeviceCheck (
     return Status;
 }
 
-/**
-    Sample code for check if this VGA supports Display Switching function.
-
-    @param ControllerHandle - the device controller handle be opened by its child device.
-    @param DriverBindingHandle - the handle of a driver which contains the binding protocol.
-    @param *PciIo - the PciIo protocol which was installed on ControllerHandle.
-
-    @retval EFI_SUCCESS - This VGA supports Display Switching function.
-
-    @note  Display Switching function may failed because the GOP
-           Driver is not supporting. Please contact VGA vendor to
-           check for this function supporting.
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------
+// Name:        AmiDefaultGopDeviceCheck
+//
+// Description: Check if this VGA supports Display Switching function.
+//
+// Input:       IN  EFI_HANDLE              ControllerHandle
+//              IN  EFI_HANDLE              DriverBindingHandle
+//              IN  EFI_PCI_IO_PROTOCOL     *PciIo
+//
+// Output:      None.
+//
+// Notes:       Display Switching function may failed because the GOP
+//              Driver is not supporting. Please contact VGA vendor to
+//              check for this function supporting.
+//
+//----------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 EFI_STATUS
 AmiDefaultGopDeviceCheck (
@@ -619,19 +636,20 @@ AmiDefaultGopDeviceCheck (
     return EFI_SUCCESS;
 }
 
-/**
-    Invoke AmiGopSwitchHook eLink
-
-    @param ControllerHandle - the device controller handle be opened by its child device.
-    @param DriverBindingHandle - the handle of a driver which contains the binding protocol.
-    @param *SetupData - the pointer to a setup data buffer for reference.
-    @param *DevicePath - the pointer to a output device path node to initialize.
-
-    @retval EFI_SUCCESS - VGA Display Switching function Success.
-
-    @note  None.
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------
+// Name:        AmiGopSwitchHook
+//
+// Description: None.
+//
+// Input:       None.
+//
+// Output:      None.
+//
+// Notes:       None.
+//
+//----------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 EFI_STATUS
 AmiGopSwitchHook (
@@ -651,116 +669,124 @@ AmiGopSwitchHook (
     return Status;
 }
 
-/**
-    Sample code for VGA Display Switching process.
-
-    @param ControllerHandle - the device controller handle be opened by its child device.
-    @param DriverBindingHandle - the handle of a driver which contains the binding protocol.
-    @param *SetupData - the pointer to a setup data buffer for reference.
-    @param *DevicePath - the pointer to a output device path node to initialize.
-
-    @retval EFI_SUCCESS - VGA Display Switching function Success.
-
-    @note  None.
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------
+// Name:        AmiDefaultGopSwitchFunction
+//
+// Description: None.
+//
+// Input:       None.
+//
+// Output:      None.
+//
+// Notes:       None.
+//
+//----------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 EFI_STATUS
 AmiDefaultGopSwitchFunction (
-    IN  EFI_HANDLE                ControllerHandle,
-    IN  EFI_HANDLE                DriverBindingHandle,
-    IN  SETUP_DATA                *SetupData,
-    IN  EFI_DEVICE_PATH_PROTOCOL  *DevicePath )
+    IN  EFI_HANDLE                  ControllerHandle,
+    IN  EFI_HANDLE                  DriverBindingHandle,
+    IN  SETUP_DATA                  *SetupData,
+    IN  EFI_DEVICE_PATH_PROTOCOL    *DevicePath )
 {
-    EFI_STATUS  Status;
+    EFI_STATUS  Status = EFI_SUCCESS;
 
-    pBS->DisconnectController (ControllerHandle, NULL, NULL);
+    Status = pBS->DisconnectController (ControllerHandle, NULL, NULL);
     Status = ConnectGopDevicePath(DriverBindingHandle, DevicePath);
 
     return Status;
 }
 
-/**
-    Connect specific output device by input device path.
-
-    @param DriverBindingHandle - the handle of a driver which contains the binding protocol.
-    @param *pPath - the pointer to a output device path node to initialize.
-
-    @retval EFI_SUCCESS - Connect device Success.
-
-    @note  None.
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------
+// Name:        ConnectGopDevicePath
+//
+// Description: None.
+//
+// Input:       None.
+//
+// Output:      None.
+//
+// Notes:       None.
+//
+//----------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 EFI_STATUS
 ConnectGopDevicePath (
-    IN  EFI_HANDLE                DriverBindingHandle,
-    IN  EFI_DEVICE_PATH_PROTOCOL  *pPath )
+  IN  EFI_HANDLE                DriverBindingHandle,
+  IN  EFI_DEVICE_PATH_PROTOCOL  *pPath )
 {
     EFI_HANDLE Handle;
     EFI_STATUS Status;
     EFI_STATUS ConnectStatus = EFI_UNSUPPORTED;
 
     if (pPath == NULL) return EFI_INVALID_PARAMETER;
-    while (TRUE) {
-        EFI_DEVICE_PATH_PROTOCOL *pLastPath=NULL, *pFirstNode = pPath;
-        if (isEndNode(pPath)) {
-            if (pPath->SubType == END_ENTIRE_SUBTYPE) break;
-            pPath++;
-            continue;
-        }
-        while(TRUE){
+	while (TRUE)
+	{
+		EFI_DEVICE_PATH_PROTOCOL *pLastPath=NULL, *pFirstNode = pPath;
+		if (isEndNode(pPath))
+		{
+			if (pPath->SubType == END_ENTIRE_SUBTYPE) break;
+			pPath++;
+			continue;
+		}
+		while(TRUE){
             EFI_DEVICE_PATH_PROTOCOL *Dp;
             UINT8 SubType;
 
-            pPath = pFirstNode;
+	        pPath = pFirstNode;
 
             //LocateDevicePath can not work with multi-instance device paths.
             //Prepare single instance device path and call LocateDevicePath
             Dp = DPGetEndNode(pPath);
-            SubType = Dp->SubType;
-            Dp->SubType=END_ENTIRE_SUBTYPE;
+	        SubType = Dp->SubType;
+	        Dp->SubType=END_ENTIRE_SUBTYPE;
             Status = pBS->LocateDevicePath(&gEfiDevicePathProtocolGuid, &pPath, &Handle);
             Dp->SubType=SubType;
-            if (EFI_ERROR(Status)) break;
+			if (EFI_ERROR(Status)) break;
 
-            if (pPath==pLastPath) break;
-            pLastPath = pPath;
+			if (pPath==pLastPath) break;
+			pLastPath = pPath;
             ConnectStatus = pBS->ConnectController(Handle, &DriverBindingHandle, pPath, TRUE);
-            if (EFI_ERROR(ConnectStatus)) break;
+			if (EFI_ERROR(ConnectStatus)) break;
             else return ConnectStatus;
-        }
-        while (!isEndNode(pPath))
-        pPath = NEXT_NODE(pPath);
-    }
+		}
+		while (!isEndNode(pPath))
+			pPath = NEXT_NODE(pPath);
+	}
 
     return ConnectStatus;
 }
 
-/**
-    Get driver name by input driver handle.
-
-    @param DriverBindingHandle - the handle of a driver which contains the binding protocol.
-    @param Length - Length of name to be copied to String including null.
-    @param *String - Output string of driver name.
-
-    @retval TRUE - Get driver name Success.
-    @retval FALSE - Get driver name fail.
-
-    @note  None.
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------
+//
+// Procedure:   GetDriverName
+//
+// Description: None.
+//
+// Input:       None.
+//
+// Output:      None.
+//
+// Notes:       None.
+//
+//----------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 BOOLEAN
 GetDriverName (
-    IN  EFI_HANDLE  DriverBindingHandle,
-    IN  UINT16      Length,
-    OUT CHAR16      *String )
+  IN  EFI_HANDLE  DriverBindingHandle,
+  OUT CHAR8       *String )
 {
     EFI_STATUS                      Status;
     CHAR16                          *DriverName;
     EFI_COMPONENT_NAME_PROTOCOL     *ComponentName;
     CHAR8                           *Lang = NULL;
+    CHAR8                           *TempChar;
 
     //
     // Get driver name from UEFI 2.0 Component Name 2 protocol interface.
@@ -780,7 +806,6 @@ GetDriverName (
             //
             pBS->AllocatePool(EfiBootServicesData, Strlen(ComponentName->SupportedLanguages)+1, &Lang);
             if (Lang != NULL) {
-                CHAR8 *TempChar = NULL;
                 Strcpy(Lang, ComponentName->SupportedLanguages);
                 TempChar = Strstr(Lang, ";");
                 if (TempChar != NULL) *TempChar = 0x0000;
@@ -790,8 +815,7 @@ GetDriverName (
             }
         }
         if (!EFI_ERROR(Status)) {
-            DriverName[Length-1]=0; // avoid overflowed, copy only length
-            Swprintf(String, L"%s", DriverName);
+            Sprintf(String, "%S", DriverName);
             return TRUE;
         }
     }
@@ -810,8 +834,7 @@ GetDriverName (
     if (!EFI_ERROR(Status)) {
         Status = ComponentName->GetDriverName(ComponentName, "eng", &DriverName);
         if (!EFI_ERROR(Status)) {
-            DriverName[Length-1]=0; // avoid overflowed, copy only length
-            Swprintf(String, L"%s", DriverName);
+            Sprintf(String, "%S", DriverName);
             return TRUE;
         }
     }
@@ -819,104 +842,25 @@ GetDriverName (
     return FALSE;
 }
 
-/**
-    Get device name by input device handle.
-
-    @param DriverBindingHandle - the handle of a driver which contains the binding protocol.
-    @param ControllerHandle - the device controller handle be opened by its child device.
-    @param ChildControllerHandle - the handle of child controller.
-    @param *String - Output string of device name.
-
-    @retval TRUE - Get device name Success.
-    @retval FALSE - Get device name fail.
-
-    @note  None.
-
-**/
-
-BOOLEAN
-GetDeviceName (
-  IN  EFI_HANDLE  DriverBindingHandle,
-  IN  EFI_HANDLE  ControllerHandle,
-  IN  EFI_HANDLE  ChildControllerHandle,
-  OUT CHAR16      *String )
-{
-    EFI_STATUS                      Status;
-    CHAR16                          *DeviceName;
-    EFI_COMPONENT_NAME_PROTOCOL     *ComponentName;
-    CHAR8                           *Lang = NULL;
-
-    //
-    // Get driver name from UEFI 2.0 Component Name 2 protocol interface.
-    //
-    Status = pBS->OpenProtocol(
-                  DriverBindingHandle,
-                  &gEfiComponentName2ProtocolGuid,
-                  (VOID**)&ComponentName,
-                  NULL,
-                  NULL,
-                  EFI_OPEN_PROTOCOL_GET_PROTOCOL);
-    if (!EFI_ERROR(Status)) {
-        Status = ComponentName->GetControllerName(ComponentName, ControllerHandle, ChildControllerHandle, LANGUAGE_CODE_ENGLISH, &DeviceName);
-        if (EFI_ERROR(Status)) {
-            //
-            // Driver does not support "en-us", try to get SupportedLanguages
-            //
-            pBS->AllocatePool(EfiBootServicesData, Strlen(ComponentName->SupportedLanguages)+1, &Lang);
-            if (Lang != NULL) {
-                CHAR8 *TempChar = NULL;
-                Strcpy(Lang, ComponentName->SupportedLanguages);
-                TempChar = Strstr(Lang, ";");
-                if (TempChar != NULL) *TempChar = 0x0000;
-                Status = ComponentName->GetControllerName(ComponentName, ControllerHandle, ChildControllerHandle, Lang, &DeviceName);
-                pBS->FreePool(Lang);
-                Lang = NULL;
-            }
-        }
-        if (!EFI_ERROR(Status)) {
-            Swprintf(String, L"%s", DeviceName);
-            return TRUE;
-        }
-    }
-
-    //
-    // If it fails to get the driver name from Component Name protocol interface, we should fall back on
-    // EFI 1.1 Component Name protocol interface.
-    //
-    Status = pBS->OpenProtocol(
-                  DriverBindingHandle,
-                  &gEfiComponentNameProtocolGuid,
-                  (VOID**)&ComponentName,
-                  NULL,
-                  NULL,
-                  EFI_OPEN_PROTOCOL_GET_PROTOCOL);
-    if (!EFI_ERROR(Status)) {
-        Status = ComponentName->GetControllerName(ComponentName, ControllerHandle, ChildControllerHandle, "eng", &DeviceName);
-        if (!EFI_ERROR(Status)) {
-            Swprintf(String, L"%s", DeviceName);
-            return TRUE;
-        }
-    }
-
-    return FALSE;
-}
-
-/**
-    Get DriverBinding Handle by input device handle.
-
-    @param ControllerHandle - the device controller handle be opened by its child device.
-    @param *DriverBindingHandle - the handle of a driver which contains the binding protocol.
-
-    @retval EFI_SUCCESS - DriverBinding handle found.
-
-    @note  None.
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Name:        GetDriverBindingHandle
+//
+// Description: None.
+//
+// Input:       None.
+//
+// Output:      None.
+//
+// Notes:       None.
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 EFI_STATUS
 GetDriverBindingHandle (
-    IN  EFI_HANDLE  ControllerHandle,
-    OUT EFI_HANDLE  *DriverBindingHandle )
+  IN  EFI_HANDLE  ControllerHandle,
+  OUT EFI_HANDLE  *DriverBindingHandle )
 {
     EFI_STATUS                          Status;
     UINTN                               HandleCount;
@@ -977,24 +921,26 @@ GetDriverBindingHandle (
     return EFI_NOT_FOUND;
 }
 
-/**
-    Get all DriverBinding Handles were installed by a specific device handle.
-
-    @param Controller - the device controller handle be opened by its child device.
-    @param *DriverHandleCount - the number of available driver handles returned in DriverHandleBuffer
-    @param **DriverHandleBuffer - a pointer to the buffer to return the array of driver handles.
-
-    @retval EFI_STATUS
-
-    @note  If returned status is not succeful or find no available driver, the **DriverHandleBuffer will be NULL.
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Name:        GetDriverHandleBuffer
+//
+// Description: None.
+//
+// Input:       None.
+//
+// Output:      None.
+//
+// Notes:       None.
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 EFI_STATUS
 GetDriverHandleBuffer (
-    IN  EFI_HANDLE                      Controller,
-    OUT UINTN                           *DriverHandleCount,
-    OUT EFI_HANDLE                      **DriverHandleBuffer )
+  IN  EFI_HANDLE                        Controller,
+  OUT UINTN                             *DriverHandleCount,
+  OUT EFI_HANDLE                        **DriverHandleBuffer )
 {
     EFI_STATUS                          Status;
     UINTN                               HandleCount;
@@ -1077,20 +1023,37 @@ GetDriverHandleBuffer (
         return EFI_NOT_FOUND;
 }
 
-/**
-    Get all device handles which are being opened by a specific driver.
-    The rountine will allocate pool buffer for the found device handles,
-    and it is the caller's responsibility to safe free the buffer.
-
-    @param DriverBindingHandle - the handle of a driver which contains the binding protocol.
-    @param *ControllerHandleCount - the number of available device handles returned in ControllerHandleBuffer.
-    @param **ControllerHandleBuffer - a pointer to the buffer to return the array of device handles.
-
-    @retval EFI_STATUS.
-
-    @note  If returned status is not succeful or find no available device, the *ControllerHandleBuffer will be NULL.
-
-**/
+// <AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure: GetDeviceHandlesManagedByDriver
+//
+// Description:
+//  Get all device handles which are being opened by a specific driver. The
+//  rountine will allocate pool buffer for the found device handles, and it
+//  is the caller's responsibility to safe free the buffer.
+//
+// Input:
+//  IN  EFI_HANDLE  DriverBindingHandle - the handle of a driver which
+//                                        contains the binding protocol
+//  OUT UINTN       ControllerHandleCount - the number of available device handles
+//                                          returned in ControllerHandleBuffer
+//  OUT EFI_HANDLE  ControllerHandleBuffer - a pointer to the buffer to return
+//                                           the array of device handles
+//
+// Output:
+//     EFI_STATUS
+//      If returned status is not succeful or find no available device,
+//      the *ControllerHandleBuffer will be NULL
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//
+//----------------------------------------------------------------------------
+// <AMI_PHDR_END>
 
 EFI_STATUS
 GetDeviceHandlesManagedByDriver (
@@ -1222,21 +1185,41 @@ Error:
     return Status;
 }
 
-/**
-    Get all child device handles which are being opened by a specific driver.
-    The rountine will allocate pool buffer for the found child device handles,
-    and it is the caller's responsibility to safe free the buffer.
-
-    @param DriverBindingHandle - the handle of a driver which contains the binding protocol.
-    @param ControllerHandle - the device controller handle be opened by its child device.
-    @param *ChildControllerHandleCount - the number of available device handles returned in ControllerHandleBuffer.
-    @param **ChildControllerHandleBuffer - a pointer to the buffer to return the array of child device handles.
-
-    @retval EFI_STATUS.
-
-    @note  If returned status is not succeful or find no available device, the *ChildControllerHandleBuffer will be NULL.
-
-**/
+// <AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Name: GetChildDeviceHandlesManagedByDriver
+//
+// Description:
+//  Get all child device handles which are being opened by a specific driver.
+//  The rountine will allocate pool buffer for the found child device handles,
+//  and it is the caller's responsibility to safe free the buffer.
+//
+// Input:
+//  IN  EFI_HANDLE  DriverBindingHandle - the handle of a driver which
+//                                        contains the binding protocol
+//  IN  EFI_HANDLE  ControllerHandle - the device controller handle be opened
+//                                     by its child device 
+//  OUT UINTN       ChildControllerHandleCount - the number of available
+//                                               device handles returned in
+//                                               ControllerHandleBuffer
+//  OUT EFI_HANDLE  ChildControllerHandleBuffer - a pointer to the buffer to
+//                                                return the array of child
+//                                                device handles
+//
+// Output:
+//     EFI_STATUS
+//      If returned status is not succeful or find no available device,
+//      the *ChildControllerHandleBuffer will be NULL
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//
+//----------------------------------------------------------------------------
+// <AMI_PHDR_END>
 
 EFI_STATUS
 GetChildDeviceHandlesManagedByDriver (
@@ -1356,81 +1339,99 @@ Error:
     return Status;
 }
 
-/**
-    Get all child device handles which have EdidDiscoveredProtocol and produce by a specific driver.
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------
+//
+// Procedure:   GetDeviceName
+//
+// Description: None.
+//
+// Input:       None.
+//
+// Output:      None.
+//
+// Notes:       None.
+//
+//----------------------------------------------------------------------
+//<AMI_PHDR_END>
 
-    @param DriverBindingHandle - the handle of a driver which contains the binding protocol.
-    @param ControllerHandle - the device controller handle be opened by its child device.
-
-    @retval EFI_STATUS.
-
-    @note  If returned status is not succeful or find no available device, the *OutputHndList will be NULL.
-
-**/
-
-EFI_STATUS
-GetEdidDiscoveredHandlesManagedByDriver (
+BOOLEAN
+GetDeviceName (
   IN  EFI_HANDLE  DriverBindingHandle,
-  IN  EFI_HANDLE  ControllerHandle )
+  IN  EFI_HANDLE  ControllerHandle,
+  IN  EFI_HANDLE  ChildControllerHandle,
+  OUT CHAR8       *String )
 {
-    EFI_STATUS      Status;
-    UINTN           ChildHandleCount = 0;
-    EFI_HANDLE      *ChildHandleBuffer = NULL;
-    UINTN           ChildHandleIndex = 0;
+    EFI_STATUS                      Status;
+    CHAR16                          *DeviceName;
+    EFI_COMPONENT_NAME_PROTOCOL     *ComponentName;
+    CHAR8                           *Lang = NULL;
+    CHAR8                           *TempChar;
 
-    Status = GetChildDeviceHandlesManagedByDriver (DriverBindingHandle, ControllerHandle, &ChildHandleCount, &ChildHandleBuffer);
-    if (EFI_ERROR(Status)) return Status;
-
-    for (ChildHandleIndex = 0; ChildHandleIndex < ChildHandleCount; ChildHandleIndex++) {
-        Status = pBS->OpenProtocol(
-                      ChildHandleBuffer[ChildHandleIndex],
-                      &gEfiEdidDiscoveredProtocolGuid,
-                      NULL, NULL, NULL,
-                      EFI_OPEN_PROTOCOL_TEST_PROTOCOL);
-        if (EFI_ERROR(Status)) Status = GetEdidDiscoveredHandlesManagedByDriver (DriverBindingHandle, ChildHandleBuffer[ChildHandleIndex]);
-        else AppendItemLst(&OutputHndList, &ChildHandleBuffer[ChildHandleIndex]);
-    }
-
-    return EFI_SUCCESS;
-}
-
-/**
-    Get all output device handles which are produced by a specific driver.
-    The rountine will allocate pool buffer for the found output device handles,
-    and it is the caller's responsibility to safe free the buffer.
-
-    @param DriverBindingHandle - the handle of a driver which contains the binding protocol
-    @param ControllerHandle - the device controller handle be opened by its child device 
-    @param *OutputHandleCount - the number of available device handles returned in OutputHandleBuffer.
-    @param **OutputHandleBuffer - a pointer to the buffer to return the array of Output device handles.
-
-    @retval EFI_STATUS.
-
-    @note  If returned status is not succeful or find no available device, the *OutputHandleBuffer will be NULL.
-
-**/
-
-EFI_STATUS
-GetOutputDeviceHandlesManagedByDriver (
-  IN  EFI_HANDLE    DriverBindingHandle,
-  IN  EFI_HANDLE    ControllerHandle,
-  OUT UINTN         *OutputHandleCount,
-  OUT EFI_HANDLE    **OutputHandleBuffer )
-{
-    EFI_STATUS      Status;
-    UINTN           HandleIndex = 0;
-
-    *OutputHandleCount  = 0;
-    *OutputHandleBuffer = NULL;
-
-    Status = GetEdidDiscoveredHandlesManagedByDriver (DriverBindingHandle, ControllerHandle);
-    if (OutputHndList.ItemCount) {
-        *OutputHandleCount = OutputHndList.ItemCount;
-        *OutputHandleBuffer = MallocZ(sizeof(EFI_HANDLE) * (*OutputHandleCount));
-        for (HandleIndex = 0; HandleIndex < *OutputHandleCount; HandleIndex++) {
-            (*OutputHandleBuffer)[HandleIndex] = *(EFI_HANDLE*)(OutputHndList.Items[HandleIndex]);
+    //
+    // Get driver name from UEFI 2.0 Component Name 2 protocol interface.
+    //
+    Status = pBS->OpenProtocol(
+                  DriverBindingHandle,
+                  &gEfiComponentName2ProtocolGuid,
+                  (VOID**)&ComponentName,
+                  NULL,
+                  NULL,
+                  EFI_OPEN_PROTOCOL_GET_PROTOCOL);
+    if (!EFI_ERROR(Status)) {
+        Status = ComponentName->GetControllerName(ComponentName, ControllerHandle, ChildControllerHandle, LANGUAGE_CODE_ENGLISH, &DeviceName);
+        if (EFI_ERROR(Status)) {
+            //
+            // Driver does not support "en-us", try to get SupportedLanguages
+            //
+            pBS->AllocatePool(EfiBootServicesData, Strlen(ComponentName->SupportedLanguages)+1, &Lang);
+            if (Lang != NULL) {
+                Strcpy(Lang, ComponentName->SupportedLanguages);
+                TempChar = Strstr(Lang, ";");
+                if (TempChar != NULL) *TempChar = 0x0000;
+                Status = ComponentName->GetControllerName(ComponentName, ControllerHandle, ChildControllerHandle, Lang, &DeviceName);
+                pBS->FreePool(Lang);
+                Lang = NULL;
+            }
+        }
+        if (!EFI_ERROR(Status)) {
+            Sprintf(String, "%S", DeviceName);
+            return TRUE;
         }
     }
 
-    return Status;
+    //
+    // If it fails to get the driver name from Component Name protocol interface, we should fall back on
+    // EFI 1.1 Component Name protocol interface.
+    //
+    Status = pBS->OpenProtocol(
+                  DriverBindingHandle,
+                  &gEfiComponentNameProtocolGuid,
+                  (VOID**)&ComponentName,
+                  NULL,
+                  NULL,
+                  EFI_OPEN_PROTOCOL_GET_PROTOCOL);
+    if (!EFI_ERROR(Status)) {
+        Status = ComponentName->GetControllerName(ComponentName, ControllerHandle, ChildControllerHandle, "eng", &DeviceName);
+        if (!EFI_ERROR(Status)) {
+            Sprintf(String, "%S", DeviceName);
+            return TRUE;
+        }
+    }
+
+    return FALSE;
 }
+
+//**********************************************************************
+//**********************************************************************
+//**                                                                  **
+//**        (C)Copyright 1985-2012, American Megatrends, Inc.         **
+//**                                                                  **
+//**                       All Rights Reserved.                       **
+//**                                                                  **
+//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093        **
+//**                                                                  **
+//**                       Phone: (770)-246-8600                      **
+//**                                                                  **
+//**********************************************************************
+//**********************************************************************

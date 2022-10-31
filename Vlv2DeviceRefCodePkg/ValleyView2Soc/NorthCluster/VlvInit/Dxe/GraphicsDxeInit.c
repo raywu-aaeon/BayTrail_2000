@@ -41,12 +41,6 @@ Abstract:
 #include <PchAccess.h>
 #include <Library/PchPlatformLib.h>
 
-// AMI_OVERRIDE START - EIP194648
-#include <SetupDataDefinition.h>
-
-extern EFI_RUNTIME_SERVICES *gRT;
-extern EFI_GUID gEfiSetupVariableGuid;
-// AMI_OVERRIDE END
 
 UINT64            GTTMMADR;
 UINTN             MCHBAR_BASE;
@@ -1061,38 +1055,6 @@ Returns:
 
   UINT32                Data32Mask;
   UINT32                Result;
-
-// AMI_OVERRIDE START - EIP194648
-  UINTN                 SetupSize;
-  SETUP_DATA            SetupData;
-  UINT32                SetupAttr;
-  UINT32                Data32;
-  
-  SetupSize = sizeof (SETUP_DATA);
-  Status = gRT->GetVariable (
-                    L"Setup",
-                    &gEfiSetupVariableGuid,
-                    &SetupAttr,
-                    &SetupSize,
-                    &SetupData
-                    );
-  ASSERT_EFI_ERROR (Status);
-  
-  MsgBus32Read(VLV_FUSEEPNC, 0x2c, Data32);
-  Data32 = (Data32 >> 24) & 0x1f;   // FB_GFX_MAX_NONTURBO_FUSE_MSB[28:24]
-  
-  if (Data32 == 0x4) {
-      SetupData.InternalGraphics = 0;
-      gRT->SetVariable(
-                  L"Setup",
-                  &gEfiSetupVariableGuid,
-                  SetupAttr,
-                  SetupSize,
-                  &SetupData
-                  );
-      ASSERT_EFI_ERROR (Status);
-  }
-// AMI_OVERRIDE END
 
   GTTMMADR    = 0;
   Status      = EFI_SUCCESS;

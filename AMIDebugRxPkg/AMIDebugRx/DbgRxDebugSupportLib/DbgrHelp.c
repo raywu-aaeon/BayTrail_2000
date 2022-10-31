@@ -2,7 +2,7 @@
 //*****************************************************************//
 //*****************************************************************//
 //**                                                             **//
-//**         (C)Copyright 2014, American Megatrends, Inc.        **//
+//**         (C)Copyright 2012, American Megatrends, Inc.        **//
 //**                                                             **//
 //**                     All Rights Reserved.                    **//
 //**                                                             **//
@@ -19,14 +19,6 @@
 //
 // $Date: 11/02/12 10:14a $
 //*****************************************************************
-//*****************************************************************
-//
-// Revision History
-// ----------------
-// $Log: /AptioV/SRC/AMIDebugRx/DbgRxDebugSupportLib/DbgrHelp.c $
-// 
-//
-//**********************************************************************
 
 
 //**********************************************************************
@@ -52,11 +44,6 @@
 #define USB_DEBUG_TRANSPORT	0
 #endif
 
-#ifndef AMI_DEBUG_RX_IN_S3_SUPPORT
-#define AMI_DEBUG_RX_IN_S3_SUPPORT	0
-#endif
-
-volatile UINT16 gS3ResumeSupport = AMI_DEBUG_RX_IN_S3_SUPPORT;
 //volatile UINTN USB_DEBUGGER_ENABLED = USB_DEBUG_TRANSPORT;
 
 const UINTN	AMI_PEIDEBUGGER_DS_BASEADDRESS 	= 0;
@@ -67,11 +54,17 @@ EFI_GUID  mDxeDebugDataGuidDbgSup = DXE_DBG_DATA_GUID;
 EFI_GUID  mPeiDbgBasePpiGuidDbgSup = EFI_PEI_DBG_BASEADDRESS_PPI_GUID;
 EFI_GUID  mPeiDbgDbgrIfcGuidDbgSup = PEI_DBGR_REPORTSTATUSCODE_GUID;
 
+#ifdef DBG_WRITE_IO_80_SUPPORT
+volatile UINTN gDbgWriteIO80Support = DBG_WRITE_IO_80_SUPPORT;
+#else
+volatile UINTN gDbgWriteIO80Support = 0;
+#endif
+
 //*****************************************************************//
 //*****************************************************************//
 //*****************************************************************//
 //**                                                             **//
-//**         (C)Copyright 2014, American Megatrends, Inc.        **//
+//**         (C)Copyright 2012, American Megatrends, Inc.        **//
 //**                                                             **//
 //**                     All Rights Reserved.                    **//
 //**                                                             **//

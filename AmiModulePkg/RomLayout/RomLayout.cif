@@ -5,12 +5,6 @@
 	RefName = "AmiModulePkg.RomLayout"
 [INF]
 "RomLayout.inf"
-"LegacyRomLayout.inf"
-"RomLayoutPei.inf"
-"RomLayoutDxe.inf"
-"AmiReportFvLibCompatibility.inf"
 [files]
 "RomLayout.sdl"	
-"RomLayoutHooks.txt"
-"RomLayout.chm"
 <endComponent>

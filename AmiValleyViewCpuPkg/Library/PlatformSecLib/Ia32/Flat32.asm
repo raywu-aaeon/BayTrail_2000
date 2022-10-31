@@ -7,7 +7,7 @@
 ;
 ;------------------------------------------------------------------------------
 ;
-; Copyright (c) 1999 - 2013, Intel Corporation. All rights reserved.<BR>
+; Copyright (c) 1999 - 2010, Intel Corporation. All rights reserved.<BR>
 ; This software and associated documentation (if any) is furnished
 ; under a license and may only be used or copied in accordance
 ; with the terms of the license. Except as permitted by such
@@ -380,32 +380,21 @@ EccProgDone:
    ; In other words, the only valid flow for these bits later in code is 1->0,  not 0->1.
    ;
    ; bits[17:16] will get written again in Pei Phase(LmSetup.c) based on PDM/Dfx setting in BIOS-Setup under Debug options
-   
-   mov	ebx, 30000h
-   mov  ecx, 007040640h
+	mov	edx, 0CF8h        ;config MCD
+	mov	eax, 800000d4h
+	out	dx, eax
 
+	mov	edx, 0CFCh        ;set Bit16 and Bit17
+	mov	eax, 30000h
+	out	dx, eax
 
-;  mov     al, CMOS_MEM_CHANNEL2_CONTROL
-;  mov     al, MKF_CMOS_MEM_CHANNEL2_CONTROL
-;  CALL_EBP ReadCmos
-  mov      al, MKF_DEFAULT_CMOS_MEM_CHANNEL2_CONTROL
-  
-  test     al, 01h
-  jnz      NO_DISABLE_CHANNEL2 
-  
-  or      ebx, 40000000h
-  mov	    ecx, 0070406C0h
-  
-NO_DISABLE_CHANNEL2: 
-  
-    CALL_EBP SendMessageBus 
-    
-    ; BayTrail-I BWG Addendum Rev 1.9 section A.3: P-Unit Sideband Register Configuration for
-    ; ECC Enabled Systems (Bakersport).  This is a fix for a hang on Bakersport when ECC is
-    ; enabled and using microcode M0130679903 and above.
-    mov ebx, 100000h        ; Set Bit20
-    mov ecx, 00704d550h
-    CALL_EBP SendMessageBus
+	mov	edx, 0CF8h        ;config MCR
+	mov	eax, 800000d0h
+	out	dx, eax
+
+	mov	edx, 0CFCh        ;write_opcode+portID+offset+(WriteEnByte = 4, for byte2)
+	mov	eax, 007040640h
+	out	dx, eax
 
    ; For A-step, bits 0 and 1 need to be set after patch load and before MRC (first possible reset)
    ; Without setting BIOS_RESET_DONE on A0, Bios will stuck at vlvdxe after GT PowerManagement
@@ -413,10 +402,22 @@ NO_DISABLE_CHANNEL2:
    ;
    ;Program BIOS_RESET_DONE (bit0) and BIOS_ALL_DONE (bit1) in PUNIT.BIOS_RESET_CPL, Port 0x4, Offset 0x5
    ;BIOS_ALL_DONE is newly added bit for B0.
-   mov ebx, 3           ;set Bit0 and Bit1
-   mov ecx, 007040510h
-   CALL_EBP SendMessageBus
- 
+	mov	edx, 0CF8h        ;config MCD
+	mov	eax, 800000d4h
+	out	dx, eax
+
+	mov	edx, 0CFCh        ;set Bit0 and Bit1
+	mov	eax, 3
+	out	dx, eax
+
+	mov	edx, 0CF8h        ;config MCR
+	mov	eax, 800000d0h
+	out	dx, eax
+
+	mov	edx, 0CFCh        ;write_opcode+portID+offset(WriteEnByte = 1, for byte0)
+	mov	eax, 007040510h
+	out	dx, eax
+
 
   STATUS_CODE (09h)
   CALL_MMX  InitializeNEM
@@ -524,10 +525,18 @@ ENDIF
   ;
   ; Program ECBASE and enable EC space in BUNIT.BECREG  Port 0x3, Offset 0x27
   ;
-  mov     ebx, MKF_PCIEX_BASE_ADDRESS OR 1					; MKF_EC_BASE_ADDRESS
-  mov     ecx, 0110327f0h
-  CALL_EBP SendMessageBus
-  
+  mov			eax,	0800000d4h
+  mov			dx,	0CF8h
+  out			dx,	eax
+  mov			eax,	MKF_PCIEX_BASE_ADDRESS OR 1					; MKF_EC_BASE_ADDRESS
+  mov			dx,	0CFCh
+  out			dx,	eax
+  mov			eax,	0800000d0h
+  mov			dx,	0CF8h
+  out			dx,	eax
+  mov			eax,	0110327f0h
+  mov			dx,	0CFCh
+  out			dx,	eax
 
 ;Update Microcode
 
@@ -773,20 +782,17 @@ init_RTC_state_machine:
 ;EIP158981 >>
 IFDEF MKF_ENBDT_PF_ENABLE
   IF MKF_ENBDT_PF_ENABLE EQ 1
-;CMOS_PS2_VCC_VNN_CONTROL           equ 034h	
-;CMOS_MEM_CHANNEL2_CONTROL          equ 035h	
+;CMOS_PS2_VCC_VNN_CONTROL           equ 034h		
 ; Set default PS2_VCC_VNN Control to 0 if RTC bad
   mov     al, MKF_CMOS_PS2_VCC_VNN_CONTROL
-  mov     ah, 0h
-  CALL_EBP WriteCmos
+  out     070h, al
+  nop                  ;delay
+  nop                  ;delay
+  mov     al, 00h
+  out     071h, al
   ENDIF
 ENDIF
-;EIP158981 <<  
-  
-  ; Set default MEM_CHANNEL2_CONTROL value 
-  mov     al, MKF_CMOS_MEM_CHANNEL2_CONTROL
-  mov     ah, 01h
-  CALL_EBP WriteCmos
+;EIP158981 <<
 
 no_RTC_pwr_failure:
 ;EIP158981 >>
@@ -814,10 +820,13 @@ IFDEF MKF_ENBDT_PF_ENABLE
 	    
 ; Read PS2_VCC_VNN setting from CMOS
   mov     al, MKF_CMOS_PS2_VCC_VNN_CONTROL
-  CALL_EBP ReadCmos
+  out     070h, al
+  nop                  ;delay
+  nop                  ;delay
+  in      al, 071h
   test    al, 03h		; bits 00 - disable, 3 - enable both Vcc and Vnn for PS2
   jz      disable_PS2_Vcc_Vnn
-  
+	    
   mov	edx, 0CF8h        
   mov	eax, 800000d4h    ;config Message Data Register (MDR) 
   out	dx, eax
@@ -944,782 +953,6 @@ GlobalresetClear:
     add dx,  4
     out dx,  al
 
-    ;
-    ;  Check the S3 Boot Mode Code Begins here
-    ;
-    ;   If S3 mode jump to skip_usb_workaround:
-    ;   
-    
-    mov eax, 08000f800h + 040h				; PCI_LPC_BASE + R_PCH_LPC_ACPI_BASE
-    mov dx,  0CF8h
-    out dx,  eax
-    mov ax,  0400h + 002h				; ACPI_BASE_ADDRESS + B_PCH_LPC_ACPI_BASE_EN
-    add dx,  4
-    out dx,  ax
-
-    mov     dx, 0400h + 004h			        ; ACPI_BASE_ADDRESS + R_PCH_ACPI_PM1_CNT
-    in      ax, dx
-    cmp     ax, 1400h
-    je      skip_usb_workaround
-
-    ;
-    ;  Check the S3 Boot Mode Code Ends here
-    ;
-
-
- 
-  ; test usb port 1 if need workaround  
-  mov	edx, 0CF8h        
-  mov	eax, 800000d8h    
-  out	dx, eax
-
-  mov	edx, 0CFCh    
-  mov	eax, 000004100h  
-  out	dx, eax
-
-  mov	edx, 0CF8h        
-  mov	eax, 800000d0h  
-  out	dx, eax
-
-  mov	edx, 0CFCh    
-  mov	eax, 0064313F0h  
-  out	dx, eax
-
-  mov	edx, 0CF8h        
-  mov	eax, 800000d4h  
-  out	dx, eax
-  
-  mov	edx, 0CFCh        
-  in	eax, dx
-  test eax, 0800h
-  jz check_port2_workaround ; jump to  port 2 check
-
-  mov	edx, 0CF8h          
-  mov	eax, 800000d8h   
-  out	dx, eax
-  
-  mov	edx, 0CFCh    
-  mov	eax, 000004100h  
-  out	dx, eax
-  
-  mov ebx, 000000008h           
-  mov ecx, 0074313F0h
-  CALL_EBP SendMessageBus 
-
-  mov	edx, 0CF8h        
-  mov	eax, 800000d8h  
-  out	dx, eax
-
-  mov	edx, 0CFCh        
-  mov	eax, 000004100h 
-  out	dx, eax
-   
-  mov ebx, 000007F13h           
-  mov ecx, 0074323F0h
-  CALL_EBP SendMessageBus
-
-  mov	edx, 0CF8h        
-  mov	eax, 800000d8h    
-  out	dx, eax
-
-  mov	edx, 0CFCh        
-  mov	eax, 000004100h   
-  out	dx, eax
-  
-  mov ebx, 000000013h           
-  mov ecx, 0074323F0h
-  CALL_EBP SendMessageBus
-
-  mov	edx, 0CF8h        
-  mov	eax, 800000d8h    
-  out	dx, eax
-
-  mov	edx, 0CFCh        
-  mov	eax, 000004100h  
-  out	dx, eax
-   
-  mov ebx, 000004011h           
-  mov ecx, 0074323F0h
-  CALL_EBP SendMessageBus
-
-  mov	edx, 0CF8h        
-  mov	eax, 800000d8h  
-  out	dx, eax
-
-  mov	edx, 0CFCh        
-  mov	eax, 000004100h   
-  out	dx, eax
-  
-  mov ebx, 000000108h           ; [ AMI_OVERRIDE EIP330058+> ]
-  mov ecx, 0074313F0h
-  CALL_EBP SendMessageBus
-  
-  mov	edx, 0CF8h        
-  mov	eax, 800000d8h  
-  out	dx, eax
-
-  mov	edx, 0CFCh        
-  mov	eax, 000004100h   
-  out	dx, eax
-  
-  mov ebx, 000000008h           
-  mov ecx, 0074313F0h
-  CALL_EBP SendMessageBus  
-  
-  mov	edx, 0CF8h        
-  mov	eax, 800000d8h  
-  out	dx, eax
-
-  mov	edx, 0CFCh        
-  mov	eax, 000004100h   
-  out	dx, eax                 ; [ AMI_OVERRIDE EIP330058+< ]
-  
-  mov ebx, 000000000h           
-  mov ecx, 0074313F0h
-  CALL_EBP SendMessageBus
-
-;Read offset 0x4126 and store   ; [ AMI_OVERRIDE EIP330058+> ]
-  mov	edx, 0CF8h        
-  mov	eax, 800000d8h  
-  out	dx, eax
-
-  mov	edx, 0CFCh        
-  mov	eax, 000004100h   
-  out	dx, eax
-  
-  mov	edx, 0CF8h        
-  mov	eax, 800000d0h   
-  out	dx, eax
-  
-  mov	edx, 0CFCh        
-  mov	eax, 0074326F0h   
-  out	dx, eax
-
-  mov edx, 0CF8h
-  mov eax, 800000d4h
-  out dx, eax
-  
-  mov	edx, 0CFCh
-  in  eax, dx
-  mov	edi, eax 
-
-  ;program offset 0x4126[31:0] to 0x0000001C
-  mov	edx, 0CF8h        
-  mov	eax, 800000d8h  
-  out	dx, eax
-
-  mov	edx, 0CFCh        
-  mov	eax, 000004100h   
-  out	dx, eax
-  
-  mov ebx, 00000001Ch           
-  mov ecx, 0074326F0h
-  CALL_EBP SendMessageBus
-  
-  ;program offset 0x4126[31:0] to 0x00000000
-  mov	edx, 0CF8h        
-  mov	eax, 800000d8h  
-  out	dx, eax
-
-  mov	edx, 0CFCh        
-  mov	eax, 000004100h   
-  out	dx, eax
-  
-  mov ebx, 000000000h           
-  mov ecx, 0074326F0h
-  CALL_EBP SendMessageBus
-  
-  ;program offset 0x4126[31:0] to 0x0000001C
-  mov	edx, 0CF8h        
-  mov	eax, 800000d8h  
-  out	dx, eax
-
-  mov	edx, 0CFCh        
-  mov	eax, 000004100h   
-  out	dx, eax
-  
-  mov ebx, 00000011Ch           
-  mov ecx, 0074326F0h
-  CALL_EBP SendMessageBus
-
-  ;restore offset 0x4126  
-  mov	edx, 0CF8h        
-  mov	eax, 800000d8h  
-  out	dx, eax
-
-  mov	edx, 0CFCh        
-  mov	eax, 000004100h   
-  out	dx, eax
-  
-  mov ebx, edi           
-  mov ecx, 0074326F0h
-  CALL_EBP SendMessageBus       ; [ AMI_OVERRIDE EIP330058+> ]
-  
-check_port2_workaround:
-
-  mov	edx, 0CF8h        
-  mov	eax, 800000d8h    
-  out	dx, eax
-
-  mov	edx, 0CFCh    
-  mov	eax, 000004200h  
-  out	dx, eax
-
-  mov	edx, 0CF8h        
-  mov	eax, 800000d0h  
-  out	dx, eax
-
-  mov	edx, 0CFCh    
-  mov	eax, 0064313F0h  
-  out	dx, eax
-
-  mov	edx, 0CF8h        
-  mov	eax, 800000d4h  
-  out	dx, eax
-  
-  mov	edx, 0CFCh        
-  in	eax, dx
-  test eax, 0800h
-  jz check_port3_workaround  ; jump to port 3 check
-
-  mov	edx, 0CF8h          
-  mov	eax, 800000d8h   
-  out	dx, eax
-  
-  mov	edx, 0CFCh    
-  mov	eax, 000004200h  
-  out	dx, eax
-  
-  mov ebx, 000000008h           
-  mov ecx, 0074313F0h
-  CALL_EBP SendMessageBus 
-
-  mov	edx, 0CF8h        
-  mov	eax, 800000d8h  
-  out	dx, eax
-
-  mov	edx, 0CFCh        
-  mov	eax, 000004200h 
-  out	dx, eax
-   
-  mov ebx, 000007F13h           
-  mov ecx, 0074323F0h
-  CALL_EBP SendMessageBus
-
-  mov	edx, 0CF8h        
-  mov	eax, 800000d8h    
-  out	dx, eax
-
-  mov	edx, 0CFCh        
-  mov	eax, 000004200h   
-  out	dx, eax
-  
-  mov ebx, 000000013h           
-  mov ecx, 0074323F0h
-  CALL_EBP SendMessageBus
-
-  mov	edx, 0CF8h        
-  mov	eax, 800000d8h    
-  out	dx, eax
-
-  mov	edx, 0CFCh        
-  mov	eax, 000004200h  
-  out	dx, eax
-   
-  mov ebx, 000004011h           
-  mov ecx, 0074323F0h
-  CALL_EBP SendMessageBus
-
-  mov	edx, 0CF8h        
-  mov	eax, 800000d8h  
-  out	dx, eax
-
-  mov	edx, 0CFCh        
-  mov	eax, 000004200h   
-  out	dx, eax
-  
-  mov ebx, 000000108h           ; [ AMI_OVERRIDE EIP330058+> ]
-  mov ecx, 0074313F0h
-  CALL_EBP SendMessageBus
-  
-  mov	edx, 0CF8h        
-  mov	eax, 800000d8h  
-  out	dx, eax
-
-  mov	edx, 0CFCh        
-  mov	eax, 000004200h   
-  out	dx, eax
-  
-  mov ebx, 000000008h           
-  mov ecx, 0074313F0h
-  CALL_EBP SendMessageBus
-
-  mov	edx, 0CF8h        
-  mov	eax, 800000d8h  
-  out	dx, eax
-
-  mov	edx, 0CFCh        
-  mov	eax, 000004200h   
-  out	dx, eax                 ; [ AMI_OVERRIDE EIP330058+< ]
-  
-  mov ebx, 000000000h           
-  mov ecx, 0074313F0h
-  CALL_EBP SendMessageBus
-
-  ;Read offset 0x4226 and store ; [ AMI_OVERRIDE EIP330058+> ]
-  mov	edx, 0CF8h        
-  mov	eax, 800000d8h  
-  out	dx, eax
-
-  mov	edx, 0CFCh        
-  mov	eax, 000004200h   
-  out	dx, eax
-  
-  mov	edx, 0CF8h        
-  mov	eax, 800000d0h   
-  out	dx, eax
-  
-  mov	edx, 0CFCh        
-  mov	eax, 0074326F0h   
-  out	dx, eax
-
-  mov edx, 0CF8h
-  mov eax, 800000d4h
-  out dx, eax
-  
-  mov	edx, 0CFCh
-  in  eax, dx
-  mov	edi, eax 
-
-  ;program offset 0x4226[31:0] to 0x0000001C
-  mov	edx, 0CF8h        
-  mov	eax, 800000d8h  
-  out	dx, eax
-
-  mov	edx, 0CFCh        
-  mov	eax, 000004200h   
-  out	dx, eax
-  
-  mov ebx, 00000001Ch           
-  mov ecx, 0074326F0h
-  CALL_EBP SendMessageBus
-  
-  ;program offset 0x4226[31:0] to 0x00000000
-  mov	edx, 0CF8h        
-  mov	eax, 800000d8h  
-  out	dx, eax
-
-  mov	edx, 0CFCh        
-  mov	eax, 000004200h   
-  out	dx, eax
-  
-  mov ebx, 000000000h           
-  mov ecx, 0074326F0h
-  CALL_EBP SendMessageBus
-  
-  ;program offset 0x4226[31:0] to 0x0000001C
-  mov	edx, 0CF8h        
-  mov	eax, 800000d8h  
-  out	dx, eax
-
-  mov	edx, 0CFCh        
-  mov	eax, 000004200h   
-  out	dx, eax
-  
-  mov ebx, 00000011Ch           
-  mov ecx, 0074326F0h
-  CALL_EBP SendMessageBus
-
-  ;restore offset 0x4226  
-  mov	edx, 0CF8h        
-  mov	eax, 800000d8h  
-  out	dx, eax
-
-  mov	edx, 0CFCh        
-  mov	eax, 000004200h   
-  out	dx, eax
-  
-  mov ebx, edi           
-  mov ecx, 0074326F0h
-  CALL_EBP SendMessageBus       ; [ AMI_OVERRIDE EIP330058+< ]
-
-check_port3_workaround:
-
-  mov	edx, 0CF8h          
-  mov	eax, 800000d8h    
-  out	dx, eax
-
-  mov	edx, 0CFCh    
-  mov	eax, 000004300h  
-  out	dx, eax
-
-  mov	edx, 0CF8h        
-  mov	eax, 800000d0h  
-  out	dx, eax
-
-  mov	edx, 0CFCh    
-  mov	eax, 0064313F0h  
-  out	dx, eax
-
-  mov	edx, 0CF8h        
-  mov	eax, 800000d4h  
-  out	dx, eax
-  
-  mov	edx, 0CFCh        
-  in	eax, dx
-  test eax, 0800h
-  jz usb_port4_workaround ; jump to port 4 check
-
-  mov	edx, 0CF8h          
-  mov	eax, 800000d8h   
-  out	dx, eax
-  
-  mov	edx, 0CFCh    
-  mov	eax, 000004300h  
-  out	dx, eax
-  
-  mov ebx, 000000008h           
-  mov ecx, 0074313F0h
-  CALL_EBP SendMessageBus 
-
-  mov	edx, 0CF8h        
-  mov	eax, 800000d8h  
-  out	dx, eax
-
-  mov	edx, 0CFCh        
-  mov	eax, 000004300h 
-  out	dx, eax
-   
-  mov ebx, 000007F13h           
-  mov ecx, 0074323F0h
-  CALL_EBP SendMessageBus
-
-  mov	edx, 0CF8h        
-  mov	eax, 800000d8h    
-  out	dx, eax
-
-  mov	edx, 0CFCh        
-  mov	eax, 000004300h   
-  out	dx, eax
-  
-  mov ebx, 000000013h           
-  mov ecx, 0074323F0h
-  CALL_EBP SendMessageBus
-
-  mov	edx, 0CF8h        
-  mov	eax, 800000d8h    
-  out	dx, eax
-
-  mov	edx, 0CFCh        
-  mov	eax, 000004300h  
-  out	dx, eax
-   
-  mov ebx, 000004011h           
-  mov ecx, 0074323F0h
-  CALL_EBP SendMessageBus
-
-  mov	edx, 0CF8h        
-  mov	eax, 800000d8h  
-  out	dx, eax
-
-  mov	edx, 0CFCh        
-  mov	eax, 000004300h   
-  out	dx, eax
-  
-  mov ebx, 000000108h           ; [ AMI_OVERRIDE EIP330058+> ]
-  mov ecx, 0074313F0h
-  CALL_EBP SendMessageBus
-  
-  mov	edx, 0CF8h        
-  mov	eax, 800000d8h  
-  out	dx, eax
-
-  mov	edx, 0CFCh        
-  mov	eax, 000004300h   
-  out	dx, eax
-  
-  mov ebx, 000000008h           
-  mov ecx, 0074313F0h
-  CALL_EBP SendMessageBus
-
-  mov	edx, 0CF8h        
-  mov	eax, 800000d8h  
-  out	dx, eax
-
-  mov	edx, 0CFCh        
-  mov	eax, 000004300h   
-  out	dx, eax                 ; [ AMI_OVERRIDE EIP330058+< ]
-  
-  mov ebx, 000000000h           
-  mov ecx, 0074313F0h
-  CALL_EBP SendMessageBus
-
-  ;Read offset 0x4326 and store ; [ AMI_OVERRIDE EIP330058+> ]
-  mov	edx, 0CF8h        
-  mov	eax, 800000d8h  
-  out	dx, eax
-
-  mov	edx, 0CFCh        
-  mov	eax, 000004300h   
-  out	dx, eax
-  
-  mov	edx, 0CF8h        
-  mov	eax, 800000d0h   
-  out	dx, eax
-  
-  mov	edx, 0CFCh        
-  mov	eax, 0074326F0h   
-  out	dx, eax
-
-  mov edx, 0CF8h
-  mov eax, 800000d4h
-  out dx, eax
-  
-  mov	edx, 0CFCh
-  in  eax, dx
-  mov	edi, eax 
-
-  ;program offset 0x4326[31:0] to 0x0000001C
-  mov	edx, 0CF8h        
-  mov	eax, 800000d8h  
-  out	dx, eax
-
-  mov	edx, 0CFCh        
-  mov	eax, 000004300h   
-  out	dx, eax
-  
-  mov ebx, 00000001Ch           
-  mov ecx, 0074326F0h
-  CALL_EBP SendMessageBus
-  
-;program offset 0x4326[31:0] to 0x00000000
-  mov	edx, 0CF8h        
-  mov	eax, 800000d8h  
-  out	dx, eax
-
-  mov	edx, 0CFCh        
-  mov	eax, 000004300h   
-  out	dx, eax
-  
-  mov ebx, 000000000h           
-  mov ecx, 0074326F0h
-  CALL_EBP SendMessageBus
-  
-  ;program offset 0x4326[31:0] to 0x0000001C
-  mov	edx, 0CF8h        
-  mov	eax, 800000d8h  
-  out	dx, eax
-
-  mov	edx, 0CFCh        
-  mov	eax, 000004300h   
-  out	dx, eax
-  
-  mov ebx, 00000011Ch           
-  mov ecx, 0074326F0h
-  CALL_EBP SendMessageBus
-
-  ;restore offset 0x4326  
-  mov	edx, 0CF8h        
-  mov	eax, 800000d8h  
-  out	dx, eax
-
-  mov	edx, 0CFCh        
-  mov	eax, 000004300h   
-  out	dx, eax
-  
-  mov ebx, edi           
-  mov ecx, 0074326F0h
-  CALL_EBP SendMessageBus       ; [ AMI_OVERRIDE EIP330058+< ]
-
-usb_port4_workaround:
-  mov	edx, 0CF8h        
-  mov	eax, 800000d8h    
-  out	dx, eax
-
-  mov	edx, 0CFCh    
-  mov	eax, 000004400h  
-  out	dx, eax
-
-  mov	edx, 0CF8h        
-  mov	eax, 800000d0h  
-  out	dx, eax
-
-  mov	edx, 0CFCh    
-  mov	eax, 0064313F0h  
-  out	dx, eax
-
-  mov	edx, 0CF8h        
-  mov	eax, 800000d4h  
-  out	dx, eax
-  
-  mov	edx, 0CFCh        
-  in	eax, dx
-  test eax, 0800h
-  jz skip_usb_port4_workaround
-
-  mov	edx, 0CF8h          
-  mov	eax, 800000d8h   
-  out	dx, eax
-  
-  mov	edx, 0CFCh    
-  mov	eax, 000004400h  
-  out	dx, eax
-  
-  mov ebx, 000000008h           
-  mov ecx, 0074313F0h
-  CALL_EBP SendMessageBus 
-
-  mov	edx, 0CF8h        
-  mov	eax, 800000d8h  
-  out	dx, eax
-
-  mov	edx, 0CFCh        
-  mov	eax, 000004400h 
-  out	dx, eax
-   
-  mov ebx, 000007F13h           
-  mov ecx, 0074323F0h
-  CALL_EBP SendMessageBus
-
-  mov	edx, 0CF8h        
-  mov	eax, 800000d8h    
-  out	dx, eax
-
-  mov	edx, 0CFCh        
-  mov	eax, 000004400h   
-  out	dx, eax
-  
-  mov ebx, 000000013h           
-  mov ecx, 0074323F0h
-  CALL_EBP SendMessageBus
-
-  mov	edx, 0CF8h        
-  mov	eax, 800000d8h    
-  out	dx, eax
-
-  mov	edx, 0CFCh        
-  mov	eax, 000004400h  
-  out	dx, eax
-   
-  mov ebx, 000004011h           
-  mov ecx, 0074323F0h
-  CALL_EBP SendMessageBus
-
-  mov	edx, 0CF8h        
-  mov	eax, 800000d8h  
-  out	dx, eax
-
-  mov	edx, 0CFCh        
-  mov	eax, 000004400h   
-  out	dx, eax
-  
-  mov ebx, 000000108h           ; [ AMI_OVERRIDE EIP330058+> ] 
-  mov ecx, 0074313F0h
-  CALL_EBP SendMessageBus
-  
-  mov	edx, 0CF8h        
-  mov	eax, 800000d8h  
-  out	dx, eax
-
-  mov	edx, 0CFCh        
-  mov	eax, 000004400h   
-  out	dx, eax
-  
-  mov ebx, 000000008h           
-  mov ecx, 0074313F0h
-  CALL_EBP SendMessageBus  
-
-  mov	edx, 0CF8h        
-  mov	eax, 800000d8h  
-  out	dx, eax
-
-  mov	edx, 0CFCh        
-  mov	eax, 000004400h   
-  out	dx, eax                 ; [ AMI_OVERRIDE EIP330058+< ]
-  
-  mov ebx, 000000000h           
-  mov ecx, 0074313F0h
-  CALL_EBP SendMessageBus
-
-  ;Read offset 0x4426 and store ; [ AMI_OVERRIDE EIP330058+> ]
-  mov	edx, 0CF8h        
-  mov	eax, 800000d8h  
-  out	dx, eax
-
-  mov	edx, 0CFCh        
-  mov	eax, 000004400h   
-  out	dx, eax
-  
-  mov	edx, 0CF8h        
-  mov	eax, 800000d0h   
-  out	dx, eax
-  
-  mov	edx, 0CFCh        
-  mov	eax, 0074326F0h   
-  out	dx, eax
-
-  mov edx, 0CF8h
-  mov eax, 800000d4h
-  out dx, eax
-  
-  mov	edx, 0CFCh
-  in  eax, dx
-  mov	edi, eax 
-
-  ;program offset 0x4426[31:0] to 0x0000001C
-  mov	edx, 0CF8h        
-  mov	eax, 800000d8h  
-  out	dx, eax
-
-  mov	edx, 0CFCh        
-  mov	eax, 000004400h   
-  out	dx, eax
-  
-  mov ebx, 00000001Ch           
-  mov ecx, 0074326F0h
-  CALL_EBP SendMessageBus
-  
-  ;program offset 0x4426[31:0] to 0x00000000
-  mov	edx, 0CF8h        
-  mov	eax, 800000d8h  
-  out	dx, eax
-
-  mov	edx, 0CFCh        
-  mov	eax, 000004400h   
-  out	dx, eax
-  
-  mov ebx, 000000000h           
-  mov ecx, 0074326F0h
-  CALL_EBP SendMessageBus
-  
-  ;program offset 0x4426[31:0] to 0x0000001C
-  mov	edx, 0CF8h        
-  mov	eax, 800000d8h  
-  out	dx, eax
-
-  mov	edx, 0CFCh        
-  mov	eax, 000004400h   
-  out	dx, eax
-  
-  mov ebx, 00000011Ch           
-  mov ecx, 0074326F0h
-  CALL_EBP SendMessageBus
-
-  ;restore offset 0x4426  
-  mov	edx, 0CF8h        
-  mov	eax, 800000d8h  
-  out	dx, eax
-
-  mov	edx, 0CFCh        
-  mov	eax, 000004400h   
-  out	dx, eax
-  
-  mov ebx, edi           
-  mov ecx, 0074326F0h
-  CALL_EBP SendMessageBus       ; [ AMI_OVERRIDE EIP330058+< ]
-
-skip_usb_port4_workaround:
-skip_usb_workaround:
 
   ;
   ; Ported from NBSECInit.ASM
@@ -2032,12 +1265,11 @@ VeryEarlyMicrocodeUpdate    ENDP
 
 IF MKF_MICROCODE_BACKUP_SUPPORT
 ;; 197DB236-F856-4924-90F8-CDF12FB875F3
-;; 17088572-377F-44ef-8F4E-B09FFF46A070 ami MICROCODE ffs guid
 MICOCODE_FFS_GUID label dword
-	DD	17088572h
-	dw	377Fh
-	dw	44EFh
-	db	8Fh,04Eh,0B0h,09Fh,0FFh,046h,0A0h,070h
+	DD	197DB236h
+	dw	0F856h
+	dw	4924h
+	db	90h,0F8h,0CDh,0F1h,2Fh,0B8h,75h,0F3h
     
 FindMicrocode proc
 FindMicrocodeFv:
@@ -2639,62 +1871,6 @@ CheckValidCMOS    PROC    NEAR    PRIVATE
    
   RET_EBP
 CheckValidCMOS    ENDP
-
-ReadCmos PROC NEAR 
-  cmp     al, 080h
-  jb      @f
-  out     072h, al
-  nop                  ;delay
-  nop                  ;delay
-  in      al, 073h 
-  jmp     ReadCmosEnd
-@@: 
-  out     070h, al
-  nop                  ;delay
-  nop                  ;delay
-  in      al, 071h 
-ReadCmosEnd:
-  RET_EBP
-ReadCmos ENDP
-
-WriteCmos PROC NEAR 
-  cmp     al, 080h
-  jb      @f
-  out     072h, al
-  nop                  ;delay
-  nop                  ;delay
-  mov     al, ah
-  out     073h, al
-  jmp     WriteCmosEnd
-@@:   
-  out     070h, al
-  nop                  ;delay
-  nop                  ;delay
-  mov     al, ah
-  out     071h, al
-WriteCmosEnd:
-  RET_EBP 
-WriteCmos ENDP
-
-SendMessageBus PROC NEAR 
-  mov     edx, 0CF8h        ;config MCD
-  mov     eax, 800000d4h
-  out     dx, eax
-
-  mov     edx, 0CFCh        ;
-  mov     eax, ebx          ;ebx= Message Data 
-  out     dx, eax
-
-  mov     edx, 0CF8h        ;config MCR
-  mov     eax, 800000d0h
-  out     dx, eax
-
-  mov     edx, 0CFCh        ;write_opcode+portID+offset+(WriteEnByte = 8, for byte3)
-  mov     eax, ecx          ;ecx=MCR Data
-  out     dx, eax
-  
-  RET_EBP 
-SendMessageBus ENDP
 
 PlatformInitTable LABEL DWORD
    dd  0e0000000h + 0F8054h, MKF_SPI_BASE_ADDRESS          ; MKF_EC_BASE_ADDRESS + 0:1F:0:54; MKF_SPI_BASE_ADDRESS Set base address.

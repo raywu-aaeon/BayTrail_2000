@@ -40,15 +40,18 @@ Device(XHC1)
   //When it is in Host mode, USH core is connected to USB3 microAB(USB3 P1 and USB2 P0)
   Name (_DDN, "Baytrail XHCI controller (CCG core/Host only)" )
 
-#ifdef WIN8_SUPPORT     
-    Method(_DEP){
-    	if (LAnd(LGreaterEqual(OSYS, 2013), LEqual(S0IX, 1))) {
-			Return(Package() {\_SB.PEPD})
-		}Else{
-			Return(Package(){})
-		}
-	}
-#endif    
+#ifdef WIN8_SUPPORT 
+  Method(XDEP, 0,Serialized)
+  {
+    If(LEqual(OSYS,2013))
+    {
+      Name(_DEP, Package(0x1)
+      {
+        PEPD
+      })
+    }
+  }
+#endif
   Name (_STR, Unicode ("Baytrail XHCI controller (CCG core/Host only)"))
   Name(_PRW, Package() {0xD,4})
 
@@ -452,8 +455,7 @@ Device(XHC1)
             0x00, 0x00, 0x00, 0x00,
             //95:64 - bit[66:64]=b'000 not visiable/no docking/no lid bit[69:67]=b'000 top bit[71:70]=b'01 Center  bit[73:72]=b'00 Left
             //           bit[77:74]=2 Square bit[78]=0 bit[86:79]=0 bit[94:87]='2 no group info' bit[95]=0 not a bay
-            //0x40, 0x08, 0x00, 0x01,   // AMI_OVERRIDE - EIP245223 USB port2 HighSpeed safety removable icon
-            0x41, 0x08, 0x00, 0x01,
+            0x40, 0x08, 0x00, 0x01,
             //127:96 -bit[96]=0 not Ejectable bit[97]=0 no OSPM Ejection required Bit[105:98]=0 no Cabinet Number
             //            bit[113:106]=0 no Card cage Number bit[114]=0 no reference shape Bit[118:115]=0 no rotation Bit[123:119]=0 no order
             0x00, 0x00, 0x00, 0x00,

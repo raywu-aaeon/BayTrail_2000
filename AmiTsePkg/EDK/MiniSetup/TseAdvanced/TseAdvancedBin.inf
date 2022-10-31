@@ -11,8 +11,6 @@ LIBRARY_CLASS = TseAdvancedBin
 BIN | TseAdvanced.lib
 [binaries.X64]
 BIN | TseAdvancedx64.lib
-[binaries.AARCH64]
-BIN | TseAdvancedAarch64.lib
 
 [Sources]
 

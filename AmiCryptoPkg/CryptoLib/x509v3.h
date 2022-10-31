@@ -1,9 +1,15 @@
 /*
  * X.509v3 certificate parsing and processing
- * Copyright (c) 2006-2011, Jouni Malinen <j@w1.fi>
+ * Copyright (c) 2006, Jouni Malinen <j@w1.fi>
  *
- * This software may be distributed under the terms of the BSD license.
- * See README for more details.
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
+ * published by the Free Software Foundation.
+ *
+ * Alternatively, this software may be distributed under the terms of BSD
+ * license.
+ *
+ * See README and COPYING for more details.
  */
 
 #ifndef X509V3_H
@@ -27,7 +33,6 @@ struct x509_name {
 
 struct x509_certificate {
 	struct x509_certificate *next;
-	struct x509_certificate *chain; // NEW: will be filled after signer cert chain validate is executed
 	enum { X509_CERT_V1 = 0, X509_CERT_V2 = 1, X509_CERT_V3 = 2 } version;
 	unsigned long serial_number;
 	struct x509_algorithm_identifier signature;

@@ -15,6 +15,7 @@
 [Packages]
     MdePkg/MdePkg.dec
     MdeModulePkg/MdeModulePkg.dec
+    IntelFrameworkPkg/IntelFrameworkPkg.dec
     AmiCompatibilityPkg/AmiCompatibilityPkg.dec 
     AmiModulePkg/AmiModulePkg.dec
 
@@ -22,7 +23,6 @@
     AmiDxeLib
     UefiDriverEntryPoint
     SmmServicesTableLib
-    AmiBufferValidationLib
 
 [Depex]
     gEfiSmmBase2ProtocolGuid AND

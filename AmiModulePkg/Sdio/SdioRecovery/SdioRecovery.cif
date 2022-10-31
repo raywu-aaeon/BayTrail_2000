@@ -1,0 +1,11 @@
+<component>
+	name = "SdioRecovery"
+	category = ModulePart
+	LocalRoot = "AmiModulePkg\Sdio\SdioRecovery\"
+	RefName = "SdioRecovery"
+[INF]
+"SdioRecovery.inf"
+[files]
+"SdioRecovery.sdl"	
+"SdioRecovery.mak"		
+<endComponent>

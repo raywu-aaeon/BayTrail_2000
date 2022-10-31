@@ -1,21 +1,35 @@
-//**********************************************************************
-//**********************************************************************
-//**                                                                  **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
-//**                                                                  **
-//**                       All Rights Reserved.                       **
-//**                                                                  **
-//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093        **
-//**                                                                  **
-//**                       Phone: (770)-246-8600                      **
-//**                                                                  **
-//**********************************************************************
-//**********************************************************************
+//****************************************************************************
+//****************************************************************************
+//**                                                                        **
+//**             (C)Copyright 1985-2008, American Megatrends, Inc.          **
+//**                                                                        **
+//**                          All Rights Reserved.                          **
+//**                                                                        **
+//**                 5555 Oakbrook Pkwy, Norcross, GA 30093                 **
+//**                                                                        **
+//**                          Phone (770)-246-8600                          **
+//**                                                                        **
+//****************************************************************************
+//****************************************************************************
 
-/** @file Tree.c
-    USB tree manipulation routines
+//****************************************************************************
+// $Header: /Alaska/SOURCE/Modules/USB/ALASKA/tree.c 10    12/16/08 10:51a Olegi $
+//
+// $Revision: 10 $
+//
+// $Date: 12/16/08 10:51a $
+//
+//****************************************************************************
 
-**/
+//<AMI_FHDR_START>
+//-----------------------------------------------------------------------------
+//
+//  Name:           TREE.C
+//
+//  Description:    USB tree manipulation routines
+//
+//-----------------------------------------------------------------------------
+//<AMI_FHDR_END>
 
 
 #include <Efi.h>
@@ -25,17 +39,22 @@
 
 #include "Tree.h"
 
-/**
-    initializes TREENODE_T structure
-
-    @param 
-        n - pointer to TREENODE_T structure
-        d - pointer to data structure specific to
-        the type of tree node
-
-    @retval Pointer to TREENODE_T structure that was passed in as parrameter
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        TreeCreate
+//
+// Description: initializes TREENODE_T structure
+//
+// Input:
+//          n - pointer to TREENODE_T structure
+//          d - pointer to data structure specific to
+//              the type of tree node
+//
+// Output:  Pointer to TREENODE_T structure that was passed in as parrameter
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 TREENODE_T* TreeCreate( TREENODE_T* n, VOID* d )
 {
@@ -48,14 +67,19 @@ TREENODE_T* TreeCreate( TREENODE_T* n, VOID* d )
 }
 
 
-/**
-    add a child node to the TREENODE_T structure
-
-    @param 
-        p - pointer to parent TREENODE_T structure
-        c - pointer to child TREENODE_T structure
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        TreeAddChild
+//
+// Description: add a child node to the TREENODE_T structure
+//
+// Input:
+//          p - pointer to parent TREENODE_T structure
+//          c - pointer to child TREENODE_T structure
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 VOID TreeAddChild( TREENODE_T* p, TREENODE_T* c )
 {
@@ -70,12 +94,17 @@ VOID TreeAddChild( TREENODE_T* p, TREENODE_T* c )
 }
 
 
-/**
-    removes a node from the tree
-
-    @param 
-        n - pointer to TREENODE_T structure
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        TreeRemove
+//
+// Description: removes a node from the tree
+//
+// Input:
+//          n - pointer to TREENODE_T structure
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 VOID TreeRemove( TREENODE_T* n )
 {
@@ -93,20 +122,25 @@ VOID TreeRemove( TREENODE_T* n )
 }
 
 
-/**
-    Enumerates nodes of the tree which are direct children of
-    the same parent
-
-    @param 
-        n   - pointer to TREENODE_T structure
-        pr  - predicate function that is called for each node
-        and controll whether enumeration should continue
-        once predicate returns TRUE the enumeration will
-        data - pointer that is passed to predicate to maintain
-        the context of the enumeration
-
-    @retval the node that cause enumeration to stop
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        TreeSearchSibling
+//
+// Description: Enumerates nodes of the tree which are direct children of
+//              the same parent
+//
+// Input:
+//          n   - pointer to TREENODE_T structure
+//          pr  - predicate function that is called for each node
+//                and controll whether enumeration should continue
+//                once predicate returns TRUE the enumeration will
+//          data - pointer that is passed to predicate to maintain
+//                the context of the enumeration
+//
+//  Output: the node that cause enumeration to stop
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 TREENODE_T* TreeSearchSibling( TREENODE_T* n, TREE_PREDICATE1_T pr, VOID* data )
 {
@@ -119,20 +153,25 @@ TREENODE_T* TreeSearchSibling( TREENODE_T* n, TREE_PREDICATE1_T pr, VOID* data )
 }
 
 
-/**
-    Enumerates nodes of the tree which are direct and indirect
-    children of the same parent
-
-    @param 
-        n   - pointer to TREENODE_T structure
-        pr  - predicate function that is called for each node;
-        controlls whether enumeration should continue
-        once predicate returns TRUE the enumeration will
-        data - pointer that is passed to predicate to maintain
-        the context of the enumeration
-
-    @retval the node that cause enumeration to stop
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        TreeSearchDeep
+//
+// Description: Enumerates nodes of the tree which are direct and indirect
+//              children of the same parent
+//
+// Input:
+//          n   - pointer to TREENODE_T structure
+//          pr  - predicate function that is called for each node;
+//                controlls whether enumeration should continue
+//                once predicate returns TRUE the enumeration will
+//          data - pointer that is passed to predicate to maintain
+//                the context of the enumeration
+//
+//  Output: the node that cause enumeration to stop
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 TREENODE_T* TreeSearchDeep( TREENODE_T* n, TREE_PREDICATE1_T pr, VOID* data )
 {
@@ -152,18 +191,23 @@ TREENODE_T* TreeSearchDeep( TREENODE_T* n, TREE_PREDICATE1_T pr, VOID* data )
 }
 
 
-/**
-    Enumerates nodes of the tree which are direct children of
-    the same parent; In contrust to TreeSearchSibling this
-    function ignores the result returned from call-back routine
-    and always enumerates all sibling nodes
-
-    @param 
-        n - pointer to TREENODE_T structure
-        pr  - call-back function that is called for each node
-        data - pointer that is passed to call-back to maintain
-        the context of the enumeration
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        TreeForEachSibling
+//
+// Description: Enumerates nodes of the tree which are direct children of
+//              the same parent; In contrust to TreeSearchSibling this
+//              function ignores the result returned from call-back routine
+//              and always enumerates all sibling nodes
+//
+// Input:
+//          n - pointer to TREENODE_T structure
+//          pr  - call-back function that is called for each node
+//          data - pointer that is passed to call-back to maintain
+//                the context of the enumeration
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 VOID TreeForEachSibling( TREENODE_T* n, TREE_CALLBACK_T pr, VOID* data )
 {
@@ -172,13 +216,18 @@ VOID TreeForEachSibling( TREENODE_T* n, TREE_CALLBACK_T pr, VOID* data )
 }
 
 
-/**
-    retrieves data stored at the tail of the queue and
-    removes the tail item
-
-    @param 
-        q - pointer to QUEUE_T structure
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        QueueGet
+//
+// Description: retrieves data stored at the tail of the queue and
+//              removes the tail item
+//
+// Input:
+//          q - pointer to QUEUE_T structure
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 VOID* QueueGet( QUEUE_T* q)
 {
@@ -190,12 +239,17 @@ VOID* QueueGet( QUEUE_T* q)
 }
 
 
-/**
-    retrieves number of items stored in the queue
-
-    @param 
-        q - pointer to QUEUE_T structure
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        QueueSize
+//
+// Description: retrieves number of items stored in the queue
+//
+// Input:
+//          q - pointer to QUEUE_T structure
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 int QueueSize(QUEUE_T* q)
 {
@@ -204,12 +258,17 @@ int QueueSize(QUEUE_T* q)
 }
 
 
-/**
-    add a new item in front of the head of the queue
-
-    @param 
-        q - pointer to QUEUE_T structure
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        QueuePut
+//
+// Description: add a new item in front of the head of the queue
+//
+// Input:
+//          q - pointer to QUEUE_T structure
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 VOID QueuePut( QUEUE_T* q, VOID * d)
 {
@@ -224,13 +283,18 @@ VOID QueuePut( QUEUE_T* q, VOID * d)
 }
 
 
-/**
-    add a variable size item to the queue
-
-    @param 
-        q - pointer to QUEUE_T structure
-        sz - number of dwords to add to the queue
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        QueuePutMsg
+//
+// Description: add a variable size item to the queue
+//
+// Input:
+//          q - pointer to QUEUE_T structure
+//          sz - number of dwords to add to the queue
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 VOID QueuePutMsg( QUEUE_T* q, VOID * d, int sz )
 {
@@ -249,13 +313,18 @@ VOID QueuePutMsg( QUEUE_T* q, VOID * d, int sz )
 }
 
 
-/**
-    retrieves a variable size item from the queue
-
-    @param 
-        q - pointer to QUEUE_T structure
-        sz - number of dwords to remove from the queue
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        QueueRemoveMsg
+//
+// Description: retrieves a variable size item from the queue
+//
+// Input:
+//          q - pointer to QUEUE_T structure
+//          sz - number of dwords to remove from the queue
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 VOID* QueueRemoveMsg( QUEUE_T* q, int sz)
 {
@@ -272,16 +341,16 @@ VOID* QueueRemoveMsg( QUEUE_T* q, int sz)
     return d;
 }
 
-//**********************************************************************
-//**********************************************************************
-//**                                                                  **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
-//**                                                                  **
-//**                       All Rights Reserved.                       **
-//**                                                                  **
-//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093        **
-//**                                                                  **
-//**                       Phone: (770)-246-8600                      **
-//**                                                                  **
-//**********************************************************************
-//**********************************************************************
+//****************************************************************************
+//****************************************************************************
+//**                                                                        **
+//**             (C)Copyright 1985-2008, American Megatrends, Inc.          **
+//**                                                                        **
+//**                          All Rights Reserved.                          **
+//**                                                                        **
+//**                 5555 Oakbrook Pkwy, Norcross, GA 30093                 **
+//**                                                                        **
+//**                          Phone (770)-246-8600                          **
+//**                                                                        **
+//****************************************************************************
+//****************************************************************************

@@ -10,7 +10,6 @@
 "Library\SbCspLib.h"	
 "Library\SmBusCommon.h"
 "Library\SbPolicy.h"	
-"Library\SbHdaVerbTableLib.h" ##EIP176554
 [parts]
 "AmiChipsetModulePkg.SbPpi"
 "AmiChipsetModulePkg.SbProtocols"

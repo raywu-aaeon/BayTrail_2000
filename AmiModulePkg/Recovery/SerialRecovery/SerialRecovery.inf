@@ -1,7 +1,7 @@
 #**********************************************************************
 #**********************************************************************
 #**                                                                  **
-#**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+#**        (C)Copyright 1985-2011, American Megatrends, Inc.         **
 #**                                                                  **
 #**                       All Rights Reserved.                       **
 #**                                                                  **
@@ -12,7 +12,7 @@
 #**********************************************************************
 #**********************************************************************
 
-## @file SerialRecovery.inf
+## @file
 #   This driver installs RecoveryModulePpi
 ##
 
@@ -44,7 +44,6 @@
 [LibraryClasses]
   PeimEntryPoint
   AmiPeiLib
-  SerialPortLib
   
 [Pcd]
   gAmiModulePkgTokenSpaceGuid.PcdRecoveryImageSize
@@ -59,18 +58,4 @@
   gSerialCapsuleGuid
   
 [Depex]
-  gEfiPeiBootInRecoveryModePpiGuid AND gEfiPeiMemoryDiscoveredPpiGuid AND gEfiPeiDecompressPpiGuid
-  
-#**********************************************************************
-#**********************************************************************
-#**                                                                  **
-#**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
-#**                                                                  **
-#**                       All Rights Reserved.                       **
-#**                                                                  **
-#**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093        **
-#**                                                                  **
-#**                       Phone: (770)-246-8600                      **
-#**                                                                  **
-#**********************************************************************
-#**********************************************************************
+  gEfiPeiMemoryDiscoveredPpiGuid AND gEfiPeiBootInRecoveryModePpiGuid

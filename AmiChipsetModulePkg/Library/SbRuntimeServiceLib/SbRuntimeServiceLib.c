@@ -42,7 +42,6 @@
 #include <Library/AmiChipsetRuntimeServiceLib.h>
 #include <Library/ElinkLib.h>
 #include <PchAccess.h>
-#include <SbElinks.h> //EIP188072 
 
 // Produced Protocols
 #include <Protocol/Reset.h>
@@ -69,18 +68,8 @@ UINT8       DaysInMonth[] = {30, 27, 30, 29, 30,\
 
 
 // Function Prototypes
-//EIP188072 >>
-typedef VOID (SB_RESET_CALLBACK) (
-    IN EFI_RESET_TYPE           ResetType,
-    IN EFI_STATUS               ResetStatus,
-    IN UINTN                    DataSize,
-    IN VOID                     *ResetData OPTIONAL
-);
 
 // Function Definitions
-extern SB_RESET_CALLBACK SB_RESET_CALLBACK_LIST EndOfList;
-SB_RESET_CALLBACK* SbResetCallbackList[] = { SB_RESET_CALLBACK_LIST NULL };
-//EIP188072 <<
 
 //----------------------------------------------------------------------------
 //   USUALLY NO PORTING REQUIRED FOR THE FOLLOWING ROUTINES
@@ -115,12 +104,25 @@ AmiChipsetResetSystem (
     IN CHAR16           *ResetData OPTIONAL
     )
 {
-//EIP188072 >>
+    UINT32                  ElinkPtr;
+    AMI_HOOK_LINK           *AmiHookLink;
     UINT32                  Index;
-    for (Index = 0; SbResetCallbackList[Index] != NULL; Index++) {
-      SbResetCallbackList[Index](ResetType, ResetStatus, DataSize, ResetData);
+    SB_RUN_RESET_CALLBACK   *Elink;
+
+    ElinkPtr = ElinkGet (PcdToken(PcdSbResetElink));
+
+    if (ElinkPtr != 0) {
+      AmiHookLink = (AMI_HOOK_LINK *) ElinkPtr;
+
+      for (Index = 0; Index < ELINK_ARRAY_NUM; Index++) {
+        if (AmiHookLink->ElinkArray[Index] == NULL) {
+          break;
+        }
+        Elink = AmiHookLink->ElinkArray[Index];
+        Elink(ResetType);
+      }
     }
-//EIP188072 <<
+
     // do a cold reset of the system
     SBLib_ResetSystem (ResetType);
 
@@ -381,26 +383,6 @@ UINT8 GetDayOfTheWeek (
     return (UINT8)d;
 }
 
-// [ EIP265304 ]
-BOOLEAN IsLeapYear (    
-    IN EFI_TIME     *Time )
-{
-    if (Time->Year % 4 == 0) {
-        if (Time->Year % 100 == 0) {
-            if (Time->Year % 400 == 0) {
-                return TRUE;
-            } else {
-                return FALSE;
-            }
-        } else {
-            return TRUE;
-        }
-    } else {
-        return FALSE;
-    }
-}
-
-
 //<AMI_PHDR_START>
 //----------------------------------------------------------------------------
 //
@@ -429,11 +411,9 @@ BOOLEAN VerifyTime(
     UINT8 Month = Time->Month - 1;
     UINT8 Day   = Time->Day - 1;
 
-    if (Time->Year < EARLIEST_YEAR || Time->Year > 9999) return FALSE;
+    if (Time->Year < EARLIEST_YEAR || Time->Year > 2099) return FALSE;
     if (Month > 11) return FALSE;             //0 based month
-// [ EIP265304 ]
-//    if (Month != 1 || (Time->Year & 3)) { //not leap year or not February.
-    if ((Month != 1) || (!IsLeapYear(Time))) { // Not leap year or not February.
+    if (Month != 1 || (Time->Year & 3)) { //not leap year or not February.
         if (Day > DaysInMonth[Month]) return FALSE; //All values already adjusted for 0 based.
     } else {
         if (Day > 28) return FALSE; //February
@@ -719,10 +699,6 @@ EFI_STATUS AmiChipsetGetWakeupTime (
 #if ACPI_ALARM_MONTH_CMOS
     RTC_MONTH_ALARM_REG     RegMonthAlarm;
 #endif
-    //CSP20140703_26 >>
-    EFI_TIME                RtcTime;    
-    UINTN                   DataSize;
-    //CSP20140703_26 <<
 
     if (!Enabled || !Pending || !Time) return EFI_INVALID_PARAMETER;
 
@@ -770,31 +746,6 @@ EFI_STATUS AmiChipsetGetWakeupTime (
     *Enabled = (RegB.AlarmInt == 1) ? TRUE : FALSE;
     *Pending = (RegC.AlarmFlag == 1) ? TRUE : FALSE;
 
-    //CSP20140703_26 >>
-    //
-    // Get the alarm info from variable
-    //    
-    DataSize = sizeof (EFI_TIME);
-    Status = pRS->GetVariable (
-                   L"RTCALARM",
-                   &gEfiTimeVariableGuid,
-                   NULL,
-                   &DataSize,
-                   &RtcTime
-                   );
-    if (!EFI_ERROR (Status)) {
-#if (ACPI_ALARM_DAY_CMOS == 0)
-      Time->Day = RtcTime.Day;
-#endif
-#if (ACPI_ALARM_MONTH_CMOS == 0)
-      Time->Month = RtcTime.Month;
-#endif      
-      Time->Year     = RtcTime.Year;
-      Time->TimeZone = RtcTime.TimeZone;
-      Time->Daylight = RtcTime.Daylight;
-    }
-    //CSP20140703_26 <<
-    
     return EFI_SUCCESS;
 }
 
@@ -841,7 +792,6 @@ EFI_STATUS AmiChipsetSetWakeupTime (
 #if ACPI_ALARM_MONTH_CMOS
     RTC_MONTH_ALARM_REG     RegMonthAlarm;
 #endif
-    EFI_TIME                RtcTime = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}; //CSP20140703_26
 //EIP164769 >>
 #if DAY_0_WORKAROUND
     UINT8                   Day; 
@@ -895,30 +845,6 @@ EFI_STATUS AmiChipsetSetWakeupTime (
     WriteRtcIndex(RTC_REG_B_INDEX, RegB.REG_B);
 
     SetUpdate(TRUE);
-    
-	//CSP20140703_26 >>
-    //
-    // Set the Y/M/D info to variable as it has no corresponding HW registers.
-    //
-    if (Enable) {
-#if (ACPI_ALARM_DAY_CMOS == 0)
-      RtcTime.Day = Time->Day;
-#endif
-#if (ACPI_ALARM_MONTH_CMOS == 0)
-      RtcTime.Month = Time->Month;
-#endif      
-      RtcTime.Year     = Time->Year;
-      RtcTime.TimeZone = Time->TimeZone;
-      RtcTime.Daylight = Time->Daylight;      
-    }
-    Status =  pRS->SetVariable (
-                     L"RTCALARM",
-                     &gEfiTimeVariableGuid,
-                     EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS | EFI_VARIABLE_NON_VOLATILE,
-                     sizeof (RtcTime),
-                     &RtcTime
-                     );
-	//CSP20140703_26 <<
 
     return EFI_SUCCESS;
 }

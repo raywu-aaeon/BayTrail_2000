@@ -581,16 +581,6 @@ TOKEN
 End
 #EIP162773 <<
 
-#EIP174562 >>
-TOKEN
-	Name  = "TRTI"
-	Value  = "TRTI"
-	Help  = "The package name OEM would like to return in _TRT."
-	TokenType = Expression
-	TargetH = Yes
-End
-#EIP174562 <<
-
 TOKEN
     Name  = " "
     TokenType = Integer
@@ -600,38 +590,6 @@ PATH
 	Name  = "VlvRefCodePkg_DIR"
 End
 
-#EIP180243 >>
-ELINK
-	Name  = "DSDT_ASL_W7_INCLUDE_FILE"
-	InvokeOrder = ReplaceParent
-End
-
-ELINK
-	Name  = "TokenAsl.h"
-	Parent  = "DSDT_ASL_W7_INCLUDE_FILE"
-	InvokeOrder = AfterParent
-End
-
-ELINK
-	Name  = "DSDT.ASL"
-	Parent  = "DSDT_ASL_W7_INCLUDE_FILE"
-	InvokeOrder = AfterParent
-End
-#EIP180243 <<
-
-#EIP174562 >>
-ELINK
-	Name  = "OEM_DPTF_ASL_INCLUDE_FILE"
-	InvokeOrder = ReplaceParent
-End
-
-ELINK
-	Name  = "Vlv2DeviceRefCodePkg/Wrapper/AcpiAslWrap/Dummy.asl"
-	Parent  = "OEM_DPTF_ASL_INCLUDE_FILE"
-	Help  = "This is used to avoid the build error while the child elink of OEM_DPTF_ASL_INCLUDE_FILE is empty."
-	InvokeOrder = AfterParent
-End
-#EIP174562 <<
 
 #EIP136267 >>
 ELINK
@@ -655,25 +613,6 @@ End
 
 #EIP136267 <<
 #P20130627_3 <<
-
-#EIP174562 >>
-OUTPUTREGISTER
-	Name  = "OemDptfAslIncludeList"
-	Path  = "Build"
-	File  = "OemDptfAsl.asl"
-	Template  = "AcpiAslWrap/OemDptfAsl.txt"
-End
-#EIP174562 <<
-
-#EIP180243 >>
-OUTPUTREGISTER
-	Name  = "DsdtAslW7IncludeList"
-	Path  = "Build"
-	File  = "DsdtAslW7Tmp.asl"
-	Template  = "AcpiAslWrap/DsdtAslW7.txt"
-End
-#EIP180243 <<
-
 INFComponent
 	Name  = "NcPolicyInitPei"
 	File  = "Library/NcPolicyInit/Pei/NcPolicyInitPei.inf"
@@ -1249,28 +1188,4 @@ End
 #    Class  = "DfuLib"
 #    Instance  = "Vlv2DeviceRefCodePkg.DfuLib"
 #End
-#EIP205408 >>
-TOKEN
-	Name  = "DEFAULT_REFRESH_2X_POLICY"
-	Value  = "0"
-	Help  = "Control memory refresh rate."
-	TokenType = Integer
-	TargetH = Yes
-End
-#EIP205408 <<
-#EIP209971 >>
-TOKEN
-	Name  = "DTMI"
-	Value  = "0xB7"
-	TokenType = Integer
-	TargetH = Yes
-	TargetASL = Yes
-End
-#EIP209971 <<
 
-INFComponent    # EIP314798
-    Name  = "WrapperAcpi"
-    File  = "WrapperAcpi/Dxe/WrapperAcpi.inf"
-    Package  = "Vlv2DeviceRefCodePkg"
-    ModuleTypes  = "DXE_DRIVER"
-End

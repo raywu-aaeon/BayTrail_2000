@@ -48,7 +48,7 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 #include <Library/DevicePathLib.h>
 #include <Library/PrintLib.h>
 
-#include <NetworkStackSetup.h>        // AMI PORTING.
+#include <Protocol/NetworkStackSetup.h>        // AMI PORTING.
 
 #include "ComponentName.h"
 

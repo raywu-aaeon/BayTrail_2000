@@ -79,25 +79,9 @@ TOKEN
 End
 
 TOKEN
-    Name  = "CHECK_FOR_LOOPBACK_DEVICE"
-    Value  = "0"
-    Help  = "0- hardware Loop back checking disabled 1- Hardware loopback checking enabled and if present redirection skipped for the port"
-    TokenType = Boolean
-    TargetH = Yes
-End
-
-TOKEN
     Name  = "CLEAR_LEGACYSREDIR_KB_BUFFER_AT_READYTOBOOT"
     Value  = "0"
     Help  = "ON   -> Legacy Serial Redirection KB Buffer will be cleared at ReadyToBoot.\OFF  -> Legacy Serial Redirection KB Buffer will not be cleared at ReadyToBoot."
-    TokenType = Boolean
-    TargetH = Yes
-End
-
-TOKEN
-    Name  = "UART_POLLING_REDIRECTION"
-    Value  = "0"
-    Help  = "Use polling method redirection to send and receive data from COM Port"
     TokenType = Boolean
     TargetH = Yes
 End

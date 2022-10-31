@@ -1,7 +1,7 @@
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2013, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **
@@ -12,25 +12,22 @@
 //**********************************************************************
 //**********************************************************************
 //**********************************************************************
-/** @file
- * CryptoPei.c
- */
 #include <Token.h>
 #include <AmiPeiLib.h>
-#include "Ppi/LoadFile.h"
+#include "PPI/LoadFile.h"
 #include <Protocol/Hash.h>
 #include <PPI/CryptoPPI.h>
 #include "AmiCertificate.h"
-#include <Protocol/AmiDigitalSignature.h> // EFI_CERT_X509_SHAXXX
+
+#include <cryptlib.h>
 
 //
 // Global variables
 //
+
 // Although ShaXXXGuid global variables are defined in EDK's EdkProtocol Lib, but linking it adds additional 20k in debug mode.
-//static EFI_GUID gEfiHashAlgorithmSha1Guid   = EFI_HASH_ALGORITHM_SHA1_GUID;
-//static EFI_GUID gEfiHashAlgorithmSha256Guid = EFI_HASH_ALGORITHM_SHA256_GUID;
-//static EFI_GUID gEfiHashAlgorithmSha384Guid = EFI_HASH_ALGORITHM_SHA384_GUID;
-//static EFI_GUID gEfiHashAlgorithmSha512Guid = EFI_HASH_ALGORITHM_SHA512_GUID;
+static EFI_GUID gEfiHashAlgorithmSha1Guid   = EFI_HASH_ALGORITHM_SHA1_GUID;
+static EFI_GUID gEfiHashAlgorithmSha256Guid = EFI_HASH_ALGORITHM_SHA256_GUID;
 static EFI_GUID gPKeyGuid                   = PR_KEY_GUID;
 
 // Hardwired at Build time. Supported formats: RSA2048, HASH256 Key Certs
@@ -39,25 +36,25 @@ static EFI_GUID gPKeyFileSha256Guid = PR_KEY_FFS_FILE_SHA256_GUID;
 static EFI_GUID gPKeyFileX509Guid = PR_KEY_FFS_FILE_X509_GUID;
 
 static EFI_GUID *gKeyFileGuid [] = {
-    &gPKeyFileSha256Guid,
     &gPKeyFileX509Guid,
     &gPKeyFileRsa2048Guid,
+    &gPKeyFileSha256Guid,
     NULL
 };
 static EFI_GUID *gKeyTypeGuid [] = {
-    &gEfiCertSha256Guid,
     &gEfiCertX509Guid,
     &gEfiCertRsa2048Guid,
+    &gEfiCertSha256Guid,
     NULL
 };
 
-CONST EFI_PEI_SERVICES  **ppPS;
+EFI_PEI_SERVICES  **ppPS;
 FW_KEY_HOB         *pFwKeyHob = NULL;
 //
 // SDL defined Public Exponent E of RSA Key.
 //
 const UINT8  KeyE[] = {E_CONST}; // 0x10001
-const UINTN  LenE = sizeof(KeyE);
+const UINT32 LenE = sizeof(KeyE);
 //    PKCS_1 PSS Signature constant. Size of the Salt (random data) field in PSS signature.
 const INT32  saltlen = PSS_SIG_SALTLEN; // 8 
 static UINT8 DecriptedSig[DEFAULT_RSA_SIG_LEN];
@@ -65,7 +62,7 @@ static UINT8 DecriptedSig[DEFAULT_RSA_SIG_LEN];
 // Crypto Function prototypes
 //----------------------------------------------------------------------------
 EFI_STATUS
-EFIAPI
+//EFIAPI
 PeiHash (
   IN CONST AMI_CRYPT_DIGITAL_SIGNATURE_PPI      *This,
   IN CONST EFI_GUID               *HashAlgorithm,
@@ -76,7 +73,6 @@ PeiHash (
   );
 
 EFI_STATUS
-EFIAPI
 PeiPkcs7Verify (
   IN CONST AMI_CRYPT_DIGITAL_SIGNATURE_PPI *This,
   IN CONST UINT8 *P7Data,
@@ -88,7 +84,6 @@ PeiPkcs7Verify (
   );
   
 EFI_STATUS
-EFIAPI
 PeiVerifySig 
 (
   IN CONST AMI_CRYPT_DIGITAL_SIGNATURE_PPI *This,
@@ -100,7 +95,6 @@ PeiVerifySig
 );
 
 EFI_STATUS
-EFIAPI
 PeiGetKey 
 (
   IN CONST AMI_CRYPT_DIGITAL_SIGNATURE_PPI *This,
@@ -109,7 +103,6 @@ PeiGetKey
   );
   
 EFI_STATUS
-EFIAPI
 PeiVerifyKey 
 (
   IN CONST AMI_CRYPT_DIGITAL_SIGNATURE_PPI *This,
@@ -120,6 +113,8 @@ PeiVerifyKey
 //----------------------------------------------------------------------------
 // Crypto Protocol Identifiers
 //----------------------------------------------------------------------------
+static EFI_GUID gAmiDigitalSignaturePPIGuid = AMI_DIGITAL_SIGNATURE_PPI_GUID;
+
 AMI_CRYPT_DIGITAL_SIGNATURE_PPI  mSigPeiInitPpi = {
   PeiHash,
   PeiVerifyKey,
@@ -135,14 +130,21 @@ EFI_PEI_PPI_DESCRIPTOR mPpiSigListVariable = {
   &mSigPeiInitPpi
 };
 
-/**
-  Loads binary from RAW section of X firmware volume
-
-  @param[out] Buffer - returns a pointer to allocated memory. Caller must free it when done
-  @param[out] Size  - returns the size of the binary loaded into the buffer.
-  
-  @retval     Status
-**/
+//**********************************************************************
+//<AMI_PHDR_START>
+//
+// Procedure:  CryptoGetRawImage
+//
+// Description:    Loads binary from RAW section of X firwmare volume
+//
+//
+// Output:          Buffer - returns a pointer to allocated memory. Caller
+//                          must free it when done.
+//                  Size  - returns the size of the binary loaded into the
+//                          buffer.
+//
+//<AMI_PHDR_END>
+//**********************************************************************
 EFI_STATUS
 CryptoGetRawImage (IN EFI_GUID *FileGuid, IN OUT VOID **Buffer, IN OUT UINTN *Size)
 {
@@ -151,40 +153,27 @@ CryptoGetRawImage (IN EFI_GUID *FileGuid, IN OUT VOID **Buffer, IN OUT UINTN *Si
   UINTN                         FvNum=0;
   EFI_FFS_FILE_HEADER           *ppFile=NULL;
 //  EFI_FV_FILE_INFO            FileInfo;  
-  static EFI_GUID               pFV_BB_Guid = FWKEY_FV_HEADER_GUID;
-  BOOLEAN    bFound = FALSE;
 
   if (!Buffer || !Size) 
     return EFI_INVALID_PARAMETER;
 
+  Status = (*ppPS)->FfsFindNextVolume (ppPS, FvNum, &pFV);
+  
   while(TRUE)
-  {
-      Status = (*ppPS)->FfsFindNextVolume (ppPS, FvNum++, &pFV);
-      if(EFI_ERROR(Status)) return Status;
-//      PEI_TRACE(((UINTN)TRACE_ALWAYS, ppPS, "FvNum %d : %g\n", FvNum-1, (EFI_GUID*)((UINTN)pFV+pFV->ExtHeaderOffset)));
-      //
-      // FwKey location is in FV_BB only
-      //
-      if(guidcmp((EFI_GUID*)((UINTN)pFV+pFV->ExtHeaderOffset), &pFV_BB_Guid) != 0)
-        continue;
-
-      ppFile = NULL;
-
-      while(TRUE)
-      {
-          Status = (*ppPS)->FfsFindNextFile(ppPS, EFI_FV_FILETYPE_ALL, pFV, &ppFile);
-          if(Status == EFI_NOT_FOUND)
-          {
-              break;
-          }
-          if(guidcmp(&ppFile->Name, FileGuid)==0) 
-          {
-              bFound = TRUE; 
-              break;
-          }
-      }
-      if(bFound) break;
-  }
+    {
+      Status = (*ppPS)->FfsFindNextFile(ppPS, EFI_FV_FILETYPE_ALL, pFV, &ppFile);
+      if(Status == EFI_NOT_FOUND)
+       {
+//         FvNum++;
+//         Status = (*ppPS)->FfsFindNextVolume (ppPS, FvNum, &pFV);
+//         if(EFI_ERROR(Status)) return Status;
+//         continue;
+// !!! the PK Key may only be in FV_BB volume. FvNum=0!!!!
+           return Status;
+       }
+      
+      if(guidcmp(&ppFile->Name, FileGuid)==0)break;
+    }
     // hopefully we found the file...now try to read raw data
     // !!! Keys are uncompressed. There is no much reason to run compression on prime numbers anyway
   Status = (*ppPS)->FfsFindSectionData(ppPS, EFI_SECTION_RAW, ppFile, Buffer);
@@ -205,23 +194,29 @@ PEI_TRACE(((UINTN)TRACE_ALWAYS, ppPS, "Find Key Ffs %r addr=%X (%X,%X), size=%d\
 
 }
 
-/**
-  Allows creating a hash of an arbitrary message digest using one or more hash algorithms
-
-  @param[in] This           Pointer to the AMI_CRYPT_DIGITAL_SIGNATURE_PPI instance.
-  @param[in]  HashAlgorithm Points to the EFI_GUID which identifies the algorithm to use.
-  @param[in]  num_elem      Number of blocks to be passed via next argument:addr[]
-  @param[in]  addr[]        Pointer to array of UINT8* addresses of data blocks to be hashed
-  @param[in]  len           Pointer to array of integers containing length of each block listed by addr[]
-  @param[in]  Hash          Holds the resulting hash computed from the message.
-  
-  @retval     Status
-        EFI_SUCCESS           Hash returned successfully.
-        EFI_INVALID_PARAMETER Message or Hash is NULL
-        EFI_UNSUPPORTED       The algorithm specified by HashAlgorithm is not supported by this driver.
-**/
+//**********************************************************************
+//<AMI_PHDR_START>
+//
+// Procedure:  PeiHash
+//
+// Description:    Allows creating a hash of an arbitrary message digest using one or more hash algorithms
+//
+// Input:
+//      This          Pointer to the AMI_CRYPT_DIGITAL_SIGNATURE_PPI instance.
+//      HashAlgorithm Points to the EFI_GUID which identifies the algorithm to use.
+//      num_elem      Number of blocks to be passed via next argument:addr[]
+//      addr[]        Pointer to array of UINT8* addresses of data blocks to be hashed
+//      len           Pointer to array of integers containing length of each block listed by addr[]
+//      Hash          Holds the resulting hash computed from the message.
+//
+// Output:    
+//      EFI_SUCCESS           Hash returned successfully.
+//      EFI_INVALID_PARAMETER Message or Hash is NULL
+//      EFI_UNSUPPORTED       The algorithm specified by HashAlgorithm is not supported by this
+//                            driver.
+//<AMI_PHDR_END>
+//**********************************************************************
 EFI_STATUS
-EFIAPI
 PeiHash (
   IN CONST AMI_CRYPT_DIGITAL_SIGNATURE_PPI      *This,
   IN CONST EFI_GUID               *HashAlgorithm,
@@ -231,69 +226,60 @@ PeiHash (
   OUT UINT8                       *Hash
   )
 {
-    HASH_ALG    HashAlgo=SHA256;
-    UINTN       HashLen=SHA256_DIGEST_SIZE;
+    BOOLEAN     bSha1 = FALSE, bSha256 = FALSE;
+    UINT32      HashLen=SHA256_DIGEST_SIZE;
 
-// Support SHA1, SHA256 hashes
-    if(!guidcmp((EFI_GUID*)HashAlgorithm, &gEfiHashAlgorithmSha1Guid)) 
+// Support only SHA1 & SHA256 hashes
+    if(!guidcmp((EFI_GUID*)HashAlgorithm, &gEfiHashAlgorithmSha1Guid))
     {
-        HashAlgo= SHA1;
+        bSha1 = TRUE;
         HashLen = SHA1_DIGEST_SIZE;
     }
-    else if(!guidcmp((EFI_GUID*)HashAlgorithm, &gEfiHashAlgorithmSha256Guid))
-         {
-             HashAlgo= SHA256;
-             HashLen = SHA256_DIGEST_SIZE;
-         }
-//        else if(!guidcmp((EFI_GUID*)HashAlgorithm, &gEfiHashAlgorithmSha384Guid))
-//             {
-//                 HashAlgo=SHA384;
-//                 HashLen = SHA384_DIGEST_SIZE;
-//             }
-//                else if(!guidcmp((EFI_GUID*)HashAlgorithm, &gEfiHashAlgorithmSha512Guid))
-//                     {
-//                         HashAlgo=SHA512;
-//                         HashLen = SHA512_DIGEST_SIZE;
-//                     }
-                    else
-                        return EFI_UNSUPPORTED;
+    else 
+        if(!guidcmp((EFI_GUID*)HashAlgorithm, &gEfiHashAlgorithmSha256Guid))
+        {
+            bSha256 = TRUE;
+            HashLen = SHA256_DIGEST_SIZE;
+        }
+         else
+            return EFI_UNSUPPORTED;
 
     MemSet(Hash, HashLen, 0);
-    if(HashAlgo==SHA1)
-        sha1_vector(num_elem, (const UINT8 **)addr, (const size_t *)len, Hash);
-    else if(HashAlgo==SHA256)
-            sha256_vector(num_elem, (const UINT8 **)addr, (const size_t *)len, Hash);
-//        else if(HashAlgo==SHA384)
-//                sha384_vector(num_elem, (const UINT8 **)addr, (const size_t *)len, Hash);
-//            else if(HashAlgo==SHA512)
-//                    sha512_vector(num_elem, (const UINT8 **)addr, (const size_t *)len, Hash);
+    if(bSha1)
+        sha1_vector(num_elem, addr, len, Hash);
+    else
+        sha256_vector(num_elem, addr, len, Hash);
+
 
     return  EFI_SUCCESS;
 }
 
-/**
-   Function verifies that the specified signature matches the specified hash. 
-                 Verifies the RSA-SSA signature with EMSA-PKCS1-v1_5 encoding scheme defined in
-                 RSA PKCS#1.
-                 This function decrypts the signature with the provided key and then compares 
-                 the decrypted value to the specified hash value
-
-  @param[in]  This          Pointer to the AMI_CRYPT_DIGITAL_SIGNATURE_PPI instance.
-  @param[in]  PublicKey     Handle to a key used for verifying signatures. This handle must be identifying a public key.
-  @param[in]  Hash          Handle of the hash object to verify.
-  @param[in]  Signature     Pointer to the signature data to be verified.
-  @param[in]  SignatureSize The size, in bytes, of the signature data.
-  @param[in]  Flags        Specifies additional flags to further customize the signing/verifying behavior.
-
-  @retval     Status
-    EFI_SUCCESS               The signature is successfully verified.
-    EFI_SECURITY_VIOLATION    The signature does not match the given message.
-    EFI_ACCESS_DENIED         The key could not be used in signature operation.
-    EFI_INVALID_PARAMETER     The size of input message or signature does not meet the criteria 
-                              of the underlying signature algorithm.
-**/
+//**********************************************************************
+//<AMI_PHDR_START>
+//
+// Procedure:  PeiVerifySig
+//
+// Description:    Function verifies that the specified signature matches the specified hash. 
+//    This function decrypts the signature with the provided key and then compares 
+//    the decrypted value to the specified hash value
+//
+//  Input:
+//    This          Pointer to the AMI_CRYPT_DIGITAL_SIGNATURE_PPI instance.
+//    PublicKey     Handle to a key used for verifying signatures. This handle must be identifying a public key.
+//    Hash          Handle of the hash object to verify.
+//    Signature     Pointer to the signature data to be verified.
+//    SignatureSize The size, in bytes, of the signature data.
+//    Flags         Specifies additional flags to further customize the signing/verifying behavior.
+//
+// Output:    
+//    EFI_SUCCESS               The signature is successfully verified.
+//    EFI_SECURITY_VIOLATION    The signature does not match the given message.
+//    EFI_ACCESS_DENIED         The key could not be used in signature operation.
+//    EFI_INVALID_PARAMETER     The size of input message or signature does not meet the criteria 
+//                              of the underlying signature algorithm.
+//<AMI_PHDR_END>
+//**********************************************************************
 EFI_STATUS
-EFIAPI
 PeiVerifySig 
 (
   IN CONST AMI_CRYPT_DIGITAL_SIGNATURE_PPI      *This,
@@ -307,6 +293,7 @@ PeiVerifySig
     EFI_STATUS      Status;
     INTN            err;
     struct          crypto_rsa_key *key = NULL;
+    UINT16          Size = (UINT16)(PublicKey->BlobSize);
     size_t         *sig_len=(size_t*)&SignatureSize;
     INT32           modulus_bitlen = DEFAULT_RSA_SIG_LEN << 3;
     UINT32          HashLen;
@@ -325,7 +312,7 @@ PeiVerifySig
 // For now Public Key is supported in 2 formats: RAW 256 bytes and ASN.1 Integer
 // shall be extended to gPBkey_x509_Guid
     if(!guidcmp(&PublicKey->AlgGuid, &gEfiCertRsa2048Guid))
-        key = crypto_import_rsa2048_public_key(PublicKey->Blob, PublicKey->BlobSize, (UINT8*)&KeyE, LenE);
+        key = crypto_import_rsa2048_public_key(PublicKey->Blob, Size, (UINT8*)&KeyE, LenE);
     else
         return EFI_INVALID_PARAMETER;
 
@@ -349,7 +336,7 @@ PeiVerifySig
             // Validate PKCS#1v1.5 Padding
 //            err = pkcs_1_v1_5_decode((const UINT8 *)Hash->Blob, HashLen, (const UINT8 *)&DecriptedSig, (unsigned long)*sig_len);
 // just compare the hash at the end of the sig blob
-            err = MemCmp(Hash->Blob, (void*)((UINTN)DecriptedSig + (UINTN)(*sig_len - HashLen)), HashLen);
+            err = MemCmp(Hash->Blob, (void*)((UINT32)DecriptedSig + (UINT32)(*sig_len - HashLen)), HashLen);
         } else //(Flags & EFI_CRYPT_RSASSA_PSS))
             // Validate PKCS#1 PSS Signature: padding & hash
             err = pkcs_1_pss_decode(
@@ -366,30 +353,36 @@ PeiVerifySig
     return Status;
 }
 
-/**
- Verifies the validity of a PKCS#7 signed data as described in "PKCS #7: Cryptographic Message Syntax Standard".
- Function verifies validity of the signature contained inside the Certificate
- This function decrypts the signature with the Public key from the Signer certificate
- and then compares the decrypted value to the input Data
-
-  @param[in]  This         Pointer to the AMI_CRYPT_DIGITAL_SIGNATURE_PPI instance.
-  @param[in]  P7Data       Pointer to the PKCS#7 DER encoded message to verify.
-  @param[in]  P7Size       Size of the PKCS#7 message in bytes.
-  @param[in]  TrustedCert  Pointer to a trusted/root X509 certificate encoded in DER, which
-                           is used for certificate chain verification.
-  @param[in]  CertSize     Size of the trusted certificate in bytes.
-  @param[in]  Data         Pointer to the content to be verified/returned at
-  @param[in]  DataSize     Size of Data in bytes
-
-  @retval     Status
-    EFI_SUCCESS              The specified PKCS#7 signed data is valid
-    EFI_SECURITY_VIOLATION   Invalid PKCS#7 signed data.
-    EFI_ACCESS_DENIED        The Trusted certificate does not have a match in SignedData.certificate store.
-    EFI_INVALID_PARAMETER    The size of input message or signature does not meet the criteria 
-                             of the underlying signature algorithm.
-**/
+//**********************************************************************
+//<AMI_PHDR_START>
+//
+// Procedure:  PeiPkcs7Verify
+//
+// Description:    Verifies the validity of a PKCS#7 signed data as described in "PKCS #7: Cryptographic
+//                 Message Syntax Standard".
+//                 Function verifies validity of the signature contained inside the Certificate
+//                 This function decrypts the signature with the Public key from the Signer certificate
+//                 and then compares the decrypted value to the input Data
+//
+//  Input:
+//      This         Pointer to the AMI_DIGITAL_SIGNATURE_PROTOCOL instance.
+//      P7Data       Pointer to the PKCS#7 DER encoded message to verify.
+//      P7Size       Size of the PKCS#7 message in bytes.
+//      TrustedCert  Pointer to a trusted/root X509 certificate encoded in DER, which
+//                   is used for certificate chain verification.
+//      CertSize     Size of the trusted certificate in bytes.
+//      Data         Pointer to the content to be verified/returned at
+//      DataSize     Size of Data in bytes
+//
+// Output:    
+//    EFI_SUCCESS              The specified PKCS#7 signed data is valid
+//    EFI_SECURITY_VIOLATION   Invalid PKCS#7 signed data.
+//    EFI_ACCESS_DENIED        The Trusted certificate does not have a match in SignedData.certificate store.
+//    EFI_INVALID_PARAMETER    The size of input message or signature does not meet the criteria 
+//                             of the underlying signature algorithm.
+//<AMI_PHDR_END>
+//**********************************************************************
 EFI_STATUS
-EFIAPI
 PeiPkcs7Verify (
   IN CONST AMI_CRYPT_DIGITAL_SIGNATURE_PPI *This,
   IN CONST UINT8 *P7Data,
@@ -407,7 +400,6 @@ PeiPkcs7Verify (
     struct pkcs7_signed_data_st* PKCS7cert;
     struct x509_certificate *x509TrustCert;
     struct x509_certificate *x509SignCert;
-    struct pkcs7_cert_revoke_info   revokeInfo;
 
     err     = -1;
     reason  = 0;
@@ -427,18 +419,9 @@ PeiPkcs7Verify (
         x509TrustCert = x509_certificate_parse(TrustedCert, CertSize);
         if(x509TrustCert) {
             err = Pkcs7_x509_certificate_chain_validate(PKCS7cert, x509TrustCert, (int*)&reason);
-        } else {
-        // potentially a TimeStamped Hash of x509 tbs certificate data
-            if(CertSize == sizeof(EFI_CERT_X509_SHA256)) {
-                revokeInfo.ToBeSignedHashLen = 32;
-                revokeInfo.ToBeSignedHash = TrustedCert;
-                err = Pkcs7_x509_certificate_chain_validate_with_timestamp(PKCS7cert, FALSE, NULL, &revokeInfo, (int*)&reason);
-            }
-            else // unsupported Hash struct
-                err = -1;
+            if(!err)
+                err = Pkcs7_certificate_validate_digest(PKCS7cert, x509SignCert, *Data, *DataSize);
         }
-        if(!err)
-            err = Pkcs7_certificate_validate_digest(PKCS7cert, x509SignCert, *Data, *DataSize);
     } 
 
     // Security concern, memory heap is being cleared on exit 
@@ -453,26 +436,32 @@ PeiPkcs7Verify (
 #endif    
 }
 
-/**
-    Function returns Ptr to a Platform Signing Key (PK) Ffs inside Recovery FV (FV_BB or similar)
-
-  @param[in]   This         Pointer to the AMI_CRYPT_DIGITAL_SIGNATURE_PPI instance.
-  @param[in]   KeyAlgorithm Points to the EFI_GUID which identifies the PKpub algorithm to use.
-  @param[out]  PublicKey    Handle to a key used to return a ptr to a Key. This handle must be identifying a public key.
-
-  @retval     Status
-    EFI_SUCCESS               The Key is successfully returned.
-    EFI_NOT_FOUND             The Key not found
-    EFI_ACCESS_DENIED         The key could not be used in signature operation.
-    EFI_INVALID_PARAMETER     The size of input message or signature does not meet the criteria 
-                              of the underlying signature algorithm.
-**/
+//**********************************************************************
+//<AMI_PHDR_START>
+//
+// Procedure:  PeiGetKey
+//
+// Description:    Function returns Ptr to a Platform Signing Key (PK) Ffs 
+//                 inside Recovery FV (FV_BB or similar)
+//
+//  Input:
+//    This            Pointer to the AMI_CRYPT_DIGITAL_SIGNATURE_PPI instance.
+//    KeyAlgorithm    Points to the EFI_GUID which identifies the PKpub algorithm to use.
+//    PublicKey       Handle to a key used to return a ptr to a Key. This handle must be identifying a public key.
+//
+// Output:
+//    EFI_SUCCESS               The Key is successfully returned.
+//    EFI_NOT_FOUND             The Key not found
+//    EFI_ACCESS_DENIED         The key could not be used in signature operation.
+//    EFI_INVALID_PARAMETER     The size of input message or signature does not meet the criteria 
+//                              of the underlying signature algorithm.
+//<AMI_PHDR_END>
+//**********************************************************************
 EFI_STATUS
-EFIAPI
 PeiGetKey (
   IN CONST AMI_CRYPT_DIGITAL_SIGNATURE_PPI      *This,
   IN CONST EFI_GUID          *KeyAlgorithm, // reserved to PKPUB_KEY_GUID
-  IN OUT PEI_CRYPT_HANDLE        *PublicKey
+  IN PEI_CRYPT_HANDLE        *PublicKey
   )
 {
     if(!PublicKey || !KeyAlgorithm)
@@ -492,22 +481,28 @@ PeiGetKey (
     return EFI_NOT_FOUND;
 }
 
-/**
-  Function compares the input PublicKey against Platform Signing Key (PK) image in the flash.
-
-  @param[in]   This         Pointer to the AMI_CRYPT_DIGITAL_SIGNATURE_PPI instance.
-  @param[in]   KeyAlgorithm    Points to the EFI_GUID which identifies the PKpub algorithm to use.
-  @param[in]   PublicKey       Handle to a key used for verifying signatures.  This handle must be identifying a public key.
-
-  @retval     Status
-    EFI_SUCCESS               The Key is successfully verified.
-    EFI_SECURITY_VIOLATION    The Key does not match current FW key.
-    EFI_ACCESS_DENIED         The key could not be used in signature operation.
-    EFI_INVALID_PARAMETER     The size of input message or signature does not meet the criteria 
-                              of the underlying signature algorithm.
-**/
+//**********************************************************************
+//<AMI_PHDR_START>
+//
+// Procedure:  PeiVerifyKey
+//
+// Description:    Function compares the input PublicKey against 
+//                 Platform Signing Key (PK) image in the flash.
+//
+//  Input:
+//    This            Pointer to the AMI_CRYPT_DIGITAL_SIGNATURE_PPI instance.
+//    KeyAlgorithm    Points to the EFI_GUID which identifies the PKpub algorithm to use.
+//    PublicKey       Handle to a key used for verifying signatures.  This handle must be identifying a public key.
+//
+// Output:
+//    EFI_SUCCESS               The Key is successfully verified.
+//    EFI_SECURITY_VIOLATION    The Key does not match current FW key.
+//    EFI_ACCESS_DENIED         The key could not be used in signature operation.
+//    EFI_INVALID_PARAMETER     The size of input message or signature does not meet the criteria 
+//                              of the underlying signature algorithm.
+//<AMI_PHDR_END>
+//**********************************************************************
 EFI_STATUS
-EFIAPI
 PeiVerifyKey 
 (
   IN CONST AMI_CRYPT_DIGITAL_SIGNATURE_PPI      *This,
@@ -520,74 +515,43 @@ PeiVerifyKey
     PEI_CRYPT_HANDLE KeyHndl;
     UINT8         Hash[SHA256_DIGEST_SIZE] = {0};
     UINT8         *KeyBuf, *PKpubBuffer=NULL;
-    size_t        KeyLen;
+    UINT32        KeyLen;
 
     if(!PublicKey || !KeyAlgorithm || !PublicKey->Blob)
         return EFI_INVALID_PARAMETER;
 
-// check Key handle if requested PubKey is a Platform Key PKpub.
+    // check Key handle if requested PubKey is a Platform Key PKpub.
 // In this case use PKpub key from ffs image
     if(guidcmp((EFI_GUID*)KeyAlgorithm, &gPKeyGuid))
         return EFI_INVALID_PARAMETER;
     
     Status = PeiGetKey(This, KeyAlgorithm, &KeyHndl);
     if(!EFI_ERROR(Status)) {
-//
-//==========================    
-// FWKey : hash 
-//    pubkey : Rsa2048 - hash it
-//    pubkey : x509 - N/A 
-//
-// FWKey : x509
-//    pubkey : Rsa2048 (Pkcs1) - xtract x509 pub key from FWkey
-// 
-// FWKey : Rsa2048
-//    pubkey : x509 (Pkcs7) - xtract nModulus from x509 pubkey
-//==========================    
-//
         PKpubBuffer = KeyHndl.Blob;
-        KeyLen = (size_t)KeyHndl.BlobSize; // always 256
+        KeyLen = KeyHndl.BlobSize; // always 256
         KeyBuf = PublicKey->Blob;
-        err = TRUE;
-//  FWKey : hash
-        if(!guidcmp(&KeyHndl.AlgGuid, &gEfiCertSha256Guid) ){
-            KeyBuf = Hash;
-            //    pubkey : Rsa2048 - hash it
-            if(!guidcmp(&PublicKey->AlgGuid, &gEfiCertRsa2048Guid) ){
-            // SHA256 Hash of RSA Key
-                KeyLen = (size_t)PublicKey->BlobSize;
-                sha256_vector(1, (const UINT8**)&PublicKey->Blob, (const size_t*)&KeyLen, KeyBuf);
-            } 
+        if(!guidcmp(&KeyHndl.AlgGuid, &gEfiCertSha256Guid) &&
+           !guidcmp(&PublicKey->AlgGuid, &gEfiCertRsa2048Guid)
+        ) {
+        // SHA256 Hash of RSA Key
             KeyLen = SHA256_DIGEST_SIZE;
-        } else 
-// FWKey : x509        
-        if(!guidcmp(&KeyHndl.AlgGuid, &gEfiCertX509Guid) ){
-        //    pubkey : Rsa2048 (Pkcs1) - xtract x509 pub key
-            if(!guidcmp(&PublicKey->AlgGuid, &gEfiCertRsa2048Guid) ){
+            KeyBuf = Hash;
+            sha256_vector(1, (const UINT8**)&PublicKey->Blob, (const UINTN*)&PublicKey->BlobSize, KeyBuf);
 #if CONFIG_PEI_PKCS7 == 1
-                KeyLen = DEFAULT_RSA_KEY_MODULUS_LEN;
-                KeyBuf = PublicKey->Blob;
-                ResetCRmm();
-                err = Pkcs7_x509_return_Cert_pubKey((UINT8*)KeyHndl.Blob, KeyHndl.BlobSize, &PKpubBuffer, &KeyLen);
-                ResetCRmm();
-#endif                
-                if(err) return EFI_SECURITY_VIOLATION;
-            }
-        } else
-// FWKey : Rsa2048            
-        if(!guidcmp(&KeyHndl.AlgGuid, &gEfiCertRsa2048Guid) ){
-        //    pubkey : x509 (Pkcs7) - xtract nModulus    
-            if(!guidcmp(&PublicKey->AlgGuid, &gEfiCertX509Guid) ){
-#if CONFIG_PEI_PKCS7 == 1
+        } else {
+            // if FwKey is x509 and Key->Algo - gEfiCertRsa2048Guid:
+            // derive nModulus from x509 Key Cert for comparison
+            if(!guidcmp(&KeyHndl.AlgGuid, &gEfiCertRsa2048Guid) &&
+               !guidcmp(&PublicKey->AlgGuid, &gEfiCertX509Guid)
+            ) {
                 PKpubBuffer = &Hash[0];
                 KeyLen = DEFAULT_RSA_KEY_MODULUS_LEN;
-                KeyBuf = PublicKey->Blob;
                 ResetCRmm();
-                err = Pkcs7_x509_return_Cert_pubKey((UINT8*)PublicKey->Blob, PublicKey->BlobSize, &PKpubBuffer, &KeyLen);
+                err = Pkcs7_x509_return_Cert_pubKey((UINT8*)PublicKey->Blob, (UINTN)PublicKey->BlobSize, &PKpubBuffer, &KeyLen);
                 ResetCRmm();
-#endif                
                 if(err) return EFI_SECURITY_VIOLATION;
             }
+#endif
         }
 
         err = MemCmp(PKpubBuffer, KeyBuf, KeyLen);
@@ -598,20 +562,25 @@ PeiVerifyKey
     return Status;
 }
 
-/**
-  This function is the entry point for this PEI.
-
-  @param[in]   FileHandle  Pointer to the file handle
-  @param[in]   PeiServices Pointer to the PEI services table
-
-  @retval     Status
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   CryptoPei_Init
+//
+// Description: This function is the entry point for this PEI.
+//
+//
+// Input:       FfsHeader   Pointer to the FFS file header
+//              PeiServices Pointer to the PEI services table
+//
+// Output:      Return Status based on errors that occurred while waiting for
+//              time to expire.
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
-EFIAPI
 CryptoPei_Init (
-  IN       EFI_PEI_FILE_HANDLE  FileHandle,
-  IN CONST EFI_PEI_SERVICES     **PeiServices
-  )
+  IN EFI_FFS_FILE_HEADER       *FfsHeader,
+  IN EFI_PEI_SERVICES          **PeiServices
+)
 {
     EFI_STATUS              Status;
     UINTN                   Size;
@@ -624,9 +593,9 @@ CryptoPei_Init (
     
     UINT8        *pBuf;
 
+// WARNING. This module must always be launched from RAM.
     ppPS = PeiServices; 
-    // WARNING. This module must always be launched from RAM.
-    // PEI_TRACE(((UINTN)TRACE_ALWAYS, PeiServices, "*PeiServices == *ppPS(ppPS) %x == %x(%x)\n",  *PeiServices, *ppPS, ppPS ));
+    PEI_TRACE(((UINTN)TRACE_ALWAYS, PeiServices, "*PeiServices == *ppPS(ppPS) %x == %x(%x)\n",  *PeiServices, *ppPS, ppPS ));
     Status = (*PeiServices)->GetBootMode( PeiServices, &BootMode );
     if(EFI_ERROR(Status) || BootMode == BOOT_ON_S3_RESUME) {
         return Status; // skip Crypto PPI install on S3 resume
@@ -642,7 +611,7 @@ CryptoPei_Init (
     Size = CR_PEI_MAX_HEAP_SIZE;
     Npages = EFI_SIZE_TO_PAGES(Size);
     Status = (*PeiServices)->AllocatePages(ppPS, EfiBootServicesData, Npages, &DstAddress);
-    PEI_TRACE(((UINTN)TRACE_ALWAYS, ppPS, "PEI Heap alloc %r (addr=%X, size=%x)\n", Status, (UINT32)DstAddress, Size));
+    PEI_TRACE(((UINTN)TRACE_ALWAYS, ppPS, "Heap alloc %r (addr=%X, size=%d)\n", Status, (UINT32)DstAddress, Size));
     if(EFI_ERROR(Status))
         return Status;
     
@@ -652,6 +621,7 @@ CryptoPei_Init (
     //
     wpa_set_trace_level(CRYPTO_trace_level); 
 
+    
 ////////////////////////////////////////////////////////////////////////////////////
 //
 // Create FwKey Hob
@@ -670,7 +640,7 @@ CryptoPei_Init (
                  (UINT64)(FV_BB_BASE+(UINT64)FV_BB_BLOCKS*FLASH_BLOCK_SIZE)))
                 break;
 */
-/*
+/*        	
             // don't report a Key if dummy FWkey  is found
             Byte = pBuf[0];
             for(i = 1; i < Size && (Byte == pBuf[i]); i++);
@@ -681,14 +651,13 @@ CryptoPei_Init (
 */            
             Status = (*PeiServices)->CreateHob(
                 PeiServices, EFI_HOB_TYPE_GUID_EXTENSION, 
-               sizeof(FW_KEY_HOB), (void**)&pFwKeyHob);
+               sizeof(FW_KEY_HOB), &pFwKeyHob);
             if (!EFI_ERROR(Status) && pFwKeyHob) {
                 pFwKeyHob->Header.Name = gPKeyGuid;
                 pFwKeyHob->KeyGuid =  *gKeyTypeGuid[Index];
                 pFwKeyHob->KeyAddress = (EFI_PHYSICAL_ADDRESS)(UINTN)pBuf;
                 pFwKeyHob->KeySize = Size;
-
-            }
+            }    
             break;
         }
         Index++;
@@ -704,7 +673,7 @@ CryptoPei_Init (
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2013, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **

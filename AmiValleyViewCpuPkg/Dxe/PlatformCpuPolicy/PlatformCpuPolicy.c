@@ -18,13 +18,14 @@ as expressly permitted by the license for the Material, no part of the Material
 may be reproduced, stored in a retrieval system, transmitted in any form, or
 distributed by any means without the express written consent of Intel Corporation.
 
---*/
+Module Name:
+  PlatformCpuPolicy.c
 
-/** @file PlatformCpuPolicy.c
-		
-    CPU Platform Policy Driver.
-	
-**/
+Abstract:
+  CPU Platform Policy Driver.
+
+ 
+--*/
 
 #include "CpuType.h"
 typedef struct {
@@ -120,28 +121,28 @@ ZeroMem (
 //
 // Function prototypes
 //
-
 EFI_STATUS
 PlatformCpuRetrieveMicrocode (
   IN  EFI_PLATFORM_CPU_PROTOCOL       *This,
   OUT UINT8                           **MicrocodeData
   )
-/**
+/*++
+
 Routine Description:
 
   Get the microcode patch.
 
 Arguments:
 
-  @param  This      - Driver context.
-  @param  MicrocodeData - Retrieved image of the microcode.
+  This      - Driver context.
+  MicrocodeData - Retrieved image of the microcode.
 
 Returns:
 
-  @retval  EFI_SUCCESS - Image found.
-  @retval  EFI_NOT_FOUND - Image not found.
+  EFI_SUCCESS - Image found.
+  EFI_NOT_FOUND - Image not found.
 
-**/
+--*/
 {
   EFI_CPU_MICROCODE_HEADER *Microcode;
   UINTN                    MicrocodeStart;
@@ -190,7 +191,7 @@ PlatformCpuStall (
   IN  EFI_PLATFORM_CPU_PROTOCOL  *This,
   IN  UINTN                       Microseconds
   )
-/**
+/*++
 
 Routine Description:
 
@@ -198,14 +199,14 @@ Routine Description:
 
 Arguments:
 
-  @param This              - PlatfromCpu protocol instance
-  @param Microseconds      - Desired length of time to wait.
+  This              PlatfromCpu protocol instance
+  Microseconds      Desired length of time to wait.
 
 Returns:
 
-  @retval EFI_SUCCESS       - Function has been executed correctly
+  EFI_SUCCESS       - Function has been executed correctly
 
-**/
+--*/
 {
   UINTN   Ticks;
   UINTN   Counts;
@@ -266,7 +267,7 @@ PlatformCpuGetTm2ControlInfo (
   OUT UINT8                 *Tm2Core2BusRatio,
   OUT UINT8                 *Tm2Vid
   )
-/**
+/*++
 
 Routine Description:
 
@@ -274,15 +275,15 @@ Routine Description:
 
 Arguments:
 
-  @param This        - GC_TODO: add argument description
-  @param Tm2Core2BusRatio  - GC_TODO: add argument description
-  @param Tm2Vid      - GC_TODO: add argument description
+  This        - GC_TODO: add argument description
+  Tm2Core2BusRatio  - GC_TODO: add argument description
+  Tm2Vid      - GC_TODO: add argument description
 
 Returns:
 
-  @retval EFI_UNSUPPORTED - GC_TODO: Add description for return value
+  EFI_UNSUPPORTED - GC_TODO: Add description for return value
 
-**/
+--*/
 {
   return EFI_UNSUPPORTED;
 }
@@ -296,7 +297,7 @@ PlatformCpuGetMaxCount (
   IN OUT  UINT32                 *MaxDiesPerPackage,
   IN OUT  UINT32                 *MaxPackages
   )
-/**
+/*++
 
 Routine Description:
   Returns the maximum number of threads, cores, dies and processor packages the system supports.
@@ -312,7 +313,7 @@ Returns:
   EFI_SUCCESS     Always.
   ASSERT () in case of errors.
 
-**/
+--*/
 {
   *MaxThreadsPerCore  = mMaxThreadsPerCore;
   *MaxCoresPerDie     = mMaxCoresPerDie;
@@ -329,7 +330,7 @@ PlatformCpuGetCpuInfo (
   IN   EFI_CPU_PHYSICAL_LOCATION       *Location,
   OUT EFI_PLATFORM_CPU_INFORMATION     *PlatformCpuInfo
   )
-/**
+/*++
 
 Routine Description:
 
@@ -337,15 +338,15 @@ Routine Description:
 
 Arguments:
 
-  @param This        - GC_TODO: add argument description
-  @param Location      - GC_TODO: add argument description
-  @param PlatformCpuInfo - GC_TODO: add argument description
+  This        - GC_TODO: add argument description
+  Location      - GC_TODO: add argument description
+  PlatformCpuInfo - GC_TODO: add argument description
 
 Returns:
 
-  @retval EFI_SUCCESS - GC_TODO: Add description for return value
+  EFI_SUCCESS - GC_TODO: Add description for return value
 
-**/
+--*/
 {
   ASSERT (Location->Package < mMaxPackages);
 
@@ -390,7 +391,7 @@ PlatformCpuPolicyEntryPoint (
   IN EFI_HANDLE           ImageHandle,
   IN EFI_SYSTEM_TABLE     *SystemTable
   )
-/**
+/*++
 
   Routine Description:
 
@@ -399,14 +400,14 @@ PlatformCpuPolicyEntryPoint (
 
   Arguments:
 
-  @param ImageHandle   - Handle for the image of this driver.
-  @param SystemTable   - Pointer to the EFI System Table.
+  ImageHandle   - Handle for the image of this driver.
+  SystemTable   - Pointer to the EFI System Table.
 
   Returns:
 
-  @retval EFI_SUCCESS   - Protocol installed sucessfully.
+  EFI_SUCCESS   - Protocol installed sucessfully.
 
-**/
+--*/
 {
   EFI_STATUS                Status;
 //  UINTN                     SysCfgSize;

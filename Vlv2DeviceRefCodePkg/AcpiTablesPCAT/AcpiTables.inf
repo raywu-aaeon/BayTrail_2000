@@ -39,10 +39,10 @@
   Facp/Facp.aslc
   Madt/Madt30.aslc
   Mcfg/Mcfg.aslc
-  Lpit/Lpit.aslc
   Hpet/Hpet.aslc
   DptfAcpiTable/CpuDptf.asl
   DptfAcpiTable/Dptf.asl
+  Lpit/Lpit.aslc
   SwitchableGraphics/Pch/SgSsdtPch.asl
 
 [Packages]

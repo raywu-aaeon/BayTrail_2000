@@ -1,7 +1,7 @@
 #*************************************************************************
 #*************************************************************************
 #**                                                                     **
-#**        (C)Copyright 1985-2015, American Megatrends, Inc.            **
+#**        (C)Copyright 1985-2012, American Megatrends, Inc.            **
 #**                                                                     **
 #**                       All Rights Reserved.                          **
 #**                                                                     **
@@ -32,9 +32,9 @@
   AmiCompatibilityPkg/AmiCompatibilityPkg.dec
 
 [LibraryClasses]
-  AmiCspLib                             # WakeUpType
   AmiDxeLib
   UefiDriverEntryPoint
+  FlashLib
 
 [Guids]
   gAmiSmbiosStaticDataGuid
@@ -60,7 +60,7 @@
 #*************************************************************************
 #*************************************************************************
 #**                                                                     **
-#**        (C)Copyright 1985-2015, American Megatrends, Inc.            **
+#**        (C)Copyright 1985-2012, American Megatrends, Inc.            **
 #**                                                                     **
 #**                       All Rights Reserved.                          **
 #**                                                                     **

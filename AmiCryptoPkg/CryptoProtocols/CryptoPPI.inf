@@ -31,7 +31,7 @@
 #  VALID_ARCHITECTURES           = IA32
 #
 
-[Sources]
+[Sources.IA32]
   CryptoPei.c
 
 [Packages]
@@ -53,10 +53,7 @@ gEfiCertSha256Guid
 gEfiCertRsa2048Guid
 gEfiCertPkcs7Guid
 gEfiCertX509Guid
-gEfiHashAlgorithmSha1Guid
-gEfiHashAlgorithmSha256Guid
-gEfiHashAlgorithmSha384Guid
-gEfiHashAlgorithmSha512Guid
+# gAmiDigitalSignaturePPIGuid
      
 [Depex]
  gEfiPeiMemoryDiscoveredPpiGuid AND

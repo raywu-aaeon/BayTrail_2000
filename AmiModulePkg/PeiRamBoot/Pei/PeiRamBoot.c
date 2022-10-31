@@ -129,24 +129,13 @@
 #include <RomLayout.h>
 #include <Token.h>
 #include <PeiRamBoot.h>
-// "CorePeiMain.h" is a duplicated file from "MdeModulePkg/Core/pei/PeiMain.h" 
-// to "Build" Directory when building process..
-#include <CorePeiMain.h>
+#include "PeiMain.h"
 #if defined (SecureBoot_SUPPORT) && SecureBoot_SUPPORT == 1
 #include <AmiCertificate.h>
-#endif // #if defined (SecureBoot_SUPPORT) && SecureBoot_SUPPORT == 1
-#if (CORE_COMBINED_VERSION >= 0x5000a)
-#include <AmiHobs.h>
-#include <Library/AmiRomLayoutLib.h>
+#endif
+
 //----------------------------------------------------------------------------
 // Function Externs
-#else  // #if (CORE_COMBINED_VERSION < 0x5000a)
-EFI_STATUS GetRomLayout(
-    IN  EFI_PEI_SERVICES **PeiServices,
-    OUT ROM_AREA         **Layout
-);
-#endif // #if (CORE_COMBINED_VERSION >= 0x5000a)
-
 extern
 VOID
 SwitchPeiServiceDataToRam (
@@ -168,6 +157,11 @@ GetDispatchedPeimBitMap (
     IN EFI_PEI_SERVICES             **PeiServices
 );
 #endif
+EFI_STATUS GetRomLayout(
+    IN  EFI_PEI_SERVICES **PeiServices,
+    OUT ROM_AREA         **Layout
+);
+
 typedef BOOLEAN (PEI_RAM_BOOT_ELINK) (EFI_PEI_SERVICES **PeiServices);
 extern PEI_RAM_BOOT_ELINK PEI_RAM_BOOT_LIST EndOfPeiRamBootList;
 PEI_RAM_BOOT_ELINK* IsMrcColdBooteLink[] = {PEI_RAM_BOOT_LIST NULL};
@@ -695,9 +689,6 @@ PrepareForCopyRomToRam (
     EFI_STATUS              Status = EFI_SUCCESS;
     UINTN                   NumOfPages;
     EFI_PHYSICAL_ADDRESS    Buffer = 0;
-    EFI_FIRMWARE_VOLUME_HEADER *FvHeader = NULL;
-    UINT32                  FvAlignment = 0;
-    UINT32                  Alignment = 0;
 
     for (i = 0; i < HobRomImage->NumOfFv; i++) {
         NumOfPages = HobRomImage->FvInfo[i].UsedBytes;
@@ -709,13 +700,6 @@ PrepareForCopyRomToRam (
 #else
             NumOfPages = HobRomImage->FvInfo[i].FvLength;
 #endif
-        }
-        //If firmware volume alignment is bigger than 4K, enlarge the memory.
-        FvHeader = (EFI_FIRMWARE_VOLUME_HEADER*)HobRomImage->FvInfo[i].FvAddress;
-        FvAlignment = (FvHeader->Attributes) & EFI_FVB2_ALIGNMENT;
-        if( FvAlignment > EFI_FVB2_ALIGNMENT_4K ) {
-            Alignment = 1 << (FvAlignment >> 16);
-            NumOfPages += Alignment;
         }
         Status = (*PeiServices)->AllocatePages ( PeiServices,
 #if PEI_RAM_BOOT_S3_SUPPORT == 1
@@ -730,11 +714,6 @@ PrepareForCopyRomToRam (
         // reserve the necessary memory space for FV then exit.
         if (HobRomImage->HobValid == TRUE) continue;
         HobRomImage->FvInfo[i].NumOfPages = NumOfPages >> 12;
-        //Make memory address is match with alignment.
-        if( FvAlignment > EFI_FVB2_ALIGNMENT_4K ) {
-            Buffer += (Alignment - 1);
-            Buffer &= (0xFFFFFFFF - (Alignment - 1));
-        }
         HobRomImage->FvInfo[i].MemAddress = (UINT32)Buffer;
         HobRomImage->FvInfo[i].FvMemReady = FALSE;
     }
@@ -813,16 +792,19 @@ MinimumizeBootFv (
         // Increase PEIM index meeting PEI Core Private Data of PI 1.2  
         if (FfsFile->Type == EFI_FV_FILETYPE_PEIM) k++;    
         (*PeiServices)->CopyMem (p, (UINT8*)FfsFile, n);
-        //If the CheckSum is enable, only modify the minimized FFS's attribute and file's checksum.
-        if( ((EFI_FFS_FILE_HEADER*)p)->Attributes & FFS_ATTRIB_CHECKSUM ) {
-            if( (FfsFile->Type == EFI_FV_FILETYPE_SECURITY_CORE) ||
-                ( (FfsFile->Type == EFI_FV_FILETYPE_PEIM) &&
-                  IsPeimDispatched(PeiServices, FfsFile, k) ) ) {
+//<EIP141743+> >>>
+        if( (FfsFile->Type == EFI_FV_FILETYPE_SECURITY_CORE) ||
+            ((FfsFile->Type == EFI_FV_FILETYPE_PEIM) &&
+		    IsPeimDispatched(PeiServices, FfsFile, k)) )
+        {
+            if( ((EFI_FFS_FILE_HEADER*)p)->Attributes & FFS_ATTRIB_CHECKSUM )
+            {
                 ((EFI_FFS_FILE_HEADER*)p)->Attributes &= (~FFS_ATTRIB_CHECKSUM);
                 ((EFI_FFS_FILE_HEADER*)p)->IntegrityCheck.Checksum.Header += FFS_ATTRIB_CHECKSUM;
-				((EFI_FFS_FILE_HEADER*)p)->IntegrityCheck.Checksum.File = 0xAA;
             }
+            ((EFI_FFS_FILE_HEADER*)p)->IntegrityCheck.Checksum.File = 0xAA;
         }
+//<EIP141743+> <<<
         p = p + FfsLength;
         if(FfsFile->Type == EFI_FV_FILETYPE_SECURITY_CORE) continue;
         // Save PAD_FFS_FILE Header for FvCheck of NotifyFwVolBlock procedure.
@@ -994,6 +976,7 @@ CollectRomImageInfo (
     IN HOB_ROM_IMAGE            *HobRomImage
 )
 {
+    ROM_AREA                *Area;
     UINT32                  FileSize;
     UINT8                   i = 0, j = 0, n = 0;
     UINTN                   k = 0;
@@ -1002,13 +985,9 @@ CollectRomImageInfo (
     BOOLEAN                 IsDispatched = FALSE;
     UINT64                  DispatchedPeimBitMap = 0;
     EFI_GUID                *pGuid = NULL, *pLastFileOvrdeGuid = NULL;
-
-#if (CORE_COMBINED_VERSION >= 0x5000a)
-    AMI_ROM_AREA            *Area, *RomLayout = AmiGetFirstRomArea();
-#else
-    ROM_AREA                *Area, *RomLayout = NULL;
+    ROM_AREA                *RomLayout = NULL;
+    
     Status = GetRomLayout(PeiServices, &RomLayout);
-#endif
     if ( EFI_ERROR(Status) || (RomLayout == NULL) ) return EFI_UNSUPPORTED;
 #if (PI_SPECIFICATION_VERSION < 0x0001000A)
     DispatchedPeimBitMap = GetDispatchedPeimBitMap(PeiServices);
@@ -1023,13 +1002,7 @@ CollectRomImageInfo (
     if (EFI_ERROR(Status)) pLastFileOvrdeGuid = NULL;
 
     // find last ffs file for calculating used rom space for each Firmware Volume.
-#if (CORE_COMBINED_VERSION >= 0x5000a)
-    for(Area = RomLayout; Area != NULL; \
-            Area = AmiGetNextRomArea(Area), FfsFile = NULL, FileSize = 0)
-#else
-    for (Area = RomLayout; Area->Size != 0; Area++, FfsFile = NULL, FileSize = 0)
-#endif
-    {        
+    for (Area = RomLayout; Area->Size != 0; Area++, FfsFile = NULL, FileSize = 0) {
         if (Area->Type != RomAreaTypeFv) continue;
         if (!(Area->Attributes & (ROM_AREA_FV_PEI_ACCESS + ROM_AREA_FV_DXE)))
             continue;
@@ -1120,40 +1093,6 @@ CollectRomImageInfo (
 //<AMI_PHDR_START>
 //----------------------------------------------------------------------------
 //
-// Procedure:   LocateFvInfoFromHobRomImage
-//
-// Description: This procedure locate the Index of FVInfo from RomImage HOB by 
-//              Base Address and Length of Firmware Volume.
-//
-// Input:       EFI_PEI_SERVICES**  - PeiServices
-//              EFI_PHYSICAL_ADDRESS - RomImageBuffer
-//              UINT32              - BaseAddress
-//              UINT32              - Length
-//
-// Output:      Index
-//
-//----------------------------------------------------------------------------
-//<AMI_PHDR_END>
-UINT8
-LocateFvInfoFromHobRomImage (
-    IN EFI_PEI_SERVICES         **PeiServices,
-    IN HOB_ROM_IMAGE            *HobRomImage,
-    IN UINT32                   BaseAddress,
-    IN UINT32                   Length
-)
-{
-    UINT8               i;   
-    for (i = 0; i < HobRomImage->NumOfFv; i++) {
-        if ((BaseAddress == HobRomImage->FvInfo[i].FvAddress) && \
-            (Length == HobRomImage->FvInfo[i].FvLength) && \
-            (HobRomImage->FvInfo[i].MemAddress != 0) && \
-            (HobRomImage->FvInfo[i].FvMemReady)) break;
-    }       
-    return i;         
-}
-//<AMI_PHDR_START>
-//----------------------------------------------------------------------------
-//
 // Procedure:   FvHobSwitchToRam
 //
 // Description: This procedure redirect the FV Base Address of FV HOB to RAM.
@@ -1166,17 +1105,17 @@ LocateFvInfoFromHobRomImage (
 //----------------------------------------------------------------------------
 //<AMI_PHDR_END>
 EFI_STATUS
-FvInfoSwitchToRam (
+FvHobSwitchToRam (
     IN EFI_PEI_SERVICES         **PeiServices,
     IN HOB_ROM_IMAGE            *HobRomImage
 )
 {
     VOID                    *p;
     EFI_HOB_FIRMWARE_VOLUME	*FvHob;
-    UINT8                   i = 0, Index = 0;
+    UINT8                   i, j = 0;
     EFI_BOOT_MODE           BootMode;
     EFI_STATUS              Status = EFI_SUCCESS;
-    EFI_PEI_FIRMWARE_VOLUME_INFO_PPI      *FvInfoPpi = NULL;
+    EFI_PEI_FIRMWARE_VOLUME_INFO_PPI *FirmwareVolumeInfo = NULL;
 #if (PI_SPECIFICATION_VERSION >= 0x0001000A)
     PEI_CORE_INSTANCE       *PrivateData;
     PrivateData = PEI_CORE_INSTANCE_FROM_PS_THIS (PeiServices);
@@ -1186,52 +1125,34 @@ FvInfoSwitchToRam (
     Status = (*PeiServices)->GetBootMode (PeiServices, &BootMode);
     if (EFI_ERROR(Status)) return EFI_UNSUPPORTED;
 
-    // Here locate the FV HOB then update its Base Address to be pointed to 
-    // in-memory cache.
+    // Update FV HOB (BaseAddress)
     for ((*PeiServices)->GetHobList(PeiServices,&p);
             !(FindNextHobByType(EFI_HOB_TYPE_FV,&p)); ) {
         FvHob = (EFI_HOB_FIRMWARE_VOLUME*)p;
-        Index = LocateFvInfoFromHobRomImage(PeiServices, \
-                    HobRomImage, (UINT32)FvHob->BaseAddress, (UINT32)FvHob->Length);
-        if (Index >= HobRomImage->NumOfFv) continue;                        
-
+        for (i = 0; i < HobRomImage->NumOfFv; i++) {
+            if ((FvHob->BaseAddress == HobRomImage->FvInfo[i].FvAddress) && \
+                    (FvHob->Length == HobRomImage->FvInfo[i].FvLength) && \
+                    (HobRomImage->FvInfo[i].MemAddress != 0) && \
+                    (HobRomImage->FvInfo[i].FvMemReady)) {
 #if (PI_SPECIFICATION_VERSION >= 0x0001000A)
-            for (i = 0; i < PrivateData->FvCount; ++i) {
-                if ((UINT32)FvHob->BaseAddress == (UINT32)PrivateData->Fv[i].FvHandle) {
-                    PrivateData->Fv[i].FvHandle = (EFI_PEI_FV_HANDLE)HobRomImage->FvInfo[Index].MemAddress;
+                for (j = 0; j < PrivateData->FvCount; ++j) {
+                    if ((UINT32)FvHob->BaseAddress == (UINT32)PrivateData->Fv[j].FvHandle) {
+                        PrivateData->Fv[j].FvHandle = (EFI_PEI_FV_HANDLE)HobRomImage->FvInfo[i].MemAddress;
+                    }
                 }
-            }
 #endif
-            FvHob->BaseAddress = HobRomImage->FvInfo[Index].MemAddress;
+                FvHob->BaseAddress = HobRomImage->FvInfo[i].MemAddress;
 #if PEI_RAM_BOOT_S3_SUPPORT == 2
-            if ((BootMode == BOOT_ON_S3_RESUME) && \
-                (!HobRomImage->FvInfo[Index].IsBootFv)) {
-                FvHob->Header.HobType = EFI_HOB_TYPE_UNUSED;
-            }
+                if ((BootMode == BOOT_ON_S3_RESUME) && \
+                        (!HobRomImage->FvInfo[i].IsBootFv)) {
+                    FvHob->Header.HobType = EFI_HOB_TYPE_UNUSED;
+                }
 #endif
-//CSP20141009+ 
-//Fixed S3 resume fail if enable verify boot support.
-//            break;
-//CSP20141009+ 			
+                break;
+            }
+        }
     }
 
-    // Here locate the Firmware Volume PPI and Update its BaseAddress to be 
-    // pointed to in-memory cache. 
-    i = 0; // Initialize PPI Instance 
-    do {
-        Status = (*PeiServices)->LocatePpi ( PeiServices, \
-                                             &gEfiPeiFirmwareVolumeInfoPpiGuid, \
-                                             i++, \
-                                             NULL, \
-                                             &FvInfoPpi);
-        if (!EFI_ERROR(Status)) {
-            Index = LocateFvInfoFromHobRomImage (PeiServices, \
-                        HobRomImage, (UINT32)FvInfoPpi->FvInfo, FvInfoPpi->FvInfoSize);
-            if (Index >= HobRomImage->NumOfFv) continue;
-            FvInfoPpi->FvInfo = (VOID*)HobRomImage->FvInfo[Index].MemAddress;    
-        }
-    } while(!EFI_ERROR(Status));
-    
     return EFI_SUCCESS;
 }
 #if defined PRESERVE_NESTED_FV_IN_MEM && PRESERVE_NESTED_FV_IN_MEM == 1
@@ -1349,7 +1270,7 @@ PeiRamBootEndOfPei (
     }
 #endif
     SwitchPeiServiceDataToRam (PeiServices, (HOB_ROM_IMAGE*)p);
-    FvInfoSwitchToRam (PeiServices, (HOB_ROM_IMAGE*)p);
+    FvHobSwitchToRam (PeiServices, (HOB_ROM_IMAGE*)p);
     return EFI_SUCCESS;
 }
 //<AMI_PHDR_START>
@@ -1474,7 +1395,7 @@ PeiRamBootMemoryReady (
 #endif
     }
     SwitchPeiServiceDataToRam (PeiServices, HobRomImage);
-    FvInfoSwitchToRam (PeiServices, HobRomImage);
+    FvHobSwitchToRam (PeiServices, HobRomImage);
     return EFI_SUCCESS;
 }
 //<AMI_PHDR_START>

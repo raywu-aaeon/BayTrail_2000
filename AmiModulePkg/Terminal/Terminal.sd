@@ -1,7 +1,7 @@
 //****************************************************************************
 //****************************************************************************
 //**                                                                        **
-//**             (C)Copyright 1985-2014, American Megatrends, Inc.          **
+//**             (C)Copyright 1985-2013, American Megatrends, Inc.          **
 //**                                                                        **
 //**                          All Rights Reserved.                          **
 //**                                                                        **
@@ -27,6 +27,9 @@
 #include "TerminalSetupVar.h"
 #endif 
 
+//Initialize Macro Arguments 
+#define PORT_NUM  0 
+#define DEFAULT_CONSOLE_REDIRECTION_ENABLE  0
 
 #if EFI_SPECIFICATION_VERSION>0x20000
 #define TERMINAL_PORT0 0
@@ -80,7 +83,6 @@
     #endif //(TOTAL_SERIAL_PORTS > 0)
         UINT8   DebuggerConsoleRedirectionEnable;
         UINT8   DebuggerTerminalType;
-        UINT8   ComPortforLegacy;
 #endif //ifdef SETUP_DATA_DEFINITION
 
 ////////////////////////////////////
@@ -114,11 +116,11 @@
 #if CONSOLE_REDIRECTION_SUPPORT == 1
 
 #define TERMINAL_CHECKBOX_DEBUGGERCONSOLEREDIRECTIONENABLE\
-        checkbox varid    = SETUP_DATA.DebuggerConsoleRedirectionEnable,\
-            prompt        = STRING_TOKEN(STR_CONSOLE_REDIRECTION),\
-            help          = STRING_TOKEN(STR_CONSOLE_REDIRECTION_ENABLE_HELP),\
-            flags         = CHECKBOX_DEFAULT_MFG | RESET_REQUIRED,\
-            default value = DEFAULT_DEBUGGER_CONSOLE_REDIRECTION_ENABLE, \
+        checkbox varid  = SETUP_DATA.DebuggerConsoleRedirectionEnable,\
+            prompt      = STRING_TOKEN(STR_CONSOLE_REDIRECTION),\
+            help        = STRING_TOKEN(STR_CONSOLE_REDIRECTION_ENABLE_HELP),\
+            flags       = CHECKBOX_DEFAULT_MFG | RESET_REQUIRED,\
+	    default value	= DEFAULT_DEBUGGER_CONSOLE_REDIRECTION_ENABLE, \
         endcheckbox;
 
 #define TERMINAL_ONEOF_DEBUGGERTERMINALTYPE\
@@ -315,7 +317,7 @@
             prompt      = STRING_TOKEN(STR_FORCE_SYSTEM_VGA_TO_TEXT_MODE),\
             help        = STRING_TOKEN(STR_FORCE_SYSTEM_VGA_TO_TEXT_MODE_HELP),\
             flags       = CHECKBOX_DEFAULT_MFG | RESET_REQUIRED,\
-	    	default	value = 0, \
+	    	default	value = INSTALL_LEGACY_OS_THROUGH_REMOTE, \
         endcheckbox;
 #else
 #define TERMINAL_ONEOF_INSTALLLEGACYOSTHROUGHREMOTE(PORT_NUM)
@@ -360,11 +362,11 @@
             prompt      = STRING_TOKEN(STR_CONSOLE_REDIRECTION),\
             help        = STRING_TOKEN(STR_CONSOLE_REDIRECTION_ENABLE_HELP),\
             flags       = CHECKBOX_DEFAULT_MFG | RESET_REQUIRED,\
-            default     = DEFAULT_ACPI_SPCR_CONSOLE_REDIRECTION_ENABLE, \
+	    	default	= DEFAULT_ACPI_SPCR_CONSOLE_REDIRECTION_ENABLE, \
         endcheckbox;
 
 #define TERMINAL_ONEOF_ACPISPCRTERMINALTYPE\
-       oneof varid = SETUP_DATA.AcpiSpcrTerminalType,\
+        oneof varid = SETUP_DATA.AcpiSpcrTerminalType,\
             prompt = STRING_TOKEN (STR_TERMINAL_TYPE),\
             help   = STRING_TOKEN (STR_OUT_OF_BAND_MGMT_TERMINAL_TYPE_HELP),\
             option text  = STRING_TOKEN (STR_VT100),\
@@ -422,7 +424,44 @@
 #endif // END #if (TOTAL_SERIAL_PORTS > 0)
 
 
-#if (TOTAL_SERIAL_PORTS > 0)
+//---------------------------------------------------------------------------
+// AcpiSpcrPort VARIABLE DEFINITION START
+//---------------------------------------------------------------------------
+
+#if ((TOTAL_SERIAL_PORTS == 1) && (TOTAL_SIO_SERIAL_PORTS == 1))
+
+#define TERMINAL_ONEOF_ACPISPCRPORT\
+        oneof varid = SETUP_DATA.AcpiSpcrPort,\
+            prompt = STRING_TOKEN (STR_OUT_OF_BAND_MANAGEMENT_PORT),\
+            help   = STRING_TOKEN (STR_OUT_OF_BAND_MANAGEMENT_PORT_HELP),\
+            option text  = STRING_TOKEN (STR_SIO_SERIAL_PORT0),\
+                   value = TERMINAL_PORT0,\
+                   flags = DEFAULT  | MANUFACTURING  | RESET_REQUIRED;\
+            option text  = STRING_TOKEN (STR_SIO_SERIAL_PORT1),\
+                   value = TERMINAL_PORT1,\
+                   flags = 0;\
+        endoneof;
+
+#endif // END #if ((TOTAL_SERIAL_PORTS == 1) && (TOTAL_SIO_SERIAL_PORTS == 1))
+
+#if ((TOTAL_SERIAL_PORTS == 1) && (TOTAL_PCI_SERIAL_PORTS == 1))
+
+#define TERMINAL_ONEOF_ACPISPCRPORT\
+        oneof varid = SETUP_DATA.AcpiSpcrPort,\
+            prompt = STRING_TOKEN (STR_OUT_OF_BAND_MANAGEMENT_PORT),\
+            help   = STRING_TOKEN (STR_OUT_OF_BAND_MANAGEMENT_PORT_HELP),\
+            option text  = STRING_TOKEN (STR_PCI_SERIAL_PORT0),\
+                   value = PCI_SERIAL_PORT_0_INDEX,\
+                   flags = DEFAULT  | MANUFACTURING  | RESET_REQUIRED;\
+            option text  = STRING_TOKEN (STR_PCI_SERIAL_PORT1),\
+                   value = PCI_SERIAL_PORT_1_INDEX,\
+                   flags = 0;\
+        endoneof;
+
+#endif // END #if ((TOTAL_SERIAL_PORTS == 1) && (TOTAL_PCI_SERIAL_PORTS == 1))
+
+
+#if (TOTAL_SERIAL_PORTS > 1)
 
 //---------------------------------------------------------------------------
 // PCI PORT OPTION TEXT INDEX DEFINITION
@@ -505,261 +544,293 @@
 // PCI PORT OPTION TEXT DEFINITION END
 //---------------------------------------------------------------------------
 
-//---------------------------------------------------------------------------
-// SIO PORT OPTION TEXT INDEX DEFINITION START
-//---------------------------------------------------------------------------
-
-//#if (TOTAL_SIO_SERIAL_PORTS > 0)
-
-#define SIO_PORT_OPTION_TEXT_INDEX\
-        option text  = STRING_TOKEN (STR_SIO_SERIAL_PORT0),\
-             value = TERMINAL_PORT0,\
-             flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;
-
-#endif // END #if (TOTAL_SIO_SERIAL_PORTS > 0) 
-
-//---------------------------------------------------------------------------
-// SIO PORT OPTION TEXT INDEX DEFINITION END
-//---------------------------------------------------------------------------
-
-//---------------------------------------------------------------------------
-// SIO PORT OPTION TEXT DEFINITION START
-//---------------------------------------------------------------------------
-
 #if (TOTAL_SIO_SERIAL_PORTS == 0)
-
-        #define SIO_PORT_OPTION_TEXT
-
-#endif // END #if (TOTAL_SIO_SERIAL_PORTS == 0)
-
-#if (TOTAL_SIO_SERIAL_PORTS == 1)
-
-#define SIO_PORT_OPTION_TEXT\
-        SIO_PORT_OPTION_TEXT_INDEX
-
-#endif // END #if (TOTAL_SIO_SERIAL_PORTS == 1)
-
-#if (TOTAL_SIO_SERIAL_PORTS == 2)
-
-#define SIO_PORT_OPTION_TEXT\
-        SIO_PORT_OPTION_TEXT_INDEX\
-        option text  = STRING_TOKEN (STR_SIO_SERIAL_PORT1),\
-             value = TERMINAL_PORT1,\
-             flags = RESET_REQUIRED;
-
-#endif // END #if (TOTAL_SIO_SERIAL_PORTS == 2)
-
-#if (TOTAL_SIO_SERIAL_PORTS == 3)
-
-#define SIO_PORT_OPTION_TEXT\
-        SIO_PORT_OPTION_TEXT_INDEX\
-        option text  = STRING_TOKEN (STR_SIO_SERIAL_PORT1),\
-             value = TERMINAL_PORT1,\
-             flags = RESET_REQUIRED;\
-        option text  = STRING_TOKEN (STR_SIO_SERIAL_PORT2),\
-             value = TERMINAL_PORT2,\
-             flags = RESET_REQUIRED;
-
-#endif // END #if (TOTAL_SIO_SERIAL_PORTS == 3)
-
-#if (TOTAL_SIO_SERIAL_PORTS == 4)
-
-#define SIO_PORT_OPTION_TEXT\
-        SIO_PORT_OPTION_TEXT_INDEX\
-        option text  = STRING_TOKEN (STR_SIO_SERIAL_PORT1),\
-             value = TERMINAL_PORT1,\
-             flags = RESET_REQUIRED;\
-        option text  = STRING_TOKEN (STR_SIO_SERIAL_PORT2),\
-             value = TERMINAL_PORT2,\
-             flags = RESET_REQUIRED;\
-        option text  = STRING_TOKEN (STR_SIO_SERIAL_PORT3),\
-             value = TERMINAL_PORT3,\
-             flags = RESET_REQUIRED;
-
-#endif // END #if (TOTAL_SIO_SERIAL_PORTS == 4)
-
-#if (TOTAL_SIO_SERIAL_PORTS == 5)
-
-#define SIO_PORT_OPTION_TEXT\
-        SIO_PORT_OPTION_TEXT_INDEX\
-        option text  = STRING_TOKEN (STR_SIO_SERIAL_PORT1),\
-             value = TERMINAL_PORT1,\
-             flags = RESET_REQUIRED;\
-        option text  = STRING_TOKEN (STR_SIO_SERIAL_PORT2),\
-             value = TERMINAL_PORT2,\
-             flags = RESET_REQUIRED;\
-        option text  = STRING_TOKEN (STR_SIO_SERIAL_PORT3),\
-             value = TERMINAL_PORT3,\
-             flags = RESET_REQUIRED;\
-        option text  = STRING_TOKEN (STR_SIO_SERIAL_PORT4),\
-             value = TERMINAL_PORT4,\
-             flags = RESET_REQUIRED;             
-
-#endif // END #if (TOTAL_SIO_SERIAL_PORTS == 5)
-
-#if (TOTAL_SIO_SERIAL_PORTS == 6)
-
-#define SIO_PORT_OPTION_TEXT\
-        SIO_PORT_OPTION_TEXT_INDEX\
-        option text  = STRING_TOKEN (STR_SIO_SERIAL_PORT1),\
-             value = TERMINAL_PORT1,\
-             flags = RESET_REQUIRED;\
-        option text  = STRING_TOKEN (STR_SIO_SERIAL_PORT2),\
-             value = TERMINAL_PORT2,\
-             flags = RESET_REQUIRED;\
-        option text  = STRING_TOKEN (STR_SIO_SERIAL_PORT3),\
-             value = TERMINAL_PORT3,\
-             flags = RESET_REQUIRED;\
-        option text  = STRING_TOKEN (STR_SIO_SERIAL_PORT4),\
-             value = TERMINAL_PORT4,\
-             flags = RESET_REQUIRED;\
-        option text  = STRING_TOKEN (STR_SIO_SERIAL_PORT5),\
-             value = TERMINAL_PORT5,\
-             flags = RESET_REQUIRED;
-
-#endif // END #if (TOTAL_SIO_SERIAL_PORTS == 6)
-
-#if (TOTAL_SIO_SERIAL_PORTS == 7)
-
-#define SIO_PORT_OPTION_TEXT\
-        SIO_PORT_OPTION_TEXT_INDEX\
-        option text  = STRING_TOKEN (STR_SIO_SERIAL_PORT1),\
-             value = TERMINAL_PORT1,\
-             flags = RESET_REQUIRED;\
-        option text  = STRING_TOKEN (STR_SIO_SERIAL_PORT2),\
-             value = TERMINAL_PORT2,\
-             flags = RESET_REQUIRED;\
-        option text  = STRING_TOKEN (STR_SIO_SERIAL_PORT3),\
-             value = TERMINAL_PORT3,\
-             flags = RESET_REQUIRED;\
-        option text  = STRING_TOKEN (STR_SIO_SERIAL_PORT4),\
-             value = TERMINAL_PORT4,\
-             flags = RESET_REQUIRED;\
-        option text  = STRING_TOKEN (STR_SIO_SERIAL_PORT5),\
-             value = TERMINAL_PORT5,\
-             flags = RESET_REQUIRED;\
-        option text  = STRING_TOKEN (STR_SIO_SERIAL_PORT6),\
-             value = TERMINAL_PORT6,\
-             flags = RESET_REQUIRED;             
-
-#endif // END #if (TOTAL_SIO_SERIAL_PORTS == 7)
-
-#if (TOTAL_SIO_SERIAL_PORTS == 8)
-
-#define SIO_PORT_OPTION_TEXT\
-        SIO_PORT_OPTION_TEXT_INDEX\
-        option text  = STRING_TOKEN (STR_SIO_SERIAL_PORT1),\
-             value = TERMINAL_PORT1,\
-             flags = RESET_REQUIRED;\
-        option text  = STRING_TOKEN (STR_SIO_SERIAL_PORT2),\
-             value = TERMINAL_PORT2,\
-             flags = RESET_REQUIRED;\
-        option text  = STRING_TOKEN (STR_SIO_SERIAL_PORT3),\
-             value = TERMINAL_PORT3,\
-             flags = RESET_REQUIRED;\
-        option text  = STRING_TOKEN (STR_SIO_SERIAL_PORT4),\
-             value = TERMINAL_PORT4,\
-             flags = RESET_REQUIRED;\
-        option text  = STRING_TOKEN (STR_SIO_SERIAL_PORT5),\
-             value = TERMINAL_PORT5,\
-             flags = RESET_REQUIRED;\
-        option text  = STRING_TOKEN (STR_SIO_SERIAL_PORT6),\
-             value = TERMINAL_PORT6,\
-             flags = RESET_REQUIRED;\
-        option text  = STRING_TOKEN (STR_SIO_SERIAL_PORT7),\
-             value = TERMINAL_PORT7,\
-             flags = RESET_REQUIRED;             
-
-#endif // END #if (TOTAL_SIO_SERIAL_PORTS == 8)
-
-#if (TOTAL_SIO_SERIAL_PORTS == 9)
-
-#define SIO_PORT_OPTION_TEXT\
-        SIO_PORT_OPTION_TEXT_INDEX\
-        option text  = STRING_TOKEN (STR_SIO_SERIAL_PORT1),\
-             value = TERMINAL_PORT1,\
-             flags = RESET_REQUIRED;\
-        option text  = STRING_TOKEN (STR_SIO_SERIAL_PORT2),\
-             value = TERMINAL_PORT2,\
-             flags = RESET_REQUIRED;\
-        option text  = STRING_TOKEN (STR_SIO_SERIAL_PORT3),\
-             value = TERMINAL_PORT3,\
-             flags = RESET_REQUIRED;\
-        option text  = STRING_TOKEN (STR_SIO_SERIAL_PORT3),\
-             value = TERMINAL_PORT3,\
-             flags = RESET_REQUIRED;\
-        option text  = STRING_TOKEN (STR_SIO_SERIAL_PORT4),\
-             value = TERMINAL_PORT4,\
-             flags = RESET_REQUIRED;\
-        option text  = STRING_TOKEN (STR_SIO_SERIAL_PORT5),\
-             value = TERMINAL_PORT5,\
-             flags = RESET_REQUIRED;\
-        option text  = STRING_TOKEN (STR_SIO_SERIAL_PORT6),\
-             value = TERMINAL_PORT6,\
-             flags = RESET_REQUIRED;\
-        option text  = STRING_TOKEN (STR_SIO_SERIAL_PORT7),\
-             value = TERMINAL_PORT7,\
-             flags = RESET_REQUIRED;\
-        option text  = STRING_TOKEN (STR_SIO_SERIAL_PORT8),\
-             value = TERMINAL_PORT8,\
-             flags = RESET_REQUIRED;             
-
-#endif // END #if (TOTAL_SIO_SERIAL_PORTS == 9)
-
-#if (TOTAL_SIO_SERIAL_PORTS == 10)
-
-#define SIO_PORT_OPTION_TEXT\
-        SIO_PORT_OPTION_TEXT_INDEX\
-        option text  = STRING_TOKEN (STR_SIO_SERIAL_PORT1),\
-             value = TERMINAL_PORT1,\
-             flags = RESET_REQUIRED;\
-        option text  = STRING_TOKEN (STR_SIO_SERIAL_PORT2),\
-             value = TERMINAL_PORT2,\
-             flags = RESET_REQUIRED;\
-        option text  = STRING_TOKEN (STR_SIO_SERIAL_PORT3),\
-             value = TERMINAL_PORT3,\
-             flags = RESET_REQUIRED;\
-        option text  = STRING_TOKEN (STR_SIO_SERIAL_PORT4),\
-             value = TERMINAL_PORT4,\
-             flags = RESET_REQUIRED;\
-        option text  = STRING_TOKEN (STR_SIO_SERIAL_PORT5),\
-             value = TERMINAL_PORT5,\
-             flags = RESET_REQUIRED;\
-        option text  = STRING_TOKEN (STR_SIO_SERIAL_PORT6),\
-             value = TERMINAL_PORT6,\
-             flags = RESET_REQUIRED;\
-        option text  = STRING_TOKEN (STR_SIO_SERIAL_PORT7),\
-             value = TERMINAL_PORT7,\
-             flags = RESET_REQUIRED;\
-        option text  = STRING_TOKEN (STR_SIO_SERIAL_PORT8),\
-             value = TERMINAL_PORT8,\
-             flags = RESET_REQUIRED;\
-        option text  = STRING_TOKEN (STR_SIO_SERIAL_PORT9),\
-             value = TERMINAL_PORT9,\
-             flags = RESET_REQUIRED;
-     
-#endif // END #if (TOTAL_SIO_SERIAL_PORTS == 10)
-
-//---------------------------------------------------------------------------
-// SIO PORT OPTION TEXT DEFINITION END
-//---------------------------------------------------------------------------
-
-
-//---------------------------------------------------------------------------
-// AcpiSpcrPort VARIABLE DEFINITION START
-//---------------------------------------------------------------------------
-
-#if (TOTAL_SERIAL_PORTS > 0) 
 
 #define TERMINAL_ONEOF_ACPISPCRPORT\
         oneof varid = SETUP_DATA.AcpiSpcrPort,\
             prompt = STRING_TOKEN (STR_OUT_OF_BAND_MANAGEMENT_PORT),\
             help   = STRING_TOKEN (STR_OUT_OF_BAND_MANAGEMENT_PORT_HELP),\
-            SIO_PORT_OPTION_TEXT\
             PCI_PORT_OPTION_TEXT\
         endoneof;
 
-#endif // ((TOTAL_SERIAL_PORTS > 0) 
+#endif // END #if (TOTAL_SIO_SERIAL_PORTS == 0)
+
+#if (TOTAL_SIO_SERIAL_PORTS == 1)
+
+#define TERMINAL_ONEOF_ACPISPCRPORT\
+        oneof varid = SETUP_DATA.AcpiSpcrPort,\
+            prompt = STRING_TOKEN (STR_OUT_OF_BAND_MANAGEMENT_PORT),\
+            help   = STRING_TOKEN (STR_OUT_OF_BAND_MANAGEMENT_PORT_HELP),\
+            option text  = STRING_TOKEN (STR_SIO_SERIAL_PORT0),\
+                   value = TERMINAL_PORT0,\
+                   flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;\
+            PCI_PORT_OPTION_TEXT\
+        endoneof;
+
+#endif // END #if (TOTAL_SIO_SERIAL_PORTS == 1)
+
+#if (TOTAL_SIO_SERIAL_PORTS == 2)
+
+#define TERMINAL_ONEOF_ACPISPCRPORT\
+        oneof varid = SETUP_DATA.AcpiSpcrPort,\
+            prompt = STRING_TOKEN (STR_OUT_OF_BAND_MANAGEMENT_PORT),\
+            help   = STRING_TOKEN (STR_OUT_OF_BAND_MANAGEMENT_PORT_HELP),\
+            option text  = STRING_TOKEN (STR_SIO_SERIAL_PORT0),\
+                   value = TERMINAL_PORT0,\
+                   flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;\
+            option text  = STRING_TOKEN (STR_SIO_SERIAL_PORT1),\
+                   value = TERMINAL_PORT1,\
+                   flags = RESET_REQUIRED;\
+            PCI_PORT_OPTION_TEXT\
+        endoneof;
+
+#endif // END #if (TOTAL_SIO_SERIAL_PORTS == 2)
+
+#if (TOTAL_SIO_SERIAL_PORTS == 3)
+
+#define TERMINAL_ONEOF_ACPISPCRPORT\
+        oneof varid = SETUP_DATA.AcpiSpcrPort,\
+            prompt = STRING_TOKEN (STR_OUT_OF_BAND_MANAGEMENT_PORT),\
+            help   = STRING_TOKEN (STR_OUT_OF_BAND_MANAGEMENT_PORT_HELP),\
+            option text  = STRING_TOKEN (STR_SIO_SERIAL_PORT0),\
+                   value = TERMINAL_PORT0,\
+                   flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;\
+            option text  = STRING_TOKEN (STR_SIO_SERIAL_PORT1),\
+                   value = TERMINAL_PORT1,\
+                   flags = RESET_REQUIRED;\
+            option text  = STRING_TOKEN (STR_SIO_SERIAL_PORT2),\
+                   value = TERMINAL_PORT2,\
+                   flags = RESET_REQUIRED;\
+            PCI_PORT_OPTION_TEXT\
+        endoneof;
+
+#endif // END #if (TOTAL_SIO_SERIAL_PORTS == 3)
+
+#if (TOTAL_SIO_SERIAL_PORTS == 4)
+
+#define TERMINAL_ONEOF_ACPISPCRPORT\
+        oneof varid = SETUP_DATA.AcpiSpcrPort,\
+            prompt = STRING_TOKEN (STR_OUT_OF_BAND_MANAGEMENT_PORT),\
+            help   = STRING_TOKEN (STR_OUT_OF_BAND_MANAGEMENT_PORT_HELP),\
+            option text  = STRING_TOKEN (STR_SIO_SERIAL_PORT0),\
+                   value = TERMINAL_PORT0,\
+                   flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;\
+            option text  = STRING_TOKEN (STR_SIO_SERIAL_PORT1),\
+                   value = TERMINAL_PORT1,\
+                   flags = RESET_REQUIRED;\
+            option text  = STRING_TOKEN (STR_SIO_SERIAL_PORT2),\
+                   value = TERMINAL_PORT2,\
+                   flags = RESET_REQUIRED;\
+            option text  = STRING_TOKEN (STR_SIO_SERIAL_PORT3),\
+                   value = TERMINAL_PORT3,\
+                   flags = RESET_REQUIRED;\
+            PCI_PORT_OPTION_TEXT\
+        endoneof;
+
+#endif // END #if (TOTAL_SIO_SERIAL_PORTS == 4)
+
+#if (TOTAL_SIO_SERIAL_PORTS == 5)
+
+#define TERMINAL_ONEOF_ACPISPCRPORT\
+        oneof varid = SETUP_DATA.AcpiSpcrPort,\
+            prompt = STRING_TOKEN (STR_OUT_OF_BAND_MANAGEMENT_PORT),\
+            help   = STRING_TOKEN (STR_OUT_OF_BAND_MANAGEMENT_PORT_HELP),\
+            option text  = STRING_TOKEN (STR_SIO_SERIAL_PORT0),\
+                   value = TERMINAL_PORT0,\
+                   flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;\
+            option text  = STRING_TOKEN (STR_SIO_SERIAL_PORT1),\
+                   value = TERMINAL_PORT1,\
+                   flags = RESET_REQUIRED;\
+            option text  = STRING_TOKEN (STR_SIO_SERIAL_PORT2),\
+                   value = TERMINAL_PORT2,\
+                   flags = RESET_REQUIRED;\
+            option text  = STRING_TOKEN (STR_SIO_SERIAL_PORT3),\
+                   value = TERMINAL_PORT3,\
+                   flags = RESET_REQUIRED;\
+            option text  = STRING_TOKEN (STR_SIO_SERIAL_PORT4),\
+                   value = TERMINAL_PORT4,\
+                   flags = RESET_REQUIRED;\
+            PCI_PORT_OPTION_TEXT\
+        endoneof;
+
+#endif // END #if (TOTAL_SIO_SERIAL_PORTS == 5)
+
+#if (TOTAL_SIO_SERIAL_PORTS == 6)
+
+#define TERMINAL_ONEOF_ACPISPCRPORT\
+        oneof varid = SETUP_DATA.AcpiSpcrPort,\
+            prompt = STRING_TOKEN (STR_OUT_OF_BAND_MANAGEMENT_PORT),\
+            help   = STRING_TOKEN (STR_OUT_OF_BAND_MANAGEMENT_PORT_HELP),\
+            option text  = STRING_TOKEN (STR_SIO_SERIAL_PORT0),\
+                   value = TERMINAL_PORT0,\
+                   flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;\
+            option text  = STRING_TOKEN (STR_SIO_SERIAL_PORT1),\
+                   value = TERMINAL_PORT1,\
+                   flags = RESET_REQUIRED;\
+            option text  = STRING_TOKEN (STR_SIO_SERIAL_PORT2),\
+                   value = TERMINAL_PORT2,\
+                   flags = RESET_REQUIRED;\
+            option text  = STRING_TOKEN (STR_SIO_SERIAL_PORT3),\
+                   value = TERMINAL_PORT3,\
+                   flags = RESET_REQUIRED;\
+            option text  = STRING_TOKEN (STR_SIO_SERIAL_PORT4),\
+                   value = TERMINAL_PORT4,\
+                   flags = RESET_REQUIRED;\
+            option text  = STRING_TOKEN (STR_SIO_SERIAL_PORT5),\
+                   value = TERMINAL_PORT5,\
+                   flags = RESET_REQUIRED;\
+            PCI_PORT_OPTION_TEXT\
+        endoneof;
+
+#endif // END #if (TOTAL_SIO_SERIAL_PORTS == 6)
+
+#if (TOTAL_SIO_SERIAL_PORTS == 7)
+
+#define TERMINAL_ONEOF_ACPISPCRPORT\
+        oneof varid = SETUP_DATA.AcpiSpcrPort,\
+            prompt = STRING_TOKEN (STR_OUT_OF_BAND_MANAGEMENT_PORT),\
+            help   = STRING_TOKEN (STR_OUT_OF_BAND_MANAGEMENT_PORT_HELP),\
+            option text  = STRING_TOKEN (STR_SIO_SERIAL_PORT0),\
+                   value = TERMINAL_PORT0,\
+                   flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;\
+            option text  = STRING_TOKEN (STR_SIO_SERIAL_PORT1),\
+                   value = TERMINAL_PORT1,\
+                   flags = RESET_REQUIRED;\
+            option text  = STRING_TOKEN (STR_SIO_SERIAL_PORT2),\
+                   value = TERMINAL_PORT2,\
+                   flags = RESET_REQUIRED;\
+            option text  = STRING_TOKEN (STR_SIO_SERIAL_PORT3),\
+                   value = TERMINAL_PORT3,\
+                   flags = RESET_REQUIRED;\
+            option text  = STRING_TOKEN (STR_SIO_SERIAL_PORT4),\
+                   value = TERMINAL_PORT4,\
+                   flags = RESET_REQUIRED;\
+            option text  = STRING_TOKEN (STR_SIO_SERIAL_PORT5),\
+                   value = TERMINAL_PORT5,\
+                   flags = RESET_REQUIRED;\
+            option text  = STRING_TOKEN (STR_SIO_SERIAL_PORT6),\
+                   value = TERMINAL_PORT6,\
+                   flags = RESET_REQUIRED;\
+            PCI_PORT_OPTION_TEXT\
+        endoneof;
+
+#endif // END #if (TOTAL_SIO_SERIAL_PORTS == 7)
+
+#if (TOTAL_SIO_SERIAL_PORTS == 8)
+
+#define TERMINAL_ONEOF_ACPISPCRPORT\
+        oneof varid = SETUP_DATA.AcpiSpcrPort,\
+            prompt = STRING_TOKEN (STR_OUT_OF_BAND_MANAGEMENT_PORT),\
+            help   = STRING_TOKEN (STR_OUT_OF_BAND_MANAGEMENT_PORT_HELP),\
+            option text  = STRING_TOKEN (STR_SIO_SERIAL_PORT0),\
+                   value = TERMINAL_PORT0,\
+                   flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;\
+            option text  = STRING_TOKEN (STR_SIO_SERIAL_PORT1),\
+                   value = TERMINAL_PORT1,\
+                   flags = RESET_REQUIRED;\
+            option text  = STRING_TOKEN (STR_SIO_SERIAL_PORT2),\
+                   value = TERMINAL_PORT2,\
+                   flags = RESET_REQUIRED;\
+            option text  = STRING_TOKEN (STR_SIO_SERIAL_PORT3),\
+                   value = TERMINAL_PORT3,\
+                   flags = RESET_REQUIRED;\
+            option text  = STRING_TOKEN (STR_SIO_SERIAL_PORT4),\
+                   value = TERMINAL_PORT4,\
+                   flags = RESET_REQUIRED;\
+            option text  = STRING_TOKEN (STR_SIO_SERIAL_PORT5),\
+                   value = TERMINAL_PORT5,\
+                   flags = RESET_REQUIRED;\
+            option text  = STRING_TOKEN (STR_SIO_SERIAL_PORT6),\
+                   value = TERMINAL_PORT6,\
+                   flags = RESET_REQUIRED;\
+            option text  = STRING_TOKEN (STR_SIO_SERIAL_PORT7),\
+                   value = TERMINAL_PORT7,\
+                   flags = RESET_REQUIRED;\
+            PCI_PORT_OPTION_TEXT\
+        endoneof;
+
+#endif // END #if (TOTAL_SIO_SERIAL_PORTS == 8)
+
+#if (TOTAL_SIO_SERIAL_PORTS == 9)
+
+#define TERMINAL_ONEOF_ACPISPCRPORT\
+        oneof varid = SETUP_DATA.AcpiSpcrPort,\
+            prompt = STRING_TOKEN (STR_OUT_OF_BAND_MANAGEMENT_PORT),\
+            help   = STRING_TOKEN (STR_OUT_OF_BAND_MANAGEMENT_PORT_HELP),\
+            option text  = STRING_TOKEN (STR_SIO_SERIAL_PORT0),\
+                   value = TERMINAL_PORT0,\
+                   flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;\
+            option text  = STRING_TOKEN (STR_SIO_SERIAL_PORT1),\
+                   value = TERMINAL_PORT1,\
+                   flags = RESET_REQUIRED;\
+            option text  = STRING_TOKEN (STR_SIO_SERIAL_PORT2),\
+                   value = TERMINAL_PORT2,\
+                   flags = RESET_REQUIRED;\
+            option text  = STRING_TOKEN (STR_SIO_SERIAL_PORT3),\
+                   value = TERMINAL_PORT3,\
+                   flags = RESET_REQUIRED;\
+            option text  = STRING_TOKEN (STR_SIO_SERIAL_PORT4),\
+                   value = TERMINAL_PORT4,\
+                   flags = RESET_REQUIRED;\
+            option text  = STRING_TOKEN (STR_SIO_SERIAL_PORT5),\
+                   value = TERMINAL_PORT5,\
+                   flags = RESET_REQUIRED;\
+            option text  = STRING_TOKEN (STR_SIO_SERIAL_PORT6),\
+                   value = TERMINAL_PORT6,\
+                   flags = RESET_REQUIRED;\
+            option text  = STRING_TOKEN (STR_SIO_SERIAL_PORT7),\
+                   value = TERMINAL_PORT7,\
+                   flags = RESET_REQUIRED;\
+            option text  = STRING_TOKEN (STR_SIO_SERIAL_PORT8),\
+                   value = TERMINAL_PORT8,\
+                   flags = RESET_REQUIRED;\
+            PCI_PORT_OPTION_TEXT\
+        endoneof;
+
+#endif // END #if (TOTAL_SIO_SERIAL_PORTS == 9)
+
+#if (TOTAL_SIO_SERIAL_PORTS == 10)
+
+#define TERMINAL_ONEOF_ACPISPCRPORT\
+        oneof varid = SETUP_DATA.AcpiSpcrPort,\
+            prompt = STRING_TOKEN (STR_OUT_OF_BAND_MANAGEMENT_PORT),\
+            help   = STRING_TOKEN (STR_OUT_OF_BAND_MANAGEMENT_PORT_HELP),\
+            option text  = STRING_TOKEN (STR_SIO_SERIAL_PORT0),\
+                   value = TERMINAL_PORT0,\
+                   flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;\
+            option text  = STRING_TOKEN (STR_SIO_SERIAL_PORT1),\
+                   value = TERMINAL_PORT1,\
+                   flags = RESET_REQUIRED;\
+            option text  = STRING_TOKEN (STR_SIO_SERIAL_PORT2),\
+                   value = TERMINAL_PORT2,\
+                   flags = RESET_REQUIRED;\
+            option text  = STRING_TOKEN (STR_SIO_SERIAL_PORT3),\
+                   value = TERMINAL_PORT3,\
+                   flags = RESET_REQUIRED;\
+            option text  = STRING_TOKEN (STR_SIO_SERIAL_PORT4),\
+                   value = TERMINAL_PORT4,\
+                   flags = RESET_REQUIRED;\
+            option text  = STRING_TOKEN (STR_SIO_SERIAL_PORT5),\
+                   value = TERMINAL_PORT5,\
+                   flags = RESET_REQUIRED;\
+            option text  = STRING_TOKEN (STR_SIO_SERIAL_PORT6),\
+                   value = TERMINAL_PORT6,\
+                   flags = RESET_REQUIRED;\
+            option text  = STRING_TOKEN (STR_SIO_SERIAL_PORT7),\
+                   value = TERMINAL_PORT7,\
+                   flags = RESET_REQUIRED;\
+            option text  = STRING_TOKEN (STR_SIO_SERIAL_PORT8),\
+                   value = TERMINAL_PORT8,\
+                   flags = RESET_REQUIRED;\
+            option text  = STRING_TOKEN (STR_SIO_SERIAL_PORT9),\
+                   value = TERMINAL_PORT9,\
+                   flags = RESET_REQUIRED;\
+            PCI_PORT_OPTION_TEXT\
+        endoneof;
+
+#endif // END #if (TOTAL_SIO_SERIAL_PORTS == 10)
+
+#endif // END #if (TOTAL_SERIAL_PORTS > 1)
 
 #ifndef TERMINAL_ONEOF_ACPISPCRPORT
     #define TERMINAL_ONEOF_ACPISPCRPORT
@@ -769,156 +840,34 @@
 // AcpiSpcrPort VARIABLE DEFINITION END
 //---------------------------------------------------------------------------
 
-//---------------------------------------------------------------------------
-// ComPortforLegacy VARIABLE DEFINITION START
-//---------------------------------------------------------------------------
-
-#if (TOTAL_SERIAL_PORTS > 1)
-
-#define TERMINAL_ONEOF_LEGACYPORT\
-        oneof varid = SETUP_DATA.ComPortforLegacy,\
-            prompt = STRING_TOKEN (STR_COM_FOR_LEGACY_REDIRECTION),\
-            help   = STRING_TOKEN (STR_COM_FOR_LEGACY_REDIRECTION_HELP),\
-            SIO_PORT_OPTION_TEXT\
-            PCI_PORT_OPTION_TEXT\
-        endoneof;
-
-#endif // END #if (TOTAL_SERIAL_PORTS > 1)
-
-#ifndef TERMINAL_ONEOF_LEGACYPORT
-    #define TERMINAL_ONEOF_LEGACYPORT
-#endif // END #ifndef TERMINAL_ONEOF_LEGACYPORT
-
-//---------------------------------------------------------------------------
-// ComPortforLegacy VARIABLE DEFINITION END
-//---------------------------------------------------------------------------
-
 #endif // END #ifdef CONTROL_DEFINITION
 
 #ifdef CONTROLS_WITH_DEFAULTS
-#define PORT_CONTROLS_DEFAULT(PORT_NUM, DEFAULT_CONSOLE_REDIRECTION_ENABLE) \
-    TERMINAL_ONEOF_TERMINALTYPE(PORT_NUM) \
-    TERMINAL_ONEOF_BAUDRATE(PORT_NUM) \
-    TERMINAL_ONEOF_DATABITS(PORT_NUM) \
-    TERMINAL_ONEOF_PARITY(PORT_NUM) \
-    TERMINAL_ONEOF_STOPBITS(PORT_NUM) \
-    TERMINAL_ONEOF_FLOWCONTROL(PORT_NUM) \
-    TERMINAL_ONEOF_VTUTF8(PORT_NUM) \
-    TERMINAL_ONEOF_RECORDERMODE(PORT_NUM) \
-    TERMINAL_ONEOF_RESOLUTION(PORT_NUM) \
-    TERMINAL_ONEOF_LEGACYOSRESOLUTION(PORT_NUM) \
-    TERMINAL_ONEOF_PUTTYFUNCTIONKEYPAD(PORT_NUM) \
-    TERMINAL_ONEOF_REDIRECTIONAFTERBIOSENABLE(PORT_NUM) \
-    TERMINAL_ONEOF_CONSOLEREDIRECTIONENABLE(PORT_NUM,DEFAULT_CONSOLE_REDIRECTION_ENABLE)
-    
     TERMINAL_CHECKBOX_DEBUGGERCONSOLEREDIRECTIONENABLE
     TERMINAL_ONEOF_DEBUGGERTERMINALTYPE
-
-#if (TOTAL_SIO_SERIAL_PORTS > 0)
-    PORT_CONTROLS_DEFAULT(TERMINAL_PORT0, COM0_DEFAULT_CONSOLE_REDIRECTION_ENABLE)
+#if (TOTAL_SERIAL_PORTS > 0)
+    TERMINAL_ONEOF_TERMINALTYPE(PORT_NUM)
+    TERMINAL_ONEOF_BAUDRATE(PORT_NUM)
+    TERMINAL_ONEOF_DATABITS(PORT_NUM)
+    TERMINAL_ONEOF_PARITY(PORT_NUM)
+    TERMINAL_ONEOF_STOPBITS(PORT_NUM)
+    TERMINAL_ONEOF_FLOWCONTROL(PORT_NUM)
+    TERMINAL_ONEOF_VTUTF8(PORT_NUM)
+    TERMINAL_ONEOF_RECORDERMODE(PORT_NUM)
+    TERMINAL_ONEOF_RESOLUTION(PORT_NUM)
+    TERMINAL_ONEOF_LEGACYOSRESOLUTION(PORT_NUM)
+    TERMINAL_ONEOF_PUTTYFUNCTIONKEYPAD(PORT_NUM)    
+    TERMINAL_ONEOF_REDIRECTIONAFTERBIOSENABLE(PORT_NUM)
 #if  (INSTALL_LEGACY_OS_THROUGH_REMOTE == 1)
-    TERMINAL_ONEOF_INSTALLLEGACYOSTHROUGHREMOTE(TERMINAL_PORT0)
+    TERMINAL_ONEOF_INSTALLLEGACYOSTHROUGHREMOTE(PORT_NUM)
 #endif
-#endif
-
-#if (TOTAL_SIO_SERIAL_PORTS > 1)
-    PORT_CONTROLS_DEFAULT(TERMINAL_PORT1, COM1_DEFAULT_CONSOLE_REDIRECTION_ENABLE)
-#if  (INSTALL_LEGACY_OS_THROUGH_REMOTE == 1)
-    TERMINAL_ONEOF_INSTALLLEGACYOSTHROUGHREMOTE(TERMINAL_PORT1)
-#endif
-#endif
-
-#if (TOTAL_SIO_SERIAL_PORTS > 2)
-    PORT_CONTROLS_DEFAULT(TERMINAL_PORT2, COM2_DEFAULT_CONSOLE_REDIRECTION_ENABLE)
-#if  (INSTALL_LEGACY_OS_THROUGH_REMOTE == 1)
-    TERMINAL_ONEOF_INSTALLLEGACYOSTHROUGHREMOTE(TERMINAL_PORT2)
-#endif
-#endif
-
-#if (TOTAL_SIO_SERIAL_PORTS > 3)
-    PORT_CONTROLS_DEFAULT(TERMINAL_PORT3, COM3_DEFAULT_CONSOLE_REDIRECTION_ENABLE)
-#if  (INSTALL_LEGACY_OS_THROUGH_REMOTE == 1)
-    TERMINAL_ONEOF_INSTALLLEGACYOSTHROUGHREMOTE(TERMINAL_PORT3)
-#endif
-#endif
-
-#if (TOTAL_SIO_SERIAL_PORTS > 4)
-    PORT_CONTROLS_DEFAULT(TERMINAL_PORT4, COM4_DEFAULT_CONSOLE_REDIRECTION_ENABLE)
-#if  (INSTALL_LEGACY_OS_THROUGH_REMOTE == 1)
-    TERMINAL_ONEOF_INSTALLLEGACYOSTHROUGHREMOTE(TERMINAL_PORT4)
-#endif
-#endif
-
-#if (TOTAL_SIO_SERIAL_PORTS > 5)
-    PORT_CONTROLS_DEFAULT(TERMINAL_PORT5, COM5_DEFAULT_CONSOLE_REDIRECTION_ENABLE)
-#if  (INSTALL_LEGACY_OS_THROUGH_REMOTE == 1)
-    TERMINAL_ONEOF_INSTALLLEGACYOSTHROUGHREMOTE(TERMINAL_PORT5)
-#endif
-#endif
-
-#if (TOTAL_SIO_SERIAL_PORTS > 6)
-    PORT_CONTROLS_DEFAULT(TERMINAL_PORT6, COM6_DEFAULT_CONSOLE_REDIRECTION_ENABLE)
-#if  (INSTALL_LEGACY_OS_THROUGH_REMOTE == 1)
-    TERMINAL_ONEOF_INSTALLLEGACYOSTHROUGHREMOTE(TERMINAL_PORT6)
-#endif
-#endif
-
-#if (TOTAL_SIO_SERIAL_PORTS > 7)
-    PORT_CONTROLS_DEFAULT(TERMINAL_PORT7, COM7_DEFAULT_CONSOLE_REDIRECTION_ENABLE)
-#if  (INSTALL_LEGACY_OS_THROUGH_REMOTE == 1)
-    TERMINAL_ONEOF_INSTALLLEGACYOSTHROUGHREMOTE(TERMINAL_PORT7)
-#endif
-#endif
-
-#if (TOTAL_SIO_SERIAL_PORTS > 8)
-    PORT_CONTROLS_DEFAULT(TERMINAL_PORT8, COM8_DEFAULT_CONSOLE_REDIRECTION_ENABLE)
-#if  (INSTALL_LEGACY_OS_THROUGH_REMOTE == 1)
-    TERMINAL_ONEOF_INSTALLLEGACYOSTHROUGHREMOTE(TERMINAL_PORT8)
-#endif
-#endif
-
-#if (TOTAL_SIO_SERIAL_PORTS > 9)
-    PORT_CONTROLS_DEFAULT(TERMINAL_PORT9, COM9_DEFAULT_CONSOLE_REDIRECTION_ENABLE)
-#if  (INSTALL_LEGACY_OS_THROUGH_REMOTE == 1)
-    TERMINAL_ONEOF_INSTALLLEGACYOSTHROUGHREMOTE(TERMINAL_PORT9)
-#endif
-#endif
-////////////////////////////////////
-
-#if (TOTAL_PCI_SERIAL_PORTS > 0)
-    PORT_CONTROLS_DEFAULT(PCI_SERIAL_PORT_0_INDEX, PCI0_DEFAULT_CONSOLE_REDIRECTION_ENABLE)
-#if  (INSTALL_LEGACY_OS_THROUGH_REMOTE == 1)
-    TERMINAL_ONEOF_INSTALLLEGACYOSTHROUGHREMOTE(PCI_SERIAL_PORT_0_INDEX)
-#endif
-#endif
-
-#if (TOTAL_PCI_SERIAL_PORTS > 1)
-    PORT_CONTROLS_DEFAULT(PCI_SERIAL_PORT_1_INDEX, PCI1_DEFAULT_CONSOLE_REDIRECTION_ENABLE)
-#if  (INSTALL_LEGACY_OS_THROUGH_REMOTE == 1)
-    TERMINAL_ONEOF_INSTALLLEGACYOSTHROUGHREMOTE(PCI_SERIAL_PORT_1_INDEX)
-#endif
-#endif
-
-#if (TOTAL_PCI_SERIAL_PORTS > 2)
-    PORT_CONTROLS_DEFAULT(PCI_SERIAL_PORT_2_INDEX, PCI2_DEFAULT_CONSOLE_REDIRECTION_ENABLE)
-#if  (INSTALL_LEGACY_OS_THROUGH_REMOTE == 1)
-    TERMINAL_ONEOF_INSTALLLEGACYOSTHROUGHREMOTE(PCI_SERIAL_PORT_2_INDEX)
-#endif
-#endif
-
-#if (TOTAL_PCI_SERIAL_PORTS > 3)
-    PORT_CONTROLS_DEFAULT(PCI_SERIAL_PORT_3_INDEX, PCI3_DEFAULT_CONSOLE_REDIRECTION_ENABLE)
-#if  (INSTALL_LEGACY_OS_THROUGH_REMOTE == 1)
-    TERMINAL_ONEOF_INSTALLLEGACYOSTHROUGHREMOTE(PCI_SERIAL_PORT_3_INDEX)
-#endif
-#endif
-////////////////////////////////////
+    TERMINAL_ONEOF_CONSOLEREDIRECTIONENABLE(PORT_NUM,DEFAULT_CONSOLE_REDIRECTION_ENABLE)
     TERMINAL_CHECKBOX_ACPISPCRCONSOLEREDIRECTIONENABLE
     TERMINAL_ONEOF_ACPISPCRTERMINALTYPE
     TERMINAL_ONEOF_ACPISPCRBAUDRATE
     TERMINAL_ONEOF_ACPISPCRFLOWCONTROL
     TERMINAL_ONEOF_ACPISPCRPORT
-
+#endif
 #endif // END #ifdef CONTROLS_WITH_DEFAULTS
 ////////////////////////////////////
 
@@ -1096,17 +1045,6 @@
 #endif
 #endif
 
-
-#if (TOTAL_SERIAL_PORTS > 0)
-    SUBTITLE(STRING_TOKEN(STR_LEGACY_CONSOLE_REDIRECTION))
-
-    goto LEGACYSREDIR_FORM_ID, 
-      prompt  = STRING_TOKEN(STR_LEGACY_CONSOLE_REDIRECTION_SETTINGS), 
-      help    = STRING_TOKEN(STR_LEGACY_CONSOLE_REDIRECTION_SETTINGS); 
-    
-    SEPARATOR
-#endif
-
 #if (TOTAL_SERIAL_PORTS > 0)
     SUBTITLE(STRING_TOKEN(STR_SERIAL_PORT_FOR_OUT_OF_BAND_MGMT))
 #else
@@ -1218,20 +1156,6 @@
 
 #endif // END #if TERMINAL_FORM_SPCR
 
-#ifndef LEGACYSREDIR_FORM
-#define LEGACYSREDIR_FORM
-    
-    form formid = AUTO_ID(LEGACYSREDIR_FORM_ID),
-    title = STRING_TOKEN(STR_LEGACY_CONSOLE_REDIRECTION_SETTINGS);
-    
-    TERMINAL_ONEOF_LEGACYPORT
-    
-    endform;
-#endif // END #if LEGACYSREDIR_FORM
-
-
-
-
 #endif //ifdef FORM_SET_FORM
 
 
@@ -1283,7 +1207,7 @@
                     SUBTITLE(STRING_TOKEN(STR_SIO_SERIAL_PORT0)),
                     AUTO_ID(COM0_FORM_ID), TERMINAL_PORT0)
     #endif
-#endif
+#endif 
 
 #if (TOTAL_SIO_SERIAL_PORTS > 1)
     #ifdef FORM_SET_FORM
@@ -1291,7 +1215,7 @@
                     SUBTITLE(STRING_TOKEN(STR_SIO_SERIAL_PORT1)),
                     AUTO_ID(COM1_FORM_ID), TERMINAL_PORT1)
     #endif
-#endif
+#endif 
 
 #if (TOTAL_SIO_SERIAL_PORTS > 2)
     #ifdef FORM_SET_FORM
@@ -1299,7 +1223,7 @@
                     SUBTITLE(STRING_TOKEN(STR_SIO_SERIAL_PORT2)),
                     AUTO_ID(COM2_FORM_ID), TERMINAL_PORT2)
     #endif
-#endif
+#endif 
 
 #if (TOTAL_SIO_SERIAL_PORTS > 3)
     #ifdef FORM_SET_FORM
@@ -1307,7 +1231,7 @@
                     SUBTITLE(STRING_TOKEN(STR_SIO_SERIAL_PORT3)),
                     AUTO_ID(COM3_FORM_ID), TERMINAL_PORT3)
     #endif
-#endif
+#endif 
 
 #if (TOTAL_SIO_SERIAL_PORTS > 4)
     #ifdef FORM_SET_FORM
@@ -1315,7 +1239,7 @@
                     SUBTITLE(STRING_TOKEN(STR_SIO_SERIAL_PORT4)),
                     AUTO_ID(COM4_FORM_ID), TERMINAL_PORT4)
     #endif
-#endif
+#endif 
 
 #if (TOTAL_SIO_SERIAL_PORTS > 5)
     #ifdef FORM_SET_FORM
@@ -1323,7 +1247,7 @@
                     SUBTITLE(STRING_TOKEN(STR_SIO_SERIAL_PORT5)),
                     AUTO_ID(COM5_FORM_ID), TERMINAL_PORT5)
     #endif
-#endif
+#endif 
 
 #if (TOTAL_SIO_SERIAL_PORTS > 6)
     #ifdef FORM_SET_FORM
@@ -1331,7 +1255,7 @@
                     SUBTITLE(STRING_TOKEN(STR_SIO_SERIAL_PORT6)),
                     AUTO_ID(COM6_FORM_ID), TERMINAL_PORT6)
     #endif
-#endif
+#endif 
 
 #if (TOTAL_SIO_SERIAL_PORTS > 7)
     #ifdef FORM_SET_FORM
@@ -1339,7 +1263,7 @@
                     SUBTITLE(STRING_TOKEN(STR_SIO_SERIAL_PORT7)),
                     AUTO_ID(COM7_FORM_ID), TERMINAL_PORT7)
     #endif
-#endif
+#endif 
 
 #if (TOTAL_SIO_SERIAL_PORTS > 8)
     #ifdef FORM_SET_FORM
@@ -1347,7 +1271,7 @@
                     SUBTITLE(STRING_TOKEN(STR_SIO_SERIAL_PORT8)),
                     AUTO_ID(COM8_FORM_ID), TERMINAL_PORT8)
     #endif
-#endif
+#endif 
 
 #if (TOTAL_SIO_SERIAL_PORTS > 9)
     #ifdef FORM_SET_FORM
@@ -1365,7 +1289,7 @@
                     SUBTITLE(STRING_TOKEN(STR_PCI_SERIAL_PORT0)),
                     AUTO_ID(PCI_SERIAL0_FORM_ID), PCI_SERIAL_PORT_0_INDEX)
     #endif
-#endif
+#endif 
 
 #if (TOTAL_PCI_SERIAL_PORTS > 1)
     #ifdef FORM_SET_FORM
@@ -1373,7 +1297,7 @@
                     SUBTITLE(STRING_TOKEN(STR_PCI_SERIAL_PORT1)),
                     AUTO_ID(PCI_SERIAL1_FORM_ID), PCI_SERIAL_PORT_1_INDEX)
     #endif
-#endif
+#endif 
 
 #if (TOTAL_PCI_SERIAL_PORTS > 2)
     #ifdef FORM_SET_FORM
@@ -1381,7 +1305,7 @@
                     SUBTITLE(STRING_TOKEN(STR_PCI_SERIAL_PORT2)),
                     AUTO_ID(PCI_SERIAL2_FORM_ID), PCI_SERIAL_PORT_2_INDEX)
     #endif
-#endif
+#endif 
 
 #if (TOTAL_PCI_SERIAL_PORTS > 3)
     #ifdef FORM_SET_FORM
@@ -1389,7 +1313,7 @@
                     SUBTITLE(STRING_TOKEN(STR_PCI_SERIAL_PORT3)),
                     AUTO_ID(PCI_SERIAL3_FORM_ID), PCI_SERIAL_PORT_3_INDEX)
     #endif
-#endif
+#endif 
 ////////////////////////////////////
 
 #endif //ifdef ADVANCED_FORM_SET
@@ -1397,7 +1321,7 @@
 //****************************************************************************
 //****************************************************************************
 //**                                                                        **
-//**             (C)Copyright 1985-2014, American Megatrends, Inc.          **
+//**             (C)Copyright 1985-2013, American Megatrends, Inc.          **
 //**                                                                        **
 //**                          All Rights Reserved.                          **
 //**                                                                        **

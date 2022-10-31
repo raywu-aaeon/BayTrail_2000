@@ -1,7 +1,7 @@
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2013, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **
@@ -12,10 +12,23 @@
 //**********************************************************************
 //**********************************************************************
 
-/** @file UsbMass.h
-    AMI USB Mass Storage support header
+//**********************************************************************
+// $Header: $
+//
+// $Revision: $
+//
+// $Date: $
+//**********************************************************************
 
-**/
+//<AMI_FHDR_START>
+//----------------------------------------------------------------------
+//
+// Name:  UsbMass.h
+//
+// Description:	AMI USB Mass Storage support header
+//
+//----------------------------------------------------------------------
+//<AMI_FHDR_END>
 
 #ifndef __USBMASS__H__
 #define __USBMASS__H__
@@ -23,19 +36,23 @@
 extern "C" {
 #endif
 
-/**
-    USB mass device boot only protocol status block structure.
-    Referred as CSW - Command status wrapper. Refer Bulk-Only
-    transport specification for more detail.
-
- Fields:   Name       Type    Description
-      ------------------------------------------------------------
-      dCswSignature   DWORD   CBS signature "USBS"
-      dCswTag     DWORD   Tag used to link the command with status response
-      dCswDataResidue DWORD   Size of remaining data that is not processed in this transfer
-      bmCswStatus BYTE    CSW status byte
-
-**/
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name:        BOT_STATUS_BLOCK
+//
+// Description: USB mass device boot only protocol status block structure.
+//      Referred as CSW - Command status wrapper. Refer Bulk-Only
+//      transport specification for more detail.
+//
+// Fields:   Name       Type    Description
+//      ------------------------------------------------------------
+//      dCswSignature   DWORD   CBS signature "USBS"
+//      dCswTag     DWORD   Tag used to link the command with status response
+//      dCswDataResidue DWORD   Size of remaining data that is not processed in this transfer
+//      bmCswStatus BYTE    CSW status byte
+//
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
 #pragma pack(push, 1)
 
 typedef struct {
@@ -49,24 +66,19 @@ typedef struct {
 
 // Common device specific command structures and values
 //----------------------------------------------------------------------------
-#define COMMON_INQUIRY_OPCODE                           0x12
-#define COMMON_READ_CAPACITY_10_OPCODE                  0x25
-#define COMMON_READ_CAPACITY_16_OPCODE                  0x9E
-#define COMMON_READ_10_OPCODE                           0x28
-#define COMMON_READ_16_OPCODE                           0x88
-#define COMMON_WRITE_10_OPCODE                          0x2A
-#define COMMON_WRITE_16_OPCODE                          0x8A
-#define COMMON_MODE_SENSE_6_OPCODE                      0x1A
-#define COMMON_MODE_SENSE_10_OPCODE                     0x5A
-#define COMMON_SEND_DIAGNOSTIC_OPCODE                   0x1D
-#define COMMON_TEST_UNIT_READY_OPCODE                   0x00
-#define COMMON_REQUEST_SENSE_OPCODE                     0x03
-#define COMMON_START_STOP_UNIT_OPCODE                   0x1B
-#define COMMON_FORMAT_UNIT_OPCODE                       0x04
-#define COMMON_VERIFY_10_OPCODE                         0x2F
-#define COMMON_VERIFY_16_OPCODE                         0x8F
-#define COMMON_READ_FORMAT_CAPACITY_OPCODE              0x23
-#define COMMON_GET_CONFIGURATION_OPCODE                 0x46
+#define COMMON_INQUIRY_OPCODE               0x12
+#define COMMON_READ_CAPACITY_OPCODE         0x25
+#define COMMON_READ_10_OPCODE               0x28
+#define COMMON_WRITE_10_OPCODE              0x2A
+#define COMMON_MODE_SENSE_6_OPCODE          0x1A
+#define COMMON_MODE_SENSE_10_OPCODE         0x5A
+#define COMMON_SEND_DIAGNOSTIC_OPCODE       0x1D
+#define COMMON_TEST_UNIT_READY_OPCODE       0x00
+#define COMMON_REQUEST_SENSE_OPCODE         0x03
+#define COMMON_START_STOP_UNIT_OPCODE       0x1B
+#define COMMON_FORMAT_UNIT_OPCODE           0x04
+#define COMMON_VERIFY_OPCODE                0x2F
+#define COMMON_READ_FORMAT_CAPACITY_OPCODE  0x23
 
 #pragma pack(push, 1)
 
@@ -88,16 +100,7 @@ typedef struct {
     UINT8           bPMI;       // 08h, PMI - bit 0
     UINT8           bControl;   // 09h, Control/Reserved
     UINT16          wdReserved; // 0Ah-0Bh, Reserved
-} COMN_READ_CAPACITY_10_CMD;
-
-typedef struct {
-    UINT8           OpCode;         // 00h, Operation Code
-    UINT8           ServiceAction;  // 01h, Service Action - bit0..bit4
-    UINT64          Lba;            // 02h-09h, Logical Block Address
-    UINT32          AllocLength;    // 10h-0Dh, Allocation Length
-    UINT8           PMI;            // 0Eh, PMI - bit 0
-    UINT8           Control;        // 0Fh, Control
-} COMN_READ_CAPACITY_16_CMD;
+} COMN_READ_CAPACITY_CMD;
 
 typedef struct {
     UINT8           bOpCode;        // 00h, Operation Code
@@ -115,16 +118,7 @@ typedef struct {
     UINT16          wTransferLength;// 07h-08h, Transfer Length(BIG ENDIAN)
     UINT8           bControl;       // 09h, Control/Reserved
     UINT16          wReserved;      // 0Ah-0Bh, Reserved
-} COMN_RWV_10_CMD;
-
-typedef struct {
-    UINT8           OpCode;             // 00h, Operation Code
-    UINT8           Lun;                // 01h, Logical Unit Number, etc
-    UINT64          Lba;                // 02h-09h, Logical Block Address
-    UINT32          TransferLength;     // 0Ah-0Dh, Transfer Length(BIG ENDIAN)
-    UINT8           GroupNum;           // 0Eh, Group Number, etc
-    UINT8           Control;            // 0Fh, Control
-} COMN_RWV_16_CMD;
+} COMN_RWV_CMD;
 
 typedef struct {
     UINT8           bOpCode;        // 00h, Operation Code
@@ -172,15 +166,6 @@ typedef struct {
     UINT8           bStart;         // 04h, LoEj, Start bits
     UINT8           aReserved[7];   // 05h-0Bh, Reserved
 } COMMON_START_STOP_UNIT_CMD;
-
-typedef struct {
-    UINT8           OpCode;                 // 00h, Operation Code
-    UINT8           Rt;                     // 01h, Logical Unit Number, etc
-    UINT16          StartingFeatureNumber;  // 02h, StartingFeatureNumber
-    UINT8           Reserved[3];            // 03-06h, Reserved
-    UINT16          AllocLength;            // 07h, Allocation Length
-    UINT8           Control;                // 09h, Control
-} COMMON_GET_CONFIGURATION;
 
 typedef struct {
     UINT8           bOpCode;        // 00h, Operation Code
@@ -405,11 +390,10 @@ typedef struct {
 }
 #endif
 #endif
-
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2013, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **

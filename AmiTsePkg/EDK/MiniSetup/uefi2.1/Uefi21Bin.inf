@@ -13,8 +13,6 @@ LIBRARY_CLASS = Uefi21Bin
  LIB | Uefi21Local.lib	
 [binaries.X64]
  LIB | Uefi21Localx64.lib
-[binaries.AARCH64]
- LIB | Uefi21LocalAarch64.lib 
 
 
 [Packages]

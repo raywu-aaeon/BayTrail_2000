@@ -35,7 +35,7 @@ static EFI_TIME *crEfiTime = &EfiTime;
  */
 void set_crypt_efitime(EFI_TIME *EfiTime)
 {
-    memcpy((void*)crEfiTime,(void*)EfiTime, sizeof(EFI_TIME));
+    MemCpy((void*)crEfiTime,(void*)EfiTime, sizeof(EFI_TIME));
 
     wpa_printf(MSG_INFO, "EfiTime Now :"
            "(Year=%d Month=%d Day=%d Hour=%d Min=%d Sec=%d)",
@@ -111,7 +111,7 @@ int os_mktime(int year, int month, int day, int hour, int min, int sec,
     int Year;
     *t = 0;
 
-    wpa_printf(MSG_INFO, "Year=%d Month=%d Day=%d Hour=%d Min=%d Sec=%d",
+    wpa_printf(MSG_INFO, "(Year=%d Month=%d Day=%d Hour=%d Min=%d Sec=%d)",
            year, month, day, hour, min, sec);
 
 	if (year < 1970 || month < 1 || month > 12 || day < 1 || day > 31 ||
@@ -136,8 +136,6 @@ int os_mktime(int year, int month, int day, int hour, int min, int sec,
            (os_time_t)(hour * SECSPERHOUR) + 
            (os_time_t)(min * 60) + 
            (os_time_t)sec;
-
-    wpa_printf(MSG_INFO, "%x", *t);
 
     return 0;
 
@@ -166,15 +164,16 @@ int os_mktime(int year, int month, int day, int hour, int min, int sec,
  */
 int os_get_time(struct os_time *t)
 {
+    EFI_STATUS Status = EFI_SUCCESS;  
     os_time_t Tm;
-    int err;
 
-    wpa_printf(MSG_INFO, "Time Now:");
-    err = os_mktime(crEfiTime->Year, crEfiTime->Month, crEfiTime->Day, crEfiTime->Hour, crEfiTime->Minute, crEfiTime->Second, &Tm);
+    os_mktime(crEfiTime->Year, crEfiTime->Month, crEfiTime->Day, crEfiTime->Hour, crEfiTime->Minute, crEfiTime->Second, &Tm);
     t->sec = (os_time_t)Tm;
     t->usec = (os_time_t)Tm*1000000;
 
-    return err;  
+    wpa_printf(MSG_INFO, "Time Now : %x", Tm);
+
+    return EFI_ERROR(Status)? -1: 0;  
 }
 //**********************************************************************
 //**********************************************************************

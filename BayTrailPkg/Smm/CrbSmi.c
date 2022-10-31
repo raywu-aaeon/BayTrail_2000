@@ -311,17 +311,6 @@ CrbChildDispatcher (
     return Status;
 }
 
-EFI_STATUS CrbPwrBtnHandler (
-    IN EFI_HANDLE       DispatchHandle,
-    IN CONST VOID       *DispatchContext OPTIONAL,
-    IN OUT VOID         *CommBuffer OPTIONAL,
-    IN OUT UINTN        *CommBufferSize OPTIONAL
-)
-{
-    IoWrite8 (0x80, 0xF1);
-    return EFI_SUCCESS;
-}
-
 //<AMI_PHDR_START>
 //----------------------------------------------------------------------------
 //
@@ -344,28 +333,8 @@ CrbDummyFunction (
     IN EFI_HANDLE           ImageHandle,
     IN EFI_SYSTEM_TABLE     *SystemTable )
 {
-  EFI_STATUS                              Status;
-  EFI_SMM_POWER_BUTTON_DISPATCH2_PROTOCOL *PowerButton;
-  EFI_SMM_POWER_BUTTON_REGISTER_CONTEXT   DispatchContext = {EfiPowerButtonEntry}; //CSP20130801
-  EFI_HANDLE                              Handle = NULL;
-
-
-  Status  = pSmst->SmmLocateProtocol (
-                    &gEfiSmmPowerButtonDispatch2ProtocolGuid,
-                    NULL,
-                    &PowerButton
-                    );
-
-  if (EFI_ERROR(Status)) return Status;
-
-  Status = PowerButton->Register (
-                          PowerButton,
-                          CrbPwrBtnHandler,
-                          &DispatchContext,
-                          &Handle
-                          );
-
-  return Status;
+	EFI_STATUS           	Status = EFI_SUCCESS;
+    return Status;
 }
 
 //<AMI_PHDR_START>
@@ -392,8 +361,77 @@ CrbSmiInit (
   IN EFI_SYSTEM_TABLE  *SystemTable
   )
 {
+    EFI_STATUS                		Status;
+	EFI_SMM_SW_DISPATCH2_PROTOCOL  	*SwDispatch = NULL;
+	EFI_SMM_SX_DISPATCH2_PROTOCOL  	*SxDispatch = NULL;
+	EFI_SMM_GPI_DISPATCH2_PROTOCOL 	*GpiDispatch = NULL;
+    EFI_SMM_SW_REGISTER_CONTEXT     SwContext = {CRB_SWSMI};
+    EFI_SMM_SX_REGISTER_CONTEXT     SxContext = {SxS3, SxEntry};
+    EFI_SMM_GPI_REGISTER_CONTEXT    GpiContext = {MACRO_CONVER_TO_GPI(5)}; // _L05 default for PCIExpress card
+    EFI_HANDLE                      Handle = NULL;
+
+    Status  = gSmst->SmmLocateProtocol (&gEfiSmmSwDispatch2ProtocolGuid, NULL, &SwDispatch);
+    ASSERT_EFI_ERROR(Status);
+    if (!EFI_ERROR(Status)) {
+        Status  = SwDispatch->Register( SwDispatch, \
+                                         CrbSwSmiHandler, \
+                                         &SwContext, \
+                                         &Handle );
+        ASSERT_EFI_ERROR(Status);
+    }
+
+    Status  = gSmst->SmmLocateProtocol (&gEfiSmmSxDispatch2ProtocolGuid, NULL, &SxDispatch);
+    ASSERT_EFI_ERROR(Status);
+    if (!EFI_ERROR(Status)) {
+        Status  = SxDispatch->Register( SxDispatch, \
+                                         CrbSxSmiHandler, \
+                                         &SxContext, \
+                                         &Handle );
+    }
+
+#if CRB_GPI_SMI_TEST
+    Status  = gSmst->SmmLocateProtocol (&gEfiSmmGpiDispatch2ProtocolGuid, NULL, &GpiDispatch);
+    ASSERT_EFI_ERROR(Status);
+    if (!EFI_ERROR(Status)) {
+        Status  = GpiDispatch->Register( GpiDispatch, \
+                                         CrbGpiSmiHandler, \
+                                         &GpiContext, \
+                                         &Handle );
+        ASSERT_EFI_ERROR(Status);
+
+        GpiContext.GpiNum = MACRO_CONVER_TO_GPI(23);
+        Status  = GpiDispatch->Register( GpiDispatch, \
+                                         CrbGpiSmiHandler, \
+                                         &GpiContext, \
+                                         &Handle );
+        ASSERT_EFI_ERROR(Status);
+    }
+#endif
+
+    Handle = NULL;
+    //Register call backs
+    Status = gSmst->SmiHandlerRegister(CrbChildDispatcher, NULL, &Handle);
+
+
+    //
+    // locate S3 Save protocol.
+    //
+    //### 5.004 not support yet ###Status = gSmst->SmmLocateProtocol (&gEfiS3SmmSaveStateProtocolGuid, \
+    //### 5.004 not support yet ###                              NULL, \
+    //### 5.004 not support yet ###                              &gBootScriptSave );
+    //### 5.004 not support yet ###ASSERT_EFI_ERROR(Status);
+
+
+
+    //
+    // following items is Aptio-4 compatible.
+    // We should use Mde library instead.
+    //   only one reason to use this library is for get EFI_RUNTIME_SERVICES which located in SMM.
+    //
     InitAmiLib(ImageHandle, SystemTable);
-    return InitSmmHandler(ImageHandle, SystemTable, CrbDummyFunction, NULL);
+    Status = InitSmmHandler(ImageHandle, SystemTable, CrbDummyFunction, NULL);
+
+    return Status;
 }
 
 //*************************************************************************

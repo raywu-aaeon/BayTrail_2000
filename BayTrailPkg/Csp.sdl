@@ -437,21 +437,12 @@ PcdMapping
 	TargetDSC = Yes
 End
 
-# [ EIP259936+>>> ]
-#FFS_FILE
-#	Name  = "FWkeyFileStatement"
-#	FD_AREA  = "FV_PRE_BB"
-#	FILE_Stmt  = "Keys\Fw\FWkeyFileStatement.txt"
-#	Token = "CREATE_FWCAPSULE" "!=" "0"
-#End
 FFS_FILE
-    Name  = "FWKey"
-    FD_AREA  = "FV_PRE_BB"
-    INFComponent  = "AmiModulePkg.FWKey"
-    Rule_Override  = "Uncompressed"
-    Token = "SecureMod_SUPPORT" "!=" "0"
+	Name  = "FWkeyFileStatement"
+	FD_AREA  = "FV_PRE_BB"
+	FILE_Stmt  = "Keys\Fw\FWkeyFileStatement.txt"
+	Token = "CREATE_FWCAPSULE" "!=" "0"
 End
-# [ EIP259936+<<< ]
 
 #EIP149376 >>
 PcdMapping

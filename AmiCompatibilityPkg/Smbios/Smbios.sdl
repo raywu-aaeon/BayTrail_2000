@@ -7,52 +7,6 @@ TOKEN
 	Master = Yes
 End
 
-TOKEN
-    Name  = "AMI_SMBIOS_MODULE_VERSION"
-    Value  = "0108"
-    Help  = "AMI SMBIOS module version number: MMNN -> MM = Major, NN = Minor"
-    TokenType = Integer
-    TargetMAK = Yes
-    TargetH = Yes
-    Lock = Yes
-End
-
-TOKEN
-    Name  = "SMBIOS_2X_MAJOR_VERSION"
-    Value  = "3"
-    Help  = "SMBIOS major version"
-    TokenType = Integer
-    TargetH = Yes
-    Lock = Yes
-End
-
-TOKEN
-    Name  = "SMBIOS_2X_MINOR_VERSION"
-    Value  = "0"
-    Help  = "SMBIOS major version"
-    TokenType = Integer
-    TargetH = Yes
-    Lock = Yes
-End
-
-TOKEN
-    Name  = "SMBIOS_3X_MAJOR_VERSION"
-    Value  = "3"
-    Help  = "SMBIOS major version"
-    TokenType = Integer
-    TargetH = Yes
-    Lock = Yes
-End
-
-TOKEN
-    Name  = "SMBIOS_3X_MINOR_VERSION"
-    Value  = "0"
-    Help  = "SMBIOS major version"
-    TokenType = Integer
-    TargetH = Yes
-    Lock = Yes
-End
-
 PATH
 	Name  = "SMBIOS_DIR"
 End

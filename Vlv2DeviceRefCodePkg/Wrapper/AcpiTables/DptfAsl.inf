@@ -15,7 +15,3 @@
 [Packages]
   MdePkg/MdePkg.dec
   Vlv2DeviceRefCodePkg/PlatformPkg.dec
-  AmiCompatibilityPkg/AmiCompatibilityPkg.dec #EIP174562
-
-[BuildOptions.common]
-  *_*_*_ASLPP_FLAGS = /FITokenAsl.h #EIP174562

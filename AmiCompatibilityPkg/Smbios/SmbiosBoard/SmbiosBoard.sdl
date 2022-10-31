@@ -1,69 +1,11 @@
 TOKEN
-    Name  = "SMBIOS_2X_SUPPORT"
-    Value  = "1"
-    Help  = "Control token for Smbios version 2.x support \When enabled, 32-bit Smbios Entry Point structure will be created and published to the UEFI System Configuration Table with Smbios 2.1 GUID"
-    TokenType = Boolean
-    TargetH = Yes
-End
-
-TOKEN
-    Name  = "SMBIOS_3X_SUPPORT"
-    Value  = "1"
-    Help  = "Control token for Smbios version 3.x support \When enabled, 64-bit Smbios Entry Point structure will be created and published to the UEFI System Configuration Table with Smbios 3.0 GUID"
-    TokenType = Boolean
-    TargetH = Yes
-End
-
-TOKEN
-    Name  = "SMBIOS_TABLE_ADDRESS_LIMIT"
-    Value  = "1"
-    Help  = "SMBIOS table address limit \0 = Below 4GB only \1 = Anywhere"
-    TokenType = Boolean
-    TargetH = Yes
-End
-
-##################################################
-# Force Smbios data table below 4GB for Smbios 2.x
-##################################################
-TOKEN
-    Name  = "SMBIOS_TABLE_ADDRESS_LIMIT"
-    Value  = "0"
-    Help  = "SMBIOS table address limit \0 = Below 4GB only \1 = Anywhere"
-    TokenType = Boolean
-    TargetH = Yes
-    Token = "SMBIOS_2X_SUPPORT" "=" "1"
-End
-
-TOKEN
-    Name  = "SMBIOS_TABLES_BUILD_TYPE"
-    Value  = "0"
-    Help  = "File type used to build Smbios DmiEdit and Static Table: \0 = DmiEdit and Static table will be built using ASM files \1 = DmiEdit and Static table will be built using DT files"
-    TokenType = Boolean
-    TargetH = Yes
-End
-
-##################################################
-# Only for Smbios table below 4GB
-##################################################
-TOKEN
-    Name  = "SMBIOS_TABLE_LOCATION"
-    Value  = "0"
-    Help  = "SMBIOS Table (version 2.X) location: \0 = Above 1MB only"
+    Name  = "AMI_SMBIOS_MODULE_VERSION"
+    Value  = "0104"
+    Help  = "AMI SMBIOS module version number: MMNN -> MM = Major, NN = Minor"
     TokenType = Integer
+    TargetMAK = Yes
     TargetH = Yes
     Lock = Yes
-End
-
-##################################################
-# Only for Smbios table below 4GB
-##################################################
-TOKEN
-    Name  = "SMBIOS_TABLE_LOCATION"
-    Value  = "1"
-    Help  = "SMBIOS Table (version 2.X) location: \0 = Above 1MB only \1 = Auto (E000 Segment, if unable to allocate to E000, then put table above 1MB)"
-    TokenType = Integer
-    TargetH = Yes
-    Token = "CSM_SUPPORT" "=" "1"
 End
 
 TOKEN
@@ -82,38 +24,28 @@ TOKEN
     TargetH = Yes
 End
 
-#######################################################################################
-#
-# SMBIOS_DMIEDIT_DATA_LOC - DmiEdit data locations:
-#
-# - 0:  In FV_BB
-# - 1:  In FV_SMBIOS, defined in SmbiosFlashData.sdl. Default setting is 1 block
-#       below Bootblock (FV_BB)
-# - 2:  In NVRAM
-#       ===================================================================
-#       ==========================  IMPORTANT  ============================
-#       ===  FV_SMBIOS settings:                                        ===
-#       ===  ROM_AREA_FV_DXE and ROM_AREA_RUN_TIME_UPDATABLE attribute  ===
-#       ===  bits should be set in Layout Attribute                     ===
-#       ===  Example:                                                   ===
-#       ===  FD_AREA                                                    ===
-#       ===      Name  = "FV_SMBIOS"                                    ===
-#       ===      ...                                                    ===
-#       ===      Layout_Attribute  = "0x808"                            ===
-#       ===      ...                                                    ===
-#       ===  End                                                        ===
-#       ===                                                             ===
-#       ===  Additional porting required for FV_SMBIOS setting:         ===
-#       ===  Size and Offset need to be adjusted for all Firmware       ===
-#       ===  Volumes below FV_SMBIOS                                    ===
-#       ===================================================================
-#       ===================================================================
-#
-#######################################################################################
+TOKEN
+    Name  = "SMBIOS_TABLE_LOCATION"
+    Value  = "0"
+    Help  = "SMBIOS Table location: \0 = Above 1MB only"
+    TokenType = Integer
+    TargetH = Yes
+    Lock = Yes
+End
+
+TOKEN
+    Name  = "SMBIOS_TABLE_LOCATION"
+    Value  = "1"
+    Help  = "SMBIOS Table location: \0 = Above 1MB only \1 = Auto (E000 Segment, if unable to allocate to E000, then put table above 1MB)"
+    TokenType = Integer
+    TargetH = Yes
+    Token = "CSM_SUPPORT" "=" "1"
+End
+
 TOKEN
     Name  = "SMBIOS_DMIEDIT_DATA_LOC"
     Value  = "2"
-    Help  = "SMBIOS DMIEdit data location: \0 = Boot Block \1 = FV_SMBIOS (FV_SMBIOS: defined in SmbiosFlashData.sdl)\2 = NVRAM
+    Help  = "SMBIOS DMIEdit data location: \0 = Boot Block \2 = NVRAM"
     TokenType = Integer
     TargetMAK = Yes
     TargetH = Yes
@@ -151,26 +83,6 @@ TOKEN
     Help  = "Order of updating structures during Post: \OFF -> NVRam data (DMIEdit), dynamic data (CPU, memory, slot...), OEM update \ON = Dynamic data (CPU, memory, slot...), OEM update, NVRam data (DMIEdit)"
 	TokenType = Boolean
     TargetH = Yes
-End
-
-TOKEN
-    Name  = "UPDATE_BIOS_VERSION"
-    Value  = "0"
-    Help  = "Enable/Disable updating 'Bios Version' in Type 0 structure with CORE_MAJOR_VERSION.CORE_BUILD_NUMBER"
-    TokenType = Boolean
-    TargetH = Yes
-    Token = "TYPE0_STRUCTURE" "=" "1"
-    Token = "SMBIOS_TABLES_BUILD_TYPE" "=" "1"
-End
-
-TOKEN
-    Name  = "UPDATE_BIOS_RELEASE_DATE"
-    Value  = "0"
-    Help  = "Enable/Disable updating 'Bios Release Date' in Type 0 structure with today's date"
-    TokenType = Boolean
-    TargetH = Yes
-    Token = "TYPE0_STRUCTURE" "=" "1"
-    Token = "SMBIOS_TABLES_BUILD_TYPE" "=" "1"
 End
 
 TOKEN
@@ -281,10 +193,10 @@ TOKEN
     Token = "TYPE0_STRUCTURE" "=" "1"
 End
 
-##################################################
+###################################
 ### Type 4 Structure
 ### Moved from SmbiosStaticdata.sdl
-##################################################
+###################################
 TOKEN
     Name  = "NO_OF_PROCESSOR_SOCKETS"
     Value  = "1"
@@ -295,10 +207,10 @@ TOKEN
     Range  = "1, 2, 3.........."
 End
 
-##################################################
+###################################
 ### Type 9 Structure
 ### Moved from SmbiosStaticdata.sdl
-##################################################
+###################################
 TOKEN
     Name  = "NUMBER_OF_SYSTEM_SLOTS"
     Value  = "5"
@@ -308,10 +220,10 @@ TOKEN
     TargetH = Yes
 End
 
-##################################################
+###################################
 ### Type 16 Structure
 ### Moved from SmbiosStaticdata.sdl
-##################################################
+###################################
 TOKEN
     Name  = "NO_OF_PHYSICAL_MEMORY_ARRAY"
     Value  = "1"
@@ -322,10 +234,10 @@ TOKEN
     Range  = "1 - 5"
 End
 
-##################################################
+###################################
 ### Type 16 Structure
 ### Moved from SmbiosStaticdata.sdl
-##################################################
+###################################
 TOKEN
     Name  = "A1_MEMORY_SOCKETS"
     Value  = "4"
@@ -335,10 +247,10 @@ TOKEN
     TargetH = Yes
 End
 
-##################################################
+###################################
 ### Type 16 Structure
 ### Moved from SmbiosStaticdata.sdl
-##################################################
+###################################
 TOKEN
     Name  = "A2_MEMORY_SOCKETS"
     Value  = "4"
@@ -349,10 +261,10 @@ TOKEN
     Token = "NO_OF_PHYSICAL_MEMORY_ARRAY" ">" "1"
 End
 
-##################################################
+###################################
 ### Type 16 Structure
 ### Moved from SmbiosStaticdata.sdl
-##################################################
+###################################
 TOKEN
     Name  = "A3_MEMORY_SOCKETS"
     Value  = "4"
@@ -363,10 +275,10 @@ TOKEN
     Token = "NO_OF_PHYSICAL_MEMORY_ARRAY" ">" "2"
 End
 
-##################################################
+###################################
 ### Type 16 Structure
 ### Moved from SmbiosStaticdata.sdl
-##################################################
+###################################
 TOKEN
     Name  = "A4_MEMORY_SOCKETS"
     Value  = "4"
@@ -377,9 +289,9 @@ TOKEN
     Token = "NO_OF_PHYSICAL_MEMORY_ARRAY" ">" "3"
 End
 
-##################################################
+###################################
 ### Moved from SmbiosStaticdata.sdl
-##################################################
+###################################
 TOKEN
     Name  = "EXTRA_RESERVED_BYTES"
     Value  = "4096"
@@ -398,40 +310,10 @@ TOKEN
 End
 
 TOKEN
-    Name  = "SMBIOS_PNP_SUPPORT"
-    Value  = "0"
-    Help  = "Enable/Disable Smbios PnP support"
-	TokenType = Boolean
-    Token = "CSM_SUPPORT" "=" "1"
-End
-
-TOKEN
     Name  = "SORT_SMBIOS_TABLE_BY_TYPE"
     Value  = "0"
     Help  = "Sort the Smbios Table by structure types at ReadyToBoot: \OFF -> No sorting \ON = Sort Smbios table by structure types"
     TokenType = Boolean
-    TargetH = Yes
-End
-
-TOKEN
-    Name  = "CONVERT_TYPE4_V2X_TO_V3X"
-    Value  = "0"
-    Help  = "Convert Type 4 structure version 2.x to 3.x\OFF -> No conversion \ON = Convert"
-    TokenType = Boolean
-    TargetH = Yes
-End
-
-#
-# This is the table containing memory module Manufacturer ID Code.
-# It provides a way for OEM to add additional entries that are not already in JEDEC_MF_ID table in Smbios.c.
-# Entries to be added should be in the form of: number of continuation codes, manufacturer’s ID code, manufacturer string (ref. JEP-106).
-# "Undefined" should be the last entry in this token.
-#
-TOKEN
-    Name  = "MANUFACTURER_ID_CODE"
-    Value  = '{{6, 0xf1, "InnoDisk Corporation"}, {0, 0, "Undefined"}}'
-    Help  = 'This is the table containing memory module Manufacturer ID Code.\It provides a way for OEM to add additional entries that are not already in JEDEC_MF_ID table in Smbios.c.\Entries to be added should be in the form of: number of continuation codes, manufacturer’s ID code, manufacturer string (ref. JEP-106).\"Undefined" should be the last entry in this table.'
-    TokenType = Expression
     TargetH = Yes
 End
 
@@ -453,9 +335,9 @@ ELINK
     Name = "OPROM(1, 0, 3, $(SMBIOS_BOARD_DIR)\Smbrun.com)"
     Parent = "CSM_OPROM_LIST"
     InvokeOrder = AfterParent
-    Token = "CSM_SUPPORT" "=" "1"
 End
 
+#EIP145560 >>
 ELINK
 	Name = "{ 0x4b3082a3, 0x80c6, 0x4d7e, 0x9c, 0xd0, 0x58, 0x39, 0x17, 0x26, 0x5d, 0xf1 },"
 	Parent = "SMIFlashSaveGuidsList"
@@ -463,6 +345,7 @@ ELINK
 	InvokeOrder = AfterParent
     Token = "SMBIOS_PRESERVE_NVRAM" "=" "1"
 End
+#EIP145560 <<
 
 INFComponent
 	Name  = "SmbiosBoard"
@@ -477,5 +360,5 @@ INFComponent
 	File  = "Smbrun.inf"
 	Package  = "AmiCompatibilityPkg"
 	ModuleTypes  = "USER_DEFINED"
-	Token = "SMBIOS_PNP_SUPPORT" "=" "1"
+	Token = "SMBIOS_SUPPORT" "=" "1"
 End

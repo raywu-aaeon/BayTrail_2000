@@ -28,13 +28,6 @@ PATH
 End
 
 ELINK
-	Name  = "gAmiSmbiosNvramGuid"
-	Parent  = "AMI_OFBD_GUIDS"
-	Token = "DEF_CFG_SAMPLE_TEST" "=" "1"
-	InvokeOrder = AfterParent
-End
-
-ELINK
 	Name  = "$(OFBD_DEFCFG_DIR)/DefCfg.h"
 	Parent  = "OFBD_FUNC_INCLUDE_FILES"
 	InvokeOrder = BeforeParent

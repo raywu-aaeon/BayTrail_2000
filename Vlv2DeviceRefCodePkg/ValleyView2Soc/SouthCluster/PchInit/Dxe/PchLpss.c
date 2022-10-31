@@ -2599,6 +2599,7 @@ ConfigureLpssAtBoot (
   /// Update LPSS devices ACPI variables
   ///
   if (!EFI_ERROR (AcpiTablePresent)) {
+      if (PchPlatformPolicy->LpssConfig->LpssPciModeEnabled == 0) {     // ACPI mode
 //AMI_OVERRIDE - Update PciBottom and PciTop Address correctly - CSP20130723 >>	
 //    	Status = GetPCIAddrRange(&RangeMin, &RangeMax);
 //    	if (EFI_ERROR(Status)) {
@@ -2623,9 +2624,8 @@ ConfigureLpssAtBoot (
     	  GlobalNvsArea->Area->PCITopAddress = (UINT32)RangeMax - 1;	
     	}
 //AMI_OVERRIDE - Update PciBottom and PciTop Address correctly - CSP20130723<<
-      if (PchPlatformPolicy->LpssConfig->LpssPciModeEnabled == 0) {     // ACPI mode
-        UpdateLpssSccDeviceList();
-        UpdateLpssSccDeviceInfo(GlobalNvsArea);
+      UpdateLpssSccDeviceList();
+      UpdateLpssSccDeviceInfo(GlobalNvsArea);
       }
     ///
     /// LPSS1 DMA
@@ -2706,9 +2706,7 @@ ConfigureLpssAtBoot (
 
 
     //CSRT: setup and assing base address
-// AMI_OVERRIDE - BWG Addendum A.13: publish CSRT table if either DMA is enabled >>
-    if (PchPlatformPolicy->LpssConfig->Dma0Enabled == 1 || PchPlatformPolicy->LpssConfig->Dma1Enabled == 1) {
-// AMI_OVERRIDE - BWG Addendum A.13: publish CSRT table if either DMA is enabled <<
+    if (PchPlatformPolicy->LpssConfig->Dma0Enabled == 1 && PchPlatformPolicy->LpssConfig->Dma1Enabled == 1) {
       EFI_ACPI_CSRT_TABLE              *mCsrt = NULL;
 
       DEBUG ((EFI_D_INFO, "Initialize CSRT Start\n"));

@@ -34,16 +34,14 @@ Intel Corporation.
 UINT32    XhciMemoryBase = 0x90600000;
 BOOLEAN PatchFlag = FALSE;
 
-XHCI_MMIO_REGISTER_INFO    XhciMmioState[]= {/*Erstba_Lo1*/{0x2030, 0}, {0x2034, 0}, {0x2050, 0}, {0x2054, 0}, {0x2070, 0}, {0x2074, 0}, {0x2090, 0}, {0x2094, 0},
+XHCI_MMIO_REGISTER_INFO    XhciMmioState[]= {/*Dnctrl*/{0x94, 0}, /*Dcbaap_Lo*/{0xB0, 0}, /*Dcbaap_Hi*/{0xB4, 0}, /*Config*/{0xB8, 0}, 
+                       /*Erstsz1*/ {0x2028, 0}, {0x2048, 0}, {0x2068, 0}, {0x2088, 0}, {0x20A8, 0}, {0x20C8, 0}, {0x20E8, 0}, {0x2108, 0},
+                  /*Erstba_Lo1*/{0x2030, 0}, {0x2034, 0}, {0x2050, 0}, {0x2054, 0}, {0x2070, 0}, {0x2074, 0}, {0x2090, 0}, {0x2094, 0},
                                          {0x20B0, 0}, {0x20B4, 0}, {0x20D0, 0}, {0x20D4, 0}, {0x20F0, 0}, {0x20F4, 0}, {0x2110, 0}, {0x2114, 0},
                   /*Erdp_Lo1*/   {0x2038, 0}, {0x203C, 0}, {0x2058, 0}, {0x205C, 0}, {0x2078, 0}, {0x207C, 0}, {0x2098, 0}, {0x209C, 0},
-                                         {0x20B8, 0}, {0x20BC, 0}, {0x20D8, 0}, {0x20DC, 0}, {0x20F8, 0}, {0x20FC, 0}, {0x2118, 0}, {0x211C, 0}};
-
-XHCI_MMIO_REGISTER_INFO    XhciMmioState2[]= {/*Dnctrl*/{0x94, 0}, /*Dcbaap_Lo*/{0xB0, 0}, /*Dcbaap_Hi*/{0xB4, 0}, /*Config*/{0xB8, 0}, 
-                       /*Erstsz1*/ {0x2028, 0}, {0x2048, 0}, {0x2068, 0}, {0x2088, 0}, {0x20A8, 0}, {0x20C8, 0}, {0x20E8, 0}, {0x2108, 0},
+                                         {0x20B8, 0}, {0x20BC, 0}, {0x20D8, 0}, {0x20DC, 0}, {0x20F8, 0}, {0x20FC, 0}, {0x2118, 0}, {0x211C, 0},
                       /*Iman1*/   {0x2020, 0}, {0x2040, 0}, {0x2060, 0}, {0x2080, 0}, {0x20A0, 0}, {0x20C0, 0}, {0x20E0, 0}, {0x2100, 0},
                       /*Imod1*/   {0x2024, 0}, {0x2044, 0}, {0x2064, 0}, {0x2084, 0}, {0x20A4, 0}, {0x20C4, 0}, {0x20E4, 0}, {0x2104, 0}};
-
 
 VOID
 XhciSaveRuntimeRegister (
@@ -104,15 +102,10 @@ XhciSaveRuntimeRegister (
   MmioWrite8((XhciPciMmBase + R_PCH_XHCI_COMMAND_REGISTER), B_PCH_XHCI_COMMAND_MSE);
 
   // Save runtime registers
-
-  for (Index = 0; Index < (sizeof(XhciMmioState2)/sizeof(XHCI_MMIO_REGISTER_INFO)); Index++) {
-	XhciMmioState2[Index].RegisterData	= *(UINT32 *)(UINTN)(XhciMemoryBase + XhciMmioState2[Index].RegisterIndex);
-  }
-  
   for (Index = 0; Index < (sizeof(XhciMmioState)/sizeof(XHCI_MMIO_REGISTER_INFO)); Index++) {
 	XhciMmioState[Index].RegisterData	= *(UINT32 *)(UINTN)(XhciMemoryBase + XhciMmioState[Index].RegisterIndex);
   }
-  
+
   MmioWrite8 ((XhciPciMmBase + R_PCH_XHCI_COMMAND_REGISTER), SaveCmdRegister);
   MmioWrite32 ((XhciPciMmBase + R_PCH_XHCI_MEM_BASE), SaveMemoryBaseRegister);
   if ( SavePmcRegister & V_PCH_XHCI_PWR_CNTL_STS_PWR_STS_D3) {
@@ -201,71 +194,10 @@ XhciPatchProcedure (
   SaveUSB_PGC = *(UINT32 *)(UINTN)(XhciMemoryBase + 0x8168);
   SaveXLTP_LTV1 = *(UINT32 *)(UINTN)(XhciMemoryBase + R_PCH_XHCI_LATENCY_TOLERANCE_PARAMETERS_LTV_CONTROL);
   
-  // First, restore second table
-  	for (Index = 0; Index < (sizeof(XhciMmioState2)/sizeof(XHCI_MMIO_REGISTER_INFO)); Index++) {
-			*(UINT32 *)(UINTN)(XhciMemoryBase + XhciMmioState2[Index].RegisterIndex) = XhciMmioState2[Index].RegisterData;
-  	}
-  //
-  // Second, check each port IMAN & ERSTSZ status, if both of them = 0, don't restore ERDP & ERSTBA
-  // else to restore first table.
-  //
-  if ((*(UINT32 *)(UINTN)(XhciMemoryBase + 0x2020)==0)&&(*(UINT32 *)(UINTN)(XhciMemoryBase + 0x2028)==0)){
-	} else {
-		*(UINT32 *)(UINTN)(XhciMemoryBase + 0x2030) = XhciMmioState[0].RegisterData;
-		*(UINT32 *)(UINTN)(XhciMemoryBase + 0x2034) = XhciMmioState[1].RegisterData;
-		*(UINT32 *)(UINTN)(XhciMemoryBase + 0x2038) = XhciMmioState[16].RegisterData;
-		*(UINT32 *)(UINTN)(XhciMemoryBase + 0x203c) = XhciMmioState[17].RegisterData;
+  // Prepare for restoration
+  for (Index = 0; Index < (sizeof(XhciMmioState)/sizeof(XHCI_MMIO_REGISTER_INFO)); Index++) {
+	*(UINT32 *)(UINTN)(XhciMemoryBase + XhciMmioState[Index].RegisterIndex) = XhciMmioState[Index].RegisterData;
   }
-  if ((*(UINT32 *)(UINTN)(XhciMemoryBase + 0x2040)==0)&&(*(UINT32 *)(UINTN)(XhciMemoryBase + 0x2048)==0)){
-	} else {
-		*(UINT32 *)(UINTN)(XhciMemoryBase + 0x2050) = XhciMmioState[2].RegisterData;
-		*(UINT32 *)(UINTN)(XhciMemoryBase + 0x2054) = XhciMmioState[3].RegisterData;
-		*(UINT32 *)(UINTN)(XhciMemoryBase + 0x2058) = XhciMmioState[18].RegisterData;
-		*(UINT32 *)(UINTN)(XhciMemoryBase + 0x205c) = XhciMmioState[19].RegisterData;
-  }
-  if ((*(UINT32 *)(UINTN)(XhciMemoryBase + 0x2060)==0)&&(*(UINT32 *)(UINTN)(XhciMemoryBase + 0x2068)==0)){
-	} else {
-		*(UINT32 *)(UINTN)(XhciMemoryBase + 0x2070) = XhciMmioState[4].RegisterData;
-		*(UINT32 *)(UINTN)(XhciMemoryBase + 0x2074) = XhciMmioState[5].RegisterData;
-		*(UINT32 *)(UINTN)(XhciMemoryBase + 0x2078) = XhciMmioState[20].RegisterData;
-		*(UINT32 *)(UINTN)(XhciMemoryBase + 0x207c) = XhciMmioState[21].RegisterData;
-  }
-  if ((*(UINT32 *)(UINTN)(XhciMemoryBase + 0x2080)==0)&&(*(UINT32 *)(UINTN)(XhciMemoryBase + 0x2088)==0)){
-	} else {
-		*(UINT32 *)(UINTN)(XhciMemoryBase + 0x2090) = XhciMmioState[6].RegisterData;
-		*(UINT32 *)(UINTN)(XhciMemoryBase + 0x2094) = XhciMmioState[7].RegisterData;
-		*(UINT32 *)(UINTN)(XhciMemoryBase + 0x2098) = XhciMmioState[22].RegisterData;
-		*(UINT32 *)(UINTN)(XhciMemoryBase + 0x209c) = XhciMmioState[23].RegisterData;
-  }
-  if ((*(UINT32 *)(UINTN)(XhciMemoryBase + 0x20a0)==0)&&(*(UINT32 *)(UINTN)(XhciMemoryBase + 0x20a8)==0)){
-	} else {
-		*(UINT32 *)(UINTN)(XhciMemoryBase + 0x20b0) = XhciMmioState[8].RegisterData;
-		*(UINT32 *)(UINTN)(XhciMemoryBase + 0x20b4) = XhciMmioState[9].RegisterData;
-		*(UINT32 *)(UINTN)(XhciMemoryBase + 0x20b8) = XhciMmioState[24].RegisterData;
-		*(UINT32 *)(UINTN)(XhciMemoryBase + 0x20bc) = XhciMmioState[25].RegisterData;
-  }
-  if ((*(UINT32 *)(UINTN)(XhciMemoryBase + 0x20c0)==0)&&(*(UINT32 *)(UINTN)(XhciMemoryBase + 0x20c8)==0)){
-	} else {
-		*(UINT32 *)(UINTN)(XhciMemoryBase + 0x20d0) = XhciMmioState[10].RegisterData;
-		*(UINT32 *)(UINTN)(XhciMemoryBase + 0x20d4) = XhciMmioState[11].RegisterData;
-		*(UINT32 *)(UINTN)(XhciMemoryBase + 0x20d8) = XhciMmioState[26].RegisterData;
-		*(UINT32 *)(UINTN)(XhciMemoryBase + 0x20dc) = XhciMmioState[27].RegisterData;
-  }
-  if ((*(UINT32 *)(UINTN)(XhciMemoryBase + 0x20e0)==0)&&(*(UINT32 *)(UINTN)(XhciMemoryBase + 0x20e8)==0)){
-	} else {
-		*(UINT32 *)(UINTN)(XhciMemoryBase + 0x20f0) = XhciMmioState[12].RegisterData;
-		*(UINT32 *)(UINTN)(XhciMemoryBase + 0x20f4) = XhciMmioState[13].RegisterData;
-		*(UINT32 *)(UINTN)(XhciMemoryBase + 0x20f8) = XhciMmioState[28].RegisterData;
-		*(UINT32 *)(UINTN)(XhciMemoryBase + 0x20fc) = XhciMmioState[29].RegisterData;
-  }
-  if ((*(UINT32 *)(UINTN)(XhciMemoryBase + 0x2100)==0)&&(*(UINT32 *)(UINTN)(XhciMemoryBase + 0x2108)==0)){
-	} else {
-		*(UINT32 *)(UINTN)(XhciMemoryBase + 0x2110) = XhciMmioState[14].RegisterData;
-		*(UINT32 *)(UINTN)(XhciMemoryBase + 0x2114) = XhciMmioState[15].RegisterData;
-		*(UINT32 *)(UINTN)(XhciMemoryBase + 0x2118) = XhciMmioState[30].RegisterData;
-		*(UINT32 *)(UINTN)(XhciMemoryBase + 0x211c) = XhciMmioState[31].RegisterData;
-  }
-
   // Trigger restore CRS
   (*(UINT32 *)(UINTN)(XhciMemoryBase + R_PCH_XHCI_USBCMD)) |= B_PCH_XHCI_USBCMD_CRS;
      PchPmTimerStall (1);

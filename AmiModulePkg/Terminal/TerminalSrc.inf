@@ -1,7 +1,7 @@
 #**********************************************************************
 #**********************************************************************
 #**                                                                  **
-#**        (C)Copyright 1985-2013, American Megatrends, Inc.         **
+#**        (C)Copyright 1985-2012, American Megatrends, Inc.         **
 #**                                                                  **
 #**                       All Rights Reserved.                       **
 #**                                                                  **
@@ -13,7 +13,7 @@
 #**********************************************************************
 
 ## @file
-#   This driver installs Terminal
+#   This driver installs PS2Ctl
 ##
 
 [Defines]
@@ -31,14 +31,15 @@
 #
 
 [Sources]
-  TerminalSetup.c
-  TerminalBoard.h
-  SerialIo.c
-  Terminal.h
-  Terminal.c
-  TerminalName.c
-  TerminalSimpleTextIn.c
-  TerminalSimpleTextOut.c
+TerminalSetup.c
+TerminalBoard.h
+TerminalSetupVar.h
+SerialIo.c
+Terminal.h
+Terminal.c
+TerminalName.c
+TerminalSimpleTextIn.c
+TerminalSimpleTextOut.c
 
 [Packages]
   MdePkg/MdePkg.dec
@@ -69,20 +70,3 @@
   gEfiVT100Guid
   gEfiVT100PlusGuid
   gEfiVTUTF8Guid
-
-[Pcd]
-  gEfiMdePkgTokenSpaceGuid.PcdPciExpressBaseAddress
-
-#**********************************************************************
-#**********************************************************************
-#**                                                                  **
-#**        (C)Copyright 1985-2013, American Megatrends, Inc.         **
-#**                                                                  **
-#**                       All Rights Reserved.                       **
-#**                                                                  **
-#**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093        **
-#**                                                                  **
-#**                       Phone: (770)-246-8600                      **
-#**                                                                  **
-#**********************************************************************
-#**********************************************************************

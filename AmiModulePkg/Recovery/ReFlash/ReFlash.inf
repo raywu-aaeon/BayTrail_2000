@@ -31,7 +31,6 @@
     ReFlash.h
     ReFlash.uni
     ReFlash.vfr
-    TempRomLayout.c
     
 [Packages]
     AmiCompatibilityPkg/AmiCompatibilityPkg.dec
@@ -41,8 +40,6 @@
 [LibraryClasses]
     AmiDxeLib
     AmiCspLib
-    AmiRomLayoutLib
-    PcdLib
     UefiDriverEntryPoint
     
 [Protocols]
@@ -53,9 +50,6 @@
     
 [Guids]
     gAmiRecoveryImageHobGuid
-    
-[Pcd]
-    gAmiModulePkgTokenSpaceGuid.PcdRecoveryImageSize
 
 [Depex]
     gEfiHiiDatabaseProtocolGuid AND

@@ -6,7 +6,6 @@
 [files]
 "Bds.sdl"	
 "Bds.mak"	
-"Bds.chm"
 [INF]
 "Bds.inf"	
 <endComponent>

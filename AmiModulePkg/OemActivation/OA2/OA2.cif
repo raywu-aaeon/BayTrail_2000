@@ -9,6 +9,4 @@
 "PubKey.inf"
 [files]
 "OA2.sdl"
-"Marker.bin"
-"PubKey.bin"
 <endComponent>

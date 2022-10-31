@@ -1,21 +1,35 @@
-//**********************************************************************
-//**********************************************************************
-//**                                                                  **
-//**        (C)Copyright 1985-2016, American Megatrends, Inc.         **
-//**                                                                  **
-//**                       All Rights Reserved.                       **
-//**                                                                  **
-//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093        **
-//**                                                                  **
-//**                       Phone: (770)-246-8600                      **
-//**                                                                  **
-//**********************************************************************
-//**********************************************************************
+//****************************************************************************
+//****************************************************************************
+//**                                                                        **
+//**             (C)Copyright 1985-2011, American Megatrends, Inc.          **
+//**                                                                        **
+//**                          All Rights Reserved.                          **
+//**                                                                        **
+//**                 5555 Oakbrook Pkwy, Norcross, GA 30093                 **
+//**                                                                        **
+//**                          Phone (770)-246-8600                          **
+//**                                                                        **
+//****************************************************************************
+//****************************************************************************
 
-/** @file AmiUsbCcid.h
-    AMI USB CCID Protocol definition
+//****************************************************************************
+// $Header: /Alaska/SOURCE/Modules/USB/ALASKA/Protocol/AmiUsbCCID.h 3     5/02/12 2:02a Rajeshms $
+//
+// $Revision: 3 $
+//
+// $Date: 5/02/12 2:02a $
+//
+//****************************************************************************
 
-**/
+//<AMI_FHDR_START>
+//-----------------------------------------------------------------------------
+//
+//  Name:           AmiUsbCCID.h
+//
+//  Description:    AMI USB CCID Protocol definition
+//
+//-----------------------------------------------------------------------------
+//<AMI_FHDR_END>
 
 #ifndef _USB_CCID_H
 #define _USB_CCID_H
@@ -42,14 +56,14 @@ typedef enum {
 
 typedef
 EFI_STATUS
-(EFIAPI *AMI_CCID_SMARTCLASSDESCRIPTOR) (
+(*AMI_CCID_SMARTCLASSDESCRIPTOR) (
     IN AMI_CCID_IO_PROTOCOL             *This,
     OUT UINT8                           *ResponseBuffer
 );
 
 typedef
 EFI_STATUS
-(EFIAPI *AMI_CCID_GET_ATR) (
+(*AMI_CCID_GET_ATR) (
     IN AMI_CCID_IO_PROTOCOL             *This,
     IN UINT8                            Slot,
     OUT UINT8                           *ATRData
@@ -57,7 +71,7 @@ EFI_STATUS
 
 typedef
 EFI_STATUS
-(EFIAPI *AMI_CCID_POWERUP_SLOT) (
+(*AMI_CCID_POWERUP_SLOT) (
     IN AMI_CCID_IO_PROTOCOL             *This,
     OUT UINT8                           *bStatus,
     OUT UINT8                           *bError,
@@ -66,7 +80,7 @@ EFI_STATUS
 
 typedef
 EFI_STATUS
-(EFIAPI *AMI_CCID_POWERDOWN_SLOT) (
+(*AMI_CCID_POWERDOWN_SLOT) (
     IN AMI_CCID_IO_PROTOCOL             *This,
     OUT UINT8                           *bStatus,
     OUT UINT8                           *bError
@@ -74,7 +88,7 @@ EFI_STATUS
 
 typedef
 EFI_STATUS
-(EFIAPI *AMI_CCID_GET_SLOT_STATUS) (
+(*AMI_CCID_GET_SLOT_STATUS) (
     IN AMI_CCID_IO_PROTOCOL              *This,
     OUT UINT8                            *bStatus,
     OUT UINT8                            *bError,
@@ -83,7 +97,7 @@ EFI_STATUS
 
 typedef
 EFI_STATUS
-(EFIAPI *AMI_CCID_XFR_BLOCK) (
+(*AMI_CCID_XFR_BLOCK) (
     IN AMI_CCID_IO_PROTOCOL             *This,
     IN UINTN                            CmdLength,
     IN UINT8                            *CmdBuffer,
@@ -96,7 +110,7 @@ EFI_STATUS
 
 typedef
 EFI_STATUS
-(EFIAPI *AMI_CCID_GET_PARAMETERS) (
+(*AMI_CCID_GET_PARAMETERS) (
     IN AMI_CCID_IO_PROTOCOL              *This,
     OUT UINT8                            *bStatus,
     OUT UINT8                            *bError,
@@ -128,16 +142,16 @@ typedef struct {
 #endif
 #endif // _USB_CCID_H
 
-//**********************************************************************
-//**********************************************************************
-//**                                                                  **
-//**        (C)Copyright 1985-2016, American Megatrends, Inc.         **
-//**                                                                  **
-//**                       All Rights Reserved.                       **
-//**                                                                  **
-//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093        **
-//**                                                                  **
-//**                       Phone: (770)-246-8600                      **
-//**                                                                  **
-//**********************************************************************
-//**********************************************************************
+//****************************************************************************
+//****************************************************************************
+//**                                                                        **
+//**             (C)Copyright 1985-2011, American Megatrends, Inc.          **
+//**                                                                        **
+//**                          All Rights Reserved.                          **
+//**                                                                        **
+//**                 5555 Oakbrook Pkwy, Norcross, GA 30093                 **
+//**                                                                        **
+//**                          Phone (770)-246-8600                          **
+//**                                                                        **
+//****************************************************************************
+//****************************************************************************

@@ -1,7 +1,7 @@
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2015, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2013, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **
@@ -12,32 +12,44 @@
 //**********************************************************************
 //**********************************************************************
 //**********************************************************************
+#ifndef PEI_BUILD
+
+#include <AmiLib.h>
+
 #include <Token.h>
-#include <Protocol/SmmBase2.h>
-#include "includes.h"
-#include <Library/MemoryAllocationLib.h>
-#include <Library/UefiBootServicesTableLib.h>
-#include <Library/UefiRuntimeServicesTableLib.h>
-#include <Library/SmmServicesTableLib.h>
+#include <AmiDxeLib.h>
+#include <Protocol/SmmBase.h> // used for SMM Malloc
+
 #include <CryptLib.h>
 
 //
 // Global variables
 //
-EFI_EVENT     mVirtualAddressChangeEvent = NULL;
+extern EFI_BOOT_SERVICES    *pBS;
+extern EFI_RUNTIME_SERVICES *pRS;
+
 
 // Crypto Memory Manager heap address
-static UINT8 *gDstAddress = NULL;
-static UINTN  gHeapSize   = CR_DXE_MAX_HEAP_SIZE;
+/*volatile*/ UINT8 *gDstAddress = NULL;
+UINTN  gHeapSize   = CR_DXE_MAX_HEAP_SIZE;
 
-/**
-  This is a notification function registered on EVT_SIGNAL_VIRTUAL_ADDRESS_CHANGE
-  event. It converts a pointer to a new virtual address.
-  
-  @param  Event        Event whose notification function is being invoked.
-  @param  Context      Pointer to the notification function's context
+BOOLEAN   IsVirtualAddress = FALSE;
 
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------
+// Procedure:   RuntimeCryptLibAddressChangeEvent
+//
+// Description:  Notification function of EVT_SIGNAL_VIRTUAL_ADDRESS_CHANGE.
+//               This is a notification function registered on EVT_SIGNAL_VIRTUAL_ADDRESS_CHANGE
+//               event. It converts a pointer to a new virtual address.
+//
+// Input:   Event      The event whose notification function is being invoked.
+//          Context    The pointer to the notification function's context.
+//
+// Output: 
+//
+//----------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID
 EFIAPI
 RuntimeCryptLibAddressChangeEvent (
@@ -45,6 +57,8 @@ RuntimeCryptLibAddressChangeEvent (
   IN  VOID             *Context
   )
 {
+  IsVirtualAddress = TRUE;
+
   //  
   // Stop Crypto debug traces after switch to Virtual mode
   //
@@ -52,148 +66,131 @@ RuntimeCryptLibAddressChangeEvent (
   //
   // Converts a pointer for runtime memory management to a new virtual address.
   //
-  gRT->ConvertPointer(0, (VOID**)&gDstAddress);
+TRACE((-1,"Crypto Lib Callback.\nHeap addr before Virtual MemFixup = %x, ", gDstAddress));
+  pRS->ConvertPointer(0, (VOID**)&gDstAddress);
+TRACE((-1,"After = %x\n", gDstAddress));
 
   InitCRmm((VOID*)gDstAddress, gHeapSize);
 
   return;
 }
 
-/**
-  This constructor function allocates memory for Crypto Memory manager,
-  and sets local EfiTime variable with current EfiTime
 
-  @param  ImageHandle   The firmware allocated handle for the EFI image.
-  @param  SystemTable   A pointer to the EFI System Table.
-  
-  @retval EFI_SUCCESS   The constructor always returns EFI_SUCCESS.
-
-**/
-EFI_STATUS
-EFIAPI
-AmiCryptLibConstructor(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------
+// Procedure:   RuntimeCryptLibConstructorInSmm
+//
+// Description:  Init Crypto lib internal state
+//
+// Input:   
+//
+// Output: 
+//
+//----------------------------------------------------------------------
+//<AMI_PHDR_END>
+EFI_STATUS RuntimeCryptLibConstructorInSmm(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
 {
     EFI_STATUS  Status;
-    EFI_TIME    EfiTime;
-    
-    DEBUG((EFI_D_ERROR,"AmiCryptoLib Constructor\n"));
-	///////////////////////////////////////////////////////////////////////////////
-    //
-    // Init Aux Memory Manager
-    // Pre-allocates runtime space for possible cryptographic operations
-    //
-    ///////////////////////////////////////////////////////////////////////////////
-    Status = EFI_SUCCESS;
-   
-    if(gDstAddress == NULL)
-    	gDstAddress = (UINT8*)AllocateRuntimePool ((UINTN) gHeapSize);
+    EFI_TIME  EfiTime;
 
-    if(gDstAddress == NULL)
-    	Status = EFI_OUT_OF_RESOURCES;
-    
-    DEBUG((EFI_D_ERROR,"RT Heap alloc %r (addr=%X, size=%x)\n", Status, gDstAddress, gHeapSize));
+    Status = pSmst->SmmAllocatePool(EfiRuntimeServicesData, gHeapSize, (void**)&gDstAddress);
     ASSERT_EFI_ERROR(Status);
     if(EFI_ERROR(Status)) 
         return Status;
 
     InitCRmm( (void*)gDstAddress, gHeapSize);
 
-    //  
-    // Update Crypto debug traces level
-    //
-#ifdef EFI_DEBUG
-    wpa_set_trace_level(CRYPTO_trace_level); 
-#endif    
-	///////////////////////////////////////////////////////////////////////////////
-    //
-    // Update local EfiTime variable
-    //
-    ///////////////////////////////////////////////////////////////////////////////
-    // !!!Bug in SBrun.c GetTime with Virtual Addressing
-	Status = gRT->GetTime(&EfiTime, NULL);
-	if(!EFI_ERROR(Status)) 
+    Status = pST->RuntimeServices->GetTime(&EfiTime, NULL);
+    if(!EFI_ERROR(Status))
         set_crypt_efitime(&EfiTime);
-    
-    return EFI_SUCCESS;
+TRACE((-1,"Crypto Lib SMM Init %r\nCR Heap Addr = %x\n", Status, gDstAddress));
+
+    return Status;
 }
 
-/**
-  This constructor function installs Notification function 
-  on EVT_SIGNAL_VIRTUAL_ADDRESS_CHANGE.
-
-  @param  ImageHandle   The firmware allocated handle for the EFI image.
-  @param  SystemTable   A pointer to the EFI System Table.
-  
-  @retval EFI_SUCCESS   The constructor always returns EFI_SUCCESS.
-
-**/
-EFI_STATUS
-EFIAPI
-RuntimeAmiCryptLibConstructor(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
-{
-    DEBUG((EFI_D_ERROR,"Runtime"));
-    AmiCryptLibConstructor(ImageHandle,SystemTable);
-    //////////////////////////////////////////////////////////////////////////////
-    //
-    // Create virtual address change event
-    //
-    ///////////////////////////////////////////////////////////////////////////////
-    gBS->CreateEvent(EVT_SIGNAL_VIRTUAL_ADDRESS_CHANGE, TPL_CALLBACK, RuntimeCryptLibAddressChangeEvent, NULL, &mVirtualAddressChangeEvent);
-
-    return EFI_SUCCESS;
-}
-
-/**
-  The destructor function frees memory allocated by constructor.
-
-  @param  ImageHandle   The firmware allocated handle for the EFI image.
-  @param  SystemTable   A pointer to the EFI System Table.
-  
-  @retval EFI_SUCCESS   The constructor always returns EFI_SUCCESS.
-
-**/
-EFI_STATUS
-EFIAPI
-AmiCryptLibDestructor(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
-{
-    DEBUG((EFI_D_ERROR,"AmiCryptoLib Destructor\n"));
-    if(gDstAddress)
-        FreePool ( (void*)gDstAddress);
-
-    return EFI_SUCCESS;
-}
-
-/**
-  The destructor function frees memory allocated by constructor, and closes related events.
-  It will ASSERT() if that related operation fails and it will always return EFI_SUCCESS. 
-
-  @param  ImageHandle   The firmware allocated handle for the EFI image.
-  @param  SystemTable   A pointer to the EFI System Table.
-  
-  @retval EFI_SUCCESS   The constructor always returns EFI_SUCCESS.
-
-**/
-EFI_STATUS
-EFIAPI
-RuntimeAmiCryptLibDestructor(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:   RuntimeCryptLibConstructor
+//
+// Description: This function is called from outside of SMM during SMM registration.
+//
+// Input:
+//  IN EFI_HANDLE       ImageHandle
+//  IN EFI_SYSTEM_TABLE *SystemTable
+//
+// Output: EFI_STATUS
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
+EFI_STATUS RuntimeCryptLibConstructor(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
 {
     EFI_STATUS  Status;
+    EFI_TIME  EfiTime;
+/*    BOOLEAN    InSmm= FALSE;
+    ////////////////////////////////////////////////////////////////////////////////////
+    // Init Crypto Memory Manager
+    ////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Check to see if we are already in SMM
+    //
+    pSmmBase->InSmm (pSmmBase, &InSmm);
+    //
+    //
+    //
+    if (InSmm) {
+        // Init Crypto mem manager to use heap inside the SMM
+        Status = pSmst->SmmAllocatePool(EfiRuntimeServicesData, gHeapSize, (void**)&gDstAddress);
+        ASSERT_EFI_ERROR(Status);
+    EFI_DEADLOOP()
+        InitCRmm( (void*)gDstAddress, gHeapSize);
 
-    DEBUG((EFI_D_ERROR,"Runtime"));
-    AmiCryptLibDestructor(ImageHandle, SystemTable);
+        Status = pST->RuntimeServices->GetTime(&EfiTime, NULL);
 
-    if (mVirtualAddressChangeEvent) {
-        ASSERT (gBS != NULL);
-        Status = gBS->CloseEvent (mVirtualAddressChangeEvent);
-        ASSERT_EFI_ERROR (Status);
+        TRACE((-1,"Crypto Lib SMM Init\nCR Heap Addr = %x\n", gDstAddress));
     }
+    else {
+*/
+// not in SMM
+///////////////////////////////////////////////////////////////////////////////
+//
+// Init Aux Memory Manager
+//
+///////////////////////////////////////////////////////////////////////////////
+  //
+  // Pre-allocates runtime space for possible cryptographic operations
+  //
+        if(gDstAddress == NULL) {
+            Status = pBS->AllocatePool(EfiRuntimeServicesData, gHeapSize, (void**)&gDstAddress);
+            ASSERT_EFI_ERROR (Status);
+            if(EFI_ERROR(Status)) return Status;
+        }
 
-    return EFI_SUCCESS;
+
+        InitCRmm((void*)gDstAddress, gHeapSize);
+
+        // !!!Bug in SBrun.c GetTime with Virtual Addressing
+        Status = pRS->GetTime(&EfiTime, NULL);
+    if(EFI_ERROR(Status)) 
+        return Status;
+    set_crypt_efitime(&EfiTime);
+
+TRACE((-1,"Crypto Lib Init %r\nCR Heap Addr = %x\n", Status, gDstAddress));
+        //
+        // Create virtual address change event
+        //
+        InitAmiRuntimeLib(
+            ImageHandle, SystemTable, NULL, RuntimeCryptLibAddressChangeEvent
+        );
+//    }
+
+    return Status;
 }
+#endif //#ifndef PEI_BUILD
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2015, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2013, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **

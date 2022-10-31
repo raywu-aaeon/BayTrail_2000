@@ -2,7 +2,7 @@
 //*****************************************************************//
 //*****************************************************************//
 //**                                                             **//
-//**         (C)Copyright 2014, American Megatrends, Inc.        **//
+//**         (C)Copyright 2012, American Megatrends, Inc.        **//
 //**                                                             **//
 //**                     All Rights Reserved.                    **//
 //**                                                             **//
@@ -89,6 +89,12 @@ UINTN CAR_Start_Addr = CAR_BASE_ADDRESS;
 #ifndef TSEG_SIZE
 #define TSEG_SIZE 0
 #endif
+#ifndef PCIEX_BASE_ADDRESS
+#define PCIEX_BASE_ADDRESS 0
+#endif
+#ifndef DYNAMIC_PCIEXBASE_SUPPORT
+#define DYNAMIC_PCIEXBASE_SUPPORT 0
+#endif
 
 //For SMM Outcontext Support
 volatile UINT16 gSMIIOAddress = SW_SMI_IO_ADDRESS;
@@ -98,11 +104,24 @@ volatile UINTN gSMMBspBase = SMM_BSP_BASE;
 volatile UINTN gTsegSize = TSEG_SIZE;
 //**********************************************************************
 
+#ifdef PCIEX_BASE_ADDRESS
+volatile UINTN gPCIEXBaseAddress = PCIEX_BASE_ADDRESS;
+#else
+volatile UINTN gPCIEXBaseAddress = 0;
+#endif
+
+//EIP 80406 - Debugger support for Dynamic pci express base token
+#ifdef DYNAMIC_PCIEXBASE_SUPPORT
+volatile UINTN gDynamicPCIExBase = DYNAMIC_PCIEXBASE_SUPPORT;
+#else
+volatile UINTN gDynamicPCIExBase = 0;
+#endif
+
 //*****************************************************************//
 //*****************************************************************//
 //*****************************************************************//
 //**                                                             **//
-//**         (C)Copyright 2014, American Megatrends, Inc.        **//
+//**         (C)Copyright 2012, American Megatrends, Inc.        **//
 //**                                                             **//
 //**                     All Rights Reserved.                    **//
 //**                                                             **//

@@ -7,4 +7,4 @@
     FILE_GUID = 69009842-63F2-43DB-964B-EFAD1C39EC85
 
 [Binaries]
-    BIN|$(MARKER_BIN)|*
+    BIN|Marker.bin|*

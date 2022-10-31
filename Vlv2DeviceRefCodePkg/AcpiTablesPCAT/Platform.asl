@@ -148,14 +148,6 @@ Field(SWC1, DWordAcc, NoLock, Preserve)
 }
 //AMI_OVERRIDE - system resumed from S3 last time,then S4 sleep smi would not work - EIP130577 <<
 
-//AMI_OVERRIDE - EIP180903 System could not resume from S3 after VERIFY_BOOT_SUPPORT is set to 1. >>
-OperationRegion (TXEM, SystemMemory, 0xE00D0064, 0x01) //B:0 D:26 F:0 R:0x64
-Field (TXEM, ByteAcc, NoLock, Preserve)
-{
-  SHAD,   8,  // Shadow Done Message   
-}
-//AMI_OVERRIDE - EIP180903 System could not resume from S3 after VERIFY_BOOT_SUPPORT is set to 1. <<      
-
 // Prepare to Sleep.  The hook is called when the OS is about to
 // enter a sleep state.  The argument passed is the numeric value of
 // the Sx state.
@@ -229,7 +221,7 @@ Method(_PTS,1)
       If(LGreaterEqual(DTSE, 0x01))
       {
         Store(30, DTSF) // DISABLE_UPDATE_DTS_EVERY_SMI
-        Store(DTMI, SSMP) // DTS SW SMI
+        Store(0xD0, SSMP) // DTS SW SMI
       }
     }
   }
@@ -248,8 +240,6 @@ Method(_WAK,1,Serialized)
 #endif
 //AMI_OVERRIDE <<
 {
-  Or(SHAD, 1, SHAD) //AMI_OVERRIDE - EIP180903 System could not resume from S3 after VERIFY_BOOT_SUPPORT is set to 1.
-
   Store(SSEN, SSMI) //AMI_OVERRIDE - EIP130577 system resumed from S3 last time,then S4 sleep smi would not work
   Store(SPM1, PM1E) //AMI_OVERRIDE - EIP135835 S3 power button issue
   Store (Arg0, WAKS)
@@ -365,27 +355,24 @@ Method(_WAK,1,Serialized)
         // Perform needed ACPI Notifications.
         PNOT()
       }
-    }
-    //EIP184675 >>
-    // AMI_OVERRIDE - Re-enable DTS for all flavors >>
-    //
-    // Enable Digital Thermal Sensor function after resume from S3
-    //
-    If(CondRefOf(DTSE))
-    {
-      If(LGreaterEqual(DTSE, 0x01))
+
+      //
+      // Enable Digital Thermal Sensor function after resume from S3
+      //
+      If(CondRefOf(DTSE))
       {
-        Store(20, DTSF) // INIT_DTS_FUNCTION_AFTER_S3
-        Store(DTMI, SSMP) // DTS SW SMI
-        // EIP163305 >>
-        If(CondRefOf(\_TZ.TZ01)) {
-          Notify(\_TZ.TZ01,0x80)
+        If(LGreaterEqual(DTSE, 0x01))
+        {
+          Store(20, DTSF) // INIT_DTS_FUNCTION_AFTER_S3
+          Store(0xD0, SSMP) // DTS SW SMI
+          // EIP163305 >>
+          If(CondRefOf(\_TZ.TZ01)) {
+            Notify(\_TZ.TZ01,0x80)
+          }
+          // EIP163305 <<
         }
-        // EIP163305 <<
       }
     }
-    // AMI_OVERRIDE - Re-enable DTS for all flavors <<
-    //EIP184675 <<
 
     // If CMP is enabled, we may need to restore the C-State and/or
     // P-State configuration, as it may have been saved before the
@@ -607,77 +594,6 @@ Scope(\_SB)
 
   Method(_INI,0)
   {
-      // Determine the OS and store the value, where:
-      //
-      //   OSYS = 2000 = WIN2000.
-      //   OSYS = 2001 = WINXP, RTM or SP1.
-      //   OSYS = 2002 = WINXP SP2.
-      //   OSYS = 2006 = Vista.
-      //   OSYS = 2009 = Windows 7 and Windows Server 2008 R2.
-      //   OSYS = 2012 = Windows 8 and Windows Server 2012.
-      //   OSYS = 2013 = Windows Blue.
-      //
-      // Assume Windows 2000 at a minimum.
-
-      Store(2000,OSYS)
-
-      // Check for a specific OS which supports _OSI.
-
-      If(CondRefOf(\_OSI,Local0))
-      {
-        // Linux returns _OSI = TRUE for numerous Windows
-        // strings so that it is fully compatible with
-        // BIOSes available in the market today.  There are
-        // currently 2 known exceptions to this model:
-        //      1) Video Repost - Linux supports S3 without
-        //              requireing a Driver, meaning a Video
-        //              Repost will be required.
-        //      2) On-Screen Branding - a full CMT Logo
-        //              is limited to the WIN2K and WINXP
-        //              Operating Systems only.
-
-        // Use OSYS for Windows Compatibility.
-
-        If(\_OSI("Windows 2001"))   // Windows XP
-        {
-          Store(2001,OSYS)
-        }
-
-        If(\_OSI("Windows 2001 SP1"))   // Windows XP SP1
-        {
-          Store(2001,OSYS)
-        }
-
-        If(\_OSI("Windows 2001 SP2"))   // Windows XP SP2
-        {
-          Store(2002,OSYS)
-        }
-
-        If(\_OSI("Windows 2006"))   // Windows Vista
-        {
-          Store(2006,OSYS)
-        }
-
-        If(\_OSI("Windows 2009"))   // Windows 7 or Windows Server 2008 R2
-        {
-          Store(2009,OSYS)
-        }
-        If(\_OSI("Windows 2012"))   // Windows 8 or Windows Server 2012
-        {
-          Store(2012,OSYS)
-        }
-        If(\_OSI("Windows 2013"))   //Windows Blue
-        {
-          Store(2013,OSYS)
-        }
-
-        //
-        // If CMP is enabled, enable SMM C-State
-        // coordination.  SMM C-State coordination
-        // will be disabled in _PDC if driver support
-        // for independent C-States deeper than C1
-        // is indicated.
-      }
     // NVS has stale DTS data.  Get and update the values
     // with current temperatures.   Note that this will also
     // re-arm any AP Thermal Interrupts.
@@ -881,6 +797,77 @@ Scope(\_SB)
   {
     Method(_INI,0)
     {
+      // Determine the OS and store the value, where:
+      //
+      //   OSYS = 2000 = WIN2000.
+      //   OSYS = 2001 = WINXP, RTM or SP1.
+      //   OSYS = 2002 = WINXP SP2.
+      //   OSYS = 2006 = Vista.
+      //   OSYS = 2009 = Windows 7 and Windows Server 2008 R2.
+      //   OSYS = 2012 = Windows 8 and Windows Server 2012.
+      //   OSYS = 2013 = Windows Blue.
+      //
+      // Assume Windows 2000 at a minimum.
+
+      Store(2000,OSYS)
+
+      // Check for a specific OS which supports _OSI.
+
+      If(CondRefOf(\_OSI,Local0))
+      {
+        // Linux returns _OSI = TRUE for numerous Windows
+        // strings so that it is fully compatible with
+        // BIOSes available in the market today.  There are
+        // currently 2 known exceptions to this model:
+        //      1) Video Repost - Linux supports S3 without
+        //              requireing a Driver, meaning a Video
+        //              Repost will be required.
+        //      2) On-Screen Branding - a full CMT Logo
+        //              is limited to the WIN2K and WINXP
+        //              Operating Systems only.
+
+        // Use OSYS for Windows Compatibility.
+
+        If(\_OSI("Windows 2001"))   // Windows XP
+        {
+          Store(2001,OSYS)
+        }
+
+        If(\_OSI("Windows 2001 SP1"))   // Windows XP SP1
+        {
+          Store(2001,OSYS)
+        }
+
+        If(\_OSI("Windows 2001 SP2"))   // Windows XP SP2
+        {
+          Store(2002,OSYS)
+        }
+
+        If(\_OSI("Windows 2006"))   // Windows Vista
+        {
+          Store(2006,OSYS)
+        }
+
+        If(\_OSI("Windows 2009"))   // Windows 7 or Windows Server 2008 R2
+        {
+          Store(2009,OSYS)
+        }
+        If(\_OSI("Windows 2012"))   // Windows 8 or Windows Server 2012
+        {
+          Store(2012,OSYS)
+        }
+        If(\_OSI("Windows 2013"))   //Windows Blue
+        {
+          Store(2013,OSYS)
+        }
+
+        //
+        // If CMP is enabled, enable SMM C-State
+        // coordination.  SMM C-State coordination
+        // will be disabled in _PDC if driver support
+        // for independent C-States deeper than C1
+        // is indicated.
+      }
 //AMI_OVERRIDE - EIP150027 hotplug resource for thunderbolt base >>
 #if defined (ASL_TBT_PCI0_INI_SUPPORT) && (ASL_TBT_PCI0_INI_SUPPORT == 1)
       ASL_TBT_INI               // \_SB.PCI0.RP0$(TBT_RPNum).TINI()
@@ -1313,53 +1300,6 @@ Scope(\_SB)
       }
     }
   }
-
-//
-//  Platform Indicator device PIND
-//  handles platform events, buttons and indicators such as: 
-//  VOLUME_UP, VOLUME_DOWN, BRIGHTNESS, ROTATION_LOCK, MUTE, LID, DOCK, POWER_BUTTON
-//  SLEEP_BUTTON, WIFI, TABLET_MODE
-//
-Device(PIND) {
-  Name(_HID, EISAID("PNP0A06"))
-  Name(_UID, 0)
-
-  Method(_STA) {
-    If (LEqual(OSEL, 1))
-      {
-        Return (0xF)
-      }
-      Return (0x0)   
-  }
-
-   
-
-  //
-  //  Supported TYPES:
-  //  0x00  - Undefined
-  //  0x01  - Interrupt source (GpioInt() or Interrupt()) defined in the _CRS method, 
-  //          Descriptor field returns type, zero based index of interrupt sources found in _CRS method.
-  //  0x02  - interrupt event that is not listed in CRS table. This interrupt is delivered 
-  //          through a notify () event where the notify event value is a pointer 
-  //          to the package indexed within the package returned by the _IND method. Descriptor field returns type only.
-  //  0x03  - Level, descriptor field returnd type, current value (1 or 0).
-  //  0x04  - Numerical, descriptor field returnd type, an integer value
-  //  0x05  - Percentage, descriptor field returnd type, value between 0 - 100
-  //  0x06  - Range, descriptor field returnd type, Minimum Value, Max Value, and current value
-  //  0x07  - 0xNN  - Reserved for future types
-  //
-  Name (PDAT, Package () {
-                // Name,          Descriptor:  Type,       value/Index        
-    Package (2) {"VOLUME_UP",   Package (1) {0x02 }},  // Pulse event
-    Package (2) {"VOLUME_DOWN", Package (1) {0x02 }},  // Pulse event
-    Package (2) {"HOME_BUTTON", Package (1) {0x02 }}  // Pulse event
-  })
-
-  Method(_IND, 0, Serialized) {
-   // If required read any items that need to be updated before returning package PDAT.
-   return(PDAT)
-  }
-} // end device PIND
 
 
 } // end Scope(\_SB)

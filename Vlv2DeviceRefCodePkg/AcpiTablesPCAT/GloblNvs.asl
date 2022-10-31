@@ -299,9 +299,6 @@ Field(GNVS,AnyAcc,Lock,Preserve)
   MH1A,     32,
   MH1L,     32,
 
-  offset(656),
-  SDRM,     8,   //(656) SdCard Removable
-  
   offset(657),
   HLPS,     8,   //(657) Hide Devices
   offset(658),
@@ -389,7 +386,7 @@ Field(GNVS,AnyAcc,Lock,Preserve)
   TPDE, 8,      // (818) Touch Pad enable/disable
   RPBA, 32,     // (819 - 822) PCH Root Port Base Address
   EPA1, 32,     // (823 - 826) PCH End Point Base Address
-  PB1E, 8,      // (827) Virtual Button for Win8.x 
+  PB1E, 8,      // (827) Virtual Power Button Support 
                           //   Bit0: Enable/Disable Virtual Button (0 - Disable; 1- Enable)
                           //   Bit1: Internal Flag
                           //   Bit2: Rotation Lock flag, 0:unlock, 1:lock
@@ -397,6 +394,8 @@ Field(GNVS,AnyAcc,Lock,Preserve)
                           //   Bit4: Undock / Dock Flag, 0: Undock, 1: Dock
                           //   Bit5, 6: reserved for future use.
                           //   Bit7: EC 10sec PB Override state for S3/S4 wake up. 
-  HIDE, 8,		// (828) Virtual button HID event filter for Win10
+  MIPL, 16,     // (828) PPCC Minimum Power Limit
+  MAPL, 16,     // (830) PPCC Maximum Power Limit
+  PPSZ, 16,     // (832) PPCC power step size
 }
 

@@ -14,7 +14,7 @@
 
 #include <Library/SmmCorePlatformHookLib.h>
 #include <SmmPlatformeLinks.h>
-#include <Dxe.h>
+#include <DXE.h>
 #include <AmiDxeLib.h>
 
 /**

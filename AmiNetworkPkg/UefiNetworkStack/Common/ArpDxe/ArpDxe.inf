@@ -69,9 +69,6 @@
   NetLib
   DpcLib
 
-[Guids]
-  gEfiNetworkStackSetupGuid                      # AMI PORTING.
-
 [Protocols]
   gEfiManagedNetworkServiceBindingProtocolGuid  # PROTOCOL ALWAYS_CONSUMED
   gEfiArpServiceBindingProtocolGuid             # PROTOCOL ALWAYS_CONSUMED

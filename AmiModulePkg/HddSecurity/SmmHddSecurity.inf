@@ -1,28 +1,27 @@
-#**********************************************************************
-#**********************************************************************
-#**                                                                  **
-#**        (C)Copyright 1985-2015, American Megatrends, Inc.         **
-#**                                                                  **
-#**                       All Rights Reserved.                       **
-#**                                                                  **
-#**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093        **
-#**                                                                  **
-#**                       Phone: (770)-246-8600                      **
-#**                                                                  **
-#**********************************************************************
-#**********************************************************************
-## @file SmmHddSecurity.inf
-#  Smm Module Part of the HddSecurity  
+#*************************************************************************
+#*************************************************************************
+#**                                                                     **
+#**        (C)Copyright 1985-2012, American Megatrends, Inc.            **
+#**                                                                     **
+#**                       All Rights Reserved.                          **
+#**                                                                     **
+#**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093           **
+#**                                                                     **
+#**                       Phone: (770)-246-8600                         **
+#**                                                                     **
+#*************************************************************************
+#*************************************************************************
+## @file
+#   
 ##
-
 [Defines]
-  INF_VERSION                    = 0x00010015
-  BASE_NAME                      = SmmHddSecurity
-  FILE_GUID                      = 316B1230-0500-4592-8C09-EABA0FB6B07F
-  MODULE_TYPE                    = DXE_SMM_DRIVER
-  VERSION_STRING                 = 1.0
+  INF_VERSION = 0x00010015
+  VERSION_STRING = 1.0
+  BASE_NAME = SmmHddSecurity
+  MODULE_TYPE = DXE_SMM_DRIVER
+  FILE_GUID = 316B1230-0500-4592-8C09-EABA0FB6B07F
   PI_SPECIFICATION_VERSION       = 0x0001000A
-  ENTRY_POINT                    = HddHDDPasswordSMMInit
+  ENTRY_POINT = HddHDDPasswordSMMInit
 
 [Sources]
   SmmHddSecurity.h
@@ -36,42 +35,27 @@
 [LibraryClasses]
   AmiDxeLib
   UefiDriverEntryPoint
-  PcdLib
-  AmiBufferValidationLib
-  S3BootScriptLib
-  DevicePathLib
-  
+
 [Protocols]
   gEfiSmmSwDispatch2ProtocolGuid
   gEfiSmmBase2ProtocolGuid
-  gAmiHddSecurityProtocolGuid
-  gAmiAhciSmmProtocolGuid
-  gAmiSmmNvmePassThruProtocolGuid
-  gAmiSmmNvmeControllerProtocolGuid
-  gAmiNvmeControllerProtocolGuid
-  gEfiPciIoProtocolGuid
-  gEfiDevicePathProtocolGuid
-  
-[Pcd]
-  gEfiMdePkgTokenSpaceGuid.PcdPciExpressBaseAddress
+  gIdeSecurityInterfaceGuid
 
 [Depex]
   gEfiSmmSwDispatch2ProtocolGuid
 
 [BuildOptions.X64]
-MSFT:*_*_X64_CC_FLAGS = /D EFIx64
-GCC:*_*_X64_CC_FLAGS = -D EFIx64
+  *_*_X64_CC_FLAGS = /D EFIx64
 
-#**********************************************************************
-#**********************************************************************
-#**                                                                  **
-#**        (C)Copyright 1985-2015, American Megatrends, Inc.         **
-#**                                                                  **
-#**                       All Rights Reserved.                       **
-#**                                                                  **
-#**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093        **
-#**                                                                  **
-#**                       Phone: (770)-246-8600                      **
-#**                                                                  **
-#**********************************************************************
-#**********************************************************************
+#*************************************************************************
+#**                                                                     **
+#**        (C)Copyright 1985-2012, American Megatrends, Inc.            **
+#**                                                                     **
+#**                       All Rights Reserved.                          **
+#**                                                                     **
+#**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093           **
+#**                                                                     **
+#**                       Phone: (770)-246-8600                         **
+#**                                                                     **
+#*************************************************************************
+#*************************************************************************

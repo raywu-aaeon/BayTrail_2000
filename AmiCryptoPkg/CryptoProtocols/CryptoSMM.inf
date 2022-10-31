@@ -23,8 +23,7 @@
   MODULE_TYPE                 = DXE_SMM_DRIVER
   VERSION_STRING              = 1.0
   PI_SPECIFICATION_VERSION    = 0x0001000A
-  ENTRY_POINT                 = InSmmFunction
-  #CryptoDxe_Init
+  ENTRY_POINT                 = CryptoDxe_Init
 
 #
 # The following information is for reference only and not required by the build tools.
@@ -39,27 +38,27 @@
   MdePkg/MdePkg.dec
   AmiCompatibilityPkg/AmiCompatibilityPkg.dec
   AmiCryptoPkg/AmiCryptoPkg.dec
+  IntelFrameworkPkg/IntelFrameworkPkg.dec
 
 [LibraryClasses]
   AmiDxeLib
   UefiDriverEntryPoint
   AmiCryptLib
-  MemoryAllocationLib
-
+  
 [Guids]
 gEfiCertX509Guid
 gEfiCertSha256Guid
 gEfiCertRsa2048Guid
-gEfiHashAlgorithmSha1Guid
 gEfiHashAlgorithmSha256Guid
-gEfiHashAlgorithmSha384Guid
-gEfiHashAlgorithmSha512Guid
+gEfiHashAlgorithmSha1Guid
 gEfiHashAlgorithmSha1NoPadGuid
 gEfiHashAlgorithmSha256NoPadGuid
 
 [Protocols]
 gAmiDigitalSignatureProtocolGuid    # producer
 gAmiSmmDigitalSignatureProtocolGuid # producer
+gEfiFirmwareVolumeProtocolGuid
+gEfiFirmwareVolume2ProtocolGuid
 
 [Depex]
- gEfiSmmBase2ProtocolGuid
+TRUE

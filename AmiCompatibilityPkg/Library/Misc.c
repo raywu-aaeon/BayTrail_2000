@@ -31,7 +31,7 @@
 #include <Hob.h>
 #include <AmiLib.h>
 
-//EFI_GUID gAmiGlobalVariableGuid = AMI_GLOBAL_VARIABLE_GUID; //EIP232196;EIP232188
+EFI_GUID gAmiGlobalVariableGuid = AMI_GLOBAL_VARIABLE_GUID;
 
 //*************************************************************************
 //<AMI_PHDR_START>

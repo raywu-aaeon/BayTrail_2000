@@ -1,9 +1,15 @@
 /*
  * X.509v3 certificate parsing and processing (RFC 3280 profile)
- * Copyright (c) 2006-2011, Jouni Malinen <j@w1.fi>
+ * Copyright (c) 2006-2007, Jouni Malinen <j@w1.fi>
  *
- * This software may be distributed under the terms of the BSD license.
- * See README for more details.
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
+ * published by the Free Software Foundation.
+ *
+ * Alternatively, this software may be distributed under the terms of BSD
+ * license.
+ *
+ * See README and COPYING for more details.
  */
 
 #include "includes.h"
@@ -506,10 +512,8 @@ void x509_name_string(struct x509_name *name, char *buf, size_t len)
 	}
 
 	if (pos > buf + 1 && pos[-1] == ' ' && pos[-2] == ',') {
-		pos--;
-		*pos = '\0';
-		pos--;
-		*pos = '\0';
+		*pos-- = '\0';
+		*pos-- = '\0';
 	}
 
 	if (name->email) {
@@ -525,7 +529,7 @@ done:
 }
 #endif
 
-/*static*/ int x509_parse_time(const u8 *buf, size_t len, unsigned int/*u8*/ asn1_tag,
+/*static*/ int x509_parse_time(const u8 *buf, size_t len, u8 asn1_tag,
 			   os_time_t *val)
 {
 	const char *pos;
@@ -791,7 +795,7 @@ static int x509_parse_ext_basic_constraints(struct x509_certificate *cert,
 	if (hdr.tag == ASN1_TAG_BOOLEAN) {
 		if (hdr.length != 1) {
 			wpa_printf(MSG_DEBUG, "X509: Unexpected "
-				   "Boolean length (%lx) in BasicConstraints",
+				   "Boolean length (%u) in BasicConstraints",
 				   hdr.length);
 			return -1;
 		}
@@ -930,7 +934,6 @@ static int x509_parse_extension(struct x509_certificate *cert,
 			return -1;
 		}
 	}
-
 	asn1_oid_to_str(&oid, buf, sizeof(buf));
 	wpa_printf(MSG_DEBUG, "X509: Extension: extnID=%s critical=%d",
 		   buf, critical_ext);
@@ -1000,8 +1003,10 @@ static int x509_parse_tbs_certificate(const u8 *buf, size_t len,
 		wpa_printf(MSG_DEBUG, "X509: tbsCertificate did not start "
 			   "with a valid SEQUENCE - found class %d tag 0x%x",
 			   hdr.class, hdr.tag);
+		
 		return -1;
 	}
+
 	pos = hdr.payload;
 	end = *next = pos + hdr.length;
 
@@ -1026,7 +1031,7 @@ static int x509_parse_tbs_certificate(const u8 *buf, size_t len,
 		}
 		if (hdr.length != 1) {
 			wpa_printf(MSG_DEBUG, "X509: Unexpected version field "
-				   "length %lx (expected 1)", hdr.length);
+				   "length %u (expected 1)", hdr.length);
 			return -1;
 		}
 		pos = hdr.payload;
@@ -1214,6 +1219,7 @@ static int x509_parse_tbs_certificate(const u8 *buf, size_t len,
 		oid->oid[5] == 26 /* id-sha1 */;
 }
 
+
 /*static */int x509_sha256_oid(struct asn1_oid *oid)
 {
 	return oid->len == 9 &&
@@ -1227,36 +1233,7 @@ static int x509_parse_tbs_certificate(const u8 *buf, size_t len,
 		oid->oid[7] == 2 /* hashAlgs */ &&
 		oid->oid[8] == 1 /* sha256 */;
 }
-// OID SHA384
-// { 2, 16, 840, 1, 101, 3, 4, 2, 2,  },
-/*static */int x509_sha384_oid(struct asn1_oid *oid)
-{
-	return oid->len == 9 &&
-		oid->oid[0] == 2 /* joint-iso-itu-t */ &&
-		oid->oid[1] == 16 /* country */ &&
-		oid->oid[2] == 840 /* us */ &&
-		oid->oid[3] == 1 /* organization */ &&
-		oid->oid[4] == 101 /* gov */ &&
-		oid->oid[5] == 3 /* csor */ &&
-		oid->oid[6] == 4 /* nistAlgorithm */ &&
-		oid->oid[7] == 2 /* hashAlgs */ &&
-		oid->oid[8] == 2 /* sha384 */;
-}
-// OID 
-// { 2, 16, 840, 1, 101, 3, 4, 2, 3,  },
-/*static */int x509_sha512_oid(struct asn1_oid *oid)
-{
-	return oid->len == 9 &&
-		oid->oid[0] == 2 /* joint-iso-itu-t */ &&
-		oid->oid[1] == 16 /* country */ &&
-		oid->oid[2] == 840 /* us */ &&
-		oid->oid[3] == 1 /* organization */ &&
-		oid->oid[4] == 101 /* gov */ &&
-		oid->oid[5] == 3 /* csor */ &&
-		oid->oid[6] == 4 /* nistAlgorithm */ &&
-		oid->oid[7] == 2 /* hashAlgs */ &&
-		oid->oid[8] == 3 /* sha512 */;
-}
+
 
 /**
  * x509_certificate_parse - Parse a X.509 certificate in DER format
@@ -1494,7 +1471,7 @@ int x509_certificate_check_signature(struct x509_certificate *issuer,
 
 	if (x509_sha256_oid(&oid)) {
 		if (cert->signature.oid.oid[6] !=
-		    11 /* sha256WithRSAEncryption */) {
+		    11 /* sha2561WithRSAEncryption */) {
 			wpa_printf(MSG_DEBUG, "X509: digestAlgorithm SHA256 "
 				   "does not match with certificate "
 				   "signatureAlgorithm (%x)",
@@ -1504,31 +1481,7 @@ int x509_certificate_check_signature(struct x509_certificate *issuer,
 		}
 		goto skip_digest_oid;
 	}
-	if (x509_sha384_oid(&oid)) {
-		if (cert->signature.oid.oid[6] !=
-		    12 /* sha384WithRSAEncryption */) {
-			wpa_printf(MSG_DEBUG, "X509: digestAlgorithm SHA384 "
-				   "does not match with certificate "
-				   "signatureAlgorithm (%x)",
-				   cert->signature.oid.oid[6]);
-			os_free(data);
-			return -1;
-		}
-		goto skip_digest_oid;
-	}
-	if (x509_sha512_oid(&oid)) {
-		if (cert->signature.oid.oid[6] !=
-		    13 /* sha256WithRSAEncryption */) {
-			wpa_printf(MSG_DEBUG, "X509: digestAlgorithm SHA512 "
-				   "does not match with certificate "
-				   "signatureAlgorithm (%x)",
-				   cert->signature.oid.oid[6]);
-			os_free(data);
-			return -1;
-		}
-		goto skip_digest_oid;
-	}
-// extend support to SHA224
+
 	if (!x509_digest_oid(&oid)) {
 		wpa_printf(MSG_DEBUG, "X509: Unrecognized digestAlgorithm");
 		os_free(data);
@@ -1611,21 +1564,9 @@ skip_digest_oid:
 //		os_free(data);
 //		return -1;
 //#endif /* NEED_SHA256 */
-	case 12: /* sha384WithRSAEncryption */
-		sha384_vector(1, &cert->tbs_cert_start, &cert->tbs_cert_len,
-			      hash);
-		hash_len = 48;
-		wpa_hexdump(MSG_MSGDUMP, "X509: Certificate hash (SHA384)",
-			    hash, hash_len);
-		break;
-	case 13: /* sha512WithRSAEncryption */
-		sha512_vector(1, &cert->tbs_cert_start, &cert->tbs_cert_len,
-			      hash);
-		hash_len = 64;
-		wpa_hexdump(MSG_MSGDUMP, "X509: Certificate hash (SHA512)",
-			    hash, hash_len);
-		break;
 	case 2: /* md2WithRSAEncryption */
+	case 12: /* sha384WithRSAEncryption */
+	case 13: /* sha512WithRSAEncryption */
 	default:
 		wpa_printf(MSG_INFO, "X509: Unsupported certificate signature "
 			   "algorithm (%x)", cert->signature.oid.oid[6]);
@@ -1718,10 +1659,8 @@ int x509_certificate_chain_validate(struct x509_certificate *trusted,
 //*** AMI W/A ***//
 // 09/18/2012
 // ignore Cert time stamp validation error.
-#ifndef	CONFIG_IGNORE_X509_CERTIFICATE_EXPIRATION
-			*reason = X509_VALIDATE_CERTIFICATE_EXPIRED;
-			return -1;
-#endif			
+//			*reason = X509_VALIDATE_CERTIFICATE_EXPIRED;
+//			return -1;
 		}
 
 		if (cert->next) {
@@ -1811,7 +1750,6 @@ int x509_certificate_chain_validate(struct x509_certificate *trusted,
 
 	return 0;
 }
-
 
 /**
  * x509_certificate_get_subject - Get a certificate based on Subject name

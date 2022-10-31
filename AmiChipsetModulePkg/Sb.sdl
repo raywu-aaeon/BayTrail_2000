@@ -249,21 +249,24 @@ PCIDEVICE
 	PCIBusSize = 32bit
 	ROMMain = No
 End
-#EIP205590 >>
+
 PCIDEVICE
-	Title  = "Sec"
+	Title  = "GbE Controller"
 	Parent  = "PciRoot"
-	Attribute  = "0x0"
+	Attribute  = "0"
 	Dev_type  = "PciDevice"
-	Dev  = 01ah
+	Dev  = 019h
 	Fun  = 00h
-	SleepNum  = 01h
-	IntA = 	LNKF; 21
+	GPEbit  = 0dh
+	SleepNum  = 03h
+	ASLdeviceName  = "GLAN"
+	IntA = 	LNKE; 20
 	DeviceType = OnBoard
 	PCIBusSize = 32bit
 	ROMMain = No
+	PCIExpress = Yes
 End
-#EIP205590 <<
+
 PCIDEVICE
 	Title  = "High Definition Audio Controller"
 	Parent  = "PciRoot"
@@ -311,48 +314,6 @@ PCIDEVICE
 	PCIBusSize = 32bit
 	ROMMain = No
 End
-#EIP205590 >>
-PCIDEVICE
-	Title  = "LPSS2 PWM#0"
-	Parent  = "PciRoot"
-	Attribute  = "0x0"
-	Dev_type  = "PciDevice"
-	Dev  = 01eh
-	Fun  = 01h
-	SleepNum  = 01h
-	IntB = 	LNKB; 17
-	DeviceType = OnBoard
-	PCIBusSize = 32bit
-	ROMMain = No
-End
-
-PCIDEVICE
-	Title  = "LPSS2 PWM#1"
-	Parent  = "PciRoot"
-	Attribute  = "0x0"
-	Dev_type  = "PciDevice"
-	Dev  = 01eh
-	Fun  = 02h
-	SleepNum  = 01h
-	IntC = 	LNKC; 18
-	DeviceType = OnBoard
-	PCIBusSize = 32bit
-	ROMMain = No
-End
-
-PCIDEVICE
-	Title  = "LPSS2 HSUART#0"
-	Parent  = "PciRoot"
-	Attribute  = "0x0"
-	Dev_type  = "PciDevice"
-	Dev  = 01eh
-	Fun  = 03h
-	SleepNum  = 01h
-	IntD = 	LNKA; 16
-	DeviceType = OnBoard
-	PCIBusSize = 32bit
-	ROMMain = No
-End
 
 PCIDEVICE
 	Title  = "LPSS2 I2C #5"
@@ -362,7 +323,7 @@ PCIDEVICE
 	Dev  = 018h
 	Fun  = 01h
 	SleepNum  = 01h
-	IntB = 	LNKA; 16
+	IntC = 	LNKA; 16
 	DeviceType = OnBoard
 	PCIBusSize = 32bit
 	ROMMain = No
@@ -376,7 +337,7 @@ PCIDEVICE
 	Dev  = 018h
 	Fun  = 02h
 	SleepNum  = 01h
-	IntC = 	LNKD; 19
+	IntD = 	LNKD; 19
 	DeviceType = OnBoard
 	PCIBusSize = 32bit
 	ROMMain = No
@@ -390,12 +351,12 @@ PCIDEVICE
 	Dev  = 018h
 	Fun  = 03h
 	SleepNum  = 01h
-	IntD = 	LNKC; 18
+	IntB = 	LNKC; 18
 	DeviceType = OnBoard
 	PCIBusSize = 32bit
 	ROMMain = No
 End
-#EIP205590 <<
+
 PCIDEVICE
 	Title  = "SMBus Controller"
 	Parent  = "PciRoot"
@@ -426,7 +387,7 @@ PCIDEVICE
 	BridgeBusNum  = 01h
 	GPEbit  = 09h
 	SleepNum  = 04h
-	ASLfile  = "'Vlv2DeviceRefCodePkg\AcpiTablesPCAT\PchPcie.asl','AmiChipsetModulePkg\ASL\SbPcie.asl'"	#EIP187266 
+	ASLfile  = "'Vlv2DeviceRefCodePkg\AcpiTablesPCAT\PchPcie.asl'"
 	ASLdeviceName  = "RP01"
 	IntA = 	LNKA; 16
 	IntB = 	LNKB; 17
@@ -451,7 +412,7 @@ PCIDEVICE
 	BridgeBusNum  = 02h
 	GPEbit  = 09h
 	SleepNum  = 04h
-	ASLfile  = "'Vlv2DeviceRefCodePkg\AcpiTablesPCAT\PchPcie.asl','AmiChipsetModulePkg\ASL\SbPcie.asl'"	#EIP187266 
+	ASLfile  = "'Vlv2DeviceRefCodePkg\AcpiTablesPCAT\PchPcie.asl'"
 	ASLdeviceName  = "RP02"
 	DeviceType = OnBoard
 	PCIBusSize = 32bit
@@ -472,7 +433,7 @@ PCIDEVICE
 	BridgeBusNum  = 03h
 	GPEbit  = 09h
 	SleepNum  = 04h
-	ASLfile  = "'Vlv2DeviceRefCodePkg\AcpiTablesPCAT\PchPcie.asl','AmiChipsetModulePkg\ASL\SbPcie.asl'"	#EIP187266 
+	ASLfile  = "'Vlv2DeviceRefCodePkg\AcpiTablesPCAT\PchPcie.asl'"
 	ASLdeviceName  = "RP03"
 	DeviceType = OnBoard
 	PCIBusSize = 32bit
@@ -493,7 +454,7 @@ PCIDEVICE
 	BridgeBusNum  = 04h
 	GPEbit  = 09h
 	SleepNum  = 04h
-	ASLfile  = "'Vlv2DeviceRefCodePkg\AcpiTablesPCAT\PchPcie.asl','AmiChipsetModulePkg\ASL\SbPcie.asl'"	#EIP187266 
+	ASLfile  = "'Vlv2DeviceRefCodePkg\AcpiTablesPCAT\PchPcie.asl'"
 	ASLdeviceName  = "RP04"
 	DeviceType = OnBoard
 	PCIBusSize = 32bit
@@ -655,59 +616,6 @@ End
 
 
 #//(EIP120565+) <<
-
-#EIP176554 >>
-TOKEN
-	Name  = "CMOS_ADDR_PORT"
-	Value  = "0x70"
-	Help  = "CMOS Address port"
-	TokenType = Integer
-	TargetEQU = Yes
-	TargetH = Yes
-	Lock = Yes
-End
-
-TOKEN
-	Name  = "CMOS_DATA_PORT"
-	Value  = "0x71"
-	Help  = "CMOS Data port"
-	TokenType = Integer
-	TargetEQU = Yes
-	TargetH = Yes
-	Lock = Yes
-End
-
-TOKEN
-	Name  = "CMOS_IO_EXT_INDEX"
-	Value  = "0x72"
-	Help  = "CMOS location used to check for CMOS corruption"
-	TokenType = Integer
-	TargetEQU = Yes
-	TargetH = Yes
-	Lock = Yes
-End
-
-TOKEN
-	Name  = "CMOS_IO_EXT_DATA"
-	Value  = "0x73"
-	Help  = "CMOS location used to check for CMOS corruption"
-	TokenType = Integer
-	TargetEQU = Yes
-	TargetH = Yes
-	Lock = Yes
-End
-
-TOKEN
-	Name  = "CMOS_IO_STD_INDEX"
-	Value  = "0x74"
-	Help  = "CMOS standard index"
-	TokenType = Integer
-	TargetEQU = Yes
-	TargetH = Yes
-	Lock = Yes
-End
-#EIP176554 <<
-
 TOKEN
 	Name  = "SB_DEBUG_MESSAGE"
 	Value  = "1"
@@ -1092,16 +1000,6 @@ TOKEN
 	TokenType = Integer
 	TargetH = Yes
 End
-
-#EIP191291  >>
-TOKEN
-	Name  = "PCIE_ROOT_PORT_DETECT_NON_COMPLAINT"
-	Value  = "0"
-	Help  = "Enhance Detect Non-Compliance PCIE Device"
-	TokenType = Boolean
-	TargetH = Yes
-End
-#EIP191291  <<
 
 TOKEN
 	Name  = "RCRB"
@@ -1811,6 +1709,16 @@ TOKEN
 End
 #EIP128872 <<
 
+#EIP139792 >>
+TOKEN
+	Name  = "SB_USB_S5_WAKEUP_SUPPORT"
+	Value  = "0"
+	Help  = "Support USB S5 wakeup function."
+	TokenType = Boolean
+	TargetH = Yes
+End
+#EIP139792 <<
+
 TOKEN
 	Name  = "PRIMARY_CHANNEL_ENABLE"
 	Value  = "1"
@@ -1944,15 +1852,15 @@ TOKEN
 	TokenType = Integer
 	TargetH = Yes
 End
-#EIP205591 >>
+
 TOKEN
 	Name  = "SB_PCI_DEVICES_SSID_TABLE"
-	Value  = "{SMBUS_BUS_DEV_FUN, 0x72708086}, {SB_BUS_DEV_FUN, 0x72708086}, {LPSS_SPI_BUS_DEV_FUN, 0x72708086}, {LPSS_HSUART1_BUS_DEV_FUN, 0x72708086}, {LPSS_HSUART0_BUS_DEV_FUN, 0x72708086}, {LPSS_PWM1_BUS_DEV_FUN, 0x72708086}, {LPSS_PWM0_BUS_DEV_FUN, 0x72708086}, {LPSS_DMAC1_BUS_DEV_FUN, 0x72708086}, {LPSS_DMAC0_BUS_DEV_FUN, 0x72708086}, {LPSS_I2C6_BUS_DEV_FUN, 0x72708086}, {LPSS_I2C5_BUS_DEV_FUN, 0x72708086}, {LPSS_I2C4_BUS_DEV_FUN, 0x72708086}, {LPSS_I2C3_BUS_DEV_FUN, 0x72708086}, {LPSS_I2C2_BUS_DEV_FUN, 0x72708086}, {LPSS_I2C1_BUS_DEV_FUN, 0x72708086}, {LPSS_I2C0_BUS_DEV_FUN, 0x72708086}, {USB_EHCI_BUS_DEV_FUN, 0x72708086}, {USB_XHCI_BUS_DEV_FUN, 0x72708086}, {OTG_BUS_DEV_FUN, 0x72708086}, {LPE_BUS_DEV_FUN, 0x72708086}, {SEC_DEVICE_BUS_DEV_FUN, 0x72708086}, {SCC_SDIO2_BUS_DEV_FUN, 0x72708086}, {SCC_SDIO1_BUS_DEV_FUN, 0x72708086}, {SCC_SDIO0_BUS_DEV_FUN, 0x72708086}, {PCIE_ROOT_P0_BUS_DEV_FUN, 0x72708086}, {PCIE_ROOT_P1_BUS_DEV_FUN, 0x72708086}, {PCIE_ROOT_P2_BUS_DEV_FUN, 0x72708086}, {PCIE_ROOT_P3_BUS_DEV_FUN, 0x72708086}, {AZALIA_BUS_DEV_FUN, 0x72708086}, {SATA_BUS_DEV_FUN, 0x72708086}, {-1, -1}"
+	Value  = "{SMBUS_BUS_DEV_FUN, -1}, {SB_BUS_DEV_FUN, -1}, {LPSS_SPI_BUS_DEV_FUN, -1}, {LPSS_HSUART1_BUS_DEV_FUN, -1}, {LPSS_HSUART0_BUS_DEV_FUN, -1}, {LPSS_PWM1_BUS_DEV_FUN, -1}, {LPSS_PWM0_BUS_DEV_FUN, -1}, {LPSS_DMAC1_BUS_DEV_FUN, -1}, {LPSS_DMAC0_BUS_DEV_FUN, -1}, {LPSS_I2C6_BUS_DEV_FUN, -1}, {LPSS_I2C5_BUS_DEV_FUN, -1}, {LPSS_I2C4_BUS_DEV_FUN, -1}, {LPSS_I2C3_BUS_DEV_FUN, -1}, {LPSS_I2C2_BUS_DEV_FUN, -1}, {LPSS_I2C1_BUS_DEV_FUN, -1}, {LPSS_I2C0_BUS_DEV_FUN, -1}, {USB_EHCI_BUS_DEV_FUN, -1}, {USB_XHCI_BUS_DEV_FUN, -1}, {OTG_BUS_DEV_FUN, -1}, {LPE_BUS_DEV_FUN, -1}, {SEC_DEVICE_BUS_DEV_FUN, -1}, {SCC_SDIO2_BUS_DEV_FUN, -1}, {SCC_SDIO1_BUS_DEV_FUN, -1}, {SCC_SDIO0_BUS_DEV_FUN, -1}, {PCIE_ROOT_P0_BUS_DEV_FUN, -1}, {PCIE_ROOT_P1_BUS_DEV_FUN, -1}, {PCIE_ROOT_P2_BUS_DEV_FUN, -1}, {PCIE_ROOT_P3_BUS_DEV_FUN, -1}, {AZALIA_BUS_DEV_FUN, -1}, {SATA_BUS_DEV_FUN, -1}, {-1, -1}"
 	Help  = "List of PCI device's Sub-System ID in the following format:\{Device#1 Bus/Device/Function, Device#1 Sub-ID}, {Device#2 Bus/Device/Function, Device#2 Sub-ID}...\The format of the PCI bus/device/function is followed by EFI_PCI_CONFIGURATION_ADDRESS.\If the value of Sub-ID is -1, that means BIOS will use PCI Vendor-ID and Device-ID instead.\The last structure {-1, -1} is end of the table, don't remove it!"
 	TokenType = Expression
 	TargetH = Yes
 End
-#EIP205591 <<
+
 TOKEN
 	Name  = "COLD_RESET_WITH_POWER_CYCLE"
 	Value  = "0"
@@ -2434,32 +2342,6 @@ TOKEN
 End
 #EIP134333 <<
 
-#EIP176554 >>
-TOKEN
-	Name  = "SB_DEVICE_REGS_RC_DEFINITION_SUPPORT"
-	Value  = "1"
-	TokenType = Boolean
-	TargetH = Yes
-End
-
-TOKEN
-	Name  = "SB_DEVICE_REGS_RC_DEFINITION_HEADER"
-	Value  = "<Vlv2DeviceRefCodePkg/ValleyView2Soc/SouthCluster/Include/PchAccess.h>"
-	TokenType = Expression
-	TargetH = Yes
-	Lock = Yes
-	Token = "SB_DEVICE_REGS_RC_DEFINITION_SUPPORT" "=" "1"
-End
-
-TOKEN
-	Name  = "VERB_TBL_LIB_PEI"
-	Value  = "0"
-	Help  = "Determine if SbHdaVerbTableOverride function is called by PEI or DXE driver. 0: DXE, 1:PEI."
-	TokenType = Boolean
-	TargetH = Yes
-End
-#EIP176554 <<
-
 TOKEN
 	Name  = "============================================="
 	TokenType = Expression
@@ -2556,20 +2438,6 @@ ELINK
 	Parent  = "AMI_CSP_DXE_SOURCES"
 	InvokeOrder = AfterParent
 End
-
-#EIP176554 >>
-ELINK
-	Name  = "AmiChipsetIoLib"
-	Parent  = "AMI_CSP_LIBRARIES"
-	InvokeOrder = AfterParent
-End
-
-ELINK
-	Name  = "AmiDxeLib"
-	Parent  = "AMI_CSP_DXE_LIBRARIES"
-	InvokeOrder = AfterParent
-End
-#EIP176554 <<
 
 ELINK
 	Name  = "TimerLib"
@@ -2759,26 +2627,6 @@ INFComponent
 	Package  = "AmiChipsetModulePkg"
 	ModuleTypes  = "DXE_DRIVER"
 End
-
-#EIP188072 >>
-ELINK
-	Name = "SbResetCallbackList"
-	InvokeOrder = ReplaceParent
-End
-
-ELINK
-	Name  = "SBLib_ExtResetSystem,"
-	Parent  = "SbResetCallbackList"
-	InvokeOrder = AfterParent
-End
-
-OUTPUTREGISTER
-	Name  = "SbElinkList"
-	Path  = "Build"
-	File  = "SbElinks.h"
-	Template  = "Elink/SbElinks.txt"
-End
-#EIP188072 <<
 
 INFComponent
 	Name  = "SbAcpiTimerLib"
@@ -2978,15 +2826,6 @@ INFComponent
 End
 #EIP153622 <<
 
-#EIP176554 >>
-INFComponent
-	Name  = "SbHdaVerbTableLib"
-	File  = "SbHdaVerbTableLib/SbHdaVerbTableLib.inf"
-	Package  = "AmiChipsetModulePkg"
-	Path  = "SB_LIBRARY_DIR"
-End
-#EIP176554 <<
-
 LibraryMapping
 	Class  = "SbGetSetupData"
 	Instance  = "AmiChipsetModulePkg.SbPeiGetSetupData"
@@ -3159,35 +2998,3 @@ LibraryMapping
 	Token = "PerformanceMeasurement_SUPPORT" "=" "1"
 End
 #CSP20140425_23 <<
-
-#EIP176554 >>
-LibraryMapping
-	Class  = "SbHdaVerbTableLib"
-	Instance  = "AmiChipsetModulePkg.SbHdaVerbTableLib"
-	ModuleTypes  = "DXE_DRIVER"
-End
-#EIP176554 <<
-
-#EIP188072 >>
-LibraryMapping
-	Class = "NULL"
-	Instance = "AmiChipsetModulePkg.AmiCspLibDxe"
-	Override = "Vlv2DeviceRefCodePkg.PchReset"
-End
-#EIP188072 <<
-#EIP201247 >>
-INFComponent
-	Name  = "SbPeiDebugger"
-	File  = "SbPeiDebugger/SbPeiDebugger.inf"
-	Package  = "AmiChipsetModulePkg"
-	Arch  = "common Ia32 X64"
-	Path  = "SB_LIBRARY_DIR"
-	Token = "SERIAL_DEBUGGER_SUPPORT" "=" "1"
-End
-
-LibraryMapping
-    	Class  = "DebugPortingLib"
-    	Instance  = "AmiChipsetModulePkg.SbPeiDebugger"
-    	Token = "SERIAL_DEBUGGER_SUPPORT" "=" "1"
-End
-#EIP201247 <<

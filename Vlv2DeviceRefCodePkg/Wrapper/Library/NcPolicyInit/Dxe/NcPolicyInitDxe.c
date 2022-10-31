@@ -135,26 +135,22 @@ NcPolicyInitDxe(
         case 0x3510:
         case 0x3520: //EIP155583 
         case 0x3530: //EIP155583 
-        case 0x3540: 
           DxePlatformVlvPolicy->DptfSettings.SdpProfile = 1;
           break;
         case 0x2910:
         case 0x2920: //EIP155583 
         case 0x2930: //EIP155583 
-        case 0x2940: 
           DxePlatformVlvPolicy->DptfSettings.SdpProfile = 2;
           break;
         case 0x2810:
         case 0x2815: //EIP155583 
         case 0x2820: //EIP155583 
         case 0x2830: //EIP155583 
-        case 0x2840: 
           DxePlatformVlvPolicy->DptfSettings.SdpProfile = 3;
           break;
         case 0x2805:
         case 0x2806: //EIP155583 
         case 0x2807: //EIP155583 
-        case 0x2808: 
           DxePlatformVlvPolicy->DptfSettings.SdpProfile = 4;
           break;
         default:

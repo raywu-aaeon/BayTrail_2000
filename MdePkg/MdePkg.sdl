@@ -591,7 +591,6 @@ PcdMapping
 	Value  = "0x80000006"
 	Offset  = 00h
 	Length  = 00h
-	Help  = "The value is a bit mask that is used to enable/disable certain types of debug messages.\Bit values are defined by the DEBUG_XXX macros in DebugLib.h"
 	TargetDSC = Yes
 End
 
@@ -607,24 +606,3 @@ PcdMapping
 	Token = "PERFORMANCE_MEASUREMENTS_SUPPORT" "=" "1"
 End
 
-PcdMapping
-	Name  = "PcdReportStatusCodePropertyMask"
-	GuidSpace  = "gEfiMdePkgTokenSpaceGuid"
-	PcdType  = "PcdsFixedAtBuild"
-	Value  = "0x07"
-	Offset  = 00h
-	Length  = 00h
-	Help  = "The value is a bit mask that is used to control ReportStatusCodeLib behavior.\Bit values:\1 - Enable reporting of the progress codes\2 - Enable reporting of the error codes\4 - Enable reporting of the debug codes"
-	TargetDSC = Yes
-End
-
-PcdMapping
-	Name  = "PcdDebugPropertyMask"
-	GuidSpace  = "gEfiMdePkgTokenSpaceGuid"
-	PcdType  = "PcdsFixedAtBuild"
-	Value  = "0x2F"
-	Offset  = 00h
-	Length  = 00h
-	Help  = "The value is a bit mask that is used to control DebugLib behavior.\Bit values:\1 - Enable asserts\2 - Enable debug messages\4 - Enable debug code\8 - Clear memory after deallocation\0x10 - Enable breakpoints\0x20 - Enable dead loops"
-	TargetDSC = Yes
-End

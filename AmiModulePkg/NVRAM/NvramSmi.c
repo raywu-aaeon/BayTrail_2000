@@ -82,16 +82,7 @@ EFI_STATUS NvramSmiHandler ()
 
         case SMI_SET_VARIABLE:
         //TRACE((-1,"SmiNVRAM Handler. SMI_SET_VARIABLE \n"));
-        	
-        // VariableName address must be allined on 16 bit boundary
-        if (((UINTN)&SmmVarBuffer->VarData + SmmVarBuffer->VarSize) & 1)
-        	Status = pRS->SetVariable ( (CHAR16*)((UINT8*)&SmmVarBuffer->VarData + SmmVarBuffer->VarSize + 1),
-                                    &SmmVarBuffer->VarGuid,
-                                    SmmVarBuffer->VarAttrib,
-                                    SmmVarBuffer->VarSize,
-                                    &SmmVarBuffer->VarData);
-        else 
-        	Status = pRS->SetVariable ( (CHAR16*)((UINT8*)&SmmVarBuffer->VarData + SmmVarBuffer->VarSize),
+        Status = pRS->SetVariable ( (CHAR16*)((UINT8*)&SmmVarBuffer->VarData + SmmVarBuffer->VarSize),
                                     &SmmVarBuffer->VarGuid,
                                     SmmVarBuffer->VarAttrib,
                                     SmmVarBuffer->VarSize,

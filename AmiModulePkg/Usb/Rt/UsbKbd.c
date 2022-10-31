@@ -1,33 +1,44 @@
 #pragma warning(disable: 4001)
-//**********************************************************************
-//**********************************************************************
-//**                                                                  **
-//**        (C)Copyright 1985-2016, American Megatrends, Inc.         **
-//**                                                                  **
-//**                       All Rights Reserved.                       **
-//**                                                                  **
-//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093        **
-//**                                                                  **
-//**                       Phone: (770)-246-8600                      **
-//**                                                                  **
-//**********************************************************************
-//**********************************************************************
+//****************************************************************************
+//****************************************************************************
+//**                                                                        **
+//**             (C)Copyright 1985-2008, American Megatrends, Inc.          **
+//**                                                                        **
+//**                          All Rights Reserved.                          **
+//**                                                                        **
+//**                 5555 Oakbrook Pkwy, Norcross, GA 30093                 **
+//**                                                                        **
+//**                          Phone (770)-246-8600                          **
+//**                                                                        **
+//****************************************************************************
+//****************************************************************************
 
-/** @file UsbKbd.c
-    USB keyboard driver SMI routines
+//****************************************************************************
+// $Header: /Alaska/SOURCE/Modules/USB/ALASKA/RT/usbkbd.c 49    8/07/12 4:47a Roberthsu $
+//
+// $Revision: 49 $
+//
+// $Date: 8/07/12 4:47a $
+//****************************************************************************
 
-**/
+//<AMI_FHDR_START>
+//-----------------------------------------------------------------------------
+//
+//  Name:           UsbKbd.c
+//
+//  Description:    USB keyboard driver SMI routines
+//
+//-----------------------------------------------------------------------------
+//<AMI_FHDR_END>
 
 #include "AmiDef.h"
 #include "UsbDef.h"
 #include "AmiUsb.h"
 #include "UsbKbd.h"
-#include <UsbDevDriverElinks.h>
-#include <Library/BaseMemoryLib.h>
-#include <Protocol/AmiUsbHid.h>
+#include <UsbDevDriverElinks.h>         //(EIP90887+)
 
 extern USB_GLOBAL_DATA *gUsbData;
-extern BOOLEAN gKeyRepeatStatus;
+extern BOOLEAN KeyRepeatStatus;
 extern UINT16 gKbcSetTypeRate11CharsSec;
 extern UINT16 gKbcSetTypeDelay500MSec;
 UINT8   gLastKeyCodeArray[8]={0,0,0,0,0,0,0,0};
@@ -50,30 +61,40 @@ UINT8   aTypematicRateDelayTable[]      =   {2, 4, 8, 16, 32, 48, 64, 96};
 
 LEGACY_USB_KEYBOARD mLegacyKeyboard;
 
+extern UINT8 IsKbcAccessBlocked;		//(EIP29733+)
 extern  VOID USBKB_LEDOn();
+
+BOOLEAN     gEfiMakeCodeGenerated=FALSE;
+BOOLEAN     gLegacyMakeCodeGenerated=FALSE;
 
 extern EFI_EMUL6064KBDINPUT_PROTOCOL* gKbdInput ;
 
+                                        //(EIP90887+)>
 typedef	BOOLEAN (KBD_BUFFER_CHECK_FUNCTIONS)( 
     DEV_INFO	*DevInfo,
     UINT8       *Buffer
 	);
 extern KBD_BUFFER_CHECK_FUNCTIONS KBD_BUFFER_CHECK_ELINK_LIST EndOfInitList;
 KBD_BUFFER_CHECK_FUNCTIONS* KbdBufferCheckFunctionsList[] = {KBD_BUFFER_CHECK_ELINK_LIST NULL};
+                                        //<(EIP90887+)
 
 UINT8	UsbControlTransfer(HC_STRUC*, DEV_INFO*, DEV_REQ, UINT16, VOID*);
-UINT32	ExtractInputReportData (UINT8 *Report, UINT16 Offset, UINT16 Size);
 UINT8	UsbKbdDataHandler(DEV_INFO*, UINT8*);
 
-/**
-    This function returns fills the host controller driver
-    routine pointers in the structure provided
-
-    @param VOID
-
-    @retval VOID
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        USBKBDInitialize (VOID)
+//
+// Description: This function returns fills the host controller driver
+//              routine pointers in the structure provided
+//
+// Input:       Nothing
+//
+// Output:      Nothing
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 VOID
 USBKBDInitialize (VOID)
@@ -87,7 +108,7 @@ USBKBDInitialize (VOID)
     gUsbData->wUSBKBC_StatusFlag |= ((gKbcSetTypeRate11CharsSec << KBC_TYPE_RATE_BIT_SHIFT) +
                                         (gKbcSetTypeDelay500MSec << KBC_TYPE_DELAY_BIT_SHIFT));
 
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_5, "USBKBDInitialize:  CodeBufferStart : %lx\n", gUsbData->aKBCScanCodeBufferStart);
+    USB_DEBUG (DEBUG_LEVEL_5, "USBKBDInitialize:  CodeBufferStart : %lx\n", gUsbData->aKBCScanCodeBufferStart);
 
     //
     // Initialize the scanner buffer
@@ -119,421 +140,335 @@ USBKBDInitialize (VOID)
     for (bTemp=0; bTemp<6; bTemp++) mLegacyKeyboard.KeyCodeStorage[bTemp] = 0;
     mLegacyKeyboard.KeyToRepeat = 0;
 
-    gUsbData->EfiMakeCodeGenerated = FALSE;
-    gUsbData->LegacyMakeCodeGenerated = FALSE;
-    gUsbData->IsKbcAccessBlocked = FALSE;
-
     return;
 }
 
-/**
-    Initialize the key buffer
 
-    @param KeyBuffer    - Pointer to the key buffer structure
-
-    @retval VOID
-
-**/
-VOID
-InitKeyBuffer (
-    KEY_BUFFER    *KeyBuffer
-)
-{
-    UINT32      Index;
-    UINT8       *Buffer;
-
-    if ((KeyBuffer == NULL) || (KeyBuffer->Buffer == NULL)) {
-        return;
-    }
-
-    Buffer = (UINT8*)KeyBuffer->Buffer;
-
-    SetMem(Buffer, (KeyBuffer->MaxKey * sizeof(VOID*)) + 
-                    (KeyBuffer->MaxKey * KeyBuffer->KeySize), 0);
-
-    Buffer += KeyBuffer->MaxKey * sizeof(VOID*);    
-    for (Index = 0; 
-        Index < KeyBuffer->MaxKey;
-        Index++, Buffer += KeyBuffer->KeySize) {
-        KeyBuffer->Buffer[Index] = Buffer;
-    }
-    KeyBuffer->Head = 0;
-    KeyBuffer->Tail = 0;
-}
-
-/**
-    Create a key buffer
-
-    @param KeyBuffer    - Pointer to the key buffer structure
-        MaxKey        - Maximum key of the buffer
-        KeySize        - Size of one key
-
-    @retval USB_SUCCESS or USB_ERROR
-
-**/
-
-UINT8
-CreateKeyBuffer (
-    KEY_BUFFER      *KeyBuffer,
-    UINT8           MaxKey,
-    UINT32          KeySize
-)
-{
-    UINT16          MemSize;
-    UINT8           *Buffer = NULL;
-
-    MemSize = (UINT16)(MaxKey * sizeof(VOID*)) + (MaxKey * KeySize);
-
-    Buffer = USB_MemAlloc(GET_MEM_BLK_COUNT(MemSize));
-
-    if (Buffer == NULL) {
-        return USB_ERROR;
-    }
-
-    KeyBuffer->Buffer = (VOID**)Buffer;
-    KeyBuffer->MaxKey = MaxKey;
-    KeyBuffer->KeySize = KeySize;
-
-    InitKeyBuffer(KeyBuffer);
-
-    return USB_SUCCESS;
-}
-
-/**
-    Destroy the key buffer
-
-    @param KeyBuffer    - Pointer to the key buffer structure
-
-    @retval USB_SUCCESS or USB_ERROR
-
-**/
-
-UINT8
-DestroyKeyBuffer (
-    KEY_BUFFER      *KeyBuffer,
-    UINT8           MaxKey,
-    UINT32          KeySize
-)
-{
-    UINT16  MemSize;
-    
-    if ((KeyBuffer == NULL) || (KeyBuffer->Buffer == NULL)) {
-        return USB_SUCCESS;
-    }
-
-    MemSize = (UINT16)(MaxKey * sizeof(VOID*)) + (MaxKey * KeySize);
-
-    USB_MemFree(KeyBuffer->Buffer, GET_MEM_BLK_COUNT(MemSize));
-    SetMem(KeyBuffer, sizeof(KEY_BUFFER), 0);
-
-    return USB_SUCCESS;
-}
-
-/**
-    This routine checks an interface descriptor of the USB device
-    detected to see if it describes a HID/Boot/Keyboard device.
-    If the device matches the above criteria, then the device is
-    configured and initialized
-
-    @param DevInfo   Device information structure pointer
-              
-    @retval DEV_INFO  New device info structure, 0 on error
-
-**/
-
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   USBKBDConfigureKeyboard
+//
+// Description: This routine checks an interface descriptor of the USB device
+//      detected to see if it describes a HID/Boot/Keyboard device.
+//      If the device matches the above criteria, then the device is
+//      configured and initialized
+//
+// Input:       fpHCStruc   HCStruc pointer
+//              fpDevInfo   Device information structure pointer
+//              fpDesc      Pointer to the descriptor structure
+//              wStart      Offset within interface descriptor
+//                      supported by the device
+//              wEnd        End offset of the device descriptor
+//
+// Output:      FPDEV_INFO  New device info structure, 0 on error
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
+                                        //(EIP84455+)>
 DEV_INFO*
 USBKBDConfigureDevice (
-    DEV_INFO*   DevInfo
+    DEV_INFO*   fpDevInfo
 )
 {
-    UINT16          Index;
-    UINT8           Status;
+    UINT16          wIndex;
 
-    DevInfo->fpPollTDPtr  = 0;                                      
-    Index = USBKBDFindUSBKBDeviceTableEntry(DevInfo);
-    if (Index == 0xFFFF) {
-        Index  = USBKBDFindUSBKBDeviceTableEntry(NULL);
+    fpDevInfo->fpPollTDPtr  = 0;                                      
+    wIndex = USBKBDFindUSBKBDeviceTableEntry(fpDevInfo);
+    if (wIndex == 0xFFFF) {
+        wIndex  = USBKBDFindUSBKBDeviceTableEntry(NULL);
     }
-    if (Index != 0xFFFF) {
-        Status = CreateKeyBuffer(&DevInfo->KeyCodeBuffer, MAX_KEY_ALLOWED, sizeof(UINT8));
-        if (Status == USB_ERROR) {
-            return 0;
-        }
-	    Status = CreateKeyBuffer(&DevInfo->UsbKeyBuffer, MAX_KEY_ALLOWED, sizeof(USB_KEY));
-        if (Status == USB_ERROR) {
-            return 0;
-        }
-        gUsbData->aUSBKBDeviceTable[Index] = DevInfo;
-        if (!(gUsbData->dUSBStateFlag & USB_FLAG_RUNNING_UNDER_EFI)) {
-            if (BOOT_PROTOCOL_SUPPORT || (DevInfo->HidReport.Flag & HID_REPORT_FLAG_LED_FLAG) ||
-                (DevInfo->wIncompatFlags & USB_INCMPT_HID_BOOT_PROTOCOL_ONLY)) {
+    if(wIndex != 0xFFFF)
+    {
+        gUsbData->aUSBKBDeviceTable[wIndex]    = fpDevInfo;
+        if  (!(gUsbData->dUSBStateFlag & USB_FLAG_RUNNING_UNDER_EFI)) {
+            if(BOOT_PROTOCOL_SUPPORT || (fpDevInfo->Hidreport.bFlag & HID_REPORT_BFLAG_LED_FLAG))
                 USBKB_LEDOn();
-            }
         }
-    } else {    
-        return 0;
-    }
+    } 
+    else    return 0;
     
-    return DevInfo;
+    return fpDevInfo;
 }
-
-/**
-    This routine searches for the HID table entry which matches
-    the provided device info structure
-
-    @param DevInfo   Pointer to DeviceInfo structure
-
-    @retval 0xFFFF on error
-
-**/
+                                        //<(EIP84455+)
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        USBKBDFindUSBKBDeviceTableEntry
+//
+// Description: This routine searches for the HID table entry which matches
+//              the provided device info structure
+//
+// Input:       fpDevInfo   Pointer to DeviceInfo structure
+//
+// Output:      offset of the HID table for the requested fpDevinfo
+//              0xFFFF -on error
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT16
-USBKBDFindUSBKBDeviceTableEntry(
-    DEV_INFO* Devinfo
-)
+USBKBDFindUSBKBDeviceTableEntry(DEV_INFO* fpDevinfo)
 {
-    UINT16  Count ;
+    UINT16      wCount ;
 
-    for (Count = 0; Count < USB_DEV_HID_COUNT; Count++) {
-        if (gUsbData->aUSBKBDeviceTable[Count] == Devinfo) {
-            return Count;
-        }
+    for (wCount = 0; wCount < USB_DEV_HID_COUNT; wCount++)
+    {
+        if(gUsbData->aUSBKBDeviceTable[wCount] == fpDevinfo )
+            return wCount;
     }
-    
-    if (Devinfo == NULL) {
-        USB_DEBUG(DEBUG_WARN, DEBUG_LEVEL_3, "No Free KBD DevInfo Entry\n");
-    }
-    
+    USB_DEBUG (DEBUG_LEVEL_3, "No Free KBD DevInfo Entry\n");
     return 0xFFFF;
 }
 
-/**
-    This routine disconnects the keyboard by freeing
-    the USB keyboard device table entry
-
-    @param fpDevInfo   Pointer to DeviceInfo structure
-
-    @retval USB_SUCCESS/USB_ERROR
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        USBKBDDisconnectDevice
+//
+// Description: This routine disconnects the keyboard by freeing
+//              the USB keyboard device table entry
+//
+// Input:       fpDevInfo   Pointer to DeviceInfo structure
+//
+// Output:      USB_SUCCESS/USB_ERROR
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT8
-USBKBDDisconnectDevice(
-    DEV_INFO*   DevInfo
-)
+USBKBDDisconnectDevice (DEV_INFO*   fpDevInfo)
 {
-    UINT16      Index;
+    UINT16      wIndex;
+                                        //(EIP93637+)>
     UINT8       ScanCodeCount = (UINT8)(gUsbData->fpKBCScanCodeBufferPtr - 
-                         (UINT8*)gUsbData->aKBCScanCodeBufferStart);
-    UINT8       i = 0;
-    UINT8       CurrentDeviceId;
-    UINT8       Key;
+                         (UINT8*)gUsbData->aKBCScanCodeBufferStart);   //(EIP102150+) 
+    UINT8       i,CurrentDeviceID,Key;  //(EIP102150+)
 
-    Index = USBKBDFindUSBKBDeviceTableEntry(DevInfo);
-    if (Index == 0xFFFF) {
+    wIndex = USBKBDFindUSBKBDeviceTableEntry(fpDevInfo);
+    if (wIndex == 0xFFFF) {
         USBLogError(USB_ERR_KBCONNECT_FAILED);
         return USB_ERROR;
     } else {
-        CurrentDeviceId = (UINT8)(1 << ((DevInfo->bDeviceAddress) -1));
-        while ((i < ScanCodeCount) && (ScanCodeCount != 0)) {     
-            if (gUsbData->aKBCDeviceIDBufferStart[i] & CurrentDeviceId) {
-                gUsbData->aKBCDeviceIDBufferStart[i] &= ~CurrentDeviceId;
-                if (gUsbData->aKBCDeviceIDBufferStart[i] == 0) {
+
+                                        //(EIP102150+)>
+        CurrentDeviceID = (UINT8)(1 << ((fpDevInfo->bDeviceAddress) -1));
+        for (i = 0; i < ScanCodeCount; i++) {
+            if (gUsbData->aKBCDeviceIDBufferStart[i] & CurrentDeviceID) {
+                gUsbData->aKBCDeviceIDBufferStart[i] &= ~CurrentDeviceID;
+                if(gUsbData->aKBCDeviceIDBufferStart[i] == 0){
                     Key = gUsbData->aKBCScanCodeBufferStart[i]; 
-                    if ((Key == HID_KEYBOARD_RIGHT_SHIFT) ||
-                        (Key == HID_KEYBOARD_LEFT_SHIFT)) {
+                    if((Key == 0xe5)||(Key == 0xe1)){
                         gUsbData->bUSBKBShiftKeyStatus &= ~(KB_RSHIFT_KEY_BIT_MASK+KB_LSHIFT_KEY_BIT_MASK);
                     }
                     USBKB_DiscardCharacter(&gUsbData->aKBCShiftKeyStatusBufferStart[i]); 
                     gUsbData->fpKBCScanCodeBufferPtr--;
-                    ScanCodeCount--;
-                    continue;
                 }
             }
-            i++;
-        }
-
-        DestroyKeyBuffer(&DevInfo->KeyCodeBuffer, MAX_KEY_ALLOWED, sizeof(UINT8));
-        DestroyKeyBuffer(&DevInfo->UsbKeyBuffer, MAX_KEY_ALLOWED, sizeof(USB_KEY));
+        }  
  
-        gUsbData->aUSBKBDeviceTable[Index] = 0;
+        gUsbData->aUSBKBDeviceTable[wIndex] = 0;
         return USB_SUCCESS;
     }
+                                        //<(EIP93637+)
 }
 
-/**
-    This routine is called with USB keyboard report data.  This
-    routine handles the translation of  USB keyboard data
-    into PS/2 keyboard data, and makes the PS/2 data available
-    to software using ports 60/64h by communicating with
-    PS/2 keyboard controller.
-
-    @param HcStruc   Pointer to HCStruc
-        DevInfo   Pointer to device information structure
-        Td        Pointer to the polling TD
-        Buffer    Pointer to the data buffer
-
-    @retval Nothing
-
-    @note  TD's control status field has the packet length (0 based).
-      It could be one of three values 0,1 or 7 indicating packet
-      lengths of 1, 2 & 8 repectively.
-      The format of 8 byte data packet is as follow:
-           Byte              Description
-      -----------------------------------------------------------
-          0   Modifier key (like shift, cntr & LED status)
-          1   Reserved
-          2   Keycode of 1st key pressed
-          3   Keycode of 2nd key pressed
-          4   Keycode of 3rd key pressed
-          5   Keycode of 4th key pressed
-          6   Keycode of 5th key pressed
-          7   Keycode of 6th key pressed
-      -----------------------------------------------------------
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        USBKBDProcessKeyboardData
+//
+// Description: This routine is called with USB keyboard report data.  This
+//              routine handles the translation of  USB keyboard data
+//              into PS/2 keyboard data, and makes the PS/2 data available
+//              to software using ports 60/64h by communicating with
+//              PS/2 keyboard controller.
+//
+// Input:       fpHCStruc   Pointer to HCStruc
+//              fpDevInfo   Pointer to device information structure
+//              fpTD        Pointer to the polling TD
+//              fpBuffer    Pointer to the data buffer
+//
+// Output:      Nothing
+//
+// Notes:   TD's control status field has the packet length (0 based).
+//      It could be one of three values 0,1 or 7 indicating packet
+//      lengths of 1, 2 & 8 repectively.
+//      The format of 8 byte data packet is as follow:
+//           Byte              Description
+//      -----------------------------------------------------------
+//          0   Modifier key (like shift, cntr & LED status)
+//          1   Reserved
+//          2   Keycode of 1st key pressed
+//          3   Keycode of 2nd key pressed
+//          4   Keycode of 3rd key pressed
+//          5   Keycode of 4th key pressed
+//          6   Keycode of 5th key pressed
+//          7   Keycode of 6th key pressed
+//      -----------------------------------------------------------
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT8
 USBKBDProcessKeyboardData (
-    HC_STRUC    *HcStruc,
-    DEV_INFO    *DevInfo,
-    UINT8       *Td,
-    UINT8       *Buffer,
-    UINT16      DataLength
+    HC_STRUC    *fpHcStruc,
+    DEV_INFO    *fpDevInfo,
+    UINT8       *fpTD,
+    UINT8       *fpBuffer
 )
 {
-    UINT8               Count = 8;
-	HID_REPORT_FIELD	*Field = NULL;
-	UINT8				FieldIndex = 0;
-	UINT32				BitOffset = 0;
-	BOOLEAN				ValidData = FALSE;
-	UINT8				Data = 0;
-	UINT16				Index = 0;
-	UINT8				UsageBuffer[32] = {0};
-	UINT16				UsageIndex = 0;
-	UINT8				i;
-    UINTN               OemHookIndex;
+    UINT8   wCount=8;
+    UINT8   i,j,k=0,l,m,n=0;
+	UINT8	usage_array[20] = {0};
 
-	if (DevInfo->HidReport.Flag & HID_REPORT_FLAG_REPORT_PROTOCOL) {
-		for (FieldIndex = 0; FieldIndex < DevInfo->HidReport.FieldCount; FieldIndex++) {
-			Field = DevInfo->HidReport.Fields[FieldIndex];
+	UINT32	kb_usage_end = 0,kb_usage_start = 0,temp = 0,size ;                 //EIP95349
+	UINT8	temp_offset = 0, test = 0;
+	HIDReport_STRUC 	*Hidreport;
+	UINT8	*usage_temp;
+	UINT8 	offset_tmp=0,start_offset=0;
+    UINT8   valid_data=0;               //EIP67400 
+    UINT8   CountEnd,CountStart;		//(EIP107262)
+    UINTN   OemHookIndex;
+ 
+	Hidreport = &(fpDevInfo->Hidreport);
 
-			// Check if the field is input report.
-			if (!(Field->Flag & HID_REPORT_FIELD_FLAG_INPUT)) {
-				continue;
-			}
-	
-			//if report id exist, check first byte
-			if ((Field->ReportId != 0) && (Field->ReportId != Buffer[0])) {
-				continue;
-			}
-
-			// Check if the field is contant.
-            if (Field->Flag & HID_REPORT_FIELD_FLAG_CONSTANT) {
-			    BitOffset += Field->ReportCount * Field->ReportSize;
-                continue;
-            }
-
-            //find start offset
-			if (Field->UsagePage == HID_UP_KEYBOARD) {
-                ValidData = TRUE;
-                
-                // If Report ID tags are used in the report descriptor, the first byte is
-                // report id, we offset 8 bits to get data.  
-				if (Field->ReportId != 0) {
-					BitOffset += 8;
-				}
-
-				for (Index = 0; Index < Field->ReportCount; Index++) {
-					Data = ExtractInputReportData(Buffer, 
-						BitOffset + (Index * Field->ReportSize), Field->ReportSize);
-
-					if ((Data < Field->LogicalMin) || (Data > Field->LogicalMax)) {
-						continue;
-					}
-                    
-					Data = Field->Flag & HID_REPORT_FIELD_FLAG_VARIABLE ?
-							(Data != 0 ? Field->Usages[Index] : Data) :
-							Field->Usages[Data - Field->LogicalMin];
-
-					if ((Data != 0) && (UsageIndex < COUNTOF(UsageBuffer))) {
-						UsageBuffer[UsageIndex++] = Data;
-					}
-				}
-                if (Field->ReportId != 0) {
-                    BitOffset -= 8;
-                }
-            }
-			BitOffset += Field->ReportCount * Field->ReportSize;
-		}
-
-		if (ValidData == FALSE) {
-			return USB_SUCCESS;
-		}
-
-		ZeroMem(Buffer, 8);
-
-        // Translate the report data to boot protocol data.
+	if(Hidreport->bFlag & HID_REPORT_BFLAG_REPORT_PROTOCOL) 
+	{
         
-        // 0   Modifier key (like shift, cntr & LED status)
-        // 1   Reserved
-        // 2   Keycode of 1st key pressed
-        // 3   Keycode of 2nd key pressed
-        // 4   Keycode of 3rd key pressed
-        // 5   Keycode of 4th key pressed
-        // 6   Keycode of 5th key pressed
-        // 7   Keycode of 6th key pressed
+		//serach modify key and keycode
+		for(i=0;i<Hidreport->bTotalCount;i++)
+		{
+			//Check is input?
+			if((Hidreport->pReport[i].bFlag & HID_BFLAG_INPUT ))
+			{
+    			//if report id exist, check first byte
+    			if(Hidreport->bFlag & HID_REPORT_BFLAG_REPORT_ID) {
+    				if(Hidreport->pReport[i].bReportID != *fpBuffer) {
+                        continue;
+    				}
+    			}
+                
+                                        //(EIP105587+)>
+                if(Hidreport->pReport[i].bFlag & HID_BFLAG_DATA_BIT){
+    			    offset_tmp+=(Hidreport->pReport[i].bReportCount*Hidreport->pReport[i].bReportSize);                     
+                    continue;
+                }
+                                        //<(EIP105587+)
+                //find start offset
+    			if(Hidreport->pReport[i].bUsagePage ==0x7)
+    			{
+                    valid_data = 1;
+    			    usage_temp = USB_MemAlloc(GET_MEM_BLK_COUNT(Hidreport->pReport[i].bReportCount * Hidreport->pReport[i].bReportSize)); 
+                    ASSERT(usage_temp);
+                    if (!usage_temp) {
+                        return USB_ERROR;
+                    }
+                    kb_usage_start = 0;
+	    			if(Hidreport->bFlag & HID_REPORT_BFLAG_REPORT_ID){
+                        kb_usage_start += 8;
+	    			}
+                    kb_usage_start += offset_tmp;
+                    kb_usage_end = Hidreport->pReport[i].bReportCount * Hidreport->pReport[i].bReportSize + kb_usage_start;
+                    size = (kb_usage_end - kb_usage_start) / 8;
+                    if((kb_usage_end - kb_usage_start) % 8 != 0)
+                        size++;
 
-        for (Index = 0, i = 0; Index < UsageIndex; Index++) {
-            if (UsageBuffer[Index] >= HID_KEYBOARD_LEFT_CTRL && 
-                UsageBuffer[Index] <= HID_KEYBOARD_RIGHT_GUI) {
-            	Buffer[0] |= 1 << (UsageBuffer[Index] - HID_KEYBOARD_LEFT_CTRL);
+					if((Hidreport->pReport[i].bFlag & 0x2 )== 0){        //array
+					    for(l =0; l< size;l++)
+                        {
+                            if (*(fpBuffer+(kb_usage_start / 8)+l) !=0) {
+    					        usage_array[k++] = *(fpBuffer + (kb_usage_start / 8) + l);
+                            }
+                        }
+    				}
+					else{
+                        //fill usage min until max into usage temp
+                        for(temp=0,m=0;m <Hidreport->pReport[i].bUsageMaxCount;m++){	//(EIP107262)
+        					for(j = (UINT8)Hidreport->pReport[i].wUsageMin[m]; j <= (UINT8)Hidreport->pReport[i].wUsageMax[m] ; j++){
+        						usage_temp[temp++] = j;
+        					}
+                        }
+                        for(n=0;n< Hidreport->pReport[i].bUsageCount;n++)
+                            usage_temp[temp++]=Hidreport->pReport[i].bUsage[n];
+                        
+                                        //(EIP107262+)>
+    					for(l = 0,j = 0; l < size ; l++){
+    						temp = *(fpBuffer + (kb_usage_start / 8) + l);
+                            CountStart = 0;
+                            CountEnd   = 8;
+                            if(kb_usage_start % 8 && (l == 0) )
+                                CountStart = kb_usage_start % 8;
+                            if((kb_usage_end % 8) &&(l == size-1))
+                                CountEnd = kb_usage_end % 8;
+                            
+    						for( ; CountStart < CountEnd ; CountStart++,j++){
+    							if((temp >> CountStart) & 1){
+    								usage_array[k++] = usage_temp[j];
+    							}
+    						}
+    					}
+                                        //<(EIP107262+)
+    				}
+                    USB_MemFree(usage_temp, GET_MEM_BLK_COUNT(Hidreport->pReport[i].bReportCount * Hidreport->pReport[i].bReportSize));
+
+                }
+    			offset_tmp+=(Hidreport->pReport[i].bReportCount*Hidreport->pReport[i].bReportSize);
+			}
+		}
+
+        MemSet(fpBuffer, 8, 0);
+
+        for (l = 0, i=0 ; l < 20 ; l++) {
+            if (usage_array[l] >= 0xE0 && usage_array[l] <= 0xE7){
+            	*fpBuffer |= 1 << (usage_array[l] - 0xE0);
             } else {
-            	if (i < 6) {
-            		Buffer[i + 2] = UsageBuffer[Index];
-					i++;
-            	}
+            	*(fpBuffer + i + 2) = usage_array[l];
+            	i++;
             }
-        }               
+        }
+    	if(!valid_data)return USB_SUCCESS;                
 	}
 
+                                        //(EIP90887+)>
     // Call all the OEM hooks that wants to check KBD buffer    
     for (OemHookIndex = 0; KbdBufferCheckFunctionsList[OemHookIndex]; OemHookIndex++) {
-        if (KbdBufferCheckFunctionsList[OemHookIndex](DevInfo, Buffer)) {
+        if (KbdBufferCheckFunctionsList[OemHookIndex](fpDevInfo, fpBuffer)) {
             return USB_SUCCESS;
 		}
 	}
+	                                    //<(EIP90887+)	
 	//Is KBC access allowed?
-	if (gUsbData->IsKbcAccessBlocked) {
-		if (!(gUsbData->dUSBStateFlag & USB_FLAG_RUNNING_UNDER_EFI) || !gUsbData->EfiMakeCodeGenerated) {
+	if (IsKbcAccessBlocked) {
+		if (!(gUsbData->dUSBStateFlag & USB_FLAG_RUNNING_UNDER_EFI) || !gEfiMakeCodeGenerated) {
 			return USB_SUCCESS;
 		}
-		ZeroMem(Buffer, 8);
+		MemSet(fpBuffer, 8, 0);
 	}
 
     //
     // Save the device info pointer for later use
     //
-    gUsbData->fpKeyRepeatDevInfo = DevInfo;
+    gUsbData->fpSavedHCStruc   = fpHcStruc;
+    gUsbData->fpKeyRepeatDevInfo = fpDevInfo;
 
-    for (i = 0, Count = 8; i < 8; i++, Count--) {
-		if (Buffer[i]) {
+    for (i = 0, wCount = 8; i < 8; i++, wCount--) {
+		if (fpBuffer[i]) {
 			break;
 		}
     }
 
-    if ((gUsbData->dUSBStateFlag & USB_FLAG_RUNNING_UNDER_EFI)) {
-        if (Count == 0) {
-            gUsbData->EfiMakeCodeGenerated = FALSE;
+    if((gUsbData->dUSBStateFlag & USB_FLAG_RUNNING_UNDER_EFI)) {
+        if(wCount==0) {
+            gEfiMakeCodeGenerated=FALSE;
         } else {
-            gUsbData->EfiMakeCodeGenerated = TRUE;
-            gUsbData->LegacyMakeCodeGenerated = FALSE;
+            gEfiMakeCodeGenerated=TRUE;
+            gLegacyMakeCodeGenerated=FALSE;
         }
     } else {
-        if (Count == 0) {
-            gUsbData->LegacyMakeCodeGenerated = FALSE;
+        if(wCount==0) {
+            gLegacyMakeCodeGenerated=FALSE;
         } else {
-            gUsbData->LegacyMakeCodeGenerated = TRUE;
-            gUsbData->EfiMakeCodeGenerated = FALSE;
+            gLegacyMakeCodeGenerated=TRUE;
+            gEfiMakeCodeGenerated=FALSE;
         }
     }
 
@@ -542,14 +477,14 @@ USBKBDProcessKeyboardData (
     // if no new key got, return immediately.
     //
     for (i = 0; i < 8; i ++) {
-        if (Buffer[i] != gLastKeyCodeArray[i]) {
+        if(fpBuffer[i] != gLastKeyCodeArray[i]) {
             break;
         }
     }
 
 #if USB_HID_KEYREPEAT_USE_SETIDLE == 1 
-    if ((i == 8) && gKeyRepeatStatus) {
-        USBKBDPeriodicInterruptHandler(HcStruc);
+    if((i == 8) && KeyRepeatStatus) {
+        USBKBDPeriodicInterruptHandler(fpHcStruc);
         return USB_SUCCESS;
     }
 #endif
@@ -559,116 +494,100 @@ USBKBDProcessKeyboardData (
     // Usb Keyboard Device data structure.
     //
     for (i = 0; i < 8; i ++) {
-        gLastKeyCodeArray[i] = Buffer[i];
+        gLastKeyCodeArray[i] = fpBuffer[i];
     }
-    
-    if ((!(gUsbData->dUSBStateFlag & USB_FLAG_RUNNING_UNDER_EFI) || 
-        gUsbData->LegacyMakeCodeGenerated) && (!gUsbData->EfiMakeCodeGenerated)) {
-        if (Count == 0) {
-            gUsbData->LegacyMakeCodeGenerated = FALSE;
+
+    if ((!(gUsbData->dUSBStateFlag & USB_FLAG_RUNNING_UNDER_EFI) || gLegacyMakeCodeGenerated) &&(!gEfiMakeCodeGenerated))
+    {
+        if(wCount==0) {
+            gLegacyMakeCodeGenerated=FALSE;
         }
-        UsbScanner(DevInfo, Buffer);
+        UsbScanner(fpDevInfo, fpBuffer);
     } else {
-        if (Count==0) {
-            gUsbData->EfiMakeCodeGenerated = FALSE;
+
+        if(wCount==0) {
+            gEfiMakeCodeGenerated=FALSE;
         }
-        UsbKbdDataHandler(DevInfo, Buffer);
+
+		UsbKbdDataHandler(fpDevInfo, fpBuffer);
     }
 
     return USB_SUCCESS;
 }
 
-/**
-    This routine is called every 16ms and is used to send
-    the characters read from USB keyboard to the keyboard
-    controller for legacy operation. Also this function updates
-    the keyboard LED status
 
-    @param fpHCStruc   Pointer to the HCStruc structure
-
-    @retval VOID
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        USBKBDPeriodicInterruptHandler
+//
+// Description: This routine is called every 16ms and is used to send
+//              the characters read from USB keyboard to the keyboard
+//              controller for legacy operation. Also this function updates
+//              the keyboard LED status
+//
+// Input:       fpHCStruc   Pointer to the HCStruc structure
+//
+// Output:      Nothing
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 VOID
 USBKBDPeriodicInterruptHandler (HC_STRUC* fpHcStruc)
 {
     if (!(gUsbData->dUSBStateFlag & USB_FLAG_RUNNING_UNDER_EFI)) {
         LegacyAutoRepeat(fpHcStruc);
-    } else {
-        USBKeyRepeat(NULL, 1);  // Disable Key repeat
     }
 }
 
-/**
-    Process the keys that alter NumLock/ScrollLock/CapsLock; updates
-    gUsbData->LastUsbKbShiftKeyStatus accordingly.
 
-    @param USB key buffer
-
-**/
-
-VOID
-ProcessLockKeysUnderOs(
-    UINT8 *UsbKeys
-)
-{
-    UINT8   i;
-
-    for (i = 2; i < 8; i++) {
-        switch (UsbKeys[i]) {
-            case USB_NUM_LOCK_KEY_CODE:  // NumLock
-                gUsbData->KbShiftKeyStatusUnderOs ^= KB_NUM_LOCK_BIT_MASK;
-                break;
-            case USB_CAPS_LOCK_KEY_CODE:  // CapsLock
-                gUsbData->KbShiftKeyStatusUnderOs ^= KB_CAPS_LOCK_BIT_MASK;
-                break;
-            case USB_SCROLL_LOCK_KEY_CODE:  // ScrlLock
-                gUsbData->KbShiftKeyStatusUnderOs ^= KB_SCROLL_LOCK_BIT_MASK;
-                break;
-        }
-    }
-}
-
-/**
-    This routine is executed to convert USB scan codes into PS/2
-    make/bread codes.
-
-    @param DevInfo   - USB keyboard device
-        Buffer    - USB scan codes data buffer
-
-    @retval VOID
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        UsbScanner
+//
+// Description: This routine is executed to convert USB scan codes into PS/2
+//              make/bread codes.
+//
+// Input:       fpDevInfo   - USB keyboard device
+//              fpBuffer    - USB scan codes data buffer
+//
+// Output:      Nothing
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 VOID
 UsbScanner(
-    DEV_INFO *DevInfo,
-    UINT8 *Buffer
+    DEV_INFO *fpDevInfo,
+    UINT8 *fpBuffer
 )
 {
-    if (gUsbData->kbc_support || ((gUsbData->dUSBStateFlag & USB_FLAG_6064EMULATION_ON) 
+    if(gUsbData->kbc_support || ((gUsbData->dUSBStateFlag & USB_FLAG_6064EMULATION_ON) 
         && (gUsbData->dUSBStateFlag & USB_FLAG_6064EMULATION_IRQ_SUPPORT))) {
         USBKBC_GetAndStoreCCB();
-        USBKB_Scanner(DevInfo, Buffer);
-        if (gUsbData->dUSBStateFlag & USB_FLAG_RUNNING_UNDER_OS) {
-            ProcessLockKeysUnderOs(Buffer);
-        }
-        USBKB_UpdateLEDState(0xFF);
+        USBKB_Scanner (fpDevInfo, fpBuffer);
+        USBKB_UpdateLEDState (0xFF);
     }else {
-        USBKB_Int9(Buffer);
+        USBKB_Int9(fpBuffer);
     }
 }
 
-/**
-    This routine is called periodically based on 8ms TD and used
-    to implement the key repeat.
-
-    @param Hc   Pointer to the HCStruc structure
-
-    @retval VOID
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        LegacyAutoRepeat
+//
+// Description: This routine is called periodically based on 8ms TD and used
+//              to implement the key repeat.
+//
+// Input:       Hc   Pointer to the HCStruc structure
+//
+// Output:      Nothing
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 VOID
 LegacyAutoRepeat(
@@ -683,15 +602,20 @@ LegacyAutoRepeat(
     }
 }
 
-/**
-    This routine set the USB keyboard LED status.
-
-    @param DevInfo		Pointer to device information structure
-        LedStatus	LED status
-
-    @retval USB_SUCCESS or USB_ERROR
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        UsbKbdSetLed
+//
+// Description: This routine set the USB keyboard LED status.
+//
+// Input:       DevInfo		Pointer to device information structure
+//				LedStatus	LED status
+//
+// Output:      USB_SUCCESS or USB_ERROR
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT8
 UsbKbdSetLed (
@@ -700,67 +624,68 @@ UsbKbdSetLed (
 )
 {
 	HC_STRUC	*HcStruc = gUsbData->HcTable[DevInfo->bHCNumber - 1];
-	DEV_REQ		DevReq = {0};
+	DEV_REQ		DevReq;
 	UINT8		Status;
-	UINT8		ReportId = 0;
+	UINT8		ReportType;
+	UINT8		ReportId;
 	UINT16		ReportLen;
 	UINT8		*ReportData = NULL;
 	UINT8		Index;
 
-	if ((DevInfo->HidReport.Flag & HID_REPORT_FLAG_REPORT_PROTOCOL) && 
-		!(DevInfo->HidReport.Flag & HID_REPORT_FLAG_LED_FLAG)) {
+	if (BOOT_PROTOCOL_SUPPORT == 0 && 
+		!(DevInfo->Hidreport.bFlag & HID_REPORT_BFLAG_LED_FLAG)) {
 		return USB_ERROR;
 	}
 
 	ReportData = USB_MemAlloc(GET_MEM_BLK_COUNT(4));
 	if (ReportData == NULL) return USB_ERROR;
 
+	
+	ReportType = 0x02;		// Output
+	ReportId = 0;
 	ReportLen = 1;
 	ReportData[0] = LedStatus & 0x7;
 
-	if (DevInfo->HidReport.Flag & HID_REPORT_FLAG_REPORT_PROTOCOL) {
-        if (DevInfo->HidReport.Fields == NULL) {
-            USB_MemFree(ReportData, GET_MEM_BLK_COUNT(4));
-            return USB_ERROR;
-        }
-		for (Index = 0; Index < DevInfo->HidReport.FieldCount; Index++) {
+	if (DevInfo->Hidreport.bFlag & HID_REPORT_BFLAG_REPORT_PROTOCOL) { 
+		for (Index = 0; Index < DevInfo->Hidreport.bTotalCount; Index++) {
 			//find start offset
-			if ((DevInfo->HidReport.Fields[Index]->UsagePage == HID_UP_LED) &&
-				(DevInfo->HidReport.Fields[Index]->ReportId != 0) &&
-				(DevInfo->HidReport.Fields[Index]->Usages[0] == HID_LED_NUM_LOCK)) {
-				ReportId = DevInfo->HidReport.Fields[Index]->ReportId;
+			if ((DevInfo->Hidreport.pReport[Index].bUsagePage == 0x8) &&
+				(DevInfo->Hidreport.bFlag & HID_REPORT_BFLAG_REPORT_ID) &&
+				(DevInfo->Hidreport.pReport[Index].wUsageMin[0] == 1)) {
+				ReportId |= DevInfo->Hidreport.pReport[Index].bReportID;
 				ReportData[1] = ReportData[0];
 				ReportData[0] = ReportId;
-				ReportLen++;
+				ReportLen = 2;
 			}
 		}
 	}
-    if (DevInfo->IntOutEndpoint == 0) {
-    	DevReq.wRequestType = HID_RQ_SET_REPORT;
-    	DevReq.wValue = (0x02 << 8) | ReportId;		// Output
-    	DevReq.wIndex = DevInfo->bInterfaceNum;
-    	DevReq.wDataLength = ReportLen;
 
-    	Status = UsbControlTransfer(HcStruc, DevInfo, DevReq, USB_KBD_SET_LED_TIMEOUT_MS, ReportData);
-    } else {
-        Status = UsbInterruptTransfer(HcStruc, DevInfo, DevInfo->IntOutEndpoint, 
-            DevInfo->IntOutMaxPkt, ReportData, ReportLen, USB_KBD_SET_LED_TIMEOUT_MS);
-    }
+	DevReq.wRequestType = HID_RQ_SET_REPORT;
+	DevReq.wValue = (ReportType << 8) | ReportId;
+	DevReq.wIndex = DevInfo->bInterfaceNum;
+	DevReq.wDataLength = ReportLen;
+
+	Status = UsbControlTransfer(HcStruc, DevInfo, DevReq, 100, ReportData);
 
 	USB_MemFree(ReportData, GET_MEM_BLK_COUNT(4));
 	return Status;
 }
 
 
-/**
-    Insert a key to key buffer.
-
-    @param KeyBuffer	- Pointer to the key buffer
-        Key			- The key to be inserted
-
-    @retval VOID
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        InsertKey
+//
+// Description: Insert a key to key buffer.
+//
+// Input:       KeyBuffer	- Pointer to the key buffer
+//				Key			- The key to be inserted
+//
+// Output:      None
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 VOID
 InsertKey (
@@ -768,31 +693,34 @@ InsertKey (
 	VOID		*Key
 )
 {
-    if ((KeyBuffer == NULL) || (KeyBuffer->Buffer == NULL) || (Key == NULL)) {
-        return; 
-    }
+	if (KeyBuffer == NULL || Key == NULL) return;	
 
 	//EfiCopyMem(KeyBuffer->Buffer[KeyBuffer->Head++], Key, KeyBuffer->KeySize);
-	CopyMem(KeyBuffer->Buffer[KeyBuffer->Head], Key, KeyBuffer->KeySize);
+	MemCpy(KeyBuffer->Buffer[KeyBuffer->Head], Key, KeyBuffer->KeySize);
 
-	KeyBuffer->Head = ((KeyBuffer->Head + 1) % KeyBuffer->MaxKey);
+	KeyBuffer->Head = ++KeyBuffer->Head % KeyBuffer->MaxKey;
 
     if (KeyBuffer->Head == KeyBuffer->Tail){
         //Drop data from buffer
-		KeyBuffer->Tail = ((KeyBuffer->Tail + 1) % KeyBuffer->MaxKey);
+		KeyBuffer->Tail = ++KeyBuffer->Tail % KeyBuffer->MaxKey;
     }
 }
 
 
-/**
-    Find the specific key in key buffer.
-
-    @param KeyBuffer	- Pointer to the key buffer
-        Key			- The key to be inserted
-
-    @retval VOID
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        FindKey
+//
+// Description: Find the specific key in key buffer.
+//
+// Input:       KeyBuffer	- Pointer to the key buffer
+//				Key			- The key to be inserted
+//
+// Output:      None
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 VOID*
 FindKey (
@@ -800,16 +728,14 @@ FindKey (
 	VOID		*Key
 )
 {
-	UINT8	Index;
+	UINT8	Index = 0;
 
-    if ((KeyBuffer == NULL) || (KeyBuffer->Buffer == NULL) || (Key == NULL)) {
-        return NULL; 
-    }
+	if (KeyBuffer == NULL || Key == NULL) return NULL;
 
 	for (Index = KeyBuffer->Tail; 
 		Index != KeyBuffer->Head; 
-		Index = ((Index + 1) % KeyBuffer->MaxKey)) {
-		if (CompareMem(KeyBuffer->Buffer[Index], Key, KeyBuffer->KeySize) == 0) {
+		Index = ++Index % KeyBuffer->MaxKey) {
+		if (MemCmp(KeyBuffer->Buffer[Index], Key, KeyBuffer->KeySize) == 0) {
 			return KeyBuffer->Buffer[Index];
 		}
 	}
@@ -818,15 +744,20 @@ FindKey (
 }
 
 
-/**
-    Get the next available key in the buffer
-
-    @param KeyBuffer	- Pointer to the key buffer
-        Key			- The key to be inserted
-
-    @retval VOID
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        GetNextKey
+//
+// Description: Get the next available key in the buffer
+//
+// Input:       KeyBuffer	- Pointer to the key buffer
+//				Key			- The key to be inserted
+//
+// Output:      None
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 VOID*
 GetNextKey (
@@ -834,16 +765,14 @@ GetNextKey (
 	VOID		*Key
 )
 {
-	UINT8	Index;
+	UINT8	Index = 0;
 	BOOLEAN	KeyFound = FALSE;
 
-    if ((KeyBuffer == NULL) || (KeyBuffer->Buffer == NULL)) {
-        return NULL;
-    }
+	if (KeyBuffer == NULL) return NULL;
 
 	for (Index = KeyBuffer->Tail; 
 		Index != KeyBuffer->Head; 
-		Index = ((Index + 1) % KeyBuffer->MaxKey)) {
+		Index = ++Index % KeyBuffer->MaxKey) {
 
 		if (Key == NULL || KeyFound) {
 			return KeyBuffer->Buffer[Index];
@@ -862,15 +791,20 @@ GetNextKey (
 }
 
 
-/**
-    Remove the key in key buffer.
-
-    @param KeyBuffer	- Pointer to the key buffer
-        Key			- The key to be inserted
-
-    @retval VOID
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        RemoveKey
+//
+// Description: Remove the key in key buffer.
+//
+// Input:       KeyBuffer	- Pointer to the key buffer
+//				Key			- The key to be inserted
+//
+// Output:      None
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 VOID
 RemoveKey (
@@ -881,13 +815,11 @@ RemoveKey (
 	UINT8	Index = 0;
 	UINT8	NextIndex = 0;
 
-    if ((KeyBuffer == NULL) || (KeyBuffer->Buffer == NULL) || (Key == NULL)) {
-        return; 
-    }
+	if (KeyBuffer == NULL || Key == NULL) return;
 
 	for (Index = KeyBuffer->Tail; 
 		Index != KeyBuffer->Head; 
-		Index = ((Index + 1) % KeyBuffer->MaxKey)) {
+		Index = ++Index % KeyBuffer->MaxKey) {
 		if (KeyBuffer->Buffer[Index] == Key) {
 			break;
 		}
@@ -898,25 +830,30 @@ RemoveKey (
 	}
 
 	for (; Index != KeyBuffer->Tail; 
-		Index = (Index - 1 + KeyBuffer->MaxKey) % KeyBuffer->MaxKey) {
+		Index = (--Index + KeyBuffer->MaxKey) % KeyBuffer->MaxKey) {
 		NextIndex = ((Index - 1) + KeyBuffer->MaxKey) % KeyBuffer->MaxKey;
-		CopyMem(KeyBuffer->Buffer[Index],
+		MemCpy(KeyBuffer->Buffer[Index],
 				KeyBuffer->Buffer[NextIndex], KeyBuffer->KeySize);
 	}
 
-	KeyBuffer->Tail = ((KeyBuffer->Tail + 1) % KeyBuffer->MaxKey);
+	KeyBuffer->Tail = ++KeyBuffer->Tail % KeyBuffer->MaxKey;
 }
 
 
-/**
-    This routine is called every time the keyboard data is updated
-
-    @param HcStruc, DevInfo, fpBuf2 always NULL
-        Buf1  - Pointer to 8 bytes USB data array
-
-    @retval USB_SUCCESS or USB_ERROR
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        KeypressCallback
+//
+// Description: This routine is called every time the keyboard data is updated
+//
+// Input:      HcStruc, DevInfo, fpBuf2 always NULL
+//             Buf1  - Pointer to 8 bytes USB data array
+//
+// Output:      USB_SUCCESS or USB_ERROR
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT8
 UsbKbdDataHandler (
@@ -931,19 +868,7 @@ UsbKbdDataHandler (
 	UINT8		Index = 0;
 	VOID		*Key = NULL;
 	USB_KEY		UsbKey = {0};
-    UINT8       *MemBlockEnd = gUsbData->fpMemBlockStart + (gUsbData->MemPages << 12);
 
-    if ((DevInfo->UsbKeyBuffer.Buffer == NULL) || (DevInfo->KeyCodeBuffer.Buffer == NULL)) {
-        return USB_ERROR;
-    }
-    if (((UINT8*)DevInfo->UsbKeyBuffer.Buffer < gUsbData->fpMemBlockStart) ||
-       ((UINT8*)DevInfo->UsbKeyBuffer.Buffer > MemBlockEnd)) {
-            return USB_ERROR;
-    }
-    if (((UINT8*)DevInfo->KeyCodeBuffer.Buffer < gUsbData->fpMemBlockStart) ||
-       ((UINT8*)DevInfo->KeyCodeBuffer.Buffer > MemBlockEnd)) {
-            return USB_ERROR;
-    }
 	// Translate the modifier to USB key code
 	for (KeyCode = 0xE0, Modifier = Data[0];
 		KeyCode <= 0xE7;
@@ -958,13 +883,13 @@ UsbKbdDataHandler (
 		if (Data[Index] == 1) {
 			UsbKey.KeyCode = Data[Index];
 			UsbKey.Press = TRUE;
-			InsertKey((KEY_BUFFER*)&DevInfo->UsbKeyBuffer, &UsbKey);
+			InsertKey((KEY_BUFFER*)DevInfo->UsbKeyBuffer, &UsbKey);
 			return USB_SUCCESS;
 		}
 		WorkSpace[WorkSpaceIndex++] = Data[Index];
 	}
 
-	while (Key = GetNextKey(&DevInfo->KeyCodeBuffer, Key)) {
+	while (Key = GetNextKey(DevInfo->KeyCodeBuffer, Key)) {
 		KeyCode = *(UINT8*)Key;
 		for (Index = 0; Index < WorkSpaceIndex; Index++) {
 			if (KeyCode == WorkSpace[Index]) {
@@ -974,39 +899,40 @@ UsbKbdDataHandler (
 
 		if (Index == WorkSpaceIndex) {
 			// The key in key code buffer is released
-			RemoveKey((KEY_BUFFER*)&DevInfo->KeyCodeBuffer, Key);
+			RemoveKey((KEY_BUFFER*)DevInfo->KeyCodeBuffer, Key);
 
 			UsbKey.KeyCode = KeyCode;
 			UsbKey.Press = FALSE;
-			InsertKey((KEY_BUFFER*)&DevInfo->UsbKeyBuffer, &UsbKey);
+			InsertKey((KEY_BUFFER*)DevInfo->UsbKeyBuffer, &UsbKey);
 		}
 	}
 
 	// Check if the key is in the key code buffer
 	for (Index = 0; Index < WorkSpaceIndex && WorkSpace[Index]; Index++) {
-		if (!FindKey(&DevInfo->KeyCodeBuffer, &WorkSpace[Index])) {
+		if (!FindKey(DevInfo->KeyCodeBuffer, &WorkSpace[Index])) {
 			// A new key pressed, insert the key code buffer
-			InsertKey((KEY_BUFFER*)&DevInfo->KeyCodeBuffer, &WorkSpace[Index]);
+			InsertKey((KEY_BUFFER*)DevInfo->KeyCodeBuffer, &WorkSpace[Index]);
 
 			UsbKey.KeyCode = WorkSpace[Index];
 			UsbKey.Press = TRUE;
-			InsertKey((KEY_BUFFER*)&DevInfo->UsbKeyBuffer, &UsbKey);
+			InsertKey((KEY_BUFFER*)DevInfo->UsbKeyBuffer, &UsbKey);
 		}
 	}
 
 	return USB_SUCCESS;
 }
 
-//**********************************************************************
-//**********************************************************************
-//**                                                                  **
-//**        (C)Copyright 1985-2016, American Megatrends, Inc.         **
-//**                                                                  **
-//**                       All Rights Reserved.                       **
-//**                                                                  **
-//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093        **
-//**                                                                  **
-//**                       Phone: (770)-246-8600                      **
-//**                                                                  **
-//**********************************************************************
-//**********************************************************************
+
+//****************************************************************************
+//****************************************************************************
+//**                                                                        **
+//**             (C)Copyright 1985-2008, American Megatrends, Inc.          **
+//**                                                                        **
+//**                          All Rights Reserved.                          **
+//**                                                                        **
+//**                 5555 Oakbrook Pkwy, Norcross, GA 30093                 **
+//**                                                                        **
+//**                          Phone (770)-246-8600                          **
+//**                                                                        **
+//****************************************************************************
+//****************************************************************************

@@ -1647,65 +1647,19 @@ HiiStringToImage (
     if (Image == NULL) {
       return EFI_OUT_OF_RESOURCES;
     }
-//*** AMI PORTING BEGIN ***//
-#if 0
     Image->Width  = 800;
     Image->Height = 600;
-#else
-    {
-// Rather than just assuming the system is in 800 x 600 mode, go through and find the Gop Protocol that contains the smallest screen
-// and use that as the base screen size.
-        EFI_HANDLE *HandleBuffer = NULL;
-        UINTN HandleCount = 0;
-        EFI_GRAPHICS_OUTPUT_PROTOCOL *Gop = NULL;
-        UINTN i = 0;
-
-        Status = gBS->LocateHandleBuffer(ByProtocol, &gEfiGraphicsOutputProtocolGuid, NULL, &HandleCount, &HandleBuffer);
-        if(!EFI_ERROR(Status))
-        {
-            for(i = 0; i < HandleCount; i++)
-            {
-                Status = gBS->HandleProtocol(HandleBuffer[i], &gEfiGraphicsOutputProtocolGuid, (VOID**)&Gop);
-                if(!EFI_ERROR(Status))
-                {
-                    if((Image->Width == 0 && Image->Height == 0) || ((Image->Width >= Gop->Mode->Info->HorizontalResolution) && (Image->Height >= Gop->Mode->Info->VerticalResolution)))
-                    {
-                        Image->Width = Gop->Mode->Info->HorizontalResolution;
-                        Image->Height = Gop->Mode->Info->VerticalResolution;
-                    }
-                }
-            }
-            gBS->FreePool(HandleBuffer);
-        }
-        else
-        {
-            // If No GOP devices are available in the system, then act like Intel's Original code and specify 800 x 600 buffer size.
-            //  Do this to allow any 3rd party code that might use the BLT buffer to function correctly when there is no GOP.
-            Image->Width  = 800;
-            Image->Height = 600;
-        }
-    }
-#endif
-#if 0
-    // Do not allocate the screen size at this point because if the system is using native resolution, then it could be a huge allocation
-    // instead, the bitmap will be allocated later.
     Image->Image.Bitmap = AllocateZeroPool (Image->Width * Image->Height *sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
     if (Image->Image.Bitmap == NULL) {
       FreePool (Image);
       return EFI_OUT_OF_RESOURCES;
     }
-#endif
-//*** AMI PORTING END ***//
+
     //
     // Other flags are not permitted when Blt is NULL.
     //
     Flags &= EFI_HII_OUT_FLAG_WRAP | EFI_HII_IGNORE_IF_NO_GLYPH | EFI_HII_IGNORE_LINE_BREAK;
-//*** AMI PORTING BEGIN ***//
-#if 0
     *Blt = Image;
-#endif
-//*** AMI PORTING END ***//
-
   }
 
   StrLength = StrLen(String);
@@ -1856,100 +1810,7 @@ HiiStringToImage (
   }
   *StringTmp = 0;
   StringPtr  = StringIn2;
-//*** AMI PORTING BEGIN ***//
-  // Since Blt is NULL, its now time to determine the required buffer size of the screen
-  if (*Blt == NULL)
-  {
-      UINT16 RequiredDisplayWidth = 0;
-      UINT16 RequiredDisplayHeight = 0;
-      UINT16 RunningDisplayWidth = 0;
-      UINT16 MaxCharacterHeightInRow = 0;
 
-      // BltY is the starting vertical positiion for where to draw the string. The Starting position of the
-      //  Vertical should also include the necessary space for the BltX (wrapped based on the screen width).
-      RequiredDisplayHeight = (UINT16)(BltY);
-
-      // BltX is the starting horizontal position for where to draw the string. Since BltX is
-      //  passed in, it is possible that the value will be larger than the screen size.
-      RunningDisplayWidth = (UINT16)(BltX % (Image->Width));
-
-      StringTmp = StringPtr;
-      Index = 0;
-
-      // Go through the string and determine the total number of pixels required to display the string
-      // give that the maximum number of pixels across is in the Image->Width (from the GOP above) and
-      // that the maximum number of pixels in height is in Image->Height.
-      while( *StringTmp != 0)
-      {
-        // If the characters being displayed are from different fonts, scan each glyph of the characters and calculate
-        //  the sum of .Height and .OffsetY. The largest value of theses in a line defines the location of the BaseLine
-        //  which can be treated as the required height for a row of characters.
-        if(MaxCharacterHeightInRow < (Cell[Index].Height + Cell[Index].OffsetY) )
-            MaxCharacterHeightInRow = (Cell[Index].Height + Cell[Index].OffsetY);
-
-        // If the current character is a line break character, update the RequiredDisplayWidth and the
-        //  RequiredDisplayHeight before advancing to the next character
-        if((Flags & EFI_HII_IGNORE_LINE_BREAK) == 0 && IsLineBreak (*StringTmp) == 0)
-        {
-            RequiredDisplayHeight += MaxCharacterHeightInRow;
-            MaxCharacterHeightInRow = (Cell[Index].Height + Cell[Index].OffsetY);
-
-            if(RunningDisplayWidth > RequiredDisplayWidth)
-                RequiredDisplayWidth = RunningDisplayWidth;
-
-            RunningDisplayWidth = 0;
-        }
-        else
-        {
-            // If the current display character will put the string width beyond the
-            //  graphics mode resolution width, then advance to the next line
-            if((RunningDisplayWidth + Cell[Index].AdvanceX) > Image->Width)
-            {
-                RequiredDisplayHeight += MaxCharacterHeightInRow;
-                MaxCharacterHeightInRow = 0;
-
-                if(RunningDisplayWidth > RequiredDisplayWidth)
-                    RequiredDisplayWidth = RunningDisplayWidth;
-
-                RunningDisplayWidth = 0;
-            }
-
-            // Update the running display width with the width of the current character
-            RunningDisplayWidth += Cell[Index].AdvanceX;
-        }
-
-        // Check if the next character will be the end of the string. If it is, then check if
-        //  the running totals of width and height need to be updated with the current row's
-        //  information
-        if( *(StringTmp+1) == 0)
-        {
-            if(RunningDisplayWidth > RequiredDisplayWidth)
-                RequiredDisplayWidth = RunningDisplayWidth;
-
-            RequiredDisplayHeight += MaxCharacterHeightInRow;
-        }
-
-        StringTmp++;
-        Index++;
-      }
-
-      // Image->Width is the maximum width possible, if the calculation requires more, cut it
-      //  off at the Image->Width. This matches the EDKII implementation. The same applies to
-      //  the Image->Height.
-      if(Image->Width > RequiredDisplayWidth)
-          Image->Width  = RequiredDisplayWidth;
-      if(Image->Height > RequiredDisplayHeight)
-          Image->Height = RequiredDisplayHeight;
-
-      Image->Image.Bitmap = AllocateZeroPool (Image->Width * Image->Height *sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
-      if (Image->Image.Bitmap == NULL) {
-        FreePool (Image);
-        Status = EFI_OUT_OF_RESOURCES;
-        goto Exit;
-      }
-      *Blt = Image;
-  }
-//*** AMI PORTING END ***//
   //
   // Draw the string according to the specified EFI_HII_OUT_FLAGS and Blt.
   // If Blt is not NULL, then EFI_HII_OUT_FLAG_CLIP is implied, render this string
@@ -2177,22 +2038,6 @@ HiiStringToImage (
           Status = EFI_OUT_OF_RESOURCES;
           goto Exit;
         }
-        //*** AMI PORTING BEGIN ***//
-        // When the EFI_HII_DIRECT_TO_SCREEN flag is used, the output buffer is allocated using an AllocateZeroPool. In the case of
-        //  EFI_HII_OUT_FLAG_TRANSPARENT, this causes the background to be Black in RGB. The way to correct this is to copy from the
-        //  current video buffer into the allocated buffer.
-        if(Transparent)
-          Status = Image->Image.Screen->Blt(Image->Image.Screen,
-                                            BltBuffer,
-                                            EfiBltVideoToBltBuffer,
-                                            BltX,
-                                            BltY,
-                                            0,
-                                            0,
-                                            RowInfo[RowIndex].LineWidth,
-                                            RowInfo[RowIndex].LineHeight,
-                                            0);
-        //*** AMI PORTING END ***//
         //
         // Set BufferPtr to Origin by adding baseline to the starting position.
         //
@@ -2819,15 +2664,7 @@ Exit:
         Status = EFI_WARN_UNKNOWN_GLYPH;
       }
     } else {
-//*** AMI PORTING BEGIN ***//
-// This case will be reached if the GetGlyphBuffer returned that it could not find the
-//  Glyph for the REPLACE_UNKNOWN_GLYPH (0xFFFD). In this case, the Blt will be NULL,
-//  but only a warning is being returned, not an error. Changing the code to return
-//  an error code, but the only defined errors in the specification are EFI_OUT_OF_RESOURCES
-//  and EFI_INVALID_PARAMETER.
-//      Status = EFI_WARN_UNKNOWN_GLYPH;
-      Status = EFI_NOT_FOUND;
-//*** AMI PORTING END ***//
+      Status = EFI_WARN_UNKNOWN_GLYPH;
     }
   }
 

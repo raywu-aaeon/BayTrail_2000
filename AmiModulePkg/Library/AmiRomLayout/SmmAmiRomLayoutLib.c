@@ -98,11 +98,14 @@ EFI_STATUS EFIAPI SmmAmiRomLayoutLibConstructor (IN EFI_HANDLE ImageHandle, IN E
  */
 EFI_STATUS AmiPublishFvArea(IN AMI_ROM_AREA *FvArea)
 {
-    // FV Area publishing is not supported in SMM.
-    // The support can potentially be added in the future if required, 
-    // but it has to be done with the following restriction in mind:
-    // - No FV publishing after End Of DXE because it's a call outside of SMM.
-    return EFI_UNSUPPORTED;
+    EFI_STATUS Status = EFI_INVALID_PARAMETER;
+    EFI_HANDLE FvHandle = NULL;
+
+    if(FvArea != NULL)
+    {
+        Status = gDS->ProcessFirmwareVolume((VOID*)(FvArea->Address), FvArea->Size, &FvHandle);
+    }
+    return Status;
 }
 
 

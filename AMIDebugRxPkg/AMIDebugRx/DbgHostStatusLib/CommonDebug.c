@@ -2,7 +2,7 @@
 //*****************************************************************//
 //*****************************************************************//
 //**                                                             **//
-//**         (C)Copyright 2014, American Megatrends, Inc.        **//
+//**         (C)Copyright 2012, American Megatrends, Inc.        **//
 //**                                                             **//
 //**                     All Rights Reserved.                    **//
 //**                                                             **//
@@ -20,18 +20,12 @@
 // $Date: 11/02/12 10:14a $
 //
 //*********************************************************************
-// Revision History
-// ----------------
-// $Log: /AptioV/SRC/AMIDebugRx/DbgHostStatusLib/CommonDebug.c $
-// 
-//
-//*********************************************************************
 //<AMI_FHDR_START>
 //----------------------------------------------------------------------------
 //
-// Name:          CommonDebug.C
+// Name:          HostConStatus.C
 //
-// Description:   Common Debug definitions
+// Description:   Checks whether the target is connected with host or not.
 //
 //----------------------------------------------------------------------------
 //<AMI_FHDR_END>
@@ -48,71 +42,60 @@
 
 #include "token.h"
 
-#ifdef REDIRECTION_ONLY_MODE
-#if REDIRECTION_ONLY_MODE
-volatile UINTN gRedirectionOnlyEnabled = 1;
-#else
-volatile UINTN gRedirectionOnlyEnabled = 0;
-#endif
-#endif
-
-#ifdef DBG_PERFORMANCE_RECORDS
-UINTN gDbgPerformanceRecords = DBG_PERFORMANCE_RECORDS;
-#else
-UINTN gDbgPerformanceRecords = 0;
-#endif
-
-#ifdef DBG_WRITE_IO_80_SUPPORT
-volatile UINTN gDbgWriteIO80Support = DBG_WRITE_IO_80_SUPPORT;
-#else
-volatile UINTN gDbgWriteIO80Support = 0;
-#endif
-
-#ifndef GENERIC_USB_CABLE_SUPPORT
-#define GENERIC_USB_CABLE_SUPPORT 0
-#endif
-
-// Load Fv Support
-UINTN gFvMainBase = FV_MAIN_BASE;
-UINTN gFvMainBlocks = FV_MAIN_BLOCKS;
-UINTN gFvBBBlocks = FV_BB_BLOCKS;
-UINTN gBlockSize = FLASH_BLOCK_SIZE;
-
-volatile UINTN gGenericUsbSupportEnabled = GENERIC_USB_CABLE_SUPPORT;
-
 EFI_GUID  mPeiDbgBasePpiGuid = EFI_PEI_DBG_BASEADDRESS_PPI_GUID;
 
 EFI_GUID  mDxeDbgDataGuid = DXE_DBG_DATA_GUID;
 INT8 CompareGuid(EFI_GUID *G1, EFI_GUID *G2);
 
-UINTN DebugDataBaseAddress = 0;
 UINTN SMMDebugDataBaseAddress = 0;
-UINTN DxeDataBaseAddress = 0;
 
 BOOLEAN CheckForHostConnectedinPEI (EFI_PEI_SERVICES **PeiServices);
+#define PEI_DBGSUPPORT_DATA_GUID  \
+	{0x41cac730, 0xe64e, 0x463b, 0x89, 0x72, 0x25, 0x5e, 0xec, 0x55, 0x55, 0xc2}
 
-//<AMI_PHDR_START>
-//--------------------------------------------------------------------
-// Procedure:	GetPCIBaseAddr
+//**********************************************************************
+//<AMI_SHDR_START>
 //
-// Description:	Returns the PCIBase Address
+// Name:		PeiDbgDataSection of type PEI_DBG_DATA_SECTION
 //
-// Input:		VOID
+// Description:	The following global data structure is for relocation purpose
+//				in order to support debugging after the debugger data section
+//				is relocated. This second parameter of the data structure has
+//				to be updated by the debugger service PEIM to point to relocated
+//				data section into memory.The code section has this module
+//				has to relocated before the update of second parameter.
 //
-// Output:		UINT32 PCIExBaseAddress
-//
-//--------------------------------------------------------------------
-//<AMI_PHDR_END>
+//<AMI_SHDR_END>
+//**********************************************************************
+#ifndef EFIx64
+PEI_DBG_DATA_SECTION PeiDbgDataSection = {
+	"XPRT",
+	(UINTN)NULL
+};
+#else
+PEI_DBG_DATA_SECTIONx64 PeiDbgDataSection = {
+	"XPRT",
+	(UINTN)NULL
+};
+#endif
 
-UINTN  GetPciExBaseAddr()
-{
-	return (UINTN) PcdGet64 (PcdPciExpressBaseAddress);
-}
+#ifndef EFIx64
+PEI_DBG_DATA_SECTION SMMDbgDataSection = {
+	"XPRT",
+	(UINTN)NULL
+};
+#else
+PEI_DBG_DATA_SECTIONx64 SMMDbgDataSection = {
+	"XPRT",
+	(UINTN)NULL
+};
+#endif
+
 //*****************************************************************//
 //*****************************************************************//
 //*****************************************************************//
 //**                                                             **//
-//**         (C)Copyright 2014, American Megatrends, Inc.        **//
+//**         (C)Copyright 2012, American Megatrends, Inc.        **//
 //**                                                             **//
 //**                     All Rights Reserved.                    **//
 //**                                                             **//

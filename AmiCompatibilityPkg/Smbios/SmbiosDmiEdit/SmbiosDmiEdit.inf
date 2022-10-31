@@ -1,7 +1,7 @@
 #*************************************************************************
 #*************************************************************************
 #**                                                                     **
-#**        (C)Copyright 1985-2015, American Megatrends, Inc.            **
+#**        (C)Copyright 1985-2012, American Megatrends, Inc.            **
 #**                                                                     **
 #**                       All Rights Reserved.                          **
 #**                                                                     **
@@ -41,7 +41,6 @@
   AmiDxeLib
   UefiDriverEntryPoint
   SmbiosDmiEditBoardLib
-  AmiBufferValidationLib
 
 [Guids]
   gAmiSmbiosNvramGuid
@@ -53,7 +52,6 @@
   gAmiSmbiosProtocolGuid
   gAmiSmbiosFlashDataProtocolGuid
   gEfiSmiFlashProtocolGuid
-  gFlashSmmProtocolGuid
 
 [Depex]
   gEfiSmiFlashProtocolGuid AND
@@ -63,7 +61,7 @@
 #*************************************************************************
 #*************************************************************************
 #**                                                                     **
-#**        (C)Copyright 1985-2015, American Megatrends, Inc.            **
+#**        (C)Copyright 1985-2012, American Megatrends, Inc.            **
 #**                                                                     **
 #**                       All Rights Reserved.                          **
 #**                                                                     **

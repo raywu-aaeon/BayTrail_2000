@@ -27,13 +27,13 @@
 //----------------------------------------------------------------------
 //<AMI_FHDR_END>
 #include <Token.h>
-#include <Pei.h>
+#include <PEI.h>
 #include <AmiPeiLib.h> 
 #include <AmiLib.h> 
-#include <Ppi/BlockIo.h>
-#include <Ppi/Stall.h>
-#include <Protocol/BlockIo.h>
-#include <Ppi/AtaController.h>
+#include <Ppi\BlockIo.h>
+#include <Ppi\Stall.h>
+#include <Protocol\BlockIo.h>
+#include <Ppi\AtaController.h>
 
 EFI_GUID gPeiAtaControllerPpiGuid      = PEI_ATA_CONTROLLER_PPI_GUID;
 EFI_GUID gIdeRecoveryNativeModePpiGuid = PEI_IDE_RECOVERY_NATIVE_MODE_PPI_GUID;
@@ -394,7 +394,7 @@ EFI_STATUS DRQReady2 (
 EFI_STATUS CheckErrorStatus (
     IN UINT16 StatusReg );
 
-static VOID ZeroMem (
+VOID ZeroMem (
     OUT VOID *Buffer,
     IN UINTN Size );
 
@@ -425,7 +425,7 @@ static EFI_PEI_STALL_PPI *gStallPpi     = NULL;
 //----------------------------------------------------------------------
 //<AMI_PHDR_END>
 EFI_STATUS Atapi_RecoveryPeimEntry(
-    IN EFI_PEI_FILE_HANDLE  FileHandle,
+    IN EFI_FFS_FILE_HEADER *FfsHeader,
     IN EFI_PEI_SERVICES    **PeiServices )
 {
     EFI_STATUS              Status          = EFI_SUCCESS;
@@ -468,7 +468,7 @@ EFI_STATUS Atapi_RecoveryPeimEntry(
 //----------------------------------------------------------------------
 //<AMI_PHDR_END>
 EFI_STATUS Ata_RecoveryPeimEntry(
-    IN EFI_PEI_FILE_HANDLE  FileHandle,
+    IN EFI_FFS_FILE_HEADER *FfsHeader,
     IN EFI_PEI_SERVICES    **PeiServices )
 {
     EFI_STATUS              Status        = EFI_SUCCESS;
@@ -511,14 +511,14 @@ EFI_STATUS Ata_RecoveryPeimEntry(
 //----------------------------------------------------------------------
 //<AMI_PHDR_END>
 EFI_STATUS IdeRecoveryPeimEntry(
-  IN       EFI_PEI_FILE_HANDLE  FileHandle,
-  IN CONST EFI_PEI_SERVICES     **PeiServices)
+    IN EFI_FFS_FILE_HEADER *FfsHeader,
+    IN EFI_PEI_SERVICES    **PeiServices )
 {
     #if defined(ATAPI_RECOVERY_SUPPORT) && ATAPI_RECOVERY_SUPPORT
-        Atapi_RecoveryPeimEntry(FileHandle,PeiServices);
+        Atapi_RecoveryPeimEntry(FfsHeader,PeiServices);
     #endif
     #if defined(ATA_RECOVERY_SUPPORT) && ATA_RECOVERY_SUPPORT
-        Ata_RecoveryPeimEntry(FileHandle,PeiServices);
+        Ata_RecoveryPeimEntry(FfsHeader,PeiServices);
     #endif
     return EFI_SUCCESS;
 }

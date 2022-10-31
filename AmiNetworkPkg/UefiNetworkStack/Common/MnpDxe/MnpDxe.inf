@@ -71,9 +71,6 @@
   DebugLib
   NetLib
   DpcLib
-  
-[Guids]
-  gEfiNetworkStackSetupGuid              # AMI PORTING.
 
 [Protocols]
   gEfiManagedNetworkServiceBindingProtocolGuid  ## PRODUCES

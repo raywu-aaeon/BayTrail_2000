@@ -6,11 +6,10 @@
 [INF]
 "AmiGopPolicy.inf"
 [files]
-"AmiGopPolicy.h"
 "AmiGopPolicy.chm"	
+"AmiGopPolicy.mak"	
 "AmiGopPolicy.sd"	
 "AmiGopPolicy.sdl"	
 "AmiGopPolicy.uni"	
 "AmiGopPolicySetup.c"	
-"AmiGopPolicyLinks.tmp"	
 <endComponent>

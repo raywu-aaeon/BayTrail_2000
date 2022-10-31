@@ -740,8 +740,7 @@ Intel Corporation.
 #define R_PCH_SATA_AHCI_P1CI                0x1B8 // Port 1 Commands Issued
 #define B_PCH_SATA_AHCI_PXCI                0xFFFFFFFF
 
-#define R_PCH_SATA_AHCI_PXDEVSLP0           0x144 // Port 0 Device Sleep
-#define R_PCH_SATA_AHCI_PXDEVSLP1           0x1C4 // Port 1 Device Sleep
+#define R_PCH_SATA_AHCI_PXDEVSLP1           0x1C4 // Port [0-5] Device Sleep
 #define B_PCH_SATA_AHCI_PXDEVSLP1_DM        0x1E000000 // DITO Multiplier
 #define B_PCH_SATA_AHCI_PXDEVSLP1_DITO      0x01FF8000 // DITO
 #define B_PCH_SATA_AHCI_PXDEVSLP1_MDAT      0x00007C00

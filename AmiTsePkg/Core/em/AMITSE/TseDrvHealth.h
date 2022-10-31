@@ -2,7 +2,7 @@
 //*****************************************************************//
 //*****************************************************************//
 //**                                                             **//
-//**         (C)Copyright 2015, American Megatrends, Inc.        **//
+//**         (C)Copyright 2012, American Megatrends, Inc.        **//
 //**                                                             **//
 //**                     All Rights Reserved.                    **//
 //**                                                             **//
@@ -24,10 +24,15 @@
 //*****************************************************************//
 //*****************************************************************//
 //*****************************************************************//
-/** @file TseDrvHealth.h
-    Header file for driver health only contains TSE specific.
-
-**/
+//<AMI_FHDR_START>
+//----------------------------------------------------------------------------
+//
+// Name:		TseDrvHealth.h
+//
+// Description:	Header file for driver health only contains TSE specific.
+//
+//----------------------------------------------------------------------------
+//<AMI_FHDR_END>
 #if EFI_SPECIFICATION_VERSION>=0x20014           
 #include "Protocol/DriverHealth.h"
 #include "Protocol/DevicePathToText.h"
@@ -133,22 +138,16 @@ typedef struct DRV_HEALTH_HNDLS{
 	struct DRV_HEALTH_HNDLS 	*Next;
 }DRV_HEALTH_HNDLS;
 
-typedef struct {
-	EFI_HII_HANDLE HiiHandle;
-	EFI_STRING_ID StringId;
-	UINT64 MessageCode;
-} TSE_EFI_DRIVER_HEALTH_HII_MESSAGE;
-
 CHAR16 *GetDrvHlthCtrlName (DRV_HEALTH_HNDLS *);
 VOID AddHandleIntoList (EFI_HANDLE, EFI_HANDLE, EFI_DRIVER_HEALTH_STATUS);
-VOID DisplayMsgListMessageBox (TSE_EFI_DRIVER_HEALTH_HII_MESSAGE *MessageList);
+VOID DisplayMsgListMessageBox (EFI_DRIVER_HEALTH_HII_MESSAGE *MessageList);
 BOOLEAN AdvancedRepairSupported (VOID);
 
 //*****************************************************************//
 //*****************************************************************//
 //*****************************************************************//
 //**                                                             **//
-//**         (C)Copyright 2015, American Megatrends, Inc.        **//
+//**         (C)Copyright 2012, American Megatrends, Inc.        **//
 //**                                                             **//
 //**                     All Rights Reserved.                    **//
 //**                                                             **//

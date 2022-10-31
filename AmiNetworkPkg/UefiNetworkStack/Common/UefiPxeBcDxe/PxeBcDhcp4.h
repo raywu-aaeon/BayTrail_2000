@@ -1,7 +1,7 @@
 /** @file
   Functions declaration related with DHCPv4 for UefiPxeBc Driver.
 
-  Copyright (c) 2009 - 2014, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2009 - 2013, Intel Corporation. All rights reserved.<BR>
 
   This program and the accompanying materials
   are licensed and made available under the terms and conditions of the BSD License
@@ -16,21 +16,9 @@
 #ifndef __EFI_PXEBC_DHCP4_H__
 #define __EFI_PXEBC_DHCP4_H__
 
-#include "Token.h"	// AMI PORTING.
-
 #define PXEBC_DHCP4_OPTION_MAX_NUM         16
 #define PXEBC_DHCP4_OPTION_MAX_SIZE        312
-//
-// AMI PORTING STARTS.
-// 
-#if (NET_PKG_AMI_PORTING_ENABLE == 1)
-#define PXEBC_DHCP4_PACKET_MAX_SIZE        (sizeof (EFI_PXE_BASE_CODE_PACKET))
-#else
 #define PXEBC_DHCP4_PACKET_MAX_SIZE        1472
-#endif	// NET_PKG_AMI_PORTING_ENABLE
-//
-// AMI PORTING ENDS.
-// 
 #define PXEBC_DHCP4_S_PORT                 67
 #define PXEBC_DHCP4_C_PORT                 68
 #define PXEBC_BS_DOWNLOAD_PORT             69
@@ -139,7 +127,7 @@ typedef enum {
 
 #define BIT(x)                (1 << x)
 #define CTRL(x)               (0x1F & (x))
-#define DEFAULT_CLASS_ID_DATA "PXEClient:Arch:xxxxx:UNDI:003000"
+#define DEFAULT_CLASS_ID_DATA "PXEClient:Arch:?????:????:??????"
 #define DEFAULT_UNDI_TYPE     1
 #define DEFAULT_UNDI_MAJOR    3
 #define DEFAULT_UNDI_MINOR    0
@@ -314,30 +302,11 @@ typedef struct {
   UINT32                *CredType;
   UINT8                 CredTypeLen;
 } PXEBC_VENDOR_OPTION;
-//
-// AMI PORTING STARTS.
-// 
-#if (NET_PKG_AMI_PORTING_ENABLE == 1)
-#define PXEBC_CACHED_DHCP4_PACKET_MAX_SIZE  (OFFSET_OF (EFI_DHCP4_PACKET, Dhcp4) + PXEBC_DHCP4_PACKET_MAX_SIZE)
-#endif	// NET_PKG_AMI_PORTING_ENABLE
-//
-// AMI PORTING ENDS.
-// 
 
 typedef union {
   EFI_DHCP4_PACKET        Offer;
   EFI_DHCP4_PACKET        Ack;
-  //
-  // AMI PORTING STARTS.
-  //
-#if (NET_PKG_AMI_PORTING_ENABLE == 1)
-  UINT8                   Buffer[PXEBC_CACHED_DHCP4_PACKET_MAX_SIZE];
-#else
   UINT8                   Buffer[PXEBC_DHCP4_PACKET_MAX_SIZE];
-#endif	// NET_PKG_AMI_PORTING_ENABLE
-  //
-  // AMI PORTING ENDS.
-  // 
 } PXEBC_DHCP4_PACKET;
 
 typedef struct {

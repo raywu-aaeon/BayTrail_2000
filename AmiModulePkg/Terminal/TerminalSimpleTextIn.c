@@ -17,9 +17,9 @@
 //
 // Name:    TerminalSimpleTextIn.c
 //
-// Description: Implements the SimpleTextIn protocol for the Terminal.  
-//      Interfaces with the SerialIo protocol to get and write 
-//      characters to the serial port.
+// Description:	Implements the SimpleTextIn protocol for the Terminal.  
+//		Interfaces with the SerialIo protocol to get and write 
+//		characters to the serial port.
 //
 //<AMI_FHDR_END>
 //**********************************************************************
@@ -105,38 +105,40 @@ VOID ReadSerialPort(
     IN OUT UINT8 *Buffer, 
     IN OUT UINTN *Size)
 {
-    EFI_STATUS  Status;
-    UINT32      Control;
-    UINTN       ReadSize = *Size;
-    UINTN       ByteSize = 1;
+	EFI_STATUS	Status;
+	UINT32		Control;
+	UINTN		ReadSize = *Size;
+	UINTN		ByteSize = 1;
 
-    *Size = 0;
+	*Size = 0;
 
-    while(ReadSize--)
-    {
+	while(ReadSize--)
+	{
         //
-        //Check if Character.
+		//Check if Character.
         //
-        Status = SerialIo->GetControl(SerialIo,
-                                      &Control);
-        
-        if (EFI_ERROR(Status) || Control & EFI_SERIAL_INPUT_BUFFER_EMPTY) return;
+		Status = SerialIo->GetControl(
+			SerialIo,
+			&Control
+		);		
+		if (EFI_ERROR(Status) || Control & EFI_SERIAL_INPUT_BUFFER_EMPTY) return;
 
         //
-        //Read single character to avoid timeout.
+		//Read single character to avoid timeout.
         //
-        Status = SerialIo->Read(SerialIo,
-                                &ByteSize,
-                                Buffer
-        );
+		Status = SerialIo->Read(
+			SerialIo,
+			&ByteSize,
+			Buffer
+		);
                
-        if (EFI_ERROR(Status)) { 
+		if (EFI_ERROR(Status)) { 
             return;	
         }
-        
-        ++Buffer;
-        ++*Size;
-    }
+		
+		++Buffer;
+		++*Size;
+	}
 }
 
 //**********************************************************************
@@ -421,7 +423,7 @@ void FillUnicodeBufferFromSerial(TERMINAL_DEV *TerminalDev)
     //Subtract 1, must have one unused byte for calculations to determine
     //if buffer full.
     FreeBuffer = BUFFER_SIZE - (AdjTail - TerminalDev->RawFIFO.Head) - 1;
-    if (!FreeBuffer) return;    //Buffer full
+    if (!FreeBuffer) return;	//Buffer full
 
     FillRawBuffer(TerminalDev->SerialIo, TerminalDev->RawFIFO.Buffer, 
                     TerminalDev->RawFIFO.Tail, &FreeBuffer);
@@ -571,6 +573,7 @@ VOID WaitForEsc(EFI_EVENT Event, VOID *Context)
     TERMINAL_DEV *TerminalDev=(TERMINAL_DEV*)(*(UINTN*)Context);
 
     if(TerminalDev == NULL) {
+        pBS->SetTimer(TerminalDev->TimeoutEscEvent, TimerCancel, 0);
         return;
     }
 
@@ -936,7 +939,7 @@ EFI_STATUS CheckKeyboardDataFromSerial(
     IN  TERMINAL_DEV *TerminalDev 
 )
 {
-    EFI_STATUS Status;
+    EFI_STATUS Status = EFI_SUCCESS;
     UINT8 Ch;
     EFISCAN_TO_EFIKEY *LookupTbl;
     UINT8 EfiKey=0;
@@ -944,7 +947,7 @@ EFI_STATUS CheckKeyboardDataFromSerial(
     AMI_EFI_KEY_DATA         TerminalKey;
 
     // Initilize the Local Buffer
-    pBS->SetMem ((VOID*)&TerminalKey, sizeof (AMI_EFI_KEY_DATA), 0);
+	pBS->SetMem ((VOID*)&TerminalKey, sizeof (AMI_EFI_KEY_DATA), 0);
 
     // Get the Remote Keyboard Data from Serial Port
     Status=GetKeyFromSerial(TerminalDev, &TerminalKey);
@@ -1121,7 +1124,7 @@ VOID WaitForKey(EFI_EVENT Event, VOID *Context)
 //
 // Input:
 //              IN EFI_SIMPLE_TEXT_INPUT_PROTOCOL    *This
-//              IN BOOLEAN              ExtendedVerification
+//              IN BOOLEAN         			ExtendedVerification
 //
 // Output:
 //              EFI_STATUS
@@ -1362,7 +1365,7 @@ TerminalCheckKeyNotify(
 )
 {
 
-    KEY_WAITING_RECORD *TerminalKeyIn = OUTTER(mTerminalKeyboardData.pHead, Link, KEY_WAITING_RECORD);
+	KEY_WAITING_RECORD *TerminalKeyIn = OUTTER(mTerminalKeyboardData.pHead, Link, KEY_WAITING_RECORD);
     BOOLEAN     KeyScanCodeMatch=FALSE;
     BOOLEAN     KeyUniCodeMatch=FALSE;
     BOOLEAN     ShiftKeyMatch=FALSE;
@@ -1631,28 +1634,28 @@ TerminalInputUnRegisterKeyNotify(
     IN EFI_HANDLE NotificationHandle
 )
 {
-    DLINK               *ListPtr;
-    KEY_WAITING_RECORD  *TerminalKeyIn;
+	DLINK			    *ListPtr;
+	KEY_WAITING_RECORD	*TerminalKeyIn;
     TERMINAL_DEV        *TerminalDev = OUTTER(This, SimpleTextInputEx, TERMINAL_DEV);
 
 
     if(NotificationHandle == NULL ) {
         return EFI_INVALID_PARAMETER;
-    }
-
-    ListPtr = mTerminalKeyboardData.pHead;
-    while ( ListPtr != NULL)
-    {
-        TerminalKeyIn = OUTTER(ListPtr, Link, KEY_WAITING_RECORD);
-        if ( (&TerminalKeyIn->Link) == NotificationHandle)
-        {
-            DListDelete(&mTerminalKeyboardData, ListPtr);
+    }	
+	
+	ListPtr = mTerminalKeyboardData.pHead;
+	while ( ListPtr != NULL)
+	{
+		TerminalKeyIn = OUTTER(ListPtr, Link, KEY_WAITING_RECORD);
+		if ( (&TerminalKeyIn->Link) == NotificationHandle)
+		{
+			DListDelete(&mTerminalKeyboardData, ListPtr);
             pBS->FreePool(TerminalKeyIn);
-            break;
-        }
-        
-        ListPtr = ListPtr->pNext;
-    }
+			break;
+		}
+		
+		ListPtr = ListPtr->pNext;
+	}
 
     if(ListPtr == NULL) {
         return EFI_INVALID_PARAMETER;
@@ -1720,7 +1723,7 @@ InitTerminalKeyBuffer(
 )
 {
 
-    pBS->SetMem ((VOID*)KeyboardBuffer, sizeof (TERMINAL_KB_BUFFER), 0);
+	pBS->SetMem ((VOID*)KeyboardBuffer, sizeof (TERMINAL_KB_BUFFER), 0);
 
     KeyboardBuffer->bHead = KeyboardBuffer->bTail;
 

@@ -19,7 +19,6 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 #include <Library/ReportStatusCodeLib.h>
 #include <Library/DriverNameLib.h>
 #include <AmiDxeLib.h> 		//Adding FPDT support.
-#include <BootOptions.h> //Do not pass AMI_SIMPLE_BOOT_OPTION_SIGNATURE to OS loader
 BOOLEAN       gFillFpdt  = FALSE;		//Adding FPDT support.
 // The function is used to validate device path in CoreLoadImage
 EFI_STATUS IsValidDevicePath(
@@ -1630,15 +1629,6 @@ CoreStartImage (
   if (gFillFpdt) {
     AmiFillFpdt (FillOsLoaderStartImageStart); // Fill OsLoaderStartImageStart field in FPDT
     gFillFpdt = FALSE;
-// We are dealing with the OS loader.
-// Let's make sure we are not passing AMI_SIMPLE_BOOT_OPTION_SIGNATURE to it.
-    if ( Image->Info.LoadOptionsSize==sizeof(UINT32)
-      && Image->Info.LoadOptions!=NULL 
-      && *(UINT32*)Image->Info.LoadOptions==AMI_SIMPLE_BOOT_OPTION_SIGNATURE
-	){
-		Image->Info.LoadOptionsSize = 0;
-		Image->Info.LoadOptions = NULL;
-	}
   }
   //*** AMI PORTING END ***//
 
@@ -1694,7 +1684,7 @@ CoreStartImage (
     	GetImageNameByHandle(ImageHandle,sName,0x100);
         if (Image->Machine == EFI_IMAGE_MACHINE_EBC)
             DEBUG((EFI_D_LOAD, "[EBC]."));
-        DEBUG((EFI_D_LOAD, "%a.Entry(%p)\n", sName, Image->EntryPoint));
+        DEBUG((EFI_D_LOAD, "%a.Entry(%X)\n", sName, Image->EntryPoint));
         
     DEBUG_CODE_END();
     // Report Status Code
@@ -1715,7 +1705,7 @@ CoreStartImage (
 // Change format of the debug message printed when the image returned with an error.
     DEBUG_CODE_BEGIN();
         if (EFI_ERROR(Image->Status) && Image->Status!=EFI_REQUEST_UNLOAD_IMAGE)
-            DEBUG((EFI_D_WARN, "ERROR: %a.Entry(%p)=%r\n", sName, Image->EntryPoint, Image->Status));
+            DEBUG((EFI_D_WARN, "ERROR: %a.Entry(%X)=%r\n", sName, Image->EntryPoint, Image->Status));
     DEBUG_CODE_END();
     }
     //

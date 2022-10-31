@@ -2102,9 +2102,9 @@ SbPeiActivateSmi(
     IN UINTN                ActivationInterval OPTIONAL
 )
 {
-//EIP187331 >>
+    /** Porting required. Include code to generate S/W SMI
         UINT8   Data;
-        UINT8   Value;
+    //  UINT8   Value;
 
         if (Periodic) return EFI_INVALID_PARAMETER;
 
@@ -2116,13 +2116,14 @@ SbPeiActivateSmi(
             Data = *ArgumentBuffer;
         }
 
-
+    /** Porting required. Include code to generate S/W SMI
         // Enable Software SMIs
-        Value =  IoRead8(PM_BASE_ADDRESS + R_PCH_SMI_EN) | (1 << 5) | 1;
-        IoWrite8(PM_BASE_ADDRESS + R_PCH_SMI_EN, Value);
+        Value =  IoRead8(PM_BASE_ADDRESS + ICH_SMI_EN) | (1 << 5) | 1;
+        IoWrite8(PM_BASE_ADDRESS + ICH_SMI_EN, Value);
 
-        IoWrite8(SW_SMI_IO_ADDRESS,Data);     //This triggers SMI
-//EIP187331 <<
+        IoWrite8(ICH_APM_CNT,Data);     //This triggers SMI
+
+     Porting End **/
 
     return EFI_SUCCESS;
 }
@@ -2147,21 +2148,21 @@ EFI_STATUS SbPeiDeactivateSmi(
     IN BOOLEAN              Periodic OPTIONAL
 )
 {
-//EIP187331 >>
-  UINT8       Value;
+//  UINT8       Value;
 
     if(Periodic) return EFI_INVALID_PARAMETER;
 
+    /** Porting Required.  Include code to clear all SMI status
     // Clear the Power Button Override Status Bit
     IoWrite16(PM_BASE_ADDRESS, 1 << 8);
 
      // Clear the APM SMI Status Bit
-    IoWrite8(PM_BASE_ADDRESS + R_PCH_SMI_EN, 1 << 5);
+    IoWrite8(PM_BASE_ADDRESS+ICH_SMI_STS, 1 << 5);
 
     //Set EOS
-    Value = IoRead8(PM_BASE_ADDRESS + R_PCH_SMI_EN) | 2;
-    IoWrite8(PM_BASE_ADDRESS + R_PCH_SMI_EN ,Value);
-//EIP187331 <<
+    Value = IoRead8(PM_BASE_ADDRESS+ICH_SMI_EN) | 2;
+    IoWrite8(PM_BASE_ADDRESS+ICH_SMI_EN,Value);
+    **/ // Porting end
 
     return EFI_SUCCESS;
 }

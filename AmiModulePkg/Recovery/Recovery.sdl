@@ -24,13 +24,6 @@ TOKEN
 End
 
 TOKEN
-    Name  = "RECOVERY_ROM"
-    Value  = "$(BIOS_TAG).rom"
-    TokenType = Expression
-    TargetH = Yes
-End
-
-TOKEN
 	Name  = "RECOVERY_SCAN_RETRIES"
 	Value  = "3"
 	Help  = "Number of times to scan all recovery devices before reporting error"
@@ -41,7 +34,7 @@ End
 TOKEN
 	Name  = "RECOVERY_DEVICE_ORDER"
 	Value  = "BLOCK,SERIAL,"
-	Help  = "***AMITODO: THIS SHOULD BE DEFINED VIA ELINK***"
+	Help  = "***AMITODO: THIS SHOULD BE DEFINED VIA ELINK***\Number of times to scan all recovery devices before reporting error"
 	TokenType = Expression
 	TargetH = Yes
 End
@@ -76,14 +69,6 @@ TOKEN
     Value  = "0"
     Help  = "Force recovery execution by forcing BootMode = BOOT_IN_RECOVERY_MODE in SbPei.c"
     TokenType = Boolean
-    TargetH = Yes
-End
-
-TOKEN
-    Name  = "OFFSET_TO_ADDRESS(Offset)"
-    Value  = "(0xFFFFFFFF - FLASH_SIZE + (Offset) + 1)"
-    Help  = "Expression to calculate FV address in flash based on offset in ROM file"
-    TokenType = Expression
     TargetH = Yes
 End
 
@@ -129,18 +114,6 @@ PcdMapping
 	Offset  = 00h
 	Length  = 04h
 	TargetDSC = Yes
-End
-
-PcdMapping
-    Name  = "PcdSerialRegisterBase"
-    GuidSpace  = "gEfiMdeModulePkgTokenSpaceGuid"
-    PcdType  = "PcdsPatchableInModule"
-    Value  = "0x02E0"
-    Offset  = 00h
-    Length  = 00h
-    TargetDSC = Yes
-    Override = "AmiModulePkg.SerialRecovery"
-    Token = "SerialRecovery_SUPPORT" "=" "1"
 End
 
 INFComponent

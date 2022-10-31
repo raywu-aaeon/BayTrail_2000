@@ -35,7 +35,6 @@ Scope(\_SB)
     Name(_CRS,ResourceTemplate()
     {
       IO(Decode16,0x70,0x70,0x01,0x08)
-	  IRQNoFlags () {8}
     })
   }
 //RTC
@@ -57,6 +56,10 @@ Scope(\_SB)
                        0xFED00000,         // Address Base
                        0x00000400,         // Address Length
                       )
+        Interrupt (ResourceConsumer, Level, ActiveHigh, Exclusive, ,, )
+        {
+          0x00000008,   //0xB HPET-2
+        }
       })
       Return (RBUF)
     }
@@ -353,18 +356,12 @@ Scope(\_SB)
     Method(^BN00, 0) { return(0x0000) } // Returns default Bus number for Peer PCI busses. Name can be overriden with control method placed directly under Device scope
     Method(_BBN, 0) { return(BN00()) }  // Bus number, optional for the Root PCI Bus
     Name(_UID, 0x0000)  // Unique Bus ID, optional
+    Name(_DEP, Package(0x1)
+    {
+      PEPD
+    })
 
-#ifdef WIN8_SUPPORT     
-    Method(_DEP){
-    	if (LAnd(LGreaterEqual(OSYS, 2013), LEqual(S0IX, 1))) {
-			Return(Package() {\_SB.PEPD})
-		}Else{
-			Return(Package(){})
-		}
-	}
-#endif    
-
-    Method(_PRT,0)
+                            Method(_PRT,0)
     {
       If(PICM) {Return(AR00)} // APIC mode
       Return (PR00) // PIC Mode

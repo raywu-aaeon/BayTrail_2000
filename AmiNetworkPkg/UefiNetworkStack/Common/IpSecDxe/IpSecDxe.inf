@@ -1,7 +1,7 @@
 #//*************************************************************************
 #//*************************************************************************
 #//**                                                                     **
-#//**        (C)Copyright 1985-2013, American Megatrends, Inc.            **
+#//**        (C)Copyright 1985-2012, American Megatrends, Inc.            **
 #//**                                                                     **
 #//**                       All Rights Reserved.                          **
 #//**                                                                     **
@@ -94,9 +94,6 @@
   UdpIoLib
   NetLib  
   PcdLib
-
-[Guids]
-  gEfiNetworkStackSetupGuid                     # AMI PORTING.
   
 [Protocols]
   gEfiIp4ConfigProtocolGuid                     # PROTOCOL ALWAYS_CONSUMED

@@ -25,7 +25,7 @@
 [Sources]  
   PeiRamBoot.c
   PeiRamBootHook.c
-#-  PeiMain.h # Need PEI_CORE_INSTANCE struct
+  PeiMain.h # Need PEI_CORE_INSTANCE struct
 
 [Packages]
   AmiModulePkg/AmiModulePkg.dec
@@ -35,9 +35,8 @@
   AmiCryptoPkg/AmiCryptoPkg.dec
 
 [LibraryClasses]
-  AmiPeiLib
+  ReportFVLib
   PeimEntryPoint
-  AmiRomLayoutLib
 
 [Guids]
 #-  gPrKeyFfsFileRawGuid 
@@ -52,7 +51,6 @@
   gEfiPeiBootInRecoveryModePpiGuid
   gEfiPeiRecoveryModulePpiGuid 
   gEfiPeiFirmwareVolumeInfoPpiGuid
-  
 
 [Depex]
   gEfiPeiCpuIoPpiInstalledGuid AND

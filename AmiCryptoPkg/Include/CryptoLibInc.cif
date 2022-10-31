@@ -4,6 +4,6 @@
 	LocalRoot = "AmiCryptoPkg\Include\"
 	RefName = "AmiCryptoLibInc"
 [files]
-"Library\CryptLib.h"	
-"Library\BaseCryptLib.h"
+"CryptLib.h"	
+"BaseCryptLib.h"
 <endComponent>

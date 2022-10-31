@@ -1,7 +1,7 @@
 //**********************************************************************//
 //**********************************************************************//
 //**                                                                  **//
-//**        (C)Copyright 1985-2015, American Megatrends, Inc.         **//
+//**        (C)Copyright 1985-2013, American Megatrends, Inc.         **//
 //**                                                                  **//
 //**                       All Rights Reserved.                       **//
 //**                                                                  **//
@@ -12,20 +12,22 @@
 //**********************************************************************//
 //**********************************************************************//
 
-/** @file AmiSmbios.h
-    AMI Smbios Header file.
-
-**/
+//**********************************************************************//
+// $Header: /Alaska/BIN/Modules/SMBIOS/SmbiosProtocol/SMBios.h 25    6/11/12 11:24a Davidd $
+//
+// $Revision: 25 $
+//
+// $Date: 6/11/12 11:24a $
+//**********************************************************************//
+//**********************************************************************//
 
 #ifndef _Smbios_DRIVER_H
 #define _Smbios_DRIVER_H
 
-#include <Token.h>
+#include <token.h>
 #include <Protocol/Smbios.h>
 
 #define AMI_SMBIOS_PROTOCOL_GUID    {0x5e90a50d, 0x6955, 0x4a49, { 0x90, 0x32, 0xda, 0x38, 0x12, 0xf8, 0xe8, 0xe5 }}
-#define	AMI_SMBIOS_POINTER_GUID		{0xc4f26989, 0xc1cf, 0x438b, { 0x88, 0x7c, 0x53, 0xd0, 0x98, 0x7d, 0x67, 0x72 }}
-#define SMBIOS_3_TABLE_GUID			{0xf2fd1544, 0x9794, 0x4a2c, { 0x99, 0x2e, 0xe5, 0xbb, 0xcf, 0x20, 0xe3, 0x94 }}
 
 extern EFI_GUID gAmiSmbiosProtocolGuid;
 extern EFI_GUID gAmiSmbiosBoardProtocolGuid;
@@ -49,30 +51,18 @@ extern EFI_GUID gAmiSmbrunGuid;
 #define DMI_LOCK_NOT_SUPPORTED      0x90
 #define DMI_CURRENTLY_LOCKED        0x91
 #define DMI_INVALID_LOCK            0x92
-#define DMI_BUFFER_TOO_SMALL        0x93
-#define DMI_BUFFER_NOT_ALLOCATED    0x94
 
 //**********************************************************************//
 
 #pragma pack(1)
 
-/**
-    SMBIOS Structure Table Entry Point structure
-**/
-typedef struct {
-    UINT8   AnchorString[5];
-    UINT8   EntryPointStructureChecksum;
-    UINT8   EntryPointLength;
-    UINT8   MajorVersion;
-    UINT8   MinorVersion;
-    UINT8   Docrev;
-    UINT8   EntryPointRevision;
-    UINT8   Reserved;
-    UINT32  TableMaximumSize;
-    UINT64  TableAddress;
-} SMBIOS_3X_TABLE_ENTRY_POINT;
-
-#ifndef __SMBIOS_STANDARD_H__
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name:  SMBIOS_TABLE_ENTRY_POINT
+//
+// Description: SMBIOS Structure Table Entry Point
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
 typedef struct {
     UINT8   AnchorString[4];
     UINT8   EntryPointStructureChecksum;
@@ -87,24 +77,31 @@ typedef struct {
     UINT16  TableLength;
     UINT32  TableAddress;
     UINT16  NumberOfSmbiosStructures;
-    UINT8   SmbiosBcdRevision;
+    UINT8   SmbiosBCDRevision;
 } SMBIOS_TABLE_ENTRY_POINT;
-#endif
 
-/**
-    SMBIOS Structure Header - Common for all structures
-    Describing the type, size of the fixed area, and handle
-    of the structure.
-**/
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name:  SMBIOS_STRUCTURE_HEADER
+//
+// Description: SMBIOS Structure Header - Common for all structures
+//              Describing the type, size of the fixed area, and handle
+//              of the structure.
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
 typedef struct {
     UINT8   Type;
     UINT8   Length;
     UINT16  Handle;
 } SMBIOS_STRUCTURE_HEADER;
 
-/**
-    BIOS Information Structure (Type 0)
-**/
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name:  SMBIOS_BIOS_INFO
+//
+// Description: BIOS Information Structure (Type 0)
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
 typedef struct {
     SMBIOS_STRUCTURE_HEADER   StructureType;
     UINT8                     BiosVendor;                     // String number
@@ -122,9 +119,13 @@ typedef struct {
     UINT8                     ECFirmwareMinorRelease;
 } SMBIOS_BIOS_INFO;                                           // TYPE 0
 
-/**
-    System Information Structure (Type 1)
-**/
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name:  SMBIOS_SYSTEM_INFO
+//
+// Description: System Information Structure (Type 1)
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
 typedef struct {
     SMBIOS_STRUCTURE_HEADER   StructureType;
     UINT8                     Manufacturer;                   // String number
@@ -138,9 +139,13 @@ typedef struct {
 } SMBIOS_SYSTEM_INFO;                                         // TYPE 1
 
 #if BASE_BOARD_INFO
-/**
-    Base Board (or Module) Information Structure (Type 2)
-**/
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name:  SMBIOS_BASE_BOARD_INFO
+//
+// Description: Base Board (or Module) Information Structure (Type 2)
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
 typedef struct {
     SMBIOS_STRUCTURE_HEADER   StructureType;
     UINT8                     Manufacturer;                   // String number
@@ -159,9 +164,13 @@ typedef struct {
 } SMBIOS_BASE_BOARD_INFO;                                     // TYPE 2
 #endif
 
-/**
-    System Enclosure or Chassis Information Structure (Type 3)
-**/
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name:  SMBIOS_SYSTEM_ENCLOSURE_INFO
+//
+// Description: System Enclosure or Chassis Information Structure (Type 3)
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
 typedef struct {
     SMBIOS_STRUCTURE_HEADER   StructureType;
     UINT8                     Manufacturer;                   // String number
@@ -184,9 +193,13 @@ typedef struct {
     UINT8                     SkuNumber;
 } SMBIOS_SYSTEM_ENCLOSURE_INFO;                               // TYPE 3
 
-/**
-    Processor Information Structure (Type 4)
-**/
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name:  SMBIOS_PROCESSOR_INFO
+//
+// Description: Processor Information Structure (Type 4)
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
 typedef struct {
     SMBIOS_STRUCTURE_HEADER   StructureType;
     UINT8                     SocketDesignation;              // String number
@@ -213,15 +226,16 @@ typedef struct {
     UINT8                     ThreadCount;                    // Number of threads per processor socket
     UINT16                    ProcessorChar;                  // Defines which functions the processor supports
     UINT16                    Family2;
-    UINT16                    CoreCount2;                     // Number of cores per processor socket for Core Counts > 255
-    UINT16                    CoreEnabled2;                   // Number of enabled cores per processor socket for Core Counts > 255
-    UINT16                    ThreadCount2;                   // Number of threads per processor socket for Core Count > 255
 } SMBIOS_PROCESSOR_INFO;                                      // TYPE 4
 
 #if MEM_CTRL_INFO
-/**
-    Memory Controller Information Structure (Type 5)
-**/
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name:  SMBIOS_MEM_CONTROLLER_INFO
+//
+// Description: Memory Controller Information Structure (Type 5)
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
 typedef struct {
     SMBIOS_STRUCTURE_HEADER   StructureType;
     UINT8                     ErrDetMethod;
@@ -239,9 +253,13 @@ typedef struct {
 #endif
 
 #if MEM_MODULE_INFO
-/**
-    Memory Module Information Structure (Type 6)
-**/
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name:  SMBIOS_MEM_MODULE_INFO
+//
+// Description: Memory Module Information Structure (Type 6)
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
 typedef struct {
     SMBIOS_STRUCTURE_HEADER   StructureType;
     UINT8                     SocketDesignation;
@@ -254,9 +272,13 @@ typedef struct {
 } SMBIOS_MEM_MODULE_INFO;                                     // TYPE 6
 #endif
 
-/**
-    Cache Information Structure (Type 7)
-**/
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name:  SMBIOS_CACHE_INFO
+//
+// Description: Cache Information Structure (Type 7)
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
 typedef struct {
     SMBIOS_STRUCTURE_HEADER   StructureType;
     UINT8                     SocketDesignation;
@@ -272,9 +294,13 @@ typedef struct {
 } SMBIOS_CACHE_INFO;                                          // TYPE 7
 
 #if PORT_CONNECTOR_INFO
-/**
-    Port Connector Information Structure (Type 8)
-**/
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name:  SMBIOS_PORT_CONN_INFO
+//
+// Description: Port Connector Information Structure (Type 8)
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
 typedef struct {
     SMBIOS_STRUCTURE_HEADER   StructureType;
     UINT8                     IntRefDesig;
@@ -285,9 +311,13 @@ typedef struct {
 } SMBIOS_PORT_CONN_INFO;                                      // TYPE 8
 #endif
 
-/**
-    System Slot Information Structure (Type 9)
-**/
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name:  SMBIOS_SYSTEM_SLOTS_INFO
+//
+// Description: System Slot Information Structure (Type 9)
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
 typedef struct {
     SMBIOS_STRUCTURE_HEADER   StructureType;
     UINT8                     SlotDesig;
@@ -304,17 +334,25 @@ typedef struct {
 } SMBIOS_SYSTEM_SLOTS_INFO;                                   // TYPE 9
 
 #if ONBOARD_DEVICE_INFO
-/**
-    Single Device Information
-**/
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name:  SINGLE_DEV_INFO
+//
+// Description: Single Device Information
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
 typedef struct {
     UINT8                     DeviceType;
     UINT8                     DescStringNum;
 } SINGLE_DEV_INFO;
 
-/**
-    On Board Devices Information Structure (Type 10)
-**/
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name:  SMBIOS_ONBOARD_DEV_INFO
+//
+// Description: On Board Devices Information Structure (Type 10)
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
 typedef struct {
     SMBIOS_STRUCTURE_HEADER   StructureType;
     SINGLE_DEV_INFO    OnBoardDev;
@@ -322,9 +360,13 @@ typedef struct {
 #endif
 
 #if OEM_STRING_INFO
-/**
-    OEM Strings Structure (Type 11)
-**/
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name:  SMBIOS_OEM_STRINGS_INFO
+//
+// Description: OEM Strings Structure (Type 11)
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
 typedef struct {
     SMBIOS_STRUCTURE_HEADER   StructureType;
     UINT8                     Count;
@@ -332,9 +374,13 @@ typedef struct {
 #endif
 
 #if SYSTEM_CONFIG_OPTION_INFO
-/**
-    System Configuration Options (Type 12)
-**/
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name:  SMBIOS_SYSTEM_CONFIG_INFO
+//
+// Description: System Configuration Options (Type 12)
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
 typedef struct {
     SMBIOS_STRUCTURE_HEADER   StructureType;
     UINT8                     Count;
@@ -342,9 +388,13 @@ typedef struct {
 #endif
 
 #if BIOS_LANGUAGE_INFO
-/**
-    BIOS Language Information (Type 13)
-**/
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name:  SMBIOS_BIOS_LANG_INFO
+//
+// Description: BIOS Language Information (Type 13)
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
 typedef struct {
     SMBIOS_STRUCTURE_HEADER   StructureType;
     UINT8                     InstallableLang;
@@ -355,17 +405,25 @@ typedef struct {
 #endif
 
 #if EVENT_LOG_INFO
-/**
-    Event Log Descriptor - Part of the System Event Log (Type 15)
-**/
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name:  EVENT_LOG_DESCRIPTOR
+//
+// Description: Event Log Descriptor - Part of the System Event Log (Type 15)
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
 typedef struct {
     UINT8                     LogType;
     UINT8                     VariableDataFormatType;
 } EVENT_LOG_DESCRIPTOR;
 
-/**
-    System Event Log (Type 15)
-**/
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name:  SMBIOS_EVENT_LOG_INFO
+//
+// Description: System Event Log (Type 15)
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
 typedef struct {
     SMBIOS_STRUCTURE_HEADER   StructureType;
     UINT16                    LogAreaLength;
@@ -382,9 +440,13 @@ typedef struct {
 } SMBIOS_EVENT_LOG_INFO;                                      // TYPE 15
 #endif
 
-/**
-    Physical Memory Array (Type 16)
-**/
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name:  SMBIOS_PHYSICAL_MEM_ARRAY_INFO
+//
+// Description: Physical Memory Array (Type 16)
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
 typedef struct {
     SMBIOS_STRUCTURE_HEADER   StructureType;
     UINT8                     Location;
@@ -396,9 +458,13 @@ typedef struct {
     UINT64                    ExtMaxCapacity;
 } SMBIOS_PHYSICAL_MEM_ARRAY_INFO;                             // TYPE 16
 
-/**
-    Memory Device (Type 17)
-**/
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name:  SMBIOS_MEMORY_DEVICE_INFO
+//
+// Description: Memory Device (Type 17)
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
 typedef struct {
     SMBIOS_STRUCTURE_HEADER   StructureType;
     UINT16                    PhysicalMemArrayHandle;
@@ -426,9 +492,13 @@ typedef struct {
 } SMBIOS_MEMORY_DEVICE_INFO;                                  // TYPE 17
 
 #if MEMORY_ERROR_INFO
-/**
-    32-bit Memory Error Information (Type 18)
-**/
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name:  SMBIOS_MEMORY_ERROR_INFO
+//
+// Description: 32-bit Memory Error Information (Type 18)
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
 typedef struct {
     SMBIOS_STRUCTURE_HEADER   StructureType;
     UINT8                     ErrorType;
@@ -441,9 +511,13 @@ typedef struct {
 } SMBIOS_MEMORY_ERROR_INFO;                                   // TYPE 18
 #endif
 
-/**
-    Memory Array Mapped Address (Type 19)
-**/
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name:  SMBIOS_MEM_ARRAY_MAP_ADDR_INFO
+//
+// Description: Memory Array Mapped Address (Type 19)
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
 typedef struct {
     SMBIOS_STRUCTURE_HEADER   StructureType;
     UINT32                    StartingAddress;
@@ -454,9 +528,13 @@ typedef struct {
     UINT64                    ExtendedEndAddr;
 } SMBIOS_MEM_ARRAY_MAP_ADDR_INFO;                             // TYPE 19
 
-/**
-    Memory Device Mapped Address (Type 20)
-**/
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name:  SMBIOS_MEM_DEV_MAP_ADDR_INFO
+//
+// Description: Memory Device Mapped Address (Type 20)
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
 typedef struct {
     SMBIOS_STRUCTURE_HEADER   StructureType;
     UINT32                    StartingAddress;
@@ -471,9 +549,13 @@ typedef struct {
 } SMBIOS_MEM_DEV_MAP_ADDR_INFO;                               // TYPE 20
 
 #if BUILTIN_POINTING_DEVICE_INFO
-/**
-    Built-in Pointing Device (Type 21)
-**/
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name:  SMBIOS_POINTING_DEV_INFO
+//
+// Description: Built-in Pointing Device (Type 21)
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
 typedef struct {
     SMBIOS_STRUCTURE_HEADER   StructureType;
     UINT8                     Type;
@@ -483,9 +565,13 @@ typedef struct {
 #endif
 
 #if PORTABLE_BATTERY_INFO
-/**
-    Portable Battery (Type 22)
-**/
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name:  SMBIOS_PORTABLE_BATTERY_INFO
+//
+// Description: Portable Battery (Type 22)
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
 typedef struct {
     SMBIOS_STRUCTURE_HEADER   StructureType;
     UINT8                     Location;
@@ -507,9 +593,13 @@ typedef struct {
 #endif
 
 #if SYSTEM_RESET_INFO
-/**
-    System Reset (Type 23)
-**/
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name:  SMBIOS_SYSTEM_RESET_INFO
+//
+// Description: System Reset (Type 23)
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
 typedef struct {
     SMBIOS_STRUCTURE_HEADER   StructureType;
     UINT8                     Capabilities;
@@ -521,9 +611,13 @@ typedef struct {
 #endif
 
 #if HARDWARE_SECURITY_INFO
-/**
-    Hardware Security (Type 24)
-**/
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name:  SMBIOS_HARDWARE_SECURITY_INFO
+//
+// Description: Hardware Security (Type 24)
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
 typedef struct {
     SMBIOS_STRUCTURE_HEADER   StructureType;
     UINT8                     HardwareSecSettings;
@@ -531,9 +625,13 @@ typedef struct {
 #endif
 
 #if SYSTEM_POWER_CONTROLS_INFO
-/**
-    System Power Control (Type 25)
-**/
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name:  SMBIOS_SYSTEM_PWR_CONTROL_INFO
+//
+// Description: System Power Control (Type 25)
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
 typedef struct {
     SMBIOS_STRUCTURE_HEADER   StructureType;
     UINT8                     NextSchedulePwrOnMonth;
@@ -545,9 +643,13 @@ typedef struct {
 #endif
 
 #if VOLTAGE_PROBE_INFO
-/**
-    Voltage Probe (Type 26)
-**/
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name:  SMBIOS_VOLTAGE_PROBE_INFO
+//
+// Description: Voltage Probe (Type 26)
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
 typedef struct {
     SMBIOS_STRUCTURE_HEADER   StructureType;
     UINT8                     Description;
@@ -563,9 +665,13 @@ typedef struct {
 #endif
 
 #if COOLING_DEVICE_INFO
-/**
-    Cooling Device (Type 27)
-**/
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name:  SMBIOS_COOLING_DEV_INFO
+//
+// Description: Cooling Device (Type 27)
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
 typedef struct {
     SMBIOS_STRUCTURE_HEADER   StructureType;
     UINT16                    TempProbeHandle;
@@ -578,9 +684,13 @@ typedef struct {
 #endif
 
 #if TEMPERATURE_PROBE_INFO
-/**
-    Temperature Probe (Type 28)
-**/
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name:  SMBIOS_TEMPERATURE_PROBE_INFO
+//
+// Description: Temperature Probe (Type 28)
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
 typedef struct {
     SMBIOS_STRUCTURE_HEADER   StructureType;
     UINT8                     Description;
@@ -596,9 +706,13 @@ typedef struct {
 #endif
 
 #if ELECTRICAL_PROBE_INFO
-/**
-    Electrical Current Probe (Type 29)
-**/
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name:  SMBIOS_ELECT_CURRENT_PROBE_INFO
+//
+// Description: Electrical Current Probe (Type 29)
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
 typedef struct {
     SMBIOS_STRUCTURE_HEADER   StructureType;
     UINT8                     Description;
@@ -614,9 +728,13 @@ typedef struct {
 #endif
 
 #if OUT_OF_BAND_REMOTE_ACCESS_INFO
-/**
-    Out-of-Band Remote Access (Type 30)
-**/
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name:  SMBIOS_OUT_OF_BAND_REMOTE_ACCESS_INFO
+//
+// Description: Out-of-Band Remote Access (Type 30)
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
 typedef struct {
     SMBIOS_STRUCTURE_HEADER   StructureType;
     UINT8                     ManufacturerName;
@@ -625,9 +743,13 @@ typedef struct {
 #endif
 
 #if MKF_BIS_INFO
-/**
-    Boot Integrity Services (BIS) Entry Point (Type 31)
-**/
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name:  SMBIOS_BIS_ENTRYPOINT_INFO
+//
+// Description: Boot Integrity Services (BIS) Entry Point (Type 31)
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
 typedef struct {
     SMBIOS_STRUCTURE_HEADER   StructureType;
     UINT8                     Checksum;
@@ -640,9 +762,13 @@ typedef struct {
 } SMBIOS_BIS_ENTRYPOINT_INFO;                                 // TYPE 31
 #endif
 
-/**
-    System Boot Information (Type 32)
-**/
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name:  SMBIOS_SYSTEM_BOOT_INFO
+//
+// Description: System Boot Information (Type 32)
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
 typedef struct {
     SMBIOS_STRUCTURE_HEADER   StructureType;
     UINT8                     Reserved[6];
@@ -650,9 +776,13 @@ typedef struct {
 } SMBIOS_SYSTEM_BOOT_INFO;                                    // TYPE 32
 
 #if SIXTY_FOURBIT_MEMORY_ERROR_INFO
-/**
-    64-bit Memory Error Information (Type 33)
-**/
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name:  SMBIOS_SIXTYFOUR_MEM_ERROR_INFO
+//
+// Description: 64-bit Memory Error Information (Type 33)
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
 typedef struct {
     SMBIOS_STRUCTURE_HEADER   StructureType;
     UINT8                     ErrorType;
@@ -666,9 +796,13 @@ typedef struct {
 #endif
 
 #if MANAGEMENT_DEVICE_INFO
-/**
-    Management Device (Type 34)
-**/
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name:  SMBIOS_MANAGEMENT_DEV_INFO
+//
+// Description: Management Device (Type 34)
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
 typedef struct {
     SMBIOS_STRUCTURE_HEADER   StructureType;
     UINT8                     Description;
@@ -679,17 +813,25 @@ typedef struct {
 #endif
 
 #if MEMORY_CHANNEL_INFO
-/**
-    Type 37 Memory Device
-**/
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name:  TYPE37_MEMORY_DEVICE
+//
+// Description: Type 37 Memory Device
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
 typedef struct {
     UINT8                     MemDevLoad;
     UINT16                    MemDevHandle;
 } TYPE37_MEMORY_DEVICE;
 
-/**
-    Memory Channel (Type 37)
-**/
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name:  SMBIOS_MEMORY_CHANNEL_INFO
+//
+// Description: Memory Channel (Type 37)
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
 typedef struct {
     SMBIOS_STRUCTURE_HEADER   StructureType;
     UINT8                     ChannelType;
@@ -700,9 +842,13 @@ typedef struct {
 #endif
 
 #if IPMI_DEVICE_INFO
-/**
-    IPMI Device Information (Type 38)
-**/
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name:  SMBIOS_IPMI_DEV_INFO
+//
+// Description: IPMI Device Information (Type 38)
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
 typedef struct {
     SMBIOS_STRUCTURE_HEADER   StructureType;
     UINT8                     InterfaceType;
@@ -714,9 +860,13 @@ typedef struct {
 #endif
 
 #if SYSTEM_POWER_SUPPLY_INFO
-/**
-    System Power Supply (Type 39)
-**/
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name:  SMBIOS_SYSTEM_PWR_SUPPY_INFO
+//
+// Description: System Power Supply (Type 39)
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
 typedef struct {
     SMBIOS_STRUCTURE_HEADER   StructureType;
     UINT8                     PwrUnitGroup;
@@ -736,9 +886,13 @@ typedef struct {
 #endif
 
 #if ADDITIONAL_INFO
-/**
-    System Power Supply Entry
-**/
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name:  SMBIOS_ADDITIONAL_INFO
+//
+// Description: System Power Supply (Type 40)
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
 typedef struct {
     UINT8                     EntryLength;
     UINT16                    RefHandle;
@@ -751,9 +905,6 @@ typedef struct {
     };
 } ADDITIONAL_INFO_ENTRY;
 
-/**
-    System Power Supply (Type 40)
-**/
 typedef struct {
     SMBIOS_STRUCTURE_HEADER   StructureType;
     UINT8                     NumAdditionalInfoEntries;
@@ -762,9 +913,13 @@ typedef struct {
 #endif
 
 #if ONBOARD_DEVICE_EXTENDED_INFO
-/**
-    Onboard Devices Extended Information (Type 41)
-**/
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name:  SMBIOS_ONBOARD_DEVICE_EXTENDED_INFO
+//
+// Description: Onboard Devices Extended Information (Type 41)
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
 typedef struct {
     SMBIOS_STRUCTURE_HEADER   StructureType;
     UINT8                     RefDesignation;
@@ -776,79 +931,88 @@ typedef struct {
 } SMBIOS_ONBOARD_DEV_EXT_INFO;                                // TYPE 41
 #endif
 
-/**
-    End of Table (Type 127)
-**/
-typedef struct {
-    SMBIOS_STRUCTURE_HEADER   StructureType;
-} SMBIOS_END_OF_TABLE;                                        // TYPE 127
-
 //**********************************************************************//
 // SMBIOS NVRAM DATA
 //**********************************************************************//
-/**
-    DMI Type X data
-**/
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name:  SMBIOS_NVRAM_TYPE
+//
+// Description: DMI Type X data
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
 typedef struct {
     UINT32                    Flag;
     CHAR8                     *StringSet[32];
 } SMBIOS_NVRAM_TYPE;
 
-/**
-    DMI Type 0 data
-    UINT32   Flag;
-              Flag:Bit0 = Vendor string changed
-              Flag:Bit1 = BIOS version string changed
-              Flag:Bit2 = BIOS Release Date string changed
-**/
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name:  SMBIOS_NVRAM_TYPE0
+//
+// Description: DMI Type 0 data
+// UINT32   Flag;		// Bit0 = Vendor string changed
+//						// Bit1 = BIOS version string changed
+//						// Bit2 = BIOS Release Date string changed
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
 typedef struct {
     UINT32                    Flag;
     CHAR8                     *StringSet[3];
 } SMBIOS_NVRAM_TYPE0;
 
-/**
-    DMI Type 1 data
-    UINT32   Flag;
-              Flag:Bit0  = Manufacturer string changed
-              Flag:Bit1  = Product Name string changed
-              Flag:Bit2  = Version string changed
-              Flag:Bit3  = Serial Number string changed
-              Flag:Bit4  = SKU string changed
-              Flag:Bit5  = Family string changed
-              Flag:Bit16 = UUID changed
-**/
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name:  SMBIOS_NVRAM_TYPE1
+//
+// Description: DMI Type 1 data
+// UINT32   Flag;		// Bit0 = Manufacturer string changed
+//						// Bit1 = Product Name string changed
+//						// Bit2 = Version string changed
+//						// Bit3 = Serial Number string changed
+//						// Bit4 = SKU string changed
+//						// Bit5 = Family string changed
+//						// Bit16 = UUID changed
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
 typedef struct {
     UINT32                    Flag;
     CHAR8                     *StringSet[6];
     EFI_GUID                  Uuid;
 } SMBIOS_NVRAM_TYPE1;
 
-/**
-    DMI Type 2 data
-    UINT32   Flag;
-              Flag:Bit0 = Manufacturer string changed
-              Flag:Bit1 = Product Name string changed
-              Flag:Bit2 = Version string changed
-              Flag:Bit3 = Serial Number string changed
-              Flag:Bit4 = Asset Tag string changed
-**/
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name:  SMBIOS_NVRAM_TYPE2
+//
+// Description: DMI Type 2 data
+// UINT32   Flag;		// Bit0 = Manufacturer string changed
+//						// Bit1 = Product Name string changed
+//						// Bit2 = Version string changed
+//						// Bit3 = Serial Number string changed
+//						// Bit4 = Asset Tag string changed
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
 typedef struct {
     UINT32                    Flag;
     CHAR8                     *StringSet[6];
     UINT16                    Handle;
 } SMBIOS_NVRAM_TYPE2;
 
-/**
-    DMI Type 3 data
-    UINT32   Flag;
-              Flag:Bit0  = Manufacturer string changed
-              Flag:Bit1  = Version string changed
-              Flag:Bit2  = Serial Number string changed
-              Flag:Bit3  = Asset Tag string changed
-              Flag:Bit4  = SKU Number string changed
-              Flag:Bit16 = Chassis Type changed
-              Flag:Bit17 = OEM-defined changed
-**/
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name:  SMBIOS_NVRAM_TYPE3
+//
+// Description: DMI Type 3 data
+// UINT32   Flag;		// Bit0 = Manufacturer string changed
+//						// Bit1 = Version string changed
+//						// Bit2 = Serial Number string changed
+//						// Bit3 = Asset Tag string changed
+//                      // Bit4 = SKU Number string changed
+//						// Bit16 = Chassis Type changed
+//						// Bit17 = OEM-defined changed
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
 typedef struct {
     UINT32                    Flag;
     CHAR8                     *StringSet[5];
@@ -857,57 +1021,69 @@ typedef struct {
     UINT16                    Handle;
 } SMBIOS_NVRAM_TYPE3;
 
-/**
-    DMI Type 4 data
-    UINT32   Flag;
-              Flag:Bit0 = Serial Number string changed
-              Flag:Bit1 = Asset Tag string changed
-              Flag:Bit2 = Part Number string changed
-**/
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name:  SMBIOS_NVRAM_TYPE4
+//
+// Description: DMI Type 4 data
+// UINT32   Flag;		// Bit0 = Serial Number string changed
+//						// Bit1 = Asset Tag string changed
+//						// Bit2 = Part Number string changed
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
 typedef struct {
     UINT32                    Flag;
     CHAR8                     *StringSet[6];
 } SMBIOS_NVRAM_TYPE4;
 
-/**
-    DMI Type 11 data
-    UINT32   Flag;
-              Flag:Bit(x) = String #(x) changed
-**/
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name:  SMBIOS_NVRAM_TYPE11
+//
+// Description: DMI Type 11 data
+// UINT32   Flag;		// Bit(x) = String #(x) changed
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
 typedef struct {
     UINT32                    Flag;
     CHAR8                     *StringSet[32];
 } SMBIOS_NVRAM_TYPE11;
 
-/**
-    DMI Type 12 data
-    UINT32   Flag;
-              Flag:Bit(x) = String #(x) changed
-**/
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name:  SMBIOS_NVRAM_TYPE12
+//
+// Description: DMI Type 12 data
+// UINT32   Flag;		// Bit(x) = String #(x) changed
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
 typedef struct {
     UINT32                    Flag;
     CHAR8                     *StringSet[32];
 } SMBIOS_NVRAM_TYPE12;
 
-/**
-    DMI Type 22 data
-    UINT8    Flag;
-              Flag:Bit0  = Location string changed
-              Flag:Bit1  = Manufacturer string changed
-              Flag:Bit2  = Manufacturer Date changed
-              Flag:Bit3  = Serial Number string changed
-              Flag:Bit4  = Device Name string changed
-              Flag:Bit5  = SBDS Version Number string changed
-              Flag:Bit6  = SBDS Device Chemistry string changed
-              Flag:Bit16 = Device Chemistry changed
-              Flag:Bit17 = Design Capacity changed
-              Flag:Bit18 = Design Voltage changed
-              Flag:Bit19 = Maximum Error in Battery Data changed
-              Flag:Bit20 = SBDS Serial Number changed
-              Flag:Bit21 = SBDS Manufacturer Date changed
-              Flag:Bit22 = Design Capacity Multiplier changed
-              Flag:Bit23 = OEM-specific changed
-**/
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name:  SMBIOS_NVRAM_TYPE22
+//
+// Description: DMI Type 22 data
+// UINT8   Flag;		// Bit0 = Location string changed
+//						// Bit1 = Manufacturer string changed
+//						// Bit2 = Manufacturer Date changed
+//						// Bit3 = Serial Number string changed
+//						// Bit4 = Device Name string changed
+//						// Bit5 = SBDS Version Number string changed
+//						// Bit6 = SBDS Device Chemistry string changed
+//						// Bit16 = Device Chemistry changed
+//						// Bit17 = Design Capacity changed
+//						// Bit18 = Design Voltage changed
+//						// Bit19 = Maximum Error in Battery Data changed
+//						// Bit20 = SBDS Serial Number changed
+//						// Bit21 = SBDS Manufacturer Date changed
+//						// Bit22 = Design Capacity Multiplier changed
+//						// Bit23 = OEM-specific changed
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
 typedef struct {
     UINT32                    Flag;
     CHAR8                     *StringSet[7];
@@ -922,23 +1098,26 @@ typedef struct {
     UINT16                    Handle;
 } SMBIOS_NVRAM_TYPE22;
 
-/**
-    DMI Type 39 data
-    UINT8    Flag;
-              Flag:Bit0  = Location string changed
-              Flag:Bit1  = Device Name string changed
-              Flag:Bit2  = Manufacturer string changed
-              Flag:Bit3  = Serial Number string changed
-              Flag:Bit4  = Asset Tag string changed
-              Flag:Bit5  = Model Part Number string changed
-              Flag:Bit6  = Revision Level string changed
-              Flag:Bit16 = Power Unit Group changed
-              Flag:Bit17 = Max Power Capacity changed
-              Flag:Bit18 = Power Supply Characteristics changed
-              Flag:Bit19 = Input Voltage Probe Handle changed
-              Flag:Bit20 = Cooling Device Handle changed
-              Flag:Bit21 = Input Current Probe Handle changed
-**/
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name:  SMBIOS_NVRAM_TYPE39
+//
+// Description: DMI Type 39 data
+// UINT8   Flag;		// Bit0 = Location string changed
+//						// Bit1 = Device Name string changed
+//						// Bit2 = Manufacturer string changed
+//						// Bit3 = Serial Number string changed
+//						// Bit4 = Asset Tag string changed
+//						// Bit5 = Model Part Number string changed
+//						// Bit6 = Revision Level string changed
+//						// Bit16 = Power Unit Group changed
+//						// Bit17 = Max Power Capacity changed
+//						// Bit18 = Power Supply Characteristics changed
+//						// Bit19 = Input Voltage Probe Handle changed
+//						// Bit20 = Cooling Device Handle changed
+//						// Bit21 = Input Current Probe Handle changed
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
 typedef struct {
     UINT32                    Flag;
     CHAR8                     *StringSet[7];
@@ -951,47 +1130,25 @@ typedef struct {
     UINT16                    Handle;
 } SMBIOS_NVRAM_TYPE39;
 
-/**
-    Structure and operational info
-    UINT8    Flag;
-              Flag:Bit0 = Write Once
-              Flag:Bit1 = Delete Structure
-              Flag:Bit2 = Add structure
-**/
 typedef struct {
     UINT8                   Type;
-    UINT16                  Handle;
+	UINT16					Handle;
     UINT8                   Offset;
-    UINT8                   Flags;      // Bit0 = Write Once
-                                        // Bit1 = Delete Structure
-                                        // Bit2 = Add structure
+    UINT8   				Flags;      // Bit0 = Write Once
+                        				// Bit1 = Delete Structure
+                        				// Bit2 = Add structure
 } DMI_VAR;
 
-/**
-    String table with current string value
-**/
 typedef struct {
     UINT8                   Offset;
     UINT8                   SpecStrNum;
     UINT8                   CurStrValue;
 } STRING_TABLE;
 
-/**
-    Smbios Operation Enumeration
-**/
 typedef enum {
     ADD_STRUCTURE,
     DELETE_STRUCTURE,
-    ADD_STRUCTURE_BY_INDEX,
 } SMBIOS_OPERATION;
-
-typedef struct {
-    UINT8                   DestStrucType;
-    UINT8                   DestInstance;
-    UINT8					DestOffset;
-    UINT8                   SrcStrucType;
-    UINT8                   SrcInstance;
-} HANDLE_FIXUP_TABLE;
 
 #pragma pack()
 
@@ -999,11 +1156,11 @@ typedef struct {
 // AMI PI Smbios Protocol
 //**********************************************************************//
 
+#define SMBIOS_MAJOR_VERSION    02
+#define SMBIOS_MINOR_VERSION    07
+
 #pragma pack(1)
 
-/**
-    ProducerHandle/SmbiosHandle association
-**/
 typedef struct {
     EFI_SMBIOS_HANDLE       SmbiosHandle;
     EFI_HANDLE              ProducerHandle;
@@ -1018,7 +1175,7 @@ typedef struct {
 EFI_STATUS
 SmbiosPiAddStructure (
     IN CONST EFI_SMBIOS_PROTOCOL    *This,
-    IN EFI_HANDLE                   ProducerHandle OPTIONAL,
+    IN EFI_HANDLE                   ProducerHandle, OPTIONAL
     IN OUT EFI_SMBIOS_HANDLE        *SmbiosHandle,
     IN EFI_SMBIOS_TABLE_HEADER      *Record
 );
@@ -1034,14 +1191,14 @@ SmbiosPiUpdateString (
 EFI_STATUS
 SmbiosPiRemoveStructure (
     IN CONST EFI_SMBIOS_PROTOCOL    *This,
-    IN EFI_SMBIOS_HANDLE            SmbiosHandle
+    IN UINTN                        SmbiosHandle
 );
 
 EFI_STATUS
 SmbiosPiGetNextStructure (
     IN CONST EFI_SMBIOS_PROTOCOL    *This,
     IN OUT EFI_SMBIOS_HANDLE        *SmbiosHandle,
-    IN EFI_SMBIOS_TYPE              *Type OPTIONAL,
+    IN EFI_SMBIOS_TYPE              *Type, OPTIONAL
     OUT EFI_SMBIOS_TABLE_HEADER     **Record,
     OUT EFI_HANDLE                  *ProducerHandle OPTIONAL
 );
@@ -1049,6 +1206,8 @@ SmbiosPiGetNextStructure (
 //**********************************************************************//
 // AMI Smbios Protocol
 //**********************************************************************//
+
+typedef struct _AMI_SMBIOS_PROTOCOL AMI_SMBIOS_PROTOCOL;
 
 typedef VOID* (EFIAPI *EFI_SMBIOS_GET_TABLE_ENTRY) (
 );
@@ -1063,60 +1222,49 @@ typedef UINT16 (EFIAPI *EFI_SMBIOS_GET_FREE_HANDLE) (
 );
 
 typedef EFI_STATUS (EFIAPI *EFI_SMBIOS_ADD_STRUCTURE) (
-    IN UINT8        *Buffer,
-    IN UINT16       Size
+    IN UINT8                  *Buffer,
+    IN UINT16                 Size
 );
 
 typedef EFI_STATUS (EFIAPI *EFI_SMBIOS_ADD_STRUC_HANDLE) (
-    IN UINT16       Handle,
-    IN UINT8        *Buffer,
-    IN UINT16       Size
+    IN UINT16                 Handle,
+    IN UINT8                  *Buffer,
+    IN UINT16                 Size
 );
 
 typedef EFI_STATUS (EFIAPI *EFI_SMBIOS_DELETE_STRUCTURE) (
-    IN UINT16       Handle
+    IN UINT16                 Handle
 );
 
 typedef EFI_STATUS (EFIAPI *EFI_SMBIOS_READ_STRUCTURE) (
-    IN      UINT16  Handle,
-    IN OUT  UINT8   **BufferPtr,
-    IN OUT  UINT16  *BufferSize
+    IN      UINT16            Handle,
+    IN OUT  UINT8             **BufferPtr,
+    IN OUT  UINT16            *BufferSize
 );
 
 typedef EFI_STATUS (EFIAPI *EFI_SMBIOS_READ_STRUC_TYPE) (
-    IN UINT8        Type,
-    IN UINT8        Instance,
-    IN UINT8        **BufferPtr,
-    IN UINT16       *BufferSize
+    IN UINT8                  Type,
+    IN UINT8                  Instance,
+    IN UINT8                  **BufferPtr,
+    IN UINT16                 *BufferSize
 );
 
 typedef EFI_STATUS (EFIAPI *EFI_SMBIOS_WRITE_STRUCTURE) (
-    IN UINT16       Handle,
-    IN UINT8        *BufferPtr,
-    IN UINT16       BufferSize
-);
-
-typedef EFI_STATUS (EFIAPI *EFI_SMBIOS_ADD_STRUC_INDEX) (
-    IN UINT16       Handle,
-    IN UINT8        *Buffer,
-    IN UINT16       Size,
-    IN UINT16       Index
+    IN UINT16                 Handle,
+    IN UINT8                  *BufferPtr,
+    IN UINT16                 BufferSize
 );
 
 typedef EFI_STATUS (EFIAPI *EFI_SMBIOS_UPDATE_HEADER) (
 );
 
-typedef VOID* (EFIAPI *EFI_SMBIOS_GET_VER_TABLE_ENTRY) (
-    IN UINT8                  SmbiosMajorVersion
-);
-
-typedef struct {
-    EFI_SMBIOS_GET_TABLE_ENTRY      SmbiosGetTableEntryPoint;   // Get SMBIOS V2 Table Entry Point
+typedef struct _AMI_SMBIOS_PROTOCOL {
+    EFI_SMBIOS_GET_TABLE_ENTRY      SmbiosGetTableEntryPoint;   // SMBIOS Table Entry Point
     EFI_SMBIOS_GET_SCRATCH_BUFFER   SmbiosGetScratchBufferPtr;  // Scratch Buffer of maximum table size
     EFI_SMBIOS_GET_BUFFER_MAX_SIZE  SmbiosGetBufferMaxSize;     // Maximum SMBIOS Table Size
     EFI_SMBIOS_GET_FREE_HANDLE      SmbiosGetFreeHandle;        // Get available free handle
     EFI_SMBIOS_ADD_STRUCTURE        SmbiosAddStructure;         // Add structure
-    EFI_SMBIOS_ADD_STRUC_HANDLE     SmbiosAddStrucByHandle;     // Add structure (by handle)
+    EFI_SMBIOS_ADD_STRUC_HANDLE     SmbiosAddStrucByHandle;     // Add structure
     EFI_SMBIOS_DELETE_STRUCTURE     SmbiosDeleteStructure;      // Delete structure (by handle)
     EFI_SMBIOS_READ_STRUCTURE       SmbiosReadStructure;        // Read structure. Caller is responsible
                                                                 // for deallocating the memory
@@ -1124,9 +1272,7 @@ typedef struct {
                                                                 // responsible for deallocating the memory
     EFI_SMBIOS_WRITE_STRUCTURE      SmbiosWriteStructure;       // Write structure
     EFI_SMBIOS_UPDATE_HEADER        SmbiosUpdateHeader;         // Update SMBIOS Table Header
-    EFI_SMBIOS_ADD_STRUC_INDEX      SmbiosAddStrucByIndex;      // Add structure
-    EFI_SMBIOS_GET_VER_TABLE_ENTRY  SmbiosGetVerTableEntryPoint;// Get input version of SMBIOS Table Entry Point
-} AMI_SMBIOS_PROTOCOL;
+};
 
 //**********************************************************************//
 // AMI SMBIOS Functions
@@ -1159,14 +1305,6 @@ AddStructureByHandle(
     IN UINT16                 Handle,
     IN UINT8                  *Buffer,
     IN UINT16                 Size
-);
-
-EFI_STATUS
-AddStructureByIndex(
-    IN UINT16                 Handle,
-    IN UINT8                  *Buffer,
-    IN UINT16                 Size,
-    IN UINT16                 Index
 );
 
 EFI_STATUS
@@ -1229,7 +1367,7 @@ FindStructureHandle(
 //**********************************************************************//
 //**********************************************************************//
 //**                                                                  **//
-//**        (C)Copyright 1985-2015, American Megatrends, Inc.         **//
+//**        (C)Copyright 1985-2013, American Megatrends, Inc.         **//
 //**                                                                  **//
 //**                       All Rights Reserved.                       **//
 //**                                                                  **//

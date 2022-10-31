@@ -2,7 +2,7 @@
 //*****************************************************************//
 //*****************************************************************//
 //**                                                             **//
-//**         (C)Copyright 2014, American Megatrends, Inc.        **//
+//**         (C)Copyright 2012, American Megatrends, Inc.        **//
 //**                                                             **//
 //**                     All Rights Reserved.                    **//
 //**                                                             **//
@@ -79,7 +79,6 @@ void Initialise(PEI_DBG_PORT_INFO *);
 extern PEI_INIT_FUNCTION PEI_DBG_INIT_LIST EndOfInitList;
 PEI_INIT_FUNCTION* PeiDebuggerInitList [] = {PEI_DBG_INIT_LIST NULL};
 
-void DBGWriteChkPort(UINT8	DbgChkPoint);
 //<AMI_PHDR_START>
 //--------------------------------------------------------------------
 // Procedure:	PeiDbgIsS3Hook
@@ -200,10 +199,6 @@ BOOLEAN NeedReinitializeHardwareDbg(IN UINTN Context)
 	UINT32 		*pDbgCtrlReg;
 	DEBUG_PORT_CONTROL_REGISTER DbgCtrlReg;
 
-	//AMIDebugRx\Debugger recovery Support	
-	if(!pUsbData->m_IsHostConnected)
-		return FALSE;
-
 	PciAddr = (UINT32)(((pUsbData->m_PCI_EHCI_BUS_NUMBER << 8) | (pUsbData->m_PCI_EHCI_DEVICE_NUMBER << 3) | pUsbData->m_PCI_EHCI_FUNCTION_NUMBER)<<12);
 
 	//Get the EHCI Base Address from the PCI Device
@@ -275,16 +270,16 @@ VOID UpdateDebugXportData(PEI_DBG_PORT_INFO *DebugPort, UINTN Context)
 
 	switch(XportData->USBBASE){
 		case 0:
-			DBGWriteChkPort(0xBF);	//err code for invalid USB base address register
+			IoWrite8(0x80,0xBF);	//err code for invalid USB base address register
 			while(1);
 		case 0xffffffff:
-			DBGWriteChkPort(0xD1);	//err code for invalid Address
+			IoWrite8(0x80,0xD1);	//err code for invalid Address
 			while(1);
 		default:
 			break;
 	}
 	if(XportData->USBBASE == XportData->USB2_DEBUG_PORT_REGISTER_INTERFACE){
-		DBGWriteChkPort(0xBE);	//err code for invalid USB Debug Port base address
+		IoWrite8(0x80,0xBE);	//err code for invalid USB Debug Port base address
 		while(1);
 	}
 }
@@ -293,7 +288,7 @@ VOID UpdateDebugXportData(PEI_DBG_PORT_INFO *DebugPort, UINTN Context)
 //*****************************************************************//
 //*****************************************************************//
 //**                                                             **//
-//**         (C)Copyright 2014, American Megatrends, Inc.        **//
+//**         (C)Copyright 2012, American Megatrends, Inc.        **//
 //**                                                             **//
 //**                     All Rights Reserved.                    **//
 //**                                                             **//

@@ -63,7 +63,7 @@ PartitionInstallElToritoChildHandles (
   EFI_STATUS              Found;
   UINT32                  VolSpaceSize;
 //*** AMI PORTING BEGIN ***//
-  VOID *SaveVolDescriptor = NULL;
+  VOID *SaveVolDescriptor;
 //*** AMI PORTING END ***//
 
   Found         = EFI_NOT_FOUND;
@@ -71,6 +71,12 @@ PartitionInstallElToritoChildHandles (
 
   VolSpaceSize  = 0;
 
+  //EIP144164 >>
+  if(PcdGetBool(PcdUdfSupport) == FALSE) {
+      SaveVolDescriptor = NULL;  
+  }
+  //EIP144164 <<
+  
   //
   // CD_ROM has the fixed block size as 2048 bytes
   //

@@ -12,6 +12,5 @@
 "Smbrun.com"	
 [parts]
 "SmbiosStaticData"
-"SmbiosStaticDataDt"
 "SmbiosDmiEditBoard"
 <endComponent>

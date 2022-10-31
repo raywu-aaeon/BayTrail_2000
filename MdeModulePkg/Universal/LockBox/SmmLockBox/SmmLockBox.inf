@@ -60,4 +60,5 @@
   gEfiLockBoxProtocolGuid            ## PRODUCED
 
 [Depex]
-  TRUE
+  gEfiSmmSwDispatch2ProtocolGuid
+

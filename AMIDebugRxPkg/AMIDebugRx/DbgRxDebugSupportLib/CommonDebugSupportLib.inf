@@ -1,6 +1,6 @@
 #*************************************************************************
 #**                                                                     **
-#**        (C)Copyright 1985-2014, American Megatrends, Inc.            **
+#**        (C)Copyright 1985-2012, American Megatrends, Inc.            **
 #**                                                                     **
 #**                       All Rights Reserved.                          **
 #**                                                                     **
@@ -23,8 +23,7 @@
 #
 
 [Sources]
-  DebugPortUsb.c
-  DbgrHelp.c
+   DbgrHelp.c
 	
 [Packages]
   MdePkg/MdePkg.dec
@@ -34,13 +33,16 @@
   AMIDebugRxPkg/AMIDebugRxPkg.dec
 
 [LibraryClasses]
+  BaseLib
+  DebugLib
+  IoLib
   PeiServicesLib
   HobLib
   AmiPeiLib
   
 #*************************************************************************
 #**                                                                     **
-#**        (C)Copyright 1985-2014, American Megatrends, Inc.            **
+#**        (C)Copyright 1985-2012, American Megatrends, Inc.            **
 #**                                                                     **
 #**                       All Rights Reserved.                          **
 #**                                                                     **

@@ -1,29 +1,35 @@
-//***********************************************************************
-//***********************************************************************
-//**                                                                   **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.          **
-//**                                                                   **
-//**                       All Rights Reserved.                        **
-//**                                                                   **
-//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093         **
-//**                                                                   **
-//**                       Phone: (770)-246-8600                       **
-//**                                                                   **
-//***********************************************************************
-//***********************************************************************
+//**********************************************************************
+//**********************************************************************
+//**                                                                  **
+//**        (C)Copyright 1985-2012, American Megatrends, Inc.         **
+//**                                                                  **
+//**                       All Rights Reserved.                       **
+//**                                                                  **
+//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093        **
+//**                                                                  **
+//**                       Phone: (770)-246-8600                      **
+//**                                                                  **
+//**********************************************************************
+//**********************************************************************
 
-/** @file 
-OemRomHole.c
-
-This function is only used to provide AFU the messages to show on screen if 
-user tries to flash sesitive data in ROM hole.
-
-*/
-
-//---------------------------------------------------------------------------
-// Include Files
-//---------------------------------------------------------------------------
-
+//**********************************************************************
+// $Header: /AptioV/Source/Modules/Ofbd/OemRomHole/OemRomHole.c $
+//
+// $Revision: $
+//
+// $Date: $
+//**********************************************************************
+//<AMI_FHDR_START>
+//
+// Name:    OemRomHole.c
+//
+// Description: 
+// Unlike the same name module in CORE8. Due to AFUAPTIO has ability to identify ROM hole location and size in ROM
+// file. This function is only used to provide AFU the messages to show on screen if user tries to flash sesitive data
+// in ROM hole.
+//
+//<AMI_FHDR_END>
+//**********************************************************************
 #include <Efi.h>
 #include <Token.h>
 #include <AmiLib.h>
@@ -33,20 +39,24 @@ user tries to flash sesitive data in ROM hole.
 
 static UINT16 dwOFBDTblEndOffset = 0;
 
-/**
-    Ofbd (Oem Message String handle)
-
-	This routine will output the OEM String message to the flash utility.
-	
-    @param pOFBDHdr - Ofbd header.
-    @param OEMSTR - Oem Message string buffer.
-    @param ROMHOLEGUID - Specific Rom Hole Guid.
-    @param IsAppend - Oem Message is need to append or not.
-
-    @return EFI_STATUS
-    @retval EFI_SUCCESS Function executed successfully
-*/ 
-
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   OFBDOemStrHandle
+//
+// Description: OFBD OEM STRING Handle
+// 
+// This routine will output the OEM String message to the flash utility.
+//
+// Input:
+//      IN OUT  OFBD_HDR    *pOFBDHdr
+//      IN      char        *OEMSTR
+//      IN      EFI_GUID    *ROMHOLEGUID
+//      IN      BOOLEAN     IsAppend
+// Output:
+//      EFI_STATUS
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
 OFBDOemStrHandle(
     IN OUT OFBD_HDR *pOFBDHdr,
@@ -76,17 +86,19 @@ OFBDOemStrHandle(
     return(Status);
 }
 
-/**
-   	Ofbd (Oem Rom Hole Check handle)
-	
-	This function is used to check the Guid of Rom Hole get from Afu.
-	
-	@param pOFBDHdr - Ofbd header.
-
-  	@return EFI_STATUS
-  	@retval EFI_SUCCESS Function executed successfully
-*/ 
-
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   OFBDRomHoleCheckHandle
+//
+// Description: OFBD Rom Hole Check Handle
+//
+// Input:
+//      IN OUT OFBD_HDR *pOFBDHdr
+// Output:
+//      EFI_STATUS
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
 OFBDRomHoleCheckHandle(
     IN OUT OFBD_HDR *pOFBDHdr)
@@ -160,16 +172,20 @@ OFBDRomHoleCheckHandle(
     return(Status);
 }
 
-/**
-   	This function is Ofbd Oem Rom Hole Checking function entry point
-
-	@param Buffer - Ofbd header.
-  	@param pOFBDDataHandled - handle value returns
-  	
-	@retval	0xFF means Function executed successfully
-	@retval	0xFE means Function error occured
-*/ 
-
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   OEMROMHOLEEntry
+//
+// Description: OFBD OEM ROM HOLE Entry Point
+//
+// Input:
+//      IN VOID             *Buffer
+//      IN OUT UINT8        *pOFBDDataHandled
+// Output:
+//      VOID
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID OEMROMHOLEEntry (
     IN VOID             *Buffer,
     IN OUT UINT8        *pOFBDDataHandled )
@@ -206,7 +222,7 @@ VOID OEMROMHOLEEntry (
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2012, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **

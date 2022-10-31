@@ -2,7 +2,7 @@
 //*****************************************************************//
 //*****************************************************************//
 //**                                                             **//
-//**         (C)Copyright 2014, American Megatrends, Inc.        **//
+//**         (C)Copyright 2012, American Megatrends, Inc.        **//
 //**                                                             **//
 //**                     All Rights Reserved.                    **//
 //**                                                             **//
@@ -19,13 +19,6 @@
 //
 // $Date: 11/02/12 10:14a $
 //*****************************************************************
-//
-// Revision History
-// ----------------
-// $Log: /AptioV/SRC/AMIDebugRx/DbgRxPortLib/PeiDbgPortUSB.c $
-// 
-//
-//*****************************************************************
 //*****************************************************************
 
 #ifndef EFIx64
@@ -35,7 +28,6 @@
 #endif
 #include <AmiDebugPort.h>
 
-void DBGWriteChkPort(UINT8	DbgChkPoint);
 //<AMI_PHDR_START>
 //--------------------------------------------------------------------
 // Procedure:	Initialise
@@ -104,16 +96,16 @@ void InitPeiDebugPortInterface(PEI_DBG_PORT_INFO *DebugPort,UINTN SetupFlag, UIN
 
 	switch(PeiXportData->USBBASE){
 		case 0:
-			DBGWriteChkPort(0xBF);	//err code for invalid USB base address register
+			IoWrite8(0x80,0xBF);	//err code for invalid USB base address register
 			while(1);
 		case 0xffffffff:
-			DBGWriteChkPort(0xD1);	//err code for invalid CAR
+			IoWrite8(0x80,0xD1);	//err code for invalid CAR
 			while(1);
 		default:
 			break;
 	}
 	if(PeiXportData->USBBASE == PeiXportData->USB2_DEBUG_PORT_REGISTER_INTERFACE){
-		DBGWriteChkPort(0xBE);	//err code for invalid USB Debug Port base address
+		IoWrite8(0x80,0xBE);	//err code for invalid USB Debug Port base address
 		while(1);
 	}
 }
@@ -122,7 +114,7 @@ void InitPeiDebugPortInterface(PEI_DBG_PORT_INFO *DebugPort,UINTN SetupFlag, UIN
 //*****************************************************************//
 //*****************************************************************//
 //**                                                             **//
-//**         (C)Copyright 2014, American Megatrends, Inc.        **//
+//**         (C)Copyright 2012, American Megatrends, Inc.        **//
 //**                                                             **//
 //**                     All Rights Reserved.                    **//
 //**                                                             **//

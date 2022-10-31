@@ -118,12 +118,6 @@ Device(H_EC)  // Hitachi Embedded Controller
   Name(ECAV, 0) //EIP132855
   Name(TSSR, 0) //EIP132855
   
-  //EIP175655 >>
-  Name(BATL, 0)
-  Name(BATH, 0)
-  Name(BCLT, 0)
-  Name(PB10, 1)
-  //EIP175655 <<  
   //EIP132855 >>
   Method(ECMD,1,Serialized)
   {
@@ -184,30 +178,28 @@ Device(H_EC)  // Hitachi Embedded Controller
 }// end scope Scope(\_SB.PCI0.LPCB)
   // System Bus
 
-//EIP175655 >>
-/*
-//Scope(\_SB)
-//{
+Scope(\_SB)
+{
 
   // Define a Lid Switch.
 
-//  Device(LID0)
-//  {
-//    Name(_HID,EISAID("PNP0C0D"))
+  Device(LID0)
+  {
+    Name(_HID,EISAID("PNP0C0D"))
 
-//    Method(_STA)
-//    {
-//      Return(0x00)
-//    }
+    Method(_STA)
+    {
+      Return(0x00)
+    }
 
     //EIP132855 >>
-//    Method(_LID,0)
-//    {
+    Method(_LID,0)
+    {
       // 0 = Closed, 1 = Open.
-//      Return(0x01)
-//    }
+      Return(0x01)
+    }
     //EIP132855 <<
-//  }
-//}//end scope _SB
-*/
-//EIP175655 <<
+  }
+}//end scope _SB
+
+

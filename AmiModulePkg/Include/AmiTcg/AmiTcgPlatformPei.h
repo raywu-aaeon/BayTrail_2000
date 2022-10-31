@@ -26,11 +26,6 @@
 //<AMI_FHDR_END>
 //*************************************************************************
 #include <Include/Setup.h>
-#include <AmiTcg/TcgPc.h>
-#include <ppi/TcgTcmService.h>
-#include <ppi/TcgService.h>
-#include <ppi/TpmDevice.h>
-#include <PiPei.h>
 
 #define TCG_LOCK_DOWN_VAR_GUID\
   {0x6e605536, 0xa30a, 0x4d56, 0x93, 0x9e, 0x1c, 0x37, 0x3f, 0x79, 0x8d, 0x7b}
@@ -69,7 +64,7 @@ static EFI_GUID gSetupGuid = SETUP_GUID;
 typedef struct
 {
     EFI_PHYSICAL_ADDRESS PostCodeAddress;
-    #if x64_TCG
+    #if x64_BUILD
     UINT64 PostCodeLength;
     #else
     UINTN PostCodeLength;

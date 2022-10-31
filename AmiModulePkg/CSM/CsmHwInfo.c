@@ -158,7 +158,8 @@ UpdateCsm16Configuration(
     //
     // Get ACPI&SMBIOS pointers
     //
-    //NOTE: CSM specification 0.97 defines the pointers as UINT32
+//TODOx64: What is these pointers are more the 4G in 64 bit mode?
+//CSM specification 0.96 defines the pointers as UINT32
     Csm16BootTable->AcpiTable = (UINT32)GetEfiConfigurationTable(pST, &gAcpiRsdtPtr);
     if (Csm16BootTable->AcpiTable == 0)
          Csm16BootTable->AcpiTable = (UINT32)GetEfiConfigurationTable(pST, &gAcpiRsdtPtr1_0);
@@ -372,19 +373,6 @@ EFI_STATUS GetAtaAtapiInfo(
 
 
     for (i = 0; i < HandlesNo; i++) {
-// [ EIP324741, 184371 ]+>>>
-        // Check DiskInfo.Interface field
-        static EFI_GUID DiIntrfGuid = EFI_DISK_INFO_IDE_INTERFACE_GUID;
-
-        Status = pBS->HandleProtocol (
-            (*DiskInfoHandles)[i],
-            &gDiskInfoProtocolGuid,
-            &pDiskInfo);    // Get DiskInfo protocol
-        ASSERT_EFI_ERROR (Status);
-        
-        if (guidcmp(&pDiskInfo->Interface, &DiIntrfGuid)) continue;
-// [ EIP324741, 184371 ]+<<<
-        
         Status = pBS->HandleProtocol ((*DiskInfoHandles)[i],
             &gEfiDevicePathProtocolGuid,
             (VOID*)&pDevicePath);
@@ -412,13 +400,11 @@ EFI_STATUS GetAtaAtapiInfo(
             &pPciIo);           // Get PciIo protocol
         ASSERT_EFI_ERROR (Status);
 
-// [ EIP324741, 184371 ]->>>
-//        Status = pBS->HandleProtocol (
-//            (*DiskInfoHandles)[i],
-//            &gDiskInfoProtocolGuid,
-//            &pDiskInfo);    // Get DiskInfo protocol
-//        ASSERT_EFI_ERROR (Status);
-// [ EIP324741, 184371 ]->>>
+        Status = pBS->HandleProtocol (
+            (*DiskInfoHandles)[i],
+            &gDiskInfoProtocolGuid,
+            &pDiskInfo);    // Get DiskInfo protocol
+        ASSERT_EFI_ERROR (Status);
 
         pDiskInfo->WhichIde(pDiskInfo, &PriSec, &MasterSlave);  // Device/Channel info
         Status = pPciIo->GetLocation(pPciIo, &Seg, &Bus, &Dev, &Func);   // Location on PCI bus      
@@ -878,7 +864,7 @@ VOID InstallLegacyMassStorageDevices()
         }
     }
 	{
-		AMI_AHCI_INT13_INIT_PROTOCOL    *Aint13;
+		EFI_AHCI_INT13_INIT_PROTOCOL    *Aint13;
 		Status = pBS->LocateProtocol(&gAint13ProtocolGuid, NULL, &Aint13);
 		if (!EFI_ERROR(Status)) {
 			Aint13->InitAhciInt13Support();
@@ -1184,12 +1170,10 @@ UpdatePciLastBusCallback (
     UINT8               MaxBus=0;
     EFI_STATUS          Status;
     UINT32              Granularity;
-    LEGACY16_TO_EFI_DATA_TABLE_EXT *Csm16Data;
-    UINT8               *NextRootBridgeBus;
-    UINT8               CsmRbCount = 0;
-    BOOLEAN             Csm16Is75Plus;
-    
+
+    //
     // UnLock E000 and F000 segments
+    //
     Status = gCoreBiosInfo->iRegion->UnLock (
              gCoreBiosInfo->iRegion,
              (UINT32)0xe0000,
@@ -1198,7 +1182,9 @@ UpdatePciLastBusCallback (
              );
     ASSERT_EFI_ERROR(Status);
 
-    // Locate the RootBridge protocol
+    //
+    //Locate the RootBridge protocol
+    //
     Status = pBS->LocateHandleBuffer (
                   ByProtocol,
                   &gEfiPciRootBridgeIoProtocolGuid,
@@ -1206,15 +1192,6 @@ UpdatePciLastBusCallback (
                   &Count,
                   &Buffer
                   );
-    ASSERT_EFI_ERROR(Status);
-    if (EFI_ERROR(Status)) return;
-
-    Csm16Is75Plus = *(UINT8*)0xf0019 > 0x75;   // CSM version 76 or later
-
-    if (Csm16Is75Plus) {
-        Csm16Data = (LEGACY16_TO_EFI_DATA_TABLE_EXT*)(UINTN)(0xf0000 + *(UINT16*)0xfff4c);
-        NextRootBridgeBus = (UINT8*)((UINTN)Csm16Data->RbMinBusArrayOfs + 0xf0000);
-    }
 
     for (i = 0; i < Count; i++) {
         Status = pBS->HandleProtocol (
@@ -1223,35 +1200,31 @@ UpdatePciLastBusCallback (
                     &RBProtocol
                     );
 
-        if (EFI_ERROR(Status)) continue;
-        //
-        // Get the Configuration
-        //
-        RBProtocol->Configuration(
-                  RBProtocol,
-                  &Descriptors
-                  );
-
-        if ((Descriptors)->Hdr.HDR != ASLV_END_TAG_HDR) {
+        if (!EFI_ERROR(Status)) {
             //
-            // go till we get the Resource type = Bus Number range
+            // Get the Configuration
             //
-            while (Descriptors->Hdr.HDR != ASLV_END_TAG_HDR) {
+            RBProtocol->Configuration(
+                      RBProtocol,
+                      &Descriptors
+                      );
 
-                if (Descriptors->Type == ASLRV_SPC_TYPE_BUS) {
-                    //
-                    // We got the type;update the LastPCiBus of csm16header
-                    //
-                    if (Csm16Is75Plus) {
-                        if (++CsmRbCount < Csm16Data->RbArrayCount) {
-                            *NextRootBridgeBus++ = (UINT8)Descriptors->_MIN;
+            if ((Descriptors)->Hdr.HDR != ASLV_END_TAG_HDR) {
+                //
+                // go till we get the Resource type = Bus Number range
+                //
+                while (Descriptors->Hdr.HDR != ASLV_END_TAG_HDR) {
+
+                    if (Descriptors->Type == ASLRV_SPC_TYPE_BUS) {
+                        //
+                        //We got the type;update the LastPCiBus of csm16header
+                        //
+                        if((UINT8)Descriptors->_MAX > MaxBus ) {
+                            MaxBus =(UINT8)Descriptors->_MAX;
                         }
                     }
-                    if((UINT8)Descriptors->_MAX > MaxBus ) {
-                        MaxBus =(UINT8)Descriptors->_MAX;
-                    }
+                    Descriptors++;
                 }
-                Descriptors++;
             }
         }
     }
@@ -1307,48 +1280,7 @@ UpdatePciLastBusCallback (
 }
 
 /**
- * Goes through memory map looking for the requested memory block within 1MB..2GB range
- * 
- * @param[in] MemDesc   Starting memory descriptor of the memory map
- * @param[in] MemEntriesCount   Count of the memory map entries
- * @param[in] MemDescSize       Size of the memory descriptor
- * @param[in] DesiredBlockSize  Number of pages requested to be found
- * @param[out] MemAddress       Found memory block
- * @param[out] NumberOfPages    Found memory block size
- * @retval EFI_SUCCESS          Memory block is found
- * @retval EFI_NOT_FOUND        Memory block is not found
- */
-EFI_STATUS FindMemoryBlockForHiPmm(
-    EFI_MEMORY_DESCRIPTOR *MemMap,
-    UINTN MemEntriesCount,
-    UINTN MemDescSize,
-    UINTN DesiredBlockSize,
-    EFI_PHYSICAL_ADDRESS *MemAddress,
-    UINT64 *NumberOfPages
-)
-{
-    EFI_MEMORY_DESCRIPTOR *mm;
-    UINTN count = 0;
-    
-    for (mm = MemMap; count < MemEntriesCount; mm=(EFI_MEMORY_DESCRIPTOR*)((UINT8*)mm+MemDescSize), count++) {
-        if (mm->PhysicalStart < 0x100000) continue; // skip low memory entries
-        // Skip above 2GB memory entries:
-        // CORE0292.1 - value above 2GB will be assumed a negative number in find_free_memory algorithm
-        if (mm->PhysicalStart > 0x7fffffff) continue; 
-
-        if (mm->Type == EfiConventionalMemory && (mm->NumberOfPages >= DesiredBlockSize))
-        {
-            *MemAddress = mm->PhysicalStart;
-            *NumberOfPages = mm->NumberOfPages;
-            break;
-        }
-    }
-
-    return (count == MemEntriesCount)? EFI_NOT_FOUND : EFI_SUCCESS;
-}
-
-/**
-  Allocates the memory at 1MB..2GB that can be used for high memory PMM allocations.
+  Allocates the memory at 1MB..4GB that can be used for high memory PMM allocations.
 
   This EfiBootServicesData memory block should be outside the "main" BS memory
   so that it can be freed during READY_TO_BOOT. For that we go through EFI memory
@@ -1373,7 +1305,6 @@ EFI_STATUS AllocateHiMemPmmBlock(
     UINTN MemEntriesCount;
     EFI_PHYSICAL_ADDRESS HiPmmMemory;
     EFI_STATUS Status;
-    UINT64 NumberOfPages;
     UINT64 BlockLength;
     
     GetSystemMemoryMap(&MemMap, &MemDescSize, &MemEntriesCount);
@@ -1399,22 +1330,28 @@ EFI_STATUS AllocateHiMemPmmBlock(
             default: TRACE((-1, "%x\n", mm->Type));
         }
     }
+        
+    count = 0;
+    for (mm = MemMap; count < MemEntriesCount; mm=(EFI_MEMORY_DESCRIPTOR*)((UINT8*)mm+MemDescSize), count++) {
+        if (mm->PhysicalStart < 0x100000) continue; // skip low memory entries
+        // Skip above 2GB memory entries:
+        // CORE0292.1 - value above 2GB will be assumed a negative number in find_free_memory algorithm
+        if (mm->PhysicalStart > 0x7fffffff) continue; 
 
-    // Try to allocate Size*4 block and use the middle of it; if not found, then try to allocate Size*2
-    // and use the end
-    Status = FindMemoryBlockForHiPmm(MemMap, MemEntriesCount, MemDescSize, BlockSize*4, &HiPmmMemory, &NumberOfPages);
-    if (!EFI_ERROR(Status)) {
-        BlockLength = Shl64(NumberOfPages, 11); // Middle of the block
-    } else {
-        Status = FindMemoryBlockForHiPmm(MemMap, MemEntriesCount, MemDescSize, BlockSize*2, &HiPmmMemory, &NumberOfPages);
-        BlockLength = Shl64(NumberOfPages, 12); // End of the block
+        if (mm->Type == EfiConventionalMemory && (mm->NumberOfPages >= (BlockSize*4)))
+        {
+            BlockLength = mm->NumberOfPages << 11;
+            HiPmmMemory = mm->PhysicalStart; // Middle of the block
+            HiPmmMemory += BlockLength;
+            break;
+        }
     }
-    ASSERT_EFI_ERROR(Status);
-    
-    HiPmmMemory += BlockLength;
-
     pBS->FreePool(MemMap);
 
+    if (count == MemEntriesCount) {
+        ASSERT(FALSE);
+        return EFI_NOT_FOUND;
+    }
 
     Status = pBS->AllocatePages(AllocateMaxAddress, EfiBootServicesData, BlockSize*2, &HiPmmMemory);
     *BlockAddr = (UINTN)HiPmmMemory;
@@ -1422,7 +1359,7 @@ EFI_STATUS AllocateHiMemPmmBlock(
     return Status;
 }
 
-// The following definition is from DebugLib.h; currently DebugLib.h can not be included
+// TODO: The following definition is from DebugLib.h; currently it can not be included
 // as it clashes with AmiDxeLib.h definitions
 #define DEBUG_PROPERTY_CLEAR_MEMORY_ENABLED       0x08
 BOOLEAN

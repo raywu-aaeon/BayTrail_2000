@@ -10,7 +10,7 @@ End
 
 TOKEN
     Name  = "SECURE_BOOT_MODULE_REVISION"
-    Value  = "18"
+    Value  = "15"
     Help  = "Version of Secure Boot module interfaces"
     TokenType = Integer
     TargetMAK = Yes
@@ -44,7 +44,7 @@ End
 TOKEN
     Name  = "DEFAULT_PROVISION_SECURE_VARS"
     Value  = "0"
-    Help  = "Install factory default Secure Boot variables: PK, KEK, db, dbx and dbt.\Note: this function will not override existing Secure Boot variables in NVRAM."
+    Help  = "Enroll Factory default Secure Variables at 1st power on after reFlash."
     TokenType = Boolean
     TargetH = Yes
 End
@@ -57,31 +57,21 @@ TOKEN
     TargetH = Yes
 End
 
+TOKEN
+    Name  = "ALWAYS_INSTALL_DEFAULT_RT_KEYS"
+    Value  = "0"
+    Help  = "UEFI 2.3.1c. Install default Secure Boot keys as volatile variables: PKdefault, KEKdefault etc. are set irrespective of Setup mode"
+    TokenType = Boolean
+    TargetH = Yes
+End
+
 PATH
     Name  = "SecureBoot_DIR"
     Help  = "Path to SecureBoot Module Module in Project"
 End
 
 ELINK
-    Name  = "ITEM_CALLBACK(SECURITY_FORM_SET_CLASS,0,SECURE_BOOT_MENU_REFRESH,ForceSetupModeCallback),"
-    Parent  = "SetupItemCallbacks"
-    InvokeOrder = AfterParent
-End
-
-ELINK
-    Name  = "ITEM_CALLBACK(SECURITY_FORM_SET_CLASS,0,KEY_MANAGEMENT_MENU_REFRESH,ForceSetupModeCallback),"
-    Parent  = "SetupItemCallbacks"
-    InvokeOrder = AfterParent
-End
-
-ELINK
     Name  = "ITEM_CALLBACK(SECURITY_FORM_SET_CLASS,0,SECURE_BOOT_SUPPORT_CHANGE_KEY,ForceSetupModeCallback),"
-    Parent  = "SetupItemCallbacks"
-    InvokeOrder = AfterParent
-End
-
-ELINK
-    Name  = "ITEM_CALLBACK(SECURITY_FORM_SET_CLASS,0,SECURE_BOOT_MODE_CHANGE_KEY,ForceSetupModeCallback),"
     Parent  = "SetupItemCallbacks"
     InvokeOrder = AfterParent
 End
@@ -105,46 +95,100 @@ ELINK
 End
 
 ELINK
+    Name  = "ITEM_CALLBACK(SECURITY_FORM_SET_CLASS,0,SET_PK_KEY,SetAppendSecureBootDBCallback),"
+    Parent  = "SetupItemCallbacks"
+    InvokeOrder = AfterParent
+End
+
+ELINK
     Name  = "ITEM_CALLBACK(SECURITY_FORM_SET_CLASS,0,GET_PK_KEY,GetSecureBootDBCallback),"
     Parent  = "SetupItemCallbacks"
     InvokeOrder = AfterParent
 End
 
 ELINK
-    Name  = "ITEM_CALLBACK(SECURITY_FORM_SET_CLASS,0,MANAGE_PK_KEY,ManageSecureBootKeysCallback),"
+    Name  = "ITEM_CALLBACK(SECURITY_FORM_SET_CLASS,0,DELETE_PK_KEY,DeleteSecureBootDBCallback),"
     Parent  = "SetupItemCallbacks"
     InvokeOrder = AfterParent
 End
 
 ELINK
-    Name  = "ITEM_CALLBACK(SECURITY_FORM_SET_CLASS,0,MANAGE_KEK_KEY,ManageSecureBootKeysCallback),"
+    Name  = "ITEM_CALLBACK(SECURITY_FORM_SET_CLASS,0,SET_KEK_KEY,SetAppendSecureBootDBCallback),"
     Parent  = "SetupItemCallbacks"
     InvokeOrder = AfterParent
 End
 
 ELINK
-    Name  = "ITEM_CALLBACK(SECURITY_FORM_SET_CLASS,0,MANAGE_DB_KEY,ManageSecureBootKeysCallback),"
+    Name  = "ITEM_CALLBACK(SECURITY_FORM_SET_CLASS,0,DELETE_KEK_KEY,DeleteSecureBootDBCallback),"
     Parent  = "SetupItemCallbacks"
     InvokeOrder = AfterParent
 End
 
 ELINK
-    Name  = "ITEM_CALLBACK(SECURITY_FORM_SET_CLASS,0,MANAGE_DBT_KEY,ManageSecureBootKeysCallback),"
+    Name  = "ITEM_CALLBACK(SECURITY_FORM_SET_CLASS,0,APPEND_KEK_KEY,SetAppendSecureBootDBCallback),"
     Parent  = "SetupItemCallbacks"
     InvokeOrder = AfterParent
 End
 
 ELINK
-    Name  = "ITEM_CALLBACK(SECURITY_FORM_SET_CLASS,0,MANAGE_DBX_KEY,ManageSecureBootKeysCallback),"
+    Name  = "ITEM_CALLBACK(SECURITY_FORM_SET_CLASS,0,SET_DB_KEY,SetAppendSecureBootDBCallback),"
     Parent  = "SetupItemCallbacks"
     InvokeOrder = AfterParent
 End
 
 ELINK
-    Name  = "InitSecureBootStrings,"
-    Parent  = "SetupStringInit"
+    Name  = "ITEM_CALLBACK(SECURITY_FORM_SET_CLASS,0,DELETE_DB_KEY,DeleteSecureBootDBCallback),"
+    Parent  = "SetupItemCallbacks"
     InvokeOrder = AfterParent
 End
+
+ELINK
+    Name  = "ITEM_CALLBACK(SECURITY_FORM_SET_CLASS,0,APPEND_DB_KEY,SetAppendSecureBootDBCallback),"
+    Parent  = "SetupItemCallbacks"
+    InvokeOrder = AfterParent
+End
+
+ELINK
+    Name  = "ITEM_CALLBACK(SECURITY_FORM_SET_CLASS,0,SET_DBT_KEY,SetAppendSecureBootDBCallback),"
+    Parent  = "SetupItemCallbacks"
+    InvokeOrder = AfterParent
+End
+
+ELINK
+    Name  = "ITEM_CALLBACK(SECURITY_FORM_SET_CLASS,0,DELETE_DBT_KEY,DeleteSecureBootDBCallback),"
+    Parent  = "SetupItemCallbacks"
+    InvokeOrder = AfterParent
+End
+
+ELINK
+    Name  = "ITEM_CALLBACK(SECURITY_FORM_SET_CLASS,0,APPEND_DBT_KEY,SetAppendSecureBootDBCallback),"
+    Parent  = "SetupItemCallbacks"
+    InvokeOrder = AfterParent
+End
+
+ELINK
+    Name  = "ITEM_CALLBACK(SECURITY_FORM_SET_CLASS,0,SET_DBX_KEY,SetAppendSecureBootDBCallback),"
+    Parent  = "SetupItemCallbacks"
+    InvokeOrder = AfterParent
+End
+
+ELINK
+    Name  = "ITEM_CALLBACK(SECURITY_FORM_SET_CLASS,0,DELETE_DBX_KEY,DeleteSecureBootDBCallback),"
+    Parent  = "SetupItemCallbacks"
+    InvokeOrder = AfterParent
+End
+
+ELINK
+    Name  = "ITEM_CALLBACK(SECURITY_FORM_SET_CLASS,0,APPEND_DBX_KEY,SetAppendSecureBootDBCallback),"
+    Parent  = "SetupItemCallbacks"
+    InvokeOrder = AfterParent
+End
+
+#ELINK
+#    Name  = "InitCPUStrings,"
+#    Parent  = "SetupStringInit"
+#    InvokeOrder = AfterParent
+#End
 
 ELINK
     Name  = "UpdateSecureVariableBrowserInfo,"

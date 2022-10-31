@@ -1,7 +1,7 @@
 //****************************************************************************
 //****************************************************************************
 //**                                                                        **
-//**             (C)Copyright 1985-2015, American Megatrends, Inc.          **
+//**             (C)Copyright 1985-2012, American Megatrends, Inc.          **
 //**                                                                        **
 //**                          All Rights Reserved.                          **
 //**                                                                        **
@@ -19,9 +19,13 @@
 //
 // $Date: $
 //*****************************************************************************
-/** @file OA3_SmiFlashHook.c
-
-**/
+//<AMI_FHDR_START>
+//
+// Name: OA3_SmiFlashHook.c
+//
+// Description: 
+//
+//<AMI_FHDR_END>
 //*****************************************************************************
 
 
@@ -31,17 +35,22 @@
 #include <Protocol/SmiFlash.h>
 
 
-/**
-    This function is SW SMI hook that sets Flash Block Description
-    type for AMI AFU utility. 
-
-    @param 
-        SwSmiNum    - SW SMI value number
-        Buffer      - Flash descriptor address
-
-    @retval VOID
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:   OemActivationUpdateBlockTypeId
+//
+// Description: This function is SW SMI hook that sets Flash Block Description
+//              type for AMI AFU utility. 
+//
+// Input:
+//  SwSmiNum    - SW SMI value number
+//  Buffer      - Flash descriptor address
+//
+// Output:  VOID
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 VOID OemActivationUpdateBlockTypeId (
     IN UINT8  SwSmiNum,
@@ -76,7 +85,7 @@ VOID OemActivationUpdateBlockTypeId (
 //****************************************************************************
 //****************************************************************************
 //**                                                                        **
-//**             (C)Copyright 1985-2015, American Megatrends, Inc.          **
+//**             (C)Copyright 1985-2012, American Megatrends, Inc.          **
 //**                                                                        **
 //**                          All Rights Reserved.                          **
 //**                                                                        **

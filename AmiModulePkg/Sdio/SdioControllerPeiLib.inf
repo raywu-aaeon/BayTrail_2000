@@ -1,7 +1,7 @@
 #**********************************************************************
 #**********************************************************************
 #**                                                                  **
-#**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+#**        (C)Copyright 1985-2013, American Megatrends, Inc.         **
 #**                                                                  **
 #**                       All Rights Reserved.                       **
 #**                                                                  **
@@ -12,7 +12,7 @@
 #**********************************************************************
 #**********************************************************************
 
-## @file SdioControllerDxeLib.inf
+## @file
 #   This is SDIO Controller Pei Lib
 ##
 
@@ -32,12 +32,9 @@
 
 [Sources]
   SdioController.c
-  SdMemoryCard.c
-  MmcCard.c
   
 [LibraryClasses]
-  TimerLib
-  BaseMemoryLib
+  AmiPeiLib
 
 [Packages]
   MdePkg/MdePkg.dec
@@ -45,14 +42,12 @@
   AmiCompatibilityPkg/AmiCompatibilityPkg.dec 
 
 [BuildOptions]
-  *_*_*_CC_FLAGS = -DSDIO_PEI_RECOVERY_PRESENT
-
-[Pcd]
- gEfiMdePkgTokenSpaceGuid.PcdDebugPrintErrorLevel
+  *_*_*_CC_FLAGS = /DSDIO_PEI_RECOVERY_PRESENT
+  
 #**********************************************************************
 #**********************************************************************
 #**                                                                  **
-#**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+#**        (C)Copyright 1985-2013, American Megatrends, Inc.         **
 #**                                                                  **
 #**                       All Rights Reserved.                       **
 #**                                                                  **

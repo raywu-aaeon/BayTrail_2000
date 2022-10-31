@@ -80,12 +80,6 @@ ELINK
 	Token = "TSE_PRN_SCRN_EVENT_SUPPORT" "=" "1"
 End
 
-ELINK
-	Name  = "{{SCAN_F11, 0},0, SetupShowDebugScreen, 0 },"
-	Parent  = "HOTKEY_LIST"
-	InvokeOrder = AfterParent
-End
-
 PATH
 	Name  = "TSE_STYLE_DIR"
 End
@@ -94,7 +88,6 @@ ELINK
 	Name  = "{ 1, 2, 1 + 98, 2+19, LegacyMainFrameHandlewithMouse, 0 },"
 	Parent  = "HOTCLICK_LIST"
 	InvokeOrder = AfterParent
-	Help  = "Dont change the HOTCLICK_LIST order, for 100*31 mode"
     Token = "HOTCLICK_FULLSCREEN_SUPPORT" "=" "1"
 End
 
@@ -102,7 +95,6 @@ ELINK
 	Name  = "{ 70, 5, 70 + 29, 5 + 21, LegacyHelpFrameHandlewithMouse, 1 },"
 	Parent  = "HOTCLICK_LIST"
 	InvokeOrder = AfterParent
-	Help  = "Dont change the HOTCLICK_LIST order, for 100*31 mode"
     Token = "HOTCLICK_FULLSCREEN_SUPPORT" "=" "1"
 End
 
@@ -110,66 +102,41 @@ ELINK
 	Name  = "{ 0, 29, 0 + 100, 29 + 2, LegacyNavFrameHandlewithMouse, 1 },"
 	Parent  = "HOTCLICK_LIST"
 	InvokeOrder = AfterParent
-	Help  = "Dont change the HOTCLICK_LIST order, for 100*31 mode"
     Token = "HOTCLICK_FULLSCREEN_SUPPORT" "=" "1"
 End
 
 ELINK
-	Name  = "{ 0, 0, 0, 0, LegacyMainFrameHandlewithMouse, 0 },"
-	Parent  = "HOTCLICK_LIST"
-	InvokeOrder = AfterParent
-	Help  = "Dont change the HOTCLICK_LIST order, for 80*25 mode. Not supported customization needed"
-    Token = "HOTCLICK_FULLSCREEN_SUPPORT" "=" "1"
-End
-
-ELINK
-	Name  = "{ 0, 0, 0, 0, LegacyHelpFrameHandlewithMouse, 1 },"
-	Parent  = "HOTCLICK_LIST"
-	InvokeOrder = AfterParent
-	Help  = "Dont change the HOTCLICK_LIST order, for 80*25 mode. Not supported customization needed"
-    Token = "HOTCLICK_FULLSCREEN_SUPPORT" "=" "1"
-End
-
-ELINK
-	Name  = "{ 0, 0, 0, 0, LegacyNavFrameHandlewithMouse, 1 },"
-	Parent  = "HOTCLICK_LIST"
-	InvokeOrder = AfterParent
-	Help  = "Dont change the HOTCLICK_LIST order, for 80*25 mode. Not supported customization needed"
-    Token = "HOTCLICK_FULLSCREEN_SUPPORT" "=" "1"
-End
-
-ELINK
-	Name  = "$(TSE_STYLE_DIR)/StyleStr.uni"
+	Name  = "$(TSE_STYLE_DIR)\StyleStr.uni"
 	Parent  = "TSE_STRING_FILES"
 	InvokeOrder = AfterParent
 End
 
 ELINK
-	Name  = "$(TSE_STYLE_DIR)/StyleTokens.c"
+	Name  = "$(TSE_STYLE_DIR)\StyleTokens.c"
 	Parent  = "TSE_STRING_CONSUMERS_LIST"
 	InvokeOrder = AfterParent
 End
 
 ELINK
-	Name  = "$(TSE_STYLE_DIR)/HotkeyBin.h"
+	Name  = "$(TSE_STYLE_DIR)\HotkeyBin.h"
 	Parent  = "TSE_SOURCE_FILES"
 	InvokeOrder = AfterParent
 End
 
 ELINK
-	Name  = "$(TSE_STYLE_DIR)/HotkeyBin.c"
+	Name  = "$(TSE_STYLE_DIR)\HotkeyBin.c"
 	Parent  = "TSE_SOURCE_FILES"
 	InvokeOrder = AfterParent
 End
 
 ELINK
-	Name  = "$(TSE_STYLE_DIR)/HotclickBin.c"
+	Name  = "$(TSE_STYLE_DIR)\HotclickBin.c"
 	Parent  = "TSE_SOURCE_FILES"
 	InvokeOrder = AfterParent
 End
 
 ELINK
-	Name  = "$(TSE_STYLE_DIR)/HotclickBin.h"
+	Name  = "$(TSE_STYLE_DIR)\HotclickBin.h"
 	Parent  = "TSE_SOURCE_FILES"
 	InvokeOrder = AfterParent
 End

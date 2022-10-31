@@ -20,7 +20,7 @@ End
 
 TOKEN
 	Name  = "CSM16_VERSION_MINOR"
-	Value  = "76"
+	Value  = "75"
 	Help  = "CSM16 minor version"
 	TokenType = Integer
 	TargetMAK = Yes
@@ -445,12 +445,6 @@ End
 ELINK
 	Name  = "CSM_INIT_LEGACY_MEMORY_FUNCTIONS"
 	InvokeOrder = ReplaceParent
-End
-
-ELINK
-    Name  = "CSM_CHECK_UEFI_OPROM_POLICY"
-    Help  = "List of callback functions to be called to determine if UEFI Oprom should be executed"
-    InvokeOrder = ReplaceParent
 End
 
 ELINK

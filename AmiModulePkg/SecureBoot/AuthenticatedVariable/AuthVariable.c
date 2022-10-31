@@ -1,7 +1,7 @@
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2013, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **
@@ -13,27 +13,23 @@
 //**********************************************************************
 
 #include <Setup.h>
+#include <../SecureBoot.h>
 #include "AuthVariable.h"
 
 //
 // Global defines and variables
 // 
 
-//BOOLEAN AVarRuntime = FALSE;
-extern BOOLEAN IsNvramRuntime(VOID);
+BOOLEAN AVarRuntime = FALSE;
 
-extern EFI_GUID gEfiGlobalVariableGuid;
-extern BOOLEAN PhysicalUserPresent ( VOID ) ;
-extern UINT8 GetVendorKeysMode ( VOID ) ;
-
+extern EFI_GUID  gEfiGlobalVariableGuid;
+extern BOOLEAN PhysicalUserPresent ( VOID  ) ;
 static EFI_GUID  mSignatureSupport[SIGSUPPORT_NUM] = {SIGSUPPORT_LIST};
-static EFI_GUID  gSecureSetupGuid = SECURITY_FORM_SET_GUID;
 
 UINT8  PublicKeyHashArray[HASH_SHA256_LEN];
 UINT8  mPlatformMode = SETUP_MODE;
 UINT8  mSetupMode = USER_MODE;
-UINT8  mCustomMode = 0;
-SECURE_BOOT_SETUP_VAR   mSecureBootSetup;
+static UINT8  mSecureBootSupport = NONSECURE_BOOT;
 
 AMI_DIGITAL_SIGNATURE_PROTOCOL *mDigitalSigProtocol = NULL;
 
@@ -45,7 +41,6 @@ static CHAR16* ReservedReadOnlyVarNameList[] = {
  EFI_IMAGE_SECURITY_DATABASE1_DEFAULT,
  EFI_PLATFORM_KEY_NAME_DEFAULT,
  EFI_KEY_EXCHANGE_KEY_NAME_DEFAULT,
- EFI_VENDOR_KEYS_NAME,
  NULL
 };
 
@@ -85,7 +80,7 @@ VOID AuthServiceVirtualFixup()
 //AVAR_TRACE((-1,"After = %lx\n", p));
 //    }
     pRS->ConvertPointer(0,&mDigitalSigProtocol);
-//    AVarRuntime = TRUE;
+    AVarRuntime = TRUE;
 }
 
 
@@ -138,7 +133,7 @@ VOID AuthVariableServiceInitSMM ()
     EFI_STATUS    Status;
     
     // w/a: don't print debug traces from SMM
-//    AVarRuntime = TRUE;
+    AVarRuntime = TRUE;
     //
     // Authenticated variable initialize.
     //
@@ -147,6 +142,9 @@ VOID AuthVariableServiceInitSMM ()
     //
     // Update mPlatformMode  
     GetPlatformMode();
+
+    // Update mSecureBootSupport global variable
+    GetmSecureBootSupport(mPlatformMode);
 
 //    Status = InitSmmAuthServiceCallback (NULL, NULL);
     Status = InitSmmAuthServiceCallback (NULL, NULL, NULL);
@@ -194,7 +192,7 @@ static EFI_STATUS InitAuthServiceCallback (IN EFI_EVENT Event, IN VOID *Context)
 //----------------------------------------------------------------------------
 // Procedure:   AuthVariableServiceInit
 //
-// Description: This function calls InitAuthServiceCallback to initialize 
+// Description: This function calls InitAuthServiceCallback to initialaze 
 //              DigitalSigProtocol not in SMM by trying to Locate
 //              DigitalSigProtocol. If Protocol is not installed yet 
 //              RegisterProtocolCallback will be called.
@@ -210,34 +208,33 @@ VOID AuthVariableServiceInit ()
 {
     EFI_EVENT       Event;
     VOID            *p;
-    UINT8           Data=0;
+    UINT8           Data;
 
-    // Create "SignatureSupport" with RO access 
+    //
+    // Create "SignatureSupport" with EFI_VARIABLE_AUTHENTICATED_WRITE_ACCESS set. 
+    //
     DxeSetVariable(EFI_SIGNATURE_SUPPORT_NAME,&gEfiGlobalVariableGuid,
         EFI_VARIABLE_RUNTIME_ACCESS | EFI_VARIABLE_BOOTSERVICE_ACCESS,
         SIGSUPPORT_NUM * sizeof(EFI_GUID), &mSignatureSupport
     );
     //
     // Check presence of PK database to determine the value.
-    // Then create  "SetupMode" with RO access
+    // Then create  "SetupMode" with EFI_VARIABLE_AUTHENTICATED_WRITE_ACCESS set.   
     // Update mPlatformMode  
     GetPlatformMode();
-    UpdatePlatformMode(mPlatformMode);
 
-    if(!EFI_ERROR(GetmSecureBootSetup()))
+    // Update mSecureBootSupport global variable
+    GetmSecureBootSupport(mPlatformMode);
+
     // Set SecureBoot, both conditions must be met 
-        Data = (mPlatformMode==USER_MODE && mSecureBootSetup.SecureBootSupport==SECURE_BOOT)?1:0;
-
-    // Create "SecureBoot" variable with RO access
+    Data = (mPlatformMode==USER_MODE && mSecureBootSupport==SECURE_BOOT)?1:0;
     DxeSetVariable(EFI_SECURE_BOOT_NAME,&gEfiGlobalVariableGuid, 
         EFI_VARIABLE_RUNTIME_ACCESS | EFI_VARIABLE_BOOTSERVICE_ACCESS, 
         sizeof(UINT8), &Data);
+   
+    // Create "SetupMode" variable with EFI_VARIABLE_AUTHENTICATED_WRITE_ACCESS set
+    UpdatePlatformMode(mPlatformMode);
 
-    // Create "VendorKeys" variable with RO access
-    DxeSetVariable(EFI_VENDOR_KEYS_NAME, &gEfiGlobalVariableGuid, 
-        EFI_VARIABLE_RUNTIME_ACCESS | EFI_VARIABLE_BOOTSERVICE_ACCESS,
-        sizeof(UINT8), &Data);
- 
     if (EFI_ERROR(InitAuthServiceCallback (NULL, NULL)))
         RegisterProtocolCallback(
             &gAmiDigitalSignatureProtocolGuid,
@@ -259,7 +256,7 @@ VOID AuthVariableServiceInit ()
 //  CHAR16 *String - Pointer to string
 //
 //  Output:
-//  UINT32 - Size of string in bytes excluding the null-terminator
+//  UINT32 - Size of string in bytes excluding the nul-terminator
 //
 //----------------------------------------------------------------------------
 //<AMI_PHDR_END>
@@ -367,7 +364,7 @@ IsReservedVariableName(
     UINT8   Index;
     Index = 0;
 
-    while(!IsNvramRuntime() && ReservedReadOnlyVarNameList[Index] != NULL)
+    while(ReservedReadOnlyVarNameList[Index] != NULL)
     {
         if(StrCmp16 (VariableName, ReservedReadOnlyVarNameList[Index]) == 0)
         {
@@ -376,52 +373,17 @@ IsReservedVariableName(
         }
         Index++;
     }
+// Not yet implemented. Need eLink defined lists and a make file to pass the Oem Var names
+//    Index = 0;
+//    while(OemReadOnlyVariableList[Index] != NULL)
+//    {
+//        if(StrCmp16 (VariableName, OemReadOnlyVariableList[Index]) == 0)
+//           return TRUE;
+//        Index++;
+//    }
 
     return FALSE;
 }
-
-//<AMI_PHDR_START>
-//----------------------------------------------------------------------------
-//  Procedure:   SetVendorKeysVar
-//
-//  Description: NVRAM SetVariable hook to update VendorKeys Var
-//
-// Input:       IN CHAR16 *VariableName - pointer to Var Name in Unicode
-//              IN EFI_GUID *VendorGuid - pointer to Var GUID
-//              IN UINT32 Attributes - Attributes of the Var
-//              IN UINTN DataSize - size of Var
-//              IN VOID *Data - Pointer to memory where Var data is stored
-//
-// Output:      EFI_STATUS - based on result
-//
-//----------------------------------------------------------------------------
-//<AMI_PHDR_END>
-EFI_STATUS 
-SetVendorKeysVar ( 
-    IN CHAR16 *VariableName, IN EFI_GUID *VendorGuid,
-    IN UINT32 Attributes, IN UINTN DataSize, IN VOID *Data
-) 
-{
-    UINT8    *Byte = (UINT8*)Data;
-//    AVAR_TRACE((-1,"Set '%S' %x %s\n", VariableName, *(UINT8*)Data, (mSetupMode==SETUP_MODE)?"SETUP":"USER"));
-    if(mSetupMode == USER_MODE && DataSize == 1 && !IsNvramRuntime() &&
-       (StrCmp16 (VariableName, EFI_VENDOR_KEYS_NAME) == 0) && 
-       (guidcmp(VendorGuid, &gEfiGlobalVariableGuid) == 0)
-    ){
-        *Byte = (mPlatformMode==USER_MODE && GetVendorKeysMode())?1:0;
-        // Update EFI_VENDOR_KEYS_NAME global variable
-        // Setting of mSetupMode=SETUP_MODE will un-lock access to runtime R/O vars
-        mSetupMode = SETUP_MODE;
-        // initiate re-entry
-        DxeSetVariable(EFI_VENDOR_KEYS_NAME, &gEfiGlobalVariableGuid, 
-            EFI_VARIABLE_RUNTIME_ACCESS | EFI_VARIABLE_BOOTSERVICE_ACCESS,
-            sizeof(UINT8), Data);
-
-        return EFI_WRITE_PROTECTED;
-    }
-    return EFI_UNSUPPORTED;
-}
-
 //<AMI_PHDR_START>
 //----------------------------------------------------------------------------
 //  Procedure:   IsDbVar
@@ -450,7 +412,7 @@ BOOLEAN IsDbVar(
 // Procedure:   GetPlatformMode
 //
 // Description: 
-//              Initializes for authenticated variable service.
+//              Initializes for authenticated varibale service.
 //
 // Input:
 //              UINT8 *PlatformMode
@@ -493,45 +455,62 @@ GetPlatformMode (
 
 //<AMI_PHDR_START>
 //----------------------------------------------------------------------------
-// Procedure:   GetmSecureBootSetup
+// Procedure:   GetmSecureBootSupport
 //
 // Description: 
-//              Initializes mSecureBootSetup structure.
+//              Initializes for authenticated varibale service.
 //
 // Input:
-//              none
+//              SetupMode Disable SecureBoot control if Platform runs in SetupMode (no PK)
 //          
 // Output:      EFI_STATUS Function successfully executed.
 //              EFI_OUT_OF_RESOURCES  Fail to allocate enough memory resources.
 //----------------------------------------------------------------------------
 //<AMI_PHDR_END>
 EFI_STATUS
-GetmSecureBootSetup (
-    VOID
+GetmSecureBootSupport (
+    UINT8 SetupMode
 )
 {
-    EFI_STATUS Status;
+    EFI_STATUS Status  = EFI_SUCCESS;
+#if defined(ImageVerification_SUPPORT) && ImageVerification_SUPPORT==1
+    EFI_GUID  gSecureSetupGuid = SECURITY_FORM_SET_GUID;
+    SECURE_BOOT_SETUP_VAR   SecureBootSetup;
     UINTN      DataSize=0;
+    UINT32     Attributes;
     //
     // Get Setup variable, check SecureBoot and set the EFI Var
     //
     Status = DxeGetVariable(
         AMI_SECURE_BOOT_SETUP_VAR,
         &gSecureSetupGuid,
-        NULL,
+        &Attributes,
         &DataSize,
-        &mSecureBootSetup
+        &SecureBootSetup
     );
     if(Status == EFI_BUFFER_TOO_SMALL)
         Status = DxeGetVariable(
             AMI_SECURE_BOOT_SETUP_VAR,
             &gSecureSetupGuid,
-            NULL,
+            &Attributes,
             &DataSize,
-            &mSecureBootSetup
+            &SecureBootSetup
         );
     ASSERT_EFI_ERROR (Status);
-
+    mSecureBootSupport = (SecureBootSetup.SecureBootSupport);
+// Disable SecureBoot Setup Option if system is in Setup mode 
+#if DEFAULT_SECURE_BOOT_ENABLE == 0
+    if(mSecureBootSupport == 1 &&
+    (SetupMode == SETUP_MODE && SecureBootSetup.DefaultKeyProvision == 0)
+       )
+    {
+        mSecureBootSupport = NONSECURE_BOOT;
+    }
+#endif
+#else
+    mSecureBootSupport = NONSECURE_BOOT;
+#endif
+  
     return Status;
 }
 
@@ -539,7 +518,7 @@ GetmSecureBootSetup (
 //----------------------------------------------------------------------------
 // Procedure:   UpdatePlatformMode
 //
-// Description: Update mPlatformMode & "SetupMode" Efi var
+//- also set up secureBoot based on mSecureBoot + SetupMode
 //
 // Input:       Mode  SETUP_MODE or USER_MODE.
 //
@@ -567,9 +546,7 @@ AVAR_TRACE((TRACE_ALWAYS,"Update Setup Mode\nCurrent=%x, New=%x\n", mPlatformMod
             EFI_VARIABLE_RUNTIME_ACCESS | EFI_VARIABLE_BOOTSERVICE_ACCESS,
             sizeof(UINT8), &mPlatformMode);
 
-    // Access to R/O variable should be re-locked on exit...
-    // just making sure it is...
-    // Re-lock access to runtime protected vars
+// Re-lock access to runtime protected vars
     mSetupMode = USER_MODE;
 }
 
@@ -668,7 +645,7 @@ EFI_STATUS
 ProcessVarWithPk (
   IN  VOID               *Data,
   IN  UINTN              DataSize,
-  IN  UINT32             Attributes,
+  IN  UINT32             Attributes ,
   IN  BOOLEAN            IsPk
   )
 {
@@ -687,8 +664,9 @@ ProcessVarWithPk (
     return EFI_INVALID_PARAMETER;
   }
 
-  if (mPlatformMode == SETUP_MODE || mCustomMode == 1)
-      return Status;
+  if (mPlatformMode == USER_MODE)
+  {
+
     //
     // Get platform key from variable.
     //
@@ -709,6 +687,8 @@ ProcessVarWithPk (
 // Authenticate
     Status    = VerifyDataPayload (Data, DataSize, OldPkData->SignatureData);
 //AVAR_TRACE((TRACE_ALWAYS,"PK VerifyPayload %r\n",Status));
+
+ }
 
   return Status;
 }
@@ -765,8 +745,8 @@ ProcessVarWithKek (
 //
 // If in setup mode, no authentication needed.
 //
-  if (mPlatformMode == SETUP_MODE || mCustomMode == 1)
-      return Status;
+  if (mPlatformMode == USER_MODE)
+  {
 
     CertData  = (EFI_VARIABLE_AUTHENTICATION *) Data;
     CertBlock = (EFI_CERT_BLOCK_RSA_2048_SHA256 *)&(CertData->AuthInfo.CertData);
@@ -811,6 +791,7 @@ ProcessVarWithKek (
 // Authenticate
     Status = VerifyDataPayload (Data, DataSize, CertBlock->PublicKey);
 //AVAR_TRACE((TRACE_ALWAYS,"KEK VerifyPayload %r\n",Status));
+  }
 
   return Status;
 }
@@ -913,12 +894,12 @@ EFI_STATUS VerifyDataPayload (
 //----------------------------------------------------------------------------
 //<AMI_PHDR_END>
 EFI_STATUS FindInSignatureDb (
-    IN EFI_GUID     *VendorGuid,
-    IN UINT32        Attributes,
-    IN VOID         *Data,
+    IN EFI_GUID *VendorGuid,
+    IN UINT32    Attributes,
+    IN VOID     *Data,
     IN OUT UINTN    *DataSize,
-    IN VOID         *SigDb,
-    IN UINTN        SigDbSize
+    IN VOID     *SigDb,
+    IN UINTN    SigDbSize
 ){
     EFI_SIGNATURE_LIST             *SigList;
     EFI_SIGNATURE_LIST             *SigListNew;
@@ -951,7 +932,7 @@ AVAR_TRACE((TRACE_ALWAYS,"FindInDB(x)\nDataSize In %d (0x%X)\n",*DataSize,*DataS
 //AVAR_TRACE((TRACE_ALWAYS,"Org SigList Count: %d, SigSize %X\n", SigCount, SigList->SignatureSize));
             // scan through multiple Sig Lists in NewSigList.
             for (Index = 1; Index <= SigCount; Index++) {
-// AVAR_TRACE((TRACE_ALWAYS,"OrgCert %d, Data %X\n",Index, *(UINT32*)SigItem->SignatureData));
+////AVAR_TRACE((TRACE_ALWAYS,"OrgCert %d, Data %X\n",Index, *(UINT32*)SigItem->SignatureData));
                 SigListNew  = (EFI_SIGNATURE_LIST *)Data;
                 SigNewSize  = *DataSize;
                 while ((SigNewSize > 0) && (SigNewSize >= SigListNew->SignatureListSize)) {
@@ -960,19 +941,19 @@ AVAR_TRACE((TRACE_ALWAYS,"FindInDB(x)\nDataSize In %d (0x%X)\n",*DataSize,*DataS
                     SigCountNew  = (SigListNew->SignatureListSize - sizeof (EFI_SIGNATURE_LIST) - SigListNew->SignatureHeaderSize) / SigListNew->SignatureSize;
                     if (!guidcmp ((EFI_GUID*) &(SigList->SignatureType), (EFI_GUID*)&(SigListNew->SignatureType)) && 
                         SigList->SignatureSize == SigListNew->SignatureSize) {
-//AVAR_TRACE((TRACE_ALWAYS,"New SigDb Size %X\nNew SigList Count: %d, SigSize %X\n", SigNewSize, SigCountNew, SigListNew->SignatureSize));
+//AVAR_TRACE((TRACE_ALWAYS,"New SigDb Size %X\nNew SigList Count: %d, SigSize %X\n", SigNewSize, SigNewCount, SigNewList->SignatureSize));
                       // loop through all instances of NewSigList->SigData. 
                       for (IndexNew = 1; IndexNew <= SigCountNew; IndexNew++) {
-// AVAR_TRACE((TRACE_ALWAYS,"NewCert %d, Data %X\n",IndexNew, *(UINT32*)SigItemNew->SignatureData));
+////AVAR_TRACE((TRACE_ALWAYS,"NewCert %d, Data %X\n",IndexNew, *(UINT32*)SigNewItem->SignatureData));
                             if (MemCmp (SigItem->SignatureData, SigItemNew->SignatureData, SigList->SignatureSize-sizeof(EFI_GUID)) == 0) {
 //AVAR_TRACE((TRACE_ALWAYS,"---> match found!!!\n"));
 //AVAR_TRACE((TRACE_ALWAYS,"OrgCert %4d, Data %X\n",Index, *(UINT32*)SigItem->SignatureData));
-//AVAR_TRACE((TRACE_ALWAYS,"NewCert %4d, Data %X\n",IndexNew, *(UINT32*)SigItemNew->SignatureData));
+//AVAR_TRACE((TRACE_ALWAYS,"NewCert %4d, Data %X\n",IndexNew, *(UINT32*)SigNewItem->SignatureData));
                                if(SigCountNew == 1) {
                                 // only 1 SigData per SigList - discard this SigList
                                       bSigMatch = TRUE;
-//AVAR_TRACE((TRACE_ALWAYS,"Before: DataSize=%x\nAfter : DataSize=%x\n", *DataSize, *DataSize-SigListNew->SignatureListSize));
-                                      // 1. Decrease *Datasize by SigListNew->SignatureSize 
+//AVAR_TRACE((TRACE_ALWAYS,"Before: DataSize=%x\nAfter : DataSize=%x\n", *DataSize, *DataSize-SigNewList->SignatureListSize));
+                                      // 1. Decrease *Datasize by SigNewList->SignatureSize 
                                       SigNewSize -= SigListNew->SignatureListSize;
                                       *DataSize -= SigListNew->SignatureListSize;
                                       // 2. replace this SigData block with data following it
@@ -983,29 +964,29 @@ AVAR_TRACE((TRACE_ALWAYS,"FindInDB(x)\nDataSize In %d (0x%X)\n",*DataSize,*DataS
                                 // more then 1 - discard this SigData
                                     // 1. replace this SigData block with data following it
                                     MemCpy (SigItemNew, (void*)((UINTN)SigItemNew+SigListNew->SignatureSize), ((UINTN)Data+*DataSize)-((UINTN)SigItemNew+SigListNew->SignatureSize));
-                                    // 2. Decrease SigListNew->SignatureListSize by SigListNew->SignatureSize 
+                                    // 2. Decrease SigNewList->SignatureListSize by SigNewList->SignatureSize 
                                     SigListNew->SignatureListSize-=SigListNew->SignatureSize;
                                     *DataSize-=SigListNew->SignatureSize;
-//AVAR_TRACE((TRACE_ALWAYS,"Upd SignatureListSize=%x, DataSize=%x\n",SigListNew->SignatureListSize, *DataSize));
+//AVAR_TRACE((TRACE_ALWAYS,"Upd SignatureListSize=%x, DataSize=%x\n",SigNewList->SignatureListSize, *DataSize));
                                     // 3. If this is last SigData element
                                     if((SigListNew->SignatureListSize - sizeof (EFI_SIGNATURE_LIST) - SigListNew->SignatureHeaderSize)==0)
                                     {  
 //AVAR_TRACE((TRACE_ALWAYS,"SigList is Empty!\n"));
                                         break;
                                     }         
-                                    // 4. Skip incrementing of SigItemNew
+                                    // 4. Skip incrementing of SigNewItem
                                     continue;
                                 }
                             } // if cmp 
                             SigItemNew = (EFI_SIGNATURE_DATA *) ((UINT8 *) SigItemNew + SigListNew->SignatureSize);
-                        } // for SigItemNew 
+                        } // for SigNewItem 
                     } // if guid
-                    // Skip incrementing of SigListNew if bSigListMatch is found - we already on next siglist
+                    // Skip incrementing of SigNewList if bSigListMatch is found - we already on next siglist
                     if(!bSigMatch) {
                         SigNewSize -= SigListNew->SignatureListSize;
                         SigListNew = (EFI_SIGNATURE_LIST *) ((UINT8 *) SigListNew + SigListNew->SignatureListSize);
                     }
-                } // while SigListNew
+                } // while SigNewList
                 SigItem = (EFI_SIGNATURE_DATA *) ((UINT8 *) SigItem + SigList->SignatureSize);
             } // for SigItem
             SigDbSize -= SigList->SignatureListSize;
@@ -1070,12 +1051,12 @@ EFI_STATUS VerifyVariable1 (
     UINTN       CertHdrSize;
     UINTN       Size;
     BOOLEAN     IsSigListVar; 
-    BOOLEAN     IsPk, IsKek;
+    BOOLEAN     IsPk;
 
     RealData = *Data;
     Status = EFI_SUCCESS;
     IsSigListVar = TRUE;
-    IsPk = IsKek = FALSE;
+    IsPk = FALSE;
 
 // must have Auth attribute to go deeper
     if ((Attributes & EFI_VARIABLE_AUTHENTICATED_WRITE_ACCESS) == 0)
@@ -1105,8 +1086,7 @@ EFI_STATUS VerifyVariable1 (
         //
         // Invalid AuthInfo type, return EFI_SECURITY_VIOLATION.
         //
-        AVAR_TRACE((TRACE_ALWAYS,"VerifyVariable AuthHdr GUID test Fails\nWinCert_Type\nExpected  %x\nReceived %x\nGUID\nExpected  %g\nReceived %g\n",
-                               WIN_CERT_TYPE_EFI_GUID, CertData->AuthInfo.Hdr.wCertificateType, &gEfiCertTypeRsa2048Sha256Guid, &(CertData->AuthInfo.CertType)));
+        AVAR_TRACE((TRACE_ALWAYS,"VerifyVariable AuthHdr GUID test Fails\nWinCert_Type\nExpected  %x\nReceived %x\nGUID\nExpected  %g\nReceived %g\n",WIN_CERT_TYPE_EFI_GUID, CertData->AuthInfo.Hdr.wCertificateType, gEfiCertTypeRsa2048Sha256Guid, (CertData->AuthInfo.CertType)));
 // SCT 2.3.1 TW Plugfest uses wrong GUID
             return EFI_SECURITY_VIOLATION;
     } 
@@ -1141,7 +1121,6 @@ AVAR_TRACE((TRACE_ALWAYS,"Pass\n"));
       IsPk = TRUE;
       Status = ProcessVarWithPk (*Data, *DataSize, Attributes, TRUE);
     } else if (IsKekVar(VariableName, VendorGuid)) {
-      IsKek = TRUE;
       Status = ProcessVarWithPk (*Data, *DataSize, Attributes, FALSE);
     } else if (IsDbVar(VendorGuid)) {
       Status = ProcessVarWithKek (*Data, *DataSize, Attributes);
@@ -1190,7 +1169,6 @@ AVAR_TRACE((TRACE_ALWAYS,"Pass\n"));
             else
                 UpdatePlatformMode (USER_MODE);
         }
-//        SetVendorKeysVar();
     }
     return Status;
 }
@@ -1236,25 +1214,20 @@ EFI_STATUS VerifyVariable (
     EFI_STATUS  Status;
     UINT32      AuthAttributes; 
     UINT64      OldMC;
-//    UINT8      *Byte = *(UINT8**)Data;
 
     Status = EFI_SUCCESS; 
-    mCustomMode = 0;
-    
-//AVAR_TRACE((TRACE_ALWAYS,"Set Var '%S', Attr=%0X, Data[0]=%X(%x), Size=%x\n", VariableName, *Attributes, *Byte, *Data, *DataSize));
 
     // bypass var RO check when updating 
     // SetupMode and SecureBoot variables after changing of a PK
     if(mSetupMode == SETUP_MODE) {
-// Faking presence of NV attribute for SetupMode in order to meet UEFI requirement 
+// Faking presense of NV attribute for SetupMode in order to meet UEFI requirement 
 // to display SetupMode state even in runtime (after exit boot services)
 //        AuthAttributes = *Attributes & (~EFI_VARIABLE_NON_VOLATILE);
 //        *Attributes = AuthAttributes;
 //        *Attributes &= (UINT32)(~EFI_VARIABLE_NON_VOLATILE);
         // Re-lock access to runtime protected vars
         mSetupMode = USER_MODE;
-
-        return EFI_SUCCESS;
+        return Status;//EFI_SUCCESS;
     }
 
     // existing reserved variables are RO!!!
@@ -1278,19 +1251,17 @@ EFI_STATUS VerifyVariable (
         { Status = EFI_INVALID_PARAMETER; break;}
 
 #if USER_MODE_POLICY_OVERRIDE == 1
-        // ignore Variable Authentication rules while in Physical User Presence
-        mCustomMode = PhysicalUserPresent();
-        AVAR_TRACE((TRACE_ALWAYS,"Physical User %s\n",
-                 (mCustomMode?"detected - suppress Variable Authentication":"not detected")));
-        if (mCustomMode) {
+        // ignore Variable Authentication rules while in Phys User Presense
+        if (PhysicalUserPresent()) {
+AVAR_TRACE((TRACE_ALWAYS,"Physical User Present : suppress Variable Authentication\n"));
             if(*DataSize==0 || *Data==NULL) {
-                if(IsPkVar(VariableName, VendorGuid)) {
+                if(IsPkVar(VariableName, VendorGuid))
                     UpdatePlatformMode(SETUP_MODE);
-                }
-//                SetVendorKeysVar();
+    
                 Status = EFI_SUCCESS; 
                 break;
             }
+            mPlatformMode = SETUP_MODE;
         }
 #endif
 //    Old - nonAuth, New - nonAuth - exit with EFI_SUCCESS
@@ -1317,7 +1288,7 @@ EFI_STATUS VerifyVariable (
         if(!mDigitalSigProtocol)
         { Status = EFI_UNSUPPORTED; break;}
 
-//AVAR_TRACE((TRACE_ALWAYS,"Verify AuthVar: %S, Attr=%X, Data=%X, Size=%d\n", VariableName, *Attributes, *Data, *DataSize));
+//AVAR_TRACE((TRACE_ALWAYS,"AuthVarName: %S, Attr=%X, Data=%X, Size=%d\n", VariableName, *Attributes, *Data, *DataSize));
         if (AuthAttributes & EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS)
             Status = VerifyVariable2(VariableName, VendorGuid, AuthAttributes, Data, DataSize, OldData, OldDataSize, ExtSecFlags);
         else
@@ -1349,7 +1320,7 @@ EFI_STATUS VerifyVariable (
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2013, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **

@@ -4,9 +4,8 @@ TOKEN
     Help  = "Main switch to enable SmmHddSecurity support in Project"
     TokenType = Boolean
     TargetEQU = Yes
-    TargetH = Yes
     Master = Yes
-    Token = "SECURITY_SUPPORT" "=" "1"
+    Token = "HDD_SECURITY_SUPPORT" "=" "1"
 End
 
 TOKEN
@@ -41,9 +40,19 @@ TOKEN
     TargetH = Yes
 End
 
+TOKEN
+    Name  = "SW_SMI_AHCI_LOCATE_AHCI_SMM"
+    Value  = "0D4h"
+    TokenType = Integer
+    TargetEQU = Yes
+    TargetH = Yes
+End
+
 INFComponent
     Name  = "SmmHddSecurity"
     File  = "SmmHddSecurity.inf"
     Package  = "AmiModulePkg"
     ModuleTypes  = "DXE_SMM_DRIVER"
 End
+
+

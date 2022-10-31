@@ -46,8 +46,6 @@
   MdePkg/MdePkg.dec
   MdeModulePkg/MdeModulePkg.dec
   Vlv2DeviceRefCodePkg/Vlv2DeviceRefCodePkg.dec
-  Vlv2DeviceRefCodePkg/PlatformPkg.dec
-  AmiCompatibilityPkg/AmiCompatibilityPkg.dec
   
 [LibraryClasses]
   PeimEntryPoint
@@ -65,12 +63,10 @@
    gEfiPeiStallPpiGuid
    gPchPeiInitPpiGuid
    gS3ResumeDonePpiGuid
-   gEfiPeiReadOnlyVariable2PpiGuid
    
 [Guids]
-  gEfiSetupVariableGuid
   gEfiPlatformInfoGuid
-   
+
 [Pcd]  
   gEfiMdePkgTokenSpaceGuid.PcdPciExpressBaseAddress  ## CONSUMES
 

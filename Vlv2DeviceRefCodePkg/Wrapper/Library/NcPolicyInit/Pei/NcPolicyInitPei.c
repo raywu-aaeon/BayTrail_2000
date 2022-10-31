@@ -49,24 +49,12 @@ NcPolicyInitPei(
     EFI_STATUS                      Status;
     EFI_PEI_PPI_DESCRIPTOR          *mVlvPolicyPpiDesc;
     VLV_POLICY_PPI                  *mVlvPolicyPpi;
-// AMI_OVERRIDE START - EIP187886
-    SG_GPIO_DATA                    *SgGpioData;
-    SG_GPIO_INFO                    *SgGpioInfo;
-// AMI_OVERRIDE END
 
     Status = (*PeiServices)->AllocatePool(PeiServices, sizeof(EFI_PEI_PPI_DESCRIPTOR), &mVlvPolicyPpiDesc);
     ASSERT_EFI_ERROR(Status);
 
     Status = (*PeiServices)->AllocatePool(PeiServices, sizeof(VLV_POLICY_PPI), &mVlvPolicyPpi);
     ASSERT_EFI_ERROR(Status);
-
-// AMI_OVERRIDE START - EIP187886
-    Status = (*PeiServices)->AllocatePool(PeiServices, sizeof(SG_GPIO_DATA), &SgGpioData);
-    ASSERT_EFI_ERROR(Status);
-    
-    Status = (*PeiServices)->AllocatePool(PeiServices, (4 * sizeof(SG_GPIO_INFO)), &SgGpioInfo);
-    ASSERT_EFI_ERROR(Status);  
-// AMI_OVERRIDE END
 
     //
     // Initialize PPI
@@ -78,13 +66,6 @@ NcPolicyInitPei(
 
     /// SwitchableGraphics Policy update from Setup Configuration
     /// GPIO support exists for both Mobile & Desktop platforms
-// AMI_OVERRIDE START - EIP187886
-    mVlvPolicyPpi->SgGpioData = SgGpioData;
-    mVlvPolicyPpi->SgGpioData->SgDgpuPwrOK = SgGpioInfo;
-    mVlvPolicyPpi->SgGpioData->SgDgpuHoldRst = SgGpioInfo + 1;
-    mVlvPolicyPpi->SgGpioData->SgDgpuPwrEnable = SgGpioInfo + 2;
-    mVlvPolicyPpi->SgGpioData->SgDgpuPrsnt = SgGpioInfo + 3;
-// AMI_OVERRIDE END
     mVlvPolicyPpi->SgGpioData->GpioSupport = 1;
 
     /// For SG mode dGPU PWR Enable is Active Low (When Low - Power given to card, when High - No power)

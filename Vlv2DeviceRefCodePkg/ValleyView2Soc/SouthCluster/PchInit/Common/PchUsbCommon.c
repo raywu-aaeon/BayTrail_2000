@@ -957,7 +957,7 @@ USB3PHYInit (void)
                        (R_PCH_CDN_PLL_CONTROL-2),
                        DwordReg,
                        (~(R_PCH_CDN_PLL_VCO_CALIBRATION_TRIM_CODE<<16)),
-                       (0x7 <<20),
+                       (0x5 <<20),
                        PCH_USH_PHY_READ_OPCODE,
                        PCH_USH_PHY_WRITE_OPCODE);
 

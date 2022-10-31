@@ -1,0 +1,8 @@
+<component>
+	name = "TcgPlatformSetupPolicyProtocol"
+	category = ModulePart
+	LocalRoot = "AmiModulePkg\Include\Protocol\"
+	RefName = "TcgPlatformSetupPolicyProtocol"
+[files]
+"TcgPlatformSetupPolicy.h"
+<endComponent>

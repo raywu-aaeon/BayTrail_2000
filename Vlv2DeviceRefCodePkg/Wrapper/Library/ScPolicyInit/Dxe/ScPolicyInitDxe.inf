@@ -51,7 +51,6 @@
   ElinkTableLib
   SbGetSetupData
   PchPlatformLib
-  SbHdaVerbTableLib  #EIP176554
 
 [Protocols.common]
   gDxePchPlatformPolicyProtocolGuid

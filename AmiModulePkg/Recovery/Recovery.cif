@@ -5,14 +5,12 @@
 	RefName = "AmiModulePkg.Recovery"
 [INF]
 "Recovery.inf"
+"SerialRecovery\SerialRecovery.inf"
+"IdeRecovery\IdeRecovery.inf"
 [files]
 "Recovery.sdl"	
 "Recovery.chm"	
 [parts]
 "ReFlash"
 "FsRecovery"
-"FtRecovery"
-"SerialRecovery"
-"IdeRecovery"
-"UsbRecovery"
 <endComponent>

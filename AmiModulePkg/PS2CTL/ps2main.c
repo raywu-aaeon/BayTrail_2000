@@ -470,14 +470,15 @@ EFI_STATUS GetPS2_DP(
                 Controller,   
                 Attributes
                 );
-    //EIP212613 >>
+  
     if (EFI_ERROR(Status)) {
-        if( Status == EFI_ALREADY_STARTED || Status == EFI_ACCESS_DENIED ) {
+        if( Status != (EFI_ALREADY_STARTED || EFI_ACCESS_DENIED) ) {
+            return EFI_UNSUPPORTED;
+        } else { 
             return Status;
         }
-        return EFI_UNSUPPORTED;
     }
-    //EIP212613 <<
+
     //
     // Process ps2DevPath - get the node which is before the EndNode
     //

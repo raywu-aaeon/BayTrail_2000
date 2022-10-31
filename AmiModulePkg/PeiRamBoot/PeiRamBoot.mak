@@ -80,11 +80,7 @@
 #
 #<AMI_FHDR_END>
 #**********************************************************************
-Prepare : PREPARE_PEIMAIN_H_FILE $(BUILD_DIR)/PeiRamBootElinks.h
-.PHONY : PREPARE_PEIMAIN_H_FILE
-
-PREPARE_PEIMAIN_H_FILE:
-	$(CP) /b /y $(MDEMODULEPKG_DIR)\Core\Pei\PeiMain.h $(BUILD_DIR)\CorePeiMain.h
+Prepare : $(BUILD_DIR)/PeiRamBootElinks.h
 
 $(BUILD_DIR)/PeiRamBootElinks.h : $(BUILD_DIR)/Token.mak
 	$(ECHO) \

@@ -91,15 +91,7 @@ scope(\_SB.I2C1)
 
     Name(BTPC, 0x00)   //Battery Trip point.   0--clear trip point
 
-#ifdef WIN8_SUPPORT     
-    Method(_DEP){
-    	if (LAnd(LGreaterEqual(OSYS, 2013), LEqual(S0IX, 1))) {
-			Return(Package() {\_SB.PEPD})
-		}Else{
-			Return(Package(){})
-		}
-	}
-#endif    
+    Name (_DEP, Package() {\_SB.I2C1})
 
     // Create the GenericSerialBus data buffer for ULPMC
     Name(BFFG, Buffer(0x55) {0xFF}) // 0x53+2

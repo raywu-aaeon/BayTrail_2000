@@ -41,15 +41,14 @@
 [LibraryClasses]
   AmiDxeLib
   UefiDriverEntryPoint
-  BaseLib
-
 
 [Guids]
 #-  gRomImageAddressGuid
 #-  gRomImageHobGuid
 
 [Protocols]
-  gEfiFirmwareVolumeBlockProtocolGuid
+  gEfiFirmwareVolumeBlockProtocolGuid 
 
 [Depex.common.DXE_DRIVER]
-  gEfiFirmwareVolumeBlockProtocolGuid
+#  gEfiSmmBase2ProtocolGuid  #<EIP145799->
+  gEfiFirmwareVolumeBlockProtocolGuid #<EIP145799+>

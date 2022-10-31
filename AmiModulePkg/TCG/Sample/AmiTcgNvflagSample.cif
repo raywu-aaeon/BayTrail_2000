@@ -1,0 +1,10 @@
+<component>
+	name = "AmiTcgNvflagSample"
+	category = ModulePart
+	LocalRoot = "AmiModulePkg\TCG\Sample\"
+	RefName = "AmiTcgNvflagSample"
+[files]
+"AmiTcgNvflagSample.sdl"
+[INF]	
+"AmiTcgNvflagSample.inf"
+<endComponent>

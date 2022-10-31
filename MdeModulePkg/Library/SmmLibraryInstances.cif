@@ -8,6 +8,7 @@
 "PiSmmCoreMemoryAllocationLib\PiSmmCoreMemoryAllocationLib.inf"
 "PiSmmCoreSmmServicesTableLib\PiSmmCoreSmmServicesTableLib.inf"
 "SmmCorePerformanceLib\SmmCorePerformanceLib.inf"
+"SmmCorePlatformHookLibNull\SmmCorePlatformHookLibNull.inf"
 "SmmLockBoxLib\SmmLockBoxDxeLib.inf"
 "SmmLockBoxLib\SmmLockBoxPeiLib.inf"
 "SmmLockBoxLib\SmmLockBoxSmmLib.inf"

@@ -1,8 +1,0 @@
-<component>
-	name = "Terminal Setup Includes"
-	category = ModulePart
-	LocalRoot = "AmiModulePkg\Include\"
-	RefName = "Terminal Setup Includes"
-[files]
-"TerminalSetupVar.h"
-<endComponent>

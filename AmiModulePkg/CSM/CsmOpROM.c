@@ -464,7 +464,7 @@ Check30ROM(
 {
     PCI_DATA_STRUCTURE *pcir;
     EFI_STATUS Status;
-
+    // TODO:: move this patchy data elswhere
     static UINT32 pci30pretender[] = {
                 0x00041103, // Adaptec 1200 (did 0004 vid 1103)
                 0x444d8086, // Intel ROBSON Technology card (444D)

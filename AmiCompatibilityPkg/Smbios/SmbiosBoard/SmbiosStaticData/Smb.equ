@@ -9,7 +9,7 @@ _SMB_EQU_    equ    1
 ;****************************************************************************
 ;****************************************************************************
 ;**                                                                        **
-;**           (C)Copyright 1985-2015, American Megatrends, Inc.            **
+;**           (C)Copyright 1985-2013, American Megatrends, Inc.            **
 ;**                                                                        **
 ;**                          All Rights Reserved.                          **
 ;**                                                                        **
@@ -170,9 +170,6 @@ SE_COMPACT_PCI          equ     1Ah     ; CompactPCI
 SE_ADVANCED_TCA         equ     1Bh     ; AdvancedTCA
 SE_BLADE                equ     1Ch     ; Blade
 SE_BLADE_ENCLOSURE      equ     1Dh     ; Blade Enclosure
-SE_TABLET               equ     1Eh     ; Tablet
-SE_CONVERTIBLE          equ     1Fh     ; Convertible
-SE_DETACHABLE           equ     20h     ; Detachable
 
 ;----------------------------------------------------------------------------
 ; System Chassis Bootup state, Chassis Power Supply and Chassis Thermal State
@@ -250,7 +247,6 @@ FA_CORE_DUO             equ     28h     ; Intel(R) Core(TM) Duo Processor
 FA_CORE_DUO_MOBILE      equ     29h     ; Intel(R) Core(TM) Duo Mobile Processor
 FA_CORE_SOLO_MOBILE     equ     2Ah     ; Intel(R) Core(TM) Solo Mobile Processor
 FA_ATOM                 equ     2Bh     ; Intel(R) Atom(TM) Processor
-FA_CORE_M               equ     2Ch     ; Intel(R) Core(TM) M Processor
 FA_ALPHA_FAMILY         equ     30h     ; DEC Aplpha family
 FA_ALPHA_21064          equ     31h     ; Alpha 21064
 FA_ALPHA_21066          equ     32h     ; Alpha 21066
@@ -298,9 +294,6 @@ FA_68000                equ     62h     ; Motorola 68000 family
 FA_68010                equ     63h     ; Motorola 68010 family
 FA_68020                equ     64h     ; Motorola 68020 family
 FA_68030                equ     65h     ; Motorola 68030 family
-FA_AMD_ATHLON_X4        equ     66h     ; AMD Athlon(TM) X4 Quad-Core Processor Family
-FA_AMD_OPTERON_X1000    equ     67h     ; AMD Opteron(TM) X1000 Series Processor
-FA_AMD_OPTERON_X2000    equ     68h     ; AMD Opteron(TM) X2000 Series APU
 FA_HOBBIT_FAMILY        equ     70h     ; Hobbit family
 FA_CRUSOE_TM5000        equ     78h     ; Crusoe TM5000
 FA_CRUSOE_TM3000        equ     79h     ; Crusoe TM3000
@@ -380,7 +373,6 @@ FA_VIA_EDEN             equ     0D5h    ; VIA Eden Processor
 FA_MULTI_CORE_XEON      equ     0D6h    ; Multi-Core Intel(R) Xeon(R) processor
 FA_DUAL_CORE_XEON_3XXX  equ     0D7h    ; Dual-Core Intel(R) Xeon(R) processor 3xxx Series
 FA_QUAD_CORE_XEON_3XXX  equ     0D8h    ; Quad-Core Intel(R) Xeon(R) processor 3xxx Series
-FA_VIA_NANO             equ     0D9h    ; VIA Nano(TM) Processor
 FA_DUAL_CORE_XEON_5XXX  equ     0DAh    ; Dual-Core Intel(R) Xeon(R) processor 5xxx Series
 FA_QUAD_CORE_XEON_5XXX  equ     0DBh    ; Quad-Core Intel(R) Xeon(R) processor 5xxx Series
 FA_DUAL_CORE_XEON_7XXX  equ     0DDh    ; Dual-Core Intel(R) Xeon(R) processor 7xxx Series
@@ -461,10 +453,6 @@ UPG_SOCKET_FM_1  		equ		29h		; Socket FM 1
 UPG_SOCKET_FM_2  		equ		2Ah		; Socket FM 2
 UPG_SOCKET_LGA_2011_3   equ     2Bh     ; Socket LGA2011-3
 UPG_SOCKET_LGA_1356_3   equ     2Ch     ; Socket LGA1356-3
-UPG_SOCKET_LGA_1150     equ     2Dh     ; Socket LGA1150
-UPG_SOCKET_BGA_1168     equ     2Eh     ; Socket BGA1168
-UPG_SOCKET_BGA_1234     equ     2Fh     ; Socket BGA1234
-UPG_SOCKET_BGA_1364     equ     30h     ; Socket BGA1364
 
 ;----------------------------------------------------------------------------
 ; Processor Voltage (a byte value)
@@ -783,19 +771,6 @@ SYS_SLOT_AGP_2X     equ     10h     ; AGP 2X
 SYS_SLOT_AGP_4X     equ     11h     ; AGP 4X
 SYS_SLOT_PCI_X      equ     12h     ; PCI-X
 SYS_SLOT_AGP_8X     equ     13h     ; AGP 8X
-SYS_SLOT_M2_SK1_DP  equ     14h     ; M.2 Socket 1-DP (Mechanical Key A)
-SYS_SLOT_M2_SK1_SD  equ     15h     ; M.2 Socket 1-SD (Mechanical Key E)
-SYS_SLOT_M2_SK2     equ     16h     ; M.2 Socket 2 (Mechanical Key B)
-SYS_SLOT_M2_SK3     equ     17h     ; M.2 Socket 3 (Mechanical Key M)
-SYS_SLOT_MXM_TYPE1  equ     18h     ; MXM Type I
-SYS_SLOT_MXM_TYPE2  equ     19h     ; MXM Type II
-SYS_SLOT_MXM_TYPE3_STD equ  1Ah     ; MXM Type III (standard connector)
-SYS_SLOT_MXM_TYPE3_HE equ   1Bh     ; MXM Type III (HE connector)
-SYS_SLOT_MXM_TYPE4  equ     1Ch     ; MXM Type IV
-SYS_SLOT_MXM_3_A    equ     1Dh     ; MXM 3.0 Type A
-SYS_SLOT_MXM_3_B    equ     1Eh     ; MXM 3.0 Type B
-SYS_SLOT_PCIE_G2    equ     1Fh     ; PCI Express Gen 2 SFF-8639
-SYS_SLOT_PCIE_G3    equ     20h     ; PCI Express Gen 3 SFF-8639
 SYS_SLOT_PC98_C20   equ     0A0h    ; PC-98/C20
 SYS_SLOT_PC98_C24   equ     0A1h    ; PC-98/C24
 SYS_SLOT_PC98_E     equ     0A2h    ; PC-98/E
@@ -1006,11 +981,6 @@ MEMORY_DEVICE_TYPE_DDR2     equ     13h     ; DDR2
 MEMORY_DEVICE_TYPE_DDR2_FB_DIM equ  14h     ; DDR2 FB-DIMM
 MEMORY_DEVICE_TYPE_DDR3     equ     18h     ; DDR3
 MEMORY_DEVICE_TYPE_FBD2     equ     19h     ; FBD2
-MEMORY_DEVICE_TYPE_DDR4     equ     1Ah     ; DDR4
-MEMORY_DEVICE_TYPE_LPDDR    equ     1Bh     ; LPDDR
-MEMORY_DEVICE_TYPE_LPDDR2   equ     1Ch     ; LPDDR2
-MEMORY_DEVICE_TYPE_LPDDR3   equ     1Dh     ; LPDDR3
-MEMORY_DEVICE_TYPE_LPDDR4   equ     1Eh     ; LPDDR4
 
 ;----------------------------------------------------------------------------
 ;    Structure Type 18: Equates used in 32Bit MEMORY ERROR Structure
@@ -1287,7 +1257,7 @@ endif    ;_SMB_EQU_
 ;****************************************************************************
 ;****************************************************************************
 ;**                                                                        **
-;**           (C)Copyright 1985-2015, American Megatrends, Inc.            **
+;**           (C)Copyright 1985-2013, American Megatrends, Inc.            **
 ;**                                                                        **
 ;**                          All Rights Reserved.                          **
 ;**                                                                        **

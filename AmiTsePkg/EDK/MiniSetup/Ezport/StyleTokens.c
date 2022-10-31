@@ -25,13 +25,17 @@
 //*****************************************************************//
 //*****************************************************************//
 //**********************************************************************
-/** @file StyleTokens.c
-    This file does not add any code. It has, all the string tokens that
-    are used by Minisetup, to fake the usage to strgather.exe. Add to
-    this list, the new string tokens that are defined in
-    AmiTSEStrstr.uni and to be used by Minisetup
-
-**/
+//<AMI_FHDR_START>
+//
+// Name:		ezporttokens.c
+//
+// Description:
+// This file does not add any code. It has, all the string tokens that
+// are used by Minisetup, to fake the usage to strgather.exe. Add to
+// this list, the new string tokens that are defined in
+// AmiTSEStrstr.uni and to be used by Minisetup
+//
+//<AMI_FHDR_END>
 //**********************************************************************
 
 

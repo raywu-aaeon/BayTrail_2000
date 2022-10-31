@@ -108,9 +108,7 @@ typedef struct _SB_SETUP_DATA {
     UINT8       PcieRootPortSNE[PCH_PCIE_MAX_ROOT_PORTS];
     UINT8       PcieRootPortSCE[PCH_PCIE_MAX_ROOT_PORTS];
     UINT8       PcieRootPortSpeed[PCH_PCIE_MAX_ROOT_PORTS];
-#if defined(PCIE_ROOT_PORT_DETECT_NON_COMPLAINT) && (PCIE_ROOT_PORT_DETECT_NON_COMPLAINT != 0)
-    UINT8   	PcieRPDetectNonComplaint[4]; //EIP191291
-#endif
+    
 	//EIP150027 >>
     // PCI Bridge Resources
     UINT8   	ExtraBusRsvd[PCH_PCIE_MAX_ROOT_PORTS];

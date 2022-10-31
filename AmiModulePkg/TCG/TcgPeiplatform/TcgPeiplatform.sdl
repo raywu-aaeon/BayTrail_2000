@@ -1,0 +1,11 @@
+PATH
+	Name  = "TCG_PEI_PLATFORM_DIR"
+	Help  = ""
+End
+
+INFComponent
+    Name  = "TcgPeiplatform"
+    File  = "TcgPeiplatform.inf"
+    Package  = "AmiModulePkg"
+    ModuleTypes  = "PEIM"
+End

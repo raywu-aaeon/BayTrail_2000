@@ -5,7 +5,6 @@
 	RefName = "AMITSE.TseAdvancedBin"
 [INF]
 "TseAdvancedBin.inf"
-"AdvancedImages\AdvancedImagesBin.inf"
 [files]
 "TseAdvancedBin.sdl"
 "AddDelBootDrvOpts.sd"

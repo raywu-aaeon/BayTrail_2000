@@ -1,33 +1,38 @@
-//***********************************************************************
-//***********************************************************************
-//**                                                                   **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.          **
-//**                                                                   **
-//**                       All Rights Reserved.                        **
-//**                                                                   **
-//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093         **
-//**                                                                   **
-//**                       Phone: (770)-246-8600                       **
-//**                                                                   **
-//***********************************************************************
-//***********************************************************************
+//**********************************************************************
+//**********************************************************************
+//**                                                                  **
+//**        (C)Copyright 1985-2012, American Megatrends, Inc.         **
+//**                                                                  **
+//**                       All Rights Reserved.                       **
+//**                                                                  **
+//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093        **
+//**                                                                  **
+//**                       Phone: (770)-246-8600                      **
+//**                                                                  **
+//**********************************************************************
+//**********************************************************************
 
-/** @file 
-OemRomId.c
-
-Oem Rom ID Check protocol is for Flash utility to send customer defined 
-specific ROM ID for BIOS to ID version checking uses. 
-
-BIOS should provide inserted ROM file's specific ROM ID location and then 
-check it, when ID is given by Flash Utility after OFBD_EXT_TBL_END.
-Moreover, Flash utility will have corresponding action, either stop flashing BIOS.
-
-*/
-
-//---------------------------------------------------------------------------
-// Include Files
-//---------------------------------------------------------------------------
-
+//**********************************************************************
+// $Header: /AptioV/Source/Modules/Ofbd/OemRomId/OemRomId.c $
+//
+// $Revision: $
+//
+// $Date: $
+//**********************************************************************
+//<AMI_FHDR_START>
+//
+// Name:	OemRomId.c
+//
+// Description: 
+// Oem Rom ID Check protocol is for Flash utility to send customer defined specific ROM ID for BIOS to ID version
+// checking uses. 
+//
+// BIOS should provide inserted ROM file's specific ROM ID location and then check it, when ID is given by Flash
+// Utility after OFBD_EXT_TBL_END.
+//
+// Moreover, Flash utility will have corresponding action, either stop flashing BIOS.
+//<AMI_FHDR_END>
+//**********************************************************************
 #include <Efi.h>
 #include <Token.h>
 #include <AmiLib.h>
@@ -35,18 +40,19 @@ Moreover, Flash utility will have corresponding action, either stop flashing BIO
 #include "OemRomId.h"
 #include "../Ofbd.h"
 
-
-/**
-   	Ofbd (Oem Rom Id Get handle)
-	
-	This function is used to request Afu to get the fixed address data of Rom file for BIOS to know.
-	
-	@param pOFBDHdr - Ofbd header.
-
-  	@return EFI_STATUS
-  	@retval EFI_SUCCESS Function executed successfully
-*/ 
-
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:	OFBDORIGetHandle
+//
+// Description:	OFBD OEM ROM ID Get Handle
+//
+// Input:
+//      IN OUT OFBD_HDR *pOFBDHdr
+// Output:
+//      EFI_STATUS
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
 OFBDORIGetHandle( 
     IN OUT OFBD_HDR *pOFBDHdr)
@@ -64,17 +70,19 @@ OFBDORIGetHandle(
     return(Status);
 }
 
-/**
-   	Ofbd (Oem Rom Id Check handle)
-		
-	This function is used to check the data get from Afu.
-	
-	@param pOFBDHdr - Ofbd header.
-
-  	@return EFI_STATUS
-  	@retval EFI_SUCCESS Function executed successfully
-*/ 
-
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:	OFBDORICheckHandle
+//
+// Description:	OFBD OEM ROM ID Check Handle
+//
+// Input:
+//      IN OUT OFBD_HDR *pOFBDHdr
+// Output:
+//      EFI_STATUS
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
 OFBDORICheckHandle(
     IN OUT OFBD_HDR *pOFBDHdr)
@@ -105,16 +113,20 @@ OFBDORICheckHandle(
     return(Status);
 }
 
-/**
-   	This function is Ofbd Oem Rom Id Check function entry point
-
-	@param Buffer - Ofbd header.
-  	@param pOFBDDataHandled - handle value returns
-  	
-	@retval	0xFF means Function executed successfully
-	@retval	0xFE means Function error occured
-*/ 
-
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:	OFBDEntryPoint
+//
+// Description:	OFBD OEM ROMID CHECK Entry Point
+//
+// Input:
+//      IN VOID             *Buffer
+//      IN OUT UINT8        *pOFBDDataHandled
+// Output:
+//      VOID
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID OEMROMIDEntry (
     IN VOID             *Buffer,
     IN OUT UINT8        *pOFBDDataHandled )
@@ -177,7 +189,7 @@ VOID OEMROMIDEntry (
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2012, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **

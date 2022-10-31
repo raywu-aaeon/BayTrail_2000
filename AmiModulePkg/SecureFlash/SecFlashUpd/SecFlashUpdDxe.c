@@ -1,7 +1,7 @@
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2013, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **
@@ -17,11 +17,11 @@
 #include <AmiDxeLib.h>
 #include <AmiHobs.h>
 #include <FlashUpd.h>
-#include <../SecureFlash.h>
+#include <Protocol/AmiDigitalSignature.h>
+#include "AmiCertificate.h"
 #include <Library/PciLib.h>
 
 #include <Guid/CapsuleVendor.h>
-
 //
 // Global variables
 //
@@ -49,6 +49,7 @@ EFI_GUID gBdsAllDriversConnectedProtocolGuid = BDS_ALL_DRIVERS_CONNECTED_PROTOCO
 #endif
 static EFI_GUID gBiosReadyToLockEventGuid = AMI_EVENT_FLASH_WRITE_LOCK;
 
+// TBD
 // Flash Lock Ready to lock event
 //#ifndef AMI_EVENT_FLASH_WRITE_LOCK_SET
 //// {707DF0E9-84BE-4A36-8996-D4311D788429}
@@ -59,17 +60,24 @@ static EFI_GUID gBiosReadyToLockEventGuid = AMI_EVENT_FLASH_WRITE_LOCK;
 
 #endif
 
-#if defined(ENABLE_SECURE_FLASH_INFO_PAGE) && ENABLE_SECURE_FLASH_INFO_PAGE == 1
+typedef struct{
+    UINT8 Key;
+    UINT8 Mode;
+    UINT8 Lock;
+} SECURE_FLASH_SETUP_VAR;
 
-SECURE_FLASH_SETUP_VAR SecureFlashSetupVar = {0,0,0,0};
-EFI_GUID gSecureFlashSetupVarGuid = AMI_SECURE_FLASH_SETUP_VAR_GUID;
+#define AMI_SECURE_FLASH_SETUP_VAR  L"SecureFlashSetupVar"
+// {35C936AF-E1E1-441a-BAD1-E1544E9D97A6}
+#define AMI_SECURE_FLASH_SETUP_VAR_GUID \
+    {0x35c936af, 0xe1e1, 0x441a, 0xba, 0xd1, 0xe1, 0x54, 0x4e, 0x9d, 0x97, 0xa6}
 
-#endif // #if defined(ENABLE_SECURE_FLASH_INFO_PAGE) && ENABLE_SECURE_FLASH_INFO_PAGE == 1
+SECURE_FLASH_SETUP_VAR SecureFlashSetupVar = {0,0,0};
+EFI_GUID gSecureFlashSetupVarGuid = AMI_SECURE_FLASH_SETUP_VAR_GUID;    
 
 //----------------------------------------------------------------------------
 // Function definitions
 //----------------------------------------------------------------------------
-#if defined(FLASH_LOCK_EVENT_NOTIFY) && FLASH_LOCK_EVENT_NOTIFY == 1
+#if FLASH_LOCK_EVENT_NOTIFY == 1
 
 //<AMI_PHDR_START>
 //----------------------------------------------------------------------------
@@ -106,9 +114,7 @@ ReadyToLockCallback (
     //
     pBS->CloseEvent(Event);
 }
-#endif
 
-#if defined(ENABLE_SECURE_FLASH_INFO_PAGE) && ENABLE_SECURE_FLASH_INFO_PAGE == 1
 //<AMI_PHDR_START>
 //----------------------------------------------------------------------------
 // Procedure: CheckBiosLockStatus
@@ -178,33 +184,31 @@ AfterLockCallback (
     UINTN Size;
     UINT32 Attributes;
     
-    Size = sizeof(SECURE_FLASH_SETUP_VAR);
+    TRACE((-1,"\nSecure Fl Upd: Flash Lock Complete callback\n"));
+    
     Status = pRS->GetVariable (AMI_SECURE_FLASH_SETUP_VAR, 
             &gSecureFlashSetupVarGuid,  
             &Attributes,
             &Size,
             &SecureFlashSetupVar);
-    if(SecureFlashSetupVar.Lock == 0) {
+    if(!EFI_ERROR(Status) && Size == sizeof(SECURE_FLASH_SETUP_VAR)) 
+    {
 //    
 // test only. will remove the call when actual BiosLockSet event is supported
 //
         SecureFlashSetupVar.Lock = CheckBiosLockStatus();
 // end
-        if(SecureFlashSetupVar.Lock != 0) {
-            Size = sizeof(SECURE_FLASH_SETUP_VAR);
-            Status = pRS->SetVariable (AMI_SECURE_FLASH_SETUP_VAR, 
-                    &gSecureFlashSetupVarGuid,                      EFI_VARIABLE_BOOTSERVICE_ACCESS,
-                    Size,
-                    &SecureFlashSetupVar);
-        }
+        pRS->SetVariable (AMI_SECURE_FLASH_SETUP_VAR, 
+                &gSecureFlashSetupVarGuid,                  Attributes,
+                Size,
+                &SecureFlashSetupVar);
     }
     //
     //Kill the Event
     //
     pBS->CloseEvent(Event);
 }
-#endif // #if defined(ENABLE_SECURE_FLASH_INFO_PAGE) && ENABLE_SECURE_FLASH_INFO_PAGE == 1
-
+#endif
 //<AMI_PHDR_START>
 //----------------------------------------------------------------------------
 // Procedure:   SecFlashUpdDxe_Init
@@ -229,31 +233,31 @@ SecFlashUpdDxe_Init (
     IN EFI_SYSTEM_TABLE   *SystemTable
 )
 {
-    EFI_STATUS Status = EFI_SUCCESS;
-    AMI_FLASH_UPDATE_BLOCK  FlashUpdDesc;
-    UINT32     Attributes;
-    UINTN      Size;
-
 #if FLASH_LOCK_EVENT_NOTIFY == 1
     VOID     *gSbHobList ;
     EFI_EVENT mSecureModEvent;
     VOID      *mSecureModReg;
 #endif
+    EFI_STATUS  Status = EFI_SUCCESS;
+    UINT32                  Attributes;
+    UINTN                   Size;
     
+    FLASH_UPD_POLICY FlUpdatePolicy = {FlashUpdatePolicy, BBUpdatePolicy};
+    CRYPT_HANDLE  pPubKeyHndl;
+    AMI_DIGITAL_SIGNATURE_PROTOCOL *AmiSig;
+    EFI_GUID PRKeyGuid       = PR_KEY_GUID;
+    UINT8                    Byte;
+
     InitAmiLib(ImageHandle, SystemTable);
 
-// Prep the FlashOp variable
-    Size = sizeof(AMI_FLASH_UPDATE_BLOCK);
-    if(!EFI_ERROR(pRS->GetVariable( FLASH_UPDATE_VAR,&gFlashUpdGuid,&Attributes,&Size, &FlashUpdDesc)))
-    {
-        // Erase NV Flash Var
+    Size = 0;
+    if(pRS->GetVariable( FLASH_UPDATE_VAR,&gFlashUpdGuid,&Attributes,&Size, NULL)==EFI_BUFFER_TOO_SMALL) {
+        // Erase Flash Var
         pRS->SetVariable (FLASH_UPDATE_VAR,&gFlashUpdGuid,Attributes,0,NULL);
-        // Make volatile ver of FlashUpd - to be used by a ReFlash driver
-        pRS->SetVariable (FLASH_UPDATE_VAR,&gFlashUpdGuid,(Attributes & ~EFI_VARIABLE_NON_VOLATILE), Size, &FlashUpdDesc);
         // Clear pending Capsule Update Var
         // only if FlashOp is pending. We don't want to interfere with other types of Capsule Upd
         Size = 0;
-        if(pRS->GetVariable(EFI_CAPSULE_VARIABLE_NAME, &gEfiCapsuleVendorGuid, &Attributes, &Size, NULL) == EFI_BUFFER_TOO_SMALL)
+        if(pRS->GetVariable(EFI_CAPSULE_VARIABLE_NAME, &gEfiCapsuleVendorGuid, &Attributes, &Size, NULL) ==EFI_BUFFER_TOO_SMALL)
             pRS->SetVariable(EFI_CAPSULE_VARIABLE_NAME, &gEfiCapsuleVendorGuid, Attributes,0,NULL);
     }
 ///////////////////////////////////////////////////////////////////////////////
@@ -283,27 +287,99 @@ SecFlashUpdDxe_Init (
                                         NULL,
                                         &mSecureModEvent);
     ASSERT_EFI_ERROR (Status);
-    if(EFI_ERROR(Status)) {
-        return Status;
-    }
-#endif
-    
-#if defined(ENABLE_SECURE_FLASH_INFO_PAGE) && ENABLE_SECURE_FLASH_INFO_PAGE == 1
     // Installing a callback on BIOS Lock set event.
+    //                                  &gBiosLockSetEventGuid,
     Status = RegisterProtocolCallback ( &gBdsAllDriversConnectedProtocolGuid, \
-//                                      &gBiosLockSetEventGuid,
                                         AfterLockCallback, \
                                         NULL, \
                                         &mSecureModEvent, \
                                         &mSecureModReg );
 #endif
-    return Status;
+    ///////////////////////////////////////////////////////////////////////////////
+    //
+    // Updated Secure Flash Setup Var
+    //
+    ///////////////////////////////////////////////////////////////////////////////
+    // Key
+    // 0 - Disabled, No Key
+    // 1 - Enabled, RSA2048
+    // 2 - Enabled, SHA256
+    // 3 - Enabled, x509
+    // 4 - Disabled, DummyKey
+    // Lock 
+    // 0 - Flash Lock information N/A
+    // 1 - Flash Lock Disabled
+    // 2 - Flash Lock Enabled    
+    // Mode
+    // 0 - Flash Updates disabled
+    // 1 - Flash Update: Runtime, Recovery, Capsule
+    // 2 - Flash Update: Runtime, Recovery
+    // 3 - Flash Update: Runtime
+    //
+    // Look up for FwKey 
+    //
+    Status = pBS->LocateProtocol(&gAmiDigitalSignatureProtocolGuid, NULL, &AmiSig);
+    if (EFI_ERROR(Status)) return Status;
+
+// Get PRKey and move it in SMM protected location
+    pPubKeyHndl.Blob = NULL;
+    pPubKeyHndl.BlobSize = 0;
+    Status = AmiSig->GetKey(AmiSig, &pPubKeyHndl, &PRKeyGuid, pPubKeyHndl.BlobSize, 0);
+TRACE((TRACE_ALWAYS,"GetKey %r (%x, %d bytes)\n",Status, pPubKeyHndl.Blob,pPubKeyHndl.BlobSize));
+    if (!EFI_ERROR(Status) || Status == EFI_BUFFER_TOO_SMALL) {
+        if(!guidcmp(&pPubKeyHndl.AlgGuid, &gEfiCertRsa2048Guid)) 
+            SecureFlashSetupVar.Key = 1;
+        if(!guidcmp(&pPubKeyHndl.AlgGuid, &gEfiCertSha256Guid)) 
+            SecureFlashSetupVar.Key = 2;
+        if(!guidcmp(&pPubKeyHndl.AlgGuid, &gEfiCertX509Guid))
+            SecureFlashSetupVar.Key = 3;
+        
+        // check If dummy key - return Mode = 0
+        Byte = pPubKeyHndl.Blob[0];
+        for(Size = 1; Size < pPubKeyHndl.BlobSize && (Byte == pPubKeyHndl.Blob[Size]); Size++);
+        if(Size == pPubKeyHndl.BlobSize) {
+            SecureFlashSetupVar.Key = 4; // dummy key
+        }
+    } else
+    //
+    // Flash Upd Mode
+    //
+    if(SecureFlashSetupVar.Key == 4)    // dummy key
+        FlUpdatePolicy.FlashUpdate = 0; // Sec Flash disabled
+
+#if FWCAPSULE_RECOVERY_SUPPORT == 0
+    FlUpdatePolicy.FlashUpdate &=~FlCapsule;
+#endif    
+    if((FlUpdatePolicy.FlashUpdate & (FlCapsule | FlRecovery | FlRuntime)) ==
+            (FlCapsule | FlRecovery | FlRuntime))
+            SecureFlashSetupVar.Mode = 1;
+    if((FlUpdatePolicy.FlashUpdate & (FlCapsule | FlRecovery | FlRuntime)) ==
+            (FlRecovery | FlRuntime))
+            SecureFlashSetupVar.Mode = 2;
+    if((FlUpdatePolicy.FlashUpdate & (FlCapsule | FlRecovery | FlRuntime)) ==
+            (FlRuntime))
+            SecureFlashSetupVar.Mode = 3;
+    //
+    // Flash Lock
+    //
+    SecureFlashSetupVar.Lock = 0; // N/A, TBD
+    //
+    // Set Flash Upd Setup Var
+    //
+    Size = sizeof(SECURE_FLASH_SETUP_VAR);
+    pRS->SetVariable (AMI_SECURE_FLASH_SETUP_VAR, 
+            &gSecureFlashSetupVarGuid,  
+            EFI_VARIABLE_RUNTIME_ACCESS | EFI_VARIABLE_BOOTSERVICE_ACCESS,
+            Size,
+            &SecureFlashSetupVar);
+
+    return EFI_SUCCESS;
 }
 
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2013, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **

@@ -1,7 +1,7 @@
 #*************************************************************************
 #*************************************************************************
 #**                                                                     **
-#**        (C)Copyright 1985-2014, American Megatrends, Inc.            **
+#**        (C)Copyright 1985-2013, American Megatrends, Inc.            **
 #**                                                                     **
 #**                       All Rights Reserved.                          **
 #**                                                                     **
@@ -22,36 +22,36 @@
 #<AMI_FHDR_END>
 #*************************************************************************
 Prepare: \
-$(BUILD_DIR)$(PATH_SLASH)PK \
-$(BUILD_DIR)$(PATH_SLASH)KEK \
-$(BUILD_DIR)$(PATH_SLASH)db
+$(BUILD_DIR)\PK\
+$(BUILD_DIR)\KEK\
+$(BUILD_DIR)\db
 
 ifeq ($(DBT_include),1)
-Prepare: $(BUILD_DIR)$(PATH_SLASH)dbt
+Prepare: $(BUILD_DIR)\dbt
 endif
 
 ifeq ($(DBX_include),1)
-Prepare: $(BUILD_DIR)$(PATH_SLASH)dbx
+Prepare: $(BUILD_DIR)\dbx
 endif
 
 #---------------------------------------------------------------------------
 #   Include Secure Variables as .FFS
 #---------------------------------------------------------------------------
-$(BUILD_DIR)$(PATH_SLASH)PK : $(PkVar)
+$(BUILD_DIR)\PK : $(PkVar)
 	$(CP) $< $@
-$(BUILD_DIR)$(PATH_SLASH)KEK: $(KekVar)
+$(BUILD_DIR)\KEK: $(KekVar)
 	 $(CP) $< $@
-$(BUILD_DIR)$(PATH_SLASH)db: $(dbVar)
+$(BUILD_DIR)\db: $(dbVar)
 	 $(CP) $< $@
-$(BUILD_DIR)$(PATH_SLASH)dbt: $(dbtVar)
+$(BUILD_DIR)\dbt: $(dbtVar)
 	 $(CP) $< $@
-$(BUILD_DIR)$(PATH_SLASH)dbx: $(dbxVar)
+$(BUILD_DIR)\dbx: $(dbxVar)
 	 $(CP) $< $@
   
 #*************************************************************************
 #*************************************************************************
 #**                                                                     **
-#**        (C)Copyright 1985-2014, American Megatrends, Inc.            **
+#**        (C)Copyright 1985-2013, American Megatrends, Inc.            **
 #**                                                                     **
 #**                       All Rights Reserved.                          **
 #**                                                                     **

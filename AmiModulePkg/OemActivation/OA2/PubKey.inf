@@ -7,4 +7,4 @@
     FILE_GUID = 996AA1E0-1E8C-4f36-B519-A170A206FC14
 
 [Binaries]
-    BIN|$(PUBKEY_BIN)|*
+    BIN|PubKey.bin|*

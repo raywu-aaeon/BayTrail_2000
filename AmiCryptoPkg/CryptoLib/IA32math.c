@@ -1,7 +1,7 @@
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2015, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2013, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **
@@ -24,14 +24,16 @@
 //
 //----------------------------------------------------------------------
 //<AMI_FHDR_END>
-#include <Library/BaseLib.h>
+#include "AmiLib.h"
 
+#if defined(_WIN64)
+#else
 //<AMI_PHDR_START>
 //**********************************************************************
 //
 // Procedure:  _allmul
 //
-// Description:    64x32 bit multiplication
+// Description:	64x32 bit multiplication
 //              long multiply routine
 //              Does a long multiply (same for signed/unsigned)
 //
@@ -39,247 +41,136 @@
 //  Value64  multiplier (QWORD)
 //  Value32  multiplicand (QWORD)
 //
-// Output:      UINT64 - 64bit product of multiplier and multiplicand
+// Output:	  UINT64 - 64bit product of multiplier and multiplicand
 //
 //**********************************************************************
 //<AMI_PHDR_END>
 UINT64 _allmul(IN UINT64 Value64,IN UINTN Value32)
 {
-//    return Mul64(Value64, Value32);
-    return MultU64x32(Value64, Value32);
-}
+    return Mul64(Value64, Value32);
 /*
- * Multiplies a 64-bit signed or unsigned value by a 64-bit signed or unsigned value
- * and returns a 64-bit result.
- */
-/*
-__declspec(naked) void __cdecl _allmul (void)
-{
-  //
-  // Wrapper Implementation over EDKII MultS64x64() routine
-  //    INT64
-  //    EFIAPI
-  //    MultS64x64 (
-  //      IN      INT64      Multiplicand,
-  //      IN      INT64      Multiplier
-  //      )
-  //
-  _asm {
-    ; Original local stack when calling _allmul
-    ;               -----------------
-    ;               |               |
-    ;               |---------------|
-    ;               |               |
-    ;               |--Multiplier --|
-    ;               |               |
-    ;               |---------------|
-    ;               |               |
-    ;               |--Multiplicand-|
-    ;               |               |
-    ;               |---------------|
-    ;               |  ReturnAddr** |
-    ;       ESP---->|---------------|
-    ;
+//; EXIT PARAMETERS.
+//;    EDX:EAX - Result.
+    UINT32 MA=(UINT32)(Value64>>32);
+    UINT32 MB=(UINT32)Value64;
+    UINT32 MC(UINT32)Value32>>32;
+    UINT32 MD(UINT32)Value32;
+    _asm {
+// MA EQU DWORD PTR Value64 [4]
+// MB EQU DWORD PTR Value64
+// MC EQU DWORD PTR Value32 [4]
+// MD EQU DWORD PTR Value32
 
-    ;
-    ; Set up the local stack for Multiplicand parameter
-    ;
-    mov  eax, [esp + 16]
-    push eax
-    mov  eax, [esp + 16]
-    push eax
+ mov eax, MA
+ mov ecx, MC
+ or  ecx, eax    ; both zero?
+ mov ecx, MD
+ .if zero?      ; yes, use shortcut.
+   mov eax, MB
+   mul ecx      ; EDX:EAX = DB[0:63].
+ .else
+   mov eax, MA
+   mul ecx      ; EDX:EAX = DA[0:63].
+   mov esi, eax ; ESI = DA[0:31].
 
-    ;
-    ; Set up the local stack for Multiplier parameter
-    ;
-    mov  eax, [esp + 16]
-    push eax
-    mov  eax, [esp + 16]
-    push eax
+   mov eax, MB 
+   mul MC       ; EDX:EAX = CB[0:63]
+   add esi, eax ; ESI = DA[0:31] + CB[0:31]
 
-    ;
-    ; Call native MulS64x64 of BaseLib
-    ;
-    call MultS64x64
 
-    ;
-    ; Adjust stack
-    ;
-    add  esp, 16
+   mov eax, MB
+   mul ecx      ; EDX:EAX = BD[0:63]
+   add edx, esi ; EDX = DA[0:31] + CB[0:31] + DB[31:63]
+                ; EAX = DB[0:31]
+ .endif
 
-    ret  16
-  }
-} 
+    }
 */
+}
 //<AMI_PHDR_START>
 //**********************************************************************
 //
 // Procedure:  _aullshr
 //
-// Description:    Does a Long Shift Right (signed and unsigned are identical)
+// Description:	Does a Long Shift Rightt (signed and unsigned are identical)
 //              Shifts a long right any number of bits.
 //
 // Input:
 //          EDX:EAX - long value to be shifted
 //          CL    - number of bits to shift by
 //
-// Output:     
+// Output:	 
 //          EDX:EAX - shifted value
 //
 //**********************************************************************
 //<AMI_PHDR_END>
-//__declspec(naked) void __cdecl _aullshr(void)
 _aullshr( IN UINT64 Value, IN UINT8 Shift )
 {
-//    return Shr64(Value, Shift);
-    _asm {
-        xor     ebx, ebx
-        test    cl, 32
-        ; Handle shifting of 32-63 bits
-        cmovnz  eax, edx
-        cmovnz  edx, ebx
-
-        shrd    eax, edx, cl
-        shr     edx, cl
-    }
+	_asm {
+			xor	ebx, ebx
+			test cl, 32
+			cmovnz   eax, edx
+			cmovnz   edx, ebx
+			shrd    eax, edx, cl
+			shr     edx, cl
+	}
 }
 
-/*
- * Shifts a 64-bit unsigned value right by a certain number of bits.
- */
-/*
-__declspec(naked) void __cdecl _aullshr (void)
-{
-  _asm {
-    ;
-    ; Checking: Only handle 64bit shifting or more
-    ;
-    cmp     cl, 64
-    jae     _Exit
-
-    ;
-    ; Handle shifting between 0 and 31 bits
-    ;
-    cmp     cl, 32
-    jae     More32
-    shrd    eax, edx, cl
-    shr     edx, cl
-    ret
-
-    ;
-    ; Handle shifting of 32-63 bits
-    ;
-More32:
-    mov     eax, edx
-    xor     edx, edx
-    and     cl, 31
-    shr     eax, cl
-    ret
-
-    ;
-    ; Invalid number (less then 32bits), return 0
-    ;
-_Exit:
-    xor     eax, eax
-    xor     edx, edx
-    ret
-  }
-}
-*/
 //<AMI_PHDR_START>
 //**********************************************************************
 //
 // Procedure:  _allshl
 //
-// Description:    Does a Long Shift Left (signed and unsigned are identical)
+// Description:	Does a Long Shift Left (signed and unsigned are identical)
 //              Shifts a long left any number of bits.
 //
 // Input:
-//         EDX:EAX - long value to be shifted
-//         CL      - number of bits to shift by
+//  Value64  long value to be shifted
+//  Value8   number of bits to shift by
 //
-// Output: 
-//         EDX:EAX - shifted value
+// Output:	  UINT64 - 64bit product of multiplier and multiplicand
 //
 //**********************************************************************
 //<AMI_PHDR_END>
-//__declspec(naked) void __cdecl _allshl(void)
+/*
 _allshl( IN UINT64 Value, IN UINT8 Shift )
 {
-    _asm {
-        xor    ebx, ebx
-        test   cl, 32
-        ; Handle shifting of 32-63 bits
-        cmovnz  edx, eax
-        cmovnz  eax, ebx
-
-        shld    edx, eax, cl
-        shl     eax, cl
-    }
+	_asm {
+    			xor	ebx, ebx
+                test cl, 32
+                cmovz   eax, edx
+                cmovz   edx, ebx
+                shld    edx, eax, cl
+                shl     eax, cl
+	}
 }
-/*
-    __asm {
-;
-; Handle shifts of 64 or more bits (all get 0)
-;
-        cmp     cl, 64
-        jae     short RETZERO
-
-;
-; Handle shifts of between 0 and 31 bits
-;
-        cmp     cl, 32
-        jae     short MORE32
-        shld    edx,eax,cl
-        shl     eax,cl
-        ret
-
-;
-; Handle shifts of between 32 and 63 bits
-;
-MORE32:
-        mov     edx,eax
-        xor     eax,eax
-        and     cl,31
-        shl     edx,cl
-        ret
-
-;
-; return 0 in edx:eax
-;
-RETZERO:
-        xor     eax,eax
-        xor     edx,edx
-        ret
-    }
- */    
+*/
 
 //<AMI_PHDR_START>
 //**********************************************************************
 //
 // Procedure:  _aulldiv
 //
-// Description:    Does a unsigned long divide of the arguments.
+// Description:	Does a unsigned long divide of the arguments.
 //
 // Input:
 //  Value64  dividend (QWORD)
 //  Value64  divisor (QWORD)
 //
-// Output:      UINT64 - 64bit product of multiplier and multiplicand
+// Output:	  UINT64 - 64bit product of multiplier and multiplicand
 //
 //**********************************************************************
 //<AMI_PHDR_END>
-UINT64 _aulldiv(IN UINT64 Dividend, IN UINTN Divisor)    //Can only be 31 bits for IA-32
+UINT64 _aulldiv(IN UINT64 Dividend, IN UINTN Divisor)	//Can only be 31 bits for IA-32
 {
-//    UINTN    *Remainder=0;
-//    return Div64(Dividend, Divisor, Remainder);
-////    return DivU64x64Remainder(Dividend, Divisor, Remainder);
-    return DivU64x32(Dividend, Divisor);
+    UINTN	*Remainder=0;
+    return Div64(Dividend, Divisor, Remainder);
 }
+#endif //#if defined(_WIN64)
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2015, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2013, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **

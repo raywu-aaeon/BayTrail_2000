@@ -24,10 +24,6 @@
 //<AMI_FHDR_END>
 #include "AmiLib.h"
 
-#include "includes.h"
-#include "os.h"
-#include "wpa_debug.h"
-
 // RestCRmm
 // InitCRmm
 // malloc
@@ -54,12 +50,10 @@ typedef struct {
 //
 // Global variables
 //
-static CR_MEM_DESC    *gCurDesc = NULL;
-static CR_MEM_DESC    *gFirstDesc = NULL;
-static UINT8          *gMemHeap = NULL;
-static UINTN           gMaxHeapSize = 0;
-// dbg
-static UINT8          *gMaxAddrReached = NULL;
+CR_MEM_DESC    *gCurDesc = NULL;
+CR_MEM_DESC    *gFirstDesc = NULL;
+UINT8          *gMemHeap = NULL;
+UINTN           gMaxHeapSize = 0;
 
 /*
 Optimization-combining free blocks:
@@ -109,7 +103,7 @@ void CR_squeze(int **i, CR_MEM_DESC* pDesc, int *Pages )
 //   |<--------- mem heap --------->|<-- mem_desc -->|
 //   |______________________________|________________|
 //
-//    alternative implementation for optimization-combining free blocks:
+//    TBD. Optimization-combining free blocks:
 //    If free descriptor with smaller page size is found, check if adjacent block(s) are free too:
 //     - Last free descriptor: update the Addr to next available Page
 //     - Next free descriptor with available combined Page size(can be more then 1:
@@ -151,21 +145,13 @@ void *malloc(unsigned int Size)
         i++;
     }
 // allocate new one
-    if(gCurDesc > gFirstDesc) {
-        wpa_printf(MSG_INFO,"====\nMMGR:Descriptor mem overflow %08X>%08X\n====", gCurDesc, gFirstDesc);
+    if(gCurDesc > gFirstDesc)
         return NULL;// out of Desc space
-    }
 
     NewAddr = pDesc->Addr+(pDesc->Pages*CR_PAGE_SIZE);
     LastHeapAddr = NewAddr+(Pages*CR_PAGE_SIZE);
 // reuse the descriptor if it has matching address
     if(NewAddr != pDesc->Addr) pDesc--;
-
-// dbg    
-    if(gMaxAddrReached < LastHeapAddr) {
-        gMaxAddrReached = LastHeapAddr;
-    }
-// end dbg    
     if(LastHeapAddr < (UINT8*)pDesc)
     {
         gCurDesc = pDesc;
@@ -174,11 +160,10 @@ void *malloc(unsigned int Size)
         pDesc->Attrib = CR_BLOCK_USED;
         return (VOID*)(NewAddr);
     }
-   	wpa_printf(MSG_INFO,"====>\nMMGR:Heap and Descriptor mem overlap %08X>%08X\n<====", LastHeapAddr, (UINT8*)pDesc);
     return NULL; // out of Heap space
 }
 
-void *os_zalloc(size_t/*unsigned int*/ Size)
+void *os_zalloc(unsigned int Size)
 {
     return(malloc(Size));
 }
@@ -205,7 +190,7 @@ void free(void *ptr)
         {
             pDesc[i].Attrib = CR_BLOCK_FREE;
             // clear unused memory
-            memset(pDesc[i].Addr, 0x0, pDesc[i].Pages*CR_PAGE_SIZE);
+            MemSet(pDesc[i].Addr, pDesc[i].Pages*CR_PAGE_SIZE, 0x0);
             ptr=NULL;
             return;
         }
@@ -240,7 +225,7 @@ void *realloc(void *OldPtr, unsigned int NewSize)
         } else {
             NewPtr = malloc(NewSize);
             if(NewPtr != NULL){
-                memcpy(NewPtr, OldPtr, NewSize);
+                MemCpy(NewPtr, OldPtr, NewSize);
                 free( OldPtr );
                 return NewPtr;
             }
@@ -258,17 +243,12 @@ void *realloc(void *OldPtr, unsigned int NewSize)
 //<AMI_PHDR_END>
 void ResetCRmm()
 {
-    memset( gMemHeap, 0x0, (int)gMaxHeapSize);
+    MemSet( gMemHeap, (int)gMaxHeapSize, 0);
 // Init 1st descriptor
     gCurDesc = gFirstDesc;
     gCurDesc->Addr = gMemHeap;
     gCurDesc->Pages = 0;
     gCurDesc->Attrib = CR_BLOCK_FREE;
-    // dbg    
-     wpa_printf(MSG_INFO,"====>Crypt MMGR\nMax Heap available = %08X\nMax Heap attempted = %08X\n",
-              (UINTN)gFirstDesc-(UINTN)gMemHeap,
-              (gMaxAddrReached==NULL)?0:((UINTN)gMaxAddrReached)-(UINTN)gMemHeap);
-     gMaxAddrReached = NULL;
 }
 
 //<AMI_PHDR_START>

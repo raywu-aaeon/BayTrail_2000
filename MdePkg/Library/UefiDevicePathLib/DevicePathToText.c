@@ -1,7 +1,7 @@
 /** @file
   DevicePathToText protocol as defined in the UEFI 2.0 specification.
 
-Copyright (c) 2013 - 2014, Intel Corporation. All rights reserved.<BR>
+Copyright (c) 2013, Intel Corporation. All rights reserved.<BR>
 This program and the accompanying materials
 are licensed and made available under the terms and conditions of the BSD License
 which accompanies this distribution.  The full text of the license may be found at
@@ -710,41 +710,6 @@ DevPathToTextSasEx (
 
 **/
 VOID
-DevPathToTextNVMe (
-  IN OUT POOL_PRINT  *Str,
-  IN VOID            *DevPath,
-  IN BOOLEAN         DisplayOnly,
-  IN BOOLEAN         AllowShortcuts
-  )
-{
-  NVME_NAMESPACE_DEVICE_PATH *Nvme;
-  UINT8                      *Uuid;
-
-  Nvme = DevPath;
-  Uuid = (UINT8 *) &Nvme->NamespaceUuid;
-  UefiDevicePathLibCatPrint (
-    Str,
-    L"NVMe(0x%x,%02x-%02x-%02x-%02x-%02x-%02x-%02x-%02x)",
-    Nvme->NamespaceId,
-    Uuid[7], Uuid[6], Uuid[5], Uuid[4],
-    Uuid[3], Uuid[2], Uuid[1], Uuid[0]
-    );
-}
-
-/**
-  Converts a 1394 device path structure to its string representative.
-
-  @param Str             The string representative of input device.
-  @param DevPath         The input device path structure.
-  @param DisplayOnly     If DisplayOnly is TRUE, then the shorter text representation
-                         of the display node is used, where applicable. If DisplayOnly
-                         is FALSE, then the longer text representation of the display node
-                         is used.
-  @param AllowShortcuts  If AllowShortcuts is TRUE, then the shortcut forms of text
-                         representation for a device node can be used, where applicable.
-
-**/
-VOID
 DevPathToText1394 (
   IN OUT POOL_PRINT  *Str,
   IN VOID            *DevPath,
@@ -1025,13 +990,22 @@ DevPathToTextSata (
   SATA_DEVICE_PATH *Sata;
 
   Sata = DevPath;
-  UefiDevicePathLibCatPrint (
-    Str,
-    L"Sata(0x%x,0x%x,0x%x)",
-    Sata->HBAPortNumber,
-    Sata->PortMultiplierPortNumber,
-    Sata->Lun
-    );
+  if ((Sata->PortMultiplierPortNumber & SATA_HBA_DIRECT_CONNECT_FLAG) != 0) {
+    UefiDevicePathLibCatPrint (
+      Str,
+      L"Sata(0x%x,0x%x)",
+      Sata->HBAPortNumber,
+      Sata->Lun
+      );
+  } else {
+    UefiDevicePathLibCatPrint (
+      Str,
+      L"Sata(0x%x,0x%x,0x%x)",
+      Sata->HBAPortNumber,
+      Sata->PortMultiplierPortNumber,
+      Sata->Lun
+      );
+  }
 }
 
 /**
@@ -1790,15 +1764,6 @@ DevPathToTextEndInstance (
   UefiDevicePathLibCatPrint (Str, L",");
 }
 
-GLOBAL_REMOVE_IF_UNREFERENCED const DEVICE_PATH_TO_TEXT_GENERIC_TABLE mUefiDevicePathLibToTextTableGeneric[] = {
-  {HARDWARE_DEVICE_PATH,  L"HardwarePath"   },
-  {ACPI_DEVICE_PATH,      L"AcpiPath"       },
-  {MESSAGING_DEVICE_PATH, L"Msg"            },
-  {MEDIA_DEVICE_PATH,     L"MediaPath"      },
-  {BBS_DEVICE_PATH,       L"BbsPath"        },
-  {0, NULL}
-};
-
 /**
   Converts an unknown device path structure to its string representative.
 
@@ -1813,48 +1778,17 @@ GLOBAL_REMOVE_IF_UNREFERENCED const DEVICE_PATH_TO_TEXT_GENERIC_TABLE mUefiDevic
 
 **/
 VOID
-DevPathToTextNodeGeneric (
+DevPathToTextNodeUnknown (
   IN OUT POOL_PRINT  *Str,
   IN VOID            *DevPath,
   IN BOOLEAN         DisplayOnly,
   IN BOOLEAN         AllowShortcuts
   )
 {
-  EFI_DEVICE_PATH_PROTOCOL *Node;
-  UINTN                    Index;
-
-  Node = DevPath;
-
-  for (Index = 0; mUefiDevicePathLibToTextTableGeneric[Index].Text != NULL; Index++) {
-    if (DevicePathType (Node) == mUefiDevicePathLibToTextTableGeneric[Index].Type) {
-      break;
-    }
-  }
-
-  if (mUefiDevicePathLibToTextTableGeneric[Index].Text == NULL) {
-    //
-    // It's a node whose type cannot be recognized
-    //
-    UefiDevicePathLibCatPrint (Str, L"Path(%d,%d", DevicePathType (Node), DevicePathSubType (Node));
-  } else {
-    //
-    // It's a node whose type can be recognized
-    //
-    UefiDevicePathLibCatPrint (Str, L"%s(%d", mUefiDevicePathLibToTextTableGeneric[Index].Text, DevicePathSubType (Node));
-  }
-
-  Index = sizeof (EFI_DEVICE_PATH_PROTOCOL);
-  if (Index < DevicePathNodeLength (Node)) {
-    UefiDevicePathLibCatPrint (Str, L",");
-    for (; Index < DevicePathNodeLength (Node); Index++) {
-      UefiDevicePathLibCatPrint (Str, L"%02x", ((UINT8 *) Node)[Index]);
-    }
-  }
-
-  UefiDevicePathLibCatPrint (Str, L")");
+  UefiDevicePathLibCatPrint (Str, L"?");
 }
 
-GLOBAL_REMOVE_IF_UNREFERENCED const DEVICE_PATH_TO_TEXT_TABLE mUefiDevicePathLibToTextTable[] = {
+GLOBAL_REMOVE_IF_UNREFERENCED const DEVICE_PATH_TO_TEXT_TABLE mUefiDevicePathLibDevPathToTextTable[] = {
   {HARDWARE_DEVICE_PATH,  HW_PCI_DP,                        DevPathToTextPci            },
   {HARDWARE_DEVICE_PATH,  HW_PCCARD_DP,                     DevPathToTextPccard         },
   {HARDWARE_DEVICE_PATH,  HW_MEMMAP_DP,                     DevPathToTextMemMap         },
@@ -1868,7 +1802,6 @@ GLOBAL_REMOVE_IF_UNREFERENCED const DEVICE_PATH_TO_TEXT_TABLE mUefiDevicePathLib
   {MESSAGING_DEVICE_PATH, MSG_FIBRECHANNEL_DP,              DevPathToTextFibre          },
   {MESSAGING_DEVICE_PATH, MSG_FIBRECHANNELEX_DP,            DevPathToTextFibreEx        },
   {MESSAGING_DEVICE_PATH, MSG_SASEX_DP,                     DevPathToTextSasEx          },
-  {MESSAGING_DEVICE_PATH, MSG_NVME_NAMESPACE_DP,            DevPathToTextNVMe           },
   {MESSAGING_DEVICE_PATH, MSG_1394_DP,                      DevPathToText1394           },
   {MESSAGING_DEVICE_PATH, MSG_USB_DP,                       DevPathToTextUsb            },
   {MESSAGING_DEVICE_PATH, MSG_USB_WWID_DP,                  DevPathToTextUsbWWID        },
@@ -1934,12 +1867,12 @@ UefiDevicePathLibConvertDeviceNodeToText (
   // Process the device path node
   // If not found, use a generic function
   //
-  ToText = DevPathToTextNodeGeneric;
-  for (Index = 0; mUefiDevicePathLibToTextTable[Index].Function != NULL; Index++) {
-    if (DevicePathType (DeviceNode) == mUefiDevicePathLibToTextTable[Index].Type &&
-        DevicePathSubType (DeviceNode) == mUefiDevicePathLibToTextTable[Index].SubType
+  ToText = DevPathToTextNodeUnknown;
+  for (Index = 0; mUefiDevicePathLibDevPathToTextTable[Index].Function != NULL; Index++) {
+    if (DevicePathType (DeviceNode) == mUefiDevicePathLibDevPathToTextTable[Index].Type &&
+        DevicePathSubType (DeviceNode) == mUefiDevicePathLibDevPathToTextTable[Index].SubType
         ) {
-      ToText = mUefiDevicePathLibToTextTable[Index].Function;
+      ToText = mUefiDevicePathLibDevPathToTextTable[Index].Function;
       break;
     }
   }
@@ -1997,13 +1930,13 @@ UefiDevicePathLibConvertDevicePathToText (
     // Find the handler to dump this device path node
     // If not found, use a generic function
     //
-    ToText = DevPathToTextNodeGeneric;
-    for (Index = 0; mUefiDevicePathLibToTextTable[Index].Function != NULL; Index += 1) {
+    ToText = DevPathToTextNodeUnknown;
+    for (Index = 0; mUefiDevicePathLibDevPathToTextTable[Index].Function != NULL; Index += 1) {
 
-      if (DevicePathType (Node) == mUefiDevicePathLibToTextTable[Index].Type &&
-          DevicePathSubType (Node) == mUefiDevicePathLibToTextTable[Index].SubType
+      if (DevicePathType (Node) == mUefiDevicePathLibDevPathToTextTable[Index].Type &&
+          DevicePathSubType (Node) == mUefiDevicePathLibDevPathToTextTable[Index].SubType
           ) {
-        ToText = mUefiDevicePathLibToTextTable[Index].Function;
+        ToText = mUefiDevicePathLibDevPathToTextTable[Index].Function;
         break;
       }
     }

@@ -292,7 +292,7 @@ GetPeCoffImageFixLoadingAssignedAddress(
      }
      SectionHeaderOffset += sizeof (EFI_IMAGE_SECTION_HEADER);     
    }
-   DEBUG ((EFI_D_INFO|EFI_D_LOAD, "LOADING MODULE FIXED INFO: Loading module at fixed address %p, Status = %r\n", FixLoaddingAddress, Status));
+   DEBUG ((EFI_D_INFO|EFI_D_LOAD, "LOADING MODULE FIXED INFO: Loading module at fixed address %x, Status = %r\n", FixLoaddingAddress, Status));
    return Status;
 }
 /**
@@ -898,7 +898,7 @@ SmmDispatcher (
             length = PdbPointer+length-4-temp;
             CopyMem(EfiFileName,temp,length);
             EfiFileName[length]=0;
-            DEBUG ((DEBUG_INFO | DEBUG_LOAD, "SMM.%a.Entry(%p)\n", EfiFileName, DriverEntry->ImageEntryPoint));
+            DEBUG ((DEBUG_INFO | DEBUG_LOAD, "SMM.%a.Entry(%x)\n", EfiFileName, DriverEntry->ImageEntryPoint));
         }
     }
 
@@ -917,7 +917,7 @@ SmmDispatcher (
         if (Status!=EFI_REQUEST_UNLOAD_IMAGE)
 		  DEBUG ((
 		    DEBUG_INFO | DEBUG_LOAD, 
-			"ERROR: SMM.%a.Entry(%p)=%r\n",
+			"ERROR: SMM.%a.Entry(%x)=%r\n",
 			EfiFileName, DriverEntry->ImageEntryPoint, Status
 		  ));
         DEBUG_CODE_END ();

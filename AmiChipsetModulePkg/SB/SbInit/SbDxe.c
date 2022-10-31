@@ -56,12 +56,8 @@
 #include <Protocol/BlockIo.h>
 #include <Protocol/PDiskInfo.h>
 #include <Protocol/PIDEController.h>
-//EIPEIP180881 >>
-#include <IndustryStandard/AmiAtaAtapi.h>
-#include <Protocol/AmiIdeBus.h>
-#include <Protocol/AmiAhciBus.h>
-#include <Protocol/AmiHddSecurity.h>
-//EIPEIP180881 <<
+#include <Protocol/PIDEBus.h>
+
 // Produced Protocols
 #include <Protocol/RealTimeClock.h>
 #include <Protocol/WatchdogTimer.h>
@@ -157,17 +153,6 @@ BOOT_SCRIPT_PCI_REGISTER_SAVE gSbMmioRegistersSave[] =
 {
     AZALIA_REG(R_PCH_HDA_HDBARL), EfiBootScriptWidthUint32, 0,
     AZALIA_REG(R_PCH_HDA_HDBARU), EfiBootScriptWidthUint32, 0,
-//    SPI_BASE_ADDRESS + R_PCH_SPI_SSFCS, EfiBootScriptWidthUint32, 0,
-//    SPI_BASE_ADDRESS + R_PCH_SPI_PREOP, EfiBootScriptWidthUint32, 0,
-//    SPI_BASE_ADDRESS + R_PCH_SPI_OPMENU0, EfiBootScriptWidthUint32, 0,
-//    SPI_BASE_ADDRESS + R_PCH_SPI_OPMENU1, EfiBootScriptWidthUint32, 0,
-//    SPI_BASE_ADDRESS + R_PCH_SPI_LVSCC, EfiBootScriptWidthUint32, 0,
-//    SPI_BASE_ADDRESS + R_PCH_SPI_UVSCC, EfiBootScriptWidthUint32, 0
-};
-//CSP20140123 <<
-
-BOOT_SCRIPT_PCI_REGISTER_SAVE gSbMmioRegistersSaveEarly[] =
-{
     SPI_BASE_ADDRESS + R_PCH_SPI_SSFCS, EfiBootScriptWidthUint32, 0,
     SPI_BASE_ADDRESS + R_PCH_SPI_PREOP, EfiBootScriptWidthUint32, 0,
     SPI_BASE_ADDRESS + R_PCH_SPI_OPMENU0, EfiBootScriptWidthUint32, 0,
@@ -175,6 +160,7 @@ BOOT_SCRIPT_PCI_REGISTER_SAVE gSbMmioRegistersSaveEarly[] =
     SPI_BASE_ADDRESS + R_PCH_SPI_LVSCC, EfiBootScriptWidthUint32, 0,
     SPI_BASE_ADDRESS + R_PCH_SPI_UVSCC, EfiBootScriptWidthUint32, 0
 };
+//CSP20140123 <<
 
 //----------------------------------------------------------------------------
 //          Variable Declaration
@@ -415,8 +401,6 @@ VOID SbInitBootScriptSave (
     EFI_STATUS                      Status;
     SB_SETUP_DATA                   PchPolicyData;
     UINT32                          Buffer32;
-    UINT32                          Index;
-
 
     Status = pBS->LocateProtocol (
                     &gEfiS3SaveStateProtocolGuid,
@@ -455,31 +439,6 @@ VOID SbInitBootScriptSave (
     #endif
     //(CSP20130606B+)(EIP125722)<<
     
-    for (Index=0; Index < sizeof(gSbMmioRegistersSaveEarly) / sizeof(BOOT_SCRIPT_PCI_REGISTER_SAVE); Index++)
-    {
-            switch (gSbMmioRegistersSaveEarly[Index].Width)
-            {
-                case (EfiBootScriptWidthUint32):
-                  gSbMmioRegistersSaveEarly[Index].Value = MmioRead32(gSbMmioRegistersSaveEarly[Index].Address);
-                  break;
-                case (EfiBootScriptWidthUint16):
-                  gSbMmioRegistersSaveEarly[Index].Value = MmioRead16(gSbMmioRegistersSaveEarly[Index].Address);
-                  break;
-                case (EfiBootScriptWidthUint8):
-                  gSbMmioRegistersSaveEarly[Index].Value = MmioRead8(gSbMmioRegistersSaveEarly[Index].Address);
-                  break;
-                default:
-                  gSbMmioRegistersSaveEarly[Index].Value = MmioRead32(gSbMmioRegistersSaveEarly[Index].Address);
-                  break;
-            }
-            BOOT_SCRIPT_S3_MEM_WRITE_MACRO(
-                gBootScriptSave,
-                gSbMmioRegistersSaveEarly[Index].Width,
-                gSbMmioRegistersSaveEarly[Index].Address,
-                1,
-                &gSbMmioRegistersSaveEarly[Index].Value
-            );
-    }
 }
 
 //<AMI_PHDR_START>
@@ -731,7 +690,7 @@ VOID InitSbRegsBeforeBoot(
 	UINT16							  PasswordSecurity = 0;
 	UINT16					  		  SecurityStatus = 0;
     EFI_HANDLE                        *HandleBuffer = NULL;
-    AMI_HDD_SECURITY_PROTOCOL         *IDEPasswordSecurity = NULL;    //EIPEIP180881
+    IDE_SECURITY_PROTOCOL             *IDEPasswordSecurity = NULL;    
     UINTN 							  Count = 0;
     //EIP156971 (-)>>
     //EIP146629 >> 
@@ -741,13 +700,6 @@ VOID InitSbRegsBeforeBoot(
 //#endif
 	//EIP146629 <<   
     //EIP156971 (-)<<
-    // [ EIP355841 ]+>>    
-    UINT8                             PciCmdValue;
-    UINT8                             PciBarIndex;
-    BOOLEAN                           PciBarXinit;
-    // [ EIP355841 ]+<<
-
-
     TRACE((TRACE_ALWAYS, "[[ InitSbRegsBeforeBoot() Start. ]]\n"));
     
 // Xhci workaround for disabling/enabling USB ports. (EIP135854+)>>
@@ -798,57 +750,17 @@ VOID InitSbRegsBeforeBoot(
     
       //Save Sata and ABAR S3 reg.
       Data32 = READ_MEM32 (SATA_REG(PCI_VID));
-// [ EIP355841 ]+>>
-      if ((Data32 & 0x0000FFFF) == 0x8086)          
-      {
-// [ EIP355841 ]+<<<      
-          SataMode = READ_MEM8(SATA_REG(PCI_SCC));
-//(EIP152970+)>>
-          PortControlStatus = READ_MEM16 (SATA_REG(SATA_REG_PCS)); //Get Port Control Status. Offset 0x92.   
       
-          if ((PortControlStatus & 0x0300) != 0) { //Check Sata Port1 & Port0 Present Status.
+      SataMode = READ_MEM8(SATA_REG(PCI_SCC));
+//(EIP152970+)>>
+      PortControlStatus = READ_MEM16 (SATA_REG(SATA_REG_PCS)); //Get Port Control Status. Offset 0x92.   
+      
+      if ((PortControlStatus & 0x0300) != 0) { //Check Sata Port1 & Port0 Present Status.
 //      if (Data32 != 0xffffffff) {
-//(EIP152970+)<<
+//(EIP152970+)<<	      
+        WRITE_MEM8 (SATA_REG(SATA_REG_PCICMD),0x07); //Force open the MEM & I/O decode for S3 Boot Script to save.
 
-// [ EIP355841 ]-
-//        WRITE_MEM8 (SATA_REG(SATA_REG_PCICMD),0x07); //Force open the MEM & I/O decode for S3 Boot Script to save.
-// [ EIP355841 ]+>>
-              PciCmdValue = READ_MEM8 (SATA_REG(SATA_REG_PCICMD));
-              for (PciBarIndex=PCI_BAR0, PciBarXinit=FALSE; PciBarIndex <= PCI_BAR5; PciBarIndex+=4)
-              {
-                  // BIT[0] 0 indicate memory space.
-                  // BIT[2:1] 10 indicate 64 bit base address
-                  if ((READ_MEM32(SATA_REG(PciBarIndex)) & (BIT2+BIT1+BIT0)) == BIT2)
-                  {
-                      TRACE((TRACE_ALWAYS, "PciBar(64bit)"));
-                      if ((MmioRead64(SATA_REG(PciBarIndex)) & 0xFFFFFFFFFFFFFFF0) != 0)
-                      {
-                          PciBarXinit = TRUE;
-                          break;
-                      }
-                      else
-                          PciBarIndex+=4;
-                    
-                  }
-                  else if ((READ_MEM32(SATA_REG(PciBarIndex)) & 0xFFFFFFF0) != 0)
-                  {
-                      PciBarXinit = TRUE;
-                      break;
-                  }
-              }
-        
-
-              if ((SataMode == V_PCH_SATA_CC_SCC_AHCI) && PciBarXinit)
-              {
-                  WRITE_MEM8 (SATA_REG(SATA_REG_PCICMD), B_PCH_SATA_COMMAND_BME+B_PCH_SATA_COMMAND_MSE+B_PCH_SATA_COMMAND_IOSE);  //Force open the MEM & I/O decode for S3 Boot Script to save.
-              }
-              else if ((SataMode == V_PCH_SATA_CC_SCC_IDE) && PciBarXinit)
-              {
-                  WRITE_MEM8 (SATA_REG(SATA_REG_PCICMD), B_PCH_SATA_COMMAND_BME+B_PCH_SATA_COMMAND_IOSE);                         //Force open the MEM & I/O decode for S3 Boot Script to save.
-              }    
-// [ EIP355841 ]+<<
-
-              for (i = 0; i < sizeof(gSata1RegistersSave)/ sizeof(BOOT_SCRIPT_SB_PCI_REG_SAVE); ++i) {
+        for (i = 0; i < sizeof(gSata1RegistersSave)/ sizeof(BOOT_SCRIPT_SB_PCI_REG_SAVE); ++i) {
         		BOOT_SCRIPT_S3_MEM_WRITE_MACRO (
         				gBootScriptSave, \
         				gSata1RegistersSave[i].Width, \
@@ -856,139 +768,131 @@ VOID InitSbRegsBeforeBoot(
         				1, \
         				(VOID *) (gSata1RegistersSave[i].Address) \
         				);
-              }
+        }
 
-              if (SataMode == V_PCH_SATA_CC_SCC_AHCI) {                       // [ EIP347466 ]+
-            
-                  AHCIBar = READ_MEM32 (SATA_REG(SATA_REG_ABAR));
-                  AHCIBar &= 0xFFFFFFF0;
+        AHCIBar = READ_MEM32 (SATA_REG(SATA_REG_ABAR));
+        AHCIBar &= 0xFFFFFFF0;
         
-                  GlobalPchControl = READ_MEM32 (AHCIBar + 0x04);
-                      BOOT_SCRIPT_S3_MEM_WRITE_MACRO (
-                              gBootScriptSave, \
-                              EfiBootScriptWidthUint32, \
-                              AHCIBar + 0x04, \
-                              1, \
-                              &GlobalPchControl \
-                  );
+        GlobalPchControl = READ_MEM32 (AHCIBar + 0x04);
+        BOOT_SCRIPT_S3_MEM_WRITE_MACRO (
+                gBootScriptSave, \
+                EfiBootScriptWidthUint32, \
+                AHCIBar + 0x04, \
+                1, \
+                &GlobalPchControl \
+                );
         
-                  PortImplemented = READ_MEM32 (AHCIBar + 0x0c);
-                  BOOT_SCRIPT_S3_MEM_WRITE_MACRO (
+        PortImplemented = READ_MEM32 (AHCIBar + 0x0c);
+        BOOT_SCRIPT_S3_MEM_WRITE_MACRO (
+                gBootScriptSave, \
+                EfiBootScriptWidthUint32, \
+                AHCIBar + 0x0c, \
+                1, \
+                &PortImplemented \
+                );
+	
+        for (i = 0, Offset = 0x100; i < 2 ; i++, Offset += 0x80) {
+          if ( PortImplemented & (BIT00 << i) ) {
+            Data32 = READ_MEM32 (AHCIBar + Offset);
+            BOOT_SCRIPT_S3_MEM_WRITE_MACRO (
                     gBootScriptSave, \
                     EfiBootScriptWidthUint32, \
-                    AHCIBar + 0x0c, \
+                    AHCIBar + Offset, \
                     1, \
-                    &PortImplemented \
-                  );
-	
-                  for (i = 0, Offset = 0x100; i < 2 ; i++, Offset += 0x80) {
-                      if ( PortImplemented & (BIT00 << i) ) {
-                          Data32 = READ_MEM32 (AHCIBar + Offset);
-                          BOOT_SCRIPT_S3_MEM_WRITE_MACRO (
-                            gBootScriptSave, \
-                            EfiBootScriptWidthUint32, \
-                            AHCIBar + Offset, \
-                            1, \
-                            &Data32 \
-                          );
+                    &Data32 \
+                    );
        	    
-                          Data32 = READ_MEM32 (AHCIBar + Offset + 0x04);
-                          BOOT_SCRIPT_S3_MEM_WRITE_MACRO (
-                            gBootScriptSave, \
-                            EfiBootScriptWidthUint32, \
-                            AHCIBar + Offset + 0x04, \
-                            1, \
-                            &Data32 \
-                          );
+            Data32 = READ_MEM32 (AHCIBar + Offset + 0x04);
+            BOOT_SCRIPT_S3_MEM_WRITE_MACRO (
+                    gBootScriptSave, \
+                    EfiBootScriptWidthUint32, \
+                    AHCIBar + Offset + 0x04, \
+                    1, \
+                    &Data32 \
+                    );
 		
-                          Data32 = READ_MEM32 (AHCIBar + Offset + 0x08);
-                          BOOT_SCRIPT_S3_MEM_WRITE_MACRO (
-                            gBootScriptSave, \
-                            EfiBootScriptWidthUint32, \
-                            AHCIBar + Offset + 0x08, \
-                            1, \
-                            &Data32 \
-                          );
+            Data32 = READ_MEM32 (AHCIBar + Offset + 0x08);
+            BOOT_SCRIPT_S3_MEM_WRITE_MACRO (
+                    gBootScriptSave, \
+                    EfiBootScriptWidthUint32, \
+                    AHCIBar + Offset + 0x08, \
+                    1, \
+                    &Data32 \
+                    );
 	    
-                          Data32 = READ_MEM32 (AHCIBar + Offset + 0x0c);
-                          BOOT_SCRIPT_S3_MEM_WRITE_MACRO (
-                            gBootScriptSave, \
-                            EfiBootScriptWidthUint32, \
-                            AHCIBar + Offset + 0x0c, \
-                            1, \
-                            &Data32 \
-                          );
-
-                          Data32 = READ_MEM32 (AHCIBar + Offset + 0x18);
-                          Data32 &= 0xFFFFFFEE; //Make sure Clear the Start and FIS Receive Enable bit
-                          BOOT_SCRIPT_S3_MEM_WRITE_MACRO (
-                            gBootScriptSave, \
-                            EfiBootScriptWidthUint32, \
-                            AHCIBar + Offset + 0x18, \
-                            1, \
-                            &Data32 \
-                          );
+            Data32 = READ_MEM32 (AHCIBar + Offset + 0x0c);
+            BOOT_SCRIPT_S3_MEM_WRITE_MACRO (
+                    gBootScriptSave, \
+                    EfiBootScriptWidthUint32, \
+                    AHCIBar + Offset + 0x0c, \
+                    1, \
+                    &Data32 \
+                    );
 		
-                          Data32 = READ_MEM32 (AHCIBar + Offset + 0x2c);
-                          BOOT_SCRIPT_S3_MEM_WRITE_MACRO (
-                            gBootScriptSave, \
-                            EfiBootScriptWidthUint32, \
-                            AHCIBar + Offset + 0x2c, \
-                            1, \
-                            &Data32 \
-                          );
-                      }
-                  }
+            Data32 = READ_MEM32 (AHCIBar + Offset + 0x18);
+            Data32 &= 0xFFFFFFEE; //Make sure Clear the Start and FIS Receive Enable bit
+            BOOT_SCRIPT_S3_MEM_WRITE_MACRO (
+                    gBootScriptSave, \
+                    EfiBootScriptWidthUint32, \
+                    AHCIBar + Offset + 0x18, \
+                    1, \
+                    &Data32 \
+                    );
+		
+            Data32 = READ_MEM32 (AHCIBar + Offset + 0x2c);
+            BOOT_SCRIPT_S3_MEM_WRITE_MACRO (
+                    gBootScriptSave, \
+                    EfiBootScriptWidthUint32, \
+                    AHCIBar + Offset + 0x2c, \
+                    1, \
+                    &Data32 \
+                    );
+          }
+        }
 
-                  Data32 = READ_MEM32 (AHCIBar);
-                  BOOT_SCRIPT_S3_MEM_WRITE_MACRO (
-                          gBootScriptSave, \
-                          EfiBootScriptWidthUint32, \
-                          AHCIBar, \
-                          1, \
-                          &Data32 \
-                  );
-              }                                                               // [ EIP347466 ]+
-              else if(SataMode == V_PCH_SATA_CC_SCC_IDE)                      //SSD IDE mode need delay time when S3 resume to unlock HDD password. temporary solution.
-              {
-//EIPEIP180881 >>
-                  Status = pBS->LocateHandleBuffer(ByProtocol,
-                                             &gAmiHddSecurityProtocolGuid,
-                                             NULL,
-                                             &Count,
-                                             &HandleBuffer);
-                  if(!EFI_ERROR(Status))
-                  {
-                      //
-                      // Get the PasswordSecurity Protocol
-                      //
-                      for ( i = 0; i < Count; i++ ) 
-                      {
-                          Status = pBS->OpenProtocol(HandleBuffer[i],
-                                               &gAmiHddSecurityProtocolGuid,
-                                               (VOID**) &IDEPasswordSecurity,
-                                               NULL,
-                                               HandleBuffer[i],
-                                               EFI_OPEN_PROTOCOL_GET_PROTOCOL);
-//EIPEIP180881 <<
-                          if(!EFI_ERROR(Status))
-                          {
-                              IDEPasswordSecurity->ReturnSecurityStatus(IDEPasswordSecurity, &SecurityStatus);
-                              PasswordSecurity |= SecurityStatus;
-                          }
-                      }
+            Data32 = READ_MEM32 (AHCIBar);
+            BOOT_SCRIPT_S3_MEM_WRITE_MACRO (
+                gBootScriptSave, \
+                EfiBootScriptWidthUint32, \
+                AHCIBar, \
+                1, \
+                &Data32 \
+                );
+            
+            //SSD IDE mode need delay time when S3 resume to unlock HDD password. temporary solution.
+            if(SataMode == 1) 
+            {
+                Status = pBS->LocateHandleBuffer(   ByProtocol,
+                                                    &gIdeSecurityInterfaceGuid,
+                                                    NULL,
+                                                    &Count,
+                                                    &HandleBuffer);
+                if(!EFI_ERROR(Status))
+            	{
+                    //
+                    // Get the PasswordSecurity Protocol
+                    //
+            	    for ( i = 0; i < Count; i++ ) 
+            	    {
+            	    	Status = pBS->OpenProtocol( HandleBuffer[i],
+                                                &gIdeSecurityInterfaceGuid,
+                                                (VOID**) &IDEPasswordSecurity,
+                                                NULL,
+                                                HandleBuffer[i],
+                                                EFI_OPEN_PROTOCOL_GET_PROTOCOL);
+                    	if(!EFI_ERROR(Status))
+                    	{
+                    		IDEPasswordSecurity->ReturnSecurityStatus(IDEPasswordSecurity, &SecurityStatus);
+                    		PasswordSecurity |= SecurityStatus;
+                    	}
+            	    }
             	    
-                      if(PasswordSecurity & BIT1) // BIT1 : Security Enabled
-                          BOOT_SCRIPT_S3_STALL_MACRO(gBootScriptSave, 1000*1000); 
-                  }
-              }
-          } //if ((PortControlStatus & 0x0300) != 0)
+            	    if(PasswordSecurity & BIT1) // BIT1 : Security Enabled
+            			BOOT_SCRIPT_S3_STALL_MACRO(gBootScriptSave, 1000*1000); 
+            	}
+            }
+      }// if SATA 1 = ffffffff
       
-//[ EIP355841 ]+>>>
-          WRITE_MEM8 (SATA_REG(SATA_REG_PCICMD), PciCmdValue);
-      } //if ((Data32 & 0x0000FFFF) == 0x8086)
-//[ EIP355841 ]+<<<
-   
       TRACE((TRACE_ALWAYS, "[[ InitSbRegsBeforeBoot() End. ]]\n"));
     pBS->CloseEvent(Event);
 }

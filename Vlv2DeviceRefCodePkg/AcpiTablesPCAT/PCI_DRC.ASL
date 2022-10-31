@@ -66,7 +66,7 @@ Scope (\_SB.PCI0)
       // IO BAR. Check if the hard code meets the real configuration.
       // If not, dynamically update it like the _CRS method below.
       //
-      Memory32Fixed(ReadWrite,0x0FED0C000,0x04000,IOBR) // IO BAR
+//      Memory32Fixed(ReadWrite,0x0FED0C000,0x04000,IOBR)	// IO BAR
 
       //
       // ILB BAR. Check if the hard code meets the real configuration.

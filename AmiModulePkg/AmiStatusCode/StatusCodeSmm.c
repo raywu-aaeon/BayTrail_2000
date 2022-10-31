@@ -156,7 +156,7 @@ SmmRegister (
             if (SmmRouterCallbackStr.RscSmmHandlerCallback[i] == NULL)
                 FreeEntry = i; 
         }
-        if (FreeEntry == -1) //No Unregistered entries
+        if (FreeEntry = -1) //No Unregistered entries
         {
             if (SmmRouterCallbackStr.RegisteredSmmEntries == SMM_CALLBACK_NUMBER - 1)
                 return EFI_OUT_OF_RESOURCES; // And all entries are taken already - exit

@@ -4,5 +4,5 @@
 	LocalRoot = "AmiModulePkg\Include\Protocol\"
 	RefName = "AmiTpmSupportTypeProtocol"
 [files]
-"AmiTpmSupportTypeProtocol.h"	
+"AmiTpmSupportTypeProtocol.h"
 <endComponent>

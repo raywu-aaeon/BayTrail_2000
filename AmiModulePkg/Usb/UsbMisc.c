@@ -1,21 +1,35 @@
-//**********************************************************************
-//**********************************************************************
-//**                                                                  **
-//**        (C)Copyright 1985-2016, American Megatrends, Inc.         **
-//**                                                                  **
-//**                       All Rights Reserved.                       **
-//**                                                                  **
-//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093        **
-//**                                                                  **
-//**                       Phone: (770)-246-8600                      **
-//**                                                                  **
-//**********************************************************************
-//**********************************************************************
+//****************************************************************************
+//****************************************************************************
+//**                                                                        **
+//**             (C)Copyright 1985-2009, American Megatrends, Inc.          **
+//**                                                                        **
+//**                          All Rights Reserved.                          **
+//**                                                                        **
+//**                 5555 Oakbrook Pkwy, Norcross, GA 30093                 **
+//**                                                                        **
+//**                          Phone (770)-246-8600                          **
+//**                                                                        **
+//****************************************************************************
+//****************************************************************************
 
-/** @file UsbMisc.c
-    AMI USB driver miscellaneous routines
+//****************************************************************************
+// $Header: /Alaska/SOURCE/Modules/USB/ALASKA/usbmisc.c 22    8/29/12 8:37a Ryanchou $
+//
+// $Revision: 22 $
+//
+// $Date: 8/29/12 8:37a $
+//****************************************************************************
 
-**/
+
+//<AMI_FHDR_START>
+//----------------------------------------------------------------------------
+//
+//  Name:           UsbMisc.c
+//
+//  Description:    AMI USB driver miscellaneous routines
+//
+//----------------------------------------------------------------------------
+//<AMI_FHDR_END>
 
 #include <Efi.h>
 
@@ -36,17 +50,23 @@ VOID *gEndPointer;
 extern USB_GLOBAL_DATA             *gUsbData;
 extern EFI_USB_PROTOCOL            *gAmiUsbController;
 
-/**
-    Generates SW SMI using global SmmCtl pointer.
-
-**/
+#if USB_RUNTIME_DRIVER_IN_SMM
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        USBGenerateSWSMI
+//
+// Description: Generates SW SMI using global SmmCtl pointer.
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 VOID
 USBGenerateSWSMI (
     UINT8   Data
 )
 {
-#if USB_RUNTIME_DRIVER_IN_SMM
+					                            //(EIP57354)>
 	EFI_STATUS Status;
 	UINT8 SwSmiValue = Data;
 	UINT8 DataSize = 1;
@@ -57,65 +77,87 @@ USBGenerateSWSMI (
 			return;
 		}
 	}
+					                            //<(EIP57354)
     gSmmCtl->Trigger(gSmmCtl, &SwSmiValue, &DataSize, 0, 0);
-#endif
 }
+#endif
 
-/**
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        InvokeUsbApi
+//
+// Description: 
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 VOID
 InvokeUsbApi(
 	URP_STRUC *Urp
 )
 {
-    EFI_TPL OldTpl;
-    UINTN   Temp;
+#if	USB_RUNTIME_DRIVER_IN_SMM
+	UINTN		Temp;
 
-    if (gAmiUsbController->UsbInvokeApi) {   
-        OldTpl = gBS->RaiseTPL(TPL_NOTIFY);
+	Temp = (UINTN)gUsbData->fpURP;
+	gUsbData->fpURP = Urp;
+
+	USBGenerateSWSMI (USB_SWSMI);
+
+	gUsbData->fpURP = (URP_STRUC*)Temp;
+#else
+    EFI_TPL               OldTpl;
+    OldTpl = gBS->RaiseTPL(TPL_NOTIFY);
+
+	if (gAmiUsbController->UsbInvokeApi) {
 		gAmiUsbController->UsbInvokeApi(Urp);
-        gBS->RestoreTPL(OldTpl);
-	} else {
-        Temp = (UINTN)gUsbData->fpURP;
-        gUsbData->fpURP = Urp;
-        USBGenerateSWSMI(USB_SWSMI);
-        gUsbData->fpURP = (URP_STRUC*)Temp;
-    }
+	}
+	gBS->RestoreTPL(OldTpl);
+#endif
 }
 
 
-/**
-    Returns the aligned address.
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        AlignPhysicalAddress
+//
+// Description: Returns the aligned address.
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINTN
-AlignPhysicalAddress(
+AlignPhysicalAddress (
     UINTN   PhyAddress,
-    UINT16  AlignSize
-)
+    UINT16  AlignSize,
+    UINT32  TotalSize)
 {
     UINTN   AlignAddr;
 
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_7, "Un-aligned address : %lX\n", PhyAddress);
+    USB_DEBUG(DEBUG_LEVEL_7, "Un-aligned address : %lX\n", PhyAddress);
     if ((PhyAddress % AlignSize) != 0) {
         AlignAddr = PhyAddress - (PhyAddress % (UINT32)AlignSize) + AlignSize;
     }
     else {
         AlignAddr = PhyAddress;
     }
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_7, "Aligned address : %lX\n", AlignAddr);
+    USB_DEBUG(DEBUG_LEVEL_7, "Aligned address : %lX\n", AlignAddr);
 
     return AlignAddr;
 }
 
 
-/**
-    Allocates memory with the given alignment.
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        AllocAlignedMemory
+//
+// Description: Allocates memory with the given alignment.
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 VOID*
 AllocAlignedMemory (
@@ -123,19 +165,17 @@ AllocAlignedMemory (
     UINT16 Align
 )
 {
-    UINTN                   Ptr;
-    UINT32                  Size;
-    EFI_STATUS              Status;
+    UINTN   Ptr;
+    UINT32  Size;
+    EFI_STATUS  Status;
     EFI_PHYSICAL_ADDRESS    MemAddress;
 
-    if (AllocSize == 0) {
-        return NULL;
-    }
+    if (AllocSize == 0) return NULL;
     //
     // If this is the first time the function is called,
     // allocate the USB memory and make the size 4K aligned (VTD).
     //
-    if (gFirstCall) {
+    if(gFirstCall) {
         gFirstCall = FALSE;                 // Make sure to only allocate once.
         Size = CalculateMemorySize();       // Determine total required size.
         Size = (Size + 0x1000) >> 12;       // Express Size in pages.
@@ -145,13 +185,7 @@ AllocAlignedMemory (
         MemAddress = 0xFFFFFFFF;
         Status = gBS->AllocatePages(AllocateMaxAddress, EfiRuntimeServicesData,
                 Size, &MemAddress);
-        if (EFI_ERROR(Status)) {
-            Status = gBS->AllocatePages(AllocateAnyPages, EfiRuntimeServicesData, Size, &MemAddress);
-            ASSERT_EFI_ERROR(Status);
-            if (EFI_ERROR(Status)) {
-                return NULL;
-            }
-        }
+        ASSERT_EFI_ERROR(Status);
 
         gGlobalPointer = (VOID*)(UINTN)MemAddress;
         gBS->SetMem (gGlobalPointer, (Size << 12), 0);
@@ -162,25 +196,31 @@ AllocAlignedMemory (
         gEndPointer = (VOID *)((UINTN)gGlobalPointer + (Size << 12) - 1);
     }
 
-    //USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_6, "Unaligned : %Fp, %X, %X\n", gGlobalPointer, AllocSize, Align);
-    Ptr = AlignPhysicalAddress((UINTN)gGlobalPointer, Align);
-    //USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_6, "Aligned : %Fp, %X, %X\n", Ptr, AllocSize, Align);
+    //USB_DEBUG(DEBUG_LEVEL_6, "Unaligned : %Fp, %X, %X\n", gGlobalPointer, AllocSize, Align);
+    Ptr  = AlignPhysicalAddress( (UINTN)gGlobalPointer, Align, AllocSize);
+    //USB_DEBUG(DEBUG_LEVEL_6, "Aligned : %Fp, %X, %X\n", Ptr, AllocSize, Align);
 
     gGlobalPointer = (VOID*)(Ptr + AllocSize);
 
-    if (gGlobalPointer < gEndPointer) {
+    if (gGlobalPointer < gEndPointer)
+    {
         return (VOID*)Ptr;
     }
     return NULL;
 }
 
 
-/**
-    Allocates a number of pages with the given alignment.
-
-    @note  The minimum alignment passed to this function is CPU page, 4K
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        AllocateHcMemory
+//
+// Description: Allocates a number of pages with the given alignment.
+//
+// Note:        The minimum alignment passed to this function is CPU page, 4K
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 VOID *
 AllocateHcMemory (
@@ -216,17 +256,13 @@ AllocateHcMemory (
         ASSERT (RealPages > Pages);
 
  		Memory = (VOID*)0xFFFFFFFF;
-        Status = PciIo->AllocateBuffer(PciIo, AllocateMaxAddress, EfiRuntimeServicesData,
-                                    RealPages, &Memory, 0);
-        if (EFI_ERROR(Status)) {
-            Status = PciIo->AllocateBuffer(PciIo, AllocateAnyPages, EfiRuntimeServicesData,
-                                    RealPages, &Memory, 0);
-            if (EFI_ERROR(Status)) {
-                return NULL;
-            }
+        Status = PciIo->AllocateBuffer (PciIo, AllocateMaxAddress, EfiRuntimeServicesData, RealPages,
+        			&Memory, 0);
+        if (EFI_ERROR (Status)) {
+            return NULL;
         }
         AlignedMemory  = ((UINTN) Memory + AlignmentMask) & ~AlignmentMask;
-        UnalignedPages = EFI_SIZE_TO_PAGES(AlignedMemory - (UINTN) Memory);
+        UnalignedPages = EFI_SIZE_TO_PAGES (AlignedMemory - (UINTN) Memory);
         if (UnalignedPages > 0) {
             //
             // Free first unaligned page(s).
@@ -234,7 +270,7 @@ AllocateHcMemory (
             Status = PciIo->FreeBuffer(PciIo, UnalignedPages, Memory);
             ASSERT_EFI_ERROR (Status);
         }
-        Memory = (VOID*)(AlignedMemory + EFI_PAGES_TO_SIZE(Pages));
+        Memory         = (VOID*)(AlignedMemory + EFI_PAGES_TO_SIZE (Pages));
         UnalignedPages = RealPages - Pages - UnalignedPages;
         if (UnalignedPages > 0) {
             //
@@ -248,24 +284,25 @@ AllocateHcMemory (
         // Do not over-allocate pages in this case.
         //
         Memory = (VOID*)0xFFFFFFFF;
-		Status = PciIo->AllocateBuffer(PciIo, AllocateMaxAddress, EfiRuntimeServicesData,
-                                    Pages, &Memory, 0);
-        if (EFI_ERROR(Status)) {
-    		Status = PciIo->AllocateBuffer(PciIo, AllocateAnyPages, EfiRuntimeServicesData,
-                                        Pages, &Memory, 0);
-            if (EFI_ERROR(Status)) {
-                return NULL;
-            }
+		Status = PciIo->AllocateBuffer (PciIo, AllocateMaxAddress, EfiRuntimeServicesData, Pages,
+					 &Memory, 0);
+        if (EFI_ERROR (Status)) {
+            return NULL;
         }
         AlignedMemory  = (UINTN) Memory;
     }
     return (VOID*) AlignedMemory;
 }
 
-/**
-    Free the memory allocated by AllocateHcMemory().
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        FreeHcMemory
+//
+// Description: Free the memory allocated by AllocateHcMemory().
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 VOID
 FreeHcMemory(
@@ -281,55 +318,50 @@ FreeHcMemory(
 	return;
 }
 
-/**
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        ReallocateMemory
+//
+// Description: 
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
-**/
-
-EFI_STATUS
+VOID *
 ReallocateMemory (
   IN UINTN  OldSize,
   IN UINTN  NewSize,
-  IN VOID   **OldBuffer
+  IN VOID   *OldBuffer  OPTIONAL
 )
 {
 	EFI_STATUS  Status;
     VOID        *NewBuffer = NULL;
-	VOID		*FreeBuffer = NULL;
-
-	if (OldBuffer == NULL) {
-		return EFI_INVALID_PARAMETER;
-	}
 
 	Status = gBS->AllocatePool (EfiRuntimeServicesData, NewSize, &NewBuffer);
     if (EFI_ERROR(Status)) {
-        return Status;
+        return NULL;
     }
 
-    pBS->SetMem(NewBuffer, NewSize, 0);
+    gBS->SetMem(NewBuffer, NewSize, 0);
 
-	if (OldSize > 0 && *OldBuffer != NULL) {
-		gBS->CopyMem(NewBuffer, *OldBuffer, (OldSize < NewSize) ? OldSize : NewSize);
-		FreeBuffer = *OldBuffer;
-	}
-
-	*OldBuffer = NewBuffer;
-
-    if (FreeBuffer != NULL) {
-        gBS->FreePool(FreeBuffer);
+    if (OldSize > 0 && OldBuffer != NULL && NewBuffer != NULL) {
+        gBS->CopyMem(NewBuffer, OldBuffer, (OldSize < NewSize) ? OldSize : NewSize);
+        gBS->FreePool(OldBuffer);
     }
-    return EFI_SUCCESS;
+    return NewBuffer;
 }
 
-//**********************************************************************
-//**********************************************************************
-//**                                                                  **
-//**        (C)Copyright 1985-2016, American Megatrends, Inc.         **
-//**                                                                  **
-//**                       All Rights Reserved.                       **
-//**                                                                  **
-//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093        **
-//**                                                                  **
-//**                       Phone: (770)-246-8600                      **
-//**                                                                  **
-//**********************************************************************
-//**********************************************************************
+//****************************************************************************
+//****************************************************************************
+//**                                                                        **
+//**             (C)Copyright 1985-2009, American Megatrends, Inc.          **
+//**                                                                        **
+//**                          All Rights Reserved.                          **
+//**                                                                        **
+//**                 5555 Oakbrook Pkwy, Norcross, GA 30093                 **
+//**                                                                        **
+//**                          Phone (770)-246-8600                          **
+//**                                                                        **
+//****************************************************************************
+//****************************************************************************

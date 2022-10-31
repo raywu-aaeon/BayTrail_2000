@@ -95,8 +95,7 @@ x64/x64AsmLib/WriteMsr.asm | MSFT
   AmiCompatibilityPkg/AmiCompatibilityPkg.dec
   MdePkg/MdePkg.dec
   IntelFrameworkPkg/IntelFrameworkPkg.dec
-  AmiModulePkg/AmiModulePkg.dec
-  
+
 [LibraryClasses]
   BaseLib
   IoLib
@@ -107,6 +106,3 @@ x64/x64AsmLib/WriteMsr.asm | MSFT
 [LibraryClasses.ARM, LibraryClasses.AARCH64]
   TimerLib
   CompilerIntrinsicsLib
-
-[Guids]
-  gAmiGlobalVariableGuid  

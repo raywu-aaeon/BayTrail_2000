@@ -19,30 +19,10 @@ INFComponent
 	Path  = "DebuggerLib_DIR"
 End
 
-INFComponent
-	Name  = "CommonDebugPortLib"
-	File  = "CommonDebugPortLib.inf"
-	Package  = "AMIDebugRx"
-	Arch  = "common Ia32 X64"
-	Path  = "DebuggerLib_DIR"
-End
-
 LibraryMapping
 	Class  = "DebuggerLib"
 	Instance  = "AMIDebugRx.DebuggerLib"
 	ModuleTypes  = "DXE_DRIVER DXE_CORE DXE_RUNTIME_DRIVER"
-End
-
-LibraryMapping
-	Class  = "CommonDebugPortLib"
-	Instance  = "AMIDebugRx.CommonDebugPortLib"
-	ModuleTypes  = "DXE_DRIVER DXE_CORE DXE_RUNTIME_DRIVER"
-End
-
-LibraryMapping
-	Class  = "NULL"
-	Instance  = "MdeModulePkg.DebugAgentLibNull"
-	Override  = "AmiModulePkg.StatusCodeDxe"
 End
 
 ELINK
@@ -52,28 +32,7 @@ ELINK
 End
 
 ELINK
-	Name  = "CallbackForDbgIDT,"
-	Parent  = "DxeStatusCodeInitialize"
-	InvokeOrder = AfterParent
-	Token = "DEBUG_IDT_PRESERVATION_WITH_CPU_ARCH_PROTOCOL" "=" "1"
-	Token = "REDIRECTION_ONLY_MODE" "=" "0"
-End
-
-ELINK
-	Name  = "UpdateSMMData,"
-	Parent  = "DxeStatusCodeInitialize"
-	InvokeOrder = AfterParent
-	Token = "REDIRECTION_ONLY_MODE" "=" "0"
-End
-
-ELINK
 	Name  = "ReadyToBootFunc,"
 	Parent  = "DxeStatusCodeInitialize"
 	InvokeOrder = AfterParent
-End
-
-LibraryMapping
-	Class  = "NULL"
-	Instance  = "AMIDebugRx.DebuggerLib"
-	Override  = "AmiModulePkg.StatusCodeDxe"
 End

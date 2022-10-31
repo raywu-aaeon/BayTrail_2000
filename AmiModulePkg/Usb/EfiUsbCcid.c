@@ -1,21 +1,35 @@
-//**********************************************************************
-//**********************************************************************
-//**                                                                  **
-//**        (C)Copyright 1985-2016, American Megatrends, Inc.         **
-//**                                                                  **
-//**                       All Rights Reserved.                       **
-//**                                                                  **
-//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093        **
-//**                                                                  **
-//**                       Phone: (770)-246-8600                      **
-//**                                                                  **
-//**********************************************************************
-//**********************************************************************
+//****************************************************************************
+//****************************************************************************
+//**                                                                        **
+//**             (C)Copyright 1985-2011, American Megatrends, Inc.          **
+//**                                                                        **
+//**                          All Rights Reserved.                          **
+//**                                                                        **
+//**                 5555 Oakbrook Pkwy, Norcross, GA 30093                 **
+//**                                                                        **
+//**                          Phone (770)-246-8600                          **
+//**                                                                        **
+//****************************************************************************
+//****************************************************************************
 
-/** @file EfiUsbCcid.c
-    USB CCID EFI driver implementation
+//****************************************************************************
+// $Header: /Alaska/SOURCE/Modules/USB/ALASKA/efiusbccid.c 5     8/29/12 8:35a Ryanchou $
+//
+// $Revision: 5 $
+//
+// $Date: 8/29/12 8:35a $
+//
+//****************************************************************************
 
-**/
+//****************************************************************************
+//<AMI_FHDR_START>
+//
+//  Name:           EfiUsbccid.c
+//
+//  Description:    USB CCID EFI driver implementation
+//
+//<AMI_FHDR_END>
+//****************************************************************************
 
 #include "AmiDef.h"
 #include "UsbDef.h"
@@ -23,16 +37,10 @@
 #include "ComponentName.h"
 #include "UsbBus.h"
 #include "AmiUsbRtCcid.h"
-#include "AmiUsbSmartCardReader.h"
 
 extern  USB_GLOBAL_DATA *gUsbData;
 
-// Below gEfiSmartCardReaderProtocolGuid definiion will be removed once
-// it is added into MdePkg
-EFI_GUID gEfiSmartCardReaderProtocolGuid = EFI_SMART_CARD_READER_PROTOCOL_GUID;
-
 EFI_STATUS
-EFIAPI
 SupportedUSBCCID(
     EFI_DRIVER_BINDING_PROTOCOL *This,
     EFI_HANDLE                  Controller,
@@ -40,7 +48,6 @@ SupportedUSBCCID(
 );
 
 EFI_STATUS
-EFIAPI
 StartUSBCCID(
     EFI_DRIVER_BINDING_PROTOCOL *This,
     EFI_HANDLE                  Controller,
@@ -48,7 +55,6 @@ StartUSBCCID(
 );
 
 EFI_STATUS
-EFIAPI
 StopUSBCCID(
     EFI_DRIVER_BINDING_PROTOCOL *This,
     EFI_HANDLE                  Controller,
@@ -68,23 +74,20 @@ GetICCDevice(
 );
 
 EFI_STATUS
-EFIAPI
-USBCCIDAPISmartClassDescriptor(
+USBCCIDAPISmartClassDescriptor (
     IN AMI_CCID_IO_PROTOCOL             *This,
     OUT UINT8                           *ResponseBuffer
 );
 
 EFI_STATUS
-EFIAPI
-USBCCIDAPIGetAtr(
+USBCCIDAPIGetAtr (
     IN AMI_CCID_IO_PROTOCOL *This,
     UINT8 Slot,
     UINT8 *ATRData
 );
 
 EFI_STATUS
-EFIAPI
-USBCCIDAPIPowerupSlot(
+USBCCIDAPIPowerupSlot (
     IN AMI_CCID_IO_PROTOCOL             *This,
     OUT UINT8                           *bStatus,
     OUT UINT8                           *bError,
@@ -92,16 +95,14 @@ USBCCIDAPIPowerupSlot(
 );
 
 EFI_STATUS
-EFIAPI
-USBCCIDAPIPowerDownSlot(
+USBCCIDAPIPowerDownSlot (
     IN AMI_CCID_IO_PROTOCOL             *This,
     OUT UINT8                           *bStatus,
     OUT UINT8                           *bError
 );
 
 EFI_STATUS
-EFIAPI
-USBCCIDAPIGetSlotStatus(
+USBCCIDAPIGetSlotStatus (
     IN AMI_CCID_IO_PROTOCOL              *This,
     OUT UINT8                            *bStatus,
     OUT UINT8                            *bError,
@@ -110,8 +111,7 @@ USBCCIDAPIGetSlotStatus(
 );
 
 EFI_STATUS
-EFIAPI
-USBCCIDAPIXfrBlock(
+USBCCIDAPIXfrBlock (
     IN AMI_CCID_IO_PROTOCOL             *This,
     IN UINTN                            CmdLength,
     IN UINT8                            *CmdBuffer,
@@ -123,8 +123,7 @@ USBCCIDAPIXfrBlock(
 );
 
 EFI_STATUS
-EFIAPI
-USBCCIDAPIGetParameters(
+USBCCIDAPIGetParameters (
     IN AMI_CCID_IO_PROTOCOL             *This,
     OUT UINT8                           *bStatus,
     OUT UINT8                           *bError,
@@ -152,90 +151,25 @@ EFI_DRIVER_BINDING_PROTOCOL CcidBindingProtocol = {
         NULL 
 };
 
-/**
-    Function installs EFI_SMART_CARD_READER_PROTOCOL_GUID for Smart card reader's slot
-
-    @param
-        EFI_HANDLE      CCIDHandle
-        DEV_INFO        *fpCCIDDevice
-        ICC_DEVICE      *fpICCDevice
-
-    @retval EFI STATUS
-
-**/
-
-EFI_STATUS
-InstallUSBSCardReaderProtocolOnSlot(
-    EFI_HANDLE      CCIDHandle,
-    DEV_INFO        *fpCCIDDevice,
-    ICC_DEVICE      *fpICCDevice
-)
-{
-
-    EFI_STATUS             Status = EFI_INVALID_PARAMETER;
-    EFI_USB_IO_PROTOCOL    *UsbIo = NULL;
-    USB_SCARD_DEV          *SCardDev=NULL;
-
-    // Install Protocol for the SCard Reader Slot
-    if(!fpCCIDDevice || !((SMARTCLASS_DESC*)(fpCCIDDevice->pCCIDDescriptor)) ) {
-        return EFI_INVALID_PARAMETER;
-    }
-
-    gBS->AllocatePool(EfiBootServicesData, sizeof(USB_SCARD_DEV), &SCardDev);
-    SCardDev->ChildHandle = 0;
-    SCardDev->ControllerHandle = CCIDHandle;
-    SCardDev->Slot       = fpICCDevice->Slot;
-    SCardDev->DevInfo = fpCCIDDevice;
-
-    SCardDev->EfiSmartCardReaderProtocol.SCardConnect = USBSCardReaderAPIConnect;
-    SCardDev->EfiSmartCardReaderProtocol.SCardStatus = USBSCardReaderAPIStatus;
-#if defined(MDE_PKG_VERSION) && (MDE_PKG_VERSION>=10)
-    SCardDev->EfiSmartCardReaderProtocol.SCardDisconnect = USBSCardReaderAPIDisconnect;
-    SCardDev->EfiSmartCardReaderProtocol.SCardTransmit = USBSCardReaderAPITransmit;
-#else
-    SCardDev->EfiSmartCardReaderProtocol.SCardDisConnect = USBSCardReaderAPIDisconnect;
-    SCardDev->EfiSmartCardReaderProtocol.ScardTransmit = USBSCardReaderAPITransmit;
-#endif
-    SCardDev->EfiSmartCardReaderProtocol.SCardControl = USBSCardReaderAPIControl;
-    SCardDev->EfiSmartCardReaderProtocol.SCardGetAttrib = USBSCardReaderAPIGetAttrib;
-
-    Status = gBS->InstallProtocolInterface(
-                        &SCardDev->ChildHandle,
-                        &gEfiSmartCardReaderProtocolGuid,
-                        EFI_NATIVE_INTERFACE,
-                        &SCardDev->EfiSmartCardReaderProtocol
-                        );
-    ASSERT_EFI_ERROR(Status);
-
-    fpICCDevice->SCardChildHandle = SCardDev->ChildHandle;
-
-    Status = gBS->OpenProtocol (
-                        CCIDHandle,
-                        &gEfiUsbIoProtocolGuid,
-                        &UsbIo,
-                        CcidBindingProtocol.DriverBindingHandle,
-                        SCardDev->ChildHandle,
-                        EFI_OPEN_PROTOCOL_BY_CHILD_CONTROLLER );
-
-    ASSERT_EFI_ERROR(Status);
-
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "Install SCard on %lx status = %x SCardDev->ChildHandle %x \n", CCIDHandle, Status, SCardDev->ChildHandle);
-
-    return Status;
-}
-
-/**
-    Function installs AMI_CCID_IO_PROTOCOL_GUID for the ICC card
-
-    @param
-        EFI_HANDLE      CCIDHandle
-        DEV_INFO        *fpCCIDDevice
-        ICC_DEVICE      *fpICCDevice
-
-    @retval EFI STATUS
-
-**/
-
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        InstallUSBCCID
+//
+// Description: Install AMI_CCID_IO_PROTOCOL_GUID for each slot
+//
+// Input:
+//              EFI_HANDLE      CCIDHandle
+//              DEV_INFO        *fpCCIDDevice
+//              ICC_DEVICE      *fpICCDevice
+//
+// Output:
+//              EFI_STATUS
+//
+// Notes:
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
 InstallUSBCCID(
     EFI_HANDLE      CCIDHandle,
@@ -248,6 +182,8 @@ InstallUSBCCID(
     USB_ICC_DEV                 *ICCDev;
     EFI_USB_IO_PROTOCOL         *UsbIo;
 
+    USB_DEBUG(DEBUG_LEVEL_USBBUS, "InstallUSBCCID ....\n" );
+
     //
     // Install Protocol irrespective of device found or not. 
     // By checking ChildHandle here, avoid repeated protocol installation.
@@ -255,8 +191,6 @@ InstallUSBCCID(
 
     if (fpICCDevice && !fpICCDevice->ChildHandle) {
     
-        USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_USBBUS, "InstallUSBCCID ....\n" );
-
         gBS->AllocatePool(EfiBootServicesData, sizeof(USB_ICC_DEV), &ICCDev);
         ICCDev->ChildHandle = 0;
         ICCDev->ControllerHandle = 0;
@@ -283,7 +217,7 @@ InstallUSBCCID(
 
         fpICCDevice->ChildHandle = ICCDev->ChildHandle;
 
-        USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "ICCDev->ChildHandle = %x\n", ICCDev->ChildHandle);
+        USB_DEBUG(DEBUG_LEVEL_3, "ICCDev->ChildHandle = %x\n", ICCDev->ChildHandle);
 
         Status = gBS->OpenProtocol (
                         CCIDHandle,
@@ -293,7 +227,7 @@ InstallUSBCCID(
                         ICCDev->ChildHandle,
                         EFI_OPEN_PROTOCOL_BY_CHILD_CONTROLLER );
     
-        USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "Install CCID on %x status = %r\n", CCIDHandle, Status);
+        USB_DEBUG(DEBUG_LEVEL_3, "Install CCID on %x status = %r\n", CCIDHandle, Status);
         ASSERT_EFI_ERROR(Status);
 
     }
@@ -302,73 +236,23 @@ InstallUSBCCID(
 
 }
 
-/**
-    Uninstall EFI_SMART_CARD_READER_PROTOCOL for Smart card reader's slot
-
-    @param 
-        EFI_HANDLE    Controller 
-        EFI_HANDLE    ScardHandle 
-        EFI_HANDLE    DriverBindingHandle
-
-    @retval
-        EFI_STATUS
-
-**/
-
-EFI_STATUS
-UnInstallSCardProtocol (
-    EFI_HANDLE    Controller,
-    EFI_HANDLE    ScardHandle,
-    EFI_HANDLE    DriverBindingHandle
-)
-{
-
-    EFI_STATUS                       Status;
-    EFI_SMART_CARD_READER_PROTOCOL   *SmartCardReaderProtocol;
-
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_USBBUS, "UnInstallSCardProtocol ....ChildHandle : %lx", ScardHandle);
-
-    Status = gBS->OpenProtocol ( ScardHandle,
-                                &gEfiSmartCardReaderProtocolGuid,
-                                &SmartCardReaderProtocol,
-                                DriverBindingHandle,
-                                ScardHandle,
-                                EFI_OPEN_PROTOCOL_GET_PROTOCOL);
-    
-    if(!EFI_ERROR(Status)) {
-
-        Status = gBS->CloseProtocol (Controller, 
-                                     &gEfiUsbIoProtocolGuid, 
-                                     DriverBindingHandle, 
-                                     ScardHandle);
-        
-        ASSERT_EFI_ERROR(Status);
-
-        Status = pBS->UninstallProtocolInterface ( ScardHandle, 
-                                                   &gEfiSmartCardReaderProtocolGuid, 
-                                                   SmartCardReaderProtocol);
-
-        ASSERT_EFI_ERROR(Status);
-
-        Status = gBS->FreePool(SmartCardReaderProtocol);
-        ASSERT_EFI_ERROR(Status);
-    }
-
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_USBBUS, " Status : %r\n", Status);
-    return Status;
-}
-
-/**
-    Uninstall AMI_CCID_IO_PROTOCOL_GUID for each slot
-
-    @param 
-        EFI_HANDLE    CCIDHandle - SmartCard Reader Handle
-        EFI_HANDLE    ChildHandle - Smart Card Handle
-
-    @retval 
-
-**/
-
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        UnInstallUSBCCID
+//
+// Description: Uninstall AMI_CCID_IO_PROTOCOL_GUID for each slot
+//
+// Input:
+//    EFI_HANDLE    CCIDHandle - SmartCard Reader Handle
+//    EFI_HANDLE    ChildHandle - Smart Card Handle
+//
+// output:
+//
+// Notes:
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
 UnInstallUSBCCID (
     EFI_HANDLE    CCIDHandle,
@@ -379,7 +263,7 @@ UnInstallUSBCCID (
     EFI_STATUS                Status;
     AMI_CCID_IO_PROTOCOL      *CCIDIoProtocol;
 
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_USBBUS, "UnInstallUSBCCID ....ChildHandle : %lx", ChildHandle );
+    USB_DEBUG(DEBUG_LEVEL_USBBUS, "UnInstallUSBCCID ....\n" );
 
     Status = gBS->OpenProtocol ( ChildHandle, 
                                 &gAmiCCIDIoProtocolGuid, 
@@ -391,49 +275,56 @@ UnInstallUSBCCID (
     //
     // CCID protocol not found on ChildHandle. return with error.
     //
-    if(!EFI_ERROR(Status)) {
-        // If CCID protocol Found, close the protocol and uninstall the protocol interface.
-
-        Status = gBS->CloseProtocol (CCIDHandle, 
-                                     &gEfiUsbIoProtocolGuid, 
-                                     CcidBindingProtocol.DriverBindingHandle, 
-                                     ChildHandle);
-
-        Status = pBS->UninstallProtocolInterface ( ChildHandle, 
-                                                   &gAmiCCIDIoProtocolGuid, 
-                                                   CCIDIoProtocol);
-    
-        if(!EFI_ERROR(Status)){
-            gBS->FreePool(CCIDIoProtocol);
-        }
+    if(EFI_ERROR(Status)) {
+        return Status;
     }
 
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_USBBUS, " Status : %r\n", Status);
+    //
+    // If CCID protocol Found, close the protocol and uninstall the protocol interface.
+    //
+    Status = gBS->CloseProtocol (CCIDHandle, 
+                                &gEfiUsbIoProtocolGuid, 
+                                CcidBindingProtocol.DriverBindingHandle, 
+                                ChildHandle);
+
+    Status = pBS->UninstallProtocolInterface (  ChildHandle, 
+                                                &gAmiCCIDIoProtocolGuid, 
+                                                CCIDIoProtocol);
+    
+    if(!EFI_ERROR(Status)){
+        gBS->FreePool(CCIDIoProtocol);
+    }
+
     return Status;
 }
 
-/**
-    Generates a SW SMI to get the SMART Class Descriptor for the CCID device
-
-        
-    @param This 
-    @param ResponseBuffer 
-
-    @retval 
-        EFI_STATUS and returns SMART Class Descriptor in ResponseBuffer
-
-**/
-
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        USBCCIDAPISmartClassDescriptor
+//
+// Description: Generates a SW SMI to get the SMART Class Descriptor for the CCID device
+//
+// Input:
+//              IN AMI_CCID_IO_PROTOCOL *This
+//              OUT UINT8                *ResponseBuffer
+//
+// Output:
+//              EFI_STATUS and returns SMART Class Descriptor in ResponseBuffer
+//
+// Notes:
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
-EFIAPI
-USBCCIDAPISmartClassDescriptor(
+USBCCIDAPISmartClassDescriptor (
     IN AMI_CCID_IO_PROTOCOL             *This,
     OUT UINT8                           *ResponseBuffer
 )
 {
 
-    EFI_STATUS  Status;
-    URP_STRUC   Parameters = {0};
+    EFI_STATUS              Status;
+    URP_STRUC               Parameters = { 0 };
 
     Parameters.bFuncNumber = USB_API_CCID_DEVICE_REQUEST;
     Parameters.bSubFunc = USB_CCID_SMARTCLASSDESCRIPTOR;
@@ -441,7 +332,7 @@ USBCCIDAPISmartClassDescriptor(
     Parameters.ApiData.CCIDSmartClassDescriptor.fpDevInfo = (UINTN)((USB_ICC_DEV *)This)->DevInfo;
     Parameters.ApiData.CCIDSmartClassDescriptor.Slot = ((USB_ICC_DEV *)This)->Slot;
     Parameters.ApiData.CCIDSmartClassDescriptor.fpResponseBuffer = (UINTN)ResponseBuffer;
-     
+
     InvokeUsbApi(&Parameters);
 
     Status = GetReturnValue(Parameters.bRetValue);
@@ -450,26 +341,28 @@ USBCCIDAPISmartClassDescriptor(
 
 }
 
-/**
-    Generates a SW SMI to get the ATR data
-
-        
-    @param This 
-    @param Slot 
-    @param ATRData 
-
-    @retval 
-        EFI_STATUS and returns  ATR data if available
-
-    @note  
-      ATRData buffer length should be 32 bytes long. Caller should allocate 
-      memory for *ATRData. 
-
-**/
-
+//---------------------------------------------------------------------------
+//
+// Name:        USBCCIDAPIGetAtr
+//
+// Description: Generates a SW SMI to get the ATR data
+//
+// Input:
+//              IN AMI_CCID_IO_PROTOCOL *This
+//              IN UINT8                Slot,
+//              OUT UINT8               *ATRData
+//
+// Output:
+//  EFI_STATUS and returns  ATR data if available
+//
+// Notes:
+//      ATRData buffer length should be 32 bytes long. Caller should allocate 
+//      memory for *ATRData. 
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
-EFIAPI
-USBCCIDAPIGetAtr(
+USBCCIDAPIGetAtr (
     IN AMI_CCID_IO_PROTOCOL             *This,
     IN UINT8                            Slot,
     OUT UINT8                           *ATRData
@@ -485,7 +378,7 @@ USBCCIDAPIGetAtr(
     Parameters.ApiData.CCIDAtr.fpDevInfo = (UINTN)((USB_ICC_DEV *)This)->DevInfo;
     Parameters.ApiData.CCIDAtr.Slot = ((USB_ICC_DEV *)This)->Slot;
     Parameters.ApiData.CCIDAtr.ATRData = (UINTN)ATRData;
-    
+
     InvokeUsbApi(&Parameters);
 
     Status = GetReturnValue(Parameters.bRetValue);
@@ -494,28 +387,31 @@ USBCCIDAPIGetAtr(
 
 }
 
-/**
-    Generates a SW SMI to power up the slot in CCID
-
-        
-    @param This 
-    @param Slot 
-    @param bStatus 
-    @param bError 
-    @param ATRData 
-
-    @retval 
-        EFI_STATUS and returns  ATR data if Card powered up successfully.
-
-    @note  
-              ATRData buffer length should be 32 bytes long. Caller should allocate memory for *ATRData. 
-              Presence/Absence of card can be determined from *bStatus/*bError.
-
-**/
-
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        USBCCIDAPIPowerupSlot
+//
+// Description: Generates a SW SMI to power up the slot in CCID
+//
+// Input:
+//              IN AMI_CCID_IO_PROTOCOL               *This,
+//              IN UINT8                              Slot,    
+//              OUT UINT8                             *bStatus,
+//              OUT UINT8                             *bError,
+//              OUT UINT8                             *ATRData
+//
+// Output:
+//              EFI_STATUS and returns  ATR data if Card powered up successfully.
+//
+// Notes:
+//              ATRData buffer length should be 32 bytes long. Caller should allocate memory for *ATRData. 
+//              Presence/Absence of card can be determined from *bStatus/*bError.
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
-EFIAPI
-USBCCIDAPIPowerupSlot(
+USBCCIDAPIPowerupSlot (
     IN AMI_CCID_IO_PROTOCOL                 *This,
     OUT UINT8                               *bStatus,
     OUT UINT8                               *bError,
@@ -532,7 +428,7 @@ USBCCIDAPIPowerupSlot(
     Parameters.ApiData.CCIDPowerupSlot.fpDevInfo = (UINTN)((USB_ICC_DEV *)This)->DevInfo;
     Parameters.ApiData.CCIDPowerupSlot.Slot = ((USB_ICC_DEV *)This)->Slot;
     Parameters.ApiData.CCIDPowerupSlot.ATRData = (UINTN)ATRData;
-    
+
 	InvokeUsbApi(&Parameters);
 
     *bStatus = Parameters.ApiData.CCIDPowerupSlot.bStatus; 
@@ -544,23 +440,29 @@ USBCCIDAPIPowerupSlot(
 
 }
 
-/**
-    Generates a SW SMI to power down the slot in CCID.
-
-        
-    @param This 
-    @param Slot 
-    @param bStatus 
-    @param bError 
-
-    @retval 
-        EFI_STATUS 
-
-**/
-
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        USBCCIDAPIPowerDownSlot
+//
+// Description: Generates a SW SMI to power down the slot in CCID.
+//
+// Input:
+//              IN AMI_CCID_IO_PROTOCOL             *This,
+//              IN UINT8                            Slot,
+//              OUT UINT8                           *bStatus,
+//              OUT UINT8                           *bError,
+//
+// Output:
+//              EFI_STATUS 
+//
+// Notes:
+//
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
-EFIAPI
-USBCCIDAPIPowerDownSlot(
+USBCCIDAPIPowerDownSlot (
     IN AMI_CCID_IO_PROTOCOL                 *This,
     OUT UINT8                               *bStatus,
     OUT UINT8                               *bError
@@ -587,25 +489,30 @@ USBCCIDAPIPowerDownSlot(
 
 }
 
-/**
-    This API returns data from RDR_to_PC_SlotStatus
-
-        
-    @param This 
-    @param bStatus 
-    @param bError 
-    @param bClockStatus 
-
-    @retval 
-        OUT UINT8                            *bStatus - Sec 6.2.6 if CCID spec ver 1.2
-        OUT UINT8                            *bError - Sec 6.2.6 if CCID spec ver 1.2
-        OUT UINT8                            *bClockStatus
-
-**/
-
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        USBCCIDAPIGetSlotStatus
+//
+// Description: This API returns data from RDR_to_PC_SlotStatus
+//
+// Input:
+//              IN AMI_CCID_IO_PROTOCOL             *This
+//              OUT UINT8                           *bStatus
+//              OUT UINT8                           *bError
+//              OUT UINT8                           *bClockStatus
+//
+// Output:
+//              OUT UINT8                            *bStatus - Sec 6.2.6 if CCID spec ver 1.2
+//              OUT UINT8                            *bError - Sec 6.2.6 if CCID spec ver 1.2
+//              OUT UINT8                            *bClockStatus
+//
+// Notes:
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
-EFIAPI
-USBCCIDAPIGetSlotStatus(
+USBCCIDAPIGetSlotStatus (
     IN AMI_CCID_IO_PROTOCOL             *This,
     OUT UINT8                           *bStatus,
     OUT UINT8                           *bError,
@@ -635,34 +542,37 @@ USBCCIDAPIGetSlotStatus(
 
 }
 
-/**
-    This API generates a SWSMI to execute the USB_CCID_XFRBLOCK API.
-
-        
-    @param This 
-    @param CmdLength Length of CmdBuffer
-    @param CmdBuffer Buffer prepared to be sent to ICC through PC_TO_RDR_XFRBLOCK cmd
-    @param ISBlock Valid only in T1 TDPU        
-    @param bStatus 
-    @param bError 
-    @param ResponseLength Lenght of the Responsebuffer
-    @param ResponseBuffer 
- 
-    @retval 
-        EFI_STATUS
-        OUT UINT8                   *bStatus - Sec 6.2.6 if CCID spec ver 1.2 
-        OUT UINT8                   *bError - Sec 6.2.6 if CCID spec ver 1.2
-        IN OUT UINTN                *ResponseLength - Actual number of Bytes returned in ResponseBuffer
-        OUT UINT8                   *ResponseBuffer - Response bytes
-
-    @note  
-       ISBlock is valid only for T1. For updating IFS use S_IFS_REQUEST(0xC1).
-       For WTX request use S_WTX_REQUEST (0xC3). For all others use I_BLOCK(0x0)
-**/
-
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        USBCCIDAPIXfrBlock
+//
+// Description: This API generates a SWSMI to execute the USB_CCID_XFRBLOCK API.
+//
+// Input:
+//              IN AMI_CCID_IO_PROTOCOL     *This
+//              IN UINTN                    CmdLength - Length of CmdBuffer
+//              IN UINT8                    *CmdBuffer - Buffer prepared to be sent to ICC through PC_TO_RDR_XFRBLOCK cmd
+//              IN UINT8                    ISBlock  - Valid only in T1 TDPU        
+//              OUT UINT8                   *bStatus
+//              OUT UINT8                   *bError
+//              IN OUT UINTN                *ResponseLength - Lenght of the Responsebuffer
+//              OUT UINT8                   *ResponseBuffer
+// 
+// Output: 
+//              EFI_STATUS
+//              OUT UINT8                   *bStatus - Sec 6.2.6 if CCID spec ver 1.2 
+//              OUT UINT8                   *bError - Sec 6.2.6 if CCID spec ver 1.2
+//              IN OUT UINTN                *ResponseLength - Actual number of Bytes returned in ResponseBuffer
+//              OUT UINT8                   *ResponseBuffer - Response bytes
+//
+// Notes:
+//       ISBlock is valid only for T1. For updating IFS use S_IFS_REQUEST(0xC1).
+//       For WTX request use S_WTX_REQUEST (0xC3). For all others use I_BLOCK(0x0)
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
-EFIAPI
-USBCCIDAPIXfrBlock(
+USBCCIDAPIXfrBlock (
     IN AMI_CCID_IO_PROTOCOL                *This,
     IN UINTN                            CmdLength,
     IN UINT8                            *CmdBuffer,
@@ -687,7 +597,7 @@ USBCCIDAPIXfrBlock(
 
     Parameters.ApiData.CCIDXfrBlock.fpDevInfo = (UINTN)((USB_ICC_DEV *)This)->DevInfo;
     Parameters.ApiData.CCIDXfrBlock.Slot = ((USB_ICC_DEV *)This)->Slot;
-    
+
  	InvokeUsbApi(&Parameters);
 
     *bStatus = Parameters.ApiData.CCIDXfrBlock.bStatus ;
@@ -700,28 +610,33 @@ USBCCIDAPIXfrBlock(
 
 }
 
-/**
-    Returns data from PC_TO_RDR_GETPARAMETERS/RDR_to_PCParameters cmd
-
-        
-    @param This 
-    @param bStatus 
-    @param bError 
-    @param ResponseLength 
-    @param ResponseBuffer 
-
-    @retval 
-        IN AMI_CCID_IO_PROTOCOL         *This,
-        OUT UINT8                       *bStatus,
-        OUT UINT8                       *bError,
-        IN OUT UINTN                    *ResponseLength,
-        OUT UINT8                       *ResponseBuffer
-
-**/
-
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        USBCCIDAPIGetParameters
+//
+// Description: Returns data from PC_TO_RDR_GETPARAMETERS/RDR_to_PCParameters cmd
+//
+// Input:
+//              IN AMI_CCID_IO_PROTOCOL         *This,
+//              OUT UINT8                       *bStatus,
+//              OUT UINT8                       *bError,
+//              IN OUT UINTN                    *ResponseLength,
+//              OUT UINT8                       *ResponseBuffer
+//
+// Output:
+//              IN AMI_CCID_IO_PROTOCOL         *This,
+//              OUT UINT8                       *bStatus,
+//              OUT UINT8                       *bError,
+//              IN OUT UINTN                    *ResponseLength,
+//              OUT UINT8                       *ResponseBuffer
+//
+// Notes:
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
-EFIAPI
-USBCCIDAPIGetParameters(
+USBCCIDAPIGetParameters (
     IN AMI_CCID_IO_PROTOCOL                *This,
     OUT UINT8                            *bStatus,
     OUT UINT8                            *bError,
@@ -740,7 +655,7 @@ USBCCIDAPIGetParameters(
 
     Parameters.ApiData.CCIDGetParameters.fpDevInfo = (UINTN)((USB_ICC_DEV *)This)->DevInfo;
     Parameters.ApiData.CCIDGetParameters.Slot = ((USB_ICC_DEV *)This)->Slot;
-    
+
 	InvokeUsbApi(&Parameters);
 
     *bStatus = Parameters.ApiData.CCIDGetParameters.bStatus ;
@@ -753,332 +668,22 @@ USBCCIDAPIGetParameters(
 
 }
 
-/**
-    Function to connect the Smard Card reader/ICC card in order to access the Smart
-         reader/ICC card
-
-    @param This 
-    @param AccessMode 
-    @param CardAction
-    @param PreferredProtocols
-    @param ActiveProtocol
-
-    @retval 
-        EFI_STATUS
-
-**/
-
-EFI_STATUS
-EFIAPI
-USBSCardReaderAPIConnect(
-    IN EFI_SMART_CARD_READER_PROTOCOL *This,
-    IN UINT32                         AccessMode,
-    IN UINT32                         CardAction,
-    IN UINT32                         PreferredProtocols,
-    OUT UINT32                        *ActiveProtocol
-)
-{
-    URP_STRUC               Parameters = { 0 };
-    
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_USBBUS, "USBSCardReaderAPIConnect AccessMode : %x CardAction : %x  PreferredProtocols : %x \n",\
-        AccessMode, CardAction, PreferredProtocols);
-
-    // Return error if AccessMode or CardAction input parameter is Invalid
-    if( !((AccessMode==SCARD_AM_READER)||(AccessMode==SCARD_AM_CARD)) || 
-            !((CardAction >=SCARD_CA_NORESET) && (CardAction <=SCARD_CA_EJECT)) ) {
-        return EFI_INVALID_PARAMETER;
-    }
-
-    // Invalid Input parameter for ScardReader connect call
-    if(AccessMode == SCARD_AM_READER) {
-        // if AccessMode is set to SCARD_AM_READER,PreferredProtocol must be set to 
-        // SCARD_PROTOCOL_UNDEFINED,CardAction to SCARD_CA_NORESET else error
-        if( CardAction!=SCARD_CA_NORESET || PreferredProtocols!=SCARD_PROTOCOL_UNDEFINED ) {
-            return EFI_INVALID_PARAMETER;
-        }
-    }
-
-    Parameters.bFuncNumber = USB_API_CCID_DEVICE_REQUEST;
-    Parameters.bSubFunc = USB_SMART_CARD_READER_CONNECT;
-    
-    Parameters.ApiData.SmartCardReaderConnect.fpDevInfo = (UINTN)((USB_SCARD_DEV *)This)->DevInfo;
-    Parameters.ApiData.SmartCardReaderConnect.Slot = (UINTN)((USB_SCARD_DEV *)This)->Slot;
-    Parameters.ApiData.SmartCardReaderConnect.AccessMode = AccessMode;
-    Parameters.ApiData.SmartCardReaderConnect.CardAction = CardAction;
-    Parameters.ApiData.SmartCardReaderConnect.PreferredProtocols = PreferredProtocols;
-    Parameters.ApiData.SmartCardReaderConnect.ActiveProtocol = (UINTN)ActiveProtocol;
-    
-    InvokeUsbApi(&Parameters);
-
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_USBBUS, "USBSCardReaderAPIConnect Status : %r ActiveProtocol : %x\n", \
-             Parameters.ApiData.SmartCardReaderConnect.EfiStatus, *ActiveProtocol);
-    return Parameters.ApiData.SmartCardReaderConnect.EfiStatus;
-}
-
-/**
-    Function disconnects Scard Reader/ICC card
-
-    @param This 
-    @param CardAction
-
-    @retval 
-        EFI_STATUS
-
-**/
-
-EFI_STATUS
-EFIAPI
-USBSCardReaderAPIDisconnect(
-    IN EFI_SMART_CARD_READER_PROTOCOL  *This,
-    IN UINT32                          CardAction
-)
-{
-    URP_STRUC               Parameters = { 0 };
-
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_USBBUS, "USBSCardReaderAPIDisconnect CardAction : %x \n", CardAction);
-
-    Parameters.bFuncNumber = USB_API_CCID_DEVICE_REQUEST;
-    Parameters.bSubFunc = USB_SMART_CARD_READER_DISCONNECT;
-
-    Parameters.ApiData.SmartCardReaderDisconnect.fpDevInfo = (UINTN)((USB_SCARD_DEV *)This)->DevInfo;
-    Parameters.ApiData.SmartCardReaderDisconnect.Slot = (UINTN)((USB_SCARD_DEV *)This)->Slot;
-    Parameters.ApiData.SmartCardReaderDisconnect.CardAction = CardAction;
-    Parameters.ApiData.SmartCardReaderDisconnect.EfiStatus = 0;
-
-    InvokeUsbApi(&Parameters);
-
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_USBBUS, "USBSCardReaderAPIDisconnect Status : %r \n", \
-         Parameters.ApiData.SmartCardReaderDisconnect.EfiStatus );
-
-    return Parameters.ApiData.SmartCardReaderDisconnect.EfiStatus;
-}
-
-/**
-    Function to get the status of the ICC card connected in Smart card reader
-
-    @param This 
-    @param ReaderName
-    @param ReaderNameLength
-    @param State
-    @param CardProtocol
-    @param Atr
-    @param AtrLength
-
-    @retval
-        EFI_STATUS
-
-**/
-
-EFI_STATUS
-EFIAPI
-USBSCardReaderAPIStatus(
-    IN EFI_SMART_CARD_READER_PROTOCOL *This,
-    OUT CHAR16                        *ReaderName,
-    IN OUT UINTN                      *ReaderNameLength,
-    OUT UINT32                        *State,
-    OUT UINT32                        *CardProtocol,
-    OUT UINT8                         *Atr,
-    IN OUT UINTN                      *AtrLength
-)
-{
-    URP_STRUC                  Parameters = { 0 };
-
-    if( EFI_ERROR( GetSmartCardReaderName( ((USB_SCARD_DEV *)This)->ControllerHandle,
-                            ReaderName, 
-                            ReaderNameLength ) ) ) {
-        return EFI_BUFFER_TOO_SMALL;
-    }
-
-
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_USBBUS, "USBSCardReaderAPIStatus ReaderName : %lx ReaderNameLength : %lx Atr : %lx AtrLength : %lx \n",\
-        ReaderName, *ReaderNameLength, Atr, *AtrLength);
-    
-    Parameters.bFuncNumber = USB_API_CCID_DEVICE_REQUEST;
-    Parameters.bSubFunc = USB_SMART_CARD_READER_STATUS;
-    
-    Parameters.ApiData.SmartCardReaderStatus.fpDevInfo = (UINTN)((USB_SCARD_DEV *)This)->DevInfo;
-    Parameters.ApiData.SmartCardReaderStatus.Slot = (UINTN)((USB_SCARD_DEV *)This)->Slot;
-    Parameters.ApiData.SmartCardReaderStatus.ReaderName = (UINTN)ReaderName;
-    Parameters.ApiData.SmartCardReaderStatus.ReaderNameLength = (UINTN)ReaderNameLength;
-    Parameters.ApiData.SmartCardReaderStatus.State = (UINTN)State;
-    Parameters.ApiData.SmartCardReaderStatus.CardProtocol = (UINTN)CardProtocol;
-    Parameters.ApiData.SmartCardReaderStatus.Atr = (UINTN)Atr;
-    Parameters.ApiData.SmartCardReaderStatus.AtrLength = (UINTN)AtrLength;
-      
-    InvokeUsbApi(&Parameters);
-
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_USBBUS, "USBSCardReaderAPIStatus ReaderNameLength : %lx AtrLength : %lx  Status : %r\n",\
-         *ReaderNameLength, *AtrLength, Parameters.ApiData.SmartCardReaderStatus.EfiStatus);
-    
-    return Parameters.ApiData.SmartCardReaderStatus.EfiStatus;
-}
-
-/**
-    This function sends a command to the card or reader and returns its response.
-
-    @param This 
-    @param CAPDU
-    @param CAPDULength
-    @param RAPDU
-    @param RAPDULength
-
-    @retval
-        EFI_STATUS
-
-**/
-
-EFI_STATUS
-EFIAPI
-USBSCardReaderAPITransmit(
-    IN EFI_SMART_CARD_READER_PROTOCOL *This,
-    IN UINT8                          *CAPDU,
-    IN UINTN                          CAPDULength,
-    OUT UINT8                         *RAPDU,
-    IN OUT UINTN                      *RAPDULength
-)
-{
-    URP_STRUC               Parameters = { 0 };
-    
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_USBBUS, "USBSCardReaderAPITransmit CAPDU : %lx CAPDULength : %lx RAPDU : %lx RAPDULength : %lx \n",\
-          CAPDU, CAPDULength, RAPDU, *RAPDULength);
-
-    Parameters.bFuncNumber = USB_API_CCID_DEVICE_REQUEST;
-    Parameters.bSubFunc = USB_SMART_CARD_READER_TRANSMIT;
-    
-    Parameters.ApiData.SmartCardReaderTransmit.fpDevInfo = (UINTN)((USB_SCARD_DEV *)This)->DevInfo;
-    Parameters.ApiData.SmartCardReaderTransmit.Slot = (UINTN)((USB_SCARD_DEV *)This)->Slot;
-    Parameters.ApiData.SmartCardReaderTransmit.CAPDU = (UINTN)CAPDU;
-    Parameters.ApiData.SmartCardReaderTransmit.CAPDULength = CAPDULength;
-    Parameters.ApiData.SmartCardReaderTransmit.RAPDU = (UINTN)RAPDU;
-    Parameters.ApiData.SmartCardReaderTransmit.RAPDULength = (UINTN)RAPDULength;
-     
-    InvokeUsbApi(&Parameters);
-
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_USBBUS, "USBSCardReaderAPITransmit RAPDULength : %lx Status : %r\n",\
-            *RAPDULength, Parameters.ApiData.SmartCardReaderTransmit.EfiStatus);
-
-    return Parameters.ApiData.SmartCardReaderTransmit.EfiStatus;
-}
-
-/**
-    This function is the API function of SMART CARD READER PROTOCOL
-
-    @param This
-    @param ControlCode
-    @param InBuffer
-    @param InBufferLength
-    @param OutBuffer
-    @param OutBufferLength
-
-    @retval
-        EFI_STATUS
-
-**/
-
-EFI_STATUS
-EFIAPI
-USBSCardReaderAPIControl(
-    IN EFI_SMART_CARD_READER_PROTOCOL *This,
-    IN UINT32                         ControlCode,
-    IN UINT8                          *InBuffer,
-    IN UINTN                          *InBufferLength,
-    OUT UINT8                         *OutBuffer,
-    IN OUT UINTN                      *OutBufferLength
-)
-{
-    return EFI_UNSUPPORTED;
-}
-
-/**
-    This function is the API function of SMART CARD READER PROTOCOL
-
-    @param This
-    @param Attrib
-    @param OutBuffer
-    @param OutBufferLength
-
-    @retval
-        EFI_STATUS
-
-**/
-
-EFI_STATUS
-EFIAPI
-USBSCardReaderAPIGetAttrib(
-    IN EFI_SMART_CARD_READER_PROTOCOL *This,
-    IN UINT32                         Attrib,
-    OUT UINT8                         *OutBuffer,
-    IN OUT UINTN                      *OutBufferLength
-)
-{
-    return EFI_UNSUPPORTED;
-}
-
-
-/**
-    This function to get SMART CARD reader name
-
-    @param ControllerHandle
-    @param ReaderName
-    @param ReaderNameLength
-
-    @retval
-        EFI_STATUS
-
-**/
-EFI_STATUS
-GetSmartCardReaderName (
-    EFI_HANDLE    ControllerHandle,
-    CHAR16        *ReaderName,
-    UINTN         *ReaderNameLength
-)
-{
-    EFI_STATUS                 Status;
-    EFI_USB_IO_PROTOCOL        *UsbIo;
-    DEVGROUP_T                 *DevGroup;
-    EFI_USB_STRING_DESCRIPTOR  *StringDesc;
-    USBDEV_T                   *CCIDDev;
-
-    // Get UsbIo Interface pointer
-    Status = gBS->HandleProtocol ( ControllerHandle,
-                                   &gEfiUsbIoProtocolGuid,
-                                   &UsbIo );
-    if( EFI_ERROR(Status)) {
-        return Status;
-    }
-
-    CCIDDev = UsbIo2Dev(UsbIo);
-
-    DevGroup = (DEVGROUP_T*)CCIDDev->node.parent->data;
-
-    StringDesc = DevGroup->ProductStrDesc;
-
-    if( StringDesc->DescriptorType == DESC_TYPE_STRING && StringDesc->Length > 2 ) {
-
-        if( *ReaderNameLength < StringDesc->Length ) {
-            Status = EFI_BUFFER_TOO_SMALL;
-        } else {
-           EfiCopyMem(ReaderName, StringDesc->String, StringDesc->Length-2 );
-           ReaderName[((StringDesc->Length-2)>>1)] = L'\0';
-        }
-
-       *ReaderNameLength = StringDesc->Length;
-    }
-
-    return Status;
-}
-
-/**
-    Search the linked list to find the ICC_DEVICE for the given slot
-
-    @param 
-        DEV_INFO        *fpDevInfo
-        UINT8            Slot
-
-    @retval 
-        ICC_DEVICE Pointer
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        GetICCDevice
+//
+// Description: Search the linked list to find the ICC_DEVICE for the given slot #.
+//
+// Input:
+//              DEV_INFO        *fpDevInfo, 
+//              UINT8            Slot
+//
+// Output:
+//              ICC_DEVICE Pointer
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 ICC_DEVICE*
 GetICCDevice(
     DEV_INFO        *fpDevInfo, 
@@ -1111,16 +716,21 @@ GetICCDevice(
 
 }
 
-/**
-    Search the linked list to find the CCID Device for the given ICC
-
-    @param 
-        ICC_DEVICE  *fpICCDevice
-
-    @retval 
-        DEV_INFO Pointer
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        GetCCIDDevice
+//
+// Description: Search the linked list to find the CCID Device for the given ICC
+//
+// Input:
+//              ICC_DEVICE  *fpICCDevice
+//
+// Output:
+//              DEV_INFO Pointer
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 DEV_INFO*
 GetCCIDDevice(
     ICC_DEVICE        *fpICCDevice
@@ -1165,16 +775,21 @@ GetCCIDDevice(
     return NULL;
 }
 
-/**
-    Convert CCID return Value to EFI_STATUS
 
-    @param 
-        UINT8    bRetValue
-
-         
-    @retval EFI_STATUS Return the EFI Status
-
-**/
+//---------------------------------------------------------------------------
+//
+// Name:        GetReturnValue
+//
+// Description: Convert CCID return Value to EFI_STATUS
+//
+// Input:
+//              UINT8    bRetValue
+//
+// Output:
+//              EFI_STATUS - Return the EFI Status
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 EFI_STATUS
 GetReturnValue(
@@ -1196,35 +811,39 @@ GetReturnValue(
     return Status;
 }
 
-/**
-    Timer call-back routine that is used to monitor insertion/removal 
-    of ICC(Smart card) in the smart card reader.
-
-    @param 
-        EFI_EVENT   Event,
-        VOID        *Context
-
-         
-    @retval VOID
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        ICCOnTimer
+//
+// Description: Timer call-back routine that is used to monitor insertion/removal 
+//              of ICC(Smart card) in the smart card reader.
+//
+// Input:
+//              EFI_EVENT   Event,
+//              VOID        *Context
+//
+// Output:
+//              None
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 VOID
-EFIAPI
 ICCOnTimer(
     EFI_EVENT   Event,
     VOID        *Context
 )
 {
     ICC_DEVICE        *fpICCDevice = NULL;
-    DEV_INFO          *fpCCIDDevice = NULL; 
+    DEV_INFO        *fpCCIDDevice; 
     UINTN              Lock;
     EFI_HANDLE        CCIDHandle;
 
     ATOMIC({Lock = gICCLock; gICCLock=1;});
 
     if( Lock ){
-        USB_DEBUG(DEBUG_WARN, DEBUG_LEVEL_USBBUS, "ICCOnTimer::  is locked; return\n" );
+        USB_DEBUG(DEBUG_LEVEL_USBBUS, "ICCOnTimer::  is locked; return\n" );
         return;
     }
 
@@ -1244,39 +863,26 @@ ICCOnTimer(
 
         CCIDHandle = (EFI_HANDLE) *(UINTN*)fpCCIDDevice->Handle;
 
-        USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "Controller %lx\n", CCIDHandle);
-        USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "Insert/Removal: fpDevInfo %lx fpICCDevice %lx fpICCDevice->ChildHandle %lx fpICCDevice->ConfiguredStatus %x\n", \
-             fpCCIDDevice, fpICCDevice, fpICCDevice->ChildHandle, fpICCDevice->ConfiguredStatus );
+        USB_DEBUG(DEBUG_LEVEL_3, "Controller %x\n", CCIDHandle);
+        USB_DEBUG(DEBUG_LEVEL_3, "Insert/Removal: fpDevInfo %x fpICCDevice %x\n", fpCCIDDevice, fpICCDevice);
 
 #if CCID_USE_INTERRUPT_INSERTION_REMOVAL
-        if (!fpICCDevice->ChildHandle && (fpICCDevice->ConfiguredStatus & ICCPRESENT)) {
-            USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "InstallUSBCCID ....\n" );
+        if (fpICCDevice->ConfiguredStatus & ICCPRESENT) {
             //
             // Install EFI interface to communicate with Smart Card/CCID
             //
             InstallUSBCCID(CCIDHandle, fpCCIDDevice, fpICCDevice);
         }
-
-        if (fpICCDevice->ConfiguredStatus & CARDREMOVED) {
-            USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "UnInstallUSBCCID ....\n" );
+        else{
             //
             // Device Removed. Uninstall the existing Device
             //
              UnInstallUSBCCID (CCIDHandle, fpICCDevice->ChildHandle);
-             // Indication to the SMI handler that the CARD has been uninstalled.
-             // This Handle will be checked before device is inserted into the queue.
-             fpICCDevice->ChildHandle = NULL;
-             
         }
 #else
         InstallUSBCCID(CCIDHandle, fpCCIDDevice, fpICCDevice);     
 #endif
 
-        // When card is removed, ScardChildHandle will still be valid so it will not do anything.
-        // If the handle is valid, it means the protocol is already installed
-        if (!fpICCDevice->SCardChildHandle) {
-            InstallUSBSCardReaderProtocolOnSlot(CCIDHandle, fpCCIDDevice, fpICCDevice);
-        }
     } while ( 1 );
 
     gICCLock = 0;
@@ -1284,22 +890,27 @@ ICCOnTimer(
     return;
 }
 
-/**
-    Verifies if usb CCID support can be installed on a device
-
-        
-    @param This pointer to driver binding protocol
-    @param ControllerHandle controller handle to install driver on
-    @param RemainingDevicePath pointer to device path
-
-         
-    @retval EFI_SUCCESS driver supports given controller
-    @retval EFI_UNSUPPORTED driver doesn't support given controller
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        SupportedUSBCCID
+//
+// Description: Verifies if usb CCID support can be installed on a device
+//
+// Input:
+//              IN EFI_DRIVER_BINDING_PROTOCOL *This - pointer to driver binding protocol
+//              IN EFI_HANDLE ControllerHandle - controller handle to install driver on
+//              IN EFI_DEVICE_PATH_PROTOCOL *RemainingDevicePath - pointer to device path
+//
+// Output:
+//      EFI_STATUS
+//              EFI_SUCCESS - driver supports given controller
+//              EFI_UNSUPPORTED - driver doesn't support given controller
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 EFI_STATUS
-EFIAPI
 SupportedUSBCCID(
     EFI_DRIVER_BINDING_PROTOCOL *This,
     EFI_HANDLE                  Controller,
@@ -1309,21 +920,14 @@ SupportedUSBCCID(
     EFI_USB_INTERFACE_DESCRIPTOR    Desc;
     EFI_STATUS                      Status;
     EFI_USB_IO_PROTOCOL             *UsbIo;
-    DEV_INFO                        *DevInfo;
 
-    Status = gBS->OpenProtocol (Controller, &gEfiUsbIoProtocolGuid,
+    Status = gBS->OpenProtocol ( Controller,  &gEfiUsbIoProtocolGuid,
                                 &UsbIo, This->DriverBindingHandle,
                                 Controller, EFI_OPEN_PROTOCOL_GET_PROTOCOL 
                                 );
 
-    if (EFI_ERROR(Status)) {
+    if( EFI_ERROR(Status)) {
         return Status;
-    }
-
-    DevInfo = FindDevStruc(Controller);
-
-    if (DevInfo == NULL) {
-        return EFI_UNSUPPORTED;
     }
 
     Status = UsbIo->UsbGetInterfaceDescriptor(UsbIo, &Desc);
@@ -1343,22 +947,28 @@ SupportedUSBCCID(
     return EFI_UNSUPPORTED;
 }
 
-/**
-    Installs CCID protocol on a given handle
 
-           
-    @param This pointer to driver binding protocol
-    @param ControllerHandle controller handle to install driver on
-    @param RemainingDevicePath pointer to device path
-
-         
-    @retval EFI_SUCCESS driver started successfully
-    @retval EFI_UNSUPPORTED driver didn't start
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        StartUSBCCID
+//
+// Description: Installs CCID protocol on a given handle
+//
+// Input:   
+//              IN EFI_DRIVER_BINDING_PROTOCOL *This - pointer to driver binding protocol
+//              IN EFI_HANDLE ControllerHandle - controller handle to install driver on
+//              IN EFI_DEVICE_PATH_PROTOCOL *RemainingDevicePath - pointer to device path
+//
+// Output:
+//              EFI_STATUS
+//                      EFI_SUCCESS - driver started successfully
+//                      EFI_UNSUPPORTED - driver didn't start
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 EFI_STATUS
-EFIAPI
 StartUSBCCID(
     EFI_DRIVER_BINDING_PROTOCOL *This,
     EFI_HANDLE                  Controller,
@@ -1368,8 +978,8 @@ StartUSBCCID(
     EFI_STATUS              Status;
     EFI_USB_IO_PROTOCOL     *UsbIo;
 
-    USB_DEBUG(DEBUG_INFO, DEBUG_USBHC_LEVEL,
-        "USB: installUSBCCID: starting...Controller : %lx\n", Controller);
+    USB_DEBUG(DEBUG_USBHC_LEVEL,
+        "USB: installUSBCCID: starting...\n");
 
     //
     // Open Protocols
@@ -1385,15 +995,15 @@ StartUSBCCID(
     {
         USBDEV_T* CCIDDev = UsbIo2Dev(UsbIo);
         HC_STRUC* HcData;
-        UINT8     UsbStatus;
+        UINT8 UsbStatus;
 
         ASSERT(CCIDDev);
         HcData = gUsbData->HcTable[CCIDDev->dev_info->bHCNumber - 1];
         UsbStatus = UsbSmiReConfigDevice(HcData, CCIDDev->dev_info);
 
         if(UsbStatus != USB_SUCCESS) {
-            USB_DEBUG(DEBUG_ERROR, DEBUG_USBHC_LEVEL,
-                "installUSBCCID: failed to Reconfigure CCID: %d\n", UsbStatus );
+            USB_DEBUG(DEBUG_USBHC_LEVEL,
+                "installUSBCCID: failed to Reconfigure KBD: %d\n", UsbStatus );
 
             return EFI_DEVICE_ERROR;
         }
@@ -1415,15 +1025,17 @@ StartUSBCCID(
         //
         gCounterCCIDEnumTimer++;
         if (gEvICCEnumTimer == 0) {
-            USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_USBBUS, "USBBUS: Start: setup timer callback %x\n", &ICCOnTimer );
-            gBS->CreateEvent(EFI_EVENT_TIMER | EFI_EVENT_NOTIFY_SIGNAL,
-                                    EFI_TPL_CALLBACK, ICCOnTimer,0,&gEvICCEnumTimer);
-            gBS->SetTimer(gEvICCEnumTimer, TimerPeriodic, MILLISECOND);
+            USB_DEBUG(DEBUG_LEVEL_USBBUS, "USBBUS: Start: setup timer callback %x\n", &ICCOnTimer );
+            VERIFY_EFI_ERROR(
+                gBS->CreateEvent ( EFI_EVENT_TIMER | EFI_EVENT_NOTIFY_SIGNAL,
+                                    EFI_TPL_CALLBACK, ICCOnTimer,0,&gEvICCEnumTimer));
+                VERIFY_EFI_ERROR(
+                    gBS->SetTimer ( gEvICCEnumTimer, TimerPeriodic, MILLISECOND));
         }
 
     }
 
-    USB_DEBUG(DEBUG_INFO, DEBUG_USBHC_LEVEL,
+    USB_DEBUG(DEBUG_USBHC_LEVEL,
         "USB: installCCID: done (%x).\n", Status);
 
 
@@ -1431,23 +1043,28 @@ StartUSBCCID(
 }
 
 
-/**
-    Uninstalls CCID protocol on a given handle
-
-           
-    @param This pointer to driver binding protocol
-    @param ControllerHandle controller handle to install driver on
-    @param NumberOfChildren number of childs on this handle
-    @param ChildHandleBuffer pointer to child handles array
-
-         
-    @retval EFI_SUCCESS driver stopped successfully
-    @retval EFI_INVALID_PARAMETER invalid values passed for NumberOfChildren or
-        ChildHandleBuffer
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        StopSBCCID
+//
+// Description: Uninstalls CCID protocol on a given handle
+//
+// Input:   
+//              IN EFI_DRIVER_BINDING_PROTOCOL *This - pointer to driver binding protocol
+//              IN EFI_HANDLE ControllerHandle - controller handle to install driver on
+//              IN UINTN NumberOfChildren - number of childs on this handle
+//              IN OPTIONAL EFI_HANDLE *ChildHandleBuffer - pointer to child handles array
+//
+// Output:
+//              EFI_STATUS
+//                  EFI_SUCCESS - driver stopped successfully
+//                  EFI_INVALID_PARAMETER - invalid values passed for NumberOfChildren or
+//                                  ChildHandleBuffer
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 EFI_STATUS
-EFIAPI
 StopUSBCCID(
     EFI_DRIVER_BINDING_PROTOCOL *This,
     EFI_HANDLE                  Controller,
@@ -1463,11 +1080,10 @@ StopUSBCCID(
         // Closer the timer event when all CCID devices have been stopped
         if(--gCounterCCIDEnumTimer==0){
 
-            gBS->SetTimer(gEvICCEnumTimer, TimerCancel, ONESECOND);
-            gBS->CloseEvent(gEvICCEnumTimer);
+            VERIFY_EFI_ERROR(gBS->SetTimer ( gEvICCEnumTimer, TimerCancel, ONESECOND));
+            VERIFY_EFI_ERROR(gBS->CloseEvent (gEvICCEnumTimer));
             gEvICCEnumTimer=0;
 
-            USB_DEBUG(DEBUG_INFO, DEBUG_USBHC_LEVEL, "USB: Timer Stopped\n");
         }
 
         //
@@ -1482,9 +1098,7 @@ StopUSBCCID(
                                     This->DriverBindingHandle, 
                                     Controller);
         ASSERT_EFI_ERROR(Status);
-        
-        USB_DEBUG(DEBUG_INFO, DEBUG_USBHC_LEVEL, "USB: StopUSBCCID: done : %r gCounterCCIDEnumTimer : %x\n", \
-                 Status,  gCounterCCIDEnumTimer);
+
     }
 
     while (NumberOfChildren){
@@ -1493,12 +1107,7 @@ StopUSBCCID(
         // Uninstall AMI_CCID_IO_PROTOCOL for each slot
         //
         Status = UnInstallUSBCCID (Controller, Children[NumberOfChildren -  1]);
-
-        if( EFI_ERROR(Status) ) {
-            Status = UnInstallSCardProtocol (Controller, Children[NumberOfChildren -  1], This->DriverBindingHandle);
-        }
         ASSERT_EFI_ERROR(Status);
-
         NumberOfChildren--;
 
     }
@@ -1508,17 +1117,22 @@ StopUSBCCID(
 }
 
 
-/**
-    Returns the Controller Name 
-
-    @param 
-        EFI_HANDLE Controller,
-        EFI_HANDLE Child
-
-         
-    @retval CHAR16 Pointer to the buffer
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        UsbCCIDGetControllerName
+//
+// Description: Returns the Controller Name 
+//
+// Input:
+//              EFI_HANDLE Controller,
+//              EFI_HANDLE Child
+//
+// Output:
+//              CHAR16* - Pointer to the buffer
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 CHAR16*
 UsbCCIDGetControllerName(
@@ -1530,17 +1144,22 @@ UsbCCIDGetControllerName(
 }
  
 
-/**
-    CCID driver entry point
-
-    @param 
-        EFI_HANDLE  ImageHandle,
-        EFI_HANDLE  ServiceHandle
-
-         
-    @retval EFI_STATUS Efi Status.
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        UsbCCIDInit
+//
+// Description: CCID driver entry point
+//
+// Input:
+//              EFI_HANDLE  ImageHandle,
+//              EFI_HANDLE  ServiceHandle
+//
+// Output:
+//              EFI_STATUS - Efi Status.
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 EFI_STATUS
 UsbCCIDInit(
@@ -1552,10 +1171,10 @@ UsbCCIDInit(
     CcidBindingProtocol.DriverBindingHandle = ServiceHandle;
     CcidBindingProtocol.ImageHandle = ImageHandle;
 
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "USB CCID binding:\n\t");
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "SupportedUSBCCID:%x\n", &SupportedUSBCCID );
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "\tInstallUSBCCID:%x\n", &StartUSBCCID);
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "\tUninstallUSBCCID:%x\n", &StopUSBCCID );
+    USB_DEBUG(DEBUG_LEVEL_3, "USB CCID binding:\n\t");
+    USB_DEBUG(DEBUG_LEVEL_3, "SupportedUSBCCID:%x\n", &SupportedUSBCCID );
+    USB_DEBUG(DEBUG_LEVEL_3, "\tInstallUSBCCID:%x\n", &StartUSBCCID);
+    USB_DEBUG(DEBUG_LEVEL_3, "\tUninstallUSBCCID:%x\n", &StopUSBCCID );
 
     return gBS->InstallMultipleProtocolInterfaces(
         &CcidBindingProtocol.DriverBindingHandle,
@@ -1565,16 +1184,16 @@ UsbCCIDInit(
         NULL);
 }
 
-//**********************************************************************
-//**********************************************************************
-//**                                                                  **
-//**        (C)Copyright 1985-2016, American Megatrends, Inc.         **
-//**                                                                  **
-//**                       All Rights Reserved.                       **
-//**                                                                  **
-//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093        **
-//**                                                                  **
-//**                       Phone: (770)-246-8600                      **
-//**                                                                  **
-//**********************************************************************
-//**********************************************************************
+//****************************************************************************
+//****************************************************************************
+//**                                                                        **
+//**             (C)Copyright 1985-2011, American Megatrends, Inc.          **
+//**                                                                        **
+//**                          All Rights Reserved.                          **
+//**                                                                        **
+//**                 5555 Oakbrook Pkwy, Norcross, GA 30093                 **
+//**                                                                        **
+//**                          Phone (770)-246-8600                          **
+//**                                                                        **
+//****************************************************************************
+//****************************************************************************

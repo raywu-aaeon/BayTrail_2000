@@ -1,7 +1,7 @@
 /** @file
   EFI PEI Core Security services
   
-Copyright (c) 2006 - 2013, Intel Corporation. All rights reserved.<BR>
+Copyright (c) 2006 - 2010, Intel Corporation. All rights reserved.<BR>
 This program and the accompanying materials                          
 are licensed and made available under the terms and conditions of the BSD License         
 which accompanies this distribution.  The full text of the license may be found at        
@@ -78,12 +78,13 @@ SecurityPpiNotifyCallback (
 }
 
 /**
+
   Provide a callout to the security verification service.
+
 
   @param PrivateData     PeiCore's private data structure
   @param VolumeHandle    Handle of FV
   @param FileHandle      Handle of PEIM's ffs
-  @param AuthenticationStatus Authentication status
 
   @retval EFI_SUCCESS              Image is OK
   @retval EFI_SECURITY_VIOLATION   Image is illegal
@@ -93,13 +94,17 @@ EFI_STATUS
 VerifyPeim (
   IN PEI_CORE_INSTANCE      *PrivateData,
   IN EFI_PEI_FV_HANDLE      VolumeHandle,
-  IN EFI_PEI_FILE_HANDLE    FileHandle,
-  IN UINT32                 AuthenticationStatus
+  IN EFI_PEI_FILE_HANDLE    FileHandle
   )
 {
   EFI_STATUS                      Status;
+  UINT32                          AuthenticationStatus;
   BOOLEAN                         DeferExection;
 
+  //
+  // Set a default authentication state
+  //
+  AuthenticationStatus = 0;
 
   if (PrivateData->PrivateSecurityPpi == NULL) {
     Status = EFI_NOT_FOUND;

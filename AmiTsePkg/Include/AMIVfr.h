@@ -2,7 +2,7 @@
 //*****************************************************************//
 //*****************************************************************//
 //**                                                             **//
-//**         (C)Copyright 2015, American Megatrends, Inc.        **//
+//**         (C)Copyright 2011, American Megatrends, Inc.        **//
 //**                                                             **//
 //**                     All Rights Reserved.                    **//
 //**                                                             **//
@@ -74,12 +74,6 @@
 	{ 0xc57ad6b7, 0x0515, 0x40a8, 0x9d, 0x21, 0x55, 0x16, 0x52, 0x85, 0x4e, 0x37 }
 #endif
 
-#ifndef EFI_SHELL2_0_FILE_GUID
-#define EFI_SHELL2_0_FILE_GUID  \
-	{ 0x6302d008, 0x7f9b, 0x4f30, 0x87, 0xac, 0x60, 0xc9, 0xfe, 0xf5, 0xda, 0x4e }
-//	{ 0x7C04A583, 0x9E3E, 0x4f1c, 0xAD, 0x65, 0xE0, 0x52, 0x68, 0xD0, 0xB4, 0xD1}
-#endif
-
 #define	AMITSESETUP_GUID	\
 	{ 0xc811fa38, 0x42c8, 0x4579, 0xa9, 0xbb, 0x60, 0xe9, 0x4e, 0xdd, 0xfb, 0x34 }
 
@@ -94,23 +88,9 @@
 #define AMITSE_AFTER_FIRST_BOOT_OPTION_GUID \
   { 0xC48D651C, 0x9D0E, 0x4ce7, 0xAD, 0x39, 0xED, 0xD1, 0xAB, 0x83, 0x6B, 0x30 }
 
-
-// {1CBFC9B6-7F1E-4e9e-801F-FBCE4D92A76D}
-#define AMITSE_BEFORE_TIMEOUT_GUID \
-	{ 0x1cbfc9b6, 0x7f1e, 0x4e9e, 0x80, 0x1f, 0xfb, 0xce, 0x4d, 0x92, 0xa7, 0x6d }
-
-// {CAD40D6E-C871-4398-910D-2D74EE94711A}
-#define AMITSE_AFTER_TIMEOUT_GUID \
-	{ 0xcad40d6e, 0xc871, 0x4398, 0x91, 0xd, 0x2d, 0x74, 0xee, 0x94, 0x71, 0x1a }
-
-
 // {3677770F-EFB2-43b2-B8AE-B302E9604882}
 #define AMITSE_EVENT_BEFORE_BOOT_GUID \
   { 0x3677770f, 0xefb2, 0x43b2, 0xb8, 0xae, 0xb3, 0x2, 0xe9, 0x60, 0x48, 0x82 }
-
-// {8c12A959-70BC-4362-B437-bBB80514A1916E}
-#define AMITSE_EVENT_AFTER_BOOT_GUID \
-  {0x8c12a959, 0x70bc, 0x4362, 0xb4, 0x37, 0xb8, 0x05, 0x14, 0xa1, 0x91, 0x6e}
 
 // {1B6BC809-C986-4937-934F-1EA58622FE50}
 #define AMITSE_BOOT_ORDER_CHANGE_GUID \
@@ -143,18 +123,7 @@
 #define	DYNAMIC_PAGE_COUNT_GUID	\
     { 0xb63bf800, 0xf267, 0x4f55, 0x92, 0x17, 0xe9, 0x7f, 0xb3, 0xb6, 0x98, 0x46 }
 
-// 537F1F99-6FC4-40b5-80B2-390B0753C4D0
-#define DYNAMIC_PAGE_GROUP_COUNT_GUID  \
-{ 0x537f1f99, 0x6fc4, 0x40b5, 0x80, 0xb2, 0x39, 0xb, 0x7, 0x53, 0xc4, 0xd0 }
-
-// DD616C5C-7CFC-41dc-B8D9-CD24F6BB3A5D
-#define DYNAMIC_PAGE_DEVICE_COUNT_GUID  \
-{ 0xdd616c5c, 0x7cfc, 0x41dc, 0xb8, 0xd9, 0xcd, 0x24, 0xf6, 0xbb, 0x3a, 0x5d }
-
-//551941E5-0011-4D7F-83ED-E462CBABCCC9
-#define DYNAMIC_PAGE_GROUP_CLASS_COUNT_GUID  \
-{ 0x551941e5, 0x0011, 0x4d7f, 0x83, 0xed, 0xe4, 0x62, 0xcb, 0xab, 0xcc, 0xc9 }
-
+//EIP 57661 Start
 // {0885F288-418C-4be1-A6AF-8BAD61DA08FE}
 #define AMITSE_DRIVER_HEALTH_ENB_GUID \
     { 0x885f288, 0x418c, 0x4be1, 0xa6, 0xaf, 0x8b, 0xad, 0x61, 0xda, 0x8, 0xfe }
@@ -166,7 +135,9 @@
 // {58279C2D-FB19-466e-B42E-CD437016DC25}
 #define	AMITSE_DRIVER_HEALTH_CTRL_GUID	\
     { 0x58279c2d, 0xfb19, 0x466e, 0xb4, 0x2e, 0xcd, 0x43, 0x70, 0x16, 0xdc, 0x25 }
+//EIP 57661 End
 
+//EIP70421 & 70422 Support for Driver Order starts
 // {C0B4FB05-15E5-4588-9FE9-B3D39C067715}
 #define	DRIVER_MANAGER_GUID  \
 	{ 0xc0b4fb05, 0x15e5, 0x4588, 0x9f, 0xe9, 0xb3, 0xd3, 0x9c, 0x6, 0x77, 0x15 }
@@ -177,10 +148,12 @@
 
 #define	ADD_DRIVER_OPTION_GUID \
     { 0x7df66c0f, 0xd40a, 0x4748, 0xac, 0x5a, 0x6c, 0xb, 0xea, 0x78, 0x6a, 0x1a}
+//EIP70421 & 70422 Support for Driver ends
 
 #define	OEM_TSE_VAR_GUID	\
 	{ 0xF4B2C007, 0x94A1, 0x4cd5, 0xA7, 0x10, 0xf4, 0x14, 0x1f, 0xce, 0xbc, 0xA0 }
 
+//EIP74676 guids and variables for porting purpose starts
 //EDA2B104-7A10-4519-B0A1-EBA5C52ACFCE
 #define	OEM_PORT_VARIABEL1 \
 	{ 0xEDA2B104, 0x7A10, 0x4519, 0xB0, 0xA1, 0xEB, 0xA5, 0xC5, 0x2A, 0xCF, 0xCE }
@@ -206,18 +179,7 @@
 
 #define	OEM_PORT_GUID2	\
 	{ 0x23f69cd0, 0xff46, 0x4db6, 0xb9, 0x82, 0x63, 0xed, 0xf1, 0xa9, 0x1, 0xff }
-
-//{06449bc5-4494-4f8c-8773-1d2464c0e7ec}
-#define AMITSE_AFTER_LAST_BOOT_OPTION_GUID \
-  { 0x06449bc5, 0x4494, 0x4f8c, 0x87, 0x73, 0x1d, 0x24, 0x64, 0xc0, 0xe7, 0xec }
-
-//{B4D311E6-721D-4051-956D-2410C1D789AA}
-#define AMITSE_SWITCHING_TO_POST_SCREEN_GUID \
-  { 0xB4D311E6, 0x721D, 0x4051, 0x95, 0x6D, 0x24, 0x10, 0xC1, 0xD7, 0x89, 0xAA }
-
-// {FDFBBFAB-BC61-4961-B917-77445641507B}
-#define AMITSE_AFTER_POST_INVPwD_PROMPT_GUID \
-	{ 0xfdfbbfab, 0xbc61, 0x4961, 0xb9, 0x17, 0x77, 0x44, 0x56, 0x41, 0x50, 0x7b }
+//EIP74676 ends
 
 #define	EXIT_KEY_ID				        0xF001
 #define	AMI_CALLBACK_KEY_ID		        0xF002
@@ -246,13 +208,10 @@
 #define DRIVER_HEALTH_ENB_KEY_ID	    0xF019
 #define DRIVER_HEALTH_KEY_ID		    0xF020
 #define DRIVER_HEALTH_CTRL_KEY_ID	    0xF021
-#define	DRIVER_MANAGER_KEY_ID		    0xF022		
+#define	DRIVER_MANAGER_KEY_ID		    0xF022		//EIP70421 & 70422 Support for Driver Order
 #define	DRIVER_ORDER_KEY_ID	            0xF023
 #define	NEW_DRIVER_OPTION_KEY_ID	    0xF024
 #define	DEL_DRIVER_OPTION_KEY_ID	    0xF025
-#define DYNAMIC_PAGE_GROUP_COUNT_KEY_ID  0xF026
-#define DYNAMIC_PAGE_DEVICE_COUNT_KEY_ID 0xF027
-#define DYNAMIC_PAGE_GROUP_CLASS_COUNT_KEY_ID  0xF028
 #define OEM_TSE_VAR_KEY_ID              0xF100
 
 #define	SYSTEM_PASSWORD_ADMIN	0
@@ -269,11 +228,11 @@
 #define	SAVE_AND_RESET_VALUE		9
 #define	DISCARD_AND_RESET_VALUE		10
 #define INTERACTIVE_TEXT_VALUE    	11
-#define LAUNCH_FILE_PATH            12		
+#define LAUNCH_FILE_PATH            12		// EIP-41615: releated to file browser support for add boot option.
 #define LAUNCH_FILE_PATH_DRIVER     13
-#define SAVE_DRIVER_OPTION					14	
-#define SAVE_AND_EXIT_BOOTPAGE			15
-#define DISCARD_AND_EXIT_FRONTPAGE		16
+#define SAVE_DRIVER_OPTION					14		//EIP70421 & 70422 Support for Driver Order
+#define SAVE_AND_EXIT_BOOTPAGE			15		//For boot page message box
+#define DISCARD_AND_EXIT_FRONTPAGE		16		//For navigating to front page
 #define LAUNCH_SHELL_FROM_FRONTPAGE		17	
 #define PASSWORD_CLEAR              18
 #define PASSWORD_INVALID            19
@@ -284,7 +243,7 @@
 #define SAVE_AND_EXIT_BBSPAGE			24	
 #define	ADD_FORM_ID				0x2000
 #define	DEL_FORM_ID				0x2001
-#define	ADD_DRIVER_FORM_ID		0x2002		
+#define	ADD_DRIVER_FORM_ID		0x2002		//EIP70421 & 70422 Support for Driver Order
 #define	DEL_DRIVER_FORM_ID		0x2003
 
 #define	HARD_DISK_ORDER_FORM	0x1000
@@ -390,30 +349,13 @@ typedef struct{
   UINT16            PageCount;
 } DYNAMIC_PAGE_COUNT;
 
-typedef struct{
-  UINT16        GroupCount;
-} DYNAMIC_PAGE_GROUP_COUNT;
-
-typedef struct{
-  UINT16        DeviceCount;
-} DYNAMIC_PAGE_DEVICE_COUNT;
-
-typedef struct{
-UINT16 NonDeviceClassCount;
-UINT16 DiscDeviceClassCount;
-UINT16 VideoDeviceClassCount;
-UINT16 NetworkDeviceClassCount;
-UINT16 InputDeviceClassCount;
-UINT16 OnBoardDeviceClassCount;
-UINT16 OtherDeviceClassCount;
-} DYNAMIC_PAGE_GROUP_CLASS_COUNT;
-
 typedef struct
 {
 	UINT16 Value;
 
 }OEMTSEVAR;
 
+//EIP 57661 Start
 typedef struct
 {
 	UINT16 Enable;
@@ -431,6 +373,7 @@ typedef struct			//Number of controllers support driver health handle
 	UINT16 DrvHealthCtrlCnt;
 }
 DRIVER_HEALTH_CTRL_COUNT;
+//EIP 57661 End
 
 typedef struct
 {
@@ -520,31 +463,6 @@ typedef struct _AMITSESETUP
     UINT8   AMISilentBoot;
 }
 AMITSESETUP;
-extern EFI_GUID gAmiTseSetupEnterGuid ;
-extern EFI_GUID gAmiTseAfterFirstBootOptionGuid ;
-extern EFI_GUID gAmiTseEventBeforeBootGuid;
-extern EFI_GUID gAmiTseBootOrderChangeGuid ;
-extern EFI_GUID gAmiTseNVRAMUpdateGuid ;
-extern  EFI_GUID gAmiTsePasswordPromptEnterGuid ;
-extern  EFI_GUID gAmiTsePasswordPromptExitGuid;
-extern EFI_GUID gAmiTseUserPasswordValidGuid ;
-extern  EFI_GUID gAmiTseAdminPasswordValidGuid ;
-extern  EFI_GUID gAmiTseInvalidPasswordGuid ;
-extern  EFI_GUID gAmiTseBeforeTimeOutGuid;
-extern EFI_GUID gAmiTseAfterTimeOutGuid ;
-extern EFI_GUID gAmiTseOemTSEVarGuid ;
-extern EFI_GUID gAmiTseOemPortingVar1Guid;
-extern EFI_GUID gAmiTseOemPortingVar2Guid;
-extern EFI_GUID gAmiTseOemPortingVar3Guid ;
-extern EFI_GUID gAmiTseOemPortingVar4Guid ;
-extern EFI_GUID gAmiTseOemPortingVar5Guid ;
-extern EFI_GUID gAmiTseOemPortingGuid1 ;
-extern EFI_GUID gAmiTseOemPortingGuid2 ;
-extern EFI_GUID gTSEInvalidateBgrtStatusProtocolGuid ;
-extern EFI_GUID  gTSESwitchingToPostScreenGuid ;
-extern EFI_GUID gTSEAfterPostInvPwdPromptGuid;
-extern EFI_GUID gSetupCompleteRedrawGuid; 
-extern EFI_GUID gEvaluateDefaults4FirstBootGuid;
 
 #pragma pack()
 
@@ -552,7 +470,7 @@ extern EFI_GUID gEvaluateDefaults4FirstBootGuid;
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2015, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2011, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **

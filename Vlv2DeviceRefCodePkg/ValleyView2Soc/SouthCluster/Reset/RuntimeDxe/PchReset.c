@@ -34,23 +34,6 @@ EFI_GUID gEfiPchExtendedResetProtocolGuid = EFI_PCH_EXTENDED_RESET_PROTOCOL_GUID
 #include <Library/UefiRuntimeServicesTableLib.h>
 #include <TianoApi.h>
 #endif
-//EIP188072 >>
-//AMI_OVERRIDE_START >>
-#include <SbElinks.h>
-
-// Function Prototypes
-typedef VOID (SB_RESET_CALLBACK) (
-    IN EFI_RESET_TYPE           ResetType,
-    IN EFI_STATUS               ResetStatus,
-    IN UINTN                    DataSize,
-    IN VOID                     *ResetData OPTIONAL
-);
-
-// Function Definitions
-extern SB_RESET_CALLBACK SB_RESET_CALLBACK_LIST EndOfList;
-SB_RESET_CALLBACK* SbResetCallbackList[] = { SB_RESET_CALLBACK_LIST NULL };
-//AMI_OVERRIDE_END >>
-//EIP188072 <<
 
 PCH_RESET_INSTANCE  *mPchResetInstance;
 
@@ -533,16 +516,7 @@ Returns:
   UINT32         Data32;
 
 //  DEBUG ((EFI_D_INFO, "IntelPchResetSystem() Start\n"));
-//EIP188072 >>
-//AMI_OVERRIDE_START >>
-{
-  UINT32                  Index;
 
-  for (Index = 0; SbResetCallbackList[Index] != NULL; Index++) {
-    SbResetCallbackList[Index](ResetType, ResetStatus, DataSize, ResetData);
-  }
-}
-//EIP188072 <<
   switch (ResetType) {
     case EfiResetWarm:
       CapsuleReset ();

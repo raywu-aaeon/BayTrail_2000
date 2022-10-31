@@ -12,10 +12,23 @@
 //**********************************************************************
 //**********************************************************************
 
-/** @file mptable.c
-    MPS table builder functions implementation
+//**********************************************************************
+// $Header: /Alaska/BIN/Modules/ACPI/Template/Core/mptable.c 26    5/25/10 5:07p Yakovlevs $
+//
+// $Revision: 26 $
+//
+// $Date: 5/25/10 5:07p $
+//**********************************************************************
 
-**/
+//<AMI_FHDR_START>
+//----------------------------------------------------------------------------
+//
+// Name:	mptable.c
+//
+// Description:	MPS table builder functions implementation
+//
+//----------------------------------------------------------------------------
+//<AMI_FHDR_END>
 #define F0000_BIT       1//LegacyBios.h
 
 #include <Token.h>
@@ -30,7 +43,7 @@
 #include <Library/AmiAcpiCpuLib.h>
 
 
-#include "AcpiCore.h"
+#include "acpicore.h"
 #include "mptable.h"
 
 //------------------------ Global variables ---------------------------
@@ -66,24 +79,33 @@ static UINT8    CurrentIoApicEntry = 0;
 
 extern ISO_PARAMETER_TABLE IsoTbl[];
 
+//EIP150568 >>
 EFI_STATUS MpsTableCreateStatus =  EFI_NO_RESPONSE;
 EFI_STATUS MpsTableFloatPointerModifyStatus = EFI_NO_RESPONSE;
 BOOLEAN MpsTableWasCreated = FALSE;
+//EIP150568 <<
 
 //------------------------ Functions ----------------------------------
 
-/**
-    MPS table builder entry point 
-
-        
-    @param ImageHandle MPS table builder image handle
-    @param SystemTable pointer to system table
-               
-         
-    @retval EFI_SUCCESS Initialization completed successfully
-    @retval EFI_ERROR Initialization failed
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:    MpsTableBuilderInit
+// 
+// Description:  MPS table builder entry point 
+//
+// Input:
+// IN EFI_HANDLE ImageHandle    - MPS table builder image handle
+// IN EFI_SYSTEM_TABLE *SystemTaple    - pointer to system table
+//               
+// Output:
+// EFI_SUCCESS    - Initialization completed successfully
+// EFI_ERROR      - Initialization failed
+//
+// Modified:    MpsTableReadyToBootEvent
+// 
+//--------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 EFI_STATUS MpsTableBuilderInit(
 	IN EFI_HANDLE ImageHandle,
@@ -100,17 +122,22 @@ EFI_STATUS MpsTableBuilderInit(
 	return Status;
 }
 
-/**
-    MPS table builder ReadyToBoot notification function 
-
-        
-    @param Event signalled event
-    @param Context pointer to calling context
-    
-                    
-    @retval VOID
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:    MpsTableReadyToBootNotify
+// 
+// Description:  MPS table builder ReadyToBoot notification function 
+//
+// Input:
+// IN EFI_EVENT Event      - signalled event
+// IN VOID *Context    - pointer to calling context
+//    
+// Output:           
+// VOID
+//
+//--------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 VOID MpsTableReadyToBootNotify(
 	IN EFI_EVENT Event, 
@@ -118,6 +145,7 @@ VOID MpsTableReadyToBootNotify(
 {
     EFI_STATUS Status;
     
+//EIP150568 >>
     if(EFI_ERROR(MpsTableCreateStatus)) 
     {
         MpsTableCreateStatus = MpsTableCreate();
@@ -126,6 +154,7 @@ VOID MpsTableReadyToBootNotify(
     }
     if(EFI_ERROR(MpsTableFloatPointerModifyStatus)) 
         MpsTableFloatPointerModifyStatus = MpsTableFloatPointerModify();
+//EIP150568 <<
 
     //Install a Configuration table  Entry
     Status=pBS->InstallConfigurationTable(&gMpsTableGuid,MpsTablePointer);
@@ -137,19 +166,25 @@ VOID MpsTableReadyToBootNotify(
     return;
 }
 
-/**
-    Fills MP_FLOATING_POINTER structure with actual data
-    and places it into F000 segment 
-
-        
-    @param VOID
-            
-            
-    @retval EFI_SUCCESS Pointer created and placed successfully
-    @retval EFI_ERROR Some error occurs
-
-	@note Modifies MpsTableFloatingPointer
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:    MpsTableFloatPointerModify
+// 
+// Description:  Fills MP_FLOATING_POINTER structure with actual data
+//               and places it into F000 segment 
+//
+// Input:
+// VOID
+//            
+// Output:   
+// EFI_SUCCESS    - Pointer created and placed successfully
+// EFI_ERROR      - Some error occurs
+//
+// Modified:    MpsTableFloatingPointer
+// 
+//--------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 EFI_STATUS MpsTableFloatPointerModify(VOID)
 {
@@ -206,17 +241,22 @@ EFI_STATUS MpsTableFloatPointerModify(VOID)
     return Status;
 }
 
-/**
-    Allocates space and creates MPS table 
-
-        
-    @param VOID
-               
-         
-    @retval EFI_SUCCESS function executed successfully
-    @retval EFI_ERROR some error occured
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:    MpsTableCreate
+// 
+// Description:  Allocates space and creates MPS table 
+//
+// Input:
+// VOID
+//               
+// Output:
+// EFI_SUCCESS    - function executed successfully
+// EFI_ERROR      - some error occured
+//
+//--------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS MpsTableCreate(VOID)
 {
     EFI_STATUS Status;
@@ -224,8 +264,10 @@ EFI_STATUS MpsTableCreate(VOID)
     VOID *CpuMpTableEntries;
     UINT32 CpuMpTableSize;
     
+//EIP150568 >>
     if (MpsTableWasCreated)
         return MpsTableAddHeader();    
+//EIP150568 <<
 
     Status = pBS->AllocatePool(EfiBootServicesData,
                                MP_TBL_TMP_BUFFER_SIZE,
@@ -280,24 +322,31 @@ EFI_STATUS MpsTableCreate(VOID)
 
     MpsTableAddExtendedTable();
 
+//EIP150568 >>
     MpsTableWasCreated = TRUE;
     
     return MpsTableAddHeader();
+//EIP150568 <<
 }
 
-/**
-    Creates MPS table header, allocates space and copies entire
-    table into RuntimeServicesData memory
-
-        
-    @param VOID
-               
-         
-    @retval EFI_SUCCESS function executed successfully
-
-	@note Modifies MpsTablePointer
-	
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:    MpsTableAddHeader
+// 
+// Description:  Creates MPS table header, allocates space and copies entire
+//               table into RuntimeServicesData memory
+//
+// Input:
+// VOID
+//               
+// Output:
+// EFI_SUCCESS - function executed successfully
+//
+// Modified:    MpsTablePointer
+// 
+//--------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS MpsTableAddHeader(VOID)
 {
     EFI_STATUS Status;
@@ -333,11 +382,13 @@ EFI_STATUS MpsTableAddHeader(VOID)
                                BaseTableLength + ExtendedTableLength,
                                &AllocationPointer);
 
+//EIP150568 >>
     if(EFI_ERROR(Status))  
         return Status; 
     MemCpy(AllocationPointer, //memory allocated - copy MPS table to new location
             MpsTablePointer, 
             (UINTN) (BaseTableLength + ExtendedTableLength));
+//EIP150568 <<
     
 #else
 
@@ -368,16 +419,21 @@ EFI_STATUS MpsTableAddHeader(VOID)
     return Status;
 }
 
-/**
-    Adds Bus entries to MPS table
-
-        
-    @param VOID
-     
-                   
-    @retval Number of entries added
- 
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:    MpsTableAddBusEntry
+// 
+// Description:  Adds Bus entries to MPS table
+//
+// Input:
+// VOID
+//     
+// Output:          
+// UINT16 - Number of entries added
+// 
+//--------------------------------------------------------------------------
+//<AMI_PHDR_END>
 UINT16 MpsTableAddBusEntry(VOID)
 {
     MP_TABLE_BUS_ENTRY *EntryPointer;
@@ -401,16 +457,21 @@ UINT16 MpsTableAddBusEntry(VOID)
     return EntryCount;
 }
 
-/**
-    Adds IO Apic entries to MPS table
-
-        
-    @param VOID
-     
-                   
-    @retval Number of entries added
- 
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:    MpsTableAddIoApicEntry
+// 
+// Description:  Adds IO Apic entries to MPS table
+//
+// Input:
+// VOID
+//     
+// Output:          
+// UINT16 - Number of entries added
+// 
+//--------------------------------------------------------------------------
+//<AMI_PHDR_END>
 UINT16 MpsTableAddIoApicEntry(VOID)
 {
     MP_TABLE_IO_APIC_ENTRY *EntryPointer;
@@ -483,16 +544,21 @@ UINT16 MpsTableAddIoApicEntry(VOID)
     return EntryCount;
 }
 
-/**
-    Adds Interrupt assignment entries to MPS table
-
-        
-    @param VOID
-     
-                   
-    @retval UINT16 Number of entries added
- 
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:    MpsTableAddIntAssignEntry
+// 
+// Description:  Adds Interrupt assignment entries to MPS table
+//
+// Input:
+// VOID
+//     
+// Output:          
+// UINT16 - Number of entries added
+// 
+//--------------------------------------------------------------------------
+//<AMI_PHDR_END>
 UINT16 MpsTableAddIntAssignEntry(VOID)
 {
     MP_TABLE_INT_ASSIGN_ENTRY *EntryPointer;
@@ -557,16 +623,21 @@ UINT16 MpsTableAddIntAssignEntry(VOID)
     return EntryCount;
 }
 
-/**
-    Adds Local interrupt assignment entries to MPS table
-
-        
-    @param VOID
-     
-                   
-    @retval Number of entries added
- 
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:    MpsTableAddLocalIntAssignEntry
+// 
+// Description:  Adds Local interrupt assignment entries to MPS table
+//
+// Input:
+// VOID
+//     
+// Output:          
+// UINT16 - Number of entries added
+// 
+//--------------------------------------------------------------------------
+//<AMI_PHDR_END>
 UINT16 MpsTableAddLocalIntAssignEntry(VOID)
 {
     MP_TABLE_LOCAL_INT_ASSIGN_ENTRY *EntryPointer;
@@ -603,16 +674,21 @@ UINT16 MpsTableAddLocalIntAssignEntry(VOID)
     return EntryCount;
 }
 
-/**
-    Adds Extended table entries to base table
-
-        
-    @param VOID
-     
-                   
-    @retval VOID
- 
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:    MpsTableAddExtendedTable
+// 
+// Description:  Adds Extended table entries to base table
+//
+// Input:
+// VOID
+//     
+// Output:          
+// VOID
+// 
+//--------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID MpsTableAddExtendedTable(VOID)
 {
     MemCpy(MpsTableCurrentPointer, MpsExTablePointer, ExtendedTableLength);
@@ -620,20 +696,26 @@ VOID MpsTableAddExtendedTable(VOID)
     return;
 }
 
-/**
-    Creates Extended MPS table system address space map entryies
-
-        
-    @param pPciRootBridgeIoProtocol 
-    @param BusId PCI bus number
-    @param BusAttributes PCI bus attributes
-     
-                   
-    @retval VOID
-
-	@note  Modifies MpsExTableCurrentPointer, ExtendedTableLength
-	
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:    MpsExTableAddSysAddressMapEntry
+// 
+// Description:  Creates Extended MPS table system address space map entryies
+//
+// Input:
+// IN EFI_PCI_ROOT_BRIDGE_IO_PROTOCOL *pPciRootBridgeIoProtocol
+// IN UINT8 BusId - PCI bus number
+// IN UINT8 BusAttributes - PCI bus attributes
+//     
+// Output:          
+// VOID
+//
+// Modified:    MpsExTableCurrentPointer
+//              ExtendedTableLength
+// 
+//--------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID MpsExTableAddSysAddressMapEntry(
     IN EFI_PCI_ROOT_BRIDGE_IO_PROTOCOL *pPciRootBridgeIoProtocol,
     IN UINT8 BusId,
@@ -702,18 +784,24 @@ VOID MpsExTableAddSysAddressMapEntry(
     return;
 }
 
-/**
-    Creates Extended MPS table bus hierarchy entryies
-
-        
-    @param VOID
-     
-                   
-    @retval VOID
-
-	@note Modifies MpsExTableCurrentPointer, ExtendedTableLength
-	
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:    MpsExTableAddBusHierarchyEntry
+// 
+// Description:  Creates Extended MPS table bus hierarchy entryies
+//
+// Input:
+// VOID
+//     
+// Output:          
+// VOID
+//
+// Modified:    MpsExTableCurrentPointer
+//              ExtendedTableLength
+// 
+//--------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID MpsExTableAddBusHierarchyEntry(VOID)
 {
     MP_EX_TABLE_BUS_HIERARCHY_ENTRY *EntryPointer;
@@ -741,19 +829,25 @@ VOID MpsExTableAddBusHierarchyEntry(VOID)
     MpsExTableCurrentPointer = (VOID *)EntryPointer;        
 }
 
-/**
-    Creates Extended MPS table compatibility bus address space
-    modifier entryies
-
-        
-    @param VOID
-     
-                   
-    @retval VOID
-	
-	@note Modifies MpsExTableCurrentPointer, ExtendedTableLength
-	
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:    MpsExTableAddCompatBusAddressModifierEntry
+// 
+// Description:  Creates Extended MPS table compatibility bus address space
+//               modifier entryies
+//
+// Input:
+// VOID
+//     
+// Output:          
+// VOID
+//
+// Modified:    MpsExTableCurrentPointer
+//              ExtendedTableLength
+// 
+//--------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID MpsExTableAddCompatBusAddressModifierEntry(VOID)
 {
     MP_EX_TABLE_COMPAT_BUS_ADDRESS_MODIFIER_ENTRY *EntryPointer;
@@ -789,19 +883,27 @@ VOID MpsExTableAddCompatBusAddressModifierEntry(VOID)
     MpsExTableCurrentPointer = (VOID *)EntryPointer;
 }
 
-/**
-    Retreive system info about buses and bus ierarchy and fills
-    BUS_INFO structure. Also creates MPS table extended entries
-
-        
-    @param VOID
-     
-                   
-    @retval VOID
-
-	@note Modifies BusEntry, MaxBusId, CurrentBusEntry, IsaBusId
-	
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:    QueryBusInfo
+// 
+// Description:  Retreive system info about buses and bus ierarchy and fills
+//               BUS_INFO structure. Also creates MPS table extended entries
+//
+// Input:
+// VOID
+//     
+// Output:          
+// VOID
+//
+// Modified:    BusEntry
+//              MaxBusId
+//              CurrentBusEntry
+//              IsaBusId
+// 
+//--------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID QueryBusInfo(VOID)
 {
 	EFI_STATUS Status;
@@ -895,7 +997,7 @@ VOID QueryBusInfo(VOID)
             ASSERT_EFI_ERROR(Status);
   		    if(EFI_ERROR(Status)) continue;
 
-            CollectIoApicInfo(pPciIoProtocol, 0);
+            CollectIoApicInfo(pPciIoProtocol, NULL);
 
 #if PCI_BUS_APIC_LEAVE_ENABLE != 0
             //Restore attributes of the device
@@ -957,18 +1059,25 @@ VOID QueryBusInfo(VOID)
     MpsExTableAddCompatBusAddressModifierEntry();
 }
 
-/**
-    Retreive system info about IO APIC 
-
-        
-    @param pPciIoProtocol 
-    @param BaseAddress base address of IO APIC
-     
-                   
-    @retval VOID
-
-	@note Modifies IoApicEntry, CurrentIoApicEntry
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:    CollectIoApicInfo
+// 
+// Description:  Retreive system info about IO APIC 
+//
+// Input:
+// IN OPTIONAL EFI_PCI_IO_PROTOCOL *pPciIoProtocol 
+// IN OPTIONAL UINT32 BaseAddress - base address of IO APIC
+//     
+// Output:          
+// VOID
+//
+// Modified:    IoApicEntry
+//              CurrentIoApicEntry
+// 
+//--------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID CollectIoApicInfo(
     IN EFI_PCI_IO_PROTOCOL *pPciIoProtocol OPTIONAL,
     IN UINT32 BaseAddress OPTIONAL)
@@ -1008,18 +1117,24 @@ VOID CollectIoApicInfo(
     CurrentIoApicEntry++;
 }
 
-/**
-    Arranges IO APIC Entries in their ID ascending order
-
-        
-    @param VOID
-     
-                   
-    @retval VOID
-
-	@note Modifies IoApicEntry, CurrentIoApicEntry
-	
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:    ArrangeIoApicEntries
+// 
+// Description:  Arranges IO APIC Entries in their ID ascending order
+//
+// Input:
+// VOID
+//     
+// Output:          
+// VOID
+//
+// Modified:    IoApicEntry
+//              CurrentIoApicEntry
+// 
+//--------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID ArrangeIoApicEntries(VOID)
 {
     UINT8 i;
@@ -1042,20 +1157,26 @@ VOID ArrangeIoApicEntries(VOID)
     }
 }
 
-/**
-    Returns IO APIC ID and Pin number assosiated with given SysVectorNumber
-
-        
-    @param SysVectorNumber system interrupt vector number
-    @param IoApicId Id of IO APIC which handles that vector
-    @param IoApicItin IO APIC Pin number associated with given vector number
-     
-                   
-    @retval VOID
-
-	@note Modifies    IoApicEntry, CurrentIoApicEntry
-	
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:    GetIoApicId
+// 
+// Description:  Returns IO APIC ID and Pin number assosiated with given SysVectorNumber
+//
+// Input:
+// IN UINT16   SysVectorNumber - system interrupt vector number
+// OUT UINT8 *IoApicId - Id of IO APIC which handles that vector
+// OUT UINT8 *IoApicItin - IO APIC Pin number associated with given vector number
+//     
+// Output:          
+// VOID
+//
+// Modified:    IoApicEntry
+//              CurrentIoApicEntry
+// 
+//--------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID GetIoApicId(
     IN UINT16   SysVectorNumber,
     OUT UINT8 *IoApicId,

@@ -26,7 +26,6 @@ Abstract:
 #include "../Include/MMRCLibraries.h"
 #include "../Include/CpgcVlvX0.h"
 #include "../../../../Src32/IoAccess.h"
-#include "../../../../Src32/OemHooks.h"
 
 /*++
 
@@ -1976,19 +1975,20 @@ FineWriteLeveling (
 				TempValue |= JEDEC_OUTPUTDRIVERIMPEDANCE;
 				if ((ModMrcData->Channel[1].Enabled == 0) && (ModMrcData->MemoryDown == 1)){
 					if ((ModMrcData->Channel[Channel].RankEnabled[0] == 1) && (ModMrcData->Channel[Channel].RankEnabled[1] == 0)){
-            if(ModMrcData->Override_dram_RTT_NOM == DRAM_RTT_NOM_DISABLED){
-              TempValue |= JEDEC_RTTTARGET_0;
-            }else {
-              TempValue |= JEDEC_RTTTARGET_120;
-            }
+#if defined DISABLED_RTT_NOM && DISABLED_RTT_NOM
+						TempValue |= JEDEC_RTTTARGET_0;
+#else
+						TempValue |= JEDEC_RTTTARGET_120;
+#endif
 					}
 				} else {
-          if(ModMrcData->Override_dram_RTT_NOM == DRAM_RTT_NOM_DISABLED){
-            TempValue |= JEDEC_RTTTARGET_0;
-          }else {
-            TempValue |= JEDEC_RTTTARGET_40;
-          }
+#if defined DISABLED_RTT_NOM && DISABLED_RTT_NOM
+					TempValue |= JEDEC_RTTTARGET_0;
+#else
+					TempValue |= JEDEC_RTTTARGET_40;
+#endif
 				}
+
 
 
 				JedecCmd (ModMrcData, Channel, ConfigureRank, JEDEC_LMR, TempValue);
@@ -4372,7 +4372,7 @@ ReadWriteTrain (
 				      InitValue = 0;
 				  }
 				  TotalMargin = 0;
-                  for (TempValue = InitValue; TempValue < (UINT32)(2*MarginMidpoint) && (TempValue < 64) ; TempValue += MarginStep) {
+                  for (TempValue = InitValue; TempValue < (UINT32)(2*MarginMidpoint); TempValue += MarginStep) {
                       MarginWindow = PfLimitHistory[TempValue][Strobe][HIGH] - PfLimitHistory[TempValue][Strobe][LOW];
                       if (MarginWindow > EwPercentage) {
                          CumWeightedEW[Strobe] += (MarginWindow * TempValue);
@@ -4475,11 +4475,11 @@ SearchRmt (
     //
     if (ModMrcData->CurrentDdrType == TYPE_LPDDR3){
   	    ModMrcData->FeatureSettings.MrcCPGCNumBursts = 11;
-  	    ModMrcData->FeatureSettings.MrcCPGCExpLoopCnt = 3;
-  	    RmtDqDqsVrefSearch (ModMrcData,Channel,CMD_DELAY);
+  	    ModMrcData->FeatureSettings.MrcCPGCExpLoopCnt = 10;
+    	RmtDqDqsVrefSearch (ModMrcData,Channel,CMD_DELAY);
     }
 
-  ModMrcData->FeatureSettings.MrcCPGCNumBursts = 6;
+	ModMrcData->FeatureSettings.MrcCPGCNumBursts = 6;
 	ModMrcData->FeatureSettings.MrcCPGCExpLoopCnt = 4;
 
     //
@@ -4728,30 +4728,26 @@ RmtDqDqsVrefSearch (
 
 	      //Fixed upper and lower boundary on strobe 0 for PfLimits array
 	      if (TempValue < HALF_CLK_(ModMrcData->FeatureSettings.MrcDigitalDll, ModMrcData->CurrentFrequency)) {
-	        PfLimits[0][LOW]  = 0;
-	        if(ModMrcData->CurrentFrequency == FREQ_1066_DDLL){
-	          PfLimits[0][HIGH] = (UINT16) (TempValue + RMT_CMD_SWEEP_RANGE_1066_DDLL);
-	        }else if(ModMrcData->CurrentFrequency == FREQ_1333){
-	          PfLimits[0][HIGH] = (UINT16) (TempValue + RMT_CMD_SWEEP_RANGE_1333_ADLL);
-	        }else if(ModMrcData->CurrentFrequency <= FREQ_1333_DDLL){
-	          PfLimits[0][HIGH] = (UINT16) (TempValue + HALF_CLK_(ModMrcData->FeatureSettings.MrcDigitalDll, ModMrcData->CurrentFrequency));
-	        }
+	    	  if(ModMrcData->FeatureSettings.MrcDigitalDll){
+            PfLimits[0][LOW]  = 0;
+	    		  PfLimits[0][HIGH] = (UINT16) (TempValue + RMT_CMD_SWEEP_RANGE);
+	    	  } else {
+	    		  PfLimits[0][LOW]  = 0;
+	    		  PfLimits[0][HIGH] = (UINT16) (TempValue + HALF_CLK_(ModMrcData->FeatureSettings.MrcDigitalDll, ModMrcData->CurrentFrequency));
+	    	  }
 	      } else {
-	        if(ModMrcData->CurrentFrequency == FREQ_1066_DDLL){
-	          PfLimits[0][LOW]  = (UINT16) (TempValue - RMT_CMD_SWEEP_RANGE_1066_DDLL);
-	          PfLimits[0][HIGH] = (UINT16) (TempValue + RMT_CMD_SWEEP_RANGE_1066_DDLL);
-	        }else if(ModMrcData->CurrentFrequency == FREQ_1333){
-	          PfLimits[0][LOW]  = (UINT16) (TempValue - RMT_CMD_SWEEP_RANGE_1333_ADLL);
-	          PfLimits[0][HIGH] = (UINT16) (TempValue + RMT_CMD_SWEEP_RANGE_1333_ADLL);
-	        }else if(ModMrcData->CurrentFrequency <= FREQ_1333_DDLL){
-	          PfLimits[0][LOW]  = (UINT16) (TempValue - HALF_CLK_(ModMrcData->FeatureSettings.MrcDigitalDll, ModMrcData->CurrentFrequency));
-	          PfLimits[0][HIGH] = (UINT16) (TempValue + HALF_CLK_(ModMrcData->FeatureSettings.MrcDigitalDll, ModMrcData->CurrentFrequency));
-	        }
+	    	  if(ModMrcData->FeatureSettings.MrcDigitalDll){
+	    		  PfLimits[0][LOW]  = (UINT16) (TempValue - RMT_CMD_SWEEP_RANGE);
+	    		  PfLimits[0][HIGH] = (UINT16) (TempValue + RMT_CMD_SWEEP_RANGE);
+	    	  } else {
+	    		  PfLimits[0][LOW]  = (UINT16) (TempValue - HALF_CLK_(ModMrcData->FeatureSettings.MrcDigitalDll, ModMrcData->CurrentFrequency));
+	    		  PfLimits[0][HIGH] = (UINT16) (TempValue + HALF_CLK_(ModMrcData->FeatureSettings.MrcDigitalDll, ModMrcData->CurrentFrequency));
+	    	  }
 	      }
 	      break;
 
 	  default:
-		    //
+		  //
 	      // Signal Error
 	      //
 	      RMTDataLeftLowOffset = 0;
@@ -6645,7 +6641,6 @@ Returns:
   UINT32 LowHigh;
   UINT8  CurrentStatus;
   UINT32 CompareFlag;
-  UINT8  LateCmdSweepRange;
 
 #if defined PERFORMANCE && PERFOMRANCE
   UINT32 TscStartLow;
@@ -6658,13 +6653,6 @@ Returns:
   _asm mov TscStartHigh, edx;
 #endif                       
 
-  if(ModMrcData->CurrentFrequency == FREQ_1066_DDLL){
-    LateCmdSweepRange = LATECMD_SWEEP_RANGE_1066_DDLL;
-  }else if(ModMrcData->CurrentFrequency == FREQ_1333){
-    LateCmdSweepRange = LATECMD_SWEEP_RANGE_1333_ADLL;
-  }else{
-    LateCmdSweepRange = LATECMD_SWEEP_RANGE_DEFAULT;
-  }
 
   //
   // Read the Initial Command values for each group storing them in the CmdValue array for each group.
@@ -6731,13 +6719,13 @@ Returns:
               if (LowHigh == 0) {
                 CmdLower[TempValue] = CmdSweepValue[TempValue];
                 CmdSweepValue[TempValue] -= LATECMD_STEPSIZE;          
-                if(CmdValue[TempValue]-CmdLower[TempValue] > (UINT8)(LateCmdSweepRange -1)){
+                if(CmdValue[TempValue]-CmdLower[TempValue] > LATECMD_SWEEP_RANGE -1){
                 	CurrentStatus = FOUND_FAILURE;
                 }
               } else {
                 CmdHigher[TempValue] = CmdSweepValue[TempValue];
                 CmdSweepValue[TempValue] += LATECMD_STEPSIZE;          
-                if(CmdHigher[TempValue] - CmdValue[TempValue]> (UINT8)(LateCmdSweepRange -1)){
+                if(CmdHigher[TempValue] - CmdValue[TempValue]> LATECMD_SWEEP_RANGE -1){
                 	CurrentStatus = FOUND_FAILURE;
                 }
               }

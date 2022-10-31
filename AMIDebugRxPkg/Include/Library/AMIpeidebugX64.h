@@ -2,7 +2,7 @@
 //*****************************************************************//
 //*****************************************************************//
 //**                                                             **//
-//**         (C)Copyright 2014, American Megatrends, Inc.        **//
+//**         (C)Copyright 2012, American Megatrends, Inc.        **//
 //**                                                             **//
 //**                     All Rights Reserved.                    **//
 //**                                                             **//
@@ -19,17 +19,6 @@
 //
 // $Date: 11/02/12 10:15a $
 //*****************************************************************
-//*****************************************************************
-//
-//	peidebug.h
-//
-//
-// Revision History
-// ----------------
-// $Log: /AptioV/SRC/AMIDebugRxPkg/Include/Library/AMIpeidebugX64.h $
-// 
-//
-//*****************************************************************
 
 //<AMI_FHDR_START>
 //----------------------------------------------------------------------------
@@ -44,20 +33,14 @@
 #define _AMI_PEIDEBUGx64_H_
 #include "token.h"
 
-//#if USB_DEBUG_TRANSPORT
+#if USB_DEBUG_TRANSPORT
 #include <Library\EHCI.h>
-//#endif
+#endif
 
 #define EFI_PEI_DBG_BASEADDRESS_PPI_GUID \
   { 0x9bf4e141, 0xa4ec, 0x4d72,  {0xbc, 0xc4, 0x94, 0x2, 0x1d, 0x2b, 0x80, 0xbd }}
 
 UINTN GetDbgDataBaseAddress();
-BOOLEAN IsPMModeEnabled (UINT8);
-
-#define	IN_PEI_BEFORE_MEMORY		0
-#define	IN_PEI_AFTER_MEMORY			01
-#define	IN_DXE_WITH_PEI_DBGR		02
-#define	IN_DXE_WITH_DXE_DBGR		03
 
 #define PEI_DEBUG_DATASECTION_SIZEx64 \
 		(IDT_SIZEx64 + CONTEXT_SIZEx64 + XPORTLOCALVAR_SIZEx64 + XPORTGLOBALVAR_SIZEx64\
@@ -70,14 +53,12 @@ typedef struct {
 	UINT32	DATABASEADDRESS;
 }PEI_DBG_DATA_SECTIONx64;
 
-#define PEI_DEBUG_DATA_BASEADDRESS  GetDbgDataBaseAddress()
-
 #define IDT_ENTRIES						0x0	    // Number of Entries in IDT
 #define IDT_SIZEx64						0x0     // Total Size = 352 Bytes
 #define CONTEXT_SIZEx64					0x140	// Total Size = 320 Bytes
-#define XPORTLOCALVAR_SIZEx64			0x75	// Total Size =  116 Bytes
-#define XPORTGLOBALVAR_SIZEx64			0x40	// Total Size =  64 Bytes
-#define DBGRLOCALVAR_SIZEx64			0xa0	// Total Size =  125 Bytes
+#define XPORTLOCALVAR_SIZEx64			0x71	// Total Size =  82 Bytes
+#define XPORTGLOBALVAR_SIZEx64			0x30	// Total Size =  48 Bytes
+#define DBGRLOCALVAR_SIZEx64			0x64	// Total Size =  100 Bytes
 #define XPORTEXPTNBUF_SIZEx64			0x20	// Total Size =  32 Bytes
 #define GLOBALBUF_SIZEx64				0x235	// Total Size = 565 Bytes
 #define ACKBUF_SIZEx64					0x0a	// Total Size =  10 Bytes
@@ -123,9 +104,7 @@ typedef struct {
 	UINT16	(*SendNoAck)();
 	RETURN_STATUS	(*ConsoleIn)();
 	VOID 	(*SendExptn)();
-	RETURN_STATUS	(*ReInitialize)();
-	RETURN_STATUS	(*SmmReInitialize)();
-	RETURN_STATUS	(*UpdateTargetState)();
+	VOID	(*IrqHandler)();	//Not to be use as API by any other drivers
 } AMI_PEI_TRANSPORT_PROTOCOLx64;
 
 //#pragma pack(1)
@@ -146,12 +125,11 @@ typedef struct {
 	UINT8	m_IsHostConnected;
 	UINT8	m_IsPeiDbgIsNotS3;
 	UINT64	m_PeiDbgRxInitTimerVal;
-	UINT8	m_IsPMModeEnabled;
-//#if !USB_DEBUG_TRANSPORT
+#if !USB_DEBUG_TRANSPORT
 	UINT16  m_BaseAddr;
 	//To obtain info from Porting template support, and use it to publish HOB
 	UINT8	m_SIO_LDN_UART;			//Logical Device Number for COM port
-//#else
+#else
 
 	UINT32	USBBASE;
 	UINT32	USB2_DEBUG_PORT_REGISTER_INTERFACE;
@@ -182,7 +160,7 @@ typedef struct {
 	UINT8	m_PCI_EHCI_DEVICE_NUMBER;
 	UINT8	m_PCI_EHCI_FUNCTION_NUMBER;
 	UINT8	m_PCI_EHCI_BAR_OFFSET;
-//#endif
+#endif
 }SerXPortGblData_Tx64;
 
 typedef struct {
@@ -195,10 +173,10 @@ typedef struct {
 	UINTN	ContextData;
 	VOID	(*IRQRegisterHandler)(UINTN,UINTN);
 
-//#if USB_DEBUG_TRANSPORT
+#if USB_DEBUG_TRANSPORT
 	//Additional interface for PeiDbgSIO module to reinit EHCI memory base
 	void	(*PeiDbgSIO_Init_USB_EHCI)(VOID *);
-//#endif
+#endif
 }SerXPortGblVar_Tx64;
 
 typedef	struct{
@@ -209,7 +187,7 @@ typedef	struct{
 	VOID	(*INT1ExceptionHandler)();		//not to be use as API
 	VOID	(*INT3ExceptionHandler)();		//not to be use as API
 	VOID	(*INTnExceptionHandler)();		//not to be use as API
-	UINTN	(*PeiDbgr_SendPeiLoadImage)(UINTN FileHandle,UINTN ImageAddr,UINTN ImageSize,UINTN EntryPoint,void * PDBFileName);
+	UINTN	(*PeiDbgr_SendPeiLoadImage)(UINTN FileHandle,UINTN ImageAddr,UINTN ImageSize,void * PDBFileName);
 	VOID	(*INTFExceptionHandler)();		//not to be use as API
 }AMI_DEBUGGER_INTERFACEx64;
 
@@ -253,18 +231,6 @@ typedef struct {
 	RETURN_STATUS (*UpdateFVHob)();
 	UINT8	m_SMMEntryBreak;
 	UINT8	m_SMMExitBreak;
-	UINT8	m_SMMDispatchLoaded;
-	UINTN 	m_INT1Hndlr;
-	UINTN 	m_INT3Hndlr;
-	UINTN 	m_TmrHndlr;
-	UINT8 	m_DbgInitPending;
-	UINT64 	m_DbgInitTimeStart;
-	UINT64 	m_DbgInitTimeEnd;
-	UINT8 	m_PerfDataAvailable;
-	UINTN	m_SmmDebugDataAddress;
-	UINT8	m_IsRuntime;
-	UINT32	m_CarBaseAddress;
-	UINT32	m_CarEndAddress;
 }DbgGblData_Tx64;
 //#pragma pack()
 
@@ -299,9 +265,9 @@ typedef struct {
 	UINTN	ContextData;
 	UINT64	IRQRegisterHandler;			//VOID	(*IRQRegisterHandler)(UINTN,UINTN);
 
-////#if USB_DEBUG_TRANSPORT
+#if USB_DEBUG_TRANSPORT
 	UINT64	PeiDbgSIO_Init_USB_EHCI;	//void	(*PeiDbgSIO_Init_USB_EHCI)(VOID *);
-//#endif
+#endif
 }SerXPortGblVar_Tx64_Proto;
 
 typedef	struct{
@@ -312,7 +278,7 @@ typedef	struct{
 	UINT64	pINT1ExceptionHandler;			//VOID	(*INT1ExceptionHandler)();
 	UINT64	pINT3ExceptionHandler;			//VOID	(*INT3ExceptionHandler)();
 	UINT64	pINTnExceptionHandler;			//VOID	(*INTnExceptionHandler)();
-	UINT64  pPeiDbgr_SendPeiLoadImage;		//UINTN	(*PeiDbgr_SendPeiLoadImage)(UINTN FileHandle,UINTN ImageAddr,UINTN ImageSize,UINTN EntryPoint,void * PDBFileName);
+	UINT64  pPeiDbgr_SendPeiLoadImage;		//UINTN	(*PeiDbgr_SendPeiLoadImage)(UINTN FileHandle,UINTN ImageAddr,UINTN ImageSize,void * PDBFileName);
 	UINT64	pINTFExceptionHandler;			//VOID	(*INTFExceptionHandler)();
 }AMI_DEBUGGER_INTERFACEx64_Proto;
 
@@ -339,7 +305,7 @@ typedef struct {
 //*****************************************************************//
 //*****************************************************************//
 //**                                                             **//
-//**         (C)Copyright 2014, American Megatrends, Inc.        **//
+//**         (C)Copyright 2012, American Megatrends, Inc.        **//
 //**                                                             **//
 //**                     All Rights Reserved.                    **//
 //**                                                             **//

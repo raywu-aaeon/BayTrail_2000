@@ -14,28 +14,18 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 **/
 
 #include "DxeIpl.h"
-
 //*** AMI PORTING BEGIN ***//
-// Aptio DXE IPL Entry function
-EFI_STATUS
-EFIAPI
-AmiDxeIplEntry (
-  IN CONST EFI_DXE_IPL_PPI *This,
-  IN EFI_PEI_SERVICES      **PeiServices,
-  IN EFI_PEI_HOB_POINTERS  HobList
-  );
+#include <Library/AmiReportFvLib.h>
+#include <AmiHobs.h>
 //*** AMI PORTING END ***//
+
 
 //
 // Module Globals used in the DXE to PEI hand off
 // These must be module globals, so the stack can be switched
 //
 CONST EFI_DXE_IPL_PPI mDxeIplPpi = {
-//*** AMI PORTING BEGIN ***//
-// Replace EDKII DxeLoadCore with the function that implements Aptio specific logic
-//  DxeLoadCore
-	AmiDxeIplEntry
-//*** AMI PORTING END ***//
+  DxeLoadCore
 };
 
 CONST EFI_PEI_GUIDED_SECTION_EXTRACTION_PPI mCustomGuidedSectionExtractionPpi = {
@@ -68,6 +58,154 @@ CONST EFI_PEI_PPI_DESCRIPTOR gEndOfPeiSignalPpi = {
   &gEfiEndOfPeiSignalPpiGuid,
   NULL
 };
+
+//*** AMI PORTING BEGIN ***//
+EFI_PEI_LOADED_IMAGE_PPI LoadedImagePpi;
+static EFI_PEI_PPI_DESCRIPTOR LoadedImagePpiDesc[] =
+{ 
+	{
+	    EFI_PEI_PPI_DESCRIPTOR_PPI | EFI_PEI_PPI_DESCRIPTOR_TERMINATE_LIST,
+	    &gEfiPeiLoadedImagePpiGuid, &LoadedImagePpi 
+    }
+};
+
+// The order of elements in this array is important.
+// It defines the order of memory types in the DXE memory map.
+// The first array element corresponds to the type with the largest address.
+// Keeping boot time memory types at the bottom of the list improves 
+// stability of the runtime portions of the memory map
+// which is important during S4 resume.
+CONST EFI_MEMORY_TYPE_INFORMATION DefaultMemoryTypeInformation[] = {
+  { EfiRuntimeServicesCode,     0x30 },
+  { EfiRuntimeServicesData,     0x20 },
+  { EfiACPIMemoryNVS,           0x60 },
+  { EfiACPIReclaimMemory,       0x10 },
+  { EfiReservedMemoryType,      0x30 },
+  { EfiBootServicesCode,        0x600 },
+  { EfiBootServicesData,        0x1500 },
+  { EfiMaxMemoryType,           0 }		// indicates the end of the table
+};
+
+/**
+  Implementation of the recovery boot path.
+  
+  @param  PeiServices Describes the list of possible PEI Services.
+
+  @retval EFI_SUCESS  The recovery capsule has been successfully loaded.
+  @retval Others      Recovery capsule not found. 
+
+**/
+EFI_STATUS Recovery(
+    IN EFI_PEI_SERVICES **PeiServices
+)
+{
+    EFI_STATUS Status;
+	EFI_PEI_RECOVERY_MODULE_PPI *PeiRecovery;
+
+    Status = PeiServicesLocatePpi (
+               &gEfiPeiRecoveryModulePpiGuid,
+               0,
+               NULL,
+               (VOID **) &PeiRecovery
+               );
+
+	if (EFI_ERROR(Status)) {
+        REPORT_STATUS_CODE(EFI_ERROR_CODE|EFI_ERROR_MAJOR, PEI_RECOVERY_PPI_NOT_FOUND);
+        return Status;
+    }
+	return PeiRecovery->LoadRecoveryCapsule(PeiServices, PeiRecovery);
+}
+
+/**
+  Searches for recovery capsule address in the GUIDed HOB.
+  
+  @param  PeiServices Describes the list of possible PEI Services.
+  @param  Buffer On output conains recovery capsule address.
+
+  @retval EFI_SUCESS  The recovery capsule address has been found.
+  @retval Others      The recovery capsule address cannot be found.
+
+**/
+EFI_STATUS FindRecoveryBuffer(
+    IN EFI_PEI_SERVICES **PeiServices,
+    OUT VOID **Buffer
+)
+{
+    EFI_STATUS Status;
+    RECOVERY_IMAGE_HOB *RecoveryHob;
+
+    Status = (*PeiServices)->GetHobList(PeiServices, &RecoveryHob);
+    if(EFI_ERROR(Status))
+        return Status;     //we are not on recovery boot path
+
+    Status = FindNextHobByGuid(&gAmiRecoveryImageHobGuid, &RecoveryHob);
+    if(EFI_ERROR(Status))
+        return Status;     //we are not on recovery boot path
+
+    if(RecoveryHob->Status == EFI_SUCCESS && RecoveryHob->Address != 0) {
+        *Buffer = (VOID *)(UINTN)RecoveryHob->Address;
+        return EFI_SUCCESS;
+    }
+
+    return EFI_NOT_FOUND;
+}
+
+/**
+  Publishes Firmware volumes required for DXE phase.
+  
+  @param  PeiServices Describes the list of possible PEI Services.
+  @param  BootMode Current boot mode.
+
+  @retval Number of the next firmware volume to start search for DXE_CORE from.
+
+**/
+UINTN PublishDxeFv(
+	IN EFI_PEI_SERVICES **PeiServices,
+    IN EFI_BOOT_MODE BootMode
+)
+{
+    EFI_STATUS Status;
+    UINTN FvNum = 0;
+    VOID *RecoveryBuffer = NULL;
+	EFI_FIRMWARE_VOLUME_HEADER* pFV;
+
+/* first check for recovery/flashupdate capsule
+BOOT_IN_RECOVERY_MODE - actual recovery or flash update via recovery capsule on disk (in latter case
+boot mode will be changed to BOOT_ON_FLASH_UPDATE after call to Recovery() function)
+BOOT_ON_FLASH_UPDATE - flash update via recovery capsule in memory
+*/
+    if (BootMode == BOOT_IN_RECOVERY_MODE || BootMode == BOOT_ON_FLASH_UPDATE) {
+        Status = Recovery(PeiServices);
+		if (!EFI_ERROR(Status)) {
+            Status = FindRecoveryBuffer(PeiServices, &RecoveryBuffer);
+            BootMode = GetBootModeHob ();  //check if boot mode changed
+		}
+
+        if(EFI_ERROR(Status)) {
+        /* we can't find recovery capsule, report error */
+            PEI_ERROR_CODE(PeiServices, PEI_RECOVERY_FAILED, EFI_ERROR_MAJOR);
+        }
+    }
+
+    if(RecoveryBuffer != NULL) {
+        if(BootMode == BOOT_IN_RECOVERY_MODE || PcdGetBool(PcdUseNewImageOnFlashUpdate)) {
+        /* when we're in recovery we publish DXE Fv from recovery buffer, instead of flash */
+            while( !EFI_ERROR((*PeiServices)->FfsFindNextVolume(PeiServices, FvNum, &pFV)))
+                FvNum++;        //determine how many FVs published already
+            Status = ReportFV2Dxe(RecoveryBuffer, PeiServices);
+            if(!EFI_ERROR(Status)) {
+                return FvNum;
+            } else {
+            /* we can't publish recovery capsule, report error */
+                PEI_ERROR_CODE(PeiServices, PEI_RECOVERY_FAILED, EFI_ERROR_MAJOR);
+            }
+        } 
+    }
+
+    Status = ReportFV2Dxe(NULL, PeiServices);
+    return 0;
+}
+//*** AMI PORTING END *****//
 
 /**
   Entry point of DXE IPL PEIM.
@@ -223,8 +361,19 @@ DxeLoadCore (
   UINT32                                    AuthenticationState;
   UINTN                                     DataSize;
   EFI_PEI_S3_RESUME2_PPI                    *S3Resume;
-  EFI_PEI_RECOVERY_MODULE_PPI               *PeiRecovery;
+//*** AMI PORTING BEGIN ***//
+//  EFI_PEI_RECOVERY_MODULE_PPI               *PeiRecovery;
+//*** AMI PORTING END *****//
   EFI_MEMORY_TYPE_INFORMATION               MemoryData[EfiMaxMemoryType + 1];
+//*** AMI PORTING BEGIN ***//
+  EFI_HOB_GUID_TYPE                         *MemoryInformationHob;
+  EFI_PEI_LOADED_IMAGE_PPI                  *OldLoadedImagePpi;
+  EFI_PEI_PPI_DESCRIPTOR                    *OldLoadedImageDesc;
+  UINTN                                     FvNum = 0;
+
+  PERF_START (NULL,"DxeIpl", NULL, 0);
+  PEI_PROGRESS_CODE(PeiServices,PEI_DXE_IPL_STARTED);
+//*** AMI PORTING END *****//
 
   //
   // if in S3 Resume, restore configure
@@ -232,12 +381,18 @@ DxeLoadCore (
   BootMode = GetBootModeHob ();
 
   if (BootMode == BOOT_ON_S3_RESUME) {
+//*** AMI PORTING BEGIN ***//
+	PEI_TRACE((TRACE_DXEIPL, PeiServices, "S3Resume\n"));
+//*** AMI PORTING END *****//
     Status = PeiServicesLocatePpi (
                &gEfiPeiS3Resume2PpiGuid,
                0,
                NULL,
                (VOID **) &S3Resume
                );
+//*** AMI PORTING BEGIN ***//
+// Report error code if S3Resume could not be found
+/*
     if (EFI_ERROR (Status)) {
       //
       // Report Status code that S3Resume PPI can not be found
@@ -251,6 +406,23 @@ DxeLoadCore (
     
     Status = S3Resume->S3RestoreConfig2 (S3Resume);
     ASSERT_EFI_ERROR (Status);
+*/
+    if (EFI_ERROR(Status))
+        REPORT_STATUS_CODE(EFI_ERROR_CODE|EFI_ERROR_MAJOR,PEI_S3_RESUME_PPI_NOT_FOUND);
+    else {
+        PEI_TRACE((TRACE_DXEIPL, PeiServices, "Calling S3RestoreConfig\n"));
+		PERF_END (NULL,"DxeIpl", NULL, 0);
+        Status = S3Resume->S3RestoreConfig2 (S3Resume);
+    }
+    //if S3 Resume failed, report an error and reset the system
+    if (EFI_ERROR(Status)) {
+        REPORT_STATUS_CODE(EFI_ERROR_CODE|EFI_ERROR_MAJOR, PEI_S3_RESUME_FAILED);
+        (*PeiServices)->ResetSystem(PeiServices);
+    }
+//*** AMI PORTING END *****//
+//*** AMI PORTING BEGIN ***//
+// AMI Recovery handling
+/*
   } else if (BootMode == BOOT_IN_RECOVERY_MODE) {
     REPORT_STATUS_CODE (EFI_PROGRESS_CODE, (EFI_SOFTWARE_PEI_MODULE | EFI_SW_PEI_PC_RECOVERY_BEGIN));
     Status = PeiServicesLocatePpi (
@@ -286,11 +458,24 @@ DxeLoadCore (
       CpuDeadLoop ();
     }
     REPORT_STATUS_CODE (EFI_PROGRESS_CODE, (EFI_SOFTWARE_PEI_MODULE | EFI_SW_PEI_PC_CAPSULE_START));
+*/
+  } else {
+	FvNum = PublishDxeFv(PeiServices, BootMode);
+//*** AMI PORTING END *****//
     //
     // Now should have a HOB with the DXE core
     //
   }
 
+//*** AMI PORTING BEGIN ***//
+  // There can only be a single memory type information HOB.
+  // Invalidate other HOB instances (if any).
+  MemoryInformationHob = HobList.Guid;
+  while (!EFI_ERROR(
+      FindNextHobByGuid(&gEfiMemoryTypeInformationGuid, &MemoryInformationHob)
+  )) MemoryInformationHob->Header.HobType = EFI_HOB_TYPE_UNUSED;
+//*** AMI PORTING END *****//
+    
   Status = PeiServicesLocatePpi (
              &gEfiPeiReadOnlyVariable2PpiGuid,
              0,
@@ -301,7 +486,12 @@ DxeLoadCore (
     DataSize = sizeof (MemoryData);
     Status = Variable->GetVariable ( 
                          Variable, 
-                         EFI_MEMORY_TYPE_INFORMATION_VARIABLE_NAME,
+//*** AMI PORTING BEGIN ***//
+//                         EFI_MEMORY_TYPE_INFORMATION_VARIABLE_NAME,
+                           (BootMode == BOOT_ON_S4_RESUME)
+                        ? L"PreviousMemoryTypeInformation"
+                        : EFI_MEMORY_TYPE_INFORMATION_VARIABLE_NAME,
+//*** AMI PORTING END *****//
                          &gEfiMemoryTypeInformationGuid,
                          NULL,
                          &DataSize,
@@ -316,14 +506,34 @@ DxeLoadCore (
         MemoryData,
         DataSize
         );
+//*** AMI PORTING BEGIN ***//
+    } else {
+      //
+      // Build the GUID'd HOB for DXE using default structure
+      //
+      DataSize = sizeof(DefaultMemoryTypeInformation);
+      BuildGuidDataHob (
+        &gEfiMemoryTypeInformationGuid,
+        DefaultMemoryTypeInformation,
+        DataSize
+        );
+//*** AMI PORTING END *****//
     }
   }
 
   //
   // Look in all the FVs present in PEI and find the DXE Core FileHandle
   //
-  FileHandle = DxeIplFindDxeCore ();
-
+//*** AMI PORTING BEGIN ***//
+//  FileHandle = DxeIplFindDxeCore ();
+  Status = DxeIplFindDxeCore (&FileHandle, FvNum);
+  if (EFI_ERROR(Status)) {
+    REPORT_STATUS_CODE (EFI_ERROR_CODE|EFI_ERROR_MAJOR, PEI_DXE_CORE_NOT_FOUND);
+    PERF_END (NULL,"DxeIpl", NULL, 0);
+    return EFI_NOT_FOUND;
+  }
+//*** AMI PORTING END *****//
+  
   //
   // Load the DXE Core from a Firmware Volume.
   //
@@ -361,12 +571,32 @@ DxeLoadCore (
     DxeCoreEntryPoint
     );
 
+//*** AMI PORTING BEGIN ***//
+    //Update LoadedImage PPI information
+    LoadedImagePpi.ImageAddress = DxeCoreAddress;
+    LoadedImagePpi.ImageSize = DxeCoreSize;
+    LoadedImagePpi.FileHandle = FileHandle;
+    Status = PeiServicesLocatePpi ( &gEfiPeiLoadedImagePpiGuid,
+        0, &OldLoadedImageDesc, &OldLoadedImagePpi
+    );
+    if (!(EFI_ERROR(Status))) { // if Loaded Image PPI was located
+        Status = PeiServicesReInstallPpi (
+            OldLoadedImageDesc, LoadedImagePpiDesc
+        );
+    } else {
+		// Loaded Image PPI not found, try installing it again.
+   	    Status = PeiServicesInstallPpi(LoadedImagePpiDesc);
+	}
+// Move debug message and progress code
+/*
   //
   // Report Status Code EFI_SW_PEI_PC_HANDOFF_TO_NEXT
   //
   REPORT_STATUS_CODE (EFI_PROGRESS_CODE, (EFI_SOFTWARE_PEI_CORE | EFI_SW_PEI_CORE_PC_HANDOFF_TO_NEXT));
 
   DEBUG ((DEBUG_INFO | DEBUG_LOAD, "Loading DXE CORE at 0x%11p EntryPoint=0x%11p\n", (VOID *)(UINTN)DxeCoreAddress, FUNCTION_ENTRY_POINT (DxeCoreEntryPoint)));
+*/
+//*** AMI PORTING END *****//
 
   //
   // Transfer control to the DXE Core
@@ -391,17 +621,31 @@ DxeLoadCore (
    @return FileHandle of DxeCore to load DxeCore.
    
 **/
+//*** AMI PORTING BEGIN ***//
+/*
 EFI_PEI_FILE_HANDLE
 DxeIplFindDxeCore (
   VOID
   )
+*/
+EFI_STATUS
+EFIAPI
+DxeIplFindDxeCore (
+  EFI_PEI_FILE_HANDLE   *TargetHandle,
+  UINTN                 Instance
+  )
+//*** AMI PORTING END *****//  
 {
   EFI_STATUS            Status;
-  UINTN                 Instance;
+//*** AMI PORTING BEGIN ***//
+//  UINTN                 Instance;
+//*** AMI PORTING END *****//  
   EFI_PEI_FV_HANDLE     VolumeHandle;
   EFI_PEI_FILE_HANDLE   FileHandle;
   
-  Instance    = 0;
+//*** AMI PORTING BEGIN ***//
+//  Instance    = 0;
+//*** AMI PORTING END *****//  
   while (TRUE) {
     //
     // Traverse all firmware volume instances
@@ -412,9 +656,12 @@ DxeIplFindDxeCore (
     // volume that may contain DxeCore.
     //
     if (EFI_ERROR (Status)) {
-      REPORT_STATUS_CODE (EFI_PROGRESS_CODE, (EFI_SOFTWARE_PEI_MODULE | EFI_SW_PEI_CORE_EC_DXE_CORRUPT));
+//*** AMI PORTING BEGIN ***//
+//      REPORT_STATUS_CODE (EFI_PROGRESS_CODE, (EFI_SOFTWARE_PEI_MODULE | EFI_SW_PEI_CORE_EC_DXE_CORRUPT));
+        return Status;
     }
-    ASSERT_EFI_ERROR (Status);
+//    ASSERT_EFI_ERROR (Status);
+//*** AMI PORTING END *****//
     
     //
     // Find the DxeCore file type from the beginning in this firmware volume.
@@ -426,7 +673,11 @@ DxeIplFindDxeCore (
       // Find DxeCore FileHandle in this volume, then we skip other firmware volume and
       // return the FileHandle.
       //
-      return FileHandle;
+//*** AMI PORTING BEGIN ***//
+//      return FileHandle;
+      *TargetHandle = FileHandle;
+      return EFI_SUCCESS;
+//*** AMI PORTING END *****//
     }
     //
     // We cannot find DxeCore in this firmware volume, then search the next volume.

@@ -30,8 +30,6 @@
 #include <Protocol/PlatformDriverOverride.h>
 #include <Protocol/BusSpecificDriverOverride.h>
 #include <Setup.h>
-#include <CsmElinkFunctions.h>
-#include <Protocol/AmiCsmOpromPolicy.h>
 
 #define DEFAULT_HANDLE_BUFFER_SIZE 0x40
 typedef struct {
@@ -77,12 +75,8 @@ static EFI_GUID gSetupGuid = SETUP_GUID;
 extern EFI_GUID gBdsAllDriversConnectedProtocolGuid;
 extern EFI_GUID gEfiDriverBindingProtocolGuid;
 extern EFI_GUID gAmiOpromPolicyProtocolGuid;
-extern EFI_GUID gAmiOpromPolicyByPciHandleProtocolGuid;
 extern EFI_GUID gAmiCsmThunkDriverGuid;
 
-typedef EFI_STATUS (OEM_CHECK_UEFI_OPROM_POLICY) (EFI_HANDLE PciHandle);
-extern OEM_CHECK_UEFI_OPROM_POLICY CSM_CHECK_UEFI_OPROM_POLICY EndOfCheckUefiOpromPolicyFunctions;
-OEM_CHECK_UEFI_OPROM_POLICY* OemCheckUefiOpromPolicyList[] = { CSM_CHECK_UEFI_OPROM_POLICY NULL };
 
 UINT8 CurrentCsmState;
 VOID *ProcessOpRomRegistration;
@@ -123,23 +117,8 @@ VOID ProcessOpRom(
     IN OPTIONAL CSM_PLATFORM_POLICY_DATA *OpRomStartEndProtocol
 );
 
-EFI_STATUS CheckUefiOpRomPolicy(
-    IN  AMI_OPROM_POLICY_PROTOCOL *This,
-    IN  UINT8                     PciClass
-);
-
 AMI_OPROM_POLICY_PROTOCOL AmiOpRomPolicyProtocol = {
     CheckUefiOpRomPolicy,
-    ProcessOpRom
-};
-
-EFI_STATUS CheckUefiOpRomPolicyByPciHandle(
-    IN  AMI_OPROM_POLICY_PROTOCOL *This,
-    IN  EFI_HANDLE                PciHandle
-);
-
-AMI_CSM_OPROM_POLICY_PROTOCOL AmiOpRomPolicyByPciHandleProtocol = {
-    CheckUefiOpRomPolicyByPciHandle,
     ProcessOpRom
 };
 
@@ -222,7 +201,7 @@ UINT8 GetOpRomPolicy(
     behavior will be as in previous versions of PciBus driver - UEFI OpROM will
     be executed first or not executed at all
 */
-            Policy = CsmPolicySetupData.OldOpRom;
+            Policy = (CsmPolicySetupData.OldOpRom == 1) ? 1 : 2;
             break;
     }
     return Policy;
@@ -619,8 +598,6 @@ VOID CsmPolicyInit(
     Status = pBS->InstallMultipleProtocolInterfaces(&Handle,
                     &gAmiOpromPolicyProtocolGuid, 
                     &AmiOpRomPolicyProtocol,
-                    &gAmiCsmOpromPolicyProtocolGuid, 
-                    &AmiOpRomPolicyByPciHandleProtocol,
                     &gEfiPlatformDriverOverrideProtocolGuid, 
                     &CsmPolicyPlatformDriverOverride,
                     NULL);
@@ -688,15 +665,15 @@ EFI_STATUS CsmPolicyEntry(
 }
 
 /**
-    This function is a part of AmiOpRomPolicyProtocol
+    This function is HII driver entry point 
 
          
-    @param This -pointer to AMI_OPROM_POLICY_PROTOCOL
-    @param PciClass -PCI device class
+    @param ImageHandle Image handle
+    @param SystemTable pointer to system table
 
           
-    @retval EFI_SUCCESS OpROM should be executed
-    @retval EFI_UNSUPPORTED OpROM should not be executed
+    @retval EFI_SUCCESS Function executed successfully, HII protocols installed
+    @retval EFI_ERROR Some error occured during execution
 
 **/
 EFI_STATUS CheckUefiOpRomPolicy(
@@ -705,43 +682,6 @@ EFI_STATUS CheckUefiOpRomPolicy(
 )
 {
     return CheckOpRomExecution(PciClass, TRUE);
-}
-
-/**
-    This function is a part of AmiOpRomPolicyByPciHandleProtocol
-
-         
-    @param This -pointer to pointer to AMI_OPROM_POLICY_BY_PCIHANDLE_PROTOCOL
-    @param PciHandle -PCI device handle
-
-          
-    @retval EFI_SUCCESS OpROM should be executed
-    @retval EFI_UNSUPPORTED OpROM should not be executed
-
-**/
-EFI_STATUS CheckUefiOpRomPolicyByPciHandle(
-    IN  AMI_OPROM_POLICY_PROTOCOL *This,
-    IN  EFI_HANDLE                PciHandle
-)
-{
-    UINT32 i;
-    EFI_STATUS Status;
-    EFI_PCI_IO_PROTOCOL *PciIo;
-    UINT8 PciClass;
-
-    for(i = 0; OemCheckUefiOpromPolicyList[i] != NULL; i++) {
-        Status = OemCheckUefiOpromPolicyList[i](PciHandle);
-        if(Status == EFI_SUCCESS || Status == EFI_UNSUPPORTED)
-            return Status;
-    }
-
-    Status = pBS->HandleProtocol(PciHandle, &gEfiPciIoProtocolGuid, &PciIo);
-    if(EFI_ERROR(Status))
-        return Status;
-
-    Status = PciIo->Pci.Read(PciIo, EfiPciIoWidthUint8, 0xB, 1, &PciClass);
-
-    return (EFI_ERROR(Status))? Status : CheckOpRomExecution(PciClass, TRUE);
 }
 
 /**

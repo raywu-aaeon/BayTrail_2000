@@ -15,11 +15,10 @@
 "Crb.chm"	
 "Crb.mak"	
 "FvRsv.bin"	
-"BYTI_36_2_8_3798.bsf"	
-"BYTI_36_2_8_3798.dat"	
+"BYTI_36_2_5_3757.bsf"	
+"BYTI_36_2_5_3757.dat"	
 [parts]
 "BayTrailPkg.Setup"
 "BayTrailPkg.Include"
 "BayTrailPkg.LibraryInstances"
-"BayTrailPkg.CrbSmiFlashHook"
 <endComponent>

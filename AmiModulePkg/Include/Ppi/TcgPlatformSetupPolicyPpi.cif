@@ -1,0 +1,8 @@
+<component>
+	name = "TcgPlatformSetupPolicyPpi"
+	category = ModulePart
+	LocalRoot = "AmiModulePkg\Include\Ppi\"
+	RefName = "TcgPlatformSetupPolicyPpi"
+[files]
+"TcgPlatformSetupPeiPolicy.h"
+<endComponent>

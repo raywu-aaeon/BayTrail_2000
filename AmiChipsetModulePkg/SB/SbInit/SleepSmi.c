@@ -207,11 +207,10 @@ EFI_STATUS S5SleepSmiOccurred (
 	IN OUT VOID         *CommBuffer OPTIONAL,
 	IN OUT UINTN        *CommBufferSize OPTIONAL )
 {
-//EIP148801 >>
-#if USB_S5_WAKEUP_SUPPORT
-    UINT32    Data32;
+//EIP139792 >>
+#if SB_USB_S5_WAKEUP_SUPPORT
+    UINT16    Data16;
 #endif
-//EIP148801 <<    
     UINT32    DisEhci,DisXhci; //EIP166368
     
   ChipsetSleepWorkaround();
@@ -233,20 +232,20 @@ EFI_STATUS S5SleepSmiOccurred (
       MmioRead32(PMC_BASE_ADDRESS + R_PCH_PMC_FUNC_DIS);  // Read back Posted Writes Register
     }
     //EIP166368 <<
-
-//EIP148801 >>
-#if USB_S5_WAKEUP_SUPPORT    
+    
+#if SB_USB_S5_WAKEUP_SUPPORT
     // Clear PM1_STS
-    IoWrite32(PM_BASE_ADDRESS, IoRead32(PM_BASE_ADDRESS));
+    IoWrite16(PM_BASE_ADDRESS, IoRead16(PM_BASE_ADDRESS));
     // Clear GPE0_STS
-    IoWrite32(PM_BASE_ADDRESS + 0x20, IoRead32(PM_BASE_ADDRESS + 0x20));
+    IoWrite32(PM_BASE_ADDRESS + 0x20, 0xFFFFFFFF);
     // Set PME_B0_EN
-    IoWrite32(PM_BASE_ADDRESS + 0x28, (IoRead32(PM_BASE_ADDRESS + 0x28) | BIT13));
+    IoWrite16(PM_BASE_ADDRESS + 0x28, BIT13);
     // Clear PCI Express Wake Disable
-    Data32 = IoRead32(PM_BASE_ADDRESS) & (UINT32) ~BIT30;
-    IoWrite32(PM_BASE_ADDRESS, Data32);
+    Data16 = IoRead16(PM_BASE_ADDRESS + 0x02) & (UINT16) ~BIT14;
+    IoWrite16(PM_BASE_ADDRESS + 0x02, Data16);
 #endif
-//EIP148801 <<    
+//EIP139792 <<
+
     return SMM_CHILD_DISPATCH_SUCCESS;
 }
 

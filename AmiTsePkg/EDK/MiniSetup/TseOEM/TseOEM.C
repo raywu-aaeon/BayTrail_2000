@@ -27,14 +27,18 @@
 #include "Token.h"
 #include <Efi.h>
 
-/**
-    Empty Template
-
-    @param VOID
-
-    @retval VOID
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:	OEMEmpty
+//
+// Description:	Empty Template
+//
+// Input:	None
+//
+// Output:	None
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID OEMEmpty(VOID)
 {
 

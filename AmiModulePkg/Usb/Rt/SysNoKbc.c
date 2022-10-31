@@ -1,31 +1,40 @@
-//**********************************************************************
-//**********************************************************************
-//**                                                                  **
-//**        (C)Copyright 1985-2016, American Megatrends, Inc.         **
-//**                                                                  **
-//**                       All Rights Reserved.                       **
-//**                                                                  **
-//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093        **
-//**                                                                  **
-//**                       Phone: (770)-246-8600                      **
-//**                                                                  **
-//**********************************************************************
-//**********************************************************************
+//****************************************************************************
+//****************************************************************************
+//**                                                                        **
+//**             (C)Copyright 1985-2008, American Megatrends, Inc.          **
+//**                                                                        **
+//**                          All Rights Reserved.                          **
+//**                                                                        **
+//**                 5555 Oakbrook Pkwy, Norcross, GA 30093                 **
+//**                                                                        **
+//**                          Phone (770)-246-8600                          **
+//**                                                                        **
+//****************************************************************************
+//****************************************************************************
 
-/** @file SysNoKbc.c
-    AMI USB keyboard driver data conversion and presentation
-    routines, KBC is not present
+//****************************************************************************
+// $Header: /Alaska/SOURCE/Modules/USB/ALASKA/RT/sysnokbc.c 11    2/21/12 4:53a Rameshr $
+//
+// $Revision: 11 $
+//
+// $Date: 2/21/12 4:53a $
+//****************************************************************************
 
-**/
+//<AMI_FHDR_START>
+//-----------------------------------------------------------------------------
+//
+//  Name:           SysNoKbc.c
+//
+//  Description:    AMI USB keyboard driver data conversion and presentation
+//                  routines, KBC is not present
+//
+//-----------------------------------------------------------------------------
+//<AMI_FHDR_END>
 
 #include "AmiDef.h"
 #include "UsbDef.h"
 #include "AmiUsb.h"
 #include "UsbKbd.h"
-#include <Library/BaseMemoryLib.h>
-#if !USB_RT_DXE_DRIVER
-#include <Library/SmmServicesTableLib.h>
-#endif
 
 #if KEYMONFILTER_SUPPORT
 #include <Protocol/KeyMonPlatform.h>
@@ -204,22 +213,27 @@ struct TKeypadNumbers {
 typedef UINT16 (*GETCODE_FUNC) (UINT8 usbcode);
 
 
-/**
-    Returns the scan/ascii code for letter charachters, USB
-    code from 4 to 1D.
-    Keys from 'A' to 'Z' are interpreted using the following logic:
-    1) first_keycode is 04
-    2) last_keycode is 1D
-    3) scan_code = letters[key-first_keycode].scancode
-    4) ascii_code (normal) = 0x61+(key-first_keycode)
-    5) ascii_code (shifted) = 0x41+(key-first_keycode)
-    6) ascii_code (w/Ctrl) = key-first_keycode+1
-
-    @param Key index (key code - 4)
-
-    @retval scan code in upper byte, ascii code in lower byte
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        GetCode_Letter
+//
+// Description: Returns the scan/ascii code for letter charachters, USB
+//              code from 4 to 1D.
+//              Keys from 'A' to 'Z' are interpreted using the following logic:
+//              1) first_keycode is 04
+//              2) last_keycode is 1D
+//              3) scan_code = letters[key-first_keycode].scancode
+//              4) ascii_code (normal) = 0x61+(key-first_keycode)
+//              5) ascii_code (shifted) = 0x41+(key-first_keycode)
+//              6) ascii_code (w/Ctrl) = key-first_keycode+1
+//
+// Input:       Key index (key code - 4)
+//
+// Output:      scan code in upper byte, ascii code in lower byte
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT16 GetCode_Letter(UINT8 usbcode)
 {
@@ -241,21 +255,26 @@ UINT16 GetCode_Letter(UINT8 usbcode)
 }
 
 
-/**
-    Returns the scan/ascii code for numbers, USB code from 1E to 27.
-    Keys from '1' to '0' are interpreted using the following logic:
-    1) first_keycode is 1E
-    2) last_keycode is 27
-    3) scan_code = key-first_keycode + 2
-    4) ascii_code (normal) = aNumbers[key-first_keycode].NormalNumber
-    5) ascii_code (shifted) = aNumbers[key-first_keycode].ShiftedNumber
-    6) scan_code (w/Alt) = key-first_keycode + 0x78
-
-    @param Key index (key code - 1E)
-
-    @retval scan code in upper byte, ascii code in lower byte
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        GetCode_Number
+//
+// Description: Returns the scan/ascii code for numbers, USB code from 1E to 27.
+//              Keys from '1' to '0' are interpreted using the following logic:
+//              1) first_keycode is 1E
+//              2) last_keycode is 27
+//              3) scan_code = key-first_keycode + 2
+//              4) ascii_code (normal) = aNumbers[key-first_keycode].NormalNumber
+//              5) ascii_code (shifted) = aNumbers[key-first_keycode].ShiftedNumber
+//              6) scan_code (w/Alt) = key-first_keycode + 0x78
+//
+// Input:       Key index (key code - 1E)
+//
+// Output:      scan code in upper byte, ascii code in lower byte
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT16 GetCode_Number(UINT8 usbcode)
 {
@@ -286,15 +305,20 @@ UINT16 GetCode_Number(UINT8 usbcode)
 }
 
 
-/**
-    Returns the scan/ascii code for "basic keys" - not letters, not
-    numbers (Enter, Escape, '[', '/', etc.); USB code from 28 to 38.
-
-    @param Key index (key code - 28)
-
-    @retval scan code in upper byte, ascii code in lower byte
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        GetCode_BasicKey
+//
+// Description: Returns the scan/ascii code for "basic keys" - not letters, not
+//              numbers (Enter, Escape, '[', '/', etc.); USB code from 28 to 38.
+//
+// Input:       Key index (key code - 28)
+//
+// Output:      scan code in upper byte, ascii code in lower byte
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT16 GetCode_BasicKey(UINT8 usbcode)
 {
@@ -315,15 +339,20 @@ UINT16 GetCode_BasicKey(UINT8 usbcode)
 }
 
 
-/**
-    Returns the scan/ascii code for functional keys F1..F10;
-    USB code from 3A to 43.
-
-    @param Key index (key code - 3A)
-
-    @retval scan code in upper byte, ascii code in lower byte
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        GetCode_F1_10Key
+//
+// Description: Returns the scan/ascii code for functional keys F1..F10;
+//              USB code from 3A to 43.
+//
+// Input:       Key index (key code - 3A)
+//
+// Output:      scan code in upper byte, ascii code in lower byte
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT16 GetCode_F1_10Key(UINT8 usbcode)
 {
@@ -349,15 +378,20 @@ UINT16 GetCode_F1_10Key(UINT8 usbcode)
 }
 
 
-/**
-    Returns the scan/ascii code for functional keys F11 and F12;
-    USB code 44 and 45.
-
-    @param Key index (key code - 44)
-
-    @retval scan code in upper byte, ascii code in lower byte
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        GetCode_F11F12Key
+//
+// Description: Returns the scan/ascii code for functional keys F11 and F12;
+//              USB code 44 and 45.
+//
+// Input:       Key index (key code - 44)
+//
+// Output:      scan code in upper byte, ascii code in lower byte
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT16 GetCode_F11F12Key(UINT8 usbcode)
 {
@@ -382,15 +416,20 @@ UINT16 GetCode_F11F12Key(UINT8 usbcode)
 }
 
 
-/**
-    Returns the scan/ascii code for extended keys such as Home,
-    End, arrows, PgUp/Dn; USB code from 49 to 52.
-
-    @param Key index (key code - 49)
-
-    @retval scan code in upper byte, ascii code in lower byte
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        GetCode_ExtKey
+//
+// Description: Returns the scan/ascii code for extended keys such as Home,
+//              End, arrows, PgUp/Dn; USB code from 49 to 52.
+//
+// Input:       Key index (key code - 49)
+//
+// Output:      scan code in upper byte, ascii code in lower byte
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT16 GetCode_ExtKey(UINT8 usbcode)
 {
@@ -418,15 +457,20 @@ UINT16 GetCode_ExtKey(UINT8 usbcode)
 }
 
 
-/**
-    Returns the scan/ascii code for non-numeric part of the keypad,
-    such as '/', '*', etc.; USB code from 54 to 58.
-
-    @param Key index (key code - 54)
-
-    @retval scan code in upper byte, ascii code in lower byte
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        GetCode_Keypad1
+//
+// Description: Returns the scan/ascii code for non-numeric part of the keypad,
+//              such as '/', '*', etc.; USB code from 54 to 58.
+//
+// Input:       Key index (key code - 54)
+//
+// Output:      scan code in upper byte, ascii code in lower byte
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT16 GetCode_Keypad1(UINT8 usbcode)
 {
@@ -443,18 +487,23 @@ UINT16 GetCode_Keypad1(UINT8 usbcode)
 }
 
 
-/**
-    Returns the scan/ascii code for numeric part of the keypad;
-    USB code from 59 to 63.
-
-    @param Key index (key code - 59)
-
-    @retval scan code in upper byte, ascii code in lower byte
-
-    @note  The ascii_code is altered depending on the combination of
-              Shift and NumLock.
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        GetCode_Keypad2
+//
+// Description: Returns the scan/ascii code for numeric part of the keypad;
+//              USB code from 59 to 63.
+//
+// Input:       Key index (key code - 59)
+//
+// Output:      scan code in upper byte, ascii code in lower byte
+//
+// Notes:       The ascii_code is altered depending on the combination of
+//              Shift and NumLock.
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT16 GetCode_Keypad2(UINT8 usbcode)
 {
@@ -482,12 +531,17 @@ UINT16 GetCode_Keypad2(UINT8 usbcode)
 }
 
 
-/**
-    Returns the scan/ascii code for USB Key 0x64, a.k.a. Europe2
-    Europe2 is typically in AT-101 Key Position 45, between Left
-    Shift and Z keys.
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        GetCode_64
+//
+// Description: Returns the scan/ascii code for USB Key 0x64, a.k.a. Europe2
+//              Europe2 is typically in AT-101 Key Position 45, between Left
+//              Shift and Z keys.
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT16 GetCode_64(UINT8 usbcode)
 {
@@ -500,17 +554,22 @@ UINT16 GetCode_64(UINT8 usbcode)
     return 0x565C;
 }
 
-/**
-    This structure describes the range of the USB keys and the
-    function that is called if the USB key is found within this
-    range.
-
- Fields:  Name           Type         Description
-          first_keycode  UINT8        first key code in the range
-          last_keycode   UINT8        last key code in the range
-          GetCode        GETCODE_FUNC function to call if the code is in the range
-
-**/
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name:        TKEYGROUP
+//
+// Description: This structure describes the range of the USB keys and the
+//              function that is called if the USB key is found within this
+//              range.
+//
+// Fields:  Name           Type         Description
+//------------------------------------------------------------
+//          first_keycode  UINT8        first key code in the range
+//          last_keycode   UINT8        last key code in the range
+//          GetCode        GETCODE_FUNC function to call if the code is in the range
+//
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
 
 typedef struct {
     UINT8   first_keycode;
@@ -532,10 +591,15 @@ TKEYGROUP aGetKey[] = {
 };
 
 
-/**
-    This function performs the key autorepeat
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        SysNoKbcAutoRepeat
+//
+// Description: This function performs the key autorepeat
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 VOID SysNoKbcAutoRepeat()
 {
@@ -581,15 +645,22 @@ VOID SysNoKbcAutoRepeat()
 }
 
 
-/**
-    Calls the service routine for the given keycode. Returns the
-    scan/ascii code.
-
-    @param Key code
-
-    @retval scan code in upper byte, ascii code in lower byte
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        GetAsciiScan
+//
+// Description: Calls the service routine for the given keycode. Returns the
+//              scan/ascii code.
+//
+// Input:       Key code
+//
+// Output:      scan code in upper byte, ascii code in lower byte
+//
+// Referrals:   TKEYGROUP
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT16
 GetAsciiScan(UINT8 keyCode)
@@ -608,19 +679,24 @@ GetAsciiScan(UINT8 keyCode)
     return 0;
 }
 
-/**
-    This function takes the keyboard scan code and checks if it is present
-    in the Key Monitor table. If found, it updates the corresponding bit in
-    the Key Monitor map.
-    Key monitor data structure pointer is at 9FC0:10C
-    Key monitor map (32 bit) updated by this routine is at 9FC0:108
-    Map element is {BYTE, DWORD}; BYTE - scan code, DWORD - attribute    
-
-    @param Key code
-
-        Output        Key monitor map is updated accordingly    
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        UpdateKeyMon
+//
+// Description: This function takes the keyboard scan code and checks if it is present
+//              in the Key Monitor table. If found, it updates the corresponding bit in
+//              the Key Monitor map.
+//		        Key monitor data structure pointer is at 9FC0:10C
+//	    	    Key monitor map (32 bit) updated by this routine is at 9FC0:108
+//		        Map element is {BYTE, DWORD}; BYTE - scan code, DWORD - attribute    
+//
+// Input:       Key code
+//
+//Output        Key monitor map is updated accordingly    
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID
 UpdateKeyMon(UINT8 KeyCode) 
 {
@@ -668,13 +744,18 @@ UpdateKeyMon(UINT8 KeyCode)
 
 }
 
-/**
-    Insert the given scan/ascii code in the BDA keyboard queue.
-    Updates the necessary BDA pointers, head and tail.
-
-    @param Key code, scan code in upper byte, ascii code in lower byte
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        InsertChar
+//
+// Description: Insert the given scan/ascii code in the BDA keyboard queue.
+//              Updates the necessary BDA pointers, head and tail.
+//
+// Input:       Key code, scan code in upper byte, ascii code in lower byte
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 VOID
 InsertChar(UINT16 keyCode)
@@ -703,88 +784,80 @@ InsertChar(UINT16 keyCode)
 
 
 
-/**
-    Updates USB keyboard(s) LEDs according to the value of
-    mLegacyKeyboard.KeyModifierState.
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        UpdateLEDs
+//
+// Description: Updates USB keyboard(s) LEDs according to the value of
+//              mLegacyKeyboard.KeyModifierState.
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 VOID
-UpdateLEDs(
-)
+UpdateLEDs()
 {
-    UINT8       i;
-    DEV_INFO    *KbdDev;
-    UINT8       Rb;
+    UINT8 i;
+    DEV_INFO *kbdDev;
+    UINT8   rb;
 
     //
     // Update LED status in every USB keyboard on the system
     //
     // BIT0 ScrlLock, BIT1 NumLock, BIT2 CapsLock
-    Rb = (mLegacyKeyboard.KeyModifierState.NumLock)? 1 : 0;
-    Rb = (mLegacyKeyboard.KeyModifierState.CapsLock)? Rb|2 : Rb;
-    Rb = (mLegacyKeyboard.KeyModifierState.ScrlLock)? Rb|4 : Rb;
+    rb = (mLegacyKeyboard.KeyModifierState.NumLock)? 1 : 0;
+    rb = (mLegacyKeyboard.KeyModifierState.CapsLock)? rb|2 : rb;
+    rb = (mLegacyKeyboard.KeyModifierState.ScrlLock)? rb|4 : rb;
     //
     // Update the LED status in BDA.
     //
     *(UINT8*)0x497 = ((*(UINT8*)0x497) & 0xF8 ) | ((mLegacyKeyboard.KeyModifierState.NumLock)? 2 : 0)
                                | ((mLegacyKeyboard.KeyModifierState.CapsLock)? 4:0) | ((mLegacyKeyboard.KeyModifierState.ScrlLock)? 1 : 0) ;
 
-    for (i = 0; i < USB_DEV_HID_COUNT; i++) {
-        KbdDev  = gUsbData->aUSBKBDeviceTable[i];
-        if (KbdDev) {
-			UsbKbdSetLed(KbdDev, Rb);
+    for (i=0; i < USB_DEV_HID_COUNT; i++) {
+        kbdDev  = gUsbData->aUSBKBDeviceTable[i];
+        if(kbdDev) {
+			UsbKbdSetLed(kbdDev, rb);
         }
     }
 }
 
 
-/**
-    Updates mLegacyKeyboard.KeyModifierState according to the value
-    of the 1st byte of the USB keyboard data.
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        ProcessCtrlAltShift
+//
+// Description: Updates mLegacyKeyboard.KeyModifierState according to the value
+//              of the 1st byte of the USB keyboard data.
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 VOID
 ProcessCtrlAltShift(
-    UINT8 *UsbKeys
+    UINT8 *usbKeys
 )
 {
-    UINT8   i;
-    UINTN   SmmTableIndex = 0;
-    EFI_RUNTIME_SERVICES 	*SmmRuntimeVar = NULL;
-    EFI_GUID SmmRsTableGuid = EFI_SMM_RUNTIME_SERVICES_TABLE_GUID;
+    UINT8 i;
 
-    mLegacyKeyboard.KeyModifierState.Ctrl  = (UsbKeys[0] & 0x11)? 1 : 0;
-    mLegacyKeyboard.KeyModifierState.Shift = (UsbKeys[0] & 0x22)? 1 : 0;
-    mLegacyKeyboard.KeyModifierState.Alt   = (UsbKeys[0] & 0x44)? 1 : 0;
+    mLegacyKeyboard.KeyModifierState.Ctrl  = (usbKeys[0] & 0x11)? 1 : 0;
+    mLegacyKeyboard.KeyModifierState.Shift = (usbKeys[0] & 0x22)? 1 : 0;
+    mLegacyKeyboard.KeyModifierState.Alt   = (usbKeys[0] & 0x44)? 1 : 0;
 
     //
     // Process Ctrl-Alt-Del combination
     //
     if (mLegacyKeyboard.KeyModifierState.Ctrl
         && mLegacyKeyboard.KeyModifierState.Alt) {
-        for (i = 2; i < 6; i++) {
-            if (UsbKeys[i] == 0x4C || UsbKeys[i] == 0x63) {
-                if (!(gUsbData->dUSBStateFlag & USB_FLAG_RUNNING_UNDER_EFI)) {
-#if !USB_RT_DXE_DRIVER
-                    for (; SmmTableIndex < gSmst->NumberOfTableEntries; ++SmmTableIndex) {
-                        if (CompareGuid(&gSmst->SmmConfigurationTable[SmmTableIndex].VendorGuid,
-                                            &SmmRsTableGuid) == TRUE) {
-                            break;
-                        }
-                    }
-                    if (SmmTableIndex != gSmst->NumberOfTableEntries) {
-                         SmmRuntimeVar =(EFI_RUNTIME_SERVICES *)gSmst->SmmConfigurationTable[SmmTableIndex].VendorTable;
-                    }
-#endif
-                    if ((SmmRuntimeVar != NULL) && (SmmRuntimeVar->ResetSystem != NULL)) {
-                        SmmRuntimeVar->ResetSystem(EfiResetCold, EFI_SUCCESS, 0, NULL);
-                    } else {
-                        ByteWriteIO(0xcf9, 6);
-                        // We should never get this far
-                        while(1);
-                    }
+        for (i=2; i<6;i++) {
+            if (usbKeys[i]==0x4C || usbKeys[i]==0x63) {
+                if (gUsbData->dUSBStateFlag & USB_FLAG_RUNNING_UNDER_EFI) {
+                    ASSERT(gRT);
+                    gRT->ResetSystem(EfiResetCold, EFI_SUCCESS, 0, NULL);
+                } else {
+                    ByteWriteIO(0xcf9, 6);
                 }
             }
         }
@@ -792,13 +865,18 @@ ProcessCtrlAltShift(
 }
 
 
-/**
-    Process the keys that alter NumLock/ScrollLock/CapsLock; updates
-    mLegacyKeyboard.KeyModifierState and 0:417 accordingly.
-
-    @param USB key buffer
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        ProcessLockKeys
+//
+// Description: Process the keys that alter NumLock/ScrollLock/CapsLock; updates
+//              mLegacyKeyboard.KeyModifierState and 0:417 accordingly.
+//
+// Input:       USB key buffer
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 VOID
 ProcessLockKeys(
@@ -829,17 +907,22 @@ ProcessLockKeys(
 }
 
 
-/**
-    There is often the new key is pressed on a USB keyboard while
-    the previous one is not quite released. In this case usbKeys
-    buffer contains the old keys and the new ones. User, on the
-    other hand, expects only the new ones to be processed.
-    This requires the buffer data modification so that the "old"
-    keys are removed.
-    The only time we do not do this analysis is when the buffer
-    is clear that indicates that all keys are released.
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        AdjustKeyBuffer
+//
+// Description: There is often the new key is pressed on a USB keyboard while
+//              the previous one is not quite released. In this case usbKeys
+//              buffer contains the old keys and the new ones. User, on the
+//              other hand, expects only the new ones to be processed.
+//              This requires the buffer data modification so that the "old"
+//              keys are removed.
+//              The only time we do not do this analysis is when the buffer
+//              is clear that indicates that all keys are released.
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 VOID
 AdjustKeyBuffer(
@@ -867,14 +950,19 @@ AdjustKeyBuffer(
 }
 
 
-/**
-    This routine converts USB code into UINT16 with ASCII code in the
-    lower byte and PS/2 scan code in the upper byte and inserts this
-    UINT16 in the legacy keyboard queue in BDA.
-
-    @param USB key
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        ProcessKeyCode
+//
+// Description: This routine converts USB code into UINT16 with ASCII code in the
+//              lower byte and PS/2 scan code in the upper byte and inserts this
+//              UINT16 in the legacy keyboard queue in BDA.
+//
+// Input:       USB key
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 VOID
 ProcessKeyCode(UINT8 code)
@@ -887,15 +975,20 @@ ProcessKeyCode(UINT8 code)
 }
 
 
-/**
-    This routine is called from when the new data from USB keyboard
-    is transmitted and available for processing. The functionality is
-    similar to legacy INT9 handler - data is converted into PS/2
-    ASCII/Scan codes and placed in BDA.
-
-    @param Buffer with USB keys
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        USBKB_Int9
+//
+// Description: This routine is called from when the new data from USB keyboard
+//              is transmitted and available for processing. The functionality is
+//              similar to legacy INT9 handler - data is converted into PS/2
+//              ASCII/Scan codes and placed in BDA.
+//
+// Input:       Buffer with USB keys
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 VOID
 USBKB_Int9(
@@ -955,16 +1048,17 @@ USBKB_Int9(
     }
 }
 
-//**********************************************************************
-//**********************************************************************
-//**                                                                  **
-//**        (C)Copyright 1985-2016, American Megatrends, Inc.         **
-//**                                                                  **
-//**                       All Rights Reserved.                       **
-//**                                                                  **
-//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093        **
-//**                                                                  **
-//**                       Phone: (770)-246-8600                      **
-//**                                                                  **
-//**********************************************************************
-//**********************************************************************
+
+//****************************************************************************
+//****************************************************************************
+//**                                                                        **
+//**             (C)Copyright 1985-2008, American Megatrends, Inc.          **
+//**                                                                        **
+//**                          All Rights Reserved.                          **
+//**                                                                        **
+//**                 5555 Oakbrook Pkwy, Norcross, GA 30093                 **
+//**                                                                        **
+//**                          Phone (770)-246-8600                          **
+//**                                                                        **
+//****************************************************************************
+//****************************************************************************

@@ -5,7 +5,6 @@
 	RefName = "AMIDebugRx.DebuggerLib"
 [INF]
 "DebuggerLib.inf"
-"CommonDebugPortLib.inf"
 [files]
 "DebuggerLib.sdl"	
 <endComponent>

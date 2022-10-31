@@ -258,8 +258,7 @@ DebugClearMemoryEnabled (
   @param  Expression  Boolean expression.
 
 **/
-#if !defined(MDEPKG_NDEBUG)
-#ifndef ASSERT                  // [ EIP302680 ]
+#if !defined(MDEPKG_NDEBUG)       
   #define ASSERT(Expression)        \
     do {                            \
       if (DebugAssertEnabled ()) {  \
@@ -268,7 +267,6 @@ DebugClearMemoryEnabled (
         }                           \
       }                             \
     } while (FALSE)
-#endif
 #else
   #define ASSERT(Expression)
 #endif
@@ -309,7 +307,6 @@ DebugClearMemoryEnabled (
 
 **/
 #if !defined(MDEPKG_NDEBUG)
-#ifndef ASSERT_EFI_ERROR        // [ EIP302680 ]
   #define ASSERT_EFI_ERROR(StatusParameter)                                              \
     do {                                                                                 \
       if (DebugAssertEnabled ()) {                                                       \
@@ -319,7 +316,6 @@ DebugClearMemoryEnabled (
         }                                                                                \
       }                                                                                  \
     } while (FALSE)
-#endif
 #else
   #define ASSERT_EFI_ERROR(StatusParameter)
 #endif

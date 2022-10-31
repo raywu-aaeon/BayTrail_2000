@@ -19,7 +19,6 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 
 #include <Protocol/Capsule.h>
 #include <Guid/CapsuleVendor.h>
-#include <Guid/FmpCapsule.h>
 
 #include <Library/DebugLib.h>
 #include <Library/PcdLib.h>
@@ -30,7 +29,7 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 #include <Library/UefiRuntimeLib.h>
 #include <Library/BaseLib.h>
 #include <Library/PrintLib.h>
-#include <Library/BaseMemoryLib.h>
+
 //
 // Handle for the installation of Capsule Architecture Protocol.
 //
@@ -40,9 +39,6 @@ EFI_HANDLE  mNewHandle = NULL;
 // The times of calling UpdateCapsule ()
 //
 UINTN       mTimes      = 0;
-
-UINT32      mMaxSizePopulateCapsule     = 0;
-UINT32      mMaxSizeNonPopulateCapsule  = 0;
 
 /**
   Create the variable to save the base address of page table and stack
@@ -128,23 +124,12 @@ UpdateCapsule (
     if ((CapsuleHeader->Flags & (CAPSULE_FLAGS_PERSIST_ACROSS_RESET | CAPSULE_FLAGS_INITIATE_RESET)) == CAPSULE_FLAGS_INITIATE_RESET) {
       return EFI_INVALID_PARAMETER;
     }
-
-    //
-    // Check FMP capsule flag 
-    //
-    if (CompareGuid(&CapsuleHeader->CapsuleGuid, &gEfiFmpCapsuleGuid)
-     && (CapsuleHeader->Flags & CAPSULE_FLAGS_POPULATE_SYSTEM_TABLE) != 0 ) {
-       return EFI_INVALID_PARAMETER;
-    }
-
     //
     // Check Capsule image without populate flag by firmware support capsule function  
     //
-    if ((CapsuleHeader->Flags & CAPSULE_FLAGS_POPULATE_SYSTEM_TABLE) == 0) {
-      Status = SupportCapsuleImage (CapsuleHeader);
-      if (EFI_ERROR(Status)) {
-        return Status;
-      }
+    if (((CapsuleHeader->Flags & CAPSULE_FLAGS_POPULATE_SYSTEM_TABLE) == 0) && 
+        (SupportCapsuleImage (CapsuleHeader) != EFI_SUCCESS)) {
+      return EFI_UNSUPPORTED;
     }
   }
 
@@ -265,7 +250,6 @@ QueryCapsuleCapabilities (
   OUT EFI_RESET_TYPE       *ResetType
   )
 {
-  EFI_STATUS                Status;
   UINTN                     ArrayNumber;
   EFI_CAPSULE_HEADER        *CapsuleHeader;
   BOOLEAN                   NeedReset;
@@ -303,23 +287,12 @@ QueryCapsuleCapabilities (
     if ((CapsuleHeader->Flags & (CAPSULE_FLAGS_PERSIST_ACROSS_RESET | CAPSULE_FLAGS_INITIATE_RESET)) == CAPSULE_FLAGS_INITIATE_RESET) {
       return EFI_INVALID_PARAMETER;
     }
-
-    //
-    // Check FMP capsule flag 
-    //
-    if (CompareGuid(&CapsuleHeader->CapsuleGuid, &gEfiFmpCapsuleGuid)
-     && (CapsuleHeader->Flags & CAPSULE_FLAGS_POPULATE_SYSTEM_TABLE) != 0 ) {
-       return EFI_INVALID_PARAMETER;
-    }
-
     //
     // Check Capsule image without populate flag is supported by firmware
     //
-    if ((CapsuleHeader->Flags & CAPSULE_FLAGS_POPULATE_SYSTEM_TABLE) == 0) {
-      Status = SupportCapsuleImage (CapsuleHeader);
-      if (EFI_ERROR(Status)) {
-        return Status;
-      }
+    if (((CapsuleHeader->Flags & CAPSULE_FLAGS_POPULATE_SYSTEM_TABLE) == 0) && 
+        (SupportCapsuleImage (CapsuleHeader) != EFI_SUCCESS)) {
+      return EFI_UNSUPPORTED;
     }
   }
 
@@ -333,7 +306,7 @@ QueryCapsuleCapabilities (
       break;
     }
   }
-
+  
   if (NeedReset) {
     //
     //Check if the platform supports update capsule across a system reset
@@ -342,13 +315,13 @@ QueryCapsuleCapabilities (
       return EFI_UNSUPPORTED;
     }
     *ResetType = EfiResetWarm;
-    *MaxiumCapsuleSize = (UINT64) mMaxSizePopulateCapsule;
+    *MaxiumCapsuleSize = FixedPcdGet32(PcdMaxSizePopulateCapsule);
   } else {
     //
     // For non-reset capsule image.
     //
     *ResetType = EfiResetCold;
-    *MaxiumCapsuleSize = (UINT64) mMaxSizeNonPopulateCapsule;
+    *MaxiumCapsuleSize = FixedPcdGet32(PcdMaxSizeNonPopulateCapsule);
   }
 
   return EFI_SUCCESS;
@@ -373,10 +346,7 @@ CapsuleServiceInitialize (
   )
 {
   EFI_STATUS  Status;
-
-  mMaxSizePopulateCapsule = PcdGet32(PcdMaxSizePopulateCapsule);
-  mMaxSizeNonPopulateCapsule = PcdGet32(PcdMaxSizeNonPopulateCapsule);
-
+  
   //
   // When PEI phase is IA32, DXE phase is X64, it is possible that capsule data are 
   // put above 4GB, so capsule PEI will transfer to long mode to get capsule data.

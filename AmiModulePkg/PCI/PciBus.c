@@ -53,7 +53,7 @@
 #include <Protocol/PciEnumerationComplete.h>
 #include <Protocol/PciBusEx.h>
 #include <Protocol/LegacyBiosExt.h>
-#include <Protocol/DxeSmmReadyToLock.h>
+
 //---------------------------------------------------------------------------
 #include <Dxe.h>
 #include <AmiDxeLib.h>
@@ -171,15 +171,10 @@ EFI_STATUS ReadEfiRom(PCI_DEV_INFO	*Dev, PCI_ROM_IMAGE_DATA *RomData, VOID **Img
 
 VOID CheckEmptySetupSlot(PCI_DEV_INFO *Device);
 
-VOID EFIAPI PciSmmReadyToLockCallback (
-    IN EFI_EVENT    Event,
-    IN VOID         *Context
-);
 //==================================================================================
 //Some GUIDs variables if needed here
 //==================================================================================
-BOOLEAN     gReadyToLock    = FALSE;
-T_ITEM_LIST gThirdPartyRomList={0,0,NULL};
+
 
 //=============================================================================
 //<AMI_SHDR_START>
@@ -583,9 +578,7 @@ EFI_STATUS PciBusEntryPoint(IN EFI_HANDLE			ImageHandle,
 #endif
 	static EFI_GUID HobListGuid	= HOB_LIST_GUID;
 	CPUINFO_HOB					*CpuInfoHob;
-	EFI_STATUS					Status;
-    EFI_EVENT                   Event;
-    VOID                        *Registration;
+	EFI_STATUS					Status;	
 //--------------------------------------------------------------------
 
 	//Init some Global Data
@@ -628,10 +621,6 @@ EFI_STATUS PciBusEntryPoint(IN EFI_HANDLE			ImageHandle,
 #endif
 					NULL);
 	//Here we can set up notification events if needed
-    RegisterProtocolCallback(
-            &gEfiDxeSmmReadyToLockProtocolGuid,
-            PciSmmReadyToLockCallback,
-            NULL, &Event, &Registration);
 
 
 	//------------------------------------
@@ -8073,7 +8062,7 @@ BOOLEAN ExecuteUefiRom(UINT8 PciClass)
 //  EFI_NOT_FOUND           When Device does not have any ROMs.
 //----------------------------------------------------------------------------
 //<AMI_PHDR_END>
-EFI_STATUS ActivateOptRom(PCI_DEV_INFO *Dev, BOOLEAN Embedded)
+EFI_STATUS ActivateOptRom(PCI_DEV_INFO *Dev)
 {
 	UINT8					*cp; 
 	UINTN					romc;
@@ -8141,17 +8130,8 @@ EFI_STATUS ActivateOptRom(PCI_DEV_INFO *Dev, BOOLEAN Embedded)
 				if( efior && pcir->CodeType == PCI_CODE_TYPE_EFI_IMAGE && RomMatch) 
 				{
 					PCI_TRACE((TRACE_PCI,"(Install UEFI OpROM="));
-                    if(Embedded){
-                        if((Dev->Capab&EFI_PCI_IO_ATTRIBUTE_EMBEDDED_ROM) && (Dev->Attrib&EFI_PCI_IO_ATTRIBUTE_EMBEDDED_ROM)){
-                            Status=InstallEfiOpRom(Dev, (VOID*)rh, (VOID*)pcir, FALSE);
-                        } else {
-                            PCI_TRACE((TRACE_PCI,"<Delayed>="));
-                            Status=AppendItemLst(&gThirdPartyRomList, Dev);
-                        }
-                    } else {
-                        Status=InstallEfiOpRom(Dev, (VOID*)rh, (VOID*)pcir, FALSE);
-                    }
-                    PCI_TRACE((TRACE_PCI,"%r)", Status));
+					Status=InstallEfiOpRom(Dev, (VOID*)rh, (VOID*)pcir, FALSE);
+					PCI_TRACE((TRACE_PCI,"%r)", Status));
 				} 
 			}
 			
@@ -8188,72 +8168,6 @@ EFI_STATUS ActivateOptRom(PCI_DEV_INFO *Dev, BOOLEAN Embedded)
 	}
 	
 	return Status;
-}
-
-
-BOOLEAN CheckOptRomStatus(PCI_DEV_INFO *Device, UINTN* LstIndex){
-    UINTN           i;
-    PCI_DEV_INFO    *dev;
-//--------------------
-    if(!gReadyToLock) return FALSE;
-    for(i=0; i<gThirdPartyRomList.ItemCount; i++){
-        dev=(PCI_DEV_INFO*)gThirdPartyRomList.Items[i];
-        if(Device==dev) {
-            *LstIndex=i;
-            return TRUE;
-        }
-    }
-    return FALSE;
-}
-
-
-EFI_STATUS Activate3rdPartyRom(PCI_DEV_INFO *Dev, UINTN Index){
-    VOID            *buff[4]={NULL,NULL,NULL,NULL};
-    UINTN           offs=0;
-    EFI_STATUS      Status;
-//------------------    
-    PCI_TRACE((TRACE_PCI,"PciBus: Launch3rdPartyRom->Activate="));
-    Status=ActivateOptRom(Dev, FALSE);
-    PCI_TRACE((TRACE_PCI,"=%r; ", Status));
-    if(EFI_ERROR(Status)){
-    //filter out conditions where ERROR status does not break an operation.
-        if(Status==EFI_NOT_FOUND || Status==EFI_ALREADY_STARTED ) Status=EFI_SUCCESS;
-        else if(Status!=EFI_ACCESS_DENIED) return Status;
-    }
-
-    //EFI_ACCESS_DENIED status tells that Rom Image failed security check.  
-    //Check if Override handle count gets changed..
-    //then install Bus Override protocol interface
-    if(Status!=EFI_ACCESS_DENIED){
-        if(Dev->BusOvrData.BusOverride.GetDriver!=NULL){
-            buff[offs] = &gEfiBusSpecificDriverOverrideProtocolGuid;
-            buff[offs+1] = &Dev->BusOvrData.BusOverride;
-            offs+=2;
-        }
-    } else Status=EFI_SUCCESS;
-
-    //Install LoadFile2 protocol since we still have image in memory
-    //even if Image was not signed correctly...
-    if(Dev->LoadFileData.LoadFile2.LoadFile!=NULL){
-        buff[offs]=&gEfiLoadFile2ProtocolGuid;
-        buff[offs+1]=&Dev->LoadFileData.LoadFile2;
-    }
-
-    if(buff[1]!=NULL){
-        Status=pBS->InstallMultipleProtocolInterfaces(
-                    &Dev->Handle,
-                    buff[0],buff[1], //BusSpecificDriverOverride GUID - I/F pare
-                    buff[2],buff[3], //LoadFile2  GUID - I/F pare if present
-                    NULL, NULL );
-
-        PCI_TRACE((TRACE_PCI,"->Ins BusOvr LoadFile2=%r\n", Status));
-
-        if(EFI_ERROR(Status)) return Status;
-    }
-    
-    //Now remove Device from Delayed Rom Launch list...
-    DeleteItemLst(&gThirdPartyRomList, Index, FALSE);
-    return Status;
 }
 
 
@@ -8297,7 +8211,6 @@ EFI_STATUS InstallPciDevice(EFI_HANDLE ControllerHandle, PCI_DEV_INFO *Dev)
 
 	//Check if Device Has Been already started
 	if(Dev->Started) {
-	    if(CheckOptRomStatus(Dev, &offs)) return Activate3rdPartyRom(Dev,offs);
         Status=EFI_ALREADY_STARTED;
 		PCI_TRACE((TRACE_PCI," -> Dev.Started=1; -> %r\n",Status));
         return Status;
@@ -8352,7 +8265,7 @@ EFI_STATUS InstallPciDevice(EFI_HANDLE ControllerHandle, PCI_DEV_INFO *Dev)
 	} else {
         //Print Status from GetOptRom()
 		PCI_TRACE((TRACE_PCI,"%r :ActivateRom", OpRomStatus));
-		if(cr) Status=ActivateOptRom(Dev, TRUE);
+		if(cr) Status=ActivateOptRom(Dev);
 		PCI_TRACE((TRACE_PCI,"=%r\n", Status));
 		if(EFI_ERROR(Status)){
 			if(Status==EFI_NOT_FOUND) Status=EFI_SUCCESS;
@@ -9627,16 +9540,6 @@ EFI_STATUS PciExtApicIrqRout (
     else return EFI_INVALID_PARAMETER;
 }
 
-
-VOID EFIAPI PciSmmReadyToLockCallback(IN EFI_EVENT Event, IN VOID *Context ){
-    VOID           *rtl;
-    EFI_STATUS     Status;
-//--------------------------
-    if(!gReadyToLock){
-        Status = pBS->LocateProtocol(&gEfiDxeSmmReadyToLockProtocolGuid, NULL, &rtl );
-        if(!EFI_ERROR (Status))gReadyToLock=TRUE;
-    }
-}
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **

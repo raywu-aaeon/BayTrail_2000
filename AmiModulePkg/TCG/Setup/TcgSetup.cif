@@ -1,0 +1,15 @@
+<component>
+	name = "TcgSetup"
+	category = ModulePart
+	LocalRoot = "AmiModulePkg\TCG\Setup\"
+	RefName = "TcgSetup"
+[files]
+"TcgSetup.sdl"	
+"TcgSetup.c"	
+"TcgSetup.sd"	
+"TcgSetup.uni"	
+"TcgSetupBoard.h"	
+"TPMPwd.c"	
+"HandleLoadDefaultsSetup.c"	
+"AmiTcgPpiHandshake.c"	
+<endComponent>

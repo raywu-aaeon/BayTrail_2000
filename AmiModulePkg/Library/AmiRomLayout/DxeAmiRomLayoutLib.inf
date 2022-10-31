@@ -39,7 +39,6 @@
   MemoryAllocationLib
   BaseMemoryLib
   HobLib
-  DebugLib
   
 [GUIDS]
   gAmiRomLayoutFfsFileGuid

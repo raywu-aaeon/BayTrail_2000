@@ -56,20 +56,8 @@
 //
 // Part 2, section 5.4: TPM_DIGEST
 //
-#define TPM_SHA1_160_HASH_LEN       0x14
-#define TPM_SHA1BASED_NONCE_LEN     TPM_SHA1_160_HASH_LEN
-
 #define TPM_SHA2_256_HASH_LEN       0x20
 #define TPM_SHA2BASED_NONCE_LEN     TPM_SHA2_256_HASH_LEN
-
-
-//redefine TPM digest into a UNION so that we can support 
-//sha1 and sha2 and other has functions at the same time
-typedef union tdTPM2_DIGEST
-{
-    UINT8 digest[TPM_SHA1_160_HASH_LEN];
-    UINT8 digestSha2[TPM_SHA2_256_HASH_LEN];
-} TPM2_DIGEST;
 
 typedef struct tdTCM_DIGEST
 {

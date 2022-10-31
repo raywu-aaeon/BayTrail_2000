@@ -1,27 +1,38 @@
-//**********************************************************************
-//**********************************************************************
-//**                                                                  **
-//**        (C)Copyright 1985-2016, American Megatrends, Inc.         **
-//**                                                                  **
-//**                       All Rights Reserved.                       **
-//**                                                                  **
-//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093        **
-//**                                                                  **
-//**                       Phone: (770)-246-8600                      **
-//**                                                                  **
-//**********************************************************************
-//**********************************************************************
+//****************************************************************************
+//****************************************************************************
+//**                                                                        **
+//**             (C)Copyright 1985-2008, American Megatrends, Inc.          **
+//**                                                                        **
+//**                          All Rights Reserved.                          **
+//**                                                                        **
+//**                 5555 Oakbrook Pkwy, Norcross, GA 30093                 **
+//**                                                                        **
+//**                          Phone (770)-246-8600                          **
+//**                                                                        **
+//****************************************************************************
+//****************************************************************************
 
-/** @file UsbKbd.h
-    AMI USB keyboard support header
+//****************************************************************************
+// $Header: /Alaska/SOURCE/Modules/USB/ALASKA/RT/usbkbd.h 12    5/22/12 10:57a Jittenkumarp $
+//
+// $Revision: 12 $
+//
+// $Date: 5/22/12 10:57a $
+//****************************************************************************
 
-**/
+//<AMI_FHDR_START>
+//-----------------------------------------------------------------------------
+//
+//  Name:           UsbKbd.h
+//
+//  Description:    AMI USB keyboard support header
+//
+//-----------------------------------------------------------------------------
+//<AMI_FHDR_END>
 
 // Avoid including multiple instance of this file
 #ifndef     __USBKBD_H
 #define     __USBKBD_H
-
-#include    <Token.h>
 
 // Make/break code equates
 
@@ -52,10 +63,6 @@
 #define APP_MS_KEY      0x02F+0x80  // Microsoft application key
 #define RIGHT_ENTER     0x05A+0x80  // Local code id (scan-2)
 
-#define USB_CAPS_LOCK_KEY_CODE          0x39
-#define USB_SCROLL_LOCK_KEY_CODE        0x47
-#define USB_NUM_LOCK_KEY_CODE           0x53
-
 // Equates for KB shift key status information
 #define KB_FUNCTION_BIT         7   // Function key LED bit
 #define KB_FUNCTION_BIT_MASK    (1 << KB_FUNCTION_BIT)
@@ -78,22 +85,15 @@
 #define KBC_SET_SCAN_CODE_SET2      (0x02 << KBC_SCAN_CODE_SET_BIT_SHIFT)
 #define KBC_SCAN_CODE_SET_BIT_MASK  (0x03 << KBC_SCAN_CODE_SET_BIT_SHIFT)
 
-#if USB_KEYREPEAT_INTERVAL
-#define REPEAT_INTERVAL 16
-#define KBC_TYPE_RATE_BIT_SHIFT     1
-#define KBC_TYPE_RATE_BIT_MASK      (0x05 << KBC_TYPE_RATE_BIT_SHIFT)
-
-#define KBC_TYPE_DELAY_BIT_SHIFT    4
-#define KBC_TYPE_DELAY_BIT_MASK     (0x05 << KBC_TYPE_DELAY_BIT_SHIFT)
-
-#else
-#define REPEAT_INTERVAL 8
 #define KBC_TYPE_RATE_BIT_SHIFT     2
 #define KBC_TYPE_RATE_BIT_MASK      (0x07 << KBC_TYPE_RATE_BIT_SHIFT)
+#define KBC_SET_TYPE_RATE_11CHARS_SEC   (0x02 << KBC_TYPE_RATE_BIT_SHIFT)
+
 
 #define KBC_TYPE_DELAY_BIT_SHIFT    6
 #define KBC_TYPE_DELAY_BIT_MASK     (0x07 << KBC_TYPE_DELAY_BIT_SHIFT)
-#endif
+#define KBC_SET_TYPE_DELAY_500MSEC  (0x06 << KBC_TYPE_DELAY_BIT_SHIFT)
+
 
 // Scan code common to all the cases (base, control, shift and alt cases)
 #define PRINT_SCREEN        (0x07C + 0x80)    // Local code id (scan-2)
@@ -136,15 +136,9 @@
 #define KBC_DATA_TX_ORDER_INC_VALUE 0x01 << 14
 #define KBC_DATA_TX_ORDER_KB_FIRST  0x02 << 14
 
-#define CCB_KEYBOARD_INTRPT                 BIT0
-#define CCB_MOUSE_INTRPT                    BIT1    
 #define CCB_KEYBOARD_DISABLED               BIT4
 #define CCB_MOUSE_DISABLED                  BIT5
 #define CCB_TRANSLATE_SCAN_CODE_BIT_MASK    BIT6
-
-#ifndef USB_KBD_SET_LED_TIMEOUT_MS
-#define USB_KBD_SET_LED_TIMEOUT_MS 100
-#endif
 
 UINT8       ByteReadIO(UINT16);
 void        ByteWriteIO(UINT16, UINT8);
@@ -175,7 +169,7 @@ UINT16  USBKB_CheckModifierKeyPress (UINT8);
 UINT8   KBC_WriteCommandByte(UINT8);
 UINT8   KBC_ReadDataByte(UINT8 *);
 void    KBC_WriteSubCommandByte(UINT8);
-EFI_STATUS    SYSKBC_SendKBCData();
+void    SYSKBC_SendKBCData();
 
 extern  UINT8       USB_InstallCallBackFunction (CALLBACK_FUNC);
 
@@ -193,7 +187,7 @@ UINT8       USBKBDDisconnectDevice (DEV_INFO*);
 void    USBKBC_GetAndStoreCCB();
 DEV_INFO*   USBKBDConfigureDevice (DEV_INFO*);  //(EIP84455)
 UINT16  USBKBDFindUSBKBDeviceTableEntry(DEV_INFO*);
-UINT8   USBKBDProcessKeyboardData ( HC_STRUC*, DEV_INFO*, UINT8*, UINT8*, UINT16);
+UINT8   USBKBDProcessKeyboardData ( HC_STRUC*, DEV_INFO*, UINT8*, UINT8*);
 UINT8	UsbKbdSetLed(DEV_INFO*, UINT8);
 
 void    USBKB_GenerateScanCode ( UINT8, UINT8, UINT16 );
@@ -209,9 +203,9 @@ VOID    SysKbcAutoRepeat(HC_STRUC*);
 VOID    SysNoKbcAutoRepeat();
 VOID    USBKBDPeriodicInterruptHandler(HC_STRUC*);
                                         //(EIP84455+)>
-UINT8   USBHIDProcessData( HC_STRUC*, DEV_INFO*, UINT8*, UINT8*, UINT16);               
-UINT8   USBMSProcessMouseData ( HC_STRUC*, DEV_INFO*, UINT8*, UINT8*, UINT16);
-UINT8   USBAbsProcessMouseData ( HC_STRUC*, DEV_INFO*, UINT8*, UINT8*, UINT16);
+UINT8   USBHIDProcessData( HC_STRUC*, DEV_INFO*, UINT8*, UINT8*);               
+UINT8   USBMSProcessMouseData ( HC_STRUC*, DEV_INFO*, UINT8*, UINT8*);
+UINT8   USBAbsProcessMouseData ( HC_STRUC*, DEV_INFO*, UINT8*, UINT8*);
                                         //<(EIP84455+)
 
 typedef struct {
@@ -220,6 +214,14 @@ typedef struct {
 } USB_KEY;
 
 #define MAX_KEY_ALLOWED 32
+
+typedef struct {
+	VOID	**Buffer;
+	UINT8	Head;
+	UINT8	Tail;
+	UINT8	MaxKey;
+	UINT32	KeySize;
+} KEY_BUFFER;
 
 typedef struct _LEGACY_USB_KEY_MODIFIERS {
     UINT8   ScrlLock    : 1;
@@ -291,16 +293,16 @@ typedef struct {
 										//<(EIP38434+)
 #endif      // __USB_H
 
-//**********************************************************************
-//**********************************************************************
-//**                                                                  **
-//**        (C)Copyright 1985-2016, American Megatrends, Inc.         **
-//**                                                                  **
-//**                       All Rights Reserved.                       **
-//**                                                                  **
-//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093        **
-//**                                                                  **
-//**                       Phone: (770)-246-8600                      **
-//**                                                                  **
-//**********************************************************************
-//**********************************************************************
+//****************************************************************************
+//****************************************************************************
+//**                                                                        **
+//**             (C)Copyright 1985-2008, American Megatrends, Inc.          **
+//**                                                                        **
+//**                          All Rights Reserved.                          **
+//**                                                                        **
+//**                 5555 Oakbrook Pkwy, Norcross, GA 30093                 **
+//**                                                                        **
+//**                          Phone (770)-246-8600                          **
+//**                                                                        **
+//****************************************************************************
+//****************************************************************************

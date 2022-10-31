@@ -117,6 +117,23 @@ VgaClassDriverBindingSupported (
   IN EFI_HANDLE                    Controller,
   IN EFI_DEVICE_PATH_PROTOCOL      *RemainingDevicePath
   )
+/*++
+
+Routine Description:
+
+  GC_TODO: Add function description
+
+Arguments:
+
+  This                - GC_TODO: add argument description
+  Controller          - GC_TODO: add argument description
+  RemainingDevicePath - GC_TODO: add argument description
+
+Returns:
+
+  GC_TODO: add return values
+
+--*/
 ;
 
 EFI_STATUS
@@ -126,6 +143,23 @@ VgaClassDriverBindingStart (
   IN EFI_HANDLE                    Controller,
   IN EFI_DEVICE_PATH_PROTOCOL      *RemainingDevicePath
   )
+/*++
+
+Routine Description:
+
+  GC_TODO: Add function description
+
+Arguments:
+
+  This                - GC_TODO: add argument description
+  Controller          - GC_TODO: add argument description
+  RemainingDevicePath - GC_TODO: add argument description
+
+Returns:
+
+  GC_TODO: add return values
+
+--*/
 ;
 
 EFI_STATUS
@@ -136,6 +170,24 @@ VgaClassDriverBindingStop (
   IN  UINTN                        NumberOfChildren,
   IN  EFI_HANDLE                   *ChildHandleBuffer
   )
+/*++
+
+Routine Description:
+
+  GC_TODO: Add function description
+
+Arguments:
+
+  This              - GC_TODO: add argument description
+  Controller        - GC_TODO: add argument description
+  NumberOfChildren  - GC_TODO: add argument description
+  ChildHandleBuffer - GC_TODO: add argument description
+
+Returns:
+
+  GC_TODO: add return values
+
+--*/
 ;
 
 //
@@ -147,6 +199,22 @@ VgaClassReset (
   IN  EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL *This,
   IN  BOOLEAN                      ExtendedVerification
   )
+/*++
+
+Routine Description:
+
+  GC_TODO: Add function description
+
+Arguments:
+
+  This                  - GC_TODO: add argument description
+  ExtendedVerification  - GC_TODO: add argument description
+
+Returns:
+
+  GC_TODO: add return values
+
+--*/
 ;
 
 EFI_STATUS
@@ -155,6 +223,22 @@ VgaClassOutputString (
   IN  EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL *This,
   IN  CHAR16                       *WString
   )
+/*++
+
+Routine Description:
+
+  GC_TODO: Add function description
+
+Arguments:
+
+  This    - GC_TODO: add argument description
+  WString - GC_TODO: add argument description
+
+Returns:
+
+  GC_TODO: add return values
+
+--*/
 ;
 
 EFI_STATUS
@@ -163,6 +247,22 @@ VgaClassTestString (
   IN  EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL *This,
   IN  CHAR16                       *WString
   )
+/*++
+
+Routine Description:
+
+  GC_TODO: Add function description
+
+Arguments:
+
+  This    - GC_TODO: add argument description
+  WString - GC_TODO: add argument description
+
+Returns:
+
+  GC_TODO: add return values
+
+--*/
 ;
 
 EFI_STATUS
@@ -170,6 +270,21 @@ EFIAPI
 VgaClassClearScreen (
   IN  EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL *This
   )
+/*++
+
+Routine Description:
+
+  GC_TODO: Add function description
+
+Arguments:
+
+  This  - GC_TODO: add argument description
+
+Returns:
+
+  GC_TODO: add return values
+
+--*/
 ;
 
 EFI_STATUS
@@ -178,6 +293,22 @@ VgaClassSetAttribute (
   IN  EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL *This,
   IN  UINTN                        Attribute
   )
+/*++
+
+Routine Description:
+
+  GC_TODO: Add function description
+
+Arguments:
+
+  This      - GC_TODO: add argument description
+  Attribute - GC_TODO: add argument description
+
+Returns:
+
+  GC_TODO: add return values
+
+--*/
 ;
 
 EFI_STATUS
@@ -187,6 +318,23 @@ VgaClassSetCursorPosition (
   IN  UINTN                        Column,
   IN  UINTN                        Row
   )
+/*++
+
+Routine Description:
+
+  GC_TODO: Add function description
+
+Arguments:
+
+  This    - GC_TODO: add argument description
+  Column  - GC_TODO: add argument description
+  Row     - GC_TODO: add argument description
+
+Returns:
+
+  GC_TODO: add return values
+
+--*/
 ;
 
 EFI_STATUS
@@ -195,6 +343,22 @@ VgaClassEnableCursor (
   IN  EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL *This,
   IN  BOOLEAN                      Visible
   )
+/*++
+
+Routine Description:
+
+  GC_TODO: Add function description
+
+Arguments:
+
+  This    - GC_TODO: add argument description
+  Visible - GC_TODO: add argument description
+
+Returns:
+
+  GC_TODO: add return values
+
+--*/
 ;
 
 EFI_STATUS
@@ -205,6 +369,24 @@ VgaClassQueryMode (
   OUT UINTN                        *Columns,
   OUT UINTN                        *Rows
   )
+/*++
+
+Routine Description:
+
+  GC_TODO: Add function description
+
+Arguments:
+
+  This        - GC_TODO: add argument description
+  ModeNumber  - GC_TODO: add argument description
+  Columns     - GC_TODO: add argument description
+  Rows        - GC_TODO: add argument description
+
+Returns:
+
+  GC_TODO: add return values
+
+--*/
 ;
 
 EFI_STATUS
@@ -213,6 +395,22 @@ VgaClassSetMode (
   IN  EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL *This,
   IN  UINTN                        ModeNumber
   )
+/*++
+
+Routine Description:
+
+  GC_TODO: Add function description
+
+Arguments:
+
+  This        - GC_TODO: add argument description
+  ModeNumber  - GC_TODO: add argument description
+
+Returns:
+
+  GC_TODO: add return values
+
+--*/
 ;
 
 #endif

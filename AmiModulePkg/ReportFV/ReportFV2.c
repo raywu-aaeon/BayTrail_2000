@@ -202,6 +202,7 @@ EFI_STATUS EfiReadSection(
     if (!ppData) 
         return EFI_INVALID_PARAMETER;
 
+    //TODO: Support for GUIDed sections
     Status = (*ppPS)->FfsFindSectionData(ppPS, SectionType, pFile, &pSrc);
     if (!EFI_ERROR(Status)) {
         *ppData = pSrc; 

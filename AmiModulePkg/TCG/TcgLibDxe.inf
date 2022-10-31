@@ -1,0 +1,63 @@
+#**********************************************************************
+#**********************************************************************
+#**                                                                  **
+#**        (C)Copyright 1985-2012, American Megatrends, Inc.         **
+#**                                                                  **
+#**                       All Rights Reserved.                       **
+#**                                                                  **
+#**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093        **
+#**                                                                  **
+#**                       Phone: (770)-246-8600                      **
+#**                                                                  **
+#**********************************************************************
+#**********************************************************************
+## @file
+#   This driver creates the TCG library
+##
+#*************************************************************************
+#**                                                                     **
+#**        (C)Copyright 1985-2012, American Megatrends, Inc.            **
+#**                                                                     **
+#**                       All Rights Reserved.                          **
+#**                                                                     **
+#**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093           **
+#**                                                                     **
+#**                       Phone: (770)-246-8600                         **
+#**                                                                     **
+#*************************************************************************
+#*************************************************************************
+
+
+[Defines]
+INF_VERSION = 0x00010005
+VERSION_STRING = 1.0
+BASE_NAME = TcgLibDxe
+MODULE_TYPE = DXE_DRIVER
+LIBRARY_CLASS = BaseTcgLib
+FILE_GUID = 2A7D551C-E7AF-4afe-805D-DA30C9A4D498
+
+[Sources]
+TpmLib.c
+sha1.c
+TcgCommon.c
+TcgPrivate.c
+
+[Sources.Ia32]
+Sha1transform32.asm
+Sha1transform_ia32.inc
+
+[Sources.X64]
+Sha1transform64.asm
+Sha1transform_x64.inc
+
+[LibraryClasses]
+AmiDxeLib
+AmiCspLib
+BaseAmiTcmlib
+
+[Packages]
+AmiCompatibilityPkg\AmiCompatibilityPkg.dec
+MdePkg\MdePkg.dec
+IntelFrameworkPkg\IntelFrameworkPkg.dec
+AmiModulePkg\AmiModulePkg.dec
+

@@ -31,109 +31,138 @@ Intel Corporation.
 #ifdef ECP_FLAG
 #include "EdkIIGlueDxe.h"
 #include <Protocol/BootScriptSave/BootScriptSave.h>
-//#include <Protocol/LoadPe32Image/LoadPe32Image.h>
-//#include <Protocol/LoadedImage/LoadedImage.h>
-//#include <Protocol/FirmwareVolume/FirmwareVolume.h>
+#include <Protocol/LoadPe32Image/LoadPe32Image.h>
+#include <Protocol/LoadedImage/LoadedImage.h>
+#include <Protocol/FirmwareVolume/FirmwareVolume.h>
 #else
 
 //
 // Driver Consumed Protocol Prototypes
 //
 #include <Protocol/BootScriptSave.h>
-//#include <Protocol/LoadPe32Image.h>
-//#include <Protocol/LoadedImage.h>
-//#include <Protocol/FirmwareVolume2.h>
+#include <Protocol/LoadPe32Image.h>
+#include <Protocol/LoadedImage.h>
+#include <Protocol/FirmwareVolume2.h>
 #endif
 
 //
 // Driver Produced Protocol Prototypes
 //
 #include <Protocol/PchS3Support.h>
-#include <Protocol/Spi.h>
 
 #include "PchAccess.h"
 #include <Library/PchPlatformLib.h>
 #ifndef ECP_FLAG
 #include <Library/UefiLib.h>
-#include <Library/IoLib.h>
-#include <Library/HobLib.h>
 #include <Library/DevicePathLib.h>
 #include <Library/DebugLib.h>
 #endif
-#include <Guid/S3SupportHob.h>
+#include <Guid/PchInitVar.h>
 
 #ifndef ECP_FLAG
 #include <Library/UefiBootServicesTableLib.h>
 #include <Library/UefiRuntimeServicesTableLib.h>
 #include <Library/BaseMemoryLib.h>
 #endif
-//#define PCH_S3_PEIM_VARIABLE_NAME L"PchS3Peim"
+#define PCH_S3_PEIM_VARIABLE_NAME L"PchS3Peim"
 
-///
-/// EDK and EDKII have different GUID formats
-///
+typedef struct {
+  EFI_PHYSICAL_ADDRESS  EntryPointAddress;
+  UINTN                 PeimSize;
+} PCH_S3_PEIM_VARIABLE;
 
-extern EFI_GUID gEfiSpiProtocolGuid;
-
+#define EFI_PCH_S3_IMAGE_GUID {0x271dd6f2, 0x54cb, 0x45e6, {0x85, 0x85, 0x8c, 0x92, 0x3c, 0x1a, 0xc7, 0x6}}
 //
 // Function prototypes
 //
-
-/**
-  Set an item to be dispatched at S3 resume time. At the same time, the entry point
-  of the PCH S3 support image is returned to be used in subsequent boot script save
-  call
-
-  @param[in] This                       Pointer to the protocol instance.
-  @param[in] InputDispatchItem          The item to be dispatched.
-  @param[out] S3DispatchEntryPoint      The entry point of the PCH S3 support image.
-
-  @retval EFI_STATUS                    Successfully completed.
-  @retval EFI_OUT_OF_RESOURCES          Out of resources.
-**/
 EFI_STATUS
 EFIAPI
 PchS3SetDispatchItem (
   IN     EFI_PCH_S3_SUPPORT_PROTOCOL   *This,
   IN     EFI_PCH_S3_DISPATCH_ITEM      *DispatchItem,
   OUT    EFI_PHYSICAL_ADDRESS          *S3DispatchEntryPoint
-  );
+  )
 /**
-  Perform the EFI_PCH_S3_SUPPORT_SMM_PROTOCOL IO Trap to invoke DispatchArray data copy and
-  IO Trap Unregister.
 
-  @param[in] This                       Pointer to the protocol instance.
+  @brief
+  Set an item to be dispatched at S3 resume time. At the same time, the entry point
+  of the PCH S3 support image is returned to be used in subsequent boot script save
+  call
 
-  @retval EFI_SUCCESS                   Successfully completed.
+  @param[in] This                 Pointer to the protocol instance.
+  @param[in] DispatchItem         The item to be dispatched.
+  @param[in] S3DispatchEntryPoint The entry point of the PCH S3 support image.
+
+  @retval EFI_STATUS              Successfully completed.
+  @retval EFI_OUT_OF_RESOURCES    Out of resources.
+
 **/
-EFI_STATUS
-EFIAPI
-S3SupportReadyToLock(
-  IN    EFI_PCH_S3_SUPPORT_PROTOCOL   *This
-  );
+;
 
+EFI_STATUS
+SetPchInitVariable (
+  VOID
+  )
 /**
-  Initialize the Pch S3 Custom Script memory area.  This will later be transferred to SMRAM.
-  
+
+  @brief
+  Set the Pch Init Variable for consumption by PchInitS3 PEIM.
+  bugbug: expect to extend the variable service to support <4G EfiReservedMemory
+  variable storage, such that memory consumption is flexible and more economical.
+
   @param[in] VOID
 
   @retval None
+
 **/
+;
+
 EFI_STATUS
-InitializePchS3CustomScriptMemory (
-  VOID
-  );
-
+LoadPchS3Image (
+  OUT   UINT32          *ImageEntryPoint
+  )
 /**
-  Load the entry point address of the PCHS3Peim from the HOB that it generated during the PEI phase of POST
 
-  @param[out] ImageEntryPoint     The ImageEntryPoint after success loading
+  @brief
+  Load the PCH S3 Image into Efi Reserved Memory below 4G.
+
+  @param[in] ImageEntryPoint      The ImageEntryPoint after success loading
 
   @retval EFI_STATUS
+
 **/
+;
+
+
 EFI_STATUS
-LoadPchS3ImageEntryPoint (
-  OUT   UINT32          *ImageEntryPoint
+GetImageFromFv (
+#ifdef ECP_FLAG
+  IN  EFI_FIRMWARE_VOLUME_PROTOCOL          *Fv,
+#else
+  IN  EFI_FIRMWARE_VOLUME2_PROTOCOL         *Fv,
+#endif
+  IN  EFI_GUID                              *NameGuid,
+  IN  EFI_SECTION_TYPE                      SectionType,
+  OUT VOID                                  **Buffer,
+  OUT UINTN                                 *Size
+  );
+
+EFI_STATUS
+GetImage (
+  IN  EFI_GUID           *NameGuid,
+  IN  EFI_SECTION_TYPE   SectionType,
+  OUT VOID               **Buffer,
+  OUT UINTN              *Size
+  );
+
+EFI_STATUS
+GetImageEx (
+  IN  EFI_HANDLE         ImageHandle,
+  IN  EFI_GUID           *NameGuid,
+  IN  EFI_SECTION_TYPE   SectionType,
+  OUT VOID               **Buffer,
+  OUT UINTN              *Size,
+  BOOLEAN                WithinImageFv
   );
 
 #endif

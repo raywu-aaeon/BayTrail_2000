@@ -330,12 +330,6 @@ typedef struct _OEM16_FUNC {
     UINT16  funcOffset;
 } OEM16_FUNC;
 
-typedef struct _LEGACY16_TO_EFI_DATA_TABLE_EXT {
-    LEGACY16_TO_EFI_DATA_TABLE_STRUC    PublicData;
-    UINT16  RbMinBusArrayOfs;
-    UINT8   RbArrayCount;
-} LEGACY16_TO_EFI_DATA_TABLE_EXT;
-
 EFI_STATUS  Get16BitFuncAddress (UINT16, UINT32*);
 UINTN       CopyLegacyTable(VOID*, UINT16, UINT16, UINT16);
 EFI_STATUS  GetEmbeddedRom(UINT16, UINT16, UINT16, VOID**, UINTN*);

@@ -7,7 +7,6 @@ TOKEN
     TargetH = Yes
     Master = Yes
     Token = "SecureMod_SUPPORT" "=" "1"
-    Token = "SMM_SUPPORT" "=" "1"
 End
 
 TOKEN
@@ -21,7 +20,7 @@ End
 TOKEN
     Name  = "NEW_BIOS_MEM_ALLOC"
     Value  = "1"
-    Help  = "Memory buffer location for new BIOS image.\0-SMM TSEG, 1-OS Reserved, 2-to be allocated by external caller"
+    Help  = "Memory buffer location for new BIOS image.\0-SMM TSEG, 1-ACPI NVS, 2-allocated by AFU"
     Range = "0-1-2"
     TokenType = Integer
     TargetH = Yes
@@ -34,7 +33,6 @@ TOKEN
     TokenType = Boolean
     TargetMAK = Yes
     TargetH = Yes
-    Token = "DXE_ARCHITECTURE" "!=" "AARCH64" 
 End
 
 TOKEN
@@ -66,10 +64,9 @@ PATH
 End
 
 INFComponent
-    Name  = "SecSmiFlash"
-    File  = "SecSMIFlash.inf"
-    Package  = "AmiModulePkg"
-    ModuleTypes  = "DXE_SMM_DRIVER"
-    Token = "SMM_SUPPORT" "=" "1"    
+	Name  = "SecSmiFlash"
+	File  = "SecSMIFlash.inf"
+	Package  = "AmiModulePkg"
+	ModuleTypes  = "DXE_SMM_DRIVER"
 End
 

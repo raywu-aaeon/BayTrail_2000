@@ -1,27 +1,29 @@
-//**********************************************************************
-//**********************************************************************
-//**                                                                  **
-//**        (C)Copyright 1985-2016, American Megatrends, Inc.         **
-//**                                                                  **
-//**                       All Rights Reserved.                       **
-//**                                                                  **
-//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093        **
-//**                                                                  **
-//**                       Phone: (770)-246-8600                      **
-//**                                                                  **
-//**********************************************************************
-//**********************************************************************
+//****************************************************************************
+//****************************************************************************
+//**                                                                        **
+//**             (C)Copyright 1985-2009, American Megatrends, Inc.          **
+//**                                                                        **
+//**                          All Rights Reserved.                          **
+//**                                                                        **
+//**                 5555 Oakbrook Pkwy, Norcross, GA 30093                 **
+//**                                                                        **
+//**                          Phone (770)-246-8600                          **
+//**                                                                        **
+//****************************************************************************
+//****************************************************************************
 
-/** @file Xhci.h
-    XHCI equates and structure definitions
-
-**/
+//**********************************************************************
+//<AMI_FHDR_START>
+//
+// Name:        xhci.h
+//
+// Description: XHCI equates and structure definitions
+//
+//<AMI_FHDR_END>
+//**********************************************************************
 
 #ifndef _XHCI_H_
 #define _XHCI_H_
-
-#include <Token.h>
-#include "UsbKbd.h"
 
 #pragma pack(push, 1)
 
@@ -50,22 +52,21 @@ typedef struct {
     UINT32  MaxIntrs    : 11;   // Number of Interrupters
     UINT32  Rsvd        : 5;    // Reserved
     UINT32  MaxPorts    : 8;    // Number of ports
-} HCSPARAMS1;
+} HCPARAMS1;
 
 typedef struct {
-    UINT32  Ist         : 4;            // Isochronous Scheduling Threshold
-    UINT32  ErstMax     : 4;            // Event Ring Segment Table Max
-    UINT32  Rsvd        : 13;
-    UINT32  MaxScratchPadBufsHi   : 5;  // Max Scratchpad Buffers (Max Scratchpad Bufs Hi).
-    UINT32  Spr         : 1;            // Scratchpad restore
-    UINT32  MaxScratchPadBufsLo   : 5;  // Max Scratchpad Buffers (Max Scratchpad Bufs Lo).
-} HCSPARAMS2;
+    UINT32  Ist         : 4;    // Isochronous Scheduling Threshold
+    UINT32  ErstMax     : 4;    // Event Ring Segment Table Max
+    UINT32  Rsvd        : 18;
+    UINT32  Spr         : 1;    // Scratchpad restore
+    UINT32  MaxScratchPadBufs   : 5;    // Number of scratchpad buffers
+} HCPARAMS2;
 
 typedef struct {
     UINT32  U1DevExitLatency    : 8;    // Worst case latency of U1->U0, mks
     UINT32  Rsvd                : 8;    
     UINT32  U2DevExitLatency    : 16;   // Worst case latency of U2->U0, mks
-} HCSPARAMS3;
+} HCPARAMS3;
 
 typedef struct {
     UINT32  Ac64        : 1;    // 64-bit Addressing Capability
@@ -76,49 +77,22 @@ typedef struct {
     UINT32  Lhrc        : 1;    // Light HC Reset Capability
     UINT32  Ltc         : 1;    // Latency Tolerance Capability
     UINT32  Nss         : 1;    // No Secondary SID Support
-    UINT32  Pae         : 1;    // Parse All Event Data
-    UINT32  Spc         : 1;    // Stopped - Short Packet Capability
-    UINT32  Sec         : 1;    // Stopped EDTLA Capability
-    UINT32  Cfc         : 1;    // Contiguous Frame ID Capability
+    UINT32  Rsvd        : 4;
     UINT32  MaxPsaSize  : 4;    // Maximum Primary Stream Array Size
     UINT32  Xecp        : 16;   // xHCI Extended Capabilities Pointer
-} HCCPARAMS1;
+} HCPARAMS;
 
 typedef struct {
-    UINT32  U3c         : 1;    // U3 Entry Capability
-    UINT32  Cmc         : 1;    // Configure Endpoint Command Max Exit Latency Too Large Capability
-    UINT32  Fsc         : 1;    // Force Save Context Capability
-    UINT32  Ctc         : 1;    // Compliance Transition Capability
-    UINT32  Lec         : 1;    // Large ESIT Payload Capability
-    UINT32  Cic         : 1;    // Configuration Information Capability
-    UINT32  Rsvd        : 26;
-} HCCPARAMS2;
-
-typedef struct {
-    UINT8           CapLength;      // 00
-    UINT8           Rsvd;           // 01
-    UINT16          HciVersion;     // 02
-    HCSPARAMS1      HcsParams1;     // 04
-    HCSPARAMS2      HcsParams2;     // 08
-    HCSPARAMS3      HcsParams3;     // 0C
-    HCCPARAMS1      HccParams1;      // 10
-    UINT32          DbOff;          // 14
-    UINT32          RtsOff;         // 18
-    HCCPARAMS2      HccParams2;     // 1C
+    UINT8       CapLength;  // 00
+    UINT8       Rsvd;       // 01
+    UINT16      HciVersion; // 02
+    HCPARAMS1   HcParams1;  // 04
+    HCPARAMS2   HcParams2;  // 08
+    HCPARAMS3   HcParams3;  // 0C
+    HCPARAMS    HcParams;   // 10
+    UINT32      DbOff;      // 14
+    UINT32      RtsOff;     // 18
 } XHCI_HC_CAP_REGS;
-
-//
-// Capability registers offset
-//
-#define XHCI_CAPLENGTH_OFFSET               0x00 // Capability Register length
-#define XHCI_HCIVERSION_OFFSET              0x02 // Interface Version Number
-#define XHCI_HCSPARAMS1_OFFSET              0x04 // Structural Parameters 1
-#define XHCI_HCSPARAMS2_OFFSET              0x08 // Structural Parameters 2
-#define XHCI_HCSPARAMS3_OFFSET              0x0c // Structural Parameters 3
-#define XHCI_HCCPARAMS1_OFFSET              0x10 // Capability Parameters 1
-#define XHCI_DBOFF_OFFSET                   0x14 // Doorbell Offset
-#define XHCI_RTSOFF_OFFSET                  0x18 // Runtime Register Space Offset
-#define XHCI_HCCPARAMS2_OFFSET              0x1C // Capability Parameters 2
 
 //-----------------------------------------------------------
 // Host Controller Operational Registers
@@ -126,6 +100,11 @@ typedef struct {
 typedef struct {
     union {
         UINT32  AllBits;    // can be used for clearing status
+            #define XHCI_CMD_RS     BIT0
+            #define XHCI_CMD_HCRST  BIT1
+            #define XHCI_CMD_INTE   BIT2
+            #define XHCI_CMD_HSEE   BIT3
+            #define XHCI_CMD_LHCRST BIT4
         struct {
             UINT32      RunStop : 1;
             UINT32      HcRst   : 1;    // HC Reset
@@ -142,15 +121,13 @@ typedef struct {
     };
 } XHCI_USBCMD;
 
-#define XHCI_CMD_RS         BIT0
-#define XHCI_CMD_HCRST      BIT1
-#define XHCI_CMD_INTE       BIT2
-#define XHCI_CMD_HSEE       BIT3
-#define XHCI_CMD_LHCRST     BIT4
-
 typedef struct {
     union {
         UINT32  AllBits;    // can be used for clearing status
+            #define XHCI_STS_HALTED             BIT0
+            #define XHCI_STS_HOSTSYSTEM_ERROR   BIT2
+            #define XHCI_STS_EVT_INTERRUPT      BIT3
+            #define XHCI_STS_PCD                BIT4
         struct {
             UINT32      HcHalted    : 1;
             UINT32      Rsvd1       : 1;
@@ -168,16 +145,6 @@ typedef struct {
     };
 } XHCI_USBSTS;
 
-#define XHCI_STS_HALTED                 BIT0
-#define XHCI_STS_HOSTSYSTEM_ERROR       BIT2
-#define XHCI_STS_EVT_INTERRUPT          BIT3
-#define XHCI_STS_PCD                    BIT4
-#define XHCI_STS_SSS                    BIT8
-#define XHCI_STS_RSS                    BIT9
-#define XHCI_STS_SRE                    BIT10
-#define XHCI_STS_CNR                    BIT11
-#define XHCI_STS_HCE                    BIT12
-
 typedef struct {
     UINT32      Rcs         : 1;    // Ring Cycle State
     UINT32      Cs          : 1;    // Command Stop
@@ -192,14 +159,14 @@ typedef struct {
 #define XHCI_PORT_RESET     BIT4
 #define XHCI_PORT_RESET_CHG BIT21
 
+#define XHCI_PORTSC_OFFSET  0x400
 
 // Port speed definitions as read from PortSpeed field of PORTSC
-#define XHCI_DEVSPEED_UNDEFINED         0
-#define XHCI_DEVSPEED_FULL              1
-#define XHCI_DEVSPEED_LOW               2
-#define XHCI_DEVSPEED_HIGH              3
-#define XHCI_DEVSPEED_SUPER             4
-#define XHCI_DEVSPEED_SUPER_PLUS        5
+#define XHCI_DEVSPEED_UNDEFINED 0
+#define XHCI_DEVSPEED_FULL      1
+#define XHCI_DEVSPEED_LOW       2
+#define XHCI_DEVSPEED_HIGH      3
+#define XHCI_DEVSPEED_SUPER     4
 
 // Port link definitions
 #define	XHCI_PORT_LINK_U0				0
@@ -219,6 +186,16 @@ typedef struct {
 typedef struct {
     union {
         UINT32  AllBits;    // can be used for clearing status
+            #define XHCI_PCS_CCS    BIT0
+            #define XHCI_PCS_PED    BIT1
+            #define XHCI_PCS_OCA    BIT3
+            #define XHCI_PCS_PR     BIT4
+            #define XHCI_PCS_PP     BIT9
+            #define XHCI_PCS_LWS    BIT16
+            #define XHCI_PCS_CSC    BIT17
+			#define XHCI_PCS_WRC    BIT19
+            #define XHCI_PCS_PRC    BIT21
+			#define XHCI_PCS_WPR    BIT31
         struct {
             UINT32      Ccs         : 1;    // 0 Current Connect Status - RO
             UINT32      Ped         : 1;    // 1 Port Enabled/Disabled  - RW1CS
@@ -248,17 +225,6 @@ typedef struct {
     };
 } XHCI_PORTSC;
 
-#define XHCI_PCS_CCS    BIT0
-#define XHCI_PCS_PED    BIT1
-#define XHCI_PCS_OCA    BIT3
-#define XHCI_PCS_PR     BIT4
-#define XHCI_PCS_PP     BIT9
-#define XHCI_PCS_LWS    BIT16
-#define XHCI_PCS_CSC    BIT17
-#define XHCI_PCS_WRC    BIT19
-#define XHCI_PCS_PRC    BIT21
-#define XHCI_PCS_WPR    BIT31
-
 typedef struct {
     XHCI_USBCMD UsbCmd;     // 00
     XHCI_USBSTS UsbSts;     // 04
@@ -270,18 +236,6 @@ typedef struct {
     UINT64      DcbAap;     // 30 Device Context Base Address Array Pointer
     UINT32      Config;     // 38 Max Device Slots Enabled
 } XHCI_HC_OP_REGS;
-
-//
-// Operational registers offset
-//
-#define XHCI_USBCMD_OFFSET                  0x0000 // USB Command Register Offset
-#define XHCI_USBSTS_OFFSET                  0x0004 // USB Status Register Offset
-#define XHCI_PAGESIZE_OFFSET                0x0008 // USB Page Size Register Offset
-#define XHCI_DNCTRL_OFFSET                  0x0014 // Device Notification Control Register Offset
-#define XHCI_CRCR_OFFSET                    0x0018 // Command Ring Control Register Offset
-#define XHCI_DCBAAP_OFFSET                  0x0030 // Device Context Base Address Array Pointer Register Offset
-#define XHCI_CONFIG_OFFSET                  0x0038 // Configure Register Offset
-#define XHCI_PORTSC_OFFSET                  0x0400 // Port Status and Control Register Offset
 
 
 #define CRCR_RING_CYCLE_STATE	BIT0
@@ -300,8 +254,6 @@ typedef struct {
 // Interrupt Moderation Interval (5.5.2.2)
 // Minimum inter-interrupt interval, in 250ns units. The value of 4000 makes 1ms interval.
 #define XHCI_IMODI 4000
-#define XHCI_KEYREPEAT_IMODI        REPEAT_INTERVAL * 4000
-#define XHCI_KEYREPEAT_IMODC        REPEAT_INTERVAL * 4000
 
 // Note: the following structure defines 32-bit and 64-bits fields 
 // without detailing; this MMIO data must be accessed using Dword
@@ -407,24 +359,25 @@ typedef struct {
 #define XHCI_EPTYPE_INT_IN      7
 
 typedef struct {
-    UINT32  EpState             : 3;
-    UINT32  RsvdZ1              : 5;
-    UINT32  Mult                : 2;
-    UINT32  MaxPStreams         : 5;
-    UINT32  Lsa                 : 1;
-    UINT32  Interval            : 8;
-    UINT32  MaxEsitPayloadHi    : 8;
-    UINT32  RzvdZ2              : 1;
-    UINT32  ErrorCount          : 2;
-    UINT32  EpType              : 3;
-    UINT32  RsvdZ               : 1;
-    UINT32  Hid                 : 1;
-    UINT32  MaxBurstSize        : 8;
-    UINT32  MaxPacketSize       : 16;
+    UINT32  EpState         : 3;
+    UINT32  RsvdZ1          : 5;
+    UINT32  Mult            : 2;
+    UINT32  MaxPStreams     : 5;
+    UINT32  Lsa             : 1;
+    UINT32  Interval        : 8;
+    UINT32  RzvdZ2          : 8;
+
+    UINT32  RzvdZ3          : 1;
+    UINT32  ErrorCount      : 2;
+    UINT32  EpType          : 3;
+    UINT32  RsvdZ           : 1;
+    UINT32  Hid             : 1;
+    UINT32  MaxBurstSize    : 8;
+    UINT32  MaxPacketSize   : 16;
 
     UINT64  TrDequeuePtr;   // BIT0 of this field is DCS (Dequeue Cycle State)
     UINT16  AvgTrbLength;
-    UINT16  MaxEsitPayloadLo;
+    UINT16  MaxEsitPayload;
     UINT32  RsvdO[3];
 } XHCI_EP_CONTEXT;
 
@@ -667,27 +620,6 @@ typedef struct {
 } XHCI_ADDRESSDEV_CMD_TRB;
 
 typedef struct {
-    UINT64  InpCtxAddress;
-    UINT32  RsvdZ1;
-    UINT32  CycleBit    : 1;
-    UINT32  RsvdZ2      : 8;
-    UINT32  Dc          : 1;
-    UINT32  TrbType     : 6;
-    UINT32  RsvdZ3      : 8;
-    UINT32  SlotId      : 8;
-} XHCI_CONFIGURE_EP_CMD_TRB;
-
-typedef struct {
-    UINT64  InpCtxAddress;
-    UINT32  RsvdZ1;
-    UINT32  CycleBit    : 1;
-    UINT32  RsvdZ2      : 9;
-    UINT32  TrbType     : 6;
-    UINT32  RsvdZ3      : 8;
-    UINT32  SlotId      : 8;
-} XHCI_EVALUATE_CONTEXT_CMD_TRB;
-
-typedef struct {
     UINT32  RsvdZ1[3];
 
     UINT32  CycleBit    : 1;
@@ -832,8 +764,7 @@ typedef struct {
     UINT32  Chain       : 1;
     UINT32  Ioc         : 1;
     UINT32  Idt         : 1;
-    UINT32  Tbc         : 2;
-    UINT32  Bei         : 1;
+    UINT32  RsvdZ1      : 3;
     UINT32  TrbType     : 6;
     UINT32  Rsvd2       : 4;
     UINT32  FrameId     : 11;
@@ -895,52 +826,20 @@ typedef struct {
 // The following definition fixes the size of ring
 // segment to TRBS_PER_SEGMENT * sizeof(XHCI_TRB)
 #define TRBS_PER_SEGMENT    64
-#define EVT_TRBS_PER_SEGMENT    1024
-#define ISOC_TRBS_PER_SEGMENT    8192
 #define RING_SIZE TRBS_PER_SEGMENT*sizeof(XHCI_TRB)
-#define XHCI_TRB_MAX_XFER_SIZE 0x10000
 
 // Default timeouts
-#ifndef XHCI_CMD_COMPLETE_TIMEOUT_MS
-#define XHCI_CMD_COMPLETE_TIMEOUT_MS 50
-#endif
-#ifndef XHCI_ADDR_CMD_COMPLETE_TIMEOUT_MS
+#define XHCI_CMD_COMPLETE_TIMEOUT_MS 20
 #define XHCI_ADDR_CMD_COMPLETE_TIMEOUT_MS 2000
-#endif
-#ifndef XHCI_CTL_COMPLETE_TIMEOUT_MS
 #define XHCI_CTL_COMPLETE_TIMEOUT_MS 2000
-#endif
-#ifndef XHCI_INT_COMPLETE_TIMEOUT_MS
+//#define XHCI_BULK_COMPLETE_TIMEOUT_MS 15000		//(EIP61193)
 #define XHCI_INT_COMPLETE_TIMEOUT_MS 1500
-#endif
-
-#ifndef XHCI_RESET_DELAY_MS
-#define XHCI_RESET_DELAY_MS         1
-#endif
-
-#ifndef XHCI_HALT_TIMEOUT_MS
-#define XHCI_HALT_TIMEOUT_MS        32
-#endif
-
-#ifndef XHCI_RESET_PORT_DELAY_MS
-#define XHCI_RESET_PORT_DELAY_MS    10
-#endif
-
-#ifndef XHCI_RESET_EP_DELAY_MS
-#define XHCI_RESET_EP_DELAY_MS      10
-#endif
 
 //#define XHCI_BOT_TD_MAXSIZE 512
 #define XHCI_BOT_TD_MAXSIZE 0x10000
 #define XHCI_BOT_MAX_XFR_SIZE XHCI_BOT_TD_MAXSIZE*8
 
-#ifndef XHCI_SWITCH2SS_DELAY_MS
 #define XHCI_SWITCH2SS_DELAY_MS 5
-#endif
-
-#ifndef XHCI_MAX_PENDING_INTERRUPT_TRANSFER
-#define XHCI_MAX_PENDING_INTERRUPT_TRANSFER 16
-#endif
 
 //---------------------------------------------------------
 // Input context definition
@@ -972,8 +871,6 @@ typedef struct {
     UINT32       NextCapPtr:8;	// Next xHCI Extended Capability Pointer
     UINT32       Cap:16;		// Capability Specific
 } XHCI_EXT_CAP;
-
-#define XHCI_LEGACY_CTRL_STS_REG        4
 
 #define XHCI_BIOS_OWNED_SEMAPHORE		BIT16
 #define XHCI_OS_OWNED_SEMAPHORE			BIT24
@@ -1043,10 +940,6 @@ typedef struct {
 	};
 } XHCI_EXT_PROTOCOL;
 
-#define XHCI_DB_CAP_DCCTRL_REG      0x20
-
-#define XHCI_DB_CAP_DCE         BIT31
-
 #pragma pack(pop)
 
 										//(EIP60460)>
@@ -1073,23 +966,20 @@ typedef struct {
 
 #define XHCI_INTEL_VID  0x8086
 
-typedef struct _XHCI_PENDING_POLLING{
-    XHCI_NORMAL_XFR_TRB         *Trb;
-    UINT16                       TransferredLength;
-}XHCI_PENDING_INTERRUPT_TRANSFER;
-
 typedef struct _USB3_HOST_CONTROLLER {
     EFI_HANDLE              Controller;
-    XHCI_HC_CAP_REGS        CapRegs;
+    XHCI_HC_CAP_REGS        *CapRegs;
     XHCI_HC_OP_REGS         *OpRegs;
     XHCI_HC_RT_REGS         *RtRegs;
-	UINT32                  UsbLegSupOffSet;
-	XHCI_EXT_PROTOCOL		Usb2Protocol;
-	XHCI_EXT_PROTOCOL		Usb3Protocol;
-    XHCI_EXT_PROTOCOL		Usb31Protocol;
-    UINT32                  DbCapOffset;
+	XHCI_EXT_LEG_CAP		*ExtLegCap;
+	XHCI_EXT_PROTOCOL		*Usb2Protocol;
+	XHCI_EXT_PROTOCOL		*Usb3Protocol;
     UINT16                  Vid;
     UINT16                  Did;
+    UINT16                  HciVersion;
+    UINT8                   MaxSlots;
+    UINT8                   MaxPorts;
+    UINT16                  MaxIntrs;
     EFI_USB_HC_STATE        HcState;
     UINT32                  PageSize4K;
     UINT8                   SBRN;
@@ -1101,22 +991,23 @@ typedef struct _USB3_HOST_CONTROLLER {
     UINTN                   XfrTrbs;
     VOID					*DeviceContext;
     VOID					*InputContext;
-    UINT64                  *ScratchBufEntry;
-    XHCI_PENDING_INTERRUPT_TRANSFER PendingInterruptTransfer[XHCI_MAX_PENDING_INTERRUPT_TRANSFER];
+    UINT32                  DbOffset;
+    BOOLEAN                 Access64;
 } USB3_HOST_CONTROLLER;
 
 #endif
 
-//**********************************************************************
-//**********************************************************************
-//**                                                                  **
-//**        (C)Copyright 1985-2016, American Megatrends, Inc.         **
-//**                                                                  **
-//**                       All Rights Reserved.                       **
-//**                                                                  **
-//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093        **
-//**                                                                  **
-//**                       Phone: (770)-246-8600                      **
-//**                                                                  **
-//**********************************************************************
-//**********************************************************************
+//****************************************************************************
+//****************************************************************************
+//**                                                                        **
+//**             (C)Copyright 1985-2009, American Megatrends, Inc.          **
+//**                                                                        **
+//**                          All Rights Reserved.                          **
+//**                                                                        **
+//**                 5555 Oakbrook Pkwy, Norcross, GA 30093                 **
+//**                                                                        **
+//**                          Phone (770)-246-8600                          **
+//**                                                                        **
+//****************************************************************************
+//****************************************************************************
+

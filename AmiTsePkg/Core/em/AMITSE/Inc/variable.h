@@ -24,10 +24,15 @@
 //*****************************************************************//
 //*****************************************************************//
 //*****************************************************************//
-/** @file variable.h
-    Variable handling header
-
-**/
+//<AMI_FHDR_START>
+//----------------------------------------------------------------------------
+//
+// Name:		variable.h
+//
+// Description:	Variable handling header
+//
+//----------------------------------------------------------------------------
+//<AMI_FHDR_END>
 
 #ifndef	_VARIABLE_H_
 #define	_VARIABLE_H_
@@ -68,49 +73,21 @@ NVRAM_VARIABLE;
 #define VARIABLE_ID_DYNAMIC_PAGE_COUNT		18
 #define VARIABLE_ID_DRV_HLTH_ENB				19
 #define VARIABLE_ID_DRV_HLTH_COUNT			20
-#define VARIABLE_ID_DRV_HLTH_CTRL_COUNT		21
-#define VARIABLE_ID_DRIVER_MANAGER			22
+#define VARIABLE_ID_DRIVER_MANAGER			22		//EIP70421 & 70422 Support for driver order
 #define VARIABLE_ID_DRIVER_ORDER				23	
 #define VARIABLE_ID_ADD_DRIVER_OPTION   	24
 #define VARIABLE_ID_DEL_DRIVER_OPTION   	25
-#define VARIABLE_ID_PORT_OEM1					26
+#define VARIABLE_ID_PORT_OEM1					26		//EIP74676 variables for porting purpose
 #define VARIABLE_ID_PORT_OEM2					27
 #define VARIABLE_ID_PORT_OEM3					28
 #define VARIABLE_ID_PORT_OEM4					29
 #define VARIABLE_ID_PORT_OEM5					30
-#define VARIABLE_ID_PORT_OEM6					31
-#define VARIABLE_ID_PORT_OEM7					32
-#define VARIABLE_ID_PORT_OEM8					33
-#define VARIABLE_ID_PORT_OEM9					34
-#define VARIABLE_ID_PORT_OEM10				35
-#define VARIABLE_ID_PORT_OEM11				36
-#define VARIABLE_ID_PORT_OEM12				37
-#define VARIABLE_ID_PORT_OEM13				38
-#define VARIABLE_ID_PORT_OEM14				39
-#define VARIABLE_ID_PORT_OEM15				40
-#define VARIABLE_ID_PORT_OEM16				41
-#define VARIABLE_ID_PORT_OEM17				42
-#define VARIABLE_ID_PORT_OEM18				43
-#define VARIABLE_ID_PORT_OEM19				44
-#define VARIABLE_ID_PORT_OEM20				45
-#define VARIABLE_ID_PORT_OEM21				46
-#define VARIABLE_ID_PORT_OEM22				47
-#define VARIABLE_ID_PORT_OEM23				48
-#define VARIABLE_ID_PORT_OEM24				49
-#define VARIABLE_ID_PORT_OEM25				50
-#define VARIABLE_ID_PORT_OEM26				51
-#define VARIABLE_ID_PORT_OEM27				52
-#define VARIABLE_ID_PORT_OEM28				53
-#define VARIABLE_ID_PORT_OEM29				54                            
-#define VARIABLE_ID_DYNAMIC_PAGE_GROUP      55
-#define VARIABLE_ID_DYNAMIC_PAGE_DEVICE     56
-#define VARIABLE_ID_DYNAMIC_PAGE_GROUP_CLASS	57
 
+//EIP 76381 :  Performance Improving of variable data load and usage
 EFI_STATUS GetNvramVariableList(NVRAM_VARIABLE **RetNvramVarList);
 VOID CleanTempNvramVariableList();
 EFI_STATUS CopyNvramVariableList(NVRAM_VARIABLE *SrcVarList, NVRAM_VARIABLE **DestVarList);
-VOID CleanNvramVariableList(NVRAM_VARIABLE **InvVarlist); //For memleak
- 
+
 EFI_STATUS VarLoadVariables( VOID **list, NVRAM_VARIABLE *defaultList );
 EFI_STATUS VarBuildDefaults( VOID );
 VOID *VarGetNvramName( CHAR16 *name, EFI_GUID *guid, UINT32 *attributes, UINTN *size );

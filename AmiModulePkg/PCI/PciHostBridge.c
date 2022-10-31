@@ -1222,13 +1222,8 @@ EFI_STATUS ConvertMemoryMap(EFI_HANDLE	ImgHandle, EFI_HANDLE	CntrHandle)
 	VariableSize = sizeof(SETUP_DATA);
 	Status = pRS->GetVariable(L"Setup", &SetupGuid, NULL, &VariableSize, &SetupData);
 	if (!EFI_ERROR(Status)) { 
-//EIP186458+ >>	
-	 if(SetupData.ApertureSize > 2)  SetupData.MaxTolud = SetupData.MaxTolud2;
-//EIP186458+ <<	 
 	  switch (SetupData.MaxTolud)
 	  {
-	  //EIP202736 >>
-	  /*
 	    case 0:
 	      if (SetupData.ApertureSize > 2) {
 	        if (MemoryCeiling > 0xA0000000) {
@@ -1236,8 +1231,6 @@ EFI_STATUS ConvertMemoryMap(EFI_HANDLE	ImgHandle, EFI_HANDLE	CntrHandle)
 	        }
 	      }
 	      break; //DYNAMIC
-		  */
-		  //EIP202736 <<
 	    case 5:
 	      MemoryCeiling = 0x80000000;
 	      break; //MAX_TOLUD_2G

@@ -1,7 +1,7 @@
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2013, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **
@@ -33,7 +33,7 @@ typedef struct{
     UINT8 SecureBootSupport;
     UINT8 SecureBootMode;
     UINT8 DefaultKeyProvision;
-    UINT8 BackDoorVendorKeyChange;
+    UINT8 Load_from_FV;
     UINT8 Load_from_OROM;
     UINT8 Load_from_REMOVABLE_MEDIA;
     UINT8 Load_from_FIXED_MEDIA;
@@ -55,10 +55,6 @@ typedef struct{
     UINT8 PK;
 } SECURE_VAR_INSTALL_VAR;
 
-typedef struct{
-    UINT8 Value;
-} SECURE_BOOT_VENDOR_KEY_VAR;
-
 #pragma pack()
 
 // EFI_IMAGE_SECURITY_DATABASE_DEFAULT must be defined in ImageAuthentication.h
@@ -74,9 +70,7 @@ typedef struct{
 #define EFI_IMAGE_SECURITY_DATABASE2 L"dbt"
 #define EFI_IMAGE_SECURITY_DATABASE2_DEFAULT L"dbtDefault"
 #endif
-#ifndef EFI_VENDOR_KEYS_NAME
-#define EFI_VENDOR_KEYS_NAME L"VendorKeys"
-#endif
+
 #define SIGSUPPORT_NUM 8 
 #define SIGSUPPORT_LIST EFI_CERT_X509_SHA256_GUID, EFI_CERT_X509_SHA384_GUID, EFI_CERT_X509_SHA512_GUID, EFI_CERT_SHA256_GUID, EFI_CERT_X509_GUID, EFI_CERT_RSA2048_GUID, EFI_CERT_RSA2048_SHA256_GUID, EFI_CERT_RSA2048_SHA1_GUID
 
@@ -84,7 +78,7 @@ typedef struct{
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2013, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **

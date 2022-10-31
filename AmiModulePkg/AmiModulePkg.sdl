@@ -1,20 +1,9 @@
 TOKEN
 	Name  = "AMI_MODULE_PKG_VERSION"
-	Value  = "28"
+	Value  = "22"
 	Help  = "AmiModulePkg version.\Do not change."
 	TokenType = Integer
 	TargetMAK = Yes
 	TargetH = Yes
 	Lock = Yes
-End
-
-PcdMapping
-	Name  = "AmiPcdPerformanceProfilingSupport"
-	GuidSpace  = "gAmiModulePkgTokenSpaceGuid"
-	PcdType  = "PcdsFixedAtBuild"
-	Value  = "TRUE"
-	Offset  = 00h
-	Length  = 00h
-	TargetDSC = Yes
-	Disable = Yes
 End

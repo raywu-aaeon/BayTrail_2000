@@ -48,7 +48,6 @@
 "AcpiTables\DptfAsl.inf"
 "TxeFwDowngradeDxe\TxeFwDowngradeDxe.inf"
 "HpetTimerProtocol\HpetTimerProtocol.inf" #EIP144604
-"WrapperAcpi\Dxe\WrapperAcpi.inf" #EIP314798
 [files]
 "Wrapper.sdl"	
 [parts]

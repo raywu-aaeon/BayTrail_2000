@@ -72,8 +72,6 @@
   gIdeSecurityInterfaceGuid
   gBdsAllDriversConnectedProtocolGuid #EIP150551
   gAmiSmbiosProtocolGuid #EIP150551
-  gAmiHddSecurityProtocolGuid  #EIP180881
-  
   
 [Depex]  	
 ##  gEfiPciRootBridgeIoProtocolGuid AND

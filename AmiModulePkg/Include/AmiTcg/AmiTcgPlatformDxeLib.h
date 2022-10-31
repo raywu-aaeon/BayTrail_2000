@@ -31,8 +31,8 @@
 #include <Include\Acpi.h>
 #include <Include\Acpi11.h>
 #include <Include/Setup.h>
-//#include <AmiDxeLib.h>
-#include <Library/BaseMemoryLib.h>
+#include <AmiDxeLib.h>
+#include <AcpiRes.h>
 #include <AmiTcg\TcgMisc.h>
 #include <Protocol\TcgService.h>
 #include <Protocol\TpmDevice.h>

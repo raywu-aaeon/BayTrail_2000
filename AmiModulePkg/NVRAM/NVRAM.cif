@@ -4,9 +4,8 @@
 	LocalRoot = "AmiModulePkg\NVRAM\"
 	RefName = "AmiModulePkg.NVRAM"
 [files]
-"NvramElinkTempl.txt"
-"NVRAM.chm"		
-"NVRAM.sdl"		
+"NVRAM.sdl"	
+"NVRAM.mak"		
 "NvramFdfFileStatement.txt"
 "FvMainDefaultsFdfFileStatement.txt"
 [INF]

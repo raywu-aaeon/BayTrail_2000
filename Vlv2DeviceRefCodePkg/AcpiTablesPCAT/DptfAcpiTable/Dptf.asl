@@ -119,8 +119,6 @@ DefinitionBlock (
   External(\_PR.CPU3, DeviceObj)
 
   External(\_PR.CPU0._PPC, IntObj)
-  
-  include ("OemDptfAsl.asl") //AMI_OVERRIDE - EIP174562 DPTF implementation for OEM
 
   Name(BDLI, 2) // Brightness depth limit index - index 2 corresponds to 30%
   Name(BDHI, 12) // Brightness peformance/power limit (ceil) index - 12 corresponds to 80%
@@ -341,7 +339,7 @@ DefinitionBlock (
       //
       Method(_TRT)
       {
-        Return(ASL_TRTI) //AMI_OVERRIDE - EIP174562 DPTF implementation for OEM
+        Return(TRTI)
       } // End _TRT
 
       // TRTR

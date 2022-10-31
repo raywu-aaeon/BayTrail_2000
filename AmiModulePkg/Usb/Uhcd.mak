@@ -1,7 +1,7 @@
 #**********************************************************************
 #**********************************************************************
 #**                                                                  **
-#**        (C)Copyright 1985-2016, American Megatrends, Inc.         **
+#**        (C)Copyright 1985-2008, American Megatrends, Inc.         **
 #**                                                                  **
 #**                       All Rights Reserved.                       **
 #**                                                                  **
@@ -32,10 +32,6 @@
 #**********************************************************************
 
 Prepare : $(BUILD_DIR)/Uhcd.inf
-
-ifeq ("$(USB_IAD_PROTOCOL_SUPPORT)", "1")
-USB_IAD = gAmiUsbIadProtocolGuid
-endif
 
 $(BUILD_DIR)/Uhcd.inf : $(BUILD_DIR)/Token.h $(UHCD_DIR)/Uhcd.mak
 	$(ECHO) \
@@ -77,8 +73,6 @@ $(EOL)\
   AmiDxeLib$(EOL)\
   UefiDriverEntryPoint$(EOL)\
   MemoryAllocationLib$(EOL)\
-  UefiLib$(EOL)\
-  DebugLib$(EOL)\
 $(EOL)\
 [Protocols]$(EOL)\
   gEfiSimpleTextInputExProtocolGuid$(EOL)\
@@ -99,28 +93,15 @@ $(EOL)\
   gAmiEfiKeycodeProtocolGuid$(EOL)\
   gEfiSimplePointerProtocolGuid$(EOL)\
   gEfiSmmPeriodicTimerDispatch2ProtocolGuid$(EOL)\
-  gAmiBlockIoWriteProtectionProtocolGuid$(EOL)\
-  gEfiLegacyBiosPlatformProtocolGuid$(EOL)\
-  gEfiAbsolutePointerProtocolGuid$(EOL)\
-  gAmiMultiLangSupportProtocolGuid$(EOL)\
-  gAmiPciIrqProgramGuid$(EOL)\
-  $(USB_IAD)$(EOL)\
-$(EOL)\
-[Pcd]$(EOL)\
-  gEfiMdePkgTokenSpaceGuid.PcdPciExpressBaseAddress$(EOL)\
 $(EOL)\
 [Depex]$(EOL)\
-  TRUE$(EOL)\
-$(EOL)\
-[BuildOptions]$(EOL)\
-  MSFT:*_*_*_CC_FLAGS = /D USB_RT_DXE_DRIVER$(EOL)\
-  GCC:*_*_*_CC_FLAGS = -DUSB_RT_DXE_DRIVER$(EOL)"\
+  TRUE$(EOL)"\
 > $(BUILD_DIR)/Uhcd.inf
 
 #**********************************************************************
 #**********************************************************************
 #**                                                                  **
-#**        (C)Copyright 1985-2016, American Megatrends, Inc.         **
+#**        (C)Copyright 1985-2008, American Megatrends, Inc.         **
 #**                                                                  **
 #**                       All Rights Reserved.                       **
 #**                                                                  **

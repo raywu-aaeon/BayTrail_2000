@@ -1,20 +1,25 @@
-//**********************************************************************
-//**********************************************************************
-//**                                                                  **
-//**        (C)Copyright 1985-2015, American Megatrends, Inc.         **
-//**                                                                  **
-//**                       All Rights Reserved.                       **
-//**                                                                  **
-//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093        **
-//**                                                                  **
-//**                       Phone: (770)-246-8600                      **
-//**                                                                  **
-//**********************************************************************
-//**********************************************************************
+//****************************************************************************
+//****************************************************************************
+//**                                                                        **
+//**             (C)Copyright 1985-2009, American Megatrends, Inc.          **
+//**                                                                        **
+//**                          All Rights Reserved.                          **
+//**                                                                        **
+//**            5555 Oakbrook Pkwy, Suite 200   Norcross, GA 30093          **
+//**                                                                        **
+//**                          Phone (770)-246-8600                          **
+//**                                                                        **
+//****************************************************************************
+//****************************************************************************
 
-/** @file UsbHc.h
-
-**/
+//****************************************************************************
+// $Header: /Alaska/SOURCE/Modules/USB/ALASKA/Protocol/UsbHC.h 12    8/24/11 2:31a Ryanchou $
+//
+// $Revision: 12 $
+//
+// $Date: 8/24/11 2:31a $
+//
+//****************************************************************************
 
 #ifndef _USBHC_INC_
 #define _USBHC_INC_
@@ -42,17 +47,16 @@ typedef struct{
 //**************************************************
 // EFI_USB_PORT_STATUS.PortStatus bit definition
 //**************************************************
-#define USB_PORT_STAT_CONNECTION        0x0001
-#define USB_PORT_STAT_ENABLE            0x0002
-#define USB_PORT_STAT_SUSPEND           0x0004
-#define USB_PORT_STAT_OVERCURRENT       0x0008
-#define USB_PORT_STAT_RESET             0x0010
-#define USB_PORT_STAT_POWER             0x0100
-#define USB_PORT_STAT_LOW_SPEED         0x0200
-#define USB_PORT_STAT_HIGH_SPEED        0x0400
-#define USB_PORT_STAT_SUPER_SPEED       0x0800
-#define USB_PORT_STAT_SUPER_SPEED_PLUS  0x1000
-#define USB_PORT_STAT_OWNER             0x2000
+#define USB_PORT_STAT_CONNECTION 0x0001
+#define USB_PORT_STAT_ENABLE 0x0002
+#define USB_PORT_STAT_SUSPEND 0x0004
+#define USB_PORT_STAT_OVERCURRENT 0x0008
+#define USB_PORT_STAT_RESET 0x0010
+#define USB_PORT_STAT_POWER 0x0100
+#define USB_PORT_STAT_LOW_SPEED 0x0200
+#define USB_PORT_STAT_HIGH_SPEED 0x0400
+#define USB_PORT_STAT_SUPER_SPEED 0x0800	//(EIP57663+)
+#define USB_PORT_STAT_OWNER 0x2000			//(EIP57663)
 //**************************************************
 // EFI_USB_PORT_STATUS.PortChangeStatus bit definition
 //**************************************************
@@ -274,11 +278,10 @@ EFI_STATUS
   OUT UINT8                 *Is64BitCapable
   );
 
-#define EFI_USB_SPEED_FULL          0x0000
-#define EFI_USB_SPEED_LOW           0x0001
-#define EFI_USB_SPEED_HIGH          0x0002
-#define EFI_USB_SPEED_SUPER         0x0003
-#define EFI_USB_SPEED_SUPER_PLUS    0x0004
+#define EFI_USB_SPEED_FULL 0x0000
+#define EFI_USB_SPEED_LOW  0x0001
+#define EFI_USB_SPEED_HIGH 0x0002
+#define EFI_USB_SPEED_SUPER 0x003
 
 typedef
 EFI_STATUS
@@ -448,16 +451,16 @@ typedef struct _EFI_USB2_HC_PROTOCOL {
 #endif // GUID_VARIABLE_DEFINITION
 #endif // _USBHC_INC_
 
-//**********************************************************************
-//**********************************************************************
-//**                                                                  **
-//**        (C)Copyright 1985-2015, American Megatrends, Inc.         **
-//**                                                                  **
-//**                       All Rights Reserved.                       **
-//**                                                                  **
-//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093        **
-//**                                                                  **
-//**                       Phone: (770)-246-8600                      **
-//**                                                                  **
-//**********************************************************************
-//**********************************************************************
+//****************************************************************************
+//****************************************************************************
+//**                                                                        **
+//**             (C)Copyright 1985-2009, American Megatrends, Inc.          **
+//**                                                                        **
+//**                          All Rights Reserved.                          **
+//**                                                                        **
+//**            5555 Oakbrook Pkwy, Suite 200   Norcross, GA 30093          **
+//**                                                                        **
+//**                          Phone (770)-246-8600                          **
+//**                                                                        **
+//****************************************************************************
+//****************************************************************************

@@ -1,7 +1,7 @@
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2016, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2013, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **
@@ -12,17 +12,14 @@
 //**********************************************************************
 //**********************************************************************
 //**********************************************************************
-/** @file
- * CryptoDxe.c
- */
 #include <Token.h>
 #include <AmiDxeLib.h>
 #include "Setup.h"
 #include "AmiCertificate.h"
 #include <Protocol/AmiDigitalSignature.h>
-//#include <Protocol/Hash.h>
+#include <Protocol/Hash.h>
+#include <CryptLib.h>
 #include <Protocol/SmmBase.h> // used for SMM Malloc
-#include <Library/MemoryAllocationLib.h>
 
 //
 // Global variables
@@ -41,7 +38,7 @@ static CRYPT_HANDLE gKey = {{0},0,NULL};
 //
 // SDL Hardwired value of publicExponent--e
 const UINT8  KeyE[] = {E_CONST}; // 0x10001
-const UINTN LenE = sizeof(KeyE);
+const UINT32 LenE = sizeof(KeyE);
 const INT32  saltlen = PSS_SIG_SALTLEN; // 8
 static UINT8 Rsa2048Sig[DEFAULT_RSA_SIG_LEN];
 
@@ -54,8 +51,7 @@ static UINT8  MutexLock = RESET;
 // Crypto Function prototypes
 //----------------------------------------------------------------------------
 EFI_STATUS
-EFIAPI
-DxePkcs1Verify (
+Pkcs1Verify (
   IN CONST AMI_DIGITAL_SIGNATURE_PROTOCOL *This,
   IN CRYPT_HANDLE *PublicKey,
   IN CRYPT_HANDLE *Hash,
@@ -65,8 +61,7 @@ DxePkcs1Verify (
   );
 
 EFI_STATUS
-EFIAPI
-DxePkcs7Verify (
+Pkcs7Verify (
   IN CONST AMI_DIGITAL_SIGNATURE_PROTOCOL *This,
   IN CONST UINT8 *P7Data,
   IN UINTN        P7Size,
@@ -79,8 +74,7 @@ DxePkcs7Verify (
   );
 
 EFI_STATUS
-EFIAPI
-DxeHash(
+Hash(
   IN CONST AMI_DIGITAL_SIGNATURE_PROTOCOL  *This,
   IN CONST EFI_GUID   *HashAlgorithm,
   IN UINTN            Num_elem,
@@ -90,8 +84,7 @@ DxeHash(
   );
 
 EFI_STATUS
-EFIAPI
-DxeGetKey (
+GetKey (
   IN CONST AMI_DIGITAL_SIGNATURE_PROTOCOL  *This,
   OUT CRYPT_HANDLE  *Key,
   IN  EFI_GUID      *AlgId,
@@ -100,8 +93,7 @@ DxeGetKey (
   );
 
 EFI_STATUS
-EFIAPI
-DxeVerifyKey (
+VerifyKey (
   IN CONST AMI_DIGITAL_SIGNATURE_PROTOCOL *This,
   IN EFI_GUID       *AlgId,
   IN CRYPT_HANDLE   *Key
@@ -110,35 +102,42 @@ DxeVerifyKey (
 // Crypto Protocol Identifiers
 //----------------------------------------------------------------------------
 AMI_DIGITAL_SIGNATURE_PROTOCOL  mAmiSig = {
-  DxePkcs1Verify,
-  DxePkcs7Verify,
-  DxeHash,
-  DxeGetKey,
-  DxeVerifyKey
+  Pkcs1Verify,
+  Pkcs7Verify,
+  Hash,
+  GetKey,
+  VerifyKey
 };
 
 //----------------------------------------------------------------------------
 // Crypto Function Implementation
 //----------------------------------------------------------------------------
 
-/**
-  Allows creating a hash of an arbitrary message digest using one or more hash algorithms
-
-  @param[in] This          Pointer to the AMI_DIGITAL_SIGNATURE_PROTOCOL instance.
-  @param[in]  HashAlgorithm Points to the EFI_GUID which identifies the algorithm to use.
-  @param[in]  num_elem      Number of blocks to be passed via next argument:addr[]
-  @param[in]  addr[]        Pointer to array of UINT8* addresses of data blocks to be hashed
-  @param[in]  len           Pointer to array of integers containing length of each block listed by addr[]
-  @param[in]  Hash          Holds the resulting hash computed from the message.
-  
-  @retval     Status
-        EFI_SUCCESS           Hash returned successfully.
-        EFI_INVALID_PARAMETER Message or Hash is NULL
-        EFI_UNSUPPORTED       The algorithm specified by HashAlgorithm is not supported by this driver.
-**/
+//**********************************************************************
+//<AMI_PHDR_START>
+//
+// Procedure:  Hash
+//
+// Description:    Allows creating a hash of an arbitrary message digest using one or more hash algorithms
+//
+// Input:
+//      This          Pointer to the AMI_DIGITAL_SIGNATURE_PROTOCOL instance.
+//      HashAlgorithm Points to the EFI_GUID which identifies the algorithm to use.
+//      num_elem      Number of blocks to be passed via next argument:addr[]
+//      addr[]        Pointer to array of UINT8* addresses of data blocks to be hashed
+//      len           Pointer to array of integers containing length of each block listed by addr[]
+//      Hash          Holds the resulting hash computed from the message.
+//
+// Output:    
+//      EFI_SUCCESS           Hash returned successfully.
+//      EFI_INVALID_PARAMETER Message or Hash is NULL
+//      EFI_UNSUPPORTED       The algorithm specified by HashAlgorithm is not supported by this
+//                            driver.
+//
+//<AMI_PHDR_END>
+//**********************************************************************
 EFI_STATUS
-EFIAPI
-DxeHash(
+Hash(
   IN CONST AMI_DIGITAL_SIGNATURE_PROTOCOL  *This,
   IN CONST EFI_GUID               *HashAlgorithm,
   IN UINTN                        num_elem,
@@ -147,103 +146,91 @@ DxeHash(
   OUT UINT8                       *Hash
   )
 {
-    HASH_ALG    HashAlgo=SHA256;
-    UINTN       HashLen=SHA256_DIGEST_SIZE;
+    BOOLEAN     bSha1 = FALSE, bSha256 = FALSE;
+    UINT32      HashLen=SHA256_DIGEST_SIZE;
 
 // Support only SHA1 & SHA256 hashes
     if(!guidcmp((EFI_GUID*)HashAlgorithm, &gEfiHashAlgorithmSha1Guid) ||
        !guidcmp((EFI_GUID*)HashAlgorithm, &gEfiHashAlgorithmSha1NoPadGuid)) 
     {
-        HashAlgo=SHA1;
+        bSha1 = TRUE;
         HashLen = SHA1_DIGEST_SIZE;
     }
-    else if(!guidcmp((EFI_GUID*)HashAlgorithm, &gEfiHashAlgorithmSha256Guid) ||
-            !guidcmp((EFI_GUID*)HashAlgorithm, &gEfiHashAlgorithmSha256NoPadGuid))
-         {
-             HashAlgo=SHA256;
-             HashLen = SHA256_DIGEST_SIZE;
-         }
-        else if(!guidcmp((EFI_GUID*)HashAlgorithm, &gEfiHashAlgorithmSha384Guid)/* ||
-                !guidcmp((EFI_GUID*)HashAlgorithm, &gEfiHashAlgorithmSha384NoPadGuid)*/)
-             {
-                 HashAlgo=SHA384;
-                 HashLen = SHA384_DIGEST_SIZE;
-             }
-            else if(!guidcmp((EFI_GUID*)HashAlgorithm, &gEfiHashAlgorithmSha512Guid)/* ||
-                    !guidcmp((EFI_GUID*)HashAlgorithm, &gEfiHashAlgorithmSha512NoPadGuid)*/)
-                 {
-                     HashAlgo=SHA512;
-                     HashLen = SHA512_DIGEST_SIZE;
-                 }
-                 else
-                     return EFI_UNSUPPORTED;
+    else 
+        if(!guidcmp((EFI_GUID*)HashAlgorithm, &gEfiHashAlgorithmSha256Guid) ||
+           !guidcmp((EFI_GUID*)HashAlgorithm, &gEfiHashAlgorithmSha256NoPadGuid))
+        {
+            bSha256 = TRUE;
+            HashLen = SHA256_DIGEST_SIZE;
+        }
+         else
+            return EFI_UNSUPPORTED;
 
     MemSet(Hash, HashLen, 0);
-    if(HashAlgo==SHA1)
-        sha1_vector(num_elem, (const UINT8 **)addr, (const size_t *)len, Hash);
-    else if(HashAlgo==SHA256)
-            sha256_vector(num_elem, (const UINT8 **)addr, (const size_t *)len, Hash);
-        else if(HashAlgo==SHA384)
-                sha384_vector(num_elem, (const UINT8 **)addr, (const size_t *)len, Hash);
-            else if(HashAlgo==SHA512)
-                    sha512_vector(num_elem, (const UINT8 **)addr, (const size_t *)len, Hash);
+    if(bSha1)
+        sha1_vector(num_elem, addr, len, Hash);
+    else
+        sha256_vector(num_elem, addr, len, Hash);
 
     return  EFI_SUCCESS;
 }
 
-/**
-  Verifies the validity of a PKCS#7 signed data as described in "PKCS #7: Cryptographic
-                 Message Syntax Standard".
-                 Function performs several operations on input Pkcs7 certificate 
-                 based on the input Operation argument
-                 1. Verifies validity of the signature contained inside the Certificate
-                    This function decrypts the signature with the Public key from the Signer certificate 
-                    and then compares the decrypted value to the input Data
-                 2. Extracts the Signer certificate in format of x509
-                 3. Extracts Root CA certificate that used to sign the Signer certificate.
-
-  @param[in]  This         Pointer to the AMI_DIGITAL_SIGNATURE_PROTOCOL instance.
-  @param[in]  P7Data       Pointer to the PKCS#7 DER encoded message to verify.
-  @param[in]  P7Size       Size of the PKCS#7 message in bytes.
-  @param[in]  TrustedCert  Pointer to a trusted/root X509 certificate encoded in DER, which
-                           is used for certificate chain verification.
-  @param[in]  CertSize     Size of the trusted certificate in bytes.
-  @param[in]  Data         Pointer to the content to be verified/returned at
-  @param[in]  DataSize     Size of Data in bytes
-  @param[in]  Operation    Specifies different tasks to perform:
-                   0-Function presence check. Must return EFI_SUCCESS 
-                   1-Validate Certificate
-                   2-Return Signer Certificate in *Data. Performs cert chaining and time based validity tests
-                   3-Return Root CA certificate referenced by Signer. Used to compare with Trusted Cert in FW
-                   4-Validate Root Certificate
-                   5-Validate Signer Certificate Chain
-                   6-Return Signature Digest Algorithm
-                   7-Validate Certificate, return Root CA Certificate
-                   8-Validate Certificate, return Signer Certificate
-                   9-Validate Certificate, return Signer Key Hash (SHA256)
-                   10-Validate Certificate and return Success if match is found between Trust and any leaf certificates in the Signer chain
-                   11-Validate Certificate, return ptr in *Data to n-modulus of a Signer Key
-                   12-Return Success if match is found between Trust and any leaf certificates in the Signer chain
-                   13-Validate Certificate, return ptr in *Data to n-modulus of a Root CA Key
-                   14-Return ptr in *Data to n-modulus of a Root CA Key
-                   15-Return ptr in *Data to n-modulus of a Signer Key
-                   16-Validate TimeStamp certificate chain in Pkcs7 Certificate
-                   17-Retrieves all embedded certificates from PKCS#7 signed data, and outputs certificate lists chained to the signer's certificates.
-                   18-Retrieves all embedded certificates from PKCS#7 signed data, and outputs certificate lists un-chained to the signer's certificates.
-                   19-Return null-terminated ASCII string of Subject's CommonName. Caller is responsible for allocating a buffer
-                   20-255 reserved values
-  @param[in]  Flags        Specifies additional flags to further customize the signing/verifying behavior.
-
-  @retval     Status
-    EFI_SUCCESS              The specified PKCS#7 signed data is valid
-    EFI_SECURITY_VIOLATION   Invalid PKCS#7 signed data.
-    EFI_ACCESS_DENIED        The Trusted certificate does not have a match in SignedData.certificate store.
-    EFI_INVALID_PARAMETER    The size of input message or signature does not meet the criteria 
-                             of the underlying signature algorithm.
-**/
+//**********************************************************************
+//<AMI_PHDR_START>
+//
+// Procedure:  Pkcs7Verify
+//
+// Description:    Verifies the validity of a PKCS#7 signed data as described in "PKCS #7: Cryptographic
+//                 Message Syntax Standard".
+//                 Function performs several operations on input Pkcs7 certificate 
+//                 based on the input Operation argument
+//                 1. Verifies validity of the signature contained inside the Certificate
+//                    This function decrypts the signature with the Public key from the Signer certificate 
+//                    and then compares the decrypted value to the input Data
+//                 2. Extracts the Signer certificate in format of x509
+//                 3. Extracts Root CA certificate that used to sign the Signer certificate.
+//
+//  Input:
+//      This         Pointer to the AMI_DIGITAL_SIGNATURE_PROTOCOL instance.
+//      P7Data       Pointer to the PKCS#7 DER encoded message to verify.
+//      P7Size       Size of the PKCS#7 message in bytes.
+//      TrustedCert  Pointer to a trusted/root X509 certificate encoded in DER, which
+//                   is used for certificate chain verification.
+//      CertSize     Size of the trusted certificate in bytes.
+//      Data         Pointer to the content to be verified/returned at
+//      DataSize     Size of Data in bytes
+//      Operation    Specifies different tasks to perform:
+//                   0-Function presence check. Must return EFI_SUCCESS 
+//                   1-Validate Certificate
+//                   2-Return Signer Certificate in *Data. Performs cert chaining and time based validity tests
+//                   3-Return Root CA certificate referenced by Signer. Used to compare with Trusted Cert in FW
+//                   4-Validate Root Certificate
+//                   5-Validate Signer Certificate Chain
+//                   6-Return Signature Digest Algorithm
+//                   7-Validate Certificate, return Root CA Certificate
+//                   8-Validate Certificate, return Signer Certificate
+//                   9-Validate Certificate, return Signer Key Hash (SHA256)
+//                   10-Validate Certificate and return Success if match is found between Trust and any leaf certificates in the Signer chain
+//                   11-Validate Certificate, return ptr in *Data to n-modulus of a Signer Key
+//                   12-Return Success if match is found between Trust and any leaf certificates in the Signer chain
+//                   13-Validate Certificate, return ptr in *Data to n-modulus of a Root CA Key
+//                   14-Return ptr in *Data to n-modulus of a Root CA Key
+//                   15-Return ptr in *Data to n-modulus of a Signer Key
+//                   16-Validate TimeStamp certificate chain in Pkcs7 Certificate
+//                   17-255 reserved values
+//      Flags        Specifies additional flags to further customize the signing/verifying behavior.
+//
+// Output:    
+//    EFI_SUCCESS              The specified PKCS#7 signed data is valid
+//    EFI_SECURITY_VIOLATION   Invalid PKCS#7 signed data.
+//    EFI_ACCESS_DENIED        The Trusted certificate does not have a match in SignedData.certificate store.
+//    EFI_INVALID_PARAMETER    The size of input message or signature does not meet the criteria 
+//                             of the underlying signature algorithm.
+//
+//<AMI_PHDR_END>
+//**********************************************************************
 EFI_STATUS
-EFIAPI
-DxePkcs7Verify (
+Pkcs7Verify (
   IN CONST AMI_DIGITAL_SIGNATURE_PROTOCOL *This,
   IN CONST UINT8 *P7Data,
   IN UINTN        P7Size,
@@ -264,12 +251,11 @@ DxePkcs7Verify (
     UINTN  SignCert_len, CARootCert_len;
     struct pkcs7_cert_revoke_info   revokeInfo;
     EFI_CERT_X509_SHA256     *revokeCert;
-    UINT8    *CertBuf;
 
 // Mutex functionality:
 /*
 Structure mutex
-Mutual exclusion (mutex) semaphore locking mechanism used to serialize interthread intraprocess activities.
+Mutual exclusion (mutex) semaphore locking mechanism used to serialise interthread intraprocess activities.
 */
 #if PKCS7_MUTEX_LOCK == 1
     switch(Flags & 0x3) {
@@ -326,12 +312,7 @@ Mutual exclusion (mutex) semaphore locking mechanism used to serialize interthre
             if(Data == NULL || DataSize == NULL)
                 break;
         case Pkcs7ValidateRootCert:
-            if(P7Data == NULL || P7Size == 0)
-                break;
-#if PKCS7_MUTEX_LOCK == 1
-            if (!PKCS7cert) 
-#endif
-                  PKCS7cert = Pkcs7_parse_Authenticode_certificate(P7Data, P7Size);
+              /*if (!PKCS7cert)*/ PKCS7cert = Pkcs7_parse_Authenticode_certificate(P7Data, P7Size);
             if (!PKCS7cert) 
                 break;
             // verify Pkcs7 Signing Cert chain up to the TrustCert...if provided
@@ -355,8 +336,9 @@ Mutual exclusion (mutex) semaphore locking mechanism used to serialize interthre
                                 break;
                             }
                     revokeInfo.ToBeSignedHash = (UINT8*)&revokeCert->ToBeSignedHash;
-                    err = Pkcs7_x509_certificate_chain_validate_with_timestamp(PKCS7cert, FALSE, NULL, &revokeInfo, (int*)&reason);
+                   	err = Pkcs7_x509_certificate_chain_validate_with_timestamp(PKCS7cert, FALSE, NULL, &revokeInfo, (int*)DataSize);
                 }
+                
                 if(err == -1 || 
                     Operation==Pkcs7CertGetMatchInCertChain || 
                     Operation == Pkcs7ValidateRootCert
@@ -369,26 +351,26 @@ Mutual exclusion (mutex) semaphore locking mechanism used to serialize interthre
                 switch(Operation){
            //Returns CA Root cert after successfully validating Cert chain and signature digest
                     case Pkcs7CertValidateGetCACert:
-                        err = Pkcs7_return_cerificate_ptr(PKCS7cert, Data, (size_t *)DataSize, &x509SignCertPtr, (size_t*)&SignCert_len);
+                        err = Pkcs7_return_cerificate_ptr(PKCS7cert, Data, DataSize, &x509SignCertPtr, (size_t*)&SignCert_len);
                         break;
            //Returns Signing Key from Cert after successfully validating Cert chain and signature digest
                     case Pkcs7CertValidateGetSignerCert:
-                        err = Pkcs7_return_cerificate_ptr(PKCS7cert, &x509RootCertPtr, (size_t*)&CARootCert_len, Data, (size_t*)DataSize);
+                        err = Pkcs7_return_cerificate_ptr(PKCS7cert, &x509RootCertPtr, (size_t*)&CARootCert_len, Data, DataSize);
                         break;
                     case Pkcs7CertValidateGetSignerKeyHash:
-                        err = Pkcs7_x509_return_signing_Key(PKCS7cert, &x509SignCertPtr, (size_t*)&SignCert_len);
+                        err = Pkcs7_x509_return_signing_Key(PKCS7cert, &x509SignCertPtr, &SignCert_len);
                         if(!err) {
-                            DxeHash(This, &gEfiHashAlgorithmSha256Guid, 1,(const UINT8 **) &x509SignCertPtr, (const UINTN*)&SignCert_len, *Data); 
+                            Hash(This, &gEfiHashAlgorithmSha256Guid, 1, &x509SignCertPtr, (const UINTN*)&SignCert_len, *Data); 
                             *DataSize=SHA256_DIGEST_SIZE;
                         }
                         break;
                     case Pkcs7CertValidateGetSignerKey:
-                        err = Pkcs7_x509_return_signing_Key(PKCS7cert, Data, (size_t*)DataSize);
+                        err = Pkcs7_x509_return_signing_Key(PKCS7cert, Data, DataSize);
                         break;
                     case Pkcs7CertValidateGetCAKey:
-                        err = Pkcs7_return_cerificate_ptr(PKCS7cert, Data, (size_t*)DataSize, &x509SignCertPtr, (size_t*)&SignCert_len);
+                        err = Pkcs7_return_cerificate_ptr(PKCS7cert, Data, DataSize, &x509SignCertPtr, (size_t*)&SignCert_len);
                         if(!err)
-                            err = Pkcs7_x509_return_Cert_pubKey(*Data, (size_t)*DataSize, Data, (size_t*)DataSize);
+                            err = Pkcs7_x509_return_Cert_pubKey(*Data, *DataSize, Data, DataSize);
                         break;
                     case Pkcs7TimeStampCertValidateGet:
                         err = Pkcs7_certificate_validate_timestamp_digest(PKCS7cert, (long*)DataSize);
@@ -402,14 +384,10 @@ Mutual exclusion (mutex) semaphore locking mechanism used to serialize interthre
         case Pkcs7GetCACert: 
         case Pkcs7GetSignerKey:
         case Pkcs7GetCAKey:
-            if(P7Data == NULL || P7Size == 0 || Data == NULL || DataSize == NULL) {
-                break;
+            if(Data == NULL || DataSize == NULL) {
+                break;    
             }
-#if PKCS7_MUTEX_LOCK == 1
-            if (!PKCS7cert) 
-#endif
-                PKCS7cert = Pkcs7_parse_Authenticode_certificate(P7Data, P7Size);
-
+              /*if (!PKCS7cert)*/ PKCS7cert = Pkcs7_parse_Authenticode_certificate(P7Data, P7Size);
             if (PKCS7cert) {
                 err = Pkcs7_return_cerificate_ptr(PKCS7cert, &x509RootCertPtr, (size_t*)&CARootCert_len, &x509SignCertPtr, (size_t*)&SignCert_len);
                 if(!err) {
@@ -423,65 +401,23 @@ Mutual exclusion (mutex) semaphore locking mechanism used to serialize interthre
                             *Data = x509RootCertPtr;
                             break;
                         case Pkcs7GetCAKey:
-                            err = Pkcs7_x509_return_Cert_pubKey(x509RootCertPtr, (size_t)CARootCert_len, Data, (size_t*)DataSize);
+                            err = Pkcs7_x509_return_Cert_pubKey(x509RootCertPtr, CARootCert_len, Data, DataSize);
                             break;
                         case Pkcs7GetSignerKey:
-                            err = Pkcs7_x509_return_Cert_pubKey(x509SignCertPtr, (size_t)SignCert_len, Data, (size_t*)DataSize);
+                            err = Pkcs7_x509_return_Cert_pubKey(x509SignCertPtr, SignCert_len, Data, DataSize);
                             break;
                     }
                 }
             }
-            break;
-/**
-  Retrieves all embedded certificates from PKCS#7 signed data as described in "PKCS #7:
-  Cryptographic Message Syntax Standard", and outputs two certificate lists chained or
-  un-chained to the signer's certificates.
-**/
-        case Pkcs7GetChainedCertificates:
-        case Pkcs7GetUnChainedCertificates:
-            if(P7Data == NULL || P7Size == 0 || Data == NULL || DataSize == NULL) {
-                break;
-            }
-#if PKCS7_MUTEX_LOCK == 1
-            if (!PKCS7cert) 
-#endif
-                PKCS7cert = Pkcs7_parse_Authenticode_certificate(P7Data, P7Size);
-
-            if (PKCS7cert) {
-                if(Operation==Pkcs7GetChainedCertificates)
-                        err = Pkcs7_x509_get_certificates_List(PKCS7cert, TRUE, Data, (size_t*)DataSize);
-                if(Operation==Pkcs7GetUnChainedCertificates)
-                        err = Pkcs7_x509_get_certificates_List(PKCS7cert, FALSE, Data, (size_t*)DataSize);
-                if(!err) {
-                    CertBuf = (UINT8*)AllocatePool(*DataSize);
-                    if (CertBuf == NULL) {
-                      err = -1; break;
-                    }
-                    MemCpy (CertBuf, *Data, *DataSize);
-                    *Data = CertBuf;
-                }
-            }
-            break;
-            /**
-             *  Produces a Null-terminated ASCII string in an output buffer based on a Null-terminated
-             *  ASCII format string from a Subject name structure of a CommonName.
-             */
-        case x509GetSubjectsCommonNameStr:
-            if(P7Data == NULL || P7Size == 0 || Data == NULL || DataSize == NULL) {
-                break;
-            }
-            err = Pkcs7_x509_return_SubjectNameStr(P7Data, P7Size, *Data, (size_t)*DataSize );
             break;
 
         case x509ValidateCertChain:
         //Validates Signer certificate's key against Trusted Cert
-            if(TrustedCert && CertSize) {
-                x509SignCert = x509_certificate_parse(P7Data, P7Size);
+            x509SignCert = x509_certificate_parse(P7Data, P7Size);
+            if(TrustedCert && CertSize)
                 x509TrustCert = x509_certificate_parse(TrustedCert, CertSize);
-                if (x509TrustCert && x509SignCert) {
-                    err = x509_certificate_chain_validate(x509TrustCert, x509SignCert, (int*)&reason);
-                }
-            }
+            if (x509TrustCert && x509SignCert)
+               err = x509_certificate_chain_validate(x509TrustCert, x509SignCert, (int*)&reason);
             break;
 
         case Pkcs7GetDigestAlgorithm: 
@@ -489,10 +425,7 @@ Mutual exclusion (mutex) semaphore locking mechanism used to serialize interthre
             if(Data == NULL || DataSize == NULL) {
                 break;
             }
-#if PKCS7_MUTEX_LOCK == 1
-            if (!PKCS7cert) 
-#endif
-                PKCS7cert = Pkcs7_parse_Authenticode_certificate(P7Data, P7Size);
+              /*if (!PKCS7cert)*/    PKCS7cert = Pkcs7_parse_Authenticode_certificate(P7Data, P7Size);
             if (PKCS7cert) {
                 err = Pkcs7_return_digestAlgorithm(PKCS7cert, (UINT8*)*Data);
                 if(!err)
@@ -523,30 +456,36 @@ Mutual exclusion (mutex) semaphore locking mechanism used to serialize interthre
     return Status;
 }
 
-/**
-   Function verifies that the specified signature matches the specified hash. 
-                 Verifies the RSA-SSA signature with EMSA-PKCS1-v1_5 encoding scheme defined in
-                 RSA PKCS#1.
-                 This function decrypts the signature with the provided key and then compares 
-                 the decrypted value to the specified hash value
-
-  @param[in]  This          Pointer to the AMI_DIGITAL_SIGNATURE_PROTOCOL instance.
-  @param[in]  PublicKey     Handle to a key used for verifying signatures. This handle must be identifying a public key.
-  @param[in]  Hash          Handle of the hash object to verify.
-  @param[in]  Signature     Pointer to the signature data to be verified.
-  @param[in]  SignatureSize The size, in bytes, of the signature data.
-  @param[in]  Flags        Specifies additional flags to further customize the signing/verifying behavior.
-
-  @retval     Status
-    EFI_SUCCESS               The signature is successfully verified.
-    EFI_SECURITY_VIOLATION    The signature does not match the given message.
-    EFI_ACCESS_DENIED         The key could not be used in signature operation.
-    EFI_INVALID_PARAMETER     The size of input message or signature does not meet the criteria 
-                              of the underlying signature algorithm.
-**/
+//**********************************************************************
+//<AMI_PHDR_START>
+//
+// Procedure:  Pkcs1Verify
+//
+// Description:    Function verifies that the specified signature matches the specified hash. 
+//                 Verifies the RSA-SSA signature with EMSA-PKCS1-v1_5 encoding scheme defined in
+//                 RSA PKCS#1.
+//                 This function decrypts the signature with the provided key and then compares 
+//                 the decrypted value to the specified hash value
+//
+//  Input:
+//    This          Pointer to the AMI_DIGITAL_SIGNATURE_PROTOCOL instance.
+//    PublicKey     Handle to a key used for verifying signatures. This handle must be identifying a public key.
+//    Hash          Handle of the hash object to verify.
+//    Signature     Pointer to the signature data to be verified.
+//    SignatureSize The size, in bytes, of the signature data.
+//    Flags         Specifies additional flags to further customize the signing/verifying behavior.
+//
+// Output:    
+//    EFI_SUCCESS              The signature is successfully verified.
+//    EFI_SECURITY_VIOLATION   The signature does not match the given message.
+//    EFI_ACCESS_DENIED        The key could not be used in signature operation.
+//    EFI_INVALID_PARAMETER    The size of input message or signature does not meet the criteria 
+//                             of the underlying signature algorithm.
+//
+//<AMI_PHDR_END>
+//**********************************************************************
 EFI_STATUS
-EFIAPI
-DxePkcs1Verify (
+Pkcs1Verify (
   IN CONST AMI_DIGITAL_SIGNATURE_PROTOCOL *This,
   IN CRYPT_HANDLE   *PublicKey,
   IN CRYPT_HANDLE   *Hash,
@@ -558,7 +497,10 @@ DxePkcs1Verify (
     EFI_STATUS  Status;
     INTN        err;
     struct      crypto_rsa_key *key = NULL;
+    UINT16      Size = (UINT16)(PublicKey->BlobSize);
     size_t     *sig_len=(size_t*)&SignatureSize;
+//  PKCS1_5_SigType DecriptedSig; // common for PKCS_1_5 and PSS signatures = 256 bytes
+//    INT32       saltlen = PSS_SIG_SALTLEN; // SDL Hardwired value
     INT32       modulus_bitlen = DEFAULT_RSA_SIG_LEN << 3;
     UINT32      HashLen;
 // Only supporting RSASSA_PKCS1V15 & PSS signature types
@@ -574,11 +516,11 @@ DxePkcs1Verify (
 
 // For now Public Key is supported in 2 formats: RAW 256 bytes and ASN.1 Integer
     if(!guidcmp(&PublicKey->AlgGuid, &gEfiCertRsa2048Guid))
-        key = crypto_import_rsa2048_public_key(PublicKey->Blob, PublicKey->BlobSize, (UINT8*)&KeyE, LenE);
+        key = crypto_import_rsa2048_public_key(PublicKey->Blob, Size, (UINT8*)&KeyE, LenE);
     else 
         return EFI_INVALID_PARAMETER;
 
-// 2 hash types supported: SHA1 & SHA256
+// 2 hash types supporte: SHA1 & SHA256
     if(!guidcmp(&Hash->AlgGuid, &gEfiHashAlgorithmSha256Guid))
         HashLen = SHA256_DIGEST_SIZE;
     else if(!guidcmp(&Hash->AlgGuid, &gEfiHashAlgorithmSha1Guid))
@@ -597,7 +539,7 @@ DxePkcs1Verify (
         {
             // Validate PKCS#1 Padding
 //            err = pkcs_1_v1_5_decode((const UINT8 *)Hash->Blob, HashLen, (const UINT8 *)&Rsa2048Sig, (unsigned long)*sig_len);
-            err = MemCmp((void*)(UINTN)Hash->Blob, (void*)(UINTN)((UINTN)Rsa2048Sig + (UINTN)(*sig_len - HashLen)), HashLen);
+            err = MemCmp((void*)(UINTN)Hash->Blob, (void*)(UINTN)((UINT32)(UINTN)Rsa2048Sig + (UINT32)(*sig_len - HashLen)), HashLen);
         }
         else //(Flags & EFI_CRYPT_RSASSA_PSS))
             // Validate PKCS_1 PSS Signature: padding & hash
@@ -613,16 +555,23 @@ DxePkcs1Verify (
     return Status;
 }
 
-/**
-   Passes FwKey info from a Hob to an external Key handler structure
-
-  @param[in]  SystemTable Efi System Table
-  @param[out] Key         ptr to the buffer to hold the target key parameters
-
-  @retval     Status
-               EFI_NOT_FOUND  - Can't find the Key Hob
-               EFI_INVALID_PARAMETER - Wrong KeyID
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------
+// Procedure:   CryptoGetFwKey
+//
+// Description:    Passes FwKey info from a Hob to an external Key handler structure
+//
+//  Input:       Key       - ptr to the buffer to hold the target key parameters
+//
+// Output:       Status
+//
+//               EFI_NOT_FOUND  - Can't find the Key Hob
+//               EFI_INVALID_PARAMETER - Wrong KeyID
+//               EFI_LOAD_ERROR - Load fail.
+//               EFI_SUCCESS    - Load success.
+//
+//----------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
 CryptoGetFwKey (
   IN EFI_SYSTEM_TABLE *SystemTable,
@@ -637,44 +586,48 @@ CryptoGetFwKey (
 
     pFwKeyHob = GetEfiConfigurationTable(SystemTable, &HobListGuid);
     if (pFwKeyHob!=NULL) {
-        Status = FindNextHobByGuid(&gPRKeyGuid, (void **)&pFwKeyHob);
+        Status = FindNextHobByGuid(&gPRKeyGuid, &pFwKeyHob);
         if(!EFI_ERROR(Status)) {
 // make sure the Key buffer is mapped to FV_BB address space 
 /*
-            if(!((UINTN)pFwKeyHob->KeyAddress > FV_BB_BASE && 
-                 (UINT64)((UINTN)pFwKeyHob->KeyAddress+pFwKeyHob->KeySize) < 
+            if(!((UINT32)pFwKeyHob->KeyAddress > FV_BB_BASE && 
+                 (UINT64)((UINT32)pFwKeyHob->KeyAddress+pFwKeyHob->KeySize) < 
                     (UINT64)(FV_BB_BASE+(UINT64)FV_BB_BLOCKS*FLASH_BLOCK_SIZE))) {
                 return EFI_NOT_FOUND;
 */
-            Key->Blob = (UINT8*)((UINTN)(pFwKeyHob->KeyAddress));
+            Key->Blob = (UINT8*)(UINT32)pFwKeyHob->KeyAddress;
             Key->BlobSize = pFwKeyHob->KeySize;
             Key->AlgGuid  = pFwKeyHob->KeyGuid;
-
-            TRACE(((UINTN) -1,"Get Key Hob %g\n(addr %X, len 0x%lx) %X...\n", &Key->AlgGuid, Key->Blob, Key->BlobSize, *(UINT32*)Key->Blob));
         }
     }
 
+    TRACE(((UINTN) -1,"Get Key File %g: %r\n(%lx, %dbytes)=%X,%X\n", Key->AlgGuid, Status, Key->Blob, Key->BlobSize, Key->Blob[0], Key->Blob[1]));
 
     return Status;
 }
-/**
-   Return Firmware Signing Key from a local storage
-
-  @param[in]   This         Pointer to the AMI_DIGITAL_SIGNATURE_PROTOCOL instance.
-  @param[out]  Key          ptr to the buffer to hold the target key
-  @param[in]   AlgId        Key GUID
-  @param[in]   KeyLen       Length of the target Key buffer
-  @param[in]   Flags        Specifies additional flags to further customize the GetKey behavior.
-
-  @retval     Status
-    EFI_SUCCESS
-    EFI_ACCESS_DENIED        The key could not be located
-    EFI_INVALID_PARAMETER    Wrong KeyID
-    BUFFER_TOO_SMALL         The Key->BlobSize will contain the size of the buffer to be prepared
-**/
+//**********************************************************************
+//<AMI_PHDR_START>
+//
+// Procedure:  GetKey
+//
+// Description:    Return Firmware Signing Key from a local storage
+//
+//  Input:
+//    This         Pointer to the AMI_DIGITAL_SIGNATURE_PROTOCOL instance.
+//    Key          ptr to the buffer to hold the target key
+//    AlgId        Key GUID
+//    KeyLen       Length of the target Key buffer
+//    Flags        Specifies additional flags to further customize the GetKey behavior.
+// Output:    
+//    EFI_SUCCESS            
+//    EFI_ACCESS_DENIED        The key could not be located
+//    EFI_INVALID_PARAMETER    Wrong KeyID
+//    BUFFER_TOO_SMALL         The Key->BlobSize will contain the size of the buffer to be prepared
+//
+//<AMI_PHDR_END>
+//**********************************************************************
 EFI_STATUS
-EFIAPI
-DxeGetKey (
+GetKey (
   IN CONST AMI_DIGITAL_SIGNATURE_PROTOCOL *This,
   OUT     CRYPT_HANDLE               *Key,
   IN      EFI_GUID                   *AlgId,
@@ -712,23 +665,30 @@ DxeGetKey (
 
     return EFI_NOT_FOUND;
 }
-/**
-  Function compares the input PublicKey against Platform Signing Key (PK) image in the flash.
-
-  @param[in]   This         Pointer to the AMI_DIGITAL_SIGNATURE_PROTOCOL instance.
-  @param[in]   KeyAlgorithm    Points to the EFI_GUID which identifies the PKpub algorithm to use.
-  @param[in]   PublicKey       Handle to a key used for verifying signatures.  This handle must be identifying a public key.
-
-  @retval     Status
-    EFI_SUCCESS               The Key is successfully verified.
-    EFI_SECURITY_VIOLATION    The Key does not match current FW key.
-    EFI_ACCESS_DENIED         The key could not be used in signature operation.
-    EFI_INVALID_PARAMETER     The size of input message or signature does not meet the criteria 
-                              of the underlying signature algorithm.
-**/
+//**********************************************************************
+//<AMI_PHDR_START>
+//
+// Procedure:  VerifyKey
+//
+// Description:    Function compares the input PublicKey against 
+//                 Platform Signing Key (PK) image in the flash.
+//
+//  Input:
+//    This            Pointer to the AMI_DIGITAL_SIGNATURE protocol instance.
+//    KeyAlgorithm    Points to the EFI_GUID which identifies the PKpub algorithm to use.
+//    PublicKey       Handle to a key used for verifying signatures.  This handle must be identifying a public key.
+//
+// Output:
+//    EFI_SUCCESS               The Key is successfully verified.
+//    EFI_SECURITY_VIOLATION    The Key does not match current FW key.
+//    EFI_ACCESS_DENIED         The key could not be used in signature operation.
+//    EFI_INVALID_PARAMETER     The size of input message or signature does not meet the criteria 
+//                              of the underlying signature algorithm.
+//
+//<AMI_PHDR_END>
+//**********************************************************************
 EFI_STATUS
-EFIAPI
-DxeVerifyKey (
+VerifyKey (
   IN CONST AMI_DIGITAL_SIGNATURE_PROTOCOL *This,
   IN EFI_GUID       *AlgId,
   IN CRYPT_HANDLE   *Key
@@ -738,7 +698,7 @@ DxeVerifyKey (
     CRYPT_HANDLE        PubKeyHndl;
     UINT8               Hash[SHA256_DIGEST_SIZE]={0};
     UINT8               *KeyFfs, *KeyCmp;
-    size_t              KeyLen;
+    UINTN               KeyLen;
     UINT32              Flags=0;
     INTN                err;
 
@@ -752,11 +712,11 @@ DxeVerifyKey (
 // Get PRKey
     PubKeyHndl.Blob = NULL;
     PubKeyHndl.BlobSize = 0;
-    Status = DxeGetKey(NULL, &PubKeyHndl, AlgId, 0, Flags);
+    Status = GetKey(NULL, &PubKeyHndl, AlgId, 0, Flags);
     if(!EFI_ERROR(Status))
     {
         KeyFfs = PubKeyHndl.Blob;
-        KeyLen = (size_t)PubKeyHndl.BlobSize;
+        KeyLen = PubKeyHndl.BlobSize;
         KeyCmp = Key->Blob;
 
         // If FwKey is Hash of Rsa2048 Key and Key->Algo is Rsa2048 - 
@@ -766,9 +726,8 @@ DxeVerifyKey (
             if(!guidcmp(&PubKeyHndl.AlgGuid, &gEfiCertSha256Guid)) 
             {
                 KeyCmp = Hash;
-                KeyLen = (size_t)Key->BlobSize;
-                sha256_vector(1, (const UINT8**)&Key->Blob, (const size_t *)&KeyLen, Hash);
                 KeyLen = SHA256_DIGEST_SIZE;
+                sha256_vector(1, (const UINT8**)&Key->Blob, (const UINTN*)&Key->BlobSize, Hash);
             } else 
                 // if FwKey is x509 and Key->Algo - gEfiCertRsa2048Guid:
                 // derive nModulus from x509 Key Cert for comparison
@@ -777,7 +736,7 @@ DxeVerifyKey (
                     KeyFfs = &Rsa2048Sig[0];
                     KeyLen = DEFAULT_RSA_KEY_MODULUS_LEN;
                     ResetCRmm();
-                    err = Pkcs7_x509_return_Cert_pubKey((UINT8*)PubKeyHndl.Blob, (size_t)PubKeyHndl.BlobSize, &KeyFfs,(size_t*) &KeyLen);
+                    err = Pkcs7_x509_return_Cert_pubKey((UINT8*)PubKeyHndl.Blob, (UINTN)PubKeyHndl.BlobSize, &KeyFfs,&KeyLen);
                     ResetCRmm();
                     if(err) return EFI_SECURITY_VIOLATION;
                 }
@@ -792,22 +751,38 @@ DxeVerifyKey (
 // END of Crypto DXE Function definitions
 //----------------------------------------------------------------------------
 
-/**
-  InSMM Driver Entry point. This function is called from outside of SMM during SMM registration.
-
-  @param[in]   ImageHandle     Image Handle
-  @param[in]   SystemTable     Efi System Table
-
-  @retval     Status
-**/
-EFI_STATUS EFIAPI InSmmFunction(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------
+// Procedure:   InSmmFunction
+//
+// Description: 
+//
+// Input:   
+//
+// Output: 
+//
+// Returns: 
+//
+//----------------------------------------------------------------------
+//<AMI_PHDR_END>
+EFI_STATUS InSmmFunction(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
 {
     EFI_STATUS  Status;
     EFI_HANDLE  DummyHandle;
     UINT8       *pKey;
 
     InitAmiSmmLib( ImageHandle, SystemTable );
-    
+    TRACE(((UINTN) -1,"Init Crypto API in SMM\n"));
+    //
+    // Init Crypto lib internal state
+    //
+    RuntimeCryptLibConstructorInSmm(ImageHandle, SystemTable);
+    //  
+    // Update Crypto debug traces level
+    //
+#ifdef EFI_DEBUG
+    wpa_set_trace_level(CRYPTO_trace_level); 
+#endif
     //
     // Get location of PRKey from .ffs
     // ReadFfs/FindHob are pre-boot services whereas Key needs to be available during EFI runtime
@@ -817,9 +792,9 @@ EFI_STATUS EFIAPI InSmmFunction(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *System
     if(!EFI_ERROR(Status) && gKey.Blob) {
     // re-allocate buffer in runtime mem 
         pKey = gKey.Blob; // preserve the pointer
-
-        pKey = AllocatePool(gKey.BlobSize);
-        if (pKey != NULL) {    
+        Status = pSmst->SmmAllocatePool(EfiRuntimeServicesData, gKey.BlobSize, (void**)&pKey);
+        ASSERT_EFI_ERROR (Status);
+        if(!EFI_ERROR(Status)) {
             MemCpy(pKey, gKey.Blob, gKey.BlobSize);
             gKey.Blob = pKey;
         }
@@ -827,7 +802,7 @@ EFI_STATUS EFIAPI InSmmFunction(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *System
     if(EFI_ERROR(Status)) 
         gKey.Blob = NULL;
 
-    TRACE((TRACE_ALWAYS,"Save Key in SMM %r (addr %X)\n", Status, gKey.Blob));
+    TRACE((TRACE_ALWAYS,"Init: GetKey %r (addr %x(%X, %X), %d bytes)\n", Status, gKey.Blob, gKey.Blob[0], gKey.Blob[1], gKey.BlobSize));    
 
 ///////////////////////////////////////////////////////////////////////////////////
 // Install the SMM clone of DXE Crypto protocol
@@ -850,32 +825,49 @@ EFI_STATUS EFIAPI InSmmFunction(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *System
             );
 }
 
-/**
-  DXE handle for CryptoDXE Driver. Invoked from DXE Driver entry point.
-
-  @param[in]   ImageHandle     Image Handle
-  @param[in]   SystemTable     Efi System Table
-
-  @retval     Status
-**/
-EFI_STATUS EFIAPI NotInSmmFunction(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:   NotInSmmFunction
+//
+// Description: This function is called from outside of SMM during SMM registration.
+//
+// Input:
+//  IN EFI_HANDLE       ImageHandle
+//  IN EFI_SYSTEM_TABLE *SystemTable
+//
+// Output: EFI_STATUS
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
+EFI_STATUS NotInSmmFunction(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
 {
     EFI_STATUS  Status;
     UINT8       *pKey;
 
-    InitAmiLib(ImageHandle, SystemTable);
-
+    TRACE(((UINTN) -1,"Init Crypto API NOT in SMM\n"));
     //
-    // Get location of PRKey from .ffs
-    // ReadFfs/FindHob are preboot services whereas Key needs to be available during EFI runtime
+    // Init Crypto lib internal state
     //
+    RuntimeCryptLibConstructor(ImageHandle, SystemTable);
+    //  
+    // Update Crypto debug traces level
+    //
+#ifdef EFI_DEBUG
+    wpa_set_trace_level(CRYPTO_trace_level); 
+#endif
+      //
+      // Get location of PRKey from .ffs
+      // ReadFfs/FindHob are preboot services whereas Key needs to be available during EFI runtime
+      //
     gKey.Blob = NULL;
     Status = CryptoGetFwKey(SystemTable, &gKey);
     if(!EFI_ERROR(Status) && gKey.Blob) {
     // re-allocate buffer in runtime mem 
         pKey = gKey.Blob; // preserve the pointer
-        pKey = AllocatePool(gKey.BlobSize);
-        if (pKey != NULL) {    
+        Status = pBS->AllocatePool(EfiRuntimeServicesData, gKey.BlobSize, (void**)&pKey);
+        ASSERT_EFI_ERROR (Status);
+        if(!EFI_ERROR(Status)) {
             MemCpy(pKey, gKey.Blob, gKey.BlobSize);
             gKey.Blob = pKey;
         }
@@ -883,7 +875,8 @@ EFI_STATUS EFIAPI NotInSmmFunction(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *Sys
     if(EFI_ERROR(Status)) 
         gKey.Blob = NULL;
 
-    TRACE((TRACE_ALWAYS,"Save Key in DXE %r (addr %X)\n", Status, gKey.Blob));
+    TRACE((TRACE_ALWAYS,"Init: GetKey %r (addr %x(%X, %X), %d bytes)\n", Status, gKey.Blob, gKey.Blob[0], gKey.Blob[1], gKey.BlobSize));    
+
 
 ///////////////////////////////////////////////////////////////////////////////
 //
@@ -897,16 +890,25 @@ EFI_STATUS EFIAPI NotInSmmFunction(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *Sys
             );
 }
 
-/**
-  DXE Driver Entry point. 
-
-  @param[in]   ImageHandle     Image Handle
-  @param[in]   SystemTable     Efi System Table
-
-  @retval     Status
-**/
-/*
-EFI_STATUS EFIAPI
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   CryptoDxe_Init
+//
+// Description: Entry point of Crypto DXE driver
+//
+// Input:       EFI_HANDLE           ImageHandle,
+//              EFI_SYSTEM_TABLE     *SystemTable
+//
+// Output:      EFI_STATUS
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
+EFI_STATUS
 CryptoDxe_Init (
     IN EFI_HANDLE         ImageHandle,
     IN EFI_SYSTEM_TABLE   *SystemTable
@@ -916,13 +918,14 @@ CryptoDxe_Init (
     //
     // Install DXE & SMM Crypto Services
     //
+
     return InitSmmHandlerEx(ImageHandle, SystemTable, InSmmFunction, NotInSmmFunction);
 }
-*/
+
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2016, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2013, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **

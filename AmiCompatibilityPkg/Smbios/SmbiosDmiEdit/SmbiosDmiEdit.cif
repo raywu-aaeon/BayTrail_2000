@@ -5,13 +5,9 @@
 	RefName = "SmbiosDmiEdit"
 [INF]
 "SmbiosDmiEdit.inf"
-"SmbiosDmiEditAfri.inf"
-"SmbiosDmiEditSsi.inf"
-"SmbiosDmiEditProtocol.inf"
+"smbiosDmiEditProtocol.inf"
 "SmbiosRecoveryDmiEdit.inf"
 [files]
 "SmbiosDmiEdit.sdl"
-"SmbiosDmiEditAfri.sdl"
-"SmbiosDmiEditSsi.sdl"
 "SmbiosRecoveryDmiEdit.sdl"
 <endComponent>

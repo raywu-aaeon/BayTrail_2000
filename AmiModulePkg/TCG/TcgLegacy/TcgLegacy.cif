@@ -1,0 +1,10 @@
+<component>
+	name = "TcgLegacy"
+	category = ModulePart
+	LocalRoot = "AmiModulePkg\TCG\TcgLegacy\"
+	RefName = "TcgLegacy"
+[files]
+"TcgLegacy.sdl"	
+[INF]
+"TcgLegacy.inf"
+<endComponent>

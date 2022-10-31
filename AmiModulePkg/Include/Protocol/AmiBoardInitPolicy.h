@@ -1,7 +1,7 @@
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2015, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2010, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **
@@ -11,11 +11,29 @@
 //**                                                                  **
 //**********************************************************************
 //**********************************************************************
-/** @file
-  Header file that defines Board Initialization Protocol.
-**/
+
+//**********************************************************************
+// $Header: /Alaska/Tools/template.h 6     1/13/10 2:13p Felixp $
+//
+// $Revision: 6 $
+//
+// $Date: 1/13/10 2:13p $
+//**********************************************************************
+//<AMI_FHDR_START>
+//
+// Name:  <This File's Name>
+//
+// Description:	
+//
+//<AMI_FHDR_END>
+//**********************************************************************
 #ifndef __AMI_INIT_POLICY_H__
 #define __AMI_INIT_POLICY_H__
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+//#include <Protocol\>
 
 #define AMI_BOARD_PCI_INIT_PROTOCOL_GUID \
 		{ 0xEC63428D, 0x66CA, 0x4bf9, 0x82, 0xAE, 0x84, 0x0F, 0x6D, 0x5C, 0x23, 0x05 }
@@ -62,25 +80,12 @@ typedef enum {
 	isBeforeActivate,	//2
 	isAfterActivate,	//3
 	isGetSetupData,		//4
-    isAfterBootScript, 	//5. this initialization step will be invoked after all SIO registers are added to the boot script
+    isAfterBootScript, 	//5. this init step will be invoked after all SIO regs added to boot script
                        	//   for each device which has initialization function implemented.  
     isGetModeData,	   	//6. Provides device specific modes number and setup strings 	
-    isSetResources,     //7. If SIO is not of Standard Type, it must implement a Routine to Program resources.
-    isSioDetect,        //8. For platforms where Super I/O device has to be dynamically detected, chose this routine to detect 
-                        //   which SIO is installed on the platform. 
 	isMaxSioInitStep
 } SIO_INIT_STEP;
 
-typedef enum {
-    srNone,
-    srIrqReg1,
-    srIrqReg2,
-    srBaseAddrReg1,
-    srBaseAddrReg2,
-    srDmaReg1,  
-    srDmaReg2,
-    srMaxResReg
-} SIO_RESOURCE_REG_TYPE;
 
 
 typedef struct _AMI_BOARD_INIT_PROTOCOL AMI_BOARD_INIT_PROTOCOL;
@@ -88,7 +93,7 @@ typedef struct _AMI_BOARD_INIT_PROTOCOL AMI_BOARD_INIT_PROTOCOL;
 //Initialization Routine Parameters Block...
 typedef struct _AMI_BOARD_INIT_PARAMETER_BLOCK {
 	IN UINT64				Signature;	//"$PCIINIT" or "$SIOINIT" to validate parameter structure;
-	IN UINT32				InitStep; 	//uint32 same as SIO_INIT_STEP enum.
+	IN UINT32				InitStep; 	//uint32 same as enum.
 	IN OUT VOID				*Param1;	//Up to 4 parameters.
 	IN OUT VOID				*Param2;	//Based on InitStep some or none of this will be used.
 	IN OUT VOID				*Param3;
@@ -122,11 +127,14 @@ typedef struct _AMI_BOARD_INIT_PROTOCOL {
 #define AMI_BOARD_PCI_INIT_FUNCTION_ITEM(name) EFI_STATUS name(AMI_BOARD_INIT_PROTOCOL *This, UINTN Func,AMI_BOARD_INIT_PARAMETER_BLOCK *Param)
 
 /****** DO NOT WRITE BELOW THIS LINE *******/
+#ifdef __cplusplus
+}
+#endif
 #endif //__AMI_INIT_POLICY_H__
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2015, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2010, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **

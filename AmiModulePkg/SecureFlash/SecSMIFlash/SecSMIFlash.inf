@@ -1,7 +1,7 @@
 #**********************************************************************
 #**********************************************************************
 #**                                                                  **
-#**        (C)Copyright 1985-2013, American Megatrends, Inc.         **
+#**        (C)Copyright 1985-2012, American Megatrends, Inc.         **
 #**                                                                  **
 #**                       All Rights Reserved.                       **
 #**                                                                  **
@@ -36,25 +36,28 @@
  VerifyFwCapsule.c
 
 [Packages]
- MdePkg/MdePkg.dec
- MdeModulePkg/MdeModulePkg.dec
  AmiCompatibilityPkg/AmiCompatibilityPkg.dec
  AmiModulePkg/AmiModulePkg.dec
  AmiCryptoPkg/AmiCryptoPkg.dec
+ MdePkg/MdePkg.dec
+ IntelFrameworkPkg/IntelFrameworkPkg.dec
+ IntelFrameworkModulePkg/IntelFrameworkModulePkg.dec
+ MdeModulePkg/MdeModulePkg.dec
 
 [LibraryClasses]
  AmiDxeLib
  UefiDriverEntryPoint
- AmiCspLib
- AmiBufferValidationLib
+ FlashLib
+#  SpiFlashLib
+#  AmiCryptLib
 
 [Guids]
  gEfiCertRsa2048Guid
  gEfiHashAlgorithmSha256Guid
  gEfiCertPkcs7Guid
  gEfiCertX509Guid
- gEfiCertSha256Guid
  gEfiCapsuleVendorGuid
+
 
 [Protocols]
  gAmiSmmDigitalSignatureProtocolGuid
@@ -67,6 +70,7 @@
  gEfiFirmwareVolume2ProtocolGuid
 
 [Depex.common.DXE_SMM_DRIVER]
+ #TRUE
  gAmiSmmDigitalSignatureProtocolGuid AND
  gEfiSmmBase2ProtocolGuid       AND
  gEfiSmmSwDispatch2ProtocolGuid AND

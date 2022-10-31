@@ -1,7 +1,7 @@
 #**********************************************************************
 #**********************************************************************
 #**                                                                  **
-#**        (C)Copyright 1985-2013, American Megatrends, Inc.         **
+#**        (C)Copyright 1985-2012, American Megatrends, Inc.         **
 #**                                                                  **
 #**                       All Rights Reserved.                       **
 #**                                                                  **
@@ -37,12 +37,13 @@
   Include
   Include/Protocol
   Library
-  Include/Guid
   
 [Protocols]
   # Include/Protocol/AmiIpAvail.h
 AmiIpAvailProtocolGuid = { 0xd4e3c8b9, 0x548b, 0x4dcb, {0x80, 0x42, 0xba, 0x3c, 0xe7, 0x47, 0xf6, 0xf0 } }
 
+  # Include/Protocol/NetworkStackSetup.h
+gEfiNetworkStackSetupGuid = {  0xD1405D16, 0x7AFC, 0x4695, {0xBB, 0x12, 0x41, 0x45, 0x9D, 0x36, 0x95, 0xA2 } }
 
 [Guids]
   ## Network package token space guid.
@@ -54,9 +55,6 @@ AmiIpAvailProtocolGuid = { 0xd4e3c8b9, 0x548b, 0x4dcb, {0x80, 0x42, 0xba, 0x3c, 
 
   # Include/Guid/IscsiConfigHii.h
   gIScsiConfigGuid              = { 0x4b47d616, 0xa8d6, 0x4552, { 0x9d, 0x44, 0xcc, 0xad, 0x2e, 0xf, 0x4c, 0xf9}}
-  
-  # Include/Guid/NetworkStackSetup.h  
-  gEfiNetworkStackSetupGuid             = { 0xD1405D16, 0x7AFC, 0x4695, { 0xBB, 0x12, 0x41, 0x45, 0x9D, 0x36, 0x95, 0xA2}} 
 
 [PcdsFeatureFlag]
   ## If true, the IKEv2 Certificate Authentication feature is enabled.

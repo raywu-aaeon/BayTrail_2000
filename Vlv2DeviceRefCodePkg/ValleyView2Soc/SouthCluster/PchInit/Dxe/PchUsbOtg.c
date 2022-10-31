@@ -95,12 +95,6 @@ Returns:
       );
     *FuncDisableReg |= B_PCH_PMC_FUNC_DIS_OTG;
     MmioOr32 ((PmcBase + R_PCH_PMC_FUNC_DIS2),B_PCH_PMC_FUNC_DIS2_OTG_SS_PHY );
-    S3BootScriptSaveMemWrite (
-      EfiBootScriptWidthUint32,
-      (UINTN) (PmcBase + R_PCH_PMC_FUNC_DIS2),
-      1,
-      (VOID *) (UINTN) (PmcBase + R_PCH_PMC_FUNC_DIS2)
-    );
   } else {
     ///
     /// Check if device present

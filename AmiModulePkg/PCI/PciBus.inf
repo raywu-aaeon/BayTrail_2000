@@ -51,4 +51,4 @@
   gEfiPciPlatformProtocolGuid                           #CONSUME
   gEfiPciOverrideProtocolGuid                           #CONSUME
   gEfiIncompatiblePciDeviceSupportProtocolGuid          #CONSUME
-  gEfiDxeSmmReadyToLockProtocolGuid
+

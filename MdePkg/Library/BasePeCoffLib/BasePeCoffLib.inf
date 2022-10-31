@@ -53,6 +53,7 @@
 
 [Packages]
   MdePkg/MdePkg.dec
+  AmiCompatibilityPkg/AmiCompatibilityPkg.dec #EIP137990
 
 [LibraryClasses]
   DebugLib

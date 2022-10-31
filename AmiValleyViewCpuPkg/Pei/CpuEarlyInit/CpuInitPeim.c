@@ -15,17 +15,11 @@ Module Name:
     CpuInitPeim.c
    
 Abstract:
+
+    Functions for LpcSio initilization
     It is needed for early onboard LAN controller disable/enable in platform setup.
     
 --*/
-
-
-/** @file CpuInitPeim.c
-    Functions for LpcSio initilization
-    It is needed for early onboard LAN controller disable/enable in platform setup.
-
-**/
-
 
 //#include "PlatformEarlyInit.h"
 //#include <PeiProcessor.h>
@@ -46,15 +40,6 @@ typedef struct {
 #include <CpuType.h>
 #include <Guid/PlatformCpuInfo.h>
 #include <Setup.h>
-
-/**
-    Stop Grant cycle
-       
-    @param PlatformCpuInfo -  EFI_PLATFORM_CPU_INFO
-
-    @retval None
-
-**/
 
 VOID
 ProgramNbStopGrant(
@@ -126,15 +111,6 @@ DisableHyperthreading (
 }
 #endif
 
-/**
-    CpuOnlyReset
-       
-    @param PeiServices -  EFI_PEI_SERVICES
-
-    @retval EFI_UNSUPPORTED
-
-**/
-
 EFI_STATUS
 EFIAPI
 CpuOnlyReset (
@@ -158,15 +134,6 @@ CpuOnlyReset (
   return EFI_UNSUPPORTED;
 }
 
-/**
-    PlatformCpuInit
-       
-    @param PeiServices -  EFI_PEI_SERVICES
-    @param PlatformCpuInfo -  EFI_PLATFORM_CPU_INFO
-
-    @retval EFI_UNSUPPORTED
-
-**/
 EFI_STATUS
 PlatformCpuInit (
   IN CONST EFI_PEI_SERVICES            **PeiServices,
@@ -214,15 +181,6 @@ PlatformCpuInit (
   return EFI_SUCCESS;
 }
 
-/**
-    CpuPeiInitEntry
-       
-    @param FfsHeader -  EFI_FFS_FILE_HEADER
-    @param PeiServices -  EFI_PEI_SERVICES
-
-    @retval EFI_UNSUPPORTED
-
-**/
 EFI_STATUS
 EFIAPI
 CpuPeiInitEntry (

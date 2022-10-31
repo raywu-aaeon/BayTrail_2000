@@ -105,25 +105,29 @@ UINTN                   CSMStart = FALSE;
 #ifdef EFI_DEBUG
 
 VOID CheckCpuMsr (
-	UINT32 *CpuNo
+    VOID
 );
 
 CPU_UCODE_VERSION  gCpuUcodeVer[16];
 #endif
 UINT8 GetCacheSharedThreads(IN UINT8 Level);
 
-/**
-    Protocol function to get Cpu Info.
-
-        
-    @param This 
-    @param Cpu 
-    @param Info 
-
-    @retval 
-        EFI_STATUS
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure: GetCpuInfo
+//
+// Description: Protocol function to get Cpu Info.
+//
+// Input:
+//      IN AMI_CPU_INFO_PROTOCOL    *This
+//      IN UINTN                    Cpu
+//      OUT AMI_CPU_INFO            **Info
+//
+// Output:
+//      EFI_STATUS
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS GetCpuInfo(
     IN AMI_CPU_INFO_PROTOCOL    *This,
     IN UINTN                    Cpu,
@@ -135,15 +139,20 @@ EFI_STATUS GetCpuInfo(
     return EFI_SUCCESS;
 }
 
-/**
-    Pointer to internal Package information.
-
-        
-    @param PkgPtr - Internal package information.
-
-    @retval UINT32 Internal Core information.
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure: FindPtrToPrivCpuInfoPkg
+//
+// Description: Pointer to internal Package information.
+//
+// Input:
+//  IN UINT32  PkgPtr -- Internal package information.
+//
+// Output:  UINT32 * -- Internal Core information.
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 UINT32 *FindPtrToPrivCpuInfoPkg(
     IN UINT32 Package
 )
@@ -165,16 +174,21 @@ UINT32 *FindPtrToPrivCpuInfoPkg(
     }
     return p;
 }
-/**
-    Pointer to internal Core information.
-
-        
-    @param PkgPtr - Internal package information.
-    @param Core 
-
-    @retval UINT32 Internal Core information.
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure: FindPtrToPrivCpuInfoCore
+//
+// Description: Pointer to internal Core information.
+//
+// Input:
+//  IN UINT32* PkgPtr -- Internal package information.
+//  IN UINT32  Core
+//
+// Output:  UINT32 * -- Internal Core information.
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT32 *FindPtrToPrivCpuInfoCore(
     IN UINT32 *PkgPtr,
@@ -194,16 +208,21 @@ UINT32 *FindPtrToPrivCpuInfoCore(
     return p;
 }
 
-/**
-    Pointer to internal Core information.
-
-        
-    @param CorePtr - Internal core information.
-    @param Thread 
-
-    @retval UINT32 Internal thread information.
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure: FindPtrToPrivCpuInfoThread
+//
+// Description: Pointer to internal Core information.
+//
+// Input:
+//  IN UINT32* CorePtr -- Internal core information.
+//  IN UINT32  Thread
+//
+// Output:  UINT32 * -- Internal thread information.
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT32 *FindPtrToPrivCpuInfoThread(
     IN UINT32 *CorePtr,
@@ -216,15 +235,20 @@ UINT32 *FindPtrToPrivCpuInfoThread(
     p += Thread * PRIVATE_INFO_NUM_OF_CPU_DATA;
     return p;
 }
-/**
-    Get socket number from Apic ID.
-
-        
-    @param ApicId 
-
-    @retval UINT32 Physical Socket Id
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:   GetBoardSocketNumber
+//
+// Description: Get socket number from Apic ID.
+//
+// Input:
+//  IN UINT32 ApicId
+//
+// Output:  UINT32 - Physical Socket Id
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT32 GetBoardSocketNumber(IN UINT32 ApicId)
 {
@@ -238,17 +262,22 @@ UINT32 GetBoardSocketNumber(IN UINT32 ApicId)
     return ApicId / MaxThreadsPackage;
 }
 
-/**
-    Get the number of packages populated and sockets.
-
-        
-    @param This 
-    @param NumPopulatedPackages 
-    @param NumBoardSockets OPTIONAL
-
-    @retval EFI_STATUS
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:   GetNumPackages
+//
+// Description: Get the number of packages populated and sockets.
+//
+// Input:
+//	IN AMI_CPU_INFO_2_PROTOCOL  *This
+//  OUT UINT32                  *NumPopulatedPackages
+//  OUT UINT32                  *NumBoardSockets OPTIONAL
+//
+// Output:  EFI_STATUS
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 EFI_STATUS GetNumPackages(
 	IN AMI_CPU_INFO_2_PROTOCOL  *This,
@@ -280,20 +309,25 @@ EFI_STATUS GetNumPackages(
     return EFI_SUCCESS;
 }
 
-/**
-    Get the number of Cores
-
-        
-    @param This 
-    @param Package 
-    @param NumEnabledCores 
-    @param NumEnabledThreads This value is total for package.
-    @param NumDisabledCores OPTIONAL -- Flag must be set in Protocol.
-    @param NumEnabledThreads OPTIONAL  -- Flag must be set in Protocol.
-
-    @retval EFI_STATUS
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:   GetNumCoresThreads
+//
+// Description: Get the number of Cores
+//
+// Input:
+//  IN AMI_CPU_INFO_2_PROTOCOL  *This,
+//  IN UINT32                   Package
+//  OUT UINT32                  *NumEnabledCores
+//  OUT UINT32                  *NumEnabledThreads - This value is total for package.
+//  OUT UINT32                  *NumDisabledCores OPTIONAL -- Flag must be set in Protocol.
+//  OUT UINT32                  *NumEnabledThreads OPTIONAL  -- Flag must be set in Protocol.
+//
+// Output:  EFI_STATUS
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 EFI_STATUS GetNumCoresThreads(
 	IN AMI_CPU_INFO_2_PROTOCOL  *This,
@@ -331,19 +365,24 @@ EFI_STATUS GetNumCoresThreads(
     return EFI_SUCCESS;
 }
 
-/**
-    Get the number of Threads
-
-        
-    @param This 
-    @param Package 
-    @param Core 
-    @param NumEnabledThreads 
-    @param NumDisabledThreads OPTIONAL  -- Flag must be set if valid
-
-    @retval EFI_STATUS
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:   GetNumThreads
+//
+// Description: Get the number of Threads
+//
+// Input:
+//  IN AMI_CPU_INFO_2_PROTOCOL  *This
+//  IN UINT32                   Package
+//  IN UINT32                   Core
+//  OUT UINT32                  *NumEnabledThreads
+//  OUT UINT32                  *NumDisabledThreads OPTIONAL  -- Flag must be set if valid
+//
+// Output:  EFI_STATUS
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 EFI_STATUS GetNumThreads(
 	IN AMI_CPU_INFO_2_PROTOCOL  *This,
@@ -368,18 +407,23 @@ EFI_STATUS GetNumThreads(
     return EFI_SUCCESS;
 }
 
-/**
-    Get SBSP
-
-        
-    @param This 
-    @param Package 
-    @param Core 
-    @param Thread 
-
-    @retval EFI_STATUS
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure: GetSbsp
+//
+// Description: Get SBSP
+//
+// Input:
+//  IN AMI_CPU_INFO_2_PROTOCOL  *This
+//  OUT UINT32                  *Package
+//  OUT UINT32                  *Core
+//  OUT UINT32                  *Thread
+//
+// Output:  EFI_STATUS
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 EFI_STATUS GetSbsp(
 	IN AMI_CPU_INFO_2_PROTOCOL  *This,
@@ -400,20 +444,25 @@ EFI_STATUS GetSbsp(
 }
 
 
-/**
-    Get Apic Number and Version
-
-        
-    @param This 
-    @param Package 
-    @param Core 
-    @param Thread 
-    @param ApicId 
-    @param ApicVer OPTIONAL
-
-    @retval EFI_STATUS
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure: GetApicInfo
+//
+// Description: Get Apic Number and Version
+//
+// Input:
+//  IN AMI_CPU_INFO_2_PROTOCOL  *This
+//  IN UINT32                   Package
+//  IN UINT32                   Core
+//  IN UINT32                   Thread
+//  OUT UINT32                  *ApicId
+//  OUT UINT32                  *ApicVer OPTIONAL
+//
+// Output:  EFI_STATUS
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 EFI_STATUS GetApicInfo(
 	IN AMI_CPU_INFO_2_PROTOCOL  *This,
@@ -444,17 +493,22 @@ EFI_STATUS GetApicInfo(
     return EFI_SUCCESS;
 }
 
-/**
-    Get Cpu ACPI information.
-
-        
-    @param This 
-    @param AcpiData ACPI Data
-    @param NumEntries Number of Entries in data.
-
-    @retval EFI_STATUS
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure: GetAcpiInfo
+//
+// Description: Get Cpu ACPI information.
+//
+// Input:
+//  IN AMI_CPU_INFO_2_PROTOCOL  *This
+//  OUT VOID                    **AcpiData  - ACPI Data
+//  OUT UINT32                  *NumEntries - Number of Entries in data.
+//
+// Output:  EFI_STATUS
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 EFI_STATUS GetAcpiInfo(
 	IN AMI_CPU_INFO_2_PROTOCOL  *This,
@@ -471,18 +525,23 @@ EFI_STATUS GetAcpiInfo(
 }
 
 
-/**
-    Get the package Cache Information
-
-        
-    @param This 
-    @param Package Socket number. Intenal socket number (continous)
-    @param Description Updates pointer to pointer with pointer to Cache information. 
-    @param NumEntries Number of AMI_CPU_INFO_2_CACHE_DESCR Entries.
-
-    @retval EFI_STATUS
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure: GetPackageCacheDescr
+//
+// Description: Get the package Cache Information
+//
+// Input:
+//  IN AMI_CPU_INFO_2_PROTOCOL      *This
+//  IN UINT32                       Package - Socket number. Intenal socket number (continous)
+//  OUT AMI_CPU_INFO_2_CACHE_DESCR  **Description - Updates pointer to pointer with pointer to Cache information. 
+//  OUT UINT32                      *NumEntries - Number of AMI_CPU_INFO_2_CACHE_DESCR Entries.
+//
+// Output:  EFI_STATUS
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 EFI_STATUS GetPackageCacheDescr(
     IN AMI_CPU_INFO_2_PROTOCOL      *This,
@@ -504,19 +563,24 @@ EFI_STATUS GetPackageCacheDescr(
     return EFI_SUCCESS;
 }
 
-/**
-    Get the Core Cache Information
-
-        
-    @param This 
-    @param Package Socket number. Internal socket number (continous)
-    @param Core Core number. Internal core number (continous)
-    @param Description Updates pointer to pointer with pointer to Cache information. 
-    @param NumEntries Number of AMI_CPU_INFO_2_CACHE_DESCR Entries.
-
-    @retval EFI_STATUS
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure: GetCoreCacheDescr
+//
+// Description: Get the Core Cache Information
+//
+// Input:
+//  IN AMI_CPU_INFO_2_PROTOCOL      *This
+//  IN UINT32                       Package - Socket number. Internal socket number (continous)
+//  IN UINT32                       Core - Core number. Internal core number (continous)
+//  OUT AMI_CPU_INFO_2_CACHE_DESCR  **Description - Updates pointer to pointer with pointer to Cache information. 
+//  OUT UINT32                      *NumEntries - Number of AMI_CPU_INFO_2_CACHE_DESCR Entries.
+//
+// Output:  EFI_STATUS
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 EFI_STATUS GetCoreCacheDescr(
     IN AMI_CPU_INFO_2_PROTOCOL      *This,
@@ -560,14 +624,19 @@ PRIVATE_AMI_CPU_INFO_2_PROTOCOL PrivateAmiCpuInfo2Init = {
 
 PRIVATE_AMI_CPU_INFO_2_PROTOCOL *gPrivateAmiCpuInfo2;
 
-/**
-    Fill CPU information in Private Ami Cpu Info structure.
-
-    @param VOID
-
-    @retval VOID
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure: FillPrivateAmiCpuInfo2
+//
+// Description: Fill CPU information in Private Ami Cpu Info structure.
+//
+// Input: VOID
+//
+// Output:  VOID
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 VOID FillPrivateAmiCpuInfo2()
 {
@@ -596,14 +665,19 @@ VOID FillPrivateAmiCpuInfo2()
         }
     }
 }
-/**
-    Size of Private Ami Cpu Info 2 structure to be allocated.
-
-    @param VOID
-
-    @retval UINT32 Size
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure: SizeOfPrivateAmiCpuInfo2
+//
+// Description: Size of Private Ami Cpu Info 2 structure to be allocated.
+//
+// Input: VOID
+//
+// Output:  UINT32 -- Size
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT32 SizeOfPrivateAmiCpuInfo2()
 {
@@ -625,19 +699,24 @@ UINT32 SizeOfPrivateAmiCpuInfo2()
     return Size;
 }
 
-/**
-    Fill ACPI Data structure
-
-        
-    @param AcpiProcData 
-    @param Package 
-    @param Core 
-    @param Thread 
-    @param Bsp 
-
-    @retval BOOLEAN If filled, return TRUE.
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure: FillAcpiData
+//
+// Description: Fill ACPI Data structure
+//
+// Input:
+//  IN ACPI_PROCESSOR_INFO *AcpiProcData
+//  IN UINT32 Package
+//  IN UINT32 Core
+//  IN UINT32 Thread
+//  IN BOOLEAN Bsp
+//
+// Output:  BOOLEAN -- If filled, return TRUE.
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 BOOLEAN FillAcpiData(
     OUT ACPI_PROCESSOR_INFO *AcpiProcData,
@@ -694,16 +773,21 @@ BOOLEAN FillAcpiData(
     return TRUE;
 }
 
-/**
-    Create Private Ami Cpu Info2 Acpi Data.
-
-        
-    @param Package Processor package
-    @param Thread Processor thread (usually either 0 or 1 for HT)
-
-    @retval BOOLEAN TRUE if any entries added.
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure: AddLocalApicCoreEntries
+//
+// Description: Create Private Ami Cpu Info2 Acpi Data.
+//
+// Input:
+//  IN UINT32 Package - Processor package
+//  IN UINT32 Thread - Processor thread (usually either 0 or 1 for HT)
+//
+// Output:  BOOLEAN - TRUE if any entries added.
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 BOOLEAN AddLocalApicCoreEntries(
     IN UINT32 Package,
@@ -748,14 +832,19 @@ BOOLEAN AddLocalApicCoreEntries(
     return TRUE;
 }
 
-/**
-    Create Private Ami Cpu Info2 Acpi Data.
-
-    @param VOID
-
-    @retval VOID
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure: CreateAcpiData
+//
+// Description: Create Private Ami Cpu Info2 Acpi Data.
+//
+// Input: VOID
+//
+// Output:  VOID
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 VOID CreateAcpiData()
 {
@@ -802,14 +891,19 @@ VOID CreateAcpiData()
     } while (ProcessedEntries);     //No more threads
 }
 
-/**
-    Get Cache information.
-
-    @param VOID
-
-    @retval VOID
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure: CreateCacheData
+//
+// Description: Get Cache information.
+//
+// Input: VOID
+//
+// Output:  VOID
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 VOID CreateCacheData()
 {
@@ -876,14 +970,19 @@ VOID CreateCacheData()
     }
 }
 
-/**
-    Create Private Ami Cpu Info2 structure.
-
-    @param VOID
-
-    @retval VOID
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure: CreatePrivateAmiCpuInfo2
+//
+// Description: Create Private Ami Cpu Info2 structure.
+//
+// Input: VOID
+//
+// Output:  VOID
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 VOID CreatePrivateAmiCpuInfo2()
 {
@@ -904,15 +1003,19 @@ VOID CreatePrivateAmiCpuInfo2()
     CreateCacheData();
 }
 
-/**
-    Update cache information with CPUID 4.
-
-    @param 
-        CACHE_DESCRIPTOR_INFO * CacheInfo - Array to be filled of cache info structures.
-
-    @retval VOID
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure: FillCacheDesc
+//
+// Description: Update cache information with CPUID 4.
+//
+// Input:
+//  CACHE_DESCRIPTOR_INFO * CacheInfo - Array to be filled of cache info structures.
+//
+// Output: VOID
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 VOID FillCacheDesc(CACHE_DESCRIPTOR_INFO * CacheInfo)
 {
@@ -943,16 +1046,20 @@ VOID FillCacheDesc(CACHE_DESCRIPTOR_INFO * CacheInfo)
     CacheInfo[CacheCount] = gZeroCacheDesc;
 }
 
-/**
-    Get the CPU group for the platform policy.
-
-        
-    @param Handle 
-
-    @retval 
-        UINT32 Cpu Group
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+// Procedure:	GetPlatformCpuGroup
+//
+// Description:	Get the CPU group for the platform policy.
+//
+// Input:
+//      IN VOID *Handle
+//
+// Output:
+//      UINT32 Cpu Group
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT32 GetPlatformCpuGroup(IN VOID *Handle) {
 //    UINT32 CpuSignature = GetCpuSignature() & 0xfffffff0;
@@ -961,17 +1068,21 @@ UINT32 GetPlatformCpuGroup(IN VOID *Handle) {
 	    return 0xff;  // ALL, 1, 2
 }
 
-/**
-    Initialize DXE Init Platform Cpu Lib.
-
-        
-    @param Bs 
-    @param Rs 
-
-    @retval 
-        EFI_STATUS
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:	DxeInitPlatformCpuLib
+//
+// Description:	Initialize DXE Init Platform Cpu Lib.
+//
+// Input:
+//  IN EFI_BOOT_SERVICES       *Bs
+//  IN EFI_RUNTIME_SERVICES    *Rs
+//
+// Output:
+//  EFI_STATUS
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS DxeInitSetupCpuFeatures(
     IN EFI_BOOT_SERVICES       *Bs,
     IN EFI_RUNTIME_SERVICES    *Rs
@@ -991,17 +1102,21 @@ EFI_STATUS DxeInitSetupCpuFeatures(
     return EFI_SUCCESS;
 }
 
-/**
-    Update DXE Platform Cpu Lib.
-
-        
-    @param Bs 
-    @param Rs 
-
-    @retval 
-        EFI_STATUS
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:	DxeUpdatePlatformCpuFeatures
+//
+// Description:	Update DXE Platform Cpu Lib.
+//
+// Input:
+//  IN EFI_BOOT_SERVICES       *Bs
+//  IN EFI_RUNTIME_SERVICES    *Rs
+//
+// Output:
+//  EFI_STATUS
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS DxeUpdatePlatformCpuFeatures(
     IN EFI_BOOT_SERVICES       *Bs,
     IN EFI_RUNTIME_SERVICES    *Rs
@@ -1073,14 +1188,19 @@ EFI_STATUS DxeUpdatePlatformCpuFeatures(
     return EFI_SUCCESS;
 }
 
-/**
-    Create Private Ami Cpu Info1 structure.
-
-    @param VOID
-
-    @retval VOID
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure: CreatePrivateAmiCpuInfo1
+//
+// Description: Create Private Ami Cpu Info1 structure.
+//
+// Input: VOID
+//
+// Output:  VOID
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 VOID CreatePrivateAmiCpuInfo1()
 {
@@ -1206,21 +1326,27 @@ VOID CreatePrivateAmiCpuInfo1()
     //gMaxRatioFromBrandStr = MaxFreqBrandStr / Bclk;
 }
 
-/**
-    Check the Microcode Loading Status for All APs.
-
-    @param VOID
-
-    @retval VOID
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:   CheckCpuMsr
+//
+// Description: Check the Microcode Loading Status for All APs.
+//
+// Input: VOID
+//
+// Output:  VOID
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 #ifdef EFI_DEBUG
 VOID
 CheckCpuMsr (
-	UINT32 *CpuNo
+	VOID
 )
 {
-    UINT32		RegEbx,CpuIndex;
+
+    UINT32		RegEbx;
     UINT32		RegEdx;
     UINT64		MicroCodeVersion;
 
@@ -1230,21 +1356,25 @@ CheckCpuMsr (
 	    
     AsmCpuid (1, NULL, &RegEbx, NULL, &RegEdx);
     RegEbx = RegEbx >>24;
-	CpuIndex = *CpuNo;
-    gCpuUcodeVer[CpuIndex].ApicId = RegEbx;
-    gCpuUcodeVer[CpuIndex].Msr = 0x8b;
-    gCpuUcodeVer[CpuIndex].UcodeVer = MicroCodeVersion;
+    gCpuUcodeVer[RegEbx>>1].ApicId = RegEbx;
+    gCpuUcodeVer[RegEbx>>1].Msr = 0x8b;
+    gCpuUcodeVer[RegEbx>>1].UcodeVer = MicroCodeVersion;
 }
 #endif
 
-/**
-    Cpu Dxe Entrypoint.
-
-    @param VOID
-
-    @retval EFI_STATUS
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:   GlobalDataInitialize
+//
+// Description: Cpu Dxe Entrypoint.
+//
+// Input:   VOID
+//
+// Output:  EFI_STATUS
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS GlobalDataInitialize(VOID)
 {
     EFI_STATUS  	Status;
@@ -1282,20 +1412,19 @@ EFI_STATUS GlobalDataInitialize(VOID)
     DEBUG_CODE_BEGIN ();
 #ifdef EFI_DEBUG    
 {    
-        UINT32 i = 0;
-        CheckCpuMsr(&i);
-		
-	TRACE((-1, " CPU No.   APIC ID    Msr Addr       Msr Value\n"));
-	for (i=0; i <gNumOfCpus; i++){
-		    gEfiMpServicesProtocol->StartupThisAP (
+        UINT32 i;
+        CheckCpuMsr();
+        gEfiMpServicesProtocol->StartupAllAPs (
                                 gEfiMpServicesProtocol,
                                 (EFI_AP_PROCEDURE) CheckCpuMsr,
-                                i,
+                                0,
                                 NULL,
                                 0,
-                                &i,
+                                NULL,
                                 NULL
                                 );
+	TRACE((-1, " CPU No.   APIC ID    Msr Addr       Msr Value\n"));
+	for (i=0; i <gNumOfCpus; i++){
             TRACE((-1, "%8d%10x%12X%16lx\n", i, gCpuUcodeVer[i].ApicId, gCpuUcodeVer[i].Msr, gCpuUcodeVer[i].UcodeVer));
 	}
 }	
@@ -1327,17 +1456,22 @@ EFI_STATUS GlobalDataInitialize(VOID)
     return Status;
 }    
 
-/**
-    Get pointer to APIC/Cpu Num
-
-        
-    @param Package 
-    @param Core 
-    @param Thread 
-
-    @retval UINT32 *
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure: GetPtrToPrivateAmiCpuInfo2Entry
+//
+// Description: Get pointer to APIC/Cpu Num
+//
+// Input:
+//  IN UINT32 Package
+//  IN UINT32 Core
+//  IN UINT32 Thread
+//
+// Output:  UINT32 *
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT32 * GetPtrToPrivateAmiCpuInfo2Entry(
     IN UINT32 Package,
@@ -1357,18 +1491,23 @@ UINT32 * GetPtrToPrivateAmiCpuInfo2Entry(
     return p;
 }
 
-/**
-    Get CPU Package/Core/Thread by CPU Number. Number sequencial to APIC ID.
-
-        
-    @param CpuNum 
-    @param Package 
-    @param Core 
-    @param Thread 
-
-    @retval BOOLEAN If found, return TRUE.
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure: GetCpuPkgCoreThrdByNum
+//
+// Description: Get CPU Package/Core/Thread by CPU Number. Number sequencial to APIC ID.
+//
+// Input:
+//  IN UINT32 CpuNum
+//  OUT UINT32 *Package
+//  OUT UINT32 *Core
+//  OUT UINT32 *Thread
+//
+// Output:  BOOLEAN -- If found, return TRUE.
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 BOOLEAN GetCpuPkgCoreThrdByNum(
     IN UINT32 CpuNum,
@@ -1400,16 +1539,21 @@ BOOLEAN GetCpuPkgCoreThrdByNum(
     }
     return FALSE;
 }
-/**
-    Cpu Dxe Entrypoint.
-
-        
-    @param Event - 
-    @param Context - 
-
-    @retval EFI_STATUS
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:   AmiCpuMpServiceCallback
+//
+// Description: Cpu Dxe Entrypoint.
+//
+// Input:
+//  IN EFI_EVENT       Event    -- 
+//  IN VOID *          Context  -- 
+//
+// Output:  EFI_STATUS
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 VOID AmiCpuMpServiceCallback(IN EFI_EVENT Event, IN VOID *Context)
 {
@@ -1444,15 +1588,21 @@ VOID AmiCpuMpServiceCallback(IN EFI_EVENT Event, IN VOID *Context)
     
 }
 
-/**
-
-        
-    @param Event - 
-    @param Context - 
-
-    @retval EFI_STATUS
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:   AmiLegacyBiosCallback
+//
+// Description: 
+//
+// Input:
+//  IN EFI_EVENT       Event    -- 
+//  IN VOID *          Context  -- 
+//
+// Output:  EFI_STATUS
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 VOID AmiLegacyBiosCallback(IN EFI_EVENT Event, IN VOID *Context)
 {
@@ -1464,16 +1614,21 @@ VOID AmiLegacyBiosCallback(IN EFI_EVENT Event, IN VOID *Context)
     CSMStart = TRUE;
 }  
 
-/**
-    Cpu Dxe Entrypoint.
-
-        
-    @param ImageHandle - Handle assigned to this driver.
-    @param SystemTable - Efi System table.
-
-    @retval EFI_STATUS
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:   DxeInitializeCpu
+//
+// Description: Cpu Dxe Entrypoint.
+//
+// Input:
+//  IN EFI_HANDLE       ImageHandle   -- Handle assigned to this driver.
+//  IN EFI_SYSTEM_TABLE *SystemTable  -- Efi System table.
+//
+// Output:  EFI_STATUS
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 EFI_STATUS DxeInitializeCpu(
     IN EFI_HANDLE       ImageHandle,

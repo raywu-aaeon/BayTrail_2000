@@ -491,6 +491,7 @@ DonePreparingESP:
 	mov	ds, ax
 
 #ifdef MDE_CPU_X64
+	;TODO: Double check Reverse Thunk code.
 	cmp	BYTE PTR [IsReverseThunk+ebx], 1
 	jne	@f
 ; Reverse thunk - copy parameters to RCX, RDX, R8, R9

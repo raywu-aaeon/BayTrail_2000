@@ -176,7 +176,7 @@ Ip4ConfigOnDhcp4Complete (
   EFI_DHCP4_MODE_DATA       Dhcp4Mode;
   EFI_IP4_IPCONFIG_DATA     *Ip4Config;
   EFI_STATUS                Status;
-  BOOLEAN                   Permanent;
+  BOOLEAN                   Perment;
   IP4_ADDR                  Subnet;
   IP4_ADDR                  Ip1;
   IP4_ADDR                  Ip2;
@@ -202,11 +202,11 @@ Ip4ConfigOnDhcp4Complete (
     // the instance and to NVRam. So, both the IP4 driver and
     // other user can get that address.
     //
-    Permanent = FALSE;
+    Perment = FALSE;
 
     if (Instance->NicConfig != NULL) {
       ASSERT (Instance->NicConfig->Source == IP4_CONFIG_SOURCE_DHCP);
-      Permanent = Instance->NicConfig->Permanent;
+      Perment = Instance->NicConfig->Perment;
       FreePool (Instance->NicConfig);
     }
 
@@ -221,7 +221,7 @@ Ip4ConfigOnDhcp4Complete (
 
     CopyMem (&Instance->NicConfig->NicAddr, &Instance->NicAddr, sizeof (Instance->NicConfig->NicAddr));
     Instance->NicConfig->Source  = IP4_CONFIG_SOURCE_DHCP;
-    Instance->NicConfig->Permanent = Permanent;
+    Instance->NicConfig->Perment = Perment;
 
     Ip4Config                    = &Instance->NicConfig->Ip4Info;
     Ip4Config->StationAddress    = Dhcp4Mode.ClientAddress;

@@ -69,8 +69,8 @@ typedef struct {
   UINT8   TpmAuthenticate;
   UINT8   TpmOperation;           // 0: Disabled; 1: Enabled
   UINT8   DisallowTpm;           // 0: Disabled; 1: Enabled
-  UINT32   HashPolicy;
-  UINT8   DeviceType;
+  UINT8   Reserved1;
+  UINT8   Reserved2;
 
   //
   // Byte 1, bit definition for Status Information 
@@ -94,12 +94,6 @@ typedef struct {
   //
   UINT8   Reserved5;
 
-  //TPM 20 Configuration
-  UINT8 Tpm20Device;
-  UINT8 PlatformHierarchy;
-  UINT8 StorageHierarchy;
-  UINT8 EndorsementHierarchy;
-  UINT8 InterfaceSel;
 } TCG_CONFIGURATION;
 
 

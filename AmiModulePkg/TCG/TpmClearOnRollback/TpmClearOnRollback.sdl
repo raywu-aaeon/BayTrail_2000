@@ -1,0 +1,63 @@
+TOKEN
+	Name  = "TPMCLEARONROLLBACK_SUPPORT"
+	Value  = "1"
+	Help  = "Main switch to enable TcgPlatformSetupPolicy support in Project"
+	TokenType = Boolean
+    TargetH   = Yes
+	TargetEQU = Yes
+	TargetMAK = Yes
+	Master = Yes
+End
+
+PATH
+	Name  = "TPMCLEARONROLLBACK_DIR"
+End
+
+INFComponent
+   Name  = "TpmClearOnRollbackWrapperLib"
+   File  = "TpmClearOnRollbackWrapperLib.inf"
+   Package  = "AmiModulePkg"
+End
+
+LibraryMapping
+    Class  = "NULL"
+    Instance  = "AmiModulePkg.TpmClearOnRollbackWrapperLib"
+    Override  = "AmiModulePkg.Reflash"
+End
+
+LibraryMapping
+    Class  = "NULL"
+    Instance  = "AmiModulePkg.TpmClearRollbackMain"
+    Override  = "AmiModulePkg.Reflash"
+End
+
+LibraryMapping
+    Class  = "TpmClearOnRollbackWrapperLib"
+    Instance  = "AmiModulePkg.TpmClearOnRollbackWrapperLib"
+End
+
+ELINK
+	Name  = "RecoveryClearTpmBeforeFlash,"
+	Parent  = "OemBeforeFlashUpdateList"
+	InvokeOrder = AfterParent
+End
+
+INFComponent
+    Name  = "TpmClearOnRollbackSmm"
+    File  = "TpmClearOnRollbackSmm.inf"
+    Package  = "AmiModulePkg"
+     ModuleTypes  = "DXE_SMM_DRIVER"
+End
+
+INFComponent
+    Name  = "TpmClearRollbackMain"
+    File  = "TpmClearOnRollbackMain.inf"
+    Package  = "AmiModulePkg"
+    ModuleTypes  = "DXE_DRIVER"
+End
+
+ELINK
+	Name  = "$(BUILD_DIR)\TpmClearOnRollback.ffs"
+	Parent  = "FV_MAIN"
+	InvokeOrder = AfterParent
+End

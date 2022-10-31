@@ -5,9 +5,7 @@
 	RefName = "AMITSE.MinisetupBin"
 [INF]
 "MinisetupBin.inf"
-"PasswordEncode/PasswordEncode.inf"
-"PasswordEncode/TsePasswordEncodeBin.inf"
 [files]
 "MiniSetupBin.sdl"	
-"hiistring21.c"	
+"hiistring21.c" 
 <endComponent>

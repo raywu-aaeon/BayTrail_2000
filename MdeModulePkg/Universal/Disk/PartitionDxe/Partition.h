@@ -63,11 +63,7 @@ typedef struct {
   UINT32                    BlockSize;
 
   EFI_GUID                  *EspGuid;
-  //*** AMI PORTING BEGIN ***//
-  // Partition GUID support. See comments before PartitionInstallChildHandle for additional details.
-  // Partition GUID buffer
-  EFI_GUID                  PartitionGuidBuffer;
-  //*** AMI PORTING END ***//  
+
 } PARTITION_PRIVATE_DATA;
 
 typedef struct {

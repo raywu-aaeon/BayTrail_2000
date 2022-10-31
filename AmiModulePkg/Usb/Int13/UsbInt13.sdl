@@ -7,7 +7,7 @@ TOKEN
 	TargetH = Yes
 	Master = Yes
 	Token = "CSM_SUPPORT" "=" "1"
-	Token = "USB_RUNTIME_DRIVER_IN_SMM" "!=" "0"
+	Token = "USB_RUNTIME_DRIVER_IN_SMM" "=" "1"
 End
 
 TOKEN
@@ -24,7 +24,7 @@ PATH
 End
 
 ELINK
-	Name  = "OPROM(1,0,2,$(UINT13_DIR)/UI13.bin)"
+	Name  = "OPROM(1,0,2,$(UINT13_DIR)/UI13.BIN)"
 	Parent  = "CSM_OPROM_LIST"
 	InvokeOrder = AfterParent
 End

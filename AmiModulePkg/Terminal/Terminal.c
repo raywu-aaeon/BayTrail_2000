@@ -1,16 +1,16 @@
-//*************************************************************************
-//*************************************************************************
-//**                                                                     **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.            **
-//**                                                                     **
-//**                       All Rights Reserved.                          **
-//**                                                                     **
-//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093           **
-//**                                                                     **
-//**                       Phone: (770)-246-8600                         **
-//**                                                                     **
-//*************************************************************************
-//*************************************************************************
+//****************************************************************************
+//****************************************************************************
+//**                                                                        **
+//**             (C)Copyright 1985-2013, American Megatrends, Inc.          **
+//**                                                                        **
+//**                          All Rights Reserved.                          **
+//**                                                                        **
+//**             5555 Oakbrook Pkwy, Suite 200, Norcross, GA 30093          **
+//**                                                                        **
+//**                          Phone (770)-246-8600                          **
+//**                                                                        **
+//****************************************************************************
+//****************************************************************************
 
 //**********************************************************************
 //<AMI_FHDR_START>
@@ -407,12 +407,12 @@ EFI_STATUS TerminalSupported(
     return EFI_SUCCESS;
 
 Error:
-//EIP212613 >>
-	if( Status == EFI_ALREADY_STARTED || Status == EFI_ACCESS_DENIED ) {
-	    return Status;
-	}
-	return EFI_UNSUPPORTED;
-//EIP212613 <<
+
+    if( Status != (EFI_ALREADY_STARTED || EFI_ACCESS_DENIED) ) {
+        return EFI_UNSUPPORTED;
+    } else { 
+        return Status;
+    }
 
 }
 
@@ -712,7 +712,7 @@ EFI_STATUS TerminalStart(
                         );
 
     ASSERT_EFI_ERROR(Status);
-
+ 
     if (ComPort != (UINT8)-1) {
         GetSetupValuesForSerialIoMode(ComPort, &SerialIoMode);
     
@@ -925,7 +925,7 @@ EFI_STATUS GetComPortNumber(
     IN OUT UINT8                    *ComPort,
     IN OUT BOOLEAN                  *IsPciSerialInterface)
 {
-    EFI_STATUS Status;
+    EFI_STATUS Status = EFI_SUCCESS;
     ACPI_HID_DEVICE_PATH *AcpiPrevDPNodePtr = NULL;
     EFI_DEVICE_PATH_PROTOCOL *TerminalDevPath = NULL;
     EFI_DEVICE_PATH_PROTOCOL *TruncatedTerminalDevPath = NULL;
@@ -1097,7 +1097,7 @@ EFI_STATUS SetComSuperIoSpcrTableValues(
     IN EFI_DRIVER_BINDING_PROTOCOL *This, 
     IN EFI_HANDLE Controller)
 {
-    EFI_STATUS Status;
+    EFI_STATUS Status=EFI_SUCCESS;
     AMI_SIO_PROTOCOL *AmiSioProtocol=NULL;
     BOOLEAN SetFlag=FALSE;
     T_ITEM_LIST	*ResourcesList=NULL;
@@ -1181,59 +1181,57 @@ EFI_STATUS SetPciSerialSpcrTableValues(
     IN EFI_DRIVER_BINDING_PROTOCOL *This, 
     IN EFI_HANDLE   Controller)
 {
-    EFI_STATUS                  Status;
-    EFI_PCI_IO_PROTOCOL         *PciIo = NULL;
-    UINT8                       i = 0;
-    UINT64                      Supports = 1;
-    ASLR_QWORD_ASD              *Resources = NULL;
-    ACPI_SPCR_TABLE_INFO        *SpcrInfo = &gSpcrInfo;
-    EFI_DEVICE_PATH_PROTOCOL    *DevicePathProtocol = NULL;
-    EFI_DEVICE_PATH_PROTOCOL    *PciIoDevicePath = NULL;
-    EFI_HANDLE                  Handle = 0;
+    EFI_STATUS Status=EFI_SUCCESS;
+    EFI_PCI_IO_PROTOCOL *PciIo=NULL;
+    UINT8 i=0;
+    UINT64 Supports=1;
+    ASLR_QWORD_ASD *Resources=NULL;
+    ACPI_SPCR_TABLE_INFO *SpcrInfo = &gSpcrInfo;
+
+    EFI_DEVICE_PATH_PROTOCOL *DevicePathProtocol=NULL;
+    EFI_DEVICE_PATH_PROTOCOL *PciIoDevicePath=NULL; 
+    EFI_HANDLE Handle=0;
 
     Status=pBS->OpenProtocol(Controller, 
-                             &gEfiDevicePathProtocolGuid, 
-                             (VOID**)&DevicePathProtocol,
-                             This->DriverBindingHandle,
-                             Controller,
-                             EFI_OPEN_PROTOCOL_GET_PROTOCOL);
+                                &gEfiDevicePathProtocolGuid, 
+                                (VOID**)&DevicePathProtocol,
+                                This->DriverBindingHandle,
+                                Controller,
+                                EFI_OPEN_PROTOCOL_GET_PROTOCOL);
     ASSERT_EFI_ERROR(Status);
     PciIoDevicePath = DPCut(DevicePathProtocol);
-    
     Status = pBS->LocateDevicePath(&gEfiPciIoProtocolGuid,
                                     &PciIoDevicePath,
                                     &Handle);
     ASSERT_EFI_ERROR(Status);
+    Status = pBS->OpenProtocol(Handle, &gEfiPciIoProtocolGuid, (VOID**)&PciIo,
+                                This->DriverBindingHandle, Controller,
+                                EFI_OPEN_PROTOCOL_GET_PROTOCOL);
+    if (EFI_ERROR(Status)) return Status; 
 
-    
-        Status = pBS->OpenProtocol(Handle, &gEfiPciIoProtocolGuid, (VOID**)&PciIo,
-                                    This->DriverBindingHandle, Controller,
-                                    EFI_OPEN_PROTOCOL_GET_PROTOCOL);
-        if (EFI_ERROR(Status)) return Status; 
-    
-        for (i = 0; i < PCI_MAX_BAR_NO; i++) {
-            PciIo->GetBarAttributes (PciIo, i, &Supports, (VOID**)&Resources);
-            if (Resources->Type == ASLRV_SPC_TYPE_IO) {
-                SpcrInfo->BaseAddress = Resources->_MIN;
-                break;
-            }
+    for (i = 0; i < PCI_MAX_BAR_NO; i++) {
+        PciIo->GetBarAttributes (PciIo, i, &Supports, (VOID**)&Resources);
+        if (Resources->Type == ASLRV_SPC_TYPE_IO) {
+            SpcrInfo->BaseAddress = Resources->_MIN;
+            break;
         }
-    
-        Status = PciIo->GetLocation(PciIo, &SpcrInfo->Segment, &SpcrInfo->Bus, 
-                                    &SpcrInfo->Device, &SpcrInfo->Function);
-        if (EFI_ERROR(Status)) return Status; 
-    
-        Status = PciIo->Pci.Read(PciIo, EfiPciIoWidthUint8, 
-                                    PCI_INTLINE, 1, &SpcrInfo->Irq);
-        if (EFI_ERROR(Status)) return Status;
-    
-        Status = PciIo->Pci.Read(PciIo, EfiPciIoWidthUint16, 
-                                    PCI_VID, 1, &SpcrInfo->VendorId);
-        if (EFI_ERROR(Status)) return Status;
-    
-        Status = PciIo->Pci.Read(PciIo, EfiPciIoWidthUint16, 
-                                    PCI_DID, 1, &SpcrInfo->DeviceId);
-        if (EFI_ERROR(Status)) return Status;
+    }
+
+    Status = PciIo->GetLocation(PciIo, &SpcrInfo->Segment, &SpcrInfo->Bus, 
+                                &SpcrInfo->Device, &SpcrInfo->Function);
+    if (EFI_ERROR(Status)) return Status; 
+
+    Status = PciIo->Pci.Read(PciIo, EfiPciIoWidthUint8, 
+                                0x3c, 1, &SpcrInfo->Irq);
+    if (EFI_ERROR(Status)) return Status;
+
+    Status = PciIo->Pci.Read(PciIo, EfiPciIoWidthUint16, 
+                                0x0, 1, &SpcrInfo->VendorId);
+    if (EFI_ERROR(Status)) return Status;
+
+    Status = PciIo->Pci.Read(PciIo, EfiPciIoWidthUint16, 
+                                0x2, 1, &SpcrInfo->DeviceId);
+    if (EFI_ERROR(Status)) return Status;
 
     return Status; 
 }
@@ -1259,9 +1257,9 @@ VOID CreateSpcrAcpiTable(
     EFI_ACPI_SUPPORT_PROTOCOL *AcpiSupportProtocol, 
     ACPI_SPCR_TABLE_INFO *SpcrInfo)
 {
-    EFI_STATUS  Status = EFI_SUCCESS;
-    PSPCR_30    spcr_tbl = NULL;
-    UINT8       i;
+    EFI_STATUS Status = EFI_SUCCESS;
+    PSPCR_30 spcr_tbl = NULL;
+    UINT8   i;
 
     //get the setup variable
 
@@ -1343,7 +1341,7 @@ VOID CreateSpcrAcpiTable(
 //**********************************************************************         
 VOID CreateSpcrAcpiTableWrapper(IN EFI_EVENT Event, IN VOID *Context)
 {
-    EFI_STATUS Status;
+    EFI_STATUS Status = EFI_SUCCESS;
     EFI_ACPI_SUPPORT_PROTOCOL   *AcpiSupportProtocol = NULL;
 
     Status=pBS->LocateProtocol(&gEfiAcpiSupportGuid, 
@@ -1378,25 +1376,16 @@ VOID AcpiSpcrTable(
     IN EFI_HANDLE Controller)
 {
 
-    EFI_STATUS                          Status = EFI_SUCCESS;
-    UINT8                               AcpiSpcrTableComPort = 0; 
-    UINT8                               AcpiSpcrTableConsoleRedirectionEnable = 0;
-    UINT8                               AcpiSpcrTableTerminalType = 0;
-    UINT8                               AcpiSpcrTableBaudRate = 0; 
-    UINT8                               AcpiSpcrTableFlowControl = 0;
-    BOOLEAN                             IsPci = FALSE;
-    BOOLEAN                             IsMmIo = FALSE;
-    BOOLEAN                             AmiSerialDetected = FALSE;
-    EFI_ACPI_SUPPORT_PROTOCOL           *AcpiSupportProtocol = NULL;
-    AMI_SERIAL_PROTOCOL                 *AmiSerialProtocol = NULL;
-    EFI_HANDLE                          Handle = 0;
-    EFI_HANDLE                          *HandleBuffer = NULL;
-    UINTN                               NumHandles;
-    UINTN                               HandleIndex;
-    EFI_OPEN_PROTOCOL_INFORMATION_ENTRY *Entries = NULL;
-    UINTN                               Count;
-    UINTN                               CountIndex;
 
+    EFI_STATUS Status=EFI_SUCCESS;
+
+    UINT8 AcpiSpcrTableComPort=0; 
+    UINT8 AcpiSpcrTableConsoleRedirectionEnable=0;
+    UINT8 AcpiSpcrTableTerminalType=0;
+    UINT8 AcpiSpcrTableBaudRate=0; 
+    UINT8 AcpiSpcrTableFlowControl=0;
+
+    EFI_ACPI_SUPPORT_PROTOCOL *AcpiSupportProtocol = NULL;
     GetAcpiSpcrTableValues(&AcpiSpcrTableComPort, 
                             &AcpiSpcrTableConsoleRedirectionEnable,
                             &AcpiSpcrTableTerminalType, 
@@ -1405,98 +1394,12 @@ VOID AcpiSpcrTable(
 
     if (Port != AcpiSpcrTableComPort) return;  
 
-    if (!AcpiSpcrTableConsoleRedirectionEnable) return; 
+    if (!AcpiSpcrTableConsoleRedirectionEnable) return;
 
-    // The AmiSerial Protocol and SerialIo Protocol are installed on different Handles.
-    // The relationship between SerialIo protocol and AmiSerial Protocol is set as CHILD controller.
-    // We have to use this relation to get the Handle for AmiSerial Protocol with SerialIo Protocol.
-    
-    // Check if AmiSerialProtocol is installed in any Handle
-    Status = pBS->LocateHandleBuffer(ByProtocol,
-                                     &gAmiSerialProtocolGuid,
-                                     NULL,
-                                     &NumHandles,
-                                     &HandleBuffer);
-    if (!EFI_ERROR(Status)) {
-        // AmiSerialProtocol is installed in some Handles
-        for (HandleIndex = 0; HandleIndex < NumHandles; HandleIndex++) {
-            // Get the Information of all the protools that have opened the 
-            // AmiSerialProtocol
-            Status = pBS->OpenProtocolInformation(HandleBuffer[HandleIndex],
-                                                  &gAmiSerialProtocolGuid,
-                                                  &Entries,
-                                                  &Count);
-            ASSERT_EFI_ERROR(Status);
-
-            for(CountIndex = 0; CountIndex< Count; CountIndex++) {
-                // Check if AmiSerial Protocol is opened by an attribute
-                // EFI_OPEN_PROTOCOL_BY_CHILD_CONTROLLER
-                if(Entries[CountIndex].Attributes != EFI_OPEN_PROTOCOL_BY_CHILD_CONTROLLER)
-                    continue;
-                // Check if the Opening Protocol is SerialIo Protocol
-                // This can be known by checking if the Controller Handle is same as the
-                // Handle on which SerialIo Protocol is installed
-                if(Entries[CountIndex].ControllerHandle == Controller) {
-                    Handle = HandleBuffer[HandleIndex];
-                    AmiSerialDetected = TRUE;
-                    break;
-                }
-            }
-        }
-    }
-
-    if(AmiSerialDetected) {
-        // OpenProcol For AmiSerial Protocol
-        Status=pBS->OpenProtocol(Handle,
-                                 &gAmiSerialProtocolGuid,
-                                 (VOID **)&AmiSerialProtocol,
-                                 This->DriverBindingHandle,
-                                 Controller,
-                                 EFI_OPEN_PROTOCOL_GET_PROTOCOL );
-        ASSERT_EFI_ERROR(Status);
-        // Check if it is MmIo
-        AmiSerialProtocol->CheckPciMmio(AmiSerialProtocol, &IsPci, &IsMmIo);
-        if (IsPci) {
-            // Filling the Base Address
-            AmiSerialProtocol->GetBaseAddress(AmiSerialProtocol,&gSpcrInfo.BaseAddress);
-            // Filling the IRQ Number
-            AmiSerialProtocol->GetSerialIRQ(AmiSerialProtocol, &gSpcrInfo.Irq);
-            // Filling the Bus, Device and Function Number
-            AmiSerialProtocol->GetPciLocation(AmiSerialProtocol,
-                                              &gSpcrInfo.Bus, 
-                                              &gSpcrInfo.Device,
-                                              &gSpcrInfo.Function,
-                                              &gSpcrInfo.PortNumber);
-            // Checking if Bus, Device and Function Number are valid
-            if ((gSpcrInfo.Bus != 0xFF)&&(gSpcrInfo.Device != 0xFF)&&(gSpcrInfo.Function != 0xFF)) {
-                // Filling the Vendor ID
-                gSpcrInfo.VendorId = *(UINT16*)PCI_CFG_ADDR(gSpcrInfo.Bus,
-                                                             gSpcrInfo.Device,
-                                                             gSpcrInfo.Function,
-                                                             PCI_VID);
-                // Filling the Device ID
-                gSpcrInfo.DeviceId = *(UINT16*)PCI_CFG_ADDR(gSpcrInfo.Bus,
-                                                             gSpcrInfo.Device,
-                                                             gSpcrInfo.Function,
-                                                             PCI_DID);
-            }
-        } else {
-            // Filling the Base Address
-            AmiSerialProtocol->GetBaseAddress(AmiSerialProtocol,&gSpcrInfo.BaseAddress);
-            // Filling the IRQ Number
-            AmiSerialProtocol->GetSerialIRQ(AmiSerialProtocol, &gSpcrInfo.Irq);
-        }
-        if (IsMmIo) {
-            SpcrAddrSpcId = GAS_SYS_MEM;
-        } else {
-            SpcrAddrSpcId = GAS_SYS_IO;
-        }
+    if (Port >= gTotalSioSerialPorts) {
+        Status = SetPciSerialSpcrTableValues(This, Controller);
     } else {
-        if (Port >= gTotalSioSerialPorts) {
-            Status = SetPciSerialSpcrTableValues(This, Controller);
-        } else {
-            Status = SetComSuperIoSpcrTableValues(This, Controller);
-        }
+        Status = SetComSuperIoSpcrTableValues(This, Controller);
     }
 
     gSpcrInfo.PortNumber = AcpiSpcrTableComPort;
@@ -1564,16 +1467,17 @@ ClearFiFoBuffers (
     return;
 }
 
-//*************************************************************************
-//*************************************************************************
-//**                                                                     **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.            **
-//**                                                                     **
-//**                       All Rights Reserved.                          **
-//**                                                                     **
-//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093           **
-//**                                                                     **
-//**                       Phone: (770)-246-8600                         **
-//**                                                                     **
-//*************************************************************************
-//*************************************************************************
+
+//****************************************************************************
+//****************************************************************************
+//**                                                                        **
+//**             (C)Copyright 1985-2013, American Megatrends, Inc.          **
+//**                                                                        **
+//**                          All Rights Reserved.                          **
+//**                                                                        **
+//**             5555 Oakbrook Pkwy, Suite 200, Norcross, GA 30093          **
+//**                                                                        **
+//**                          Phone (770)-246-8600                          **
+//**                                                                        **
+//****************************************************************************
+//****************************************************************************

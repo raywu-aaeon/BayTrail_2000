@@ -14,23 +14,23 @@ End
 
 TOKEN
 	Name  = "CRYPTCON"
-	Value  = "$(CryptoUtils_DIR)$(PATH_SLASH)CryptoCon"
+	Value  = "$(CryptoUtils_DIR)$(PATH_SLASH)CryptoCon.exe "
 	TokenType = Expression
 	TargetMAK = Yes
+	Help = "Add switch -@ for Silent operation"
 End
 
 TOKEN
     Name  = "CRYPTCON"
-    Value  = "$(CryptoUtils_DIR)$(PATH_SLASH)CryptoCon -@"
+    Value  = "$(CryptoUtils_DIR)$(PATH_SLASH)CryptoCon.exe -@"
     TokenType = Expression
     TargetMAK = Yes
-	Help = "Add switch -@ for Silent operation"
     Token = "SILENT" "=" "1"
 End
 
 TOKEN
 	Name  = "CRYPTKEYGEN"
-	Value  = "$(CryptoUtils_DIR)$(PATH_SLASH)keygen"
+	Value  = "$(CryptoUtils_DIR)$(PATH_SLASH)keygen.exe"
 	TokenType = Expression
 	TargetMAK = Yes
 End

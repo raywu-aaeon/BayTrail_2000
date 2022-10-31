@@ -4,7 +4,6 @@
 	LocalRoot = "AmiModulePkg\Console\ConSplitter\"
 	RefName = "AmiModulePkg.ConSplitter"
 [files]
-"ConSplitter.chm"
 "ConSplitter.sdl"	
 [INF]
 "ConSplitter.inf"

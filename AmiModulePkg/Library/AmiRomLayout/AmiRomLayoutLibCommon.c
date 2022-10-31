@@ -19,7 +19,6 @@
 #include <Library/BaseMemoryLib.h>
 #include <Library/HobLib.h>
 #include <Guid/AmiRomLayout.h>
-#include <Library/DebugLib.h>
 
 // defines for FFS items
 #define GET_AMI_ROM_AREA_FROM_AMI_ROM_LAYOUT_HEADER(a) ((AMI_ROM_AREA*)(((AMI_ROM_LAYOUT_HEADER*)a)+1))
@@ -186,8 +185,8 @@ EFI_STATUS AmiGetImageRomLayout(
 	if (ImageAddress == NULL || RomLayout == NULL)
 	    return EFI_INVALID_PARAMETER;
 
+    // TODO: what happens if the ImageSize is not "alligned" to the same allginment that the FFSes will be?
     SearchPointer = (UINT32 *)((UINT8*)ImageAddress - sizeof(EFI_GUID) + ImageSize);
-    ASSERT( (UINTN)SearchPointer == ((UINTN)SearchPointer & (~0x07)) );
 
     // Do a manual search for the Loaded Recovery capsule searching for instances of the gAmiRomLayoutFfsFileGuid.
     //  For every match to the guid, check if it matches the full guid and subsection guid, and if it does,

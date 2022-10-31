@@ -46,7 +46,7 @@
   AmiCompatibilityPkg/AmiCompatibilityPkg.dec  #//<EIP150193+>
   
 [LibraryClasses]
-##  DxeKscLib ##//<EIP175650+>
+  DxeKscLib
   BaseLib
   UefiRuntimeServicesTableLib
   UefiBootServicesTableLib

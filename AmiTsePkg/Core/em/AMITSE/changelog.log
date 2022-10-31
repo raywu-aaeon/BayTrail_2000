@@ -1,297 +1,1269 @@
-[TAG] 			EIP196309
-[Category]		New Feature
-[Description] 	Support for mantis 0000997: Driver Health Protocol error codes
-[Files] 			TseDrvHealth.h, Uefi21Wapper.c
+$/Alaska/BIN/Modules/AMITSE2_0/AMITSE
 
-[TAG]				EIP191225
-[Description]	Need to remove all the EIP related information in TSE module
-[Category]		Action Item
-[Files]			All TSE C and H sources file
+[TAG]           EIP65320
+[Category]      Improvement
+[Description]   Board module hook for LoadImage failure.
+                OVERRIDE_UefiBootFailHook token added.
+[Files]         amitse.sdl, commonhelper.c and boot.c
 
-[TAG] 			EIP192486
-[Category] 		Bug Fix
-[Severity:] 	Normal
-[Symptom:] 		Displayed HDD password dialog title is not center aligned when multiline support was enabled
-[Root Cause] 	Alignment was not handled when multililne support is enabled for password and String type controls.
-[Solution] 		Handled MULTILINE token properly.
-[Files] 			String.c, Popup.c, PopupEdit.c
+[Files]  		AMITSE.sdl
+Minor version incremented for 2.14.1219 QA build
 
+[Files]  		AMITSE.sdl
+[TAG]  		    EIP60910 
+[Category]  	New Feature
+[Description]  	PNG image support in TSE.
+[Files]  		LogoLib.h, AMITSE.sdl, CommonHelper.c, logo.c, png.c, png.h, pnguncmp.c, TseAdvanced.cif
 
-[TAG]				EIP196303
-[Category]		New Feature
-[Description]	Support EFI_IFR_WARNING_IF opcode in TSE
-[Files]			SetupData.h, TseAdvanced.c, MessageBox.c, CtrlCond.c, CtrlCond.h, Expression.c, Parse.c, TseUefiHii.h, Uefi21Wapper.c
+[Files]  		AMITSE.mak
+Copyright version updated to 2011
 
-[TAG]				EIP188120
-[Category]		Bug Fix
-[Severity:]		Normal
-[Symptom:]		Duplicate or extra bootOption comes after modifying BootOrder variable with different number
-[Root Cause]	TSE is creating BootData irrespective of BootOption present in BootOrder for BOOT#### variables.
-[Solution]		Creating TSE BootData based on Boot#### presence in BootOrder variable.
-[Files]			Boot.c, HiiString21.c, AMITSE.sdl
+[Files]  		AMITSE.mak
+Updated for 2.14.1219 internal release.
 
-[TAG]				EIP193247
-[Category]		Bug Fix
-[Severity:]		Important
-[Symptom:]		System Hang by loading setup defaults when BootGetBootData is NULL
-[Root Cause]	The system hangs because the case if Bootdata is NULL was not handled
-[Solution]		Added proper ASSERT for NULL boot data.
-[Files]			Boot.c
+[Files]  		AMITSE.chm
+[TAG]  		    EIP47086
+[Category]  	New Feature
+[Description]  	Right clicking from the Main page is not exiting from BIOS setup.
+[Files]  		minisetup.h, Ezport\style.h,Ezport\EzportBin.sdl, Ezport\EzportBin.mak, Ezport\ezport.c, Ezport\EzportBin.cif, EzportPlus\style.h, EzportPlus\EzportPlusBin.sdl, EzportPlusBin.mak, EzportPlus\EzportPlusBin.cif, EzportPlus\ezportplus.c, Legacy\style.h, Legacy\EzportPlusBin.sdl, Legacy\LegacyBin.mak, Legacy\LegacyBin.cif, Legacy\legacy.c, TseLiteBin.sdl, TseLite.cif, Memo.c, frame.c, application.h, application.c, commonoem.h, CommonHelper.c
 
+[Files]  		commonoem.h
+Removed the unwanted code for mouse hot click operation
 
-[TAG] 			EIP201836
-[Category] 		Bug Fix
-[Severity:] 	Normal
-[Symptom:] 		ARM systems generate exception after 3 invalid password tries in the POST
-[Root Cause] 	Parameters are not used properly for WaitForEvent function during POST password.
-[Solution] 		Handled parameters for WaitForEvent() function.
-[Files] 			commonoem.c
+[TAG]           EIP 63262
+[Category]      Defect
+[Symptom]       Setup page display problem on rose city.When SETUP_GROUP_DYNAMIC_PAGES is enabled and Network Stack is enabled, the "iSCSI" menu is listed as a dynamic page in advanced menu but only 3 of 4 "Port Configuration" pages shows up. The TSE dynamic page count is incorrect.
+[Solution]      In the functions (RTIfrProcessRunTimeForms, HandleNewIFRPack, HandleRemoveIFRPack, HandleAddIFRPack), make sure the nvram cache is updated by callingVarUpdateVariable(VARIABLE_ID_DYNAMIC_PAGE_COUNT) when updating "DynamicPageCount" variable name. .
+[Files]         Hii.c, Minisetup.h, Variable.h
 
+[TAG]           EIP57661
+[Category]      New Feature
+[Description]   Drv health related variable declarations added to update the cache.
+[Files]         notify.c, Uefi21Wapper.c and variable.h
 
-TAG]				EIP195930
-[Category]		Bug Fix
-[Severity:]		Normal
-[Symptom:]		Grayed out OrderedList control is opening for feature TSE_SETUP_GRAYOUT_SELECTABLE
-[Root Cause]	TSE_SETUP_GRAYOUT_SELECTABLE token check is not handled in case of orderedlist control. So actions are consumed
-[Solution]		Returning EFI_UNSUPPORTED when token is enabled while handling key/Mouse action to avoid processing actions.
-[Files]			OrdlistBox.c
+[TAG]           EIP65320
+[Category]      Improvement
+[Description]   Board module hook for LoadImage failure
+[Files]         amitse.sdl, commonhelper.c and boot.c
 
+[Files]  		CommonHelper.c
+Removed the unwanted function for mouse hot click operation
 
-[TAG]  			EIP193383
-[Category]  	Bug Fix
-[Severity]  	Important
-[Symptom]  		Setup settings informations and VFR controls definitions are not same
-[RootCause]  	"Default" OpCode scope is not handled properly.- ControlIndex is not handled properly.
-[Solution]  	Handled Default OpCode end scope properly while parsing controls
-[Files]  		HiiPackageer.cpp
+[TAG]  		    EIP62098
+[Description]  	HOTCLICK_FULLSCREEN_SUPPORT token added to disable the mouse hot click operations.
+[Files]  		Ezport\EzportBin.sdl
 
+[TAG]           EIP62098
+[Description]   NULL entry added in gHotClickInfo array in hotclickbin.c file so removed the NULL entry here.
+[Files]  		Ezport\EzportBin.sdl
 
-[TAG]				EIP190386
-[Category]		Bug Fix
-[Symptom:]		Prompt User Password screen twice and corrupted in POST
-[Root Cause]	Once TPL is raised to application level during validating password, NotificationFunction() is getting call again and this causes to call ActivateInput() again to evaluate password. So this will draw password prompt again and causes screen corruption.
-[Solution]		Handled ActivateInput() using ActivateInputDone flag properly.
-[Files]			Notify.c
+[Files]  		Ezport\EzportBin.sdl
+Updated with correct co-ordinates for helpframe hotclick with mouse
 
+[TAG]           EIP62098
+[Description]   NULL entry added in gHotClickInfo array for handling HOTCLICK_FULLSCREEN_SUPPORT=0.
+[Files]  		Ezport\HotclickBin.c and Legacy\HotclickBin.c
 
-[TAG]				EIP186193
-[Category]   	New Feature
-[Description]	Use AmiTextOutProtocol to support writing a char in last row column without scrolling the screen.
-[Files]			minisetupext.h, screen.c,buffer.c, CommonHelper.c, AMITSE.sdl
+[TAG]           EIP62098
+[Description]   HOTCLICK_FULLSCREEN_SUPPORT token added to disable the mouse hot click operations.
+[Files]  		Legacy\LegacyBin.sdl
 
-[TAG] 			EIP180008
-[Category] 		Bug Fix
-[Severity:] 	Normal
-[Symptom:] 		When any control is changed in a form within the SIO or PCI dynamic formset, a blank arrow is seen under Advanced setup page
-[Root Cause] 	Offline setupdata pages considered as dynamic page
-[Solution] 		TSE have a check already to not move the offline pages under Advanced menu which having dynamic parsing but if dynamic parsing happens for offline pages then we are incrementing the gDynamicPageCount so empty arrow shows but we not moving offline page under Advanced menu. So if dynamic parsing happen for offline pages, now we are not incrementing gDynamicPageCount
-[Files] 			hii.c and parse.c
+[TAG]           EIP62098
+[Description]   HOTCLICK_FULLSCREEN_SUPPORT token added for disabling mouse hot click operations.
+[Files]  		EzportPlus\EzportPlusBin.sdl
 
-[TAG]				EIP173036
-[Category]		Bug Fix
-[Severity:]		Important
-[Symptom:]		In Setup, when Driver Health status shows failed (configuration required) , Critical Boot screen is not displayed.
-[Root Cause]	BrowserCallback is disabled when calling GetHealthStatus.
-[Solution]		Enable BrowserCallback when calling GetHealthStatus.
-[Files]			uefi21wapper.c, Hiistring21.c
+[TAG]           EIP62098
+[Description]   NULL entry added in gHotClickInfo array for handling HOTCLICK_FULLSCREEN_SUPPORT=0
+[Files]  		EzportPlus\HotclickBin.c
 
 
-[TAG]				EIP196242
-[Category]   	Bug Fix
-[Severity]		Important
-[Symptom]  		Build issue in ARM platform after introducing Template feature in TSE
-[RootCause]		In the file AMITSE.mak, there is a missing space before the backslash character in $(ECHO)\ In the file CommonHelper.c, the include file path is case sensitive [#include "protocol/AmiReflashProtocol.h"]
-[Solution]		In the file AMITSE.mak, add space before the backslash character in $(ECHO) \ In the file CommonHelper.c, make the include file path case sensitive [#include "Protocol/AmiReflashProtocol.h"]
-[Files]			AMITSE.mak, CommonHelper.c
+*****************  TSEStyleLegacyx64.lib  *****************
+User: Arunsb          Date:  6/30/11  Time:  7:48p
+Checked in $/Alaska/BIN/Modules/AMITSE2_0/AMITSE/Legacy
+Comment:
+  Updated for 2.14.1218 internal release.
 
-[TAG]				EIP197421
-[Category]		Improvement
-[Description]	Need to remove EFI_SPECIFICATION_VERSION token dependency in TSE
-[Files]			AMITSE.sdl, AMITSE.mak, CommonHelper.c
+*****************  TSEStyleLegacy.lib  *****************
+User: Arunsb          Date:  6/30/11  Time:  7:47p
+Checked in $/Alaska/BIN/Modules/AMITSE2_0/AMITSE/Legacy
+Comment:
+  Updated for 2.14.1218 internal release.
 
-[TAG]				EIP192968
-[Category]   	Bug Fix
-[Severity]		Minor
-[Symptom]  		USB keyboard work abnormally within setup interface
-[RootCause]		Memory leak
-[Solution]		Freed deallocated variables
-[Files]			Boot.c, TseAdvanced.c, Special.c, Frame.c, TseLiteCommon.c, Uefi21Wapper.c
+*****************  Uefi20Localx64.lib  *****************
+User: Arunsb          Date:  6/30/11  Time:  7:47p
+Checked in $/Alaska/BIN/Modules/AMITSE2_0/AMITSE/uefi2.0
+Comment:
+  Updated for 2.14.1218 internal release.
 
-[TAG]				EIP196151 & 180220
-[Category]		Bug Fix
-[Severity:]		Important
-[Symptom:]		Mouse pointer flicker and corrupted in popupEdit of Password and String Control
-[Root Cause]	MouseStop() and MouseRefresh() called frequently in this popupEdit area
-[Solution]		Handle MouseStop() and MouseFreeze() calling based on MousePointer position in popupEdit area
-[Files]			CommonHelper.c, Mouse.c, PopupPassword.c, PopupString.c
+*****************  Uefi20Local.lib  *****************
+User: Arunsb          Date:  6/30/11  Time:  7:47p
+Checked in $/Alaska/BIN/Modules/AMITSE2_0/AMITSE/uefi2.0
+Comment:
+  Updated for 2.14.1218 internal release.
 
-[TAG]				EIP198616
-[Category]		New Feature
-[Description]	Provide us token to configure CheckforClick event trigger time
-[Files]			Hiistring21.c, AMITSE.sdl, PostMgmt.c
+*****************  TseStyleEzportPlusx64.lib  *****************
+User: Arunsb          Date:  6/30/11  Time:  6:59p
+Checked in $/Alaska/BIN/Modules/AMITSE2_0/AMITSE/EzportPlus
+Comment:
+  Updated for 2.14.1218 internal release.
 
-[TAG] 			EIP196304
-[Category] 		Improvement
-[Description] 	Handling return status for action EFI_BROWSER_ACTION_CHANGING for callBack controls
-[Files] 			HiiCallback.c
+*****************  TseStyleEzportPlus.lib  *****************
+User: Arunsb          Date:  6/30/11  Time:  6:58p
+Checked in $/Alaska/BIN/Modules/AMITSE2_0/AMITSE/EzportPlus
+Comment:
+  Updated for 2.14.1218 internal release.
 
-[TAG] 			EIP203244
-[Category] 		Improvement
-[Description] 	Removing shell boot when secure boot mode is enabled
-[Files] 			bootflow.c,Uefisetup.ini
+*****************  TseStylex64.lib  *****************
+User: Arunsb          Date:  6/30/11  Time:  6:58p
+Checked in $/Alaska/BIN/Modules/AMITSE2_0/AMITSE/Ezport
+Comment:
+  Updated for 2.14.1218 internal release.
+
+*****************  TseStyle.lib  *****************
+User: Arunsb          Date:  6/30/11  Time:  6:57p
+Checked in $/Alaska/BIN/Modules/AMITSE2_0/AMITSE/Ezport
+Comment:
+  Updated for 2.14.1218 internal release.
+
+*****************  Uefi21Localx64.lib  *****************
+User: Arunsb          Date:  6/30/11  Time:  6:57p
+Checked in $/Alaska/BIN/Modules/AMITSE2_0/AMITSE/Uefi2.1
+Comment:
+  Updated for 2.14.1218 internal release.
+
+*****************  Uefi21Local.lib  *****************
+User: Arunsb          Date:  6/30/11  Time:  6:56p
+Checked in $/Alaska/BIN/Modules/AMITSE2_0/AMITSE/Uefi2.1
+Comment:
+  Updated for 2.14.1218 internal release.
+
+*****************  TseLiteLocalx64.lib  *****************
+User: Arunsb          Date:  6/30/11  Time:  6:56p
+Checked in $/Alaska/BIN/Modules/AMITSE2_0/AMITSE/TseLite
+Comment:
+  Updated for 2.14.1218 internal release.
+
+*****************  TseLiteLocal.lib  *****************
+User: Arunsb          Date:  6/30/11  Time:  6:55p
+Checked in $/Alaska/BIN/Modules/AMITSE2_0/AMITSE/TseLite
+Comment:
+  Updated for 2.14.1218 internal release.
+
+*****************  MiniSetupLocalx64.lib  *****************
+User: Arunsb          Date:  6/30/11  Time:  6:54p
+Checked in $/Alaska/BIN/Modules/AMITSE2_0/AMITSE/BootOnly
+Comment:
+  Updated for 2.14.1218 internal release.
+
+*****************  MiniSetupLocal.lib  *****************
+User: Arunsb          Date:  6/30/11  Time:  6:54p
+Checked in $/Alaska/BIN/Modules/AMITSE2_0/AMITSE/BootOnly
+Comment:
+  Updated for 2.14.1218 internal release.
+
+*****************  TseAdvancedx64.lib  *****************
+User: Arunsb          Date:  6/30/11  Time:  6:53p
+Checked in $/Alaska/BIN/Modules/AMITSE2_0/AMITSE/TseAdvanced
+Comment:
+  Updated for 2.14.1218 internal release.
+
+*****************  TseAdvanced.lib  *****************
+User: Arunsb          Date:  6/30/11  Time:  6:53p
+Checked in $/Alaska/BIN/Modules/AMITSE2_0/AMITSE/TseAdvanced
+Comment:
+  Updated for 2.14.1218 internal release.
+
+*****************  AMITSE.sdl  *****************
+User: Arunsb          Date:  6/30/11  Time:  1:01p
+Checked in $/Alaska/BIN/Modules/AMITSE2_0/AMITSE
+Comment:
+  HONOR_DRVHLTH_CONFIGREQD_ON_BOOTFAIL token defaultly disabled.
+
+*****************  CommonHelper.c  *****************
+User: Arunsb          Date:  6/30/11  Time: 11:52a
+Checked in $/Alaska/BIN/Modules/AMITSE2_0/AMITSE
+Comment:
+  EDKVersion_1_05_RetrieveData wrapper function added to return the
+EDK_1_05_RETRIEVE_DATA token value.
+
+*****************  AMITSE.sdl  *****************
+User: Arunsb          Date:  6/30/11  Time: 11:51a
+Checked in $/Alaska/BIN/Modules/AMITSE2_0/AMITSE
+Comment:
+  EDK_1_05_RETRIEVE_DATA token added and it is removed from
+uefi21.sdl.
+Minor version and build version incremented for 2.14.1218 release
+
+*****************  EzportPlusBin.sdl  *****************
+User: Rajashakerg     Date:  6/30/11  Time:  5:09a
+Checked in $/Alaska/BIN/Modules/AMITSE2_0/AMITSE/EzportPlus
+Comment:
+  Removed extra TABs
+
+*****************  AMITSE.cif  *****************
+User: Arunsb          Date:  6/30/11  Time:  4:10a
+Checked in $/Alaska/BIN/Modules/AMITSE2_0/AMITSE
+Comment:
+  [TAG]           EIP57661
+[Category]      New Feature
+[Description]   Boot manager algorithm for interaction with Driver Health
+protocol.
+                TseDrvHealth.h file added.
+[Files]         amitse.cif, amitse.sdl, faketokens.c, amitsestr.uni,
+                commonhelper.c, uefisetup.ini, tsedrvhealth.h, amivfr.h,
+minisetupbin.mak,
+                hiistring21.c, hiistring20.c, tseadvanced.c, special.c,
+special.h, boot.h, minisetup.h,
+                uefi20wapper.c, formbrowser2.c, hii.c, parse.c and
+uefi21wapper.c.
+
+*****************  hiistring20.c  *****************
+User: Arunsb          Date:  6/30/11  Time:  4:09a
+Checked in $/Alaska/BIN/Modules/AMITSE2_0/AMITSE/BootOnly
+Comment:
+  
+
+*****************  hiistring21.c  *****************
+User: Arunsb          Date:  6/30/11  Time:  4:08a
+Checked in $/Alaska/BIN/Modules/AMITSE2_0/AMITSE/BootOnly
+Comment:
+  [TAG]           EIP57661
+[Category]      New Feature
+[Description]   Boot manager algorithm for interaction with Driver Health
+protocol.
+                Boot device repair operation related functions added.
+[Files]         amitse.cif, amitse.sdl, faketokens.c, amitsestr.uni,
+                commonhelper.c, uefisetup.ini, tsedrvhealth.h, amivfr.h,
+minisetupbin.mak,
+                hiistring21.c, hiistring20.c, tseadvanced.c, special.c,
+special.h, boot.h, minisetup.h,
+                uefi20wapper.c, formbrowser2.c, hii.c, parse.c and
+uefi21wapper.c.
+
+*****************  MiniSetupBin.mak  *****************
+User: Arunsb          Date:  6/30/11  Time:  4:07a
+Checked in $/Alaska/BIN/Modules/AMITSE2_0/AMITSE/BootOnly
+Comment:
+  [TAG]           EIP57661
+[Category]      New Feature
+[Description]   Boot manager algorithm for interaction with Driver Health
+protocol.
+                Include directories added.
+[Files]         amitse.cif, amitse.sdl, faketokens.c, amitsestr.uni,
+                commonhelper.c, uefisetup.ini, tsedrvhealth.h, amivfr.h,
+minisetupbin.mak,
+                hiistring21.c, hiistring20.c, tseadvanced.c, special.c,
+special.h, boot.h, minisetup.h,
+                uefi20wapper.c, formbrowser2.c, hii.c, parse.c and
+uefi21wapper.c.
+
+*****************  AMIVfr.h  *****************
+User: Arunsb          Date:  6/30/11  Time:  4:06a
+Checked in $/Alaska/BIN/Modules/AMITSE2_0/AMITSE/Include
+Comment:
+  [TAG]           EIP57661
+[Category]      New Feature
+[Description]   Boot manager algorithm for interaction with Driver Health
+protocol.
+                Added driver health structures for vfr.
+[Files]         amitse.cif, amitse.sdl, faketokens.c, amitsestr.uni,
+                commonhelper.c, uefisetup.ini, tsedrvhealth.h, amivfr.h,
+minisetupbin.mak,
+                hiistring21.c, hiistring20.c, tseadvanced.c, special.c,
+special.h, boot.h, minisetup.h,
+                uefi20wapper.c, formbrowser2.c, hii.c, parse.c and
+uefi21wapper.c.
+
+*****************  Version 64  *****************
+User: Arunsb          Date:  6/30/11  Time:  4:04a
+Added TseDrvHealth.h
+
+*****************  Uefisetup.ini  *****************
+User: Arunsb          Date:  6/30/11  Time:  4:01a
+Checked in $/Alaska/BIN/Modules/AMITSE2_0/AMITSE
+Comment:
+  [TAG]           EIP57661
+[Category]      New Feature
+[Description]   Boot manager algorithm for interaction with Driver Health
+protocol.
+                Driver health related variables and guids added.
+[Files]         amitse.cif, amitse.sdl, faketokens.c, amitsestr.uni,
+                commonhelper.c, uefisetup.ini, tsedrvhealth.h, amivfr.h,
+minisetupbin.mak,
+                hiistring21.c, hiistring20.c, tseadvanced.c, special.c,
+special.h, boot.h, minisetup.h,
+                uefi20wapper.c, formbrowser2.c, hii.c, parse.c and
+uefi21wapper.c.
+
+*****************  CommonHelper.c  *****************
+User: Arunsb          Date:  6/30/11  Time:  4:00a
+Checked in $/Alaska/BIN/Modules/AMITSE2_0/AMITSE
+Comment:
+  [TAG]           EIP57661
+[Category]      New Feature
+[Description]   Boot manager algorithm for interaction with Driver Health
+protocol.
+                Wrapper functions added.
+                Added board module hook to perform rebooting the system.
+[Files]         amitse.cif, amitse.sdl, faketokens.c, amitsestr.uni,
+                commonhelper.c, uefisetup.ini, tsedrvhealth.h, amivfr.h,
+minisetupbin.mak,
+                hiistring21.c, hiistring20.c, tseadvanced.c, special.c,
+special.h, boot.h, minisetup.h,
+                uefi20wapper.c, formbrowser2.c, hii.c, parse.c and
+uefi21wapper.c.
+
+*****************  AmiTSEStr.uni  *****************
+User: Arunsb          Date:  6/30/11  Time:  3:58a
+Checked in $/Alaska/BIN/Modules/AMITSE2_0/AMITSE
+Comment:
+  [TAG]           EIP57661
+[Category]      New Feature
+[Description]   Boot manager algorithm for interaction with Driver Health
+protocol.
+                Driver health related strings added.
+[Files]         amitse.cif, amitse.sdl, faketokens.c, amitsestr.uni,
+                commonhelper.c, uefisetup.ini, tsedrvhealth.h, amivfr.h,
+minisetupbin.mak,
+                hiistring21.c, hiistring20.c, tseadvanced.c, special.c,
+special.h, boot.h, minisetup.h,
+                uefi20wapper.c, formbrowser2.c, hii.c, parse.c and
+uefi21wapper.c.
+
+*****************  FakeTokens.c  *****************
+User: Arunsb          Date:  6/30/11  Time:  3:57a
+Checked in $/Alaska/BIN/Modules/AMITSE2_0/AMITSE
+Comment:
+  [TAG]           EIP57661
+[Category]      New Feature
+[Description]   Boot manager algorithm for interaction with Driver Health
+protocol.
+                Driver health related string tokens added.
+[Files]         amitse.cif, amitse.sdl, faketokens.c, amitsestr.uni,
+                commonhelper.c, uefisetup.ini, tsedrvhealth.h, amivfr.h,
+minisetupbin.mak,
+                hiistring21.c, hiistring20.c, tseadvanced.c, special.c,
+special.h, boot.h, minisetup.h,
+                uefi20wapper.c, formbrowser2.c, hii.c, parse.c and
+uefi21wapper.c.
+
+*****************  commonoem.c  *****************
+User: Arunsb          Date:  6/30/11  Time:  3:55a
+Checked in $/Alaska/BIN/Modules/AMITSE2_0/AMITSE
+Comment:
+  Unused BootOption variable removed.
+
+*****************  AMITSE.sdl  *****************
+User: Arunsb          Date:  6/30/11  Time:  3:54a
+Checked in $/Alaska/BIN/Modules/AMITSE2_0/AMITSE
+Comment:
+  [TAG]  		EIP57661
+[Category]  	New Feature
+[Description]  	Boot manager algorithm for interaction with Driver Health
+protocol.
+The following tokens added
+DRIVER_HEALTH_SUPPORT
+HONOR_DRVHLTH_CONFIGREQD_ON_BOOTFAIL
+OVERRIDE_DriverHealthSystemReset
+[Files]  		amitse.cif, amitse.sdl, commonoem.c, faketokens.c, amitsestr.uni,
+commonhelper.c, uefisetup.ini, tsedrvhealth.h, amivfr.h, minisetupbin.mak,
+hiistring21.c, hiistring20.c, tseadvanced.c, special.c, special.h, boot.h,
+minisetup.h, uefi20wapper.c, formbrowser2.c,
+hii.c, parse.c and uefi21wapper.c.
+
+*****************  CommonHelper.c  *****************
+User: Rajashakerg     Date:  6/29/11  Time:  4:35p
+Checked in $/Alaska/BIN/Modules/AMITSE2_0/AMITSE
+Comment:
+  Updated for Help frame scroll changes
+
+*****************  commonoem.c  *****************
+User: Arunsb          Date:  6/29/11  Time:  2:06p
+Checked in $/Alaska/BIN/Modules/AMITSE2_0/AMITSE
+Comment:
+  EIP 62631 gHotKeyBootOption declaration moved to commonhelper.c
+
+*****************  CommonHelper.c  *****************
+User: Arunsb          Date:  6/29/11  Time:  2:01p
+Checked in $/Alaska/BIN/Modules/AMITSE2_0/AMITSE
+Comment:
+  gHotKeyBootOption declaration added and the same is removed in
+commonoem.c file.
+
+*****************  CommonHelper.c  *****************
+User: Rajashakerg     Date:  6/29/11  Time:  1:32p
+Checked in $/Alaska/BIN/Modules/AMITSE2_0/AMITSE
+Comment:
+  [TAG]  		EIP47086
+[Category]  	New Feature
+[Description]  	Right clicking from the Main page is not exiting from BIOS
+setup.
+
+[Files]  		minisetup.h, Ezport\style.h,Ezport\EzportBin.sdl,
+Ezport\EzportBin.mak, Ezport\ezport.c, Ezport\EzportBin.cif, EzportPlus\style.h,
+EzportPlus\EzportPlusBin.sdl, EzportPlusBin.mak, EzportPlus\EzportPlusBin.cif,
+EzportPlus\ezportplus.c, Legacy\style.h, Legacy\EzportPlusBin.sdl,
+Legacy\LegacyBin.mak, Legacy\LegacyBin.cif, Legacy\legacy.c, TseLiteBin.sdl,
+TseLite.cif, Memo.c, frame.c, application.h, application.c, commonoem.h,
+CommonHelper.c
+
+*****************  commonoem.h  *****************
+User: Rajashakerg     Date:  6/29/11  Time:  1:03p
+Checked in $/Alaska/BIN/Modules/AMITSE2_0/AMITSE
+Comment:
+  [TAG]  		EIP47086
+[Category]  	New Feature
+[Description]  	Right clicking from the Main page is not exiting from BIOS
+setup.
+
+[Files]  		minisetup.h, Ezport\style.h,Ezport\EzportBin.sdl,
+Ezport\EzportBin.mak, Ezport\ezport.c, Ezport\EzportBin.cif, EzportPlus\style.h,
+EzportPlus\EzportPlusBin.sdl, EzportPlusBin.mak, EzportPlus\EzportPlusBin.cif,
+EzportPlus\ezportplus.c, Legacy\style.h, Legacy\EzportPlusBin.sdl,
+Legacy\LegacyBin.mak, Legacy\LegacyBin.cif, Legacy\legacy.c, TseLiteBin.sdl,
+TseLite.cif, Memo.c, frame.c, application.h, application.c, commonoem.h,
+CommonHelper.c
+
+*****************  TseLiteBin.sdl  *****************
+User: Rajashakerg     Date:  6/29/11  Time: 12:59p
+Checked in $/Alaska/BIN/Modules/AMITSE2_0/AMITSE/TseLite
+Comment:
+  [TAG]  		EIP47086
+[Category]  	New Feature
+[Description]  	Right clicking from the Main page is not exiting from BIOS
+setup.
+
+[Files]  		minisetup.h, Ezport\style.h,Ezport\EzportBin.sdl,
+Ezport\EzportBin.mak, Ezport\ezport.c, Ezport\EzportBin.cif, EzportPlus\style.h,
+EzportPlus\EzportPlusBin.sdl, EzportPlusBin.mak, EzportPlus\EzportPlusBin.cif,
+EzportPlus\ezportplus.c, Legacy\style.h, Legacy\EzportPlusBin.sdl,
+Legacy\LegacyBin.mak, Legacy\LegacyBin.cif, Legacy\legacy.c, TseLiteBin.sdl,
+TseLite.cif, Memo.c, frame.c, application.h, application.c, commonoem.h,
+CommonHelper.c
+
+*****************  LegacyBin.mak  *****************
+User: Rajashakerg     Date:  6/29/11  Time: 12:46p
+Checked in $/Alaska/BIN/Modules/AMITSE2_0/AMITSE/Legacy
+Comment:
+  [TAG]  		EIP47086
+[Category]  	New Feature
+[Description]  	Right clicking from the Main page is not exiting from BIOS
+setup.
+
+[Files]  		minisetup.h, Ezport\style.h,Ezport\EzportBin.sdl,
+Ezport\EzportBin.mak, Ezport\ezport.c, Ezport\EzportBin.cif, EzportPlus\style.h,
+EzportPlus\EzportPlusBin.sdl, EzportPlusBin.mak, EzportPlus\EzportPlusBin.cif,
+EzportPlus\ezportplus.c, Legacy\style.h, Legacy\EzportPlusBin.sdl,
+Legacy\LegacyBin.mak, Legacy\LegacyBin.cif, Legacy\legacy.c, TseLiteBin.sdl,
+TseLite.cif, Memo.c, frame.c, application.h, application.c, commonoem.h,
+CommonHelper.c
+
+*****************  LegacyBin.sdl  *****************
+User: Rajashakerg     Date:  6/29/11  Time: 12:45p
+Checked in $/Alaska/BIN/Modules/AMITSE2_0/AMITSE/Legacy
+Comment:
+  [TAG]  		EIP47086
+[Category]  	New Feature
+[Description]  	Right clicking from the Main page is not exiting from BIOS
+setup.
+
+[Files]  		minisetup.h, Ezport\style.h,Ezport\EzportBin.sdl,
+Ezport\EzportBin.mak, Ezport\ezport.c, Ezport\EzportBin.cif, EzportPlus\style.h,
+EzportPlus\EzportPlusBin.sdl, EzportPlusBin.mak, EzportPlus\EzportPlusBin.cif,
+EzportPlus\ezportplus.c, Legacy\style.h, Legacy\EzportPlusBin.sdl,
+Legacy\LegacyBin.mak, Legacy\LegacyBin.cif, Legacy\legacy.c, TseLiteBin.sdl,
+TseLite.cif, Memo.c, frame.c, application.h, application.c, commonoem.h,
+CommonHelper.c
+
+*****************  EzportPlusBin.mak  *****************
+User: Rajashakerg     Date:  6/29/11  Time: 12:39p
+Checked in $/Alaska/BIN/Modules/AMITSE2_0/AMITSE/EzportPlus
+Comment:
+  [TAG]  		EIP47086
+[Category]  	New Feature
+[Description]  	Right clicking from the Main page is not exiting from BIOS
+setup.
+
+[Files]  		minisetup.h, Ezport\style.h,Ezport\EzportBin.sdl,
+Ezport\EzportBin.mak, Ezport\ezport.c, Ezport\EzportBin.cif, EzportPlus\style.h,
+EzportPlus\EzportPlusBin.sdl, EzportPlusBin.mak, EzportPlus\EzportPlusBin.cif,
+EzportPlus\ezportplus.c, Legacy\style.h, Legacy\EzportPlusBin.sdl,
+Legacy\LegacyBin.mak, Legacy\LegacyBin.cif, Legacy\legacy.c, TseLiteBin.sdl,
+TseLite.cif, Memo.c, frame.c, application.h, application.c, commonoem.h,
+CommonHelper.c
+
+*****************  EzportPlusBin.sdl  *****************
+User: Rajashakerg     Date:  6/29/11  Time: 12:38p
+Checked in $/Alaska/BIN/Modules/AMITSE2_0/AMITSE/EzportPlus
+Comment:
+  [TAG]  		EIP47086
+[Category]  	New Feature
+[Description]  	Right clicking from the Main page is not exiting from BIOS
+setup.
+
+[Files]  		minisetup.h, Ezport\style.h,Ezport\EzportBin.sdl,
+Ezport\EzportBin.mak, Ezport\ezport.c, Ezport\EzportBin.cif, EzportPlus\style.h,
+EzportPlus\EzportPlusBin.sdl, EzportPlusBin.mak, EzportPlus\EzportPlusBin.cif,
+EzportPlus\ezportplus.c, Legacy\style.h, Legacy\EzportPlusBin.sdl,
+Legacy\LegacyBin.mak, Legacy\LegacyBin.cif, Legacy\legacy.c, TseLiteBin.sdl,
+TseLite.cif, Memo.c, frame.c, application.h, application.c, commonoem.h,
+CommonHelper.c
+
+*****************  EzportBin.mak  *****************
+User: Rajashakerg     Date:  6/29/11  Time: 12:30p
+Checked in $/Alaska/BIN/Modules/AMITSE2_0/AMITSE/Ezport
+Comment:
+  [TAG]  		EIP47086
+[Category]  	New Feature
+[Description]  	Right clicking from the Main page is not exiting from BIOS
+setup.
+
+[Files]  		minisetup.h, Ezport\style.h,Ezport\EzportBin.sdl,
+Ezport\EzportBin.mak, Ezport\ezport.c, Ezport\EzportBin.cif, EzportPlus\style.h,
+EzportPlus\EzportPlusBin.sdl, EzportPlusBin.mak, EzportPlus\EzportPlusBin.cif,
+EzportPlus\ezportplus.c, Legacy\style.h, Legacy\EzportPlusBin.sdl,
+Legacy\LegacyBin.mak, Legacy\LegacyBin.cif, Legacy\legacy.c, TseLiteBin.sdl,
+TseLite.cif, Memo.c, frame.c, application.h, application.c, commonoem.h,
+CommonHelper.c
+
+*****************  EzportBin.sdl  *****************
+User: Rajashakerg     Date:  6/29/11  Time: 12:29p
+Checked in $/Alaska/BIN/Modules/AMITSE2_0/AMITSE/Ezport
+Comment:
+  [TAG]  		EIP47086
+[Category]  	New Feature
+[Description]  	Right clicking from the Main page is not exiting from BIOS
+setup.
+
+[Files]  		minisetup.h, Ezport\style.h,Ezport\EzportBin.sdl,
+Ezport\EzportBin.mak, Ezport\ezport.c, Ezport\EzportBin.cif, EzportPlus\style.h,
+EzportPlus\EzportPlusBin.sdl, EzportPlusBin.mak, EzportPlus\EzportPlusBin.cif,
+EzportPlus\ezportplus.c, Legacy\style.h, Legacy\EzportPlusBin.sdl,
+Legacy\LegacyBin.mak, Legacy\LegacyBin.cif, Legacy\legacy.c, TseLiteBin.sdl,
+TseLite.cif, Memo.c, frame.c, application.h, application.c, commonoem.h,
+CommonHelper.c
+
+*****************  LegacyBin.cif  *****************
+User: Rajashakerg     Date:  6/29/11  Time: 12:00p
+Checked in $/Alaska/BIN/Modules/AMITSE2_0/AMITSE/Legacy
+Comment:
+  
+
+*****************  Legacy  *****************
+User: Rajashakerg     Date:  6/29/11  Time: 11:58a
+Added HotclickBin.c
+
+*****************  Legacy  *****************
+User: Rajashakerg     Date:  6/29/11  Time: 11:58a
+Added HotclickBin.h
+
+*****************  EzportPlusBin.cif  *****************
+User: Rajashakerg     Date:  6/29/11  Time: 11:54a
+Checked in $/Alaska/BIN/Modules/AMITSE2_0/AMITSE/EzportPlus
+Comment:
+  
+
+*****************  EzportPlus  *****************
+User: Rajashakerg     Date:  6/29/11  Time: 11:52a
+Added HotclickBin.c
+
+*****************  EzportPlus  *****************
+User: Rajashakerg     Date:  6/29/11  Time: 11:52a
+Added HotclickBin.h
+
+*****************  EzportBin.cif  *****************
+User: Rajashakerg     Date:  6/29/11  Time: 11:47a
+Checked in $/Alaska/BIN/Modules/AMITSE2_0/AMITSE/Ezport
+Comment:
+  
+
+*****************  hiistring21.c  *****************
+User: Arunsb          Date:  6/29/11  Time:  6:24a
+Checked in $/Alaska/BIN/Modules/AMITSE2_0/AMITSE/BootOnly
+Comment:
+  [TAG]           EIP 62631
+[Category]      New Feature
+[Description]   Hot key boot option support in TSE as per UEFI spec. section
+3.1.6.
+[Files]         AMITSE.sdl, bootflow.c, bootflow.h, CommonHelper.c, commonoem.c,
+commonoem.h, boot.c,
+                hiistring20.c, hiistring21.c and notify.c.
+
+*****************  hiistring20.c  *****************
+User: Arunsb          Date:  6/29/11  Time:  6:17a
+Checked in $/Alaska/BIN/Modules/AMITSE2_0/AMITSE/BootOnly
+Comment:
+  [TAG]           EIP 62631
+[Category]      New Feature
+[Description]   Hot key boot option support in TSE as per UEFI spec. section
+3.1.6.
+                Dummy functions added.
+[Files]         AMITSE.sdl, bootflow.c, bootflow.h, CommonHelper.c, commonoem.c,
+commonoem.h, boot.c,
+                hiistring20.c, hiistring21.c and notify.c.
+
+*****************  commonoem.c  *****************
+User: Arunsb          Date:  6/29/11  Time:  6:03a
+Checked in $/Alaska/BIN/Modules/AMITSE2_0/AMITSE
+Comment:
+  [TAG]           EIP 62631
+[Category]      New Feature
+[Description]   Hot key boot option support in TSE as per UEFI spec. section
+3.1.6.
+                CheckAdvShiftState function moved from commonoem.c to here.
+                BootLaunchBootOption removed in checkforkey function to avoid
+TPL problem.    
+[Files]         AMITSE.sdl, bootflow.c, bootflow.h, CommonHelper.c, commonoem.c,
+commonoem.h, boot.c,
+                hiistring20.c, hiistring21.c and notify.c.
+
+*****************  CommonHelper.c  *****************
+User: Arunsb          Date:  6/29/11  Time:  5:50a
+Checked in $/Alaska/BIN/Modules/AMITSE2_0/AMITSE
+Comment:
+  [TAG]           EIP 62631
+[Category]      New Feature
+[Description]   Hot key boot option support in TSE as per UEFI spec. section
+3.1.6.
+                CheckAdvShiftState function moved from commonoem.c to here.
+                LaunchHotKeyBootOption function added to launch hot key boot
+device.    
+[Files]         AMITSE.sdl, bootflow.c, bootflow.h, CommonHelper.c, commonoem.c,
+commonoem.h, boot.c,
+                hiistring20.c, hiistring21.c and notify.c.
+
+*****************  bootflow.c  *****************
+User: Arunsb          Date:  6/29/11  Time:  5:37a
+Checked in $/Alaska/BIN/Modules/AMITSE2_0/AMITSE
+Comment:
+  [TAG]           EIP 62631
+[Category]      New Feature
+[Description]   Hot key boot option support in TSE as per UEFI spec. section
+3.1.6.
+                Added BOOT_FLOW_HOTKEY_BOOT bootflow option in BOOT_FLOW.
+[Files]         AMITSE.sdl, bootflow.c, bootflow.h, CommonHelper.c, commonoem.c,
+commonoem.h, boot.c,
+                hiistring20.c, hiistring21.c and notify.c.
+
+*****************  bootflow.h  *****************
+User: Arunsb          Date:  6/29/11  Time:  5:25a
+Checked in $/Alaska/BIN/Modules/AMITSE2_0/AMITSE
+Comment:
+  [TAG]           EIP 62631
+[Category]      New Feature
+[Description]   Hot key boot option support in TSE as per UEFI spec. section
+3.1.6.
+                Added BOOT_FLOW_HOTKEY_BOOT bootflow option for honoring the hot
+key boot.
+[Files]         AMITSE.sdl, bootflow.c, bootflow.h, CommonHelper.c, commonoem.c,
+commonoem.h, boot.c,
+                hiistring20.c, hiistring21.c and notify.c.
+
+*****************  Ezport  *****************
+User: Rajashakerg     Date:  6/29/11  Time:  5:18a
+Added HotclickBin.c
+
+*****************  Ezport  *****************
+User: Rajashakerg     Date:  6/29/11  Time:  5:18a
+Added HotclickBin.h
+
+*****************  AMITSE.sdl  *****************
+User: Arunsb          Date:  6/28/11  Time:  8:19p
+Checked in $/Alaska/BIN/Modules/AMITSE2_0/AMITSE
+Comment:
+  [TAG]           EIP 62631
+[Category]      New Feature
+[Description]   Hot key boot option in TSE as per UEFI spec. section 3.1.6.
+                OVERRIDE_LaunchHotKeyBootOption function added for hot key boot
+option.
+[Files]         AMITSE.sdl, bootflow.c, bootflow.h, CommonHelper.c, commonoem.c,
+commonoem.h, boot.c,
+                hiistring20.c, hiistring21.c and notify.c
+
+*****************  commonoem.c  *****************
+User: Arunsb          Date:  6/23/11  Time:  8:29p
+Checked in $/Alaska/BIN/Modules/AMITSE2_0/AMITSE
+Comment:
+  [TAG]  		EIP62466
+[Category]  	Improvement
+[Description]  	Trace message support in commonoem.c.
+Included amidxelib.h file.
+[Files]  		commonoem.c
+
+*****************  AMITSE.sdl  *****************
+User: Arunsb          Date:  6/23/11  Time:  8:02p
+Checked in $/Alaska/BIN/Modules/AMITSE2_0/AMITSE
+Comment:
+  Removed the unwanted tokens
+
+*****************  bootflow.c  *****************
+User: Arunsb          Date:  6/23/11  Time:  7:41p
+Checked in $/Alaska/BIN/Modules/AMITSE2_0/AMITSE
+Comment:
+  [TAG]           EIP57660 
+[Category]      New Feature
+[Description]   Non-removable media boot behavior as described in UEFI
+                specification v 2.3.1, p. 3.4.1.
+                Checks for the setup key if no boot options avail
+                or not succedded to boot. If setup key pressed launches the
+setup.
+                If no boot option avail then inserting thumb drive with image
+efi\boot\bootxxxx.efi TSE will launch that image.     
+[Files]         amitse.sdl, bootflow.c and protocol.c
+
+*****************  AMITSE.sdl  *****************
+User: Arunsb          Date:  6/23/11  Time:  7:40p
+Checked in $/Alaska/BIN/Modules/AMITSE2_0/AMITSE
+Comment:
+  
+
+*****************  AMITSE.sdl  *****************
+User: Rajashakerg     Date:  6/23/11  Time:  3:40p
+Checked in $/Alaska/BIN/Modules/AMITSE2_0/AMITSE
+Comment:
+  [TAG]  		EIP55762, 58925, 59971
+[Category]  	New Feature
+[Description]  	Support REF2,REF3 and REF4 in AMITSE
+Support direct form navigation path
+Improper layout of controls in the root page when Dynamic pages are added using
+the Legacy Setup Style	
+
+[Files]  		setupdata.h, CommonHelper.c, AMITSE.sdl, Legacy\Legacy.c,
+Legacy\style.h, Legacy\style.h, frame.c, minisetupext.c, minisetupext.h,
+numeric.c, page.c Popupstring.c, Hii.c, Uefi21Wrapper.c, Parse.c Hii.c
+
+*****************  CommonHelper.c  *****************
+User: Rajashakerg     Date:  6/23/11  Time:  3:39p
+Checked in $/Alaska/BIN/Modules/AMITSE2_0/AMITSE
+Comment:
+  [TAG]  		EIP55762, 58925, 59971
+[Category]  	New Feature
+[Description]  	Support REF2,REF3 and REF4 in AMITSE
+Support direct form navigation path
+Improper layout of controls in the root page when Dynamic pages are added using
+the Legacy Setup Style	
+[Files]  		setupdata.h, CommonHelper.c, AMITSE.sdl, Legacy\Legacy.c,
+Legacy\style.h, Legacy\style.h, frame.c, minisetupext.c, minisetupext.h,
+numeric.c, page.c Popupstring.c, Hii.c, Uefi21Wrapper.c, Parse.c Hii.c
+
+*****************  setupdata.h  *****************
+User: Rajashakerg     Date:  6/23/11  Time:  3:38p
+Checked in $/Alaska/BIN/Modules/AMITSE2_0/AMITSE/Inc
+Comment:
+  [TAG]  		EIP55762, 58925, 59971
+[Category]  	New Feature
+[Description]  	Support REF2,REF3 and REF4 in AMITSE
+Support direct form navigation path
+Improper layout of controls in the root page when Dynamic pages are added using
+the Legacy Setup Style	
+[Files]  		setupdata.h, CommonHelper.c, AMITSE.sdl, Legacy\Legacy.c,
+Legacy\style.h, Legacy\style.h, frame.c, minisetupext.c, minisetupext.h,
+numeric.c, page.c Popupstring.c, Hii.c, Uefi21Wrapper.c, Parse.c Hii.c
+
+*****************  CommonHelper.c  *****************
+User: Rajashakerg     Date:  6/23/11  Time:  5:30a
+Checked in $/Alaska/BIN/Modules/AMITSE2_0/AMITSE
+Comment:
+  [TAG]  		EIP63073  
+[Category]  	New Feature
+[Description]  	Source modules in TSE should get the version details from binary
+in run time not at build time 
+[Files]  		CommonHelper.c, minisetupext.c, notify.c, Ezport\style.c,
+EzportPlus\style.c, Legacy\style.c
+
+*****************  hiistring21.c  *****************
+User: Arunsb          Date:  6/22/11  Time:  2:45p
+Checked in $/Alaska/BIN/Modules/AMITSE2_0/AMITSE/BootOnly
+Comment:
+  [TAG]           EIP 62631
+[Category]      New Feature
+[Description]   Support for Hot key boot option in TSE as per UEFI spec. section
+3.1.6.
+[Files]         AMITSE.sdl, CommonHelper.c, commonoem.c, commonoem.h, boot.c,
+hiistring20.c and hiistring21.c.
+
+*****************  hiistring20.c  *****************
+User: Arunsb          Date:  6/22/11  Time:  2:21p
+Checked in $/Alaska/BIN/Modules/AMITSE2_0/AMITSE/BootOnly
+Comment:
+  [TAG]           EIP 62631
+[Category]      New Feature
+[Description]   Hot key boot option in TSE as per UEFI spec. section 3.1.6.
+                Dummy FormHotBootKeys function added
+[Files]         AMITSE.sdl, CommonHelper.c, commonoem.c, commonoem.h, boot.c,
+hiistring20.c and hiistring21.c.
+
+*****************  LogoLib.h  *****************
+User: Premkumara      Date:  6/22/11  Time:  9:17a
+Checked in $/Alaska/BIN/Modules/AMITSE2_0/AMITSE/Inc
+Comment:
+  [TAG]  		EIP60048
+[Category]  	Improvement
+[Description]  	TSE should Change the System Resolution according to the Quite
+Logo Size
+[Files]  		CommonHelper.c, AMITSE.sdl, Logo.c, LogoLib.h
+
+*****************  AMITSE.sdl  *****************
+User: Premkumara      Date:  6/22/11  Time:  9:13a
+Checked in $/Alaska/BIN/Modules/AMITSE2_0/AMITSE
+Comment:
+  [TAG]  		EIP60048
+[Category]  	Improvement
+[Description]  	TSE should Change the System Resolution according to the Quite
+Logo Size
+[Files]  		CommonHelper.c,  AMITSE.sdl, Logo.c, LogoLib.h
+
+*****************  CommonHelper.c  *****************
+User: Premkumara      Date:  6/22/11  Time:  9:08a
+Checked in $/Alaska/BIN/Modules/AMITSE2_0/AMITSE
+Comment:
+  [TAG]  		EIP60048 
+[Category]  	Improvement
+[Description]  	TSE should Change the System Resolution according to the Quite
+Logo Size
+[Files]  		CommonHelper.c, AMITSE.sdl, Logo.c, LogoLib.h
+
+*****************  commonoem.h  *****************
+User: Arunsb          Date:  6/22/11  Time:  7:18a
+Checked in $/Alaska/BIN/Modules/AMITSE2_0/AMITSE
+Comment:
+  [TAG]           EIP 62631, 60128 
+[Category]      New Feature
+[Description]   Hot key boot option in TSE as per UEFI spec. section 3.1.6.
+                TSE_CHECK_SHIFTSTATE macro redefined to CheckAdvShiftState
+[Files]         AMITSE.sdl, CommonHelper.c, commonoem.c, commonoem.h, boot.c,
+hiistring20.c and hiistring21.c.
+
+*****************  commonoem.c  *****************
+User: Arunsb          Date:  6/22/11  Time:  7:10a
+Checked in $/Alaska/BIN/Modules/AMITSE2_0/AMITSE
+Comment:
+  [TAG]           EIP 62631, 60128 
+[Category]      New Feature
+[Description]   Hot key boot option in TSE as per UEFI spec. section 3.1.6.
+                Hot key checked.
+                CheckAdvShiftState function added to handle special case like
+Ctrl+Alt+F6.
+                TSE_CHECK_SHIFTSTATE added for checking special key to launch
+setup.    
+[Files]         AMITSE.sdl, CommonHelper.c, commonoem.c, commonoem.h, boot.c,
+hiistring20.c and hiistring21.c.
+
+*****************  CommonHelper.c  *****************
+User: Arunsb          Date:  6/22/11  Time:  6:54a
+Checked in $/Alaska/BIN/Modules/AMITSE2_0/AMITSE
+Comment:
+  [TAG]             EIP62631
+[Category]      New Feature
+[Description]  Hot key boot option in TSE as per UEFI spec. section 3.1.6
+[Files]             AMITSE.sdl, CommonHelper.c, commonoem.c, commonoem.h,
+boot.c, hiistring20.c and hiistring21.c.
+
+*****************  AMITSE.sdl  *****************
+User: Arunsb          Date:  6/22/11  Time:  6:49a
+Checked in $/Alaska/BIN/Modules/AMITSE2_0/AMITSE
+Comment:
+  [TAG]  		EIP62631
+[Category]  	New Feature
+[Description]  	Hot key boot option in TSE as per UEFI spec. section 3.1.6
+[Files]  		AMITSE.sdl, CommonHelper.c, commonoem.c, commonoem.h, boot.c,
+hiistring20.c and hiistring21.c.
+
+*****************  commonoem.c  *****************
+User: Arunsb          Date:  6/20/11  Time:  3:50p
+Checked in $/Alaska/BIN/Modules/AMITSE2_0/AMITSE
+Comment:
+  [TAG]            EIP57660 
+[Category]     New Feature
+[Description]  Non-removable media boot behavior as described in UEFI
+specification v 2.3.1, p. 3.4.1.
+                      Added CheckForSetupKey function to check setup key
+pressed.
+[Files]            amitse.sdl, bootflow.c, bootflow.h, commonoem.c, boot.c and
+protocol.c
+
+*****************  bootflow.h  *****************
+User: Arunsb          Date:  6/20/11  Time:  3:45p
+Checked in $/Alaska/BIN/Modules/AMITSE2_0/AMITSE
+Comment:
+  [TAG]           EIP57660 
+[Category]      New Feature
+[Description]   Non-removable media boot behavior as described in UEFI
+specification v 2.3.1, p. 3.4.1.
+[Files]         amitse.sdl, bootflow.c, bootflow.h, commonoem.c, boot.c and
+protocol.c
+
+*****************  bootflow.c  *****************
+User: Arunsb          Date:  6/20/11  Time:  3:43p
+Checked in $/Alaska/BIN/Modules/AMITSE2_0/AMITSE
+Comment:
+  [TAG]           EIP57660 
+[Category]      New Feature
+[Description]   Non-removable media boot behavior as described in UEFI
+specification v 2.3.1, p. 3.4.1.
+                If BOOT_FLOW's LaunchShell param sets to
+BOOTFLOW_EXIT_LAUNCH_DEFAULT_BOOTIMAGE then TSE tries to load the
+                efi/boot/bootxxxx.efi from any of the file system.
+                If BOOT_FLOW's InfiniteLoop param sets to
+BOOTFLOW_EXIT_INFINITE_LOOP_LAUNCH_SETUP then TSE tried to enter the setup
+                if no boot option present or succeeded to boot. Enters to setup
+only when setup key detected after boot options failure occurs.
+[Files]         amitse.sdl, bootflow.c, bootflow.h, commonoem.c, boot.c and
+protocol.c
+
+*****************  AMITSE.sdl  *****************
+User: Arunsb          Date:  6/20/11  Time:  3:37p
+Checked in $/Alaska/BIN/Modules/AMITSE2_0/AMITSE
+Comment:
+  [TAG]             EIP57660 
+[Category]      New Feature
+[Description]  Non-removable media boot behavior as described in UEFI
+specification v 2.3.1, p. 3.4.1
+[Files]             amitse.sdl, bootflow.c, bootflow.h, commonoem.c, boot.c and
+protocol.c
+
+*****************  CommonHelper.c  *****************
+User: Rajashakerg     Date:  6/20/11  Time: 11:41a
+Checked in $/Alaska/BIN/Modules/AMITSE2_0/AMITSE
+Comment:
+  [TAG]  		EIP59417   
+[Category]  	New Feature
+[Description]  	Spport LOAD_OPTION_HIDDEN option in TSE 
+[Files]  		boot.h, AMITSE.sdl, CommonHelper.c, bbs.c, boot.c, minisetup.h,
+special.c, callback.c 
+
+*****************  AMITSE.sdl  *****************
+User: Rajashakerg     Date:  6/20/11  Time: 11:39a
+Checked in $/Alaska/BIN/Modules/AMITSE2_0/AMITSE
+Comment:
+  [TAG]  		EIP59417   
+[Category]  	New Feature
+[Description]  	Spport LOAD_OPTION_HIDDEN option in TSE 
+[Files]  		boot.h, AMITSE.sdl, CommonHelper.c, bbs.c, boot.c, minisetup.h,
+special.c, callback.c 
+
+*****************  boot.h  *****************
+User: Rajashakerg     Date:  6/20/11  Time: 11:38a
+Checked in $/Alaska/BIN/Modules/AMITSE2_0/AMITSE/Inc
+Comment:
+  [TAG]  		EIP59417   
+[Category]  	New Feature
+[Description]  	Spport LOAD_OPTION_HIDDEN option in TSE 	
+[Files]  		boot.h, AMITSE.sdl, CommonHelper.c, bbs.c, boot.c, minisetup.h,
+special.c, callback.c 
+
+*****************  CommonHelper.c  *****************
+User: Arunsb          Date:  6/19/11  Time:  4:13p
+Checked in $/Alaska/BIN/Modules/AMITSE2_0/AMITSE
+Comment:
+  [TAG]           EIP58712
+[Category]      New Feature
+[Description]   To disable the BIOS Signon Message and TSE copyright version in
+post screen.
+[Files]         amitse.sdl, amitse.mak, commonhelper.c and notify.c
+
+*****************  AMITSE.sdl  *****************
+User: Arunsb          Date:  6/19/11  Time:  4:10p
+Checked in $/Alaska/BIN/Modules/AMITSE2_0/AMITSE
+Comment:
+  [TAG]           EIP58712
+[Category]      New Feature
+[Description]   To disable the BIOS Signon Message and TSE copyright version in
+post screen.
+[Files]         amitse.sdl, amitse.mak, commonhelper.c and notify.c
+
+*****************  AMITSE.mak  *****************
+User: Arunsb          Date:  6/19/11  Time:  4:07p
+Checked in $/Alaska/BIN/Modules/AMITSE2_0/AMITSE
+Comment:
+  [TAG]           EIP58712
+[Category]      New Feature
+[Description]   To disable the BIOS Signon Message and TSE copyright version in
+post screen.
+[Files]         amitse.sdl, amitse.mak, commonhelper.c and notify.c
+
+*****************  UefiHpkTool.exe  *****************
+User: Arunsb          Date:  6/15/11  Time:  4:49p
+Checked in $/Alaska/BIN/Modules/AMITSE2_0/AMITSE
+Comment:
+  [TAG]           EIP61650 
+[Category]      Bug Fix
+[Severity]      Minor
+[Symptom]       Cannot edit time field when using new "time" format
+[RootCause]     Default refresh interval set to all the time variables
+[Solution]      Default refresh interval provided only for RTC time variable
+[Files]         time.c, date.c, parse.c and uefihpktool.exe
+
+*****************  CommonHelper.c  *****************
+User: Rajashakerg     Date:  6/13/11  Time: 12:37p
+Checked in $/Alaska/BIN/Modules/AMITSE2_0/AMITSE
+Comment:
+  [TAG]  		EIP60910 
+[Category]  	New Feature
+[Description]  	PNG image support in TSE.
+[Files]  		 LogoLib.h, AMITSE.sdl, CommonHelper.c, logo.c, png.c, png.h,
+pnguncmp.c, TseAdvanced.cif
+
+*****************  AMITSE.sdl  *****************
+User: Rajashakerg     Date:  6/13/11  Time: 12:36p
+Checked in $/Alaska/BIN/Modules/AMITSE2_0/AMITSE
+Comment:
+  [TAG]  		EIP60910
+[Category]  	New Feature
+[Description]  	PNG image support in TSE.
+[Files]  		 LogoLib.h, AMITSE.sdl, CommonHelper.c, logo.c, png.c, png.h,
+pnguncmp.c, TseAdvanced.cif
+
+*****************  LogoLib.h  *****************
+User: Rajashakerg     Date:  6/13/11  Time: 12:29p
+Checked in $/Alaska/BIN/Modules/AMITSE2_0/AMITSE/Inc
+Comment:
+  [TAG]  		EIP60910 
+[Category]  	New Feature
+[Description]  	PNG image support in TSE.
+[Files]  		LogoLib.h, AMITSE.sdl, CommonHelper.c, logo.c, png.c, png.h,
+pnguncmp.c, TseAdvanced.cif
+
+*****************  AMITSE.sdl  *****************
+User: Arunsb          Date:  6/10/11  Time:  2:40p
+Checked in $/Alaska/BIN/Modules/AMITSE2_0/AMITSE
+Comment:
+  [TAG]        EIP57660
+[Category]   New Feature
+[Description]    Non-removable media boot behavior as described in UEFI
+specification v 2.3.1, p. 3.4.1.2
+[Files]          boot.c, bootflow.c and bootflow.h
+
+*****************  bootflow.h  *****************
+User: Arunsb          Date:  6/10/11  Time:  2:39p
+Checked in $/Alaska/BIN/Modules/AMITSE2_0/AMITSE
+Comment:
+  [TAG]        EIP57660
+[Category]   New Feature
+[Description]    Non-removable media boot behavior as described in UEFI
+specification v 2.3.1, p. 3.4.1.2
+[Files]          boot.c, bootflow.c and bootflow.h
+
+*****************  bootflow.c  *****************
+User: Arunsb          Date:  6/10/11  Time:  2:38p
+Checked in $/Alaska/BIN/Modules/AMITSE2_0/AMITSE
+Comment:
+  [TAG]        EIP57660
+[Category]   New Feature
+[Description]    Non-removable media boot behavior as described in UEFI
+specification v 2.3.1, p. 3.4.1.2
+[Files]          boot.c, bootflow.c and bootflow.h
+
+*****************  bootflow.h  *****************
+User: Arunsb          Date:  6/08/11  Time: 11:38p
+Checked in $/Alaska/BIN/Modules/AMITSE2_0/AMITSE
+Comment:
+  [TAG]  		EIP57650
+[Category]  	New Feature
+[Description]  	Support in TSE Out of resources boot flow option.
+[Files]  		bootflow.c and bootflow.h
+
+*****************  bootflow.c  *****************
+User: Arunsb          Date:  6/08/11  Time: 11:38p
+Checked in $/Alaska/BIN/Modules/AMITSE2_0/AMITSE
+Comment:
+  [TAG]  		EIP57650
+[Category]  	New Feature
+[Description]  	Support in TSE Out of resources boot flow option.
+[Files]  		bootflow.c and bootflow.h
+
+*****************  Version 63  *****************
+Label: (INT)4.6.2_TSE_2_13_1217
+User: Arunsb          Date:  6/04/11  Time:  6:00p
+Labeled '(INT)4.6.2_TSE_2_13_1217'
+Label comment:
+  [SS Server]	  alaska
+[SS Path]	  $/Alaska/BIN/Modules/AMITSE2_0/AMITSE
+[Label]	  (INT)4.6.2_TSE_2_13_1217
+[Module Name]	  TSE Binary
+[Description]     
+Release to QA cycle 2.
+*) Fix for dynamic update for the goto control to same target page.
+*) Fix for boot override hangs with exception 0x0d.
+*) BGRT table will be formed only for quiet boot logos. BGRT status field will
+be cleared when some changes happened in screen other than displaying the image.
+
+[Entries]
+New Features:
+=============
+
+[TAG]           EIP58954
+[Category]      New Feature
+[Description]   Quiet boot logos only added for BGRT. BGRT status field cleared
+if any changes happened in screen other than displaying the images. BltBuffer
+freed in ConvertBlt2Bmp function.
+[Files]         Postmgmt.c, boot.c, logo.c commonoem.c and commonhelper.c
 
 
-[TAG]				EIP196151 & 180220/198932
-[Category]		Bug Fix
-[Severity:]		Important
-[Symptom:]		Mouse pointer flicker and corrupted in popupEdit of Password and String Control
-[Root Cause]	MouseStop() and MouseRefresh() called frequently in this popupEdit area
-[Solution]		Handle MouseStop() and MouseFreeze() calling based on MousePointer position in popupEdit area
-[Files]			CommonHelper.c, Mouse.c, PopupPassword.c, PopupString.c
+General Bug Fixes:
+===================
 
-[TAG] 			EIP168801/182890/192078
-[Category] 		Improvement
-[Description] 	Support to follow interactive password control based on spec UEFI_2_4_Errata_B_april_9.pdf
-[Files] 			AMITSE.sdl, AmiTSEStr.uni, CommonHelper.c, FakeTokens.c, EzPortPlus.c, TseAdvanced.c, minisetupext.h, popuppassword.c, hiicallback.c, uefi21wrapper.c
+[TAG]           EIP61588
+[Category]      Bug Fix
+[Severity]      Important
+[Symptom]       Advanced -> ISCSI -> Add an attempt-> Mac Address -> Save
+changes causes the system to hang.
+[RootCause]     Dynamic update for the goto control to same target page was not
+updated correctly.
+[Solution]      Fixed to update the control destination page correctly.
+[Files]         parse.c and special.c
 
-[TAG]				EIP203339
-[Category]		Bug Fix
-[Severity:]		Normal
-[Symptom:]		System asserts while loading iScsi setup page when the token TSE_SUPPORT_DEFAULT_FOR_STRING_CONTROL is enabled
-[Root Cause]	Freeing variable is not handled properly.
-[Solution]		Handled freeing variables properly.
-[Files]			MiniSetupExt.c
+[TAG]           EIP48930 
+[Description]   Boot override hangs with exception 0x0d
+[Files]         Parse.c and hii.c
 
-[TAG]				EIP194426
-[Category]		Bug Fix
-[Severity:]		Normal
-[Symptom:]		Defaults are not populating properly in binary files
-[Root Cause]	When default value is used for controls for different data type then VFRCompiler is providing size OpCode as 0x45. So UefiHpkTool always setting size as 8 for all types of data type. 
-[Solution]		Modified HpkTool to set size based on dataType used for controls irrespective of IFR data.
-[Files]			HiiPackager.cpp
+*****************  TseStyleEzportPlusx64.lib  *****************
+User: Arunsb          Date:  6/04/11  Time:  4:46p
+Checked in $/Alaska/BIN/Modules/AMITSE2_0/AMITSE/EzportPlus
+Comment:
+  Updated for 2.13.1217 internal release
 
-[TAG] 			EIP197751
-[Category] 		Bug Fix
-[Severity] 		Minor
-[Symptom] 		System boots from disabled legacy boot device
-[RootCause] 	BBS options are not set to BBS_DO_NOT_BOOT_FROM even when options are disabled in BootPage
-[Solution] 		When BBS options are DISABLED in BBSPage/BootPage then setting BootPriority as BBS_DO_NOT_BOOT_FROM
-[Files] 			Bbs.c
+*****************  TseStyleEzportPlus.lib  *****************
+User: Arunsb          Date:  6/04/11  Time:  4:46p
+Checked in $/Alaska/BIN/Modules/AMITSE2_0/AMITSE/EzportPlus
+Comment:
+  Updated for 2.13.1217 internal release
 
-[TAG]				EIP191520
-[Category]		Bug Fix
-[Severity:]		Important
-[Symptom:]		When GOP is not available setup crashes
-[Root Cause]	NULL check is not handled properly for variable TSEMouse.
-[Solution]		Handled NULL check properly for variable TSEMouse
-[Files]			Mouse.c
+*****************  TSEStyleLegacyx64.lib  *****************
+User: Arunsb          Date:  6/04/11  Time:  4:45p
+Checked in $/Alaska/BIN/Modules/AMITSE2_0/AMITSE/Legacy
+Comment:
+  Updated for 2.13.1217 internal release
 
-[TAG]				EIP197322
-[Category]		Bug Fix
-[Severity:]		Normal
-[Symptom:]		Focus is not setting proper when clicking on TIME/DATE once SoftKbd launched
-[Root Cause]	While launching softkbd for Mouse action, the DATE/TIME field is getting increased when ever ControlActionSelect happens
-[Solution]		When DATE/TIME control is selecting first or multiple times, launching SoftKbd only once for Mouse action and increasing only DATE/TIME field cyclically
-[Files]			Date.c, Time.c
+*****************  TSEStyleLegacy.lib  *****************
+User: Arunsb          Date:  6/04/11  Time:  4:45p
+Checked in $/Alaska/BIN/Modules/AMITSE2_0/AMITSE/Legacy
+Comment:
+  Updated for 2.13.1217 internal release
 
-[TAG]				EIP197420
-[Category]		Bug Fix
-[Severity:]		Important
-[Symptom:]		Possible hang at manufactoring mode due to memory corruption
-[Root Cause]	NULL check is not handle properly for STRING type of control in case of INTERACTIVE
-[Solution]		Handled NULL check and return proper status.
-[Files]			HiiCallback.c
+*****************  TseStylex64.lib  *****************
+User: Arunsb          Date:  6/04/11  Time:  4:45p
+Checked in $/Alaska/BIN/Modules/AMITSE2_0/AMITSE/Ezport
+Comment:
+  Updated for 2.13.1217 internal release
 
-[TAG]				EIP194174
-[Description]	Update TSE Function header and create release notes using Doxygen Tool from VeB
-[Category]   	Action Item
-[Files] 			All C and H files under AMITSE-Binary and AMITSE-Sources
+*****************  TseStyle.lib  *****************
+User: Arunsb          Date:  6/04/11  Time:  4:45p
+Checked in $/Alaska/BIN/Modules/AMITSE2_0/AMITSE/Ezport
+Comment:
+  Updated for 2.13.1217 internal release
 
+*****************  Uefi21Localx64.lib  *****************
+User: Arunsb          Date:  6/04/11  Time:  4:44p
+Checked in $/Alaska/BIN/Modules/AMITSE2_0/AMITSE/Uefi2.1
+Comment:
+  Updated for 2.13.1217 internal release
 
-[TAG] 			EIP168801
-[Category] 		Improvement
-[Description] 	Support to follow interactive password control based on spec UEFI_2_4_Errata_B_april_9.pdf
-[Files] 			AMITSE.sdl, AmiTSEStr.uni, CommonHelper.c, FakeTokens.c, EzPortPlus.c, TseAdvanced.c, minisetupext.h, popuppassword.c, hiicallback.c, uefi21wrapper.c
+*****************  Uefi21Local.lib  *****************
+User: Arunsb          Date:  6/04/11  Time:  4:44p
+Checked in $/Alaska/BIN/Modules/AMITSE2_0/AMITSE/Uefi2.1
+Comment:
+  Updated for 2.13.1217 internal release
 
+*****************  Uefi20Localx64.lib  *****************
+User: Arunsb          Date:  6/04/11  Time:  4:44p
+Checked in $/Alaska/BIN/Modules/AMITSE2_0/AMITSE/uefi2.0
+Comment:
+  Updated for 2.13.1217 internal release
 
-[TAG]				EIP183889
-[Category]		Bug Fix
-[Severity:]		Minor
-[Symptom:]		Restore BGRT table when Leagcy boot failed.
-[Root Cause]	IF we launch Legacy boot option we uninstall BGRT, so in case if its falied then we dont again reinstall the BGRT
-[Solution]		IF its legacy, then after we boot we again reinstall the BGRT
-[Files]			CommonHelper.c, boot.c, postmgmt.c
+*****************  Uefi20Local.lib  *****************
+User: Arunsb          Date:  6/04/11  Time:  4:43p
+Checked in $/Alaska/BIN/Modules/AMITSE2_0/AMITSE/uefi2.0
+Comment:
+  Updated for 2.13.1217 internal release
 
+*****************  TseLiteLocalx64.lib  *****************
+User: Arunsb          Date:  6/04/11  Time:  4:42p
+Checked in $/Alaska/BIN/Modules/AMITSE2_0/AMITSE/TseLite
+Comment:
+  Updated for 2.13.1217 internal release
 
-[TAG] 			EIP193708
-[Category] 		Bug Fix
-[Symptom:]		Setup hangs on selecting 'Save current form now' option repeatedly four times and then selecting 'Discard current changes and exit' option.
-[Root Cause] 	The abnormal offset obtained corrupts the memory. That condition is not handled.
-[Solution] 		A condition is introduced to check for abnormal offset case and skip remaining code and go for next iteration if offset is abnormal.
-[Files] 			uefi21wapper.c
+*****************  TseLiteLocal.lib  *****************
+User: Arunsb          Date:  6/04/11  Time:  4:42p
+Checked in $/Alaska/BIN/Modules/AMITSE2_0/AMITSE/TseLite
+Comment:
+  Updated for 2.13.1217 internal release
 
+*****************  MiniSetupLocalx64.lib  *****************
+User: Arunsb          Date:  6/04/11  Time:  4:42p
+Checked in $/Alaska/BIN/Modules/AMITSE2_0/AMITSE/BootOnly
+Comment:
+  Updated for 2.13.1217 internal release
 
-[TAG] 			EIP190334
-[Category] 		Bug Fix
-[Severity:] 	Normal
-[Symptom:] 		AMITSE build warning/error with (INT)BuildTools_25.1
-[Root Cause] 	Presence of Depex section
-[Solution] 		Removed Depex section which is not needed here
-[Files] 			SignOn\SignOn.inf 
+*****************  MiniSetupLocal.lib  *****************
+User: Arunsb          Date:  6/04/11  Time:  4:41p
+Checked in $/Alaska/BIN/Modules/AMITSE2_0/AMITSE/BootOnly
+Comment:
+  Updated for 2.13.1217 internal release
 
-[TAG] 			EIP187253
-[Category] 		Bug Fix
-[Severity:] 	Normal
-[Symptom:] 		ESRT not working
-[Root Cause] 	SUPPORT_ESRT token disabled by default
-[Solution] 		SUPPORT_ESRT token enabled by default
-[Files] 			AMITSE.sdl
+*****************  TseAdvancedx64.lib  *****************
+User: Arunsb          Date:  6/04/11  Time:  4:41p
+Checked in $/Alaska/BIN/Modules/AMITSE2_0/AMITSE/TseAdvanced
+Comment:
+  Updated for 2.13.1217 internal release
 
+*****************  TseAdvanced.lib  *****************
+User: Arunsb          Date:  6/04/11  Time:  4:40p
+Checked in $/Alaska/BIN/Modules/AMITSE2_0/AMITSE/TseAdvanced
+Comment:
+  Updated for 2.13.1217 internal release
 
-[TAG]				EIP186815
-[Category]		Improvement
-[Description]	Create override function to change MsgBoxCatagory value for Progress Bar
-[Files]			AMITSE.sdl, commonhelper.c, minisetup.h, legacy.c, tseadvanced.c and messagebox.c
+*****************  AMITSE.chm  *****************
+User: Arunsb          Date:  6/04/11  Time:  4:06p
+Checked in $/Alaska/BIN/Modules/AMITSE2_0/AMITSE
+Comment:
+  2.13.1217 release notes updated
 
+*****************  AMITSE.sdl  *****************
+User: Arunsb          Date:  6/04/11  Time:  1:55p
+Checked in $/Alaska/BIN/Modules/AMITSE2_0/AMITSE
+Comment:
+  Build version incremented for 2.13.1217 internal release
 
-[TAG] 			EIP186214
-[Category] 		Bug Fix
-[Severity:] 	Normal
-[Symptom:] 		Unable to show softkbd in POST on mouse click
-[Root Cause] 	Capturing mouse click in notificication function not invoked properly
-[Solution] 		Since notification function registered in application level, other notification functions got importance. To make our notification function to get high priority notification function registered in notify tpl level
-[Files] 			postmgmt.c
+*****************  CommonHelper.c  *****************
+User: Arunsb          Date:  6/04/11  Time:  1:54p
+Checked in $/Alaska/BIN/Modules/AMITSE2_0/AMITSE
+Comment:
+  [TAG]            EIP58954
+[Category]     New Feature
+[Description] Wrapper function added for InvalidateStatusInBgrt function.
+[Files]            Postmgmt.c, boot.c, logo.c commonoem.c and
+                     commonhelper.c
 
+*****************  CommonHelper.c  *****************
+User: Arunsb          Date:  5/29/11  Time: 12:02p
+Checked in $/Alaska/BIN/Modules/AMITSE2_0/AMITSE
+Comment:
+  [TAG]           EIP58954
+[Category]      New Feature
+[Description]   Quiet boot logo's only added for BGRT. BGRT status field cleared
+if any changes happened in screen other than displaying the image.
+[Files]         Postmgmt.c, boot.c, logo.c commonoem.c and commonhelper.c
 
-[TAG] 			EIP175017
-[Category] 		Bug Fix
-[Severity:] 	Normal
-[Symptom:] 		Setup hangs when sendform called from oemdriverhealth module
-[Solution] 		TSE installs timer to read the keys in conin availability. This timer stopped in PostManagerHandshake but if mainsetuploop called from sendform then this timer not stopped so hang happened in different stages.So stopping timer properly resolves the issue.
-[Files] 			FormBrowser2.c
+*****************  commonoem.c  *****************
+User: Arunsb          Date:  5/29/11  Time: 12:01p
+Checked in $/Alaska/BIN/Modules/AMITSE2_0/AMITSE
+Comment:
+  [TAG]           EIP58954
+[Category]      New Feature
+[Description]   Quiet boot logo's only added for BGRT. BGRT status field cleared
+if any changes happened in screen other than displaying the image.
+[Files]         Postmgmt.c, boot.c, logo.c commonoem.c and commonhelper.c
 
+*****************  TseLiteLocalx64.lib  *****************
+User: Arunsb          Date:  5/17/11  Time:  7:18p
+Checked in $/Alaska/BIN/Modules/AMITSE2_0/AMIGTSE/TseLite
+Comment:
+  Updated for GTSE 2.13.1216 release.
 
-[TAG] 			EIP198559
-[Category] 		Bug Fix
-[Severity] 		Minor
-[Symptom] 		AMITSE 2.17.1249.1 causes a CPU exception D when switching out of quiet boot after launching a legacy option rom
-[RootCause] 	gGOP variable not updated with NULL when gop is removed
-[Solution] 		gGOP variable updated properly on switching to post screen from quiet boot
-[Files] 			commonoem.c
+*****************  TseLiteLocal.lib  *****************
+User: Arunsb          Date:  5/17/11  Time:  7:16p
+Checked in $/Alaska/BIN/Modules/AMITSE2_0/AMIGTSE/TseLite
+Comment:
+  Updated for GTSE 2.13.1216  release.
 
-
-[TAG]				EIP 193436
-[Category]		Action Item
-[Symptom]		AMITSE Binary emodule support ARM64
-[Description]	AMITSE Binary emodule support ARM64
-
-
-[TAG]			EIP195048
-[Category]	Bug Fix
-[Symptom:]	Build error in NT32 simulator on Setupdata_asm.asm
-[Solution]	Exportpath is generated in AmiTseGenFds.mak to resolve the environmental issues.
-[Files]		AMITSE.mak
-
-Updated TSEPkg sources function, Structure, file header to new formart
-
-Updated TSEPkg sources by removing EIP number and EIP details

@@ -16,22 +16,9 @@
 #ifndef __EFI_PXEBC_DHCP6_H__
 #define __EFI_PXEBC_DHCP6_H__
 
-#include "Token.h"	// AMI PORTING.
-
 #define PXEBC_DHCP6_OPTION_MAX_NUM        16
 #define PXEBC_DHCP6_OPTION_MAX_SIZE       312
-//
-// AMI PORTING STARTS.
-//
-#if (NET_PKG_AMI_PORTING_ENABLE == 1)
-#define PXEBC_DHCP6_PACKET_MAX_SIZE       (sizeof (EFI_PXE_BASE_CODE_PACKET))
-#else
 #define PXEBC_DHCP6_PACKET_MAX_SIZE       1472
-#endif	// NET_PKG_AMI_PORTING_ENABLE
-
-//
-// AMI PORTING ENDS.
-// 
 #define PXEBC_IP6_POLICY_MAX              0xff
 
 #define PXEBC_DHCP6_S_PORT                547
@@ -134,28 +121,11 @@ typedef struct {
   EFI_DHCP6_PACKET_OPTION *Option;
   UINT8                   Precedence;
 } PXEBC_DHCP6_OPTION_NODE;
-//
-// AMI PORTING STARTS.
-// 
-#define PXEBC_CACHED_DHCP6_PACKET_MAX_SIZE  (OFFSET_OF (EFI_DHCP6_PACKET, Dhcp6) + PXEBC_DHCP6_PACKET_MAX_SIZE)	// AMI PORTING.
-//
-// AMI PORTING ENDS.
-// 
 
 typedef union {
   EFI_DHCP6_PACKET        Offer;
   EFI_DHCP6_PACKET        Ack;
-  //
-  // AMI PORTING STARTS.
-  //
-#if (NET_PKG_AMI_PORTING_ENABLE == 1)
-  UINT8                   Buffer[PXEBC_CACHED_DHCP6_PACKET_MAX_SIZE];
-#else
   UINT8                   Buffer[PXEBC_DHCP6_PACKET_MAX_SIZE];
-#endif
-  //
-  // AMI PORTING ENDS.
-  // 
 } PXEBC_DHCP6_PACKET;
 
 typedef struct {

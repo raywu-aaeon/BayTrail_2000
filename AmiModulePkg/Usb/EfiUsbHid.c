@@ -1,21 +1,35 @@
-//**********************************************************************
-//**********************************************************************
-//**                                                                  **
-//**        (C)Copyright 1985-2016, American Megatrends, Inc.         **
-//**                                                                  **
-//**                       All Rights Reserved.                       **
-//**                                                                  **
-//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093        **
-//**                                                                  **
-//**                       Phone: (770)-246-8600                      **
-//**                                                                  **
-//**********************************************************************
-//**********************************************************************
+//****************************************************************************
+//****************************************************************************
+//**                                                                        **
+//**             (C)Copyright 1985-2011, American Megatrends, Inc.          **
+//**                                                                        **
+//**                          All Rights Reserved.                          **
+//**                                                                        **
+//**                 5555 Oakbrook Pkwy, Norcross, GA 30093                 **
+//**                                                                        **
+//**                          Phone (770)-246-8600                          **
+//**                                                                        **
+//****************************************************************************
+//****************************************************************************
 
-/** @file EfiUsbHid.c
-    EFI USB HID device Driver
+//****************************************************************************
+// $Header: /Alaska/SOURCE/Modules/USB/ALASKA/efiusbhid.c 9     8/29/12 8:35a Ryanchou $
+//
+// $Revision: 9 $
+//
+// $Date: 8/29/12 8:35a $
+//
+//****************************************************************************
 
-**/
+//<AMI_FHDR_START>
+//----------------------------------------------------------------------------
+//
+//  Name:           EfiUsbHid.C
+//
+//  Description:    EFI USB HID device Driver
+//
+//----------------------------------------------------------------------------
+//<AMI_FHDR_END>
 
 #include "AmiDef.h"
 #include "UsbDef.h"
@@ -24,18 +38,25 @@
 #include "UsbKbd.h"
 
 #include "ComponentName.h"
-#include "UsbBus.h"
-#include <Protocol/AmiUsbHid.h>
+#include "UsbBus.h" 
 
 extern  USB_GLOBAL_DATA *gUsbData; 
 
-EFI_GUID gAmiHidProtocolGuid = AMI_USB_HID_PROTOCOL_GUID;
+#define AMI_HID_DEVICE_GUID \
+	{0x1fede521, 0x31c, 0x4bc5, 0x80, 0x50, 0xf3, 0xd6, 0x16, 0x1e, 0x2e, 0x92}
 
-/**
-    USB EFI keyboard driver driver protocol function that
-    returns the keyboard controller name.
+EFI_GUID gAmiHidDeviceGuid = AMI_HID_DEVICE_GUID;
 
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        UsbHidGetControllerName
+//
+// Description: USB EFI keyboard driver driver protocol function that
+//              returns the keyboard controller name.
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 CHAR16*
 UsbHidGetControllerName(
@@ -47,10 +68,15 @@ UsbHidGetControllerName(
 }
  
 
-/**
-    HID EFI driver entry point
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        UsbHidInit
+//
+// Description: HID EFI driver entry point
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 EFI_STATUS
 UsbHidInit(
@@ -81,13 +107,17 @@ UsbHidInit(
         NULL);
 }
  
-/**
-    Verifies if usb hid support can be installed on a device
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:      SupportedUSBHid
+//
+// Description: Verifies if usb hid support can be installed on a device
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 EFI_STATUS
-EFIAPI
 SupportedUSBHid(
     EFI_DRIVER_BINDING_PROTOCOL *This,
     EFI_HANDLE                  Controller,
@@ -96,67 +126,57 @@ SupportedUSBHid(
     EFI_USB_INTERFACE_DESCRIPTOR    Desc;
     EFI_STATUS                      Status;
     EFI_USB_IO_PROTOCOL             *UsbIo;
-    DEV_INFO                        *DevInfo;
 
-    Status = gBS->OpenProtocol(Controller, &gEfiUsbIoProtocolGuid,
+    Status = gBS->OpenProtocol ( Controller,  &gEfiUsbIoProtocolGuid,
         &UsbIo, This->DriverBindingHandle,
-        Controller, EFI_OPEN_PROTOCOL_BY_DRIVER);
-    
+        Controller, EFI_OPEN_PROTOCOL_BY_DRIVER );
     if (EFI_ERROR(Status)) {
         return Status;
     }
 
-    gBS->CloseProtocol(Controller, &gEfiUsbIoProtocolGuid,
+    gBS->CloseProtocol ( Controller, &gEfiUsbIoProtocolGuid,
         This->DriverBindingHandle, Controller);
 
-    DevInfo = FindDevStruc(Controller);
-
-    if (DevInfo == NULL) {
+    Status = UsbIo->UsbGetInterfaceDescriptor(UsbIo, &Desc  );
+    if(EFI_ERROR(Status))
         return EFI_UNSUPPORTED;
-    }
-    
-    if (DevInfo->Flag & DEV_INFO_DEV_UNSUPPORTED) {
-        return EFI_UNSUPPORTED;
-    }
 
-    Status = UsbIo->UsbGetInterfaceDescriptor(UsbIo, &Desc);
-    
-    if (EFI_ERROR(Status)) {
-        return EFI_UNSUPPORTED;
-    }
-
-    if (Desc.InterfaceClass == BASE_CLASS_HID) {
+    if ( Desc.InterfaceClass == BASE_CLASS_HID)
+    {
         return EFI_SUCCESS;
     } else {
         return EFI_UNSUPPORTED;
     }
 } 
 
-/**
-    Installs SimpleTxtIn protocol on a given handle
-
-    @param Controller - controller handle to install protocol on.
-
-    @retval VOID
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        InstallUSBHid
+//
+// Description: Installs SimpleTxtIn protocol on a given handle
+//
+// Input:       Controller - controller handle to install protocol on.
+//
+// Output:      None
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 EFI_STATUS
-EFIAPI
 InstallUSBHid(
     EFI_DRIVER_BINDING_PROTOCOL *This,
     EFI_HANDLE                  Controller,
     EFI_DEVICE_PATH_PROTOCOL    *DevicePath
 )
 {
-    EFI_STATUS                  Status;
-    EFI_USB_IO_PROTOCOL         *UsbIo;
-	USBDEV_T                    *HidDev;
-	HC_STRUC                    *HcData;
-	UINT8                       UsbStatus;
-    AMI_USB_HID_PROTOCOL        *AmiUsbHidProtocol;
+    EFI_STATUS              Status;
+    EFI_USB_IO_PROTOCOL     *UsbIo;
+	USBDEV_T* HidDev;
+	HC_STRUC* HcData;
+	UINT8 UsbStatus;
  
-    USB_DEBUG(DEBUG_INFO, DEBUG_USBHC_LEVEL,
+    USB_DEBUG(DEBUG_USBHC_LEVEL,
         "USB: InstallUSBHid: starting...\n");
     //
     // Open Protocols
@@ -170,74 +190,55 @@ InstallUSBHid(
 	HidDev = UsbIo2Dev(UsbIo); 	
 //Find DEV_INFO 
     ASSERT(HidDev);
-
     HcData = gUsbData->HcTable[HidDev->dev_info->bHCNumber - 1];
     UsbStatus = UsbSmiReConfigDevice(HcData, HidDev->dev_info); 
     if(UsbStatus != USB_SUCCESS) {
-        USB_DEBUG(DEBUG_ERROR, DEBUG_USBHC_LEVEL,
+        USB_DEBUG(DEBUG_USBHC_LEVEL,
             "InstallUSBHid: failed to Reconfigure Hid: %d\n", UsbStatus );
-		gBS->CloseProtocol(
+		gBS->CloseProtocol (
 			  Controller, &gEfiUsbIoProtocolGuid,
 			  This->DriverBindingHandle, Controller);
         return EFI_DEVICE_ERROR;
     }
 
-    if (HidDev->dev_info->HidDevType == 0) {
-        HidDev->dev_info->Flag |= DEV_INFO_DEV_UNSUPPORTED;
-        gBS->CloseProtocol(Controller, &gEfiUsbIoProtocolGuid,
-                This->DriverBindingHandle, Controller);
-        return EFI_UNSUPPORTED;
-    }
-
-    Status = gBS->AllocatePool(EfiBootServicesData, sizeof(AMI_USB_HID_PROTOCOL),
-                    &AmiUsbHidProtocol);
-
-    if (EFI_ERROR(Status)) {
-		gBS->CloseProtocol(
-			  Controller, &gEfiUsbIoProtocolGuid,
-			  This->DriverBindingHandle, Controller);
-        return Status;
-    }
-
-    AmiUsbHidProtocol->HidDevType = HidDev->dev_info->HidDevType;
-
-    Status = gBS->InstallMultipleProtocolInterfaces(&Controller,
-                &gAmiHidProtocolGuid, AmiUsbHidProtocol, 
-                NULL);
+    Status = gBS->InstallMultipleProtocolInterfaces (&Controller,
+                &gAmiHidDeviceGuid, NULL,
+                NULL
+                );
     
-    if (HidDev->dev_info->HidDevType & HID_DEV_TYPE_KEYBOARD) {
+    if(HidDev->dev_info->HidDevType & HID_DEV_TYPE_KEYBOARD) {
 	    InstallUsbKeyboard(This,Controller,DevicePath,HidDev->dev_info,UsbIo);
     }
 
     if (HidDev->dev_info->HidDevType & (HID_DEV_TYPE_MOUSE | HID_DEV_TYPE_POINT)) {
-        if (HidDev->dev_info->HidReport.Flag & HID_REPORT_FLAG_REPORT_PROTOCOL) {
-    		if (HidDev->dev_info->HidReport.Flag & HID_REPORT_FLAG_RELATIVE_DATA) {
-      			InstallUSBMouse(Controller, UsbIo, HidDev->dev_info);
-    		}
+		if (HidDev->dev_info->Hidreport.bFlag & HID_REPORT_BFLAG_RELATIVE_DATA) {
+  			InstallUSBMouse(Controller, UsbIo, HidDev->dev_info);
+		}
 #if USB_DEV_POINT 
-    		if (HidDev->dev_info->HidReport.Flag & HID_REPORT_FLAG_ABSOLUTE_DATA) {
-    			InstallUSBAbsMouse(Controller, HidDev->dev_info);
-    		}
+		if (HidDev->dev_info->Hidreport.bFlag & HID_REPORT_BFLAG_ABSOLUTE_DATA) {
+			InstallUSBAbsMouse(Controller, HidDev->dev_info);
+		}
 #endif
-        } else {
-            InstallUSBMouse(Controller, UsbIo, HidDev->dev_info);
-        }
     }
     return Status;
 
 } 
 
-/**
-    Uninstalls protocol on a given handle
-
-    @param Controller - controller handle.
-
-    @retval VOID
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:        UninstallHid
+//
+// Description: Uninstalls protocol on a given handle
+//
+// Input:       Controller - controller handle.
+//
+// Output:      None
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 EFI_STATUS
-EFIAPI
 UninstallUSBHid(
     EFI_DRIVER_BINDING_PROTOCOL *This,
     EFI_HANDLE                  Controller,
@@ -245,18 +246,18 @@ UninstallUSBHid(
     EFI_HANDLE                  *Children
 )
 {
-	EFI_STATUS				    Status;
-	EFI_USB_IO_PROTOCOL 	    *UsbIo;
-	AMI_USB_HID_PROTOCOL        *AmiUsbHidProtocol;
-	UINT8		                UsbSatus;
-	USBDEV_T*	                HidDev;
-	HC_STRUC*	                HcData;
+	EFI_STATUS				Status;
+	EFI_USB_IO_PROTOCOL 	*UsbIo;
+	VOID					*Ptr;
+	UINT8		UsbSatus;
+	USBDEV_T*	HidDev;
+	HC_STRUC*	HcData;
  
-	USB_DEBUG(DEBUG_INFO, DEBUG_USBHC_LEVEL,
+	USB_DEBUG(DEBUG_USBHC_LEVEL,
 		"\n USB: UnInstallUSBHid: stoping...\n");
 
-	Status = gBS->OpenProtocol(Controller, &gAmiHidProtocolGuid,
-		&AmiUsbHidProtocol, This->DriverBindingHandle, Controller, EFI_OPEN_PROTOCOL_GET_PROTOCOL);
+	Status = gBS->OpenProtocol ( Controller,  &gAmiHidDeviceGuid,
+		&Ptr, This->DriverBindingHandle, Controller, EFI_OPEN_PROTOCOL_GET_PROTOCOL );
 
 	if (EFI_ERROR(Status)) {
 		return Status; 
@@ -264,7 +265,7 @@ UninstallUSBHid(
 	//
 	// Open Protocols
 	//
-	Status = gBS->OpenProtocol(Controller, &gEfiUsbIoProtocolGuid,
+	Status = gBS->OpenProtocol ( Controller,  &gEfiUsbIoProtocolGuid,
 		&UsbIo, This->DriverBindingHandle,
 		Controller, EFI_OPEN_PROTOCOL_GET_PROTOCOL );
 	if (EFI_ERROR(Status)) {
@@ -277,64 +278,45 @@ UninstallUSBHid(
 	UsbSatus = UsbDevDriverDisconnect(HcData, HidDev->dev_info);
 	ASSERT(UsbSatus == USB_SUCCESS);
 
-	if (HidDev->dev_info->HidDevType & HID_DEV_TYPE_KEYBOARD) {
-		Status = UninstallUsbKeyboard(This,Controller,NumberOfChildren,Children);
-        if (EFI_ERROR(Status)) {
-            return Status;
-        }
+	if(HidDev->dev_info->HidDevType & HID_DEV_TYPE_KEYBOARD) {
+		UninstallUsbKeyboard(This,Controller,NumberOfChildren,Children);
 	}
 
 	if (HidDev->dev_info->HidDevType & (HID_DEV_TYPE_MOUSE | HID_DEV_TYPE_POINT)) {
-        if (HidDev->dev_info->HidReport.Flag & HID_REPORT_FLAG_REPORT_PROTOCOL) {
-    		if (HidDev->dev_info->HidReport.Flag & HID_REPORT_FLAG_RELATIVE_DATA) {
-    			Status = UninstallUSBMouse(This, Controller, NumberOfChildren, Children);
-                if (EFI_ERROR(Status)) {
-                    return Status;
-                }
-    		}
+		if (HidDev->dev_info->Hidreport.bFlag & HID_REPORT_BFLAG_RELATIVE_DATA) {
+			UninstallUSBMouse(This,Controller,NumberOfChildren,Children);
+		}
 #if USB_DEV_POINT 
-    		if (HidDev->dev_info->HidReport.Flag & HID_REPORT_FLAG_ABSOLUTE_DATA) {
-    			Status = UninstallUSBAbsMouse(This, Controller, NumberOfChildren, Children);
-                if (EFI_ERROR(Status)) {
-                    return Status;
-                }
-    		}
+		if (HidDev->dev_info->Hidreport.bFlag & HID_REPORT_BFLAG_ABSOLUTE_DATA) {
+			UninstallUSBAbsMouse(Controller);
+		}
 #endif
-        } else {
-            Status = UninstallUSBMouse(This, Controller, NumberOfChildren, Children);
-            if (EFI_ERROR(Status)) {
-                return Status;
-            }
-        }
 	}
-
-	Status = gBS->UninstallMultipleProtocolInterfaces(Controller,
-				&gAmiHidProtocolGuid, AmiUsbHidProtocol, 
+                                        //<(EIP84455+)
+	Status = gBS->UninstallMultipleProtocolInterfaces ( Controller,
+				&gAmiHidDeviceGuid, NULL, 
 				NULL);
 
 	if (EFI_ERROR(Status)) {
 		return Status;
 	}
-    
-    gBS->FreePool(AmiUsbHidProtocol);
-    
 	//Close usbio protocol
-    Status = gBS->CloseProtocol(Controller, &gEfiUsbIoProtocolGuid,
+    Status = gBS->CloseProtocol ( Controller, &gEfiUsbIoProtocolGuid,
     			This->DriverBindingHandle, Controller); 
 
  	return Status;
 }
 
-//**********************************************************************
-//**********************************************************************
-//**                                                                  **
-//**        (C)Copyright 1985-2016, American Megatrends, Inc.         **
-//**                                                                  **
-//**                       All Rights Reserved.                       **
-//**                                                                  **
-//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093        **
-//**                                                                  **
-//**                       Phone: (770)-246-8600                      **
-//**                                                                  **
-//**********************************************************************
-//**********************************************************************
+//****************************************************************************
+//****************************************************************************
+//**                                                                        **
+//**             (C)Copyright 1985-2011, American Megatrends, Inc.          **
+//**                                                                        **
+//**                          All Rights Reserved.                          **
+//**                                                                        **
+//**                 5555 Oakbrook Pkwy, Norcross, GA 30093                 **
+//**                                                                        **
+//**                          Phone (770)-246-8600                          **
+//**                                                                        **
+//****************************************************************************
+//****************************************************************************

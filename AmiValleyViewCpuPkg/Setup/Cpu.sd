@@ -2,7 +2,7 @@
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2013, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **
@@ -112,7 +112,6 @@
         maximum   = 255,\
         step      = 1,\
         default   = 255,\
-        default   = 255, defaultstore = AmiMfgDefault,\
     endnumeric;
 #else
 #define NEHALEM_NUMERIC_CPU_SET_MAX_RATIO
@@ -128,7 +127,6 @@
         maximum   = 255,\
         step      = 1,\
         default   = 255,\
-        default   = 255, defaultstore = AmiMfgDefault,\
     endnumeric;
 #else
 #define NEHALEM_NUMERIC_CPU_SET_BOOT_RATIO
@@ -432,7 +430,6 @@
         maximum = 255,\
         step    = 0,\
         default = 0,\
-        default = 0, defaultstore = AmiMfgDefault,\
     endnumeric;
         
 #define NEHALEM_NUMERIC_PROCESSORTDPLIMIT\
@@ -444,7 +441,6 @@
         maximum = 255,\
         step    = 0,\
         default = 0,\
-        default = 0, defaultstore = AmiMfgDefault,\
     endnumeric;
 
 #define NEHALEM_NUMERIC_CPULONGDURPWR\
@@ -456,7 +452,6 @@
         maximum = 255,\
         step    = 0,\
         default = 0,\
-        default = 0, defaultstore = AmiMfgDefault,\
     endnumeric;
 
 #define NEHALEM_NUMERIC_CPULONGDURTIME\
@@ -468,7 +463,6 @@
         maximum = 32000,\
         step    = 0,\
         default = 0,\
-        default = 0, defaultstore = AmiMfgDefault,\
     endnumeric;
 
 #define NEHALEM_NUMERIC_CPUSHORTDURPWR\
@@ -480,7 +474,6 @@
         maximum = 255,\
         step    = 0,\
         default = 0,\
-        default = 0, defaultstore = AmiMfgDefault,\
     endnumeric;
 
 #define NEHALEM_NUMERIC_1CORERATIOLIMIT\
@@ -492,7 +485,6 @@
         maximum = 255,\
         step    = 0,\
         default = 0,\
-        default = 0, defaultstore = AmiMfgDefault,\
     endnumeric;
 
 #define NEHALEM_NUMERIC_2CORERATIOLIMIT\
@@ -504,7 +496,6 @@
         maximum = 255,\
         step    = 0,\
         default = 0,\
-        default = 0, defaultstore = AmiMfgDefault,\
     endnumeric;
 
 #define NEHALEM_NUMERIC_3CORERATIOLIMIT\
@@ -516,7 +507,6 @@
         maximum = 255,\
         step    = 0,\
         default = 0,\
-        default = 0, defaultstore = AmiMfgDefault,\
     endnumeric;
 
 #define NEHALEM_NUMERIC_4CORERATIOLIMIT\
@@ -528,7 +518,6 @@
         maximum = 255,\
         step    = 0,\
         default = 0,\
-        default = 0, defaultstore = AmiMfgDefault,\
     endnumeric;
 
 #define NEHALEM_NUMERIC_5CORERATIOLIMIT\
@@ -540,7 +529,6 @@
         maximum = 255,\
         step    = 0,\
         default = 0,\
-        default = 0, defaultstore = AmiMfgDefault,\
     endnumeric;
 
 #define NEHALEM_NUMERIC_6CORERATIOLIMIT\
@@ -552,7 +540,6 @@
         maximum = 255,\
         step    = 0,\
         default = 0,\
-        default = 0, defaultstore = AmiMfgDefault,\
     endnumeric;
 
 #define NEHALEM_NUMERIC_7CORERATIOLIMIT\
@@ -564,7 +551,6 @@
         maximum = 255,\
         step    = 0,\
         default = 0,\
-        default = 0, defaultstore = AmiMfgDefault,\
     endnumeric;
 
 #define NEHALEM_NUMERIC_8CORERATIOLIMIT\
@@ -576,7 +562,6 @@
         maximum = 255,\
         step    = 0,\
         default = 0,\
-        default = 0, defaultstore = AmiMfgDefault,\
         endnumeric;
 
     #define NEHALEM_NUMERIC_CPUVID\
@@ -588,7 +573,6 @@
         maximum = 255,\
         step    = 0,\
         default = 0,\
-        default = 0, defaultstore = AmiMfgDefault,\
     endnumeric;
 
 #define CPU_ONEOF_DTSENABLE\
@@ -840,7 +824,7 @@
         NEHALEM_ONEOF_VT
     SUPPRESS_GRAYOUT_ENDIF
 
-    //NEHALEM_ONEOF_CPUPM //EIP205589
+    NEHALEM_ONEOF_CPUPM
 
     suppressif  NOT ideqval SETUP_DATA.CpuPm == 2 OR ideqval SETUP_CPU_FEATURES.EISTAvailable == 0;
         NEHALEM_ONEOF_EIST
@@ -1322,7 +1306,7 @@
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2013, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **

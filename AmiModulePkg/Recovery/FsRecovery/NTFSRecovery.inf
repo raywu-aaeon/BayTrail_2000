@@ -22,7 +22,7 @@
   FILE_GUID                      = 10c22623-db6f-4721-aa30-4c12af4230a8
   MODULE_TYPE                    = PEIM
   VERSION_STRING                 = 1.0
-  LIBRARY_CLASS                  = NULL
+  LIBRARY_CLASS                  = NTFSRecoverylib
 
 #
 # The following information is for reference only and not required by the build tools.
@@ -41,6 +41,7 @@
   MdeModulePkg/MdeModulePkg.dec
   
 [LibraryClasses]
+  PeimEntryPoint
   AmiPeiLib
 
 #**********************************************************************

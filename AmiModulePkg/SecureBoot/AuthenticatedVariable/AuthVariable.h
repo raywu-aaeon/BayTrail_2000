@@ -27,9 +27,9 @@
 #define _AUTHVARIABLE_H_
 
 #include <AmiDxeLib.h>
+#include <AmiCspLib.h>
 #include "NVRAM/NVRAM.h"
 #include <Protocol/AmiDigitalSignature.h>
-#include <../SecureBoot.h>
 
 #include <Efi.h>
 // All are EDKII defined headers
@@ -54,7 +54,7 @@
 #define AUTHINFO_2_SIZE(Cert) (((UINTN)(((EFI_VARIABLE_AUTHENTICATION_2 *) Cert)->AuthInfo.Hdr.dwLength)) + sizeof(EFI_TIME))
 
 #ifdef EFI_DEBUG
-#define AVAR_TRACE(Arguments) { if /*(!AVarRuntime)*/(!IsNvramRuntime()) TRACE(Arguments); }
+#define AVAR_TRACE(Arguments) { if (!AVarRuntime) TRACE(Arguments); }
 #else
 #define AVAR_TRACE(Arguments)
 #endif
@@ -195,17 +195,12 @@ EFI_STATUS GetPlatformMode (
     VOID
     );
 
-EFI_STATUS GetmSecureBootSetup (
-    VOID
+EFI_STATUS GetmSecureBootSupport (
+    UINT8
     );
 
-VOID UpdatePlatformMode (
+VOID  UpdatePlatformMode (
     IN  UINT8 Mode
-    );
-
-EFI_STATUS SetVendorKeysVar ( 
-    IN CHAR16 *VariableName, IN EFI_GUID *VendorGuid,
-    IN UINT32 Attributes, IN UINTN DataSize, IN VOID *Data
     );
 
 EFI_STATUS ValidateSignatureList (

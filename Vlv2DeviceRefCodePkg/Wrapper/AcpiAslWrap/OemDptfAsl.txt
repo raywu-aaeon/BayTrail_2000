@@ -1,3 +1,0 @@
-include("@eLink(OEM_DPTF_ASL_INCLUDE_FILE,"@Child", "\")
-include(\"", "\")")
-

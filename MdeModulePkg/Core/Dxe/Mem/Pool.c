@@ -1,7 +1,7 @@
 /** @file
   UEFI Memory pool management functions.
 
-Copyright (c) 2006 - 2013, Intel Corporation. All rights reserved.<BR>
+Copyright (c) 2006 - 2012, Intel Corporation. All rights reserved.<BR>
 This program and the accompanying materials
 are licensed and made available under the terms and conditions of the BSD License
 which accompanies this distribution.  The full text of the license may be found at
@@ -26,9 +26,9 @@ typedef struct {
 #define POOL_HEAD_SIGNATURE   SIGNATURE_32('p','h','d','0')
 typedef struct {
   UINT32          Signature;
-  UINT32          Reserved;
+  UINT32          Size;
   EFI_MEMORY_TYPE Type;
-  UINTN           Size;
+  UINTN           Reserved;
   CHAR8           Data[1];
 } POOL_HEAD;
 
@@ -37,8 +37,7 @@ typedef struct {
 #define POOL_TAIL_SIGNATURE   SIGNATURE_32('p','t','a','l')
 typedef struct {
   UINT32      Signature;
-  UINT32      Reserved;
-  UINTN       Size;
+  UINT32      Size;
 } POOL_TAIL;
 
 
@@ -98,7 +97,7 @@ CoreInitializePool (
     mPoolHead[Type].Used       = 0;
     mPoolHead[Type].MemoryType = (EFI_MEMORY_TYPE) Type;
     for (Index=0; Index < MAX_POOL_LIST; Index++) {
-      InitializeListHead (&mPoolHead[Type].FreeList[Index]);
+        InitializeListHead (&mPoolHead[Type].FreeList[Index]);
     }
   }
 }
@@ -337,11 +336,11 @@ Done:
     // If we have a pool buffer, fill in the header & tail info
     //
     Head->Signature = POOL_HEAD_SIGNATURE;
-    Head->Size      = Size;
+    Head->Size      = (UINT32) Size;
     Head->Type      = (EFI_MEMORY_TYPE) PoolType;
     Tail            = HEAD_TO_TAIL (Head);
     Tail->Signature = POOL_TAIL_SIGNATURE;
-    Tail->Size      = Size;
+    Tail->Size      = (UINT32) Size;
     Buffer          = Head->Data;
     DEBUG_CLEAR_MEMORY (Buffer, Size - POOL_OVERHEAD);
 

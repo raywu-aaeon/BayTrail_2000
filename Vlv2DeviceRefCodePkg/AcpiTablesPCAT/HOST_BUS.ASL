@@ -326,9 +326,6 @@ Method(_OSC,4,Serialized)
   if (\_SB.PCI0.XHC1.CUID(Arg0)) {
     Return (\_SB.PCI0.XHC1.POSC(Arg1, Arg2, Arg3))
   } else {
-    If (LOr(LEqual(XHCI,2), LEqual(XHCI,3))) {
-      \_SB.PCI0.XHC1.ESEL()
-    }
     If (LGreaterEqual(OSYS,2012)) {
       If(LEqual(XCNT, 0)) {
         \_SB.PCI0.XHC1.XSEL()

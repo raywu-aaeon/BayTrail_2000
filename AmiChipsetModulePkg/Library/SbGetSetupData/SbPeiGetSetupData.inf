@@ -31,8 +31,7 @@
 
 [Ppis]
   gEfiPeiReadOnlyVariable2PpiGuid
-  #gPeiCapsulePpiGuid  #CSP20140829 EIP200855
-  
+ 
 [Guids]
   gEfiMemoryTypeInformationGuid #EIP131494  
  

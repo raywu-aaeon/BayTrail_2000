@@ -1,34 +1,41 @@
-//**********************************************************************
-//**********************************************************************
-//**                                                                  **
-//**        (C)Copyright 1985-2016, American Megatrends, Inc.         **
-//**                                                                  **
-//**                       All Rights Reserved.                       **
-//**                                                                  **
-//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093        **
-//**                                                                  **
-//**                       Phone: (770)-246-8600                      **
-//**                                                                  **
-//**********************************************************************
-//**********************************************************************
+//****************************************************************************
+//****************************************************************************
+//**                                                                        **
+//**             (C)Copyright 1985-2009, American Megatrends, Inc.          **
+//**                                                                        **
+//**                          All Rights Reserved.                          **
+//**                                                                        **
+//**                 5555 Oakbrook Pkwy, Norcross, GA 30093                 **
+//**                                                                        **
+//**                          Phone (770)-246-8600                          **
+//**                                                                        **
+//****************************************************************************
+//****************************************************************************
 
-/** @file UsbMass.c
-    AMI USB Mass Storage support implementation
+//****************************************************************************
+// $Header: /Alaska/SOURCE/Modules/USB/ALASKA/RT/usbmass.c 126   9/04/12 8:03a Wilsonlee $
+//
+// $Revision: 126 $
+//
+// $Date: 9/04/12 8:03a $
+//****************************************************************************
 
-**/
+//<AMI_FHDR_START>
+//-----------------------------------------------------------------------------
+//
+//  Name:           UsbMass.c
+//
+//  Description:    AMI USB Mass Storage support implementation
+//
+//-----------------------------------------------------------------------------
+//<AMI_FHDR_END>
 
 #include "AmiDef.h"
 #include "UsbDef.h"
 #include "AmiUsb.h"
 #include "UsbMass.h"
-#include <Library/BaseMemoryLib.h>
-#include <Library/BaseLib.h>
-#if !USB_RT_DXE_DRIVER
-#include <Library/AmiBufferValidationLib.h>
-#endif
 
 extern  USB_GLOBAL_DATA *gUsbData;
-extern  BOOLEAN gCheckUsbApiParameter;
 
 
 VOID        USBMassInitialize(VOID);
@@ -36,30 +43,30 @@ UINT8       USBMassCheckForStorageDevice(DEV_INFO*, UINT8, UINT8, UINT8);
 DEV_INFO*   USBMassConfigureStorageDevice(HC_STRUC*, DEV_INFO*,
                                         UINT8*, UINT16, UINT16);
 UINT8       USBMassDisconnectStorageDevice(DEV_INFO*);
-UINT16      USBMassSendCBICommand(DEV_INFO*, MASS_XACT_STRUC*);
-UINT32      USBMassProcessBulkData(DEV_INFO*, MASS_XACT_STRUC*);
+UINT16      USBMassSendCBICommand(DEV_INFO*);
+UINT32      USBMassProcessBulkData(DEV_INFO*);
 UINT8       USBMassConsumeBulkData(DEV_INFO*,UINT8,UINT16);
-UINT32      USBMassIssueBOTTransaction(DEV_INFO*, MASS_XACT_STRUC*);
+UINT32      USBMassIssueBOTTransaction(DEV_INFO*);
 VOID        USBMassClearBulkEndpointStall(DEV_INFO*, UINT8);
 VOID        USBMassBOTResetRecovery(DEV_INFO*);
-UINT16      USBMassSendBOTCommand(DEV_INFO*, MASS_XACT_STRUC*);
-UINT8       USBMassGetBOTStatus(DEV_INFO*, MASS_XACT_STRUC*);
+UINT16      USBMassSendBOTCommand(DEV_INFO*);
+UINT8       USBMassGetBOTStatus(DEV_INFO*);
 UINT16      USBMassCBIGetStatus(DEV_INFO*);
-UINT32      USBMassIssueCBITransaction(DEV_INFO*, MASS_XACT_STRUC*);
-UINT8       USBMassReadCapacity10Command(DEV_INFO*);
+UINT32      USBMassIssueCBITransaction(DEV_INFO*);
+UINT8       USBMassReadCapacityCommand(DEV_INFO*);
 UINT32      USBMassCheckDeviceReady(DEV_INFO*);
 UINT32      USBMassRequestSense(DEV_INFO* fpDevInfo);
 VOID        USBMassSenseKeyParsing(DEV_INFO* , UINT32);
 MASS_INQUIRY        *USBMassInquiryCommand(DEV_INFO*);
 UINT8       USBMassUpdateDeviceGeometry( DEV_INFO* fpDevInfo );
 UINT16      USBMassBOTGetMaxLUN(DEV_INFO*);
-UINT8       USBMassIdentifyDeviceType(DEV_INFO*, UINT8*);
+VOID        USBMassIdentifyDeviceType(DEV_INFO*, UINT8*);
 UINT32      USBMassIssueBulkTransfer(DEV_INFO*, UINT8, UINT8*, UINT32);
 VOID        iPodShufflePatch(MASS_GET_DEV_INFO*);
-VOID        USBMassUpdateCylinderInfo(DEV_INFO*, UINT64);
-UINT8       USBMassSetDefaultGeometry(DEV_INFO*, UINT64);
-UINT8       USBMassValidatePartitionTable(MASTER_BOOT_RECORD*, UINT64, MBR_PARTITION*);
-UINT16      USBMassSetDefaultType(DEV_INFO*, UINT64);
+VOID        USBMassUpdateCylinderInfo(DEV_INFO*, UINT32);
+UINT8       USBMassSetDefaultGeometry(DEV_INFO*, UINT32);
+UINT8       USBMassValidatePartitionTable(MASTER_BOOT_RECORD*, UINT32, MBR_PARTITION*);
+UINT16      USBMassSetDefaultType(DEV_INFO*, UINT32);
 VOID        USBMassGetPhysicalDeviceType(DEV_INFO*, UINT8*);
 UINT8       USB_SetAddress(HC_STRUC*, DEV_INFO*, UINT8);
 UINT32      dabc_to_abcd(UINT32);
@@ -67,11 +74,12 @@ DEV_INFO*   USBGetProperDeviceInfoStructure(DEV_INFO*, UINT8);
 UINT32      USBMassTestUnitReady(DEV_INFO*);
 VOID        StoreUsbMassDeviceName(DEV_INFO*, UINT8*);
 extern      VOID AddPortNumbertoDeviceString(DEV_INFO*);
-UINT8       USBMassGetConfiguration(DEV_INFO*);
 
+VOID MemCopy (UINT8*, UINT8*, UINT32);
 VOID* USB_MemAlloc (UINT16);
 DEV_INFO* USB_GetDeviceInfoStruc(UINT8, DEV_INFO*, UINT8, HC_STRUC*);
 MASS_INQUIRY* USBMassGetDeviceParameters(DEV_INFO*);
+UINT32      USBMassReadCapacityBlockSizePatch(UINT32, DEV_INFO*);
 
 UINT8 USB_MemFree  (VOID*,  UINT16);
 VOID FixedDelay(UINTN);    
@@ -96,10 +104,15 @@ USBMassFillDriverEntries (DEV_DRIVER    *fpDevDriver)
     fpDevDriver->pfnDisconnectDevice    = USBMassDisconnectStorageDevice;
 }
 
-/**
-    This function initializes mass storage device related data
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// FUNCTION:    USBMassInitialize
+//
+// DESCRIPTION: This function initializes mass storage device related data
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 VOID
 USBMassInitialize ()
@@ -111,110 +124,112 @@ USBMassInitialize ()
 
 }
 
-/**
-    This routine checks for hub type device from the
-    interface data provided
-
-    @param bBaseClass  USB base class code
-        bSubClass   USB sub-class code
-        bProtocol   USB protocol code
-
-    @retval BIOS_DEV_TYPE_STORAGE type on success or 0FFH on error
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// PROCEDURE:   USBMassCheckForStorageDevice
+//
+// DESCRIPTION: This routine checks for hub type device from the
+//      interface data provided
+//
+// PARAMETERS:  bBaseClass  USB base class code
+//              bSubClass   USB sub-class code
+//              bProtocol   USB protocol code
+//
+// RETURN:  BIOS_DEV_TYPE_STORAGE type on success or 0FFH on error
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT8
 USBMassCheckForStorageDevice (
-    DEV_INFO*   DevInfo,
-    UINT8       BaseClass,
-    UINT8       SubClass,
-    UINT8       Protocol
-)
+    DEV_INFO*   fpDevInfo,
+    UINT8       bBaseClass,
+    UINT8       bSubClass,
+    UINT8       bProtocol)
 {
-    if (BaseClass != BASE_CLASS_MASS_STORAGE) {
-        return USB_ERROR;
-    }
+    if(bBaseClass != BASE_CLASS_MASS_STORAGE) return USB_ERROR;
 										//(EIP99882+)>
     if (!gUsbData->UsbSetupData.UsbMassDriverSupport) {
         return USB_ERROR;
     }
 										//<(EIP99882+)
 //Skip USB mass storage devices enumeration when legacy is disabled
-    if (gUsbData->dUSBStateFlag & USB_FLAG_DISABLE_LEGACY_SUPPORT) {
-        if (LEGACY_USB_DISABLE_FOR_USB_MASS) {									//(EIP93469)
+    if (gUsbData->dUSBStateFlag & USB_FLAG_DISABLE_LEGACY_SUPPORT)
+        if(LEGACY_USB_DISABLE_FOR_USB_MASS) 									//(EIP93469)
            return USB_ERROR;
-        }
-    }
     //
     // Base class is okay. Check the protocol field for supported protocols.
     // Currently we support CBI, CB and BOT protocols.
     //
-    if ((Protocol != PROTOCOL_CBI) &&
-        (Protocol != PROTOCOL_CBI_NO_INT) &&
-        (Protocol != PROTOCOL_BOT)) {
+    if((bProtocol != PROTOCOL_CBI) &&
+        (bProtocol != PROTOCOL_CBI_NO_INT) &&
+        (bProtocol != PROTOCOL_BOT)) {
         return USB_ERROR;
     }
 
-    return BIOS_DEV_TYPE_STORAGE;
-    
+    return  BIOS_DEV_TYPE_STORAGE;
 }
 
-/**
-    This function finds a free mass device info structure and
-    returns the pointer to it
 
-    @param VOID
-
-    @retval Pointer to the Mass Device Info (0 on failure)
-        The number mass storage DeviceInfo structure (0-based)
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   USBMassGetFreeMassDeviceInfoStruc
+//
+// Description: This function finds a free mass device info structure and
+//              returns the pointer to it
+//
+// Input:   None
+//
+// Output:  Pointer to the Mass Device Info (0 on failure)
+//          The number mass storage DeviceInfo structure (0-based)
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 DEV_INFO*
 USBMassGetFreeMassDeviceInfoStruc(
 	DEV_INFO	*DevInfo,
-    UINT8		*Indx
+    UINT8		*indx
 )
 {
-    DEV_INFO*   Dev = &gUsbData->aDevInfoTable[1];
-    UINT8       Count;
-    UINT8       MassDevIndx = 0;
-    
-    for (Count = 0; Count < (MAX_DEVICES-1); Count++, Dev++) {
-		if (!(Dev->Flag & DEV_INFO_VALID_STRUC)) {
+    DEV_INFO* dev = &gUsbData->aDevInfoTable[1];
+    UINT8 count;
+    UINT8 massdev_indx = 0;
+    for (count = 0; count < (MAX_DEVICES-1); count++, dev++) {
+		if (!(dev->bFlag & DEV_INFO_VALID_STRUC)) {
 			continue;
 		}
-        if (Dev->bDeviceType == BIOS_DEV_TYPE_STORAGE) {
-            MassDevIndx++;
+        if (dev->bDeviceType == BIOS_DEV_TYPE_STORAGE) {
+            massdev_indx++;
         }
-        if (Dev == DevInfo) {
+        if (dev == DevInfo) {
 			break;
         }
     }
-    if (Count == (MAX_DEVICES-1)) {
+    if (count == (MAX_DEVICES-1)) {
 		return NULL;
     }
-    *Indx = MassDevIndx;
-    
-    return Dev;
+    *indx = massdev_indx;
+    return dev;
 }
 
 
-/**
-    This function finds a free mass device info structure and
-    copies the current mass device info structure into it
-
-    @param Current mass device info structure
-
-    @retval New mass device info
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   USBMassFindFreeMassDeviceInfo
+//
+// Description: This function finds a free mass device info structure and
+//      copies the current mass device info structure into it
+//
+// Input:   Current mass device info structure
+//
+// Output:  New mass device info
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 DEV_INFO*
-USBMassFindFreeMassDeviceInfo(
-    DEV_INFO* Dev,
-    UINT8 *EmulIndex
-)
+USBMassFindFreeMassDeviceInfo(DEV_INFO* Dev, UINT8 *EmulIndex)
 {
     UINT8		Indx = 0;
     DEV_INFO	*NewDev;
@@ -222,9 +237,7 @@ USBMassFindFreeMassDeviceInfo(
     // Get the free mass device info structure pointer
     NewDev = USBMassGetFreeMassDeviceInfoStruc(Dev, &Indx);
 
-    if (NewDev == NULL) {
-        return NULL;   // No free entry found.
-    }
+    if (NewDev == NULL) return NULL;   // No free entry found.
 
     // Get the emulation type setup question associated with this device
     ASSERT(Indx>0 && Indx<17);
@@ -233,118 +246,115 @@ USBMassFindFreeMassDeviceInfo(
     }
 
     Dev->wEmulationOption = gUsbData->USBMassEmulationOptionTable[Indx-1];
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "USBMassFindFreeMassDeviceInfo-------- indx %d, emu %d\n", Indx, Dev->wEmulationOption);
+USB_DEBUG(DEBUG_LEVEL_3, "USBMassFindFreeMassDeviceInfo-------- indx %d, emu %d\n", Indx, Dev->wEmulationOption);
 
     // Set default device type and emulation type to 0
     Dev->bStorageType = 0;
     Dev->fpLUN0DevInfoPtr = 0;
-    Dev->Flag |= DEV_INFO_DEV_PRESENT;
+    Dev->bFlag |= DEV_INFO_DEV_PRESENT;
 
     *EmulIndex = Indx-1;
 
     return Dev;
-    
 }
 
-/**
-    This function verifies the presence of logical units (LUN)
-    in the USB mass device and creates appropriate device info
-    structures for them
 
-    @param fpDevInfo - Device information structure pointer
-        bMaxLun - Maximum number of logical units present (non-ZERO)
-
-    @retval USB_ERROR   On error
-        USB_SUCCESS On successfull completion
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   USBMassCreateLogicalUnits
+//
+// Description: This function verifies the presence of logical units (LUN)
+//              in the USB mass device and creates appropriate device info
+//              structures for them
+//
+// Input:   fpDevInfo - Device information structure pointer
+//          bMaxLun - Maximum number of logical units present (non-ZERO)
+//
+// Output:  USB_ERROR   On error
+//          USB_SUCCESS On successfull completion
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT8
 USBMassCreateLogicalUnits(
-    DEV_INFO*   DevInfo,
-    UINT8       MaxLun,
-    UINT8       EmulIndex
-)
+    DEV_INFO*   fpDevInfo,
+    UINT8       bMaxLun,
+    UINT8       EmulIndex)
 {
-    UINT8           Lun;
-    DEV_INFO*       NewDevInfo;
-    MASS_INQUIRY    *Inq;
+    UINT8       bLUN;
+    DEV_INFO*   fpNewDevInfo;
+    MASS_INQUIRY    *inq;
 
-    for (Lun = 1; Lun <= MaxLun; Lun++) {
+    for (bLUN = 1; bLUN <= bMaxLun; bLUN++) {
 
-        if (CheckDeviceLimit(BASE_CLASS_MASS_STORAGE) == TRUE) {
-            break;
-        }
+        if (CheckDeviceLimit(BASE_CLASS_MASS_STORAGE) == TRUE) break;
         //
         // Get the proper device info structure
         //
-        NewDevInfo = USBGetProperDeviceInfoStructure(DevInfo, Lun);
-        if (!NewDevInfo) {
-            return USB_ERROR;
-        }
+        fpNewDevInfo = USBGetProperDeviceInfoStructure(fpDevInfo, bLUN);
+        if (!fpNewDevInfo) return USB_ERROR;
         //
         // Check whether this device is reconnected by checking the
         // valid structure flag
         //
-        if ((NewDevInfo->Flag & DEV_INFO_MASS_DEV_REGD)) {
+        if ((fpNewDevInfo->bFlag & DEV_INFO_MASS_DEV_REGD)) {
             //
             // Indicate device as connected
             //
-            NewDevInfo->Flag |= DEV_INFO_DEV_PRESENT;
+            fpNewDevInfo->bFlag |= DEV_INFO_DEV_PRESENT;
 
 			// Change the parent HC number and port number in the existing DEV_INFO
-	        NewDevInfo->bHCNumber = DevInfo->bHCNumber;
-	    	NewDevInfo->bHubDeviceNumber = DevInfo->bHubDeviceNumber;
-			NewDevInfo->bHubPortNumber = DevInfo->bHubPortNumber;
-			NewDevInfo->bEndpointSpeed = DevInfo->bEndpointSpeed;
-			NewDevInfo->wEndp0MaxPacket = DevInfo->wEndp0MaxPacket;
-	    	NewDevInfo->DevMiscInfo = DevInfo->DevMiscInfo;
-	        NewDevInfo->bDeviceAddress = DevInfo->bDeviceAddress;
-			NewDevInfo->bBulkInEndpoint = DevInfo->bBulkInEndpoint;
-			NewDevInfo->wBulkInMaxPkt = DevInfo->wBulkInMaxPkt;
-			NewDevInfo->bBulkOutEndpoint = DevInfo->bBulkOutEndpoint;
-			NewDevInfo->wBulkOutMaxPkt = DevInfo->wBulkOutMaxPkt;
-			NewDevInfo->IntInEndpoint = DevInfo->IntInEndpoint;
-			NewDevInfo->IntInMaxPkt = DevInfo->IntInMaxPkt;
-			NewDevInfo->bPollInterval = DevInfo->bPollInterval;
-			NewDevInfo->fpLUN0DevInfoPtr = DevInfo;
+	        fpNewDevInfo->bHCNumber = fpDevInfo->bHCNumber;
+	    	fpNewDevInfo->bHubDeviceNumber = fpDevInfo->bHubDeviceNumber;
+			fpNewDevInfo->bHubPortNumber = fpDevInfo->bHubPortNumber;
+			fpNewDevInfo->bEndpointSpeed = fpDevInfo->bEndpointSpeed;
+			fpNewDevInfo->wEndp0MaxPacket = fpDevInfo->wEndp0MaxPacket;
+	    	fpNewDevInfo->DevMiscInfo = fpDevInfo->DevMiscInfo;
+	        fpNewDevInfo->bDeviceAddress = fpDevInfo->bDeviceAddress;
+			fpNewDevInfo->bBulkInEndpoint = fpDevInfo->bBulkInEndpoint;
+			fpNewDevInfo->wBulkInMaxPkt = fpDevInfo->wBulkInMaxPkt;
+			fpNewDevInfo->bBulkOutEndpoint = fpDevInfo->bBulkOutEndpoint;
+			fpNewDevInfo->wBulkOutMaxPkt = fpDevInfo->wBulkOutMaxPkt;
+			fpNewDevInfo->bIntEndpoint = fpDevInfo->bIntEndpoint;
+			fpNewDevInfo->wIntMaxPkt = fpDevInfo->wIntMaxPkt;
+			fpNewDevInfo->bPollInterval = fpDevInfo->bPollInterval;
+
+			fpNewDevInfo->fpLUN0DevInfoPtr	= fpDevInfo;
         } else {    // This is different device, it was not reconnected
             //
             // Copy the old device info structure into the new one
             //
-            CopyMem((UINT8*)NewDevInfo, (UINT8*)DevInfo, sizeof (DEV_INFO));
-            NewDevInfo->bLUN  = Lun; // Change LUN number
-            NewDevInfo->wEmulationOption = gUsbData->USBMassEmulationOptionTable[EmulIndex + Lun];
-            ZeroMem(NewDevInfo->DevNameString, 64);
+            MemCopy((UINT8*)fpDevInfo,
+                    (UINT8*)fpNewDevInfo,
+                    sizeof (DEV_INFO));
+            fpNewDevInfo->bLUN  = bLUN; // Change LUN number
+            fpNewDevInfo->wEmulationOption = gUsbData->USBMassEmulationOptionTable[EmulIndex+bLUN];
+            MemSet(fpNewDevInfo->DevNameString, 64, 0);
             //
             // Save the Lun0 device info pointer in the current LUN
             //
-            NewDevInfo->fpLUN0DevInfoPtr  = DevInfo;
+            fpNewDevInfo->fpLUN0DevInfoPtr  = fpDevInfo;
 
 			//
 			// The Lun0 device might have been already locked by the
 			// bus (USBBUS.usbhc_on_timer), clear it for current LUN.
 			//
-			NewDevInfo->Flag &= ~DEV_INFO_DEV_BUS;
+			fpNewDevInfo->bFlag &= ~DEV_INFO_DEV_BUS;
 
-			Inq = USBMassGetDeviceParameters(NewDevInfo);
-			ASSERT(Inq);
-			StoreUsbMassDeviceName(NewDevInfo, (UINT8*)Inq + 8);
-            if (NewDevInfo->bStorageType == USB_MASS_DEV_CDROM) {
-                USBMassGetConfiguration(NewDevInfo);
-            }
+			inq = USBMassGetDeviceParameters(fpNewDevInfo);
+			ASSERT(inq);
+			StoreUsbMassDeviceName(fpNewDevInfo, (UINT8*)inq+8);
         }
 
 		if (gUsbData->dUSBStateFlag & USB_FLAG_RUNNING_UNDER_EFI) {
-            if (!(NewDevInfo->Flag & DEV_INFO_IN_QUEUE)) {
-			    USB_SmiQueuePut(NewDevInfo);
-                NewDevInfo->Flag |= DEV_INFO_IN_QUEUE;
-            }
+			USB_SmiQueuePut(fpNewDevInfo);
 		}
     }
 
-    return USB_SUCCESS;
+    return  USB_SUCCESS;
 }
+
 
 VOID
 StoreUsbMassDeviceName(
@@ -354,8 +364,6 @@ StoreUsbMassDeviceName(
 {
     UINT8   i;
     UINT8   j;
-    UINT8   StrIndex;
-    UINT8   StrIndexMax;
 
     for (i = 0; i < 64; i++) {
         if (Device->DevNameString[i] != 0) {
@@ -369,44 +377,21 @@ StoreUsbMassDeviceName(
         }
     }
 
-    // INQUIRY Data Format
-    // The Vendor Identification field contains 8 bytes of ASCII data identifying the vendor of the product.
-    // The Product Identification field contains 16 bytes of ASCII data as defined by the vendor.
-    // The Product Revision Level field contains 4 bytes of ASCII data as defined by the vendor.
-    
-    switch (USB_MASS_STORAGE_DEVICE_NAME) {
-        // Vendor Information + Product Identification + Product Revision Level
-        case 0:
-            StrIndexMax = 28;
-            break;
-        // Vendor Information + Product Identification
-        case 1:
-            StrIndexMax = 24;
-            break;
-        // Vendor Information
-        case 2:
-            StrIndexMax = 8;
-            break;
-        default:
-            StrIndexMax = 28;
-            break;            
-    }
-
-    for (i = 0, StrIndex = 0; (i < (32 - j)) && (StrIndex < StrIndexMax); i++, StrIndex++) {
+    for (i = 0; i < (32-j); i++, Str++) {
         // supress spaces if more than one
-        if ((i > 0) && (Device->DevNameString[i-1] == ' ') && (Str[StrIndex] == ' ')) {
+        if ((i>0) && (Device->DevNameString[i-1]==' ') && (*Str==' ')) {
             i--;
             continue;
         }
 										//(EIP63706+)>
 		// Filter out the character if it is invisible.
-		if (((Str[StrIndex] != 0) && (Str[StrIndex] < 0x20)) || (Str[StrIndex] > 0x7E)) {
+		if (((*Str != 0) && (*Str < 0x20)) || (*Str > 0x7E)) {
 			i--;
 			continue;
 		}
 										//<(EIP63706+)
 
-        Device->DevNameString[i] = Str[StrIndex];
+        Device->DevNameString[i] = *Str;
     }
 
     //
@@ -417,20 +402,25 @@ StoreUsbMassDeviceName(
 #endif
 }
 
-/**
-    This function checks an interface descriptor of a device
-    to see if it describes a USB mass device.  If the device
-    is a mass storage device,  then it is configured
-    and initialized.
 
-    @param pHCStruc    HCStruc pointer
-        pDevInfo    Device information structure pointer
-        pDesc       Pointer to the descriptor structure
-        wEnd        End offset of the device descriptor
-
-    @retval New device info structure, NULL on error
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// PROCEDURE:   USBMassConfigureStorageDevice
+//
+// DESCRIPTION: This function checks an interface descriptor of a device
+//              to see if it describes a USB mass device.  If the device
+//              is a mass storage device,  then it is configured
+//              and initialized.
+//
+// PARAMETERS:  pHCStruc    HCStruc pointer
+//              pDevInfo    Device information structure pointer
+//              pDesc       Pointer to the descriptor structure
+//              wEnd        End offset of the device descriptor
+//
+// RETURN:      New device info structure, NULL on error
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 DEV_INFO*
 USBMassConfigureStorageDevice (
@@ -464,13 +454,13 @@ USBMassConfigureStorageDevice (
     fpDevInfo->bDeviceType      = BIOS_DEV_TYPE_STORAGE;
     fpDevInfo->fpPollTDPtr      = 0;
 
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "USBMassConfigureDevice ....\n");
+USB_DEBUG (DEBUG_LEVEL_3, "USBMassConfigureDevice ....\n");
 
     bTemp = 0x03;       // bit 1 = Bulk In, bit 0 = Bulk Out
 
 	fpDevInfo->bBulkOutEndpoint = 0;
 	fpDevInfo->bBulkInEndpoint = 0;
-	fpDevInfo->IntInEndpoint  = 0;
+	fpDevInfo->bIntEndpoint  = 0;
 
     fpIntrfDesc = (INTRF_DESC*)(fpDesc + wStart);
     fpDesc+=((CNFG_DESC*)fpDesc)->wTotalLength; // Calculate the end of descriptor block
@@ -499,7 +489,7 @@ USBMassConfigureStorageDevice (
                                                         & EP_DESC_ADDR_EP_NUM);
                     fpDevInfo->wBulkOutMaxPkt = fpEndpDesc->wMaxPacketSize;
                     bTemp &= 0xFE;
-					USB_DEBUG(DEBUG_INFO, 3, "bulk out endpoint addr: %x, max packet size: %x\n", 
+					USB_DEBUG(3, "bulk out endpoint addr: %x, max packet size: %x\n", 
 						fpDevInfo->bBulkOutEndpoint, fpDevInfo->wBulkOutMaxPkt);
                 }
             } else {
@@ -512,7 +502,7 @@ USBMassConfigureStorageDevice (
                                                         & EP_DESC_ADDR_EP_NUM);
                     fpDevInfo->wBulkInMaxPkt    = fpEndpDesc->wMaxPacketSize;
                     bTemp   &= 0xFD;
-					USB_DEBUG(DEBUG_INFO, 3, "bulk in endpoint addr: %x, max packet size: %x\n", 
+					USB_DEBUG(3, "bulk in endpoint addr: %x, max packet size: %x\n", 
 						fpDevInfo->bBulkInEndpoint, fpDevInfo->wBulkInMaxPkt);
                 }
             }
@@ -527,11 +517,11 @@ USBMassConfigureStorageDevice (
         }
 
 		if (fpEndpDesc->bEndpointAddr & EP_DESC_ADDR_DIR_BIT ) {
-            fpDevInfo->IntInEndpoint = fpEndpDesc->bEndpointAddr;
-            fpDevInfo->IntInMaxPkt = fpEndpDesc->wMaxPacketSize;
+            fpDevInfo->bIntEndpoint = fpEndpDesc->bEndpointAddr;
+            fpDevInfo->wIntMaxPkt = fpEndpDesc->wMaxPacketSize;
             fpDevInfo->bPollInterval = fpEndpDesc->bPollInterval;  
-			USB_DEBUG(DEBUG_INFO, 3, "interrupt in endpoint addr: %x, max packet size: %x\n", 
-				fpDevInfo->IntInEndpoint, fpDevInfo->IntInMaxPkt);
+			USB_DEBUG(3, "interrupt in endpoint addr: %x, max packet size: %x\n", 
+				fpDevInfo->bIntEndpoint, fpDevInfo->wIntMaxPkt);
         }
     }
 
@@ -551,7 +541,7 @@ USBMassConfigureStorageDevice (
     // Check whether the device is already registered. If so, proceed with current
     // mass info structure
     //
-    if (fpDevInfo->Flag & DEV_INFO_MASS_DEV_REGD) {
+    if (fpDevInfo->bFlag & DEV_INFO_MASS_DEV_REGD) {
         newDev = fpDevInfo;
         
         goto UMCM_MassDeviceOkay;
@@ -565,10 +555,7 @@ USBMassConfigureStorageDevice (
     fpDevInfo = newDev;
 
     inq = USBMassGetDeviceParameters(fpDevInfo);
-    if (inq == NULL) {
-        fpDevInfo->bDeviceType = 0;
-        goto UMCM_Error;
-    }
+    if (inq == NULL) goto UMCM_Error;
 
     //
     // Do not enumerate device if it is not a CD-ROM and has the block size different from 512 Bytes
@@ -601,10 +588,10 @@ USBMassConfigureStorageDevice (
             !(BOOLEAN)(gUsbData->dUSBStateFlag & USB_HOTPLUG_CDROM_ENABLED);
 
         if ( checkFDDhotplug || checkCDROMhotplug || checkHDDhotplug ) {
-            USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "connecting hotplug...");
+    USB_DEBUG(DEBUG_LEVEL_3, "connecting hotplug...");
 //          inq = USBMassGetDeviceParameters(fpDevInfo);
 //          if (inq == NULL) goto UMCM_Error;
-            USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "devtype phy %d, emu %d...", fpDevInfo->bPhyDevType, fpDevInfo->bEmuType);
+    USB_DEBUG(DEBUG_LEVEL_3, "devtype phy %d, emu %d...", fpDevInfo->bPhyDevType, fpDevInfo->bEmuType);
 
             if ( checkFDDhotplug &&
                 (fpDevInfo->bStorageType == USB_MASS_DEV_ARMD) ) {
@@ -622,9 +609,9 @@ USBMassConfigureStorageDevice (
                 gUsbData->dUSBStateFlag |= USB_HOTPLUG_CDROM_ENABLED;
             }
 
-            fpDevInfo->Flag |= DEV_INFO_HOTPLUG;
+            fpDevInfo->bFlag |= DEV_INFO_HOTPLUG;
             *newDev = *fpDevInfo;   // Copy device into DevInfo dedicated to hotplug
-            fpDevInfo->Flag &= ~DEV_INFO_VALIDPRESENT; // Release fpDevInfo
+            fpDevInfo->bFlag &= ~DEV_INFO_VALIDPRESENT; // Release fpDevInfo
             fpDevInfo = newDev;
         }
     }
@@ -642,7 +629,6 @@ UMCM_MassDeviceOkay:
 //    if ( newDev->bPhyDevType == USB_EMU_HDD_OR_FDD ) {
     if ( newDev->bPhyDevType == USB_MASS_DEV_CDROM ) {
         gUsbData->NumberOfCDROMs++;
-        USBMassGetConfiguration(newDev);
     }
 
     if (bMaxLUN) {
@@ -676,47 +662,49 @@ UMCM_Error:
 }
 
 
-/**
-    This function disconnects the storage device
-
-    @param pDevInfo    Device info structure pointer
-
-    @retval Nothing
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// PROCEDURE:   USBMassDisconnectStorageDevice
+//
+// DESCRIPTION: This function disconnects the storage device
+//
+// PARAMETERS:  pDevInfo    Device info structure pointer
+//
+// RETURN:  Nothing
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT8
-USBMassDisconnectStorageDevice (
-    DEV_INFO* DevInfo
-)
+USBMassDisconnectStorageDevice (DEV_INFO* fpDevInfo)
 {
-//  USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_5, "USBMassDisconnectDevice ....  \n");
+//  USB_DEBUG (DEBUG_LEVEL_5, "USBMassDisconnectDevice ....  \n");
 
-	DevInfo->bBulkOutEndpoint = 0;
-	DevInfo->bBulkInEndpoint = 0;
-	DevInfo->IntInEndpoint  = 0;
+	fpDevInfo->bBulkOutEndpoint = 0;
+	fpDevInfo->bBulkInEndpoint = 0;
+	fpDevInfo->bIntEndpoint  = 0;
 
-    if ((DevInfo->bEmuType == USB_EMU_FLOPPY_ONLY) ||
-        (DevInfo->bEmuType == USB_EMU_FORCED_FDD)) {
+    if ( (fpDevInfo->bEmuType == USB_EMU_FLOPPY_ONLY) ||
+        (fpDevInfo->bEmuType == USB_EMU_FORCED_FDD) ) {
         gUsbData->NumberOfFDDs--;
     }
 
-    if (DevInfo->bEmuType == USB_EMU_HDD_ONLY) {
+    if ( fpDevInfo->bEmuType == USB_EMU_HDD_ONLY ) {
         gUsbData->NumberOfHDDs--;
     }
 
 //    if ( newDev->bPhyDevType == USB_EMU_HDD_OR_FDD ) {
-    if ( DevInfo->bPhyDevType == USB_MASS_DEV_CDROM ) {
+    if ( fpDevInfo->bPhyDevType == USB_MASS_DEV_CDROM ) {
         gUsbData->NumberOfCDROMs--;
     }
 
-    if (DevInfo->Flag & DEV_INFO_HOTPLUG) {
-        DevInfo->Flag &= ~DEV_INFO_HOTPLUG;
-		if (DevInfo == &gUsbData->FddHotplugDev) {
+    if ( fpDevInfo->bFlag & DEV_INFO_HOTPLUG ) {
+        fpDevInfo->bFlag &= ~DEV_INFO_HOTPLUG;
+		if (fpDevInfo == &gUsbData->FddHotplugDev) {
             gUsbData->dUSBStateFlag &= ~USB_HOTPLUG_FDD_ENABLED;
-		} else if (DevInfo == &gUsbData->HddHotplugDev) {
+		} else if (fpDevInfo == &gUsbData->HddHotplugDev) {
 			gUsbData->dUSBStateFlag &= ~USB_HOTPLUG_HDD_ENABLED;
-		} else if (DevInfo == &gUsbData->CdromHotplugDev) {
+		} else if (fpDevInfo == &gUsbData->CdromHotplugDev) {
 			gUsbData->dUSBStateFlag &= ~USB_HOTPLUG_CDROM_ENABLED;
 		}
     }
@@ -724,676 +712,532 @@ USBMassDisconnectStorageDevice (
     return USB_SUCCESS;
 }
 
-/**
-    This function clears the mass transaction structure
 
-**/
-
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   USBMassClearMassXactStruc
+//
+// Description: This function clears the mass transaction structure
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID
-USBMassClearMassXactStruc(
-    MASS_XACT_STRUC *MassXactStruc
-)
+USBMassClearMassXactStruc()
 {
     UINT8   i;
-    UINT8*  Cleaner = (UINT8*)MassXactStruc;
-    
-    for (i = 0; i < sizeof (MASS_XACT_STRUC); i++ ) {
-        *Cleaner++ = 0;
+    UINT8* fpCleaner    = (UINT8*)&gUsbData->stMassXactStruc;
+    for ( i = 0; i < sizeof (MASS_XACT_STRUC); i++ )
+    {
+        *fpCleaner++ = 0;
     }
 }
 
 
-/**
-    This function clears the bulk endpoint stall by sending
-    CLEAR_FEATURE command to bulk endpoints
-
-    @param fpDevInfo   Pointer to DeviceInfo structure
-        bDirec      Endpoint direction
-
-    @retval VOID
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   USBMassClearBulkEndpointStall
+//
+// Description: This function clears the bulk endpoint stall by sending
+//      CLEAR_FEATURE command to bulk endpoints
+//
+// Input:   fpDevInfo   Pointer to DeviceInfo structure
+//          bDirec      Endpoint direction
+//
+// Output:  Nothing
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 VOID
 USBMassClearBulkEndpointStall(
-    DEV_INFO*   DevInfo,
-    UINT8       Direc
-)
+    DEV_INFO* fpDevInfo,
+    UINT8 bDirec)
 {
-    UINT8           Shift;
-    UINT16          EndPoint;
-	HC_STRUC	    *HcStruc;
-	HCD_HEADER	    *HcdDriver;
-	EFI_STATUS      Status;
+										//(EIP54283)>
+    UINT8       bShift;
+    UINT16      wEndPoint;
+	HC_STRUC	*HcStruc;
+	HCD_HEADER	*HcdDriver;
 
-	HcStruc = gUsbData->HcTable[DevInfo->bHCNumber - 1];
+	HcStruc = gUsbData->HcTable[fpDevInfo->bHCNumber - 1];
 	HcdDriver = &gUsbData->aHCDriverTable[GET_HCD_INDEX(HcStruc->bHCType)];
 
-    EndPoint = (UINT16)((DevInfo->bBulkInEndpoint) | BIT7);
+    wEndPoint = (UINT16)((fpDevInfo->bBulkInEndpoint) | BIT7);
 
-    if (!(Direc & BIT7)) {
-        EndPoint = DevInfo->bBulkOutEndpoint;
+    if(!(bDirec & BIT7)) {
+        wEndPoint = fpDevInfo->bBulkOutEndpoint;
     }
     //
     // Issue clear port feature command
     //
-	HcdDriver->pfnHCDControlTransfer(HcStruc, DevInfo, (UINT16)ENDPOINT_CLEAR_PORT_FEATURE, 
-		EndPoint,(UINT16)ENDPOINT_HALT, 0, 0);
+	HcdDriver->pfnHCDControlTransfer(HcStruc, fpDevInfo, (UINT16)ENDPOINT_CLEAR_PORT_FEATURE, 
+		wEndPoint,(UINT16)ENDPOINT_HALT, 0, 0);
 
-	//if (HcdDriver->pfnHCDClearEndpointState) {
-	//	HcdDriver->pfnHCDClearEndpointState(HcStruc, DevInfo, (UINT8)EndPoint);
-	//} else {
-	
-    //
-    // Reset the toggle bit
-    //
-    Shift = (EndPoint & 0xF) - 1;
+	if (HcdDriver->pfnHCDClearEndpointState) {
+		HcdDriver->pfnHCDClearEndpointState(HcStruc, fpDevInfo, (UINT8)wEndPoint);
+	} else {
+	    //
+	    // Reset the toggle bit
+	    //
+	    bShift = (wEndPoint & 0xF) - 1;
 
-    if (Direc & BIT7) {
-        DevInfo->wDataInSync &= ~((UINT16)(1 << Shift));
-    } else {
-        DevInfo->wDataOutSync &= ~((UINT16)(1 << Shift));
-    }
+	    if(bDirec & BIT7)
+			fpDevInfo->wDataInSync &= ~((UINT16)(1 << bShift));
+	    else
+			fpDevInfo->wDataOutSync &= ~((UINT16)(1 << bShift));
 
-    if (DevInfo->fpLUN0DevInfoPtr == NULL) {
-        return;
-    }
-    
-    Status = UsbDevInfoValidation(DevInfo->fpLUN0DevInfoPtr);
-    
-    if (EFI_ERROR(Status)) {
-        return;
-    }
+		if (fpDevInfo->fpLUN0DevInfoPtr == NULL) return;
 
-    if (Direc & BIT7) {
-        DevInfo->fpLUN0DevInfoPtr->wDataInSync &= ~((UINT16)(1 << Shift));
-    } else {
-        DevInfo->fpLUN0DevInfoPtr->wDataOutSync &= ~((UINT16)(1 << Shift));
-    }
-	//}
-
+		if(bDirec & BIT7)
+			fpDevInfo->fpLUN0DevInfoPtr->wDataInSync &= ~((UINT16)(1 << bShift));
+	    else
+			fpDevInfo->fpLUN0DevInfoPtr->wDataOutSync &= ~((UINT16)(1 << bShift));
+	}
+										//<(EIP54283)
 }
 
-/**
-    This function performs a mass storage transaction by
-    invoking proper transaction protocol.
 
-    @param Pointer to DeviceInfo structure
-        stMassXactStruc
-        pCmdBuffer  Pointer to command buffer
-        bCmdSize    Size of command block
-        bXferDir    Transfer direction
-        fpBuffer    Data buffer far pointer
-        dwLength    Amount of data to be transferred
-        wPreSkip    Number of bytes to skip before data
-        wPostSkip   Number of bytes to skip after data
-
-    @retval Amount of data actually transferred
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   USBMassIssueMassTransaction
+//
+// Description: This function performs a mass storage transaction by
+//      invoking proper transaction protocol.
+//
+// Input:   Pointer to DeviceInfo structure
+//          stMassXactStruc
+//              pCmdBuffer  Pointer to command buffer
+//              bCmdSize    Size of command block
+//              bXferDir    Transfer direction
+//              fpBuffer    Data buffer far pointer
+//              dwLength    Amount of data to be transferred
+//              wPreSkip    Number of bytes to skip before data
+//              wPostSkip   Number of bytes to skip after data
+//
+// Output:  Amount of data actually transferred
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 UINT32
-USBMassIssueMassTransaction(
-    DEV_INFO*           DevInfo,
-    MASS_XACT_STRUC*    MassXactStruc
-)
+USBMassIssueMassTransaction (DEV_INFO* fpDevInfo)
 {
-    UINT32      DataLength;
-    HC_STRUC    *HcStruc;
-    
-    if ((DevInfo->bProtocol == PROTOCOL_CBI) ||
-        (DevInfo->bProtocol == PROTOCOL_CBI_NO_INT)) {
-        return USBMassIssueCBITransaction(DevInfo, MassXactStruc);
+    if ((fpDevInfo->bProtocol == PROTOCOL_CBI) ||
+        (fpDevInfo->bProtocol == PROTOCOL_CBI_NO_INT))
+    {
+        return USBMassIssueCBITransaction( fpDevInfo );
     }
 
-    if (DevInfo->bProtocol == PROTOCOL_BOT) {
-        
-        // Block to process periodic list to prevent that we might send the wrong
-        // command sequences to the same device.
-        gUsbData->ProcessingPeriodicList = FALSE;
-        
-        DataLength = USBMassIssueBOTTransaction(DevInfo, MassXactStruc);
-        
-        // To process any pending periodic list.
-        gUsbData->ProcessingPeriodicList = TRUE;
-        HcStruc = gUsbData->HcTable[DevInfo->bHCNumber - 1];
-        (*gUsbData->aHCDriverTable
-            [GET_HCD_INDEX(HcStruc->bHCType)].pfnHCDProcessInterrupt)(HcStruc);
-        
-        return DataLength;
+    if (fpDevInfo->bProtocol == PROTOCOL_BOT)
+    {
+        return USBMassIssueBOTTransaction( fpDevInfo );
     }
 
     return 0;
 
 }
 
-/**
-    This function gets the USB mass device parameters such as
-    max cylinder, head, sector, block size and
 
-    @param Pointer to DeviceInfo structure
-
-    @retval Pointer to the temp buffer, NULL on error
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   USBMassGetDeviceParameters
+//
+// Description: This function gets the USB mass device parameters such as
+//      max cylinder, head, sector, block size and
+//
+// Input:   Pointer to DeviceInfo structure
+//
+// Output:  Pointer to the temp buffer, NULL on error
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 MASS_INQUIRY*
-USBMassGetDeviceParameters(
-    DEV_INFO* DevInfo
-)
+USBMassGetDeviceParameters (DEV_INFO* fpDevInfo)
 {
-    MASS_INQUIRY    *Inq;
-    UINT8           i;
-    UINT8           Status;
+    MASS_INQUIRY *inq;
 
-    for (i = 0; i < 2; i++) {
-        Inq = USBMassInquiryCommand(DevInfo);
-        if (Inq) {
-            break;
-        }
-        if (!(gUsbData->bLastCommandStatus & USB_BULK_STALLED)) {
-            break;
-        }
-    }
-    
-    //USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "fpMassInquiry = %x\n", Inq);
-    
-    if (!Inq) {
-        return NULL;
-    }
+    inq = USBMassInquiryCommand(fpDevInfo);
+//USB_DEBUG(DEBUG_LEVEL_3, "fpMassInquiry = %x\n", fpMassInquiry);
+    if (!inq) return NULL;
 
-    DevInfo->wBlockSize = 0xFFFF; // Clear the cached block size
+    fpDevInfo->wBlockSize = 0xFFFF; // Clear the cached block size
 
     //
     // Find the device type and update the device type structure accordingly
     //
-    Status = USBMassIdentifyDeviceType(DevInfo, (UINT8*)Inq);
+    USBMassIdentifyDeviceType(fpDevInfo, (UINT8*)inq);
 
-    if (Status == USB_ERROR) {
-        Inq = NULL;
-    }
-    
-    return Inq;
-    
+    return inq;
 }
 
-/**
-    This procedure check whether device return valid device name
-    if no valid device name returned, assign default name for it
 
-    @param Inquiry Data
-
-**/
-VOID ValidateDeviceName (
-    MASS_INQUIRY *InqData
-)
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   ValidateDeviceName
+//
+// Description: This procedure check whether device return valid device name
+//      if no valid device name returned, assign default name for it
+//
+// Input:   Inquiry Data
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
+VOID ValidateDeviceName (MASS_INQUIRY *inq_data)
 {
     static UINT8 DefaultName[] = "USB     Storage Device";
-    UINT8 *Name = ((UINT8*)InqData) + 8;
-    UINT8 *DefName = DefaultName;
-    UINT8 Count;
+
+    UINT8 *name = ((UINT8*)inq_data) + 8;
+    UINT8 *def_name = DefaultName;
+    UINT8 count;
 
     // check for a blank name
-    if (*Name) return;
+    if (*name) return;
 
-//  for (Count = 0; Count < 28; Count++) {
-//      if (*(Name + Count)) return;  // Not blank
+//  for (count = 0; count < 28; count++) {
+//      if (*(name+count)) return;  // Not blank
 //  }
 
     // copy default name
-    for (Count = 0; Count < sizeof(DefaultName); Count++) {
-        *(Name + Count) = *(DefName + Count);
+    for (count = 0; count < sizeof(DefaultName); count++) {
+        *(name+count) = *(def_name+count);
     }
 }
 
-/**
-    This function fills and returns the mass get device info
-    structure
 
-    @param fpMassGetDevInfo    Pointer to the mass get info struc
-        bDevAddr    USB device address of the device
-
-    @retval USB_SUCCESS or USB_ERROR
-        fpMassGetDevInfo    Pointer to the mass get info struc
-        dSenseData  Sense data of the last command
-        bDevType    Device type byte (HDD, CD, Removable)
-        bEmuType    Emulation type used
-        fpDevId     Far pointer to the device ID
-
-    @note  Initially the bDevAddr should be set to 0 as input. This
-          function returns the information regarding the first mass
-          storage device (if no device found it returns bDevAddr as
-          0FFh) and also updates bDevAddr to the device address of
-          the current mass storage device. If no other mass storage
-          device is found then the routine sets the bit7 to 1
-          indicating current information is valid but no more mass
-          device found in the system. The caller can get the next
-          device info if bDevAddr is not 0FFh and bit7 is not set
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   USBMassGetDeviceInfo
+//
+// Description: This function fills and returns the mass get device info
+//      structure
+//
+// Input:   fpMassGetDevInfo    Pointer to the mass get info struc
+//          bDevAddr    USB device address of the device
+//
+// Output:  USB_SUCCESS or USB_ERROR
+//          fpMassGetDevInfo    Pointer to the mass get info struc
+//              dSenseData  Sense data of the last command
+//              bDevType    Device type byte (HDD, CD, Removable)
+//              bEmuType    Emulation type used
+//              fpDevId     Far pointer to the device ID
+//
+// Notes:   Initially the bDevAddr should be set to 0 as input. This
+//          function returns the information regarding the first mass
+//          storage device (if no device found it returns bDevAddr as
+//          0FFh) and also updates bDevAddr to the device address of
+//          the current mass storage device. If no other mass storage
+//          device is found then the routine sets the bit7 to 1
+//          indicating current information is valid but no more mass
+//          device found in the system. The caller can get the next
+//          device info if bDevAddr is not 0FFh and bit7 is not set
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT8
-USBMassGetDeviceInfo (
-    MASS_GET_DEV_INFO *MassGetDevInfo
-)
+USBMassGetDeviceInfo (MASS_GET_DEV_INFO *fpMassGetDevInfo)
 {
-    DEV_INFO        *DevInfo;
-    MASS_INQUIRY    *MassInq;
-    UINT8           Dev = MassGetDevInfo->bDevAddr;
+    DEV_INFO        *fpDevInfo;
+    MASS_INQUIRY    *fpMassInq;
+    UINT8 bDev = fpMassGetDevInfo->bDevAddr;
 
     //
     // Get the total number of Mass Storage Devices
     //
-    MassGetDevInfo->bTotalMassDev = (UINT8)(UINTN)USB_GetDeviceInfoStruc(USB_SRCH_DEV_NUM,
+    fpMassGetDevInfo->bTotalMassDev = (UINT8)(UINTN)USB_GetDeviceInfoStruc(USB_SRCH_DEV_NUM,
                             0, BIOS_DEV_TYPE_STORAGE, 0);
 
-    if (Dev == 0) {
-        iPodShufflePatch(MassGetDevInfo);
+    if (bDev == 0) {
+        iPodShufflePatch(fpMassGetDevInfo);
     }
 
-    if (Dev & BIT7) {
-        return USB_ERROR;  // Check for device address validity
-    }
+    if (bDev & BIT7) return USB_ERROR;  // Check for device address validity
 
     //
     // If bDev = 0 then get information about first mass storage device
     //
-    if (!Dev) {
-        DevInfo = USB_GetDeviceInfoStruc(USB_SRCH_DEV_TYPE, 0, BIOS_DEV_TYPE_STORAGE, 0);
-        //USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "Get Mass0 info: %x\n", DevInfo);
+    if (!bDev) {
+        fpDevInfo = USB_GetDeviceInfoStruc(USB_SRCH_DEV_TYPE, 0, BIOS_DEV_TYPE_STORAGE, 0);
+//USB_DEBUG(DEBUG_LEVEL_3, "Get Mass0 info: %x\n", fpDevInfo);
 
-        if (!DevInfo) {   // Set as no more device found
-            MassGetDevInfo->bDevAddr  = 0xFF;
-            return USB_SUCCESS;
+        if (!fpDevInfo) {   // Set as no more device found
+            fpMassGetDevInfo->bDevAddr  = 0xFF;
+            return  USB_SUCCESS;
         }
-    } else {  //  Not the first mass device
+    }
+    else {  //  Not the first mass device
         //
         // Get the device info structure for the matching device index
         //
-        DevInfo = USB_GetDeviceInfoStruc(USB_SRCH_DEV_INDX, 0, Dev, 0);
-        ASSERT(DevInfo);
-        if ( (!DevInfo) || (!(DevInfo->Flag & DEV_INFO_DEV_PRESENT)) ) {   // Error
-            return USB_ERROR;
+        fpDevInfo = USB_GetDeviceInfoStruc(USB_SRCH_DEV_INDX, 0, bDev, 0);
+        ASSERT(fpDevInfo);
+        if ( (!fpDevInfo) || (!(fpDevInfo->bFlag & DEV_INFO_DEV_PRESENT)) ) {   // Error
+            return  USB_ERROR;
         }
         //
         // Get device info structure for next device
         //
-        DevInfo = USB_GetDeviceInfoStruc(USB_SRCH_DEV_TYPE, DevInfo, BIOS_DEV_TYPE_STORAGE, 0);
-        ASSERT(DevInfo);
-        if (!DevInfo) {   // Error. Exit !
-            return USB_ERROR;
+        fpDevInfo = USB_GetDeviceInfoStruc(USB_SRCH_DEV_TYPE, fpDevInfo, BIOS_DEV_TYPE_STORAGE, 0);
+        ASSERT(fpDevInfo);
+        if (!fpDevInfo) {   // Error. Exit !
+            return  USB_ERROR;
         }
     }
-    MassInq = USBMassGetDeviceParameters(DevInfo);
+    fpMassInq = USBMassGetDeviceParameters(fpDevInfo);
 
-    if (!MassInq) {
-        return USB_ERROR;
-    }
+    if (!fpMassInq) return  USB_ERROR;
 
-    MassGetDevInfo->bDevType = DevInfo->bPhyDevType;
-//  MassGetDevInfo->bPhyDevType = fpDevInfo->bPhyDevType;
-    MassGetDevInfo->bEmuType = DevInfo->bEmuType;
-    MassGetDevInfo->wPciInfo =
-        gUsbData->HcTable[DevInfo->bHCNumber - 1]->wBusDevFuncNum;
-    MassGetDevInfo->fpDevId = (UINT32)(UINTN)((UINT8*)MassInq + 8);
-//  MassGetDevInfo->fpDevId = USBMassAdjustIdString((UINT32)MassInq + 8);
+    fpMassGetDevInfo->bDevType = fpDevInfo->bPhyDevType;
+//  fpMassGetDevInfo->bPhyDevType = fpDevInfo->bPhyDevType;
+    fpMassGetDevInfo->bEmuType = fpDevInfo->bEmuType;
+    fpMassGetDevInfo->wPciInfo =
+        gUsbData->HcTable[fpDevInfo->bHCNumber - 1]->wBusDevFuncNum;
+    fpMassGetDevInfo->fpDevId = (UINT32)(UINTN)((UINT8*)fpMassInq+8);
+//  fpMassGetDevInfo->fpDevId = USBMassAdjustIdString((UINT32)fpMassInq+8);
 
-    Dev = (UINT8)(UINTN)USB_GetDeviceInfoStruc(USB_SRCH_DEV_INDX, DevInfo, 0, 0);
-    ASSERT(Dev);
+    bDev = (UINT8)(UINTN)USB_GetDeviceInfoStruc(USB_SRCH_DEV_INDX, fpDevInfo, 0, 0);
+    ASSERT(bDev);
 
-    Dev |= BIT7;   // Assume that no more mass device present
+    bDev |= BIT7;   // Assume that no more mass device present
 
     //
     // Check whether more mass device is present
     //
-    if (USB_GetDeviceInfoStruc(USB_SRCH_DEV_TYPE, DevInfo, BIOS_DEV_TYPE_STORAGE, 0)) {
-        Dev &= ~BIT7;
+    if (USB_GetDeviceInfoStruc(USB_SRCH_DEV_TYPE, fpDevInfo, BIOS_DEV_TYPE_STORAGE, 0)) {
+        bDev &= ~BIT7;
     }
 
-    DevInfo->Flag |= DEV_INFO_MASS_DEV_REGD;
-    MassGetDevInfo->bDevAddr = Dev;
+    fpDevInfo->bFlag |= DEV_INFO_MASS_DEV_REGD;
+    fpMassGetDevInfo->bDevAddr = bDev;
 
-    *(UINTN*)MassGetDevInfo->Handle = *(UINTN*)DevInfo->Handle;
+    *(UINTN*)fpMassGetDevInfo->Handle = *(UINTN*)fpDevInfo->Handle;
 
     return USB_SUCCESS;
 }
 
-/**
-    This check whether iPod shuffle attached to system and move
-    iPod shuffle to first initial device.
 
-    @param Pointer to the mass get info struc
-
-    @retval VOID
-
-    @note  Attaching iPod shuffle and iPod mini to system causes BIOS POST
-          stop. iPod shuffle must be initialized as early as possible.
-          iPod mini cosumes about 2 seconds to complete initialization,
-          init iPod shuffle first to fix problem.
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   iPodShufflePatch
+//
+// Description: This check whether iPod shuffle attached to system and move
+//      iPod shuffle to first initial device.
+//
+// Input:   Pointer to the mass get info struc
+//
+// Output:  None
+//
+// Notes:   Attaching iPod shuffle and iPod mini to system causes BIOS POST
+//          stop. iPod shuffle must be initialized as early as possible.
+//          iPod mini cosumes about 2 seconds to complete initialization,
+//          init iPod shuffle first to fix problem.
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 VOID
 iPodShufflePatch(
-    MASS_GET_DEV_INFO *MassGetDevInfo
+    MASS_GET_DEV_INFO *fpMassGetDevInfo
 )
 {
     //TO BE IMPLEMENTED
 }
 
 
-/**
-    Get USB MassStorage device status. Include Media Informarion.
-    Refer to USB_MASS_MEDIA_XXX in USBDEF.H
-
-    @param Pointer to DeviceInfo structure
-
-    @retval USB_ERROR or USB_SUCCESS
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   USBMassGetDeviceStatus
+//
+// Description:  Get USB MassStorage device status. Include Media Informarion.
+//               Refer to USB_MASS_MEDIA_XXX in USBDEF.H
+//
+// Input:       Pointer to DeviceInfo structure
+//
+// Output:      USB_ERROR or USB_SUCCESS
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT8
-USBMassGetDeviceStatus  (
-    MASS_GET_DEV_STATUS *MassGetDevSts
-)
+USBMassGetDeviceStatus  (MASS_GET_DEV_STATUS *fpMassGetDevSts)
 {
-    DEV_INFO*   DevInfo;
-    UINT8       DevAddr = MassGetDevSts->bDevAddr;
-    UINT8       LastStatus;
+    DEV_INFO*   fpDevInfo;
+    UINT8       bDevAddr = fpMassGetDevSts->bDevAddr;
 
-    DevInfo = USB_GetDeviceInfoStruc(USB_SRCH_DEV_INDX, 0, DevAddr, 0);
+    fpDevInfo = USB_GetDeviceInfoStruc(USB_SRCH_DEV_INDX, 0, bDevAddr, 0);
+    ASSERT(fpDevInfo != NULL);
+    if (fpDevInfo == NULL) return USB_ERROR;
 
-    ASSERT(DevInfo != NULL);
-    if (DevInfo == NULL) {
-        return USB_ERROR;
-    }
+//  USB_DEBUG (DEBUG_LEVEL_3, "USBMassGetDeviceStatus .... bDevAddr = %x\n",bDevAddr);
 
-    LastStatus= DevInfo->bLastStatus;
+    USBMassCheckDeviceReady(fpDevInfo);
 
-    USBMassCheckDeviceReady(DevInfo);
+    fpMassGetDevSts->bDeviceStatus = fpDevInfo->bLastStatus;
+    if(fpDevInfo->bLastStatus & USB_MASS_MEDIA_CHANGED) {
 
-    // When the Media is not present in the drive and insert the Media
-    // it's just sends the status as Media Present. So check the last status
-    // and if the media not present and current stauts is media present
-    // report it as Media changed
-    if ((LastStatus ^ DevInfo->bLastStatus) & USB_MASS_MEDIA_PRESENT) {
-        // Report the Last Status along with Media Changed status
-        DevInfo->bLastStatus |= USB_MASS_MEDIA_CHANGED;
-    }
-
-    MassGetDevSts->bDeviceStatus = DevInfo->bLastStatus;
-
-    if (DevInfo->bLastStatus & USB_MASS_MEDIA_CHANGED) {
+//  USB_DEBUG (DEBUG_LEVEL_3, "\t\t....MEDIA HAS CHANGED....\n");
         //
         // Clear Media Change Status.
         //
-        DevInfo->bLastStatus &= (UINT8)(~USB_MASS_MEDIA_CHANGED);
+        fpDevInfo->bLastStatus &= (UINT8)(~USB_MASS_MEDIA_CHANGED);
+//  USB_DEBUG (DEBUG_LEVEL_3, " bDevAddr = %x, bStatus = %x\n",bDevAddr,fpDevInfo->bLastStatus);
     }
     return USB_SUCCESS;
 }
 
-/**
-    This function issues the command/data sequence provided
-    as input.  This function can be used to send raw data
-    to the USB mass storage device
 
-    @param fpDevInfo   Pointer to Device Info structure
-        fpMassCmdPassThru   Pointer to the mass command pass
-        through structure
-        bDevAddr        USB device address of the device
-        dSenseData      Sense data of the last command
-        fpCmdBuffer     Far pointer to the command buffer
-        wCmdLength      Command length
-        fpDataBuffer    Far pointer for data buffer
-        wDataLength     Data length
-        bXferDir        Data transfer direction
-
-    @retval USB_SUCCESS or USB_ERROR
-        dSenseData      Sense data of the last command
-        fpDataBuffer    Updated with returned data if the transfer
-        is an IN transaction
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   USBMassCmdPassThru
+//
+// Description: This function issues the command/data sequence provided
+//      as input.  This function can be used to send raw data
+//      to the USB mass storage device
+//
+// Input:       fpDevInfo   Pointer to Device Info structure
+//              fpMassCmdPassThru   Pointer to the mass command pass
+//                  through structure
+//              bDevAddr        USB device address of the device
+//              dSenseData      Sense data of the last command
+//              fpCmdBuffer     Far pointer to the command buffer
+//              wCmdLength      Command length
+//              fpDataBuffer    Far pointer for data buffer
+//              wDataLength     Data length
+//              bXferDir        Data transfer direction
+//
+// Output:  USB_SUCCESS or USB_ERROR
+//          dSenseData      Sense data of the last command
+//          fpDataBuffer    Updated with returned data if the transfer
+//                          is an IN transaction
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT8
 USBMassCmdPassThru (
-    MASS_CMD_PASS_THRU  *MassCmdPassThru
-)
+    MASS_CMD_PASS_THRU  *fpMassCmdPassThru)
 {
-    UINT8           *CmdBuffer;
-    UINT8           *Src;
-    UINT8           *Dst;
-    DEV_INFO        *DevInfo;
-//  UINT8           CommandRetried = FALSE;
-    UINT8           CmdBlkSize;
-    UINT8           Count;
-    UINT16          Data16;
-    UINT32          Data32;
-    UINT8           DevAddr = MassCmdPassThru->bDevAddr;
-    MASS_XACT_STRUC MassXactStruc;
+    UINT8           *fpCmdBuffer;
+    UINT8           *fpSrc;
+    UINT8           *fpDst;
+    DEV_INFO        *fpDevInfo;
+//  UINT8           bCommandRetried = FALSE;
+    UINT8           bCmdBlkSize;
+    UINT8           count;
+    UINT16          wData;
+    UINT32          dData;
 
-    DevInfo = USB_GetDeviceInfoStruc(USB_SRCH_DEV_INDX, 0, DevAddr, 0);
-    if ( (!DevInfo) || (!(DevInfo->Flag & DEV_INFO_DEV_PRESENT)) ) {   // Error
+    UINT8   bDevAddr = fpMassCmdPassThru->bDevAddr;
+
+    fpDevInfo = USB_GetDeviceInfoStruc(USB_SRCH_DEV_INDX, 0, bDevAddr, 0);
+    if ( (!fpDevInfo) || (!(fpDevInfo->bFlag & DEV_INFO_DEV_PRESENT)) ) {   // Error
         return USB_ERROR;
     }
 
-    CmdBlkSize = (UINT8)((MassCmdPassThru->wCmdLength +
+    bCmdBlkSize = (UINT8)((fpMassCmdPassThru->wCmdLength +
                 USB_MEM_BLK_SIZE - 1) >> USB_MEM_BLK_SIZE_SHIFT);
 
     //
     // Check whether the drive is ready for read TOC command
     //
-    USBMassCheckDeviceReady(DevInfo);
+    USBMassCheckDeviceReady(fpDevInfo);
 
     //
     // Allocate memory for the command buffer
     //
-    CmdBuffer = USB_MemAlloc((UINT8)GET_MEM_BLK_COUNT(CmdBlkSize));
-    if (!CmdBuffer) {
-        return USB_ERROR;
+    fpCmdBuffer = USB_MemAlloc((UINT8)GET_MEM_BLK_COUNT(bCmdBlkSize));
+    if (!fpCmdBuffer) {
+        return  USB_ERROR;
     }
 
     //
     // Copy the command into (just allocated) mass command buffer
     //
-    Src = (UINT8*)(UINTN)MassCmdPassThru->fpCmdBuffer;
-    Dst = CmdBuffer;
-    for (Count = 0; Count < MassCmdPassThru->wCmdLength; Count++) {
-        *Dst++ = *Src++;
+    fpSrc = (UINT8*)(UINTN)fpMassCmdPassThru->fpCmdBuffer;
+    fpDst = fpCmdBuffer;
+    for (count = 0; count < fpMassCmdPassThru->wCmdLength; count++) {
+        *fpDst++ = *fpSrc++;
     }
 
     //
     // Clear the common bulk transaction structure
     //
-    USBMassClearMassXactStruc(&MassXactStruc);
+    USBMassClearMassXactStruc();
 
     //
     // Fill the common bulk transaction structure
     //
-    MassXactStruc.fpCmdBuffer = CmdBuffer;
-    MassXactStruc.bCmdSize = (UINT8)MassCmdPassThru->wCmdLength;
-    MassXactStruc.bXferDir = MassCmdPassThru->bXferDir;
-    MassXactStruc.fpBuffer = (UINT8*)(UINTN)MassCmdPassThru->fpDataBuffer;
-    MassXactStruc.dLength = (UINT32)MassCmdPassThru->wDataLength;
+    gUsbData->stMassXactStruc.fpCmdBuffer = fpCmdBuffer;
+    gUsbData->stMassXactStruc.bCmdSize = (UINT8)fpMassCmdPassThru->wCmdLength;
+    gUsbData->stMassXactStruc.bXferDir = fpMassCmdPassThru->bXferDir;
+    gUsbData->stMassXactStruc.fpBuffer = (UINT8*)(UINTN)fpMassCmdPassThru->fpDataBuffer;
+    gUsbData->stMassXactStruc.dLength = (UINT32)fpMassCmdPassThru->wDataLength;
 
-    Data16 = (UINT16)USBMassIssueMassTransaction(DevInfo, &MassXactStruc);
+    wData = (UINT16)USBMassIssueMassTransaction(fpDevInfo);
 
     //
     // Update the actual data length processed/returned
     //
-    MassCmdPassThru->wDataLength = Data16;
+    fpMassCmdPassThru->wDataLength = wData;
 
-    Data32 = USBMassRequestSense (DevInfo);
+    dData = USBMassRequestSense (fpDevInfo);
 
-    MassCmdPassThru->dSenseData = Data32;
+    fpMassCmdPassThru->dSenseData = dData;
 
     //
     // Check and free command buffer
     //
-    if (!CmdBuffer) {
-        return USB_ERROR;
-    }
-
-    USB_MemFree(CmdBuffer, (UINT16)GET_MEM_BLK_COUNT(CmdBlkSize));
-
-    return USB_SUCCESS;
-
-}
-
-/**
-    This function issues read capacity of the mass storage
-
-    @param Pointer to DeviceInfo structure
-
-    @retval USB_ERROR or USB_SUCCESS
-
-    @note  This routine will update the MassDeviceInfo structure
-          with the block size & last LBA values obtained from the
-          device
-
-**/
-
-UINT8
-USBMassReadCapacity16Command  (
-    DEV_INFO* DevInfo
-)
-{
-    UINT32                          Data;
-    COMN_READ_CAPACITY_16_CMD       *CmdBuffer;
-    MASS_XACT_STRUC                 MassXactStruc;
-    
-    if (!VALID_DEVINFO(DevInfo)) {
-        return USB_ERROR;
-    }
-    //
-    // Allocate memory for the command buffer
-    //
-    CmdBuffer = USB_MemAlloc(GET_MEM_BLK_COUNT_STRUC(COMN_READ_CAPACITY_16_CMD));
-    
-    if (!CmdBuffer) {
-        return USB_ERROR;
-    }
-    
-    CmdBuffer->OpCode = COMMON_READ_CAPACITY_16_OPCODE;
-    CmdBuffer->ServiceAction = 0x10;
-    CmdBuffer->AllocLength = 0x0C000000;
-
-    //
-    // Clear the common bulk transaction structure
-    //
-    USBMassClearMassXactStruc(&MassXactStruc);
-
-    //
-    // Change the bulk transfer delay to 10 seconds (For CDROM drives)
-    //
-    gUsbData->wBulkDataXferDelay = 10000;
-
-    //
-    // Fill the common bulk transaction structure
-    //
-    MassXactStruc.fpCmdBuffer = (UINT8*)CmdBuffer;
-    MassXactStruc.bCmdSize = sizeof(COMN_RWV_16_CMD);
-    MassXactStruc.bXferDir = BIT7;     // IN
-    MassXactStruc.fpBuffer = gUsbData->fpUSBTempBuffer;
-    MassXactStruc.dLength = 0xC;
-    
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "rcc..");
-    Data = USBMassIssueMassTransaction(DevInfo, &MassXactStruc);
-
-    //
-    // Reset the delay back
-    //
-    gUsbData->wBulkDataXferDelay = 0;
-
-    if (!Data) {
-        USB_MemFree(CmdBuffer, GET_MEM_BLK_COUNT_STRUC(COMN_READ_CAPACITY_16_CMD));
-        
-        USB_DEBUG(DEBUG_ERROR, DEBUG_LEVEL_3, "err ");
+    if (!fpCmdBuffer) {
         return  USB_ERROR;
     }
 
-    Data = *((UINT32*)(gUsbData->fpUSBTempBuffer + 8));
-
-    //
-    // Change little endian format to big endian(INTEL) format
-    //
-    Data = dabc_to_abcd(Data);
-										 	//(EIP37167+)>
-	if (!Data) {
-		USB_MemFree(CmdBuffer, GET_MEM_BLK_COUNT_STRUC(COMN_READ_CAPACITY_16_CMD));
-		USB_DEBUG(DEBUG_ERROR, DEBUG_LEVEL_3, "err ");
-		return USB_ERROR;
-	}
-
-    DevInfo->wBlockSize = (UINT16)Data;
-
-    USB_DEBUG(DEBUG_INFO, 3,"BlockSize %x\n", DevInfo->wBlockSize);
-
-    //
-    // Store the last LBA number in the mass info structure
-    //
-    Data = *((UINT32*)(gUsbData->fpUSBTempBuffer));
-
-    Data = dabc_to_abcd(Data);
-
-    DevInfo->MaxLba = LShiftU64(Data, 32);
-
-    Data = *((UINT32*)(gUsbData->fpUSBTempBuffer + 4));
-
-    Data = dabc_to_abcd(Data);
-
-    DevInfo->MaxLba |= Data;
-
-    USB_DEBUG(DEBUG_INFO, 3,"MaxLba %lx\n", DevInfo->MaxLba);
+    USB_MemFree(fpCmdBuffer, (UINT16)GET_MEM_BLK_COUNT(bCmdBlkSize));
 
     return USB_SUCCESS;
 
 }
 
-/**
-    This function issues read capacity of the mass storage
 
-    @param Pointer to DeviceInfo structure
-
-    @retval USB_ERROR or USB_SUCCESS
-
-    @note  This routine will update the MassDeviceInfo structure
-          with the block size & last LBA values obtained from the
-          device
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   USBMassReadCapacityCommand
+//
+// Description: This function issues read capacity of the mass storage
+//
+// Input:       Pointer to DeviceInfo structure
+//
+// Output:      USB_ERROR or USB_SUCCESS
+//
+// Notes:   This routine will update the MassDeviceInfo structure
+//          with the block size & last LBA values obtained from the
+//          device
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT8
-USBMassReadCapacity10Command  (
-    DEV_INFO* DevInfo
-)
+USBMassReadCapacityCommand  (DEV_INFO* fpDevInfo)
 {
-    UINT32                          Data;
-    COMN_READ_CAPACITY_10_CMD       *CmdBuffer;
-    MASS_XACT_STRUC                 MassXactStruc;
+    UINT32          dData;
+    COMN_READ_CAPACITY_CMD  *fpCmdBuffer;
 
-    if (!VALID_DEVINFO(DevInfo)) {
+    if( !VALID_DEVINFO(fpDevInfo))
         return USB_ERROR;
-    }
-    
-    if (RShiftU64(DevInfo->MaxLba, 32)) {
-        USBMassReadCapacity16Command(DevInfo);
-        return USB_SUCCESS;
-    }
     //
     // Allocate memory for the command buffer
     //
-    CmdBuffer = USB_MemAlloc(GET_MEM_BLK_COUNT_STRUC(COMN_READ_CAPACITY_10_CMD));
+    fpCmdBuffer = USB_MemAlloc(GET_MEM_BLK_COUNT_STRUC(COMN_READ_CAPACITY_CMD));
 
-    if (!CmdBuffer) {
+    if(!fpCmdBuffer) {
         return USB_ERROR;
     }
 
-    CmdBuffer->bOpCode = COMMON_READ_CAPACITY_10_OPCODE;
+    fpCmdBuffer->bOpCode    = COMMON_READ_CAPACITY_OPCODE;
 
     //
     // Clear the common bulk transaction structure
     //
-    USBMassClearMassXactStruc(&MassXactStruc);
+    USBMassClearMassXactStruc();
 
     //
     // Change the bulk transfer delay to 10 seconds (For CDROM drives)
@@ -1403,90 +1247,112 @@ USBMassReadCapacity10Command  (
     //
     // Fill the common bulk transaction structure
     //
-    MassXactStruc.fpCmdBuffer = (UINT8*)CmdBuffer;
+    gUsbData->stMassXactStruc.fpCmdBuffer = (UINT8*)fpCmdBuffer;
                                         //(EIP51158+)>
-    if (DevInfo->bSubClass == SUB_CLASS_SCSI) {
-		MassXactStruc.bCmdSize = 0x0A;	 //SBC-3_66
+    if (fpDevInfo->bSubClass == SUB_CLASS_SCSI) {
+		gUsbData->stMassXactStruc.bCmdSize = 0x0A;	 //SBC-3_66
     } else {
-        MassXactStruc.bCmdSize = sizeof (COMN_READ_CAPACITY_10_CMD);
+        gUsbData->stMassXactStruc.bCmdSize = sizeof (COMN_READ_CAPACITY_CMD);
     }
 										//<(EIP51158+)
-    MassXactStruc.bXferDir = BIT7;     // IN
-    MassXactStruc.fpBuffer = gUsbData->fpUSBTempBuffer;
-    MassXactStruc.dLength = 8;
+    gUsbData->stMassXactStruc.bXferDir = BIT7;     // IN
+    gUsbData->stMassXactStruc.fpBuffer = gUsbData->fpUSBTempBuffer;
+    gUsbData->stMassXactStruc.dLength = 8;
 
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "rcc..");
-    Data = USBMassIssueMassTransaction(DevInfo, &MassXactStruc);
+USB_DEBUG (DEBUG_LEVEL_3, "rcc..");
+    dData = USBMassIssueMassTransaction(fpDevInfo);
 
     //
     // Reset the delay back
     //
     gUsbData->wBulkDataXferDelay = 0;
 
-    if (!Data) {
-        USB_MemFree(CmdBuffer, GET_MEM_BLK_COUNT_STRUC(COMN_READ_CAPACITY_10_CMD));
-        USB_DEBUG(DEBUG_ERROR, DEBUG_LEVEL_3, "err ");
-        return USB_ERROR;
+    if(!dData) {
+        USB_MemFree(fpCmdBuffer, GET_MEM_BLK_COUNT_STRUC(COMN_READ_CAPACITY_CMD));
+USB_DEBUG (DEBUG_LEVEL_3, "err ");
+        return  USB_ERROR;
     }
 
-    USB_DEBUG(DEBUG_INFO, 3,"Read Capacity 10 LBA %x\n", *(UINT32*)gUsbData->fpUSBTempBuffer);
-
-    if (*(UINT32*)gUsbData->fpUSBTempBuffer == 0xFFFFFFFF) {
-        USB_MemFree(CmdBuffer, GET_MEM_BLK_COUNT_STRUC(COMN_READ_CAPACITY_10_CMD));
-        USBMassReadCapacity16Command(DevInfo);
-        return USB_SUCCESS;
-    }
-
-    Data = *((UINT32*)(gUsbData->fpUSBTempBuffer + 4));
+    dData = *((UINT32*)(gUsbData->fpUSBTempBuffer + 4));
 
     //
     // Change little endian format to big endian(INTEL) format
     //
-    Data = dabc_to_abcd(Data);
+    dData = dabc_to_abcd(dData);
 										 	//(EIP37167+)>
-	if (!Data) {
-		USB_MemFree(CmdBuffer, GET_MEM_BLK_COUNT_STRUC(COMN_READ_CAPACITY_10_CMD));
-		USB_DEBUG(DEBUG_ERROR, DEBUG_LEVEL_3, "err ");
+	if(!dData) {
+		USB_MemFree(fpCmdBuffer, GET_MEM_BLK_COUNT_STRUC(COMN_READ_CAPACITY_CMD));
+		USB_DEBUG (DEBUG_LEVEL_3, "err ");
+		return	USB_ERROR;
+	}
+											 //<(EIP37167+)
+    dData = USBMassReadCapacityBlockSizePatch(dData, fpDevInfo);     //Patch the block size if needed
+
+    fpDevInfo->wBlockSize = (UINT16)dData;
+//USB_DEBUG(DEBUG_LEVEL_3, "succ: %x, %x\n", dData, fpDevInfo);
+    //
+    // Store the last LBA number in the mass info structure
+    //
+    dData =  *((UINT32*)(gUsbData->fpUSBTempBuffer));
+
+    dData = dabc_to_abcd(dData);
+											//(EIP37167+)>
+	if(!dData) {
+		USB_MemFree(fpCmdBuffer, GET_MEM_BLK_COUNT_STRUC(COMN_READ_CAPACITY_CMD));
+        USB_DEBUG (DEBUG_LEVEL_3, "err ");
 		return	USB_ERROR;
 	}
 											 //<(EIP37167+)
 
-    DevInfo->wBlockSize = (UINT16)Data;
-    //USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "succ: %x, %x\n", dData, fpDevInfo);
-    //
-    // Store the last LBA number in the mass info structure
-    //
-    Data = *((UINT32*)(gUsbData->fpUSBTempBuffer));
+    fpDevInfo->dMaxLba = dData + 1; // 1-based value
 
-    Data = dabc_to_abcd(Data);
+USB_DEBUG (DEBUG_LEVEL_3, "%x ", fpDevInfo->dMaxLba);
 
-	if (!Data) {
-		USB_MemFree(CmdBuffer, GET_MEM_BLK_COUNT_STRUC(COMN_READ_CAPACITY_10_CMD));
-        USB_DEBUG(DEBUG_ERROR, DEBUG_LEVEL_3, "err ");
-		return USB_ERROR;
-	}
-
-    DevInfo->MaxLba = Data + 1; // 1-based value
-
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "%x ", DevInfo->MaxLba);
-
-    USB_MemFree(CmdBuffer, GET_MEM_BLK_COUNT_STRUC(COMN_READ_CAPACITY_10_CMD));
+    USB_MemFree(fpCmdBuffer, GET_MEM_BLK_COUNT_STRUC(COMN_READ_CAPACITY_CMD));
 
     return USB_SUCCESS;
 }
 
-/**
-    This function sends read format capacity command to the USB
-    mass storage device
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   USBMassReadCapacityBlockSizePatch
+//
+// Description: This function is used to correct the block size returned by ReadCapacity command.
+//
+// Input:       Pointer to DeviceInfo structure
+//
+// Output:      USB_ERROR or USB_SUCCESS
+//
+// Notes:   
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
-    @param Pointer to DeviceInfo structure
+UINT32
+USBMassReadCapacityBlockSizePatch(UINT32 dData, DEV_INFO* DevInfo)
+{
+  //So far TEAC CD-22E and ViPower IDE to USB2.0 bridge needs patch
+  //TODO: Add the patch for above devices after getting VID/DID
+  return dData;
+}
 
-    @retval USB_ERROR or USB_SUCCESS
 
-    @note  This routine will update the MassDeviceInfo structure
-              with the block size & last LBA values obtained from the
-              device
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   USBMassReadFormatCapacity
+//
+// Description: This function sends read format capacity command to the USB
+//              mass storage device
+//
+// Input:       Pointer to DeviceInfo structure
+//
+// Output:      USB_ERROR or USB_SUCCESS
+//
+// Notes:       This routine will update the MassDeviceInfo structure
+//              with the block size & last LBA values obtained from the
+//              device
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT8
 USBMassReadFormatCapacity (DEV_INFO* fpDevInfo)
@@ -1496,7 +1362,6 @@ USBMassReadFormatCapacity (DEV_INFO* fpDevInfo)
     UINT16  wData;
     UINT8*	DataBuffer;
 	UINT16	DataBufferSize = 0xFC;
-    MASS_XACT_STRUC MassXactStruc;
 
     //
     // Allocate memory for the command buffer
@@ -1515,31 +1380,31 @@ USBMassReadFormatCapacity (DEV_INFO* fpDevInfo)
     fpCmdBuffer->bOpCode = COMMON_READ_FORMAT_CAPACITY_OPCODE;
     fpCmdBuffer->wAllocLength = (UINT16)((DataBufferSize << 8) + (DataBufferSize >> 8));
 
-    USBMassClearMassXactStruc(&MassXactStruc);   // Clear the common bulk transaction structure
+    USBMassClearMassXactStruc();    // Clear the common bulk transaction structure
 
     //
     // Fill the common bulk transaction structure
     //
-    MassXactStruc.fpCmdBuffer = (UINT8*)fpCmdBuffer;
+    gUsbData->stMassXactStruc.fpCmdBuffer = (UINT8*)fpCmdBuffer;
                                         //(EIP51158+)>
     if (fpDevInfo->bSubClass == SUB_CLASS_SCSI) {
-		MassXactStruc.bCmdSize = 0x0A;
+		gUsbData->stMassXactStruc.bCmdSize = 0x0A;
     } else {
-    	MassXactStruc.bCmdSize = sizeof (COMN_READ_FMT_CAPACITY);
+    	gUsbData->stMassXactStruc.bCmdSize = sizeof (COMN_READ_FMT_CAPACITY);
     }
 										//<(EIP51158+)
-    MassXactStruc.bXferDir = BIT7;     // IN
-    MassXactStruc.fpBuffer = DataBuffer;
+    gUsbData->stMassXactStruc.bXferDir = BIT7;     // IN
+    gUsbData->stMassXactStruc.fpBuffer = DataBuffer;
 //  gUsbData->stMassXactStruc.dLength = MAX_TEMP_BUFFER_SIZE;
 //
 // Temp buffer 40h-64h was used as device name string buffer.
 // Limit Transaction size to 40h to prevent name string display problem.
 //
-    MassXactStruc.dLength = DataBufferSize;
+    gUsbData->stMassXactStruc.dLength = DataBufferSize;
 
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_5, "Issue ReadFormatCapacityCommand .... \n");
+USB_DEBUG (DEBUG_LEVEL_5, "Issue ReadFormatCapacityCommand .... \n");
 
-    dData = USBMassIssueMassTransaction(fpDevInfo, &MassXactStruc);
+    dData = USBMassIssueMassTransaction(fpDevInfo);
 
     //
     // The amount of data obtained should be atleast of read format capacity structure size
@@ -1572,14 +1437,14 @@ USBMassReadFormatCapacity (DEV_INFO* fpDevInfo)
         return USB_ERROR;
     }
     dData = dabc_to_abcd(dData);
-    fpDevInfo->MaxLba = dData;
+    fpDevInfo->dMaxLba = dData;
 
     if (dData == USB_144MB_FDD_MAX_LBA) {
         //
         // Return parameters for 1.44MB floppy
         //
-        fpDevInfo->Heads            = USB_144MB_FDD_MAX_HEADS;
-        fpDevInfo->NonLBAHeads      = USB_144MB_FDD_MAX_HEADS;
+        fpDevInfo->bHeads           = USB_144MB_FDD_MAX_HEADS;
+        fpDevInfo->bNonLBAHeads     = USB_144MB_FDD_MAX_HEADS;
         fpDevInfo->bSectors         = USB_144MB_FDD_MAX_SECTORS;
         fpDevInfo->bNonLBASectors   = USB_144MB_FDD_MAX_SECTORS;
         fpDevInfo->wCylinders       = USB_144MB_FDD_MAX_CYLINDERS;
@@ -1593,184 +1458,123 @@ USBMassReadFormatCapacity (DEV_INFO* fpDevInfo)
     return  USB_SUCCESS;
 }
 
-/**
-    This function sends get configuration command to the USB
-    mass storage device
 
-    @param Pointer to DeviceInfo structure
-
-    @retval USB_ERROR or USB_SUCCESS
-
-**/
-
-UINT8
-USBMassGetConfiguration(
-    DEV_INFO* DevInfo
-)
-{
-    COMMON_GET_CONFIGURATION        *CmdBuffer;
-    UINT32                          Data;
-    UINT8	                        *DataBuffer;
-	UINT16	                        DataBufferSize = 0x8;
-    MASS_XACT_STRUC                 MassXactStruc;
-
-    //
-    // Allocate memory for the command buffer
-    //
-    CmdBuffer = USB_MemAlloc(GET_MEM_BLK_COUNT_STRUC(COMMON_GET_CONFIGURATION));
-
-    if (!CmdBuffer) {
-        return USB_ERROR;
-    }
-
-	DataBuffer = USB_MemAlloc(GET_MEM_BLK_COUNT(DataBufferSize));
-	if (DataBuffer == NULL) {
-		return USB_ERROR;
-	}
-
-    CmdBuffer->OpCode = COMMON_GET_CONFIGURATION_OPCODE;
-    CmdBuffer->AllocLength = (UINT16)((DataBufferSize << 8) + (DataBufferSize >> 8));
-
-    USBMassClearMassXactStruc(&MassXactStruc);  // Clear the common bulk transaction structure
-
-    //
-    // Fill the common bulk transaction structure
-    //
-    MassXactStruc.fpCmdBuffer = (UINT8*)CmdBuffer;
-    MassXactStruc.bCmdSize = sizeof (COMMON_GET_CONFIGURATION);
-    MassXactStruc.bXferDir = BIT7;     // IN
-    MassXactStruc.fpBuffer = DataBuffer;
-    MassXactStruc.dLength = DataBufferSize;
-
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_5, "Issue GetConfigurationCommand .... \n");
-
-    Data = USBMassIssueMassTransaction(DevInfo, &MassXactStruc);
-
-	USB_MemFree(DataBuffer, GET_MEM_BLK_COUNT(DataBufferSize));
-    USB_MemFree(CmdBuffer, GET_MEM_BLK_COUNT_STRUC(COMMON_GET_CONFIGURATION));
-
-    if (Data) {
-        return USB_SUCCESS;
-    } else {
-        return USB_ERROR;
-    }
-
-}
-
-/**
-    This function a sector at the LBA specified
-
-    @param Pointer to DeviceInfo structure
-        LBA to read
-          DS:DI   Data buffer pointer
-
-    @retval USB_SUCCESS or USB_ERROR
-
-**/
-
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   USBMassReadSector
+//
+// Description: This function a sector at the LBA specified
+//
+// Input:   Pointer to DeviceInfo structure
+//          LBA to read
+//          DS:DI   Data buffer pointer
+//
+// Output:  USB_SUCCESS or USB_ERROR
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 UINT8
 USBMassReadSector(
-    DEV_INFO*   DevInfo,
-    UINT32      Lba,
-    UINT8*      Buffer
-)
+    DEV_INFO*   fpDevInfo,
+    UINT32      dLba,
+    UINT8*      fpBuffer)
 {
-    COMN_RWV_10_CMD    *CmdBuffer;
-    UINT32              Data;
-    UINT8               Counter;
-    UINT8               RetValue = USB_ERROR;
-    MASS_XACT_STRUC     MassXactStruc;
+    COMN_RWV_CMD    *fpCmdBuffer;
+    UINT32          dData;
+    UINT8           bCounter;
+    UINT8           bRetValue = USB_ERROR;
 
     //
     // Allocate memory for the command buffer
     //
-    CmdBuffer = USB_MemAlloc(GET_MEM_BLK_COUNT_STRUC(COMN_RWV_10_CMD));
+    fpCmdBuffer = USB_MemAlloc(GET_MEM_BLK_COUNT_STRUC(COMN_RWV_CMD));
 
-    if (!CmdBuffer) {
+    if(!fpCmdBuffer) {
         return USB_ERROR;
     }
 
-    USBMassClearMassXactStruc(&MassXactStruc);
-
-    Counter = 10;
+    bCounter = 10;
     do {
 		//
 		// Set opcode to read command
 		//
-		CmdBuffer->bOpCode = COMMON_READ_10_OPCODE;
-		CmdBuffer->wTransferLength = 0x100;	// Big endian to little endian: 0x0001 -> 0x0100
-		Data = Lba;
+		fpCmdBuffer->bOpCode = COMMON_READ_10_OPCODE;
+		fpCmdBuffer->wTransferLength = 0x100;	// Big endian to little endian: 0x0001 -> 0x0100
+		dData = dLba;
 		//
 		// Change LBA from big endian to little endian
 		//
-		Data = dabc_to_abcd(Data);
+		dData = dabc_to_abcd(dData);
 		
-		CmdBuffer->dLba = Data;
+		fpCmdBuffer->dLba = dData;
 
         //
         // Fill the common bulk transaction structure
         //
-        MassXactStruc.fpCmdBuffer = (UINT8*)CmdBuffer;
+        gUsbData->stMassXactStruc.fpCmdBuffer = (UINT8*)fpCmdBuffer;
                                         //(EIP51158+)>
-        if (DevInfo->bSubClass == SUB_CLASS_SCSI) {
-	    	MassXactStruc.bCmdSize = 0x0A;	//SBC-3_60
+        if (fpDevInfo->bSubClass == SUB_CLASS_SCSI) {
+	    	gUsbData->stMassXactStruc.bCmdSize = 0x0A;	//SBC-3_60
         } else {
-            MassXactStruc.bCmdSize = sizeof (COMN_RWV_10_CMD);
+            gUsbData->stMassXactStruc.bCmdSize = sizeof (COMN_RWV_CMD);
         }
 										//<(EIP51158+)
-        MassXactStruc.bXferDir = BIT7;     // IN
-        MassXactStruc.fpBuffer = Buffer;
-        MassXactStruc.dLength = DevInfo->wBlockSize;  //(EIP59738)
-        MassXactStruc.wPreSkip = 0;
-        MassXactStruc.wPostSkip= 0;
+        gUsbData->stMassXactStruc.bXferDir = BIT7;     // IN
+        gUsbData->stMassXactStruc.fpBuffer = fpBuffer;
+        gUsbData->stMassXactStruc.dLength = fpDevInfo->wBlockSize;  //(EIP59738)
+        gUsbData->stMassXactStruc.wPreSkip = 0;
+        gUsbData->stMassXactStruc.wPostSkip= 0;
 
-        USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_5, "Read Sector .... \n");
+USB_DEBUG (DEBUG_LEVEL_5, "Read Sector .... \n");
 
-        Data = USBMassIssueMassTransaction(DevInfo, &MassXactStruc);
-        if (Data) {
-			RetValue = USB_SUCCESS;
+        dData = USBMassIssueMassTransaction(fpDevInfo);
+        if(dData) {
+			bRetValue	= USB_SUCCESS;
             break;  // Success
         }
         //
         // May be drive error. Try to correct from it !
         // Check whether the drive is ready for read/write/verify command
         //
-        Data = USBMassCheckDeviceReady(DevInfo);
-        if (Data) {    // Device is not ready.
-            RetValue = USB_ERROR;
+        dData = USBMassCheckDeviceReady(fpDevInfo);
+        if (dData) {    // Device is not ready.
+            bRetValue   = USB_ERROR;
             break;
         }
-        ZeroMem((UINT8*)CmdBuffer, sizeof(COMN_RWV_10_CMD));
-    } while (Counter--);
+        MemSet((UINT8*)fpCmdBuffer, sizeof(COMN_RWV_CMD), 0);
+    } while (bCounter--);
 
-    USB_MemFree(CmdBuffer, GET_MEM_BLK_COUNT_STRUC(COMN_RWV_10_CMD));
+    USB_MemFree(fpCmdBuffer, GET_MEM_BLK_COUNT_STRUC(COMN_RWV_CMD));
 
-    return RetValue;
-    
+    return  bRetValue;
 }
 
-/**
-    This function parses the boot record and extract the CHS
-    information of the formatted media from the boot record.
-    This routine checks for DOS & NTFS formats only
 
-    @param Pointer to DeviceInfo structure
-        Maximum LBA in the device
-        Boot record of the device
-
-    @retval USB_ERROR   If the boot record is un-recognizable and CHS info
-        is not extracted
-        USB_SUCCESS If the boot record is recognizable and CHS info
-        is extracted. CHS information is updated in the
-        mass device info structure
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   USBMassUpdateCHSFromBootRecord
+//
+// Description: This function parses the boot record and extract the CHS
+//      information of the formatted media from the boot record.
+//      This routine checks for DOS & NTFS formats only
+//
+// Input:   Pointer to DeviceInfo structure
+//          Maximum LBA in the device
+//          Boot record of the device
+//
+// Output:  USB_ERROR   If the boot record is un-recognizable and CHS info
+//          is not extracted
+//          USB_SUCCESS If the boot record is recognizable and CHS info
+//          is extracted. CHS information is updated in the
+//          mass device info structure
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT8
 USBMassUpdateCHSFromBootRecord(
-    DEV_INFO        *DevInfo,
-    UINT64          MaxLba,
-    BOOT_SECTOR     *BootSetor
-)
+    DEV_INFO		*fpDevInfo,
+    UINT32			dMaxLba,
+    BOOT_SECTOR		*BootSetor)
 {
 	UINT32	OemName = 0;
 	UINT32	Fat16SysType = 0;
@@ -1783,7 +1587,7 @@ USBMassUpdateCHSFromBootRecord(
     //
     // Check for valid MSDOS/MSWIN/NTFS boot record
     //
-    CopyMem((UINT8*)&OemName, (UINT8*)BootSetor->OEMName, sizeof(OemName));
+	MemCopy((UINT8*)BootSetor->OEMName, (UINT8*)&OemName, sizeof(OemName));
     if ((OemName != 0x4F44534D) &&    // "ODSM", MSDO...
         (OemName != 0x4957534D) &&    // "IWSM", MSWI...
         (OemName != 0x5346544E)) {    // "SFTN", NTFS
@@ -1791,10 +1595,10 @@ USBMassUpdateCHSFromBootRecord(
         // Check for valid FAT,FAT16 or FAT32 boot records
         //
         BootSetor->Fat.Fat16.FilSysType[3] = 0x20;
-        CopyMem((UINT8*)&Fat16SysType,
-                (UINT8*)BootSetor->Fat.Fat16.FilSysType, sizeof(Fat16SysType));
-        CopyMem((UINT8*)&Fat32SysType,
-                (UINT8*)BootSetor->Fat.Fat32.FilSysType, sizeof(Fat32SysType));
+		MemCopy((UINT8*)BootSetor->Fat.Fat16.FilSysType, (UINT8*)&Fat16SysType, 
+			sizeof(Fat16SysType));
+		MemCopy((UINT8*)BootSetor->Fat.Fat32.FilSysType, (UINT8*)&Fat32SysType, 
+			sizeof(Fat32SysType));
         if ((Fat16SysType != 0x20544146) &&	// " TAF", FAT
             (Fat32SysType != 0x33544146)) {	// "3TAF", FAT3
 
@@ -1810,8 +1614,8 @@ USBMassUpdateCHSFromBootRecord(
 		return USB_ERROR;
     }
 
-    DevInfo->bSectors = (UINT8)BootSetor->SecPerTrk;
-	DevInfo->bNonLBASectors = (UINT8)BootSetor->SecPerTrk;
+    fpDevInfo->bSectors = (UINT8)BootSetor->SecPerTrk;
+	fpDevInfo->bNonLBASectors = (UINT8)BootSetor->SecPerTrk;
 
     // Wrong BPB in MSI MegaStick 128; this is preformat usility issue, wrong BPB
     // information built in device.
@@ -1819,109 +1623,103 @@ USBMassUpdateCHSFromBootRecord(
 		return USB_ERROR;
     }
 
-    DevInfo->Heads = BootSetor->NumHeads;
-	DevInfo->NonLBAHeads = BootSetor->NumHeads;
-    DevInfo->BpbMediaDesc = BootSetor->Media;
+    fpDevInfo->bHeads = (UINT8)BootSetor->NumHeads;
+	fpDevInfo->bNonLBAHeads = (UINT8)BootSetor->NumHeads;
+    fpDevInfo->BpbMediaDesc = BootSetor->Media;
 
-    USBMassUpdateCylinderInfo(DevInfo, MaxLba);
+    USBMassUpdateCylinderInfo(fpDevInfo, dMaxLba);
 
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_4, "CHS: %x %x %x\n",
-                    DevInfo->bSectors,
-                    DevInfo->Heads,
-                    DevInfo->wCylinders);
+USB_DEBUG (DEBUG_LEVEL_4, "CHS: %x %x %x\n",
+                fpDevInfo->bSectors,
+                fpDevInfo->bHeads,
+                fpDevInfo->wCylinders);
 
-    return USB_SUCCESS;
-    
+    return  USB_SUCCESS;
 }
 
-/**
-    This procedure update cylinder parameter for device geometry.
-    head and sector paramaters are required before invoke this
-    function.
 
-    @param Pointer to DeviceInfo structure
-        Maximum LBA in the device
-        dev->Heads
-        dev->bSectors
-
-    @retval VOID
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   USBMassUpdateCylinderInfo
+//
+// Description: This procedure update cylinder parameter for device geometry.
+//      head and sector paramaters are required before invoke this
+//      function.
+//
+// Input:   Pointer to DeviceInfo structure
+//          Maximum LBA in the device
+//              dev->bHeads
+//              dev->bSectors
+//
+// Output:  None
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 VOID
-USBMassUpdateCylinderInfo(
-    DEV_INFO*   Dev,
-    UINT64      Lba
-)
+USBMassUpdateCylinderInfo(DEV_INFO* dev, UINT32 lba)
 {
-    UINT64 Data;
+    UINT32 data = lba /(dev->bSectors * dev->bHeads);
+    if (data <= 1) data++;
+    if (data > 0xFFFF) data = 0xFFFF;   // DOS workaround
 
-    if ((Dev->bSectors != 0) && (Dev->Heads != 0)) {
-        Data = DivU64x64Remainder(Lba, (Dev->bSectors * Dev->Heads), NULL);
-    } else {
-        Data = 0;
-    }
-   
-    if (Data <= 1) {
-        Data++;
-    }
-    if (Data > 0xFFFF) {
-        Data = 0xFFFF;   // DOS workaround
-    }
-    Dev->wCylinders = (UINT16)Data;
-    Dev->wNonLBACylinders = (UINT16)Data;
-    
+    dev->wCylinders = (UINT16)data;
+    dev->wNonLBACylinders = (UINT16)data;
 }
 
-/**
-    This function reads the first sector from the mass storage
-    device and identifies the formatted type.
 
-    @param Pointer to DeviceInfo structure
-        Maximum LBA of the device
-
-    @retval USB_ERROR   If could not identify the formatted type
-        USB_SUCCESS If formatted type is identified
-        MSB of emu - Emulation type
-        LSB of emu - Device type (Floppy, Harddisk or CDROM)
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   USBMassGetFormatType
+//
+// Description: This function reads the first sector from the mass storage
+//      device and identifies the formatted type.
+//
+// Input:   Pointer to DeviceInfo structure
+//          Maximum LBA of the device
+//
+// Output:  USB_ERROR   If could not identify the formatted type
+//          USB_SUCCESS If formatted type is identified
+//              MSB of emu - Emulation type
+//              LSB of emu - Device type (Floppy, Harddisk or CDROM)
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT8
 USBMassGetFormatType(
-    DEV_INFO*   DevInfo,
-    UINT64      MaxLba,
-    UINT16      *Emu
-)
+    DEV_INFO*   fpDevInfo,
+    UINT32      dMaxLba,
+    UINT16      *emu)
 {
-
+    UINT16  emu_ = 0;
 	MBR_PARTITION Partition = {0};
 
     //
     // Read the first sector of the device
     //
-    if (USBMassReadSector(DevInfo, 0, gUsbData->fpUSBMassConsumeBuffer) == USB_ERROR) {
-        return USB_ERROR;
+    if (USBMassReadSector(fpDevInfo, 0, gUsbData->fpUSBMassConsumeBuffer) == USB_ERROR) {
+        return  USB_ERROR;
     }
 
-    DevInfo->bHiddenSectors = 0;
+    fpDevInfo->bHiddenSectors = 0;
 
     //
     // Check for validity of the partition table/boot record
     //
     if (*((UINT16*)(gUsbData->fpUSBMassConsumeBuffer + 0x1FE)) != 0xAA55) {
-        USBMassSetDefaultGeometry(DevInfo, MaxLba);
-        return USB_ERROR;
+        USBMassSetDefaultGeometry(fpDevInfo, dMaxLba);
+        return  USB_ERROR;
     }
 
     if (USBMassValidatePartitionTable((MASTER_BOOT_RECORD*)gUsbData->fpUSBMassConsumeBuffer, 
-			MaxLba, &Partition) == USB_SUCCESS) {
+			dMaxLba, &Partition) == USB_SUCCESS) {
         //
         // Only one partition present, check the device size, if the device size
         // is less than 530 MB assume FDD or else assume the emulation as HDD
         //
-
-        //if (((MaxLba >> 11) < MAX_SIZE_FOR_USB_FLOPPY_EMULATION) &&	//(EIP80382)
+										//(EIP86793)>
+        //if (((dMaxLba >> 11) < MAX_SIZE_FOR_USB_FLOPPY_EMULATION) &&	//(EIP80382)
         //    !(gUsbData->dUSBStateFlag & USB_FLAG_MASS_NATIVE_EMULATION)) {
         //    emu_ = (UINT16)(USB_EMU_FORCED_FDD << 8) + USB_MASS_DEV_ARMD;
         //}else {
@@ -1930,31 +1728,32 @@ USBMassGetFormatType(
         //
         // Read boot sector, set the LBA number to boot record LBA number
         //
-        DevInfo->bHiddenSectors = Partition.StartingLba;
+        fpDevInfo->bHiddenSectors = Partition.StartingLba;
 
-        if (USBMassReadSector(DevInfo, Partition.StartingLba,
+        if (USBMassReadSector(fpDevInfo, Partition.StartingLba,
                 gUsbData->fpUSBMassConsumeBuffer) == USB_ERROR) {
-            return USB_ERROR;
+            return  USB_ERROR;
         }
 
-        if (USBMassUpdateCHSFromBootRecord(DevInfo, MaxLba, 
+        if (USBMassUpdateCHSFromBootRecord(fpDevInfo, dMaxLba, 
 				(BOOT_SECTOR*)gUsbData->fpUSBMassConsumeBuffer) == USB_SUCCESS) {
-            if (((RShiftU64(MaxLba, 11)) < MAX_SIZE_FOR_USB_FLOPPY_EMULATION) &&
+            if (((dMaxLba>> 11) < MAX_SIZE_FOR_USB_FLOPPY_EMULATION) &&
                 !(gUsbData->dUSBStateFlag & USB_FLAG_MASS_NATIVE_EMULATION)) {
-                if (DevInfo->bSubClass != SUB_CLASS_UFI) {
-                    *Emu = (UINT16)(USB_EMU_FORCED_FDD << 8) + USB_MASS_DEV_ARMD;
+                if(fpDevInfo->bSubClass != SUB_CLASS_UFI) {
+                    *emu = (UINT16)(USB_EMU_FORCED_FDD << 8) + USB_MASS_DEV_ARMD;
                 }
             }
             return USB_SUCCESS;
-        } else {  // Reset hidden sector value and return HDD emulation
-            USBMassSetDefaultGeometry(DevInfo, MaxLba);
-            DevInfo->bHiddenSectors = 0;
+        }
+        else {  // Reset hidden sector value and return HDD emulation
+            USBMassSetDefaultGeometry(fpDevInfo, dMaxLba);
+            fpDevInfo->bHiddenSectors = 0;
 										//(EIP43711)>
             //don't emulate as HDD for UFI class even media has valid partition like HDD
-            if (gUsbData->dUSBStateFlag & USB_FLAG_MASS_SIZE_EMULATION) {
-	            if (DevInfo->bSubClass != SUB_CLASS_UFI) {
-		            if ((RShiftU64(MaxLba, 11)) < MAX_SIZE_FOR_USB_FLOPPY_EMULATION) {
-                        *Emu = (UINT16)(USB_EMU_FORCED_FDD << 8) + USB_MASS_DEV_ARMD;
+            if(gUsbData->dUSBStateFlag & USB_FLAG_MASS_SIZE_EMULATION) {
+	            if(fpDevInfo->bSubClass != SUB_CLASS_UFI) {
+		            if ((dMaxLba >> 11) < MAX_SIZE_FOR_USB_FLOPPY_EMULATION) {
+                        *emu = (UINT16)(USB_EMU_FORCED_FDD << 8) + USB_MASS_DEV_ARMD;
                     }
                 }
             }
@@ -1963,79 +1762,87 @@ USBMassGetFormatType(
         }
     }
     
-    *Emu = USBMassSetDefaultType(DevInfo, MaxLba);
+    *emu = (UINT16)(USB_EMU_FLOPPY_ONLY << 8) + USB_MASS_DEV_ARMD;
     
-    if (USBMassUpdateCHSFromBootRecord(DevInfo, MaxLba, 
+    if (USBMassUpdateCHSFromBootRecord(fpDevInfo, dMaxLba, 
 			(BOOT_SECTOR*)gUsbData->fpUSBMassConsumeBuffer) == USB_SUCCESS) {
-        //*emu = USBMassSetDefaultType(fpDevInfo, MaxLba);
-         if (gUsbData->dUSBStateFlag & USB_FLAG_MASS_SIZE_EMULATION) {
-            if (DevInfo->bSubClass != SUB_CLASS_UFI) {
-                if ((RShiftU64(MaxLba, 11)) >= MAX_SIZE_FOR_USB_FLOPPY_EMULATION) {
-                    *Emu = (UINT16)(USB_EMU_HDD_ONLY << 8) + USB_MASS_DEV_HDD;
+        //*emu = USBMassSetDefaultType(fpDevInfo, dMaxLba);
+         if(gUsbData->dUSBStateFlag & USB_FLAG_MASS_SIZE_EMULATION) {
+            if(fpDevInfo->bSubClass != SUB_CLASS_UFI) {
+                if ((dMaxLba >> 11) >= MAX_SIZE_FOR_USB_FLOPPY_EMULATION) {
+                    *emu = (UINT16)(USB_EMU_HDD_ONLY << 8) + USB_MASS_DEV_HDD;
                 }
             }
         }
         return USB_SUCCESS;
     }
-    USBMassSetDefaultGeometry(DevInfo, MaxLba);
+    USBMassSetDefaultGeometry(fpDevInfo, dMaxLba);
+										//(EIP80382)>
+    //*emu = USBMassSetDefaultType(fpDevInfo, dMaxLba);
 
-    //*emu = USBMassSetDefaultType(fpDevInfo, MaxLba);
-
-    if (((RShiftU64(MaxLba, 11)) >= MAX_SIZE_FOR_USB_FLOPPY_EMULATION) &&
+    if (((dMaxLba>> 11) >= MAX_SIZE_FOR_USB_FLOPPY_EMULATION) &&
         !(gUsbData->dUSBStateFlag & USB_FLAG_MASS_NATIVE_EMULATION)) {
-        if (DevInfo->bSubClass != SUB_CLASS_UFI) {
-            *Emu = (UINT16)(USB_EMU_HDD_ONLY << 8) + USB_MASS_DEV_HDD;
+        if(fpDevInfo->bSubClass != SUB_CLASS_UFI) {
+            *emu = (UINT16)(USB_EMU_HDD_ONLY << 8) + USB_MASS_DEV_HDD;
         }
-        DevInfo->bHiddenSectors = 0;
+        fpDevInfo->bHiddenSectors = 0;
     }
     //*emu = emu_;
-
+										//<(EIP80382)
+										//<(EIP86793)
     return USB_SUCCESS;
 }
 
-/**
-    This procedure set device type depend on device class.
 
-    @param Pointer to DeviceInfo structure
-        Maximum LBA in the device (DWORD)
-
-    @retval Device Type (WORD)
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   USBMassSetDefaultType
+//
+// Description: This procedure set device type depend on device class.
+//
+// Input:   Pointer to DeviceInfo structure
+//          Maximum LBA in the device (DWORD)
+//
+// Output:  Device Type (WORD)
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT16
-USBMassSetDefaultType(
-    DEV_INFO*   Dev,
-    UINT64      Lba
-)
+USBMassSetDefaultType(DEV_INFO* dev, UINT32 lba)
 {
-    UINT16 DevType = (UINT16)(USB_EMU_FLOPPY_ONLY << 8) + USB_MASS_DEV_ARMD;
+    UINT16 devtype = (UINT16)(USB_EMU_FLOPPY_ONLY << 8) + USB_MASS_DEV_ARMD;
 
-    if (Dev->bSubClass != SUB_CLASS_UFI) {  // Check whether UFI class device
+    if (dev->bSubClass != SUB_CLASS_UFI) {  // Check whether UFI class device
         // Assume force FDD emulation for non-UFI class device
-        DevType = (UINT16)(USB_EMU_FORCED_FDD << 8) + USB_MASS_DEV_ARMD;
+        devtype = (UINT16)(USB_EMU_FORCED_FDD << 8) + USB_MASS_DEV_ARMD;
     }
-    return DevType;
+    return devtype;
 }
 
-/**
-    This procedure check whether partition table valid.
 
-    @param Partition table content
-        Maximum LBA in the device
-
-    @retval USB_SUCCESS partion table is valid:
-        Possible valid entry count(1-based)
-        Table entry counts(0-based, 4 means all entries scaned)
-        Activate entry offset(Absolute offset)
-    @retval USB_ERROR Invalid partition table
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   USBMassValidatePartitionTable
+//
+// Description: This procedure check whether partition table valid.
+//
+// Input:   Partition table content
+//          Maximum LBA in the device
+//
+// Output:  USB_SUCCESS - partion table is valid:
+//              Possible valid entry count(1-based)
+//              Table entry counts(0-based, 4 means all entries scaned)
+//              Activate entry offset(Absolute offset)
+//          USB_ERROR - Invalid partition table
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT8
 USBMassValidatePartitionTable(
     IN MASTER_BOOT_RECORD	*Mbr,
-    IN UINT64 				Lba,
+    IN UINT32 				lba,
     OUT MBR_PARTITION		*Partition)
 {
 	UINT8	Index = 0;
@@ -2058,13 +1865,13 @@ USBMassValidatePartitionTable(
         }
 
         // Check whether beginning LBA is reasonable
-        if (Mbr->PartRec[Index].StartingLba > Lba) {
+        if (Mbr->PartRec[Index].StartingLba > lba) {
 			return USB_ERROR;
         }
 
         // Check whether the size is reasonable
 #if HDD_PART_SIZE_CHECK
-        if (Mbr->PartRec[Index].SizeInLba > Lba) {
+        if (Mbr->PartRec[Index].SizeInLba > lba) {
 			return USB_ERROR;
         }
 #endif
@@ -2077,31 +1884,36 @@ USBMassValidatePartitionTable(
     }
 
     // If no activate partition table entry found use first entry
-    CopyMem((UINT8*)Partition,
-            (UINT8*)&Mbr->PartRec[ActivateIndex], sizeof(MBR_PARTITION));
+    MemCopy((UINT8*)&Mbr->PartRec[ActivateIndex], (UINT8*)Partition, 
+    	sizeof(MBR_PARTITION));
 
     return USB_SUCCESS;
 
 }
 
-/**
-    This procedure set default geometry for mass storage devices.
 
-    @param Pointer to DeviceInfo structure
-        Maximum LBA in the device
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   USBMassSetDefaultGeometry
+//
+// Description: This procedure set default geometry for mass storage devices.
+//
+// Input:   Pointer to DeviceInfo structure
+//          Maximum LBA in the device
+//
+// Output:  USB_ERROR   If could not identify the formatted type
+//          USB_SUCCESS If formatted type is identified
+//              Emulation type - bits 8..15
+//              Device type (Floppy, Harddisk or CDROM) - bits 0..7
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
-    @retval USB_ERROR   If could not identify the formatted type
-        USB_SUCCESS If formatted type is identified
-        Emulation type - bits 8..15
-        Device type (Floppy, Harddisk or CDROM) - bits 0..7
-
-**/
-
-UINT8 USBMassSetDefaultGeometry(DEV_INFO* dev, UINT64 lba)
+UINT8 USBMassSetDefaultGeometry(DEV_INFO* dev, UINT32 lba)
 {
     if (dev->bSubClass == SUB_CLASS_UFI) {
-        dev->Heads = 0x02;
-        dev->NonLBAHeads = 0x02;
+        dev->bHeads = 0x02;
+        dev->bNonLBAHeads = 0x02;
         dev->bSectors = 0x12;
         dev->bNonLBASectors = 0x12;
     }
@@ -2110,20 +1922,20 @@ UINT8 USBMassSetDefaultGeometry(DEV_INFO* dev, UINT64 lba)
     	dev->bNonLBASectors = 0x3F;
 // Use default heads that results in 1023 (3FF) cylinders or less for CHS
     	if (lba <= 0x1F7820) {
-            dev->Heads = 0x20;
-            dev->NonLBAHeads = 0x20;
+            dev->bHeads = 0x20;
+            dev->bNonLBAHeads = 0x20;
         }
         else if ( (lba > 0x1F7820) && (lba <= 0x3EF040) ) {
-            dev->Heads = 0x40;
-            dev->NonLBAHeads = 0x40;
+            dev->bHeads = 0x40;
+            dev->bNonLBAHeads = 0x40;
         }
         else if ( (lba > 0x3EF040) && (lba <= 0x7DE080) ) {
-            dev->Heads = 0x80;
-            dev->NonLBAHeads = 0x80;
+            dev->bHeads = 0x80;
+            dev->bNonLBAHeads = 0x80;
         }
         else if (lba > 0x7DE080) {
-            dev->Heads = 0xFF;
-            dev->NonLBAHeads = 0xFF;
+            dev->bHeads = 0xFF;
+            dev->bNonLBAHeads = 0xFF;
         }
     }
 
@@ -2132,73 +1944,69 @@ UINT8 USBMassSetDefaultGeometry(DEV_INFO* dev, UINT64 lba)
 }
 
 
-/**
-    This function identifies the type of the USB mass storage
-    device attached from the INQUIRY data obtained from the drive
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   USBMassIdentifyDeviceType
+//
+// Description: This function identifies the type of the USB mass storage
+//              device attached from the INQUIRY data obtained from the drive
+//
+// Input:   Pointer to DeviceInfo structure
+//          Pointer to the inquiry data (read from device)
+//
+// Output:  Nothing
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
-    @param Pointer to DeviceInfo structure
-        Pointer to the inquiry data (read from device)
-
-    @retval VOID
-
-**/
-
-UINT8
+VOID
 USBMassIdentifyDeviceType(
-    DEV_INFO*   DevInfo,
-    UINT8*      InqData
-)
+    DEV_INFO*   dev,
+    UINT8*      inq_data)
 {
-    UINT16  EmulationType;
-    UINT16  ForceEmulationType = 0;
-    UINT32  Data = 0;
-    UINT8   Count;
-    BOOLEAN ReadCapacityTimeout;
-    static  UINT16 UsbMassEmulationTypeTable[5] = {
+    UINT16  wEmulationType;
+    UINT16  wForceEmulationType = 0;
+    UINT32  dData = 0;
+    static  UINT16 USBMassEmulationTypeTable[5] = {
         0,  // Auto
         (USB_EMU_FLOPPY_ONLY << 8) + USB_MASS_DEV_ARMD,     // Floppy
         (USB_EMU_FORCED_FDD << 8) + USB_MASS_DEV_ARMD,      // Forced floppy
         (USB_EMU_HDD_ONLY << 8) + USB_MASS_DEV_HDD,         // HDD
         (USB_EMU_HDD_OR_FDD << 8) + USB_MASS_DEV_CDROM };   // CDROM
 
-    USBMassGetPhysicalDeviceType(DevInfo, InqData);
+    USBMassGetPhysicalDeviceType(dev, inq_data);
 
     // Note: at this point we assume that dev->wEmulationOption is filled in
     // according to the setup question selection.
-    if (!(DevInfo->Flag & DEV_INFO_HOTPLUG) || DevInfo->wEmulationOption) {    // not auto
-        EmulationType = UsbMassEmulationTypeTable[DevInfo->wEmulationOption];
-        ForceEmulationType = UsbMassEmulationTypeTable[DevInfo->wEmulationOption];
+    if (!(dev->bFlag & DEV_INFO_HOTPLUG) || dev->wEmulationOption) {    // not auto
+        wEmulationType = USBMassEmulationTypeTable[dev->wEmulationOption];
+        wForceEmulationType = USBMassEmulationTypeTable[dev->wEmulationOption];
     }
-    
-    //USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, ">>-- IdentifyDeviceType:: Device #%d, Emul#: %d, Emul: %x\n",
-    //                              DevInfo->bDeviceAddress, DevInfo->wEmulationOption, EmulationType);
+//USB_DEBUG(DEBUG_LEVEL_3, ">>-- IdentifyDeviceType:: Device #%d, Emul#: %d, Emul: %x\n", dev->bDeviceAddress, dev->wEmulationOption, wEmulationType);
+
 #if USB_STORAGE_DEVICE_RMB_CHECK
-    if (*(InqData + 1) & 0x80) { // Check RMB status
-        DevInfo->bLastStatus |= USB_MASS_MEDIA_REMOVEABLE;
+    if (*(inq_data+1) & 0x80) { // Check RMB status
+        wForceEmulationType = (UINT16)(USB_EMU_HDD_ONLY << 8) + USB_MASS_DEV_HDD;
     }
-#else
-    DevInfo->bLastStatus |= USB_MASS_MEDIA_REMOVEABLE;
 #endif
+    dev->bLastStatus |= USB_MASS_MEDIA_PRESENT; // Assume Media Present
 
-    DevInfo->bLastStatus |= USB_MASS_MEDIA_PRESENT; // Assume Media Present
-
-    if (*InqData == 5) {   // CDROM
+    if (*inq_data == 5) {   // CDROM
         // Set the type as CDROM and emulation as HDD or FDD
-        DevInfo->wBlockSize = 0x800;
-        EmulationType = (UINT16)(USB_EMU_HDD_OR_FDD << 8) + USB_MASS_DEV_CDROM;
+        wEmulationType = (UINT16)(USB_EMU_HDD_OR_FDD << 8) + USB_MASS_DEV_CDROM;
         goto UMIDT_DeviceTypeOver;
     }
 //					;(EIP25229+)>
 #if USB_START_UNIT_BEFORE_MSD_ENUMERATION
 //  Start unit command before access it
-	USBMassStartUnitCommand(DevInfo);
+	USBMassStartUnitCommand (dev);
 #endif
 //					;<(EIP25229+)
                                         //(EIP80382)>
-    if (DevInfo->bSubClass == SUB_CLASS_UFI) { 
-        EmulationType = (UINT16)(USB_EMU_FLOPPY_ONLY << 8) + USB_MASS_DEV_ARMD;
+    if (dev->bSubClass == SUB_CLASS_UFI) { 
+        wEmulationType = (UINT16)(USB_EMU_FLOPPY_ONLY << 8) + USB_MASS_DEV_ARMD;
     } else {
-        EmulationType = (UINT16)(USB_EMU_HDD_ONLY << 8) + USB_MASS_DEV_HDD;
+        wEmulationType = (UINT16)(USB_EMU_HDD_ONLY << 8) + USB_MASS_DEV_HDD;
     }
                                         //<(EIP80382)
                                         
@@ -2208,51 +2016,48 @@ USBMassIdentifyDeviceType(
     // commands for parsing geometry, issue read capacity command to make sure device
     // is ready for further access. (USB0089+)>
     //
-    if (DevInfo->bSubClass != SUB_CLASS_UFI) {
-        for (Count = 0; Count < 30 && VALID_DEVINFO(DevInfo); Count++) {
-            if (USBMassReadCapacity10Command(DevInfo) == USB_SUCCESS) {
+    if(dev->bSubClass != SUB_CLASS_UFI)
+    {
+        UINT8 count;
+        for (count = 0; count < 30 && VALID_DEVINFO(dev) ; count++) {
+
+            if ( USBMassReadCapacityCommand(dev) == USB_SUCCESS ) {
                 break;
             }
-            if (gUsbData->bLastCommandStatus & USB_BULK_TIMEDOUT) {
-                ReadCapacityTimeout = TRUE;
-            } else {
-                ReadCapacityTimeout = FALSE;
-            }
-            if ((UINT16)USBMassRequestSense(DevInfo) == 0x3A02 ) {	//(EIP86793)
+            if ( (UINT16)USBMassRequestSense(dev) == 0x3A02 ) {	//(EIP86793)
                 break;  // No media
-            }
-            if ((gUsbData->bLastCommandStatus & USB_BULK_TIMEDOUT) && (ReadCapacityTimeout == TRUE)) {
-                return USB_ERROR;
             }
         }
     }
     //
     // Get the block size & last LBA number
     //
-    Data = USBMassCheckDeviceReady(DevInfo);
+    dData = USBMassCheckDeviceReady(dev);
 										//(EIP86793)>
-    if ((UINT16)Data == 0x3A02) {  // Check for media presence status
+    if ((UINT16)dData == 0x3A02) {  // Check for media presence status
         //
         // Media not present. Try to get disk geometry from Format
         // capacity command
         //
-        if (!(DevInfo->wIncompatFlags & USB_INCMPT_FORMAT_CAPACITY_NOT_SUPPORTED)) {
-            USBMassReadFormatCapacity(DevInfo);
-            if ((DevInfo->MaxLba != 0) && (DevInfo->MaxLba <= USB_144MB_FDD_MAX_LBA)) {
-                EmulationType = (UINT16)(USB_EMU_FLOPPY_ONLY << 8) + USB_MASS_DEV_ARMD;
-            } else {
-                if (!(gUsbData->dUSBStateFlag & USB_FLAG_MASS_EMULATION_FOR_NO_MEDIA)) {
-                    EmulationType = (UINT16)(USB_EMU_FORCED_FDD << 8) + USB_MASS_DEV_ARMD;
+        if (!(dev->wIncompatFlags & USB_INCMPT_FORMAT_CAPACITY_NOT_SUPPORTED)) {
+            if (dev->bSubClass == SUB_CLASS_UFI) {
+                USBMassReadFormatCapacity(dev);
+                if ((dev->dMaxLba != 0) && (dev->dMaxLba <= USB_144MB_FDD_MAX_LBA)) {
+                    wEmulationType = (UINT16)(USB_EMU_FLOPPY_ONLY << 8) + USB_MASS_DEV_ARMD;
+                }else {
+                    if (!(gUsbData->dUSBStateFlag & USB_FLAG_MASS_EMULATION_FOR_NO_MEDIA)) {
+                    wEmulationType = (UINT16)(USB_EMU_FORCED_FDD << 8) + USB_MASS_DEV_ARMD;
+                    }
                 }
+                goto UMIDT_DeviceTypeOver;
             }
-            goto UMIDT_DeviceTypeOver;
         }
     }
 
     //
     // Proceed with normal checking
     //
-    if (!Data) {
+    if (!dData) {
                                         //(EIP59738-)>
         //
         // Get the max LBA & block size; if block size is other than
@@ -2264,14 +2069,14 @@ USBMassIdentifyDeviceType(
         //}
                                         //(<EIP59738-)
                                         //(EIP80382)>
-        if (USBMassGetFormatType(DevInfo, DevInfo->MaxLba, &EmulationType) == USB_ERROR) {
+        if (USBMassGetFormatType(dev, dev->dMaxLba, &wEmulationType) == USB_ERROR) {
             //
             // Find the device type by size
             //
-            if (((RShiftU64(DevInfo->MaxLba, 11)) < MAX_SIZE_FOR_USB_FLOPPY_EMULATION) || 
+            if (((dev->dMaxLba >> 11) < MAX_SIZE_FOR_USB_FLOPPY_EMULATION) || 
                     (gUsbData->dUSBStateFlag & USB_FLAG_MASS_NATIVE_EMULATION)) {
-				if (DevInfo->bSubClass != SUB_CLASS_UFI) {
-					EmulationType = (USB_EMU_FORCED_FDD << 8) + USB_MASS_DEV_ARMD;
+				if (dev->bSubClass != SUB_CLASS_UFI) {
+					wEmulationType = (USB_EMU_FORCED_FDD << 8) + USB_MASS_DEV_ARMD;
                 }
             }
         }
@@ -2281,58 +2086,59 @@ USBMassIdentifyDeviceType(
 
 UMIDT_DeviceTypeOver:
 
-    if (ForceEmulationType) {
-        EmulationType = ForceEmulationType;
-    }
-    DevInfo->bStorageType = (UINT8)EmulationType;
-    DevInfo->bEmuType = (UINT8)(EmulationType >> 8);
+    if (wForceEmulationType) wEmulationType = wForceEmulationType;
+    dev->bStorageType = (UINT8)wEmulationType;
+    dev->bEmuType = (UINT8)(wEmulationType >> 8);
 
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "<<-- IdentifyDeviceType:: Emul: %x\n", EmulationType);
+USB_DEBUG(DEBUG_LEVEL_3, "<<-- IdentifyDeviceType:: Emul: %x\n", wEmulationType);
 
-    return USB_SUCCESS;
+    return;
 }
 
-/**
-    This procedure classify USB mass storage devices according to
-    inquiry command return data.
 
-    @param Pointer to DeviceInfo structure
-        Pointer to the inquiry data (read from device)
-
-    @retval VOID
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   USBMassGetPhysicalDeviceType
+//
+// Description: This procedure classify USB mass storage devices according to
+//              inquiry command return data.
+//
+// Input:   Pointer to DeviceInfo structure
+//          Pointer to the inquiry data (read from device)
+//
+// Output:  Nothing
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 VOID
 USBMassGetPhysicalDeviceType(
-    DEV_INFO*   Dev,
-    UINT8       *Buf
+    DEV_INFO*   dev,
+    UINT8       *buf
 )
 {
-
-    switch (*Buf) {
+    switch (*buf) {
         case 0x0:
-            if (Dev->bSubClass == SUB_CLASS_UFI) {
-                Dev->bPhyDevType = USB_MASS_DEV_FDD;
+            if (dev->bSubClass == SUB_CLASS_UFI) {
+                dev->bPhyDevType = USB_MASS_DEV_FDD;
                 break;
             }
-            Dev->bPhyDevType = (*(Buf+1) & 0x80) ? 
+            dev->bPhyDevType = (*(buf+1) & 0x80) ? 
                 USB_MASS_DEV_ARMD : USB_MASS_DEV_HDD;
             break;
         case 0x5:
-            Dev->bPhyDevType = USB_MASS_DEV_CDROM;
+            dev->bPhyDevType = USB_MASS_DEV_CDROM;
             break;
         case 0x7:
-            Dev->bPhyDevType = USB_MASS_DEV_MO;
+            dev->bPhyDevType = USB_MASS_DEV_MO;
             break;
         case 0xE:
-            Dev->bPhyDevType = USB_MASS_DEV_ARMD;
+            dev->bPhyDevType = USB_MASS_DEV_ARMD;
             break;
         default:
-            Dev->bPhyDevType = USB_MASS_DEV_UNKNOWN;
+            dev->bPhyDevType = USB_MASS_DEV_UNKNOWN;
             break;
     }
-    
 }
 
 /*                                      //(EIP59738-)>
@@ -2385,28 +2191,29 @@ USBMassConsumeBulkData(
 */                                      //<(EIP59738-)
 
 
-/**
-    This function reads/writes the data to the mass storage
-    device using bulk transfer. It also takes care of pre and
-    post skip bytes.
-
-    @param fpDevInfo   Pointer to DeviceInfo structure
-        stMassXactStruc (given for reference)
-        bXferDir    Transfer direction
-        fpBuffer    Data buffer far pointer
-        dLength Amount of data to be transferred
-        wPreSkip    Number of bytes to skip before data
-        wPostSkip   Number of bytes to skip after data
-
-    @retval Amount of data actually transferred
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// PROCEDURE:   USBMassProcessBulkData
+//
+// DESCRIPTION: This function reads/writes the data to the mass storage
+//              device using bulk transfer. It also takes care of pre and
+//              post skip bytes.
+//
+// PARAMETERS:  fpDevInfo   Pointer to DeviceInfo structure
+//              stMassXactStruc (given for reference)
+//                  bXferDir    Transfer direction
+//                  fpBuffer    Data buffer far pointer
+//                  dLength Amount of data to be transferred
+//                  wPreSkip    Number of bytes to skip before data
+//                  wPostSkip   Number of bytes to skip after data
+//
+// RETURN:      Amount of data actually transferred
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 										//(EIP70814)>
 UINT32
-USBMassProcessBulkData(
-    DEV_INFO*           DevInfo,
-    MASS_XACT_STRUC*    MassXactStruc
-)
+USBMassProcessBulkData(DEV_INFO* fpDevInfo)
 {
     UINT32      dData;
     UINT16      wTemp;
@@ -2418,42 +2225,44 @@ USBMassProcessBulkData(
 	UINT32		XferedSize;
 	UINT32		RemainingSize;
 
-//USB_DEBUG (DEBUG_INFO, DEBUG_LEVEL_3, "Pre,%x;Post,%x\n", gUsbData->stMassXactStruc.wPreSkip,
+//USB_DEBUG (DEBUG_LEVEL_3, "Pre,%x;Post,%x\n", gUsbData->stMassXactStruc.wPreSkip,
 //                  gUsbData->stMassXactStruc.wPostSkip);
     //
     // Check whether something we have to transfer
     //
-    if (!MassXactStruc->dLength) {
+    if (!gUsbData->stMassXactStruc.dLength) {
         return 0;
     }
 
 
     wTemp   = gUsbData->wTimeOutValue;     // Save original value
     if (gUsbData->wBulkDataXferDelay) {    // Check the bulk data delay specified
-        gUsbData->wTimeOutValue = gUsbData->wBulkDataXferDelay;
+        gUsbData->wTimeOutValue    = gUsbData->wBulkDataXferDelay;
     }
 
-	if ((MassXactStruc->wPreSkip == 0) && (MassXactStruc->wPostSkip == 0)) {
+	if ((gUsbData->stMassXactStruc.wPreSkip == 0) && 
+		(gUsbData->stMassXactStruc.wPostSkip == 0)) {
+
 	    dData = USBMassIssueBulkTransfer(
-	                    DevInfo,
-	                    MassXactStruc->bXferDir,
-	                    MassXactStruc->fpBuffer,
-	                    MassXactStruc->dLength);
+	                    fpDevInfo,
+	                    gUsbData->stMassXactStruc.bXferDir,
+	                    gUsbData->stMassXactStruc.fpBuffer,
+	                    gUsbData->stMassXactStruc.dLength);
 	} else {
 		// Allocate a data buffer
-		Buffer = USB_MemAlloc((UINT16)GET_MEM_BLK_COUNT(DevInfo->wBlockSize));
-		PreSkip = MassXactStruc->wPreSkip;
-		RemainingSize = MassXactStruc->dLength - 
-						(PreSkip + MassXactStruc->wPostSkip);
-		DestBuffer = MassXactStruc->fpBuffer;
+		Buffer = USB_MemAlloc((UINT16)GET_MEM_BLK_COUNT(fpDevInfo->wBlockSize));
+		PreSkip = gUsbData->stMassXactStruc.wPreSkip;
+		RemainingSize = gUsbData->stMassXactStruc.dLength - 
+						(PreSkip + gUsbData->stMassXactStruc.wPostSkip);
+		DestBuffer = gUsbData->stMassXactStruc.fpBuffer;
 
-		for (XferedSize = 0; XferedSize < MassXactStruc->dLength;) {
-			XferSize = MassXactStruc->dLength >= DevInfo->wBlockSize ?
-						DevInfo->wBlockSize : MassXactStruc->dLength;
+		for (XferedSize = 0; XferedSize < gUsbData->stMassXactStruc.dLength;) {
+			XferSize = gUsbData->stMassXactStruc.dLength >= fpDevInfo->wBlockSize ?
+						fpDevInfo->wBlockSize : gUsbData->stMassXactStruc.dLength;
 
 		    dData = USBMassIssueBulkTransfer(
-		                DevInfo,
-		                MassXactStruc->bXferDir,
+		                fpDevInfo,
+		                gUsbData->stMassXactStruc.bXferDir,
 		                Buffer,
 		                XferSize);
 		    if (dData == 0) {
@@ -2483,14 +2292,14 @@ USBMassProcessBulkData(
 			}
 
 			XferSize = RemainingSize < XferSize ? RemainingSize : XferSize;
-			CopyMem(DestBuffer, SrcBuffer, XferSize);
+			MemCopy(SrcBuffer, DestBuffer, XferSize);
 
 			// Update the destination buffer pointer
 			DestBuffer += XferSize;
 			RemainingSize -= XferSize;
 		}
 		
-		USB_MemFree(Buffer, (UINT16)GET_MEM_BLK_COUNT(DevInfo->wBlockSize));
+		USB_MemFree(Buffer, (UINT16)GET_MEM_BLK_COUNT(fpDevInfo->wBlockSize));
 
 		dData = XferedSize;
 	}
@@ -2502,22 +2311,25 @@ USBMassProcessBulkData(
 }
 										//<(EIP70814)
 
-/**
-    This function sends inquiry command to the USB mass storage
-    device
-
-    @param fpDevInfo   Pointer to DeviceInfo structure
-
-    @retval Pointer to the inquiry data
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// PROCEDURE:   USBMassInquiryCommand
+//
+// DESCRIPTION: This function sends inquiry command to the USB mass storage
+//              device
+//
+// PARAMETERS:  fpDevInfo   Pointer to DeviceInfo structure
+//
+// RETURN:      Pointer to the inquiry data
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 MASS_INQUIRY*
 USBMassInquiryCommand (DEV_INFO* fpDevInfo)
 {
-    COMMON_INQ_CMD  *   fpCmdBuffer;
-    UINT32              dData;
-    MASS_XACT_STRUC     MassXactStruc;
+    COMMON_INQ_CMD  *fpCmdBuffer;
+    UINT32          dData;
 
     //
     // Allocate memory for the command buffer
@@ -2533,26 +2345,26 @@ USBMassInquiryCommand (DEV_INFO* fpDevInfo)
     //
     // Clear the common bulk transaction structure
     //
-    USBMassClearMassXactStruc(&MassXactStruc);
+    USBMassClearMassXactStruc();
 
     //
     // Fill the common bulk transaction structure
     //
-    MassXactStruc.fpCmdBuffer = (UINT8*)fpCmdBuffer;
+    gUsbData->stMassXactStruc.fpCmdBuffer = (UINT8*)fpCmdBuffer;
                                         //(EIP51158+)>
     if (fpDevInfo->bSubClass == SUB_CLASS_SCSI) {
-		MassXactStruc.bCmdSize = 0x06;	//SPC-4_246	
+		gUsbData->stMassXactStruc.bCmdSize = 0x06;	//SPC-4_246	
     } else {
-    	MassXactStruc.bCmdSize = sizeof (COMMON_INQ_CMD);
+    	gUsbData->stMassXactStruc.bCmdSize = sizeof (COMMON_INQ_CMD);
     }
 										//<(EIP51158+)
-    MassXactStruc.bXferDir = BIT7;     // IN
-    MassXactStruc.fpBuffer = gUsbData->fpUSBTempBuffer + 0x40;
-    MassXactStruc.dLength = 0x24;
+    gUsbData->stMassXactStruc.bXferDir = BIT7;     // IN
+    gUsbData->stMassXactStruc.fpBuffer = gUsbData->fpUSBTempBuffer + 0x40;
+    gUsbData->stMassXactStruc.dLength = 0x24;
 
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_5, "Issue Inquiry Command .... \n");
+USB_DEBUG (DEBUG_LEVEL_5, "Issue Inquiry Command .... \n");
 
-    dData = USBMassIssueMassTransaction(fpDevInfo, &MassXactStruc);
+    dData = USBMassIssueMassTransaction(fpDevInfo);
 
     USB_MemFree(fpCmdBuffer, GET_MEM_BLK_COUNT_STRUC(COMMON_INQ_CMD));
 
@@ -2566,82 +2378,69 @@ USBMassInquiryCommand (DEV_INFO* fpDevInfo)
 }
 
 
-/**
-    This function reads/writes/verifies blocks of data from the
-    USB mass device specified by its device address
-
-    @param fpDevInfo   Pointer to DeviceInfo structure
-        bOpCode     Read/Write/Verify
-        fpReadData  Pointer to the read command structure
-        bDevAddr        USB device address of the device
-        dStartLBA       Starting LBA address
-        wNumBlks        Number of blocks to process
-        wPreSkipSize    Number of bytes to skip before
-        wPostSkipSize   Number of bytes to skip after
-        fpBufferPtr     Far buffer pointer
-
-    @retval Return code (0 - Failure, <>0 - Size read)
-        fpReadData  Pointer to the mass read command structure
-        dSenseData  Sense data of the last command
-        fpBufferPtr Far buffer pointer
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   USBMassRWVCommand
+//
+// Description: This function reads/writes/verifies blocks of data from the
+//              USB mass device specified by its device address
+//
+// Input:   fpDevInfo   Pointer to DeviceInfo structure
+//          bOpCode     Read/Write/Verify
+//          fpReadData  Pointer to the read command structure
+//              bDevAddr        USB device address of the device
+//              dStartLBA       Starting LBA address
+//              wNumBlks        Number of blocks to process
+//              wPreSkipSize    Number of bytes to skip before
+//              wPostSkipSize   Number of bytes to skip after
+//              fpBufferPtr     Far buffer pointer
+//
+// Output:  Return code (0 - Failure, <>0 - Size read)
+//              fpReadData  Pointer to the mass read command structure
+//                  dSenseData  Sense data of the last command
+//                  fpBufferPtr Far buffer pointer
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT16
 USBMassRWVCommand(
-    DEV_INFO    *DevInfo,
-    UINT8       OpCode,
+    DEV_INFO    *fpDevInfo,
+    UINT8       bOpCode,
     VOID        *DataStruc
 )
 {
-    EFI_MASS_READ		*MassDataStruc = (EFI_MASS_READ*)DataStruc;
-    COMN_RWV_16_CMD	    *CmdBuffer;
-    UINT64              StartLba;
-    UINT32              BytesToRw;
-    UINT32              Data;
-    UINT32              SenseData;
-    UINT8               Dir;       // BIT7 0/1 - R/W
-    UINT8               RetryNum;
-    UINT16              RetCode = 0;
-    UINT8               CmdSize;
-    EFI_STATUS          EfiStatus = EFI_SUCCESS;
-    MASS_XACT_STRUC     MassXactStruc;
-    
-
-#if !USB_RT_DXE_DRIVER
-    if (gCheckUsbApiParameter) {
-        EfiStatus = AmiValidateMemoryBuffer((VOID*)MassDataStruc->BufferPtr, 
-                (UINT32)MassDataStruc->NumBlks * (UINT32)DevInfo->wBlockSize);
-        if (EFI_ERROR(EfiStatus)) {
-            USB_DEBUG(DEBUG_ERROR, 3, "UsbMassRWVCommand Invalid Pointer, Buffer is in SMRAM.\n");
-            return 0;
-        }
-        gCheckUsbApiParameter = FALSE;
-    }
-#endif
+	MASS_READ		*fpDataStruc = (MASS_READ*)DataStruc;
+    COMN_RWV_CMD	*fpCmdBuffer = NULL;
+    UINT32  dStartLba;
+    UINT32  dBytesToRW;
+    UINT32  dData, dSenseData;
+    UINT8   bDir;       // BIT7 0/1 - R/W
+    UINT8   bRetryNum;
+    UINT16  wRetCode = 0;
 
     //
     // Set the sense code as 0
     //
-    MassDataStruc->SenseData = 0;
+    fpDataStruc->dSenseData = 0;
 
     //
     // Allocate memory for the command buffer
     //
-    CmdBuffer = (COMN_RWV_16_CMD*)USB_MemAlloc(GET_MEM_BLK_COUNT_STRUC(COMN_RWV_16_CMD));
-    if (!CmdBuffer) {
-        return 0;
+    fpCmdBuffer = (COMN_RWV_CMD*)USB_MemAlloc(GET_MEM_BLK_COUNT_STRUC(COMN_RWV_CMD));
+    if (!fpCmdBuffer) {
+        return  0;
     }
 
-	for (RetryNum = 0; RetryNum < 2; RetryNum++) {
+	for (bRetryNum = 0; bRetryNum < 2; bRetryNum++) {
 	    //
 	    // Load command into (just allocated) mass command buffer
 	    //
-	    CmdBuffer->OpCode = OpCode;
-	    StartLba = MassDataStruc->StartLba;
+	    fpCmdBuffer->bOpCode = bOpCode;
+	    dStartLba = fpDataStruc->dStartLBA;
                                         //(EIP60588+)>
-        if (StartLba > (DevInfo->MaxLba - MassDataStruc->NumBlks)) {
-            StartLba = DevInfo->MaxLba - MassDataStruc->NumBlks;
+        if (dStartLba > (fpDevInfo->dMaxLba - fpDataStruc->wNumBlks)) {
+            dStartLba = fpDevInfo->dMaxLba - fpDataStruc->wNumBlks;
         }
                                         //<(EIP60588+)
 	//
@@ -2656,38 +2455,30 @@ USBMassRWVCommand(
 	    //
 	    // Check for forced floppy emulated device and change LBA accordingly
 	    //
-	    if (DevInfo->bEmuType == USB_EMU_FORCED_FDD) {
-            if (!(gUsbData->dUSBStateFlag & USB_FLAG_RUNNING_UNDER_EFI)) //(EIP113379+)
+	    if (fpDevInfo->bEmuType == USB_EMU_FORCED_FDD) {
+            if  (!(gUsbData->dUSBStateFlag & USB_FLAG_RUNNING_UNDER_EFI)) //(EIP113379+)
     	        //
     	        // Skip first track in case of floppy emulation
     	        //
-    	        StartLba += DevInfo->bHiddenSectors;
+    	        dStartLba += fpDevInfo->bHiddenSectors;
 	    }
+
+	    //
+	    // Change big endian format (INTEL) to little endian format
+	    //
+	    dStartLba = dabc_to_abcd(dStartLba);
+
+	    fpCmdBuffer->dLba = dStartLba;
 
         //
         // Check the validity of the block size
         //
-        if (DevInfo->wBlockSize != 0xFFFF) {
+        if (fpDevInfo->wBlockSize != 0xFFFF) {
             //
             // Change big endian format (INTEL) to little endian format
             //
-            if ((OpCode == COMMON_READ_10_OPCODE) ||
-                (OpCode == COMMON_WRITE_10_OPCODE) ||
-                (OpCode == COMMON_VERIFY_10_OPCODE)) {
-                ((COMN_RWV_10_CMD*)CmdBuffer)->dLba = dabc_to_abcd((UINT32)StartLba);
-                ((COMN_RWV_10_CMD*)CmdBuffer)->wTransferLength =
-                    (UINT16)((MassDataStruc->NumBlks << 8) + (MassDataStruc->NumBlks >> 8));
-                if (DevInfo->bSubClass == SUB_CLASS_SCSI) {
-	        	    CmdSize = 0x0A;	//SBC-3_60
-                } else {
-                    CmdSize = sizeof (COMN_RWV_10_CMD);
-                }
-            } else {
-            	CmdBuffer->Lba = LShiftU64(dabc_to_abcd((UINT32)StartLba), 32);
-                CmdBuffer->Lba |= dabc_to_abcd((UINT32)RShiftU64(StartLba, 32));
-                CmdBuffer->TransferLength = dabc_to_abcd(MassDataStruc->NumBlks);
-                CmdSize = sizeof(COMN_RWV_16_CMD);
-            }
+            fpCmdBuffer->wTransferLength =
+                (UINT16)((fpDataStruc->wNumBlks << 8) + (fpDataStruc->wNumBlks >> 8));
             //
             // Verify command does not need delay
             //
@@ -2697,58 +2488,75 @@ USBMassRWVCommand(
             // Calculate number of bytes to transfer (for verify command nothing
             // to read/write.
             //
-            BytesToRw = 0;
-            if ((OpCode != COMMON_VERIFY_10_OPCODE) && 
-                (OpCode != COMMON_VERIFY_16_OPCODE)){
+            dBytesToRW = 0;
+            if (bOpCode != COMMON_VERIFY_OPCODE) {
                 //
                 // Read/write command may need long time delay
                 //
                 gUsbData->wBulkDataXferDelay = 20000;
-                BytesToRw = (UINT32)MassDataStruc->NumBlks * (UINT32)DevInfo->wBlockSize;
+                dBytesToRW = (UINT32)fpDataStruc->wNumBlks * (UINT32)fpDevInfo->wBlockSize;
             }
 
             //
             // Set the direction properly
             //
-            if ((OpCode == COMMON_WRITE_10_OPCODE) ||
-                (OpCode == COMMON_WRITE_16_OPCODE)) {
-                Dir = 0;
-            } else {
-                Dir = BIT7;
-            }
+            bDir = (UINT8)((bOpCode == COMMON_WRITE_10_OPCODE)? 0 : BIT7);
 
             //
             // Fill the common bulk transaction structure
             // Fill Command buffer address & size
             //
-            MassXactStruc.fpCmdBuffer = (UINT8*)CmdBuffer;
-            MassXactStruc.bCmdSize = CmdSize;
-            MassXactStruc.bXferDir = Dir;
-            MassXactStruc.fpBuffer = (UINT8*)(UINTN)MassDataStruc->BufferPtr;
-            MassXactStruc.wPreSkip = MassDataStruc->PreSkipSize;
-            MassXactStruc.wPostSkip = MassDataStruc->PostSkipSize;
-            MassXactStruc.dLength = BytesToRw;
+            gUsbData->stMassXactStruc.fpCmdBuffer = (UINT8*)fpCmdBuffer;
+                                        //(EIP51158+)>
+            if (fpDevInfo->bSubClass == SUB_CLASS_SCSI) {
+	        	gUsbData->stMassXactStruc.bCmdSize = 0x0A;	//SBC-3_60
+            } else {
+                gUsbData->stMassXactStruc.bCmdSize = sizeof (COMN_RWV_CMD);
+            }
+										//<(EIP51158+)
+            gUsbData->stMassXactStruc.bXferDir = bDir;
+            gUsbData->stMassXactStruc.fpBuffer = (UINT8*)(UINTN)fpDataStruc->fpBufferPtr;
+            gUsbData->stMassXactStruc.wPreSkip = fpDataStruc->wPreSkipSize;
+            gUsbData->stMassXactStruc.wPostSkip = fpDataStruc->wPostSkipSize;
+            gUsbData->stMassXactStruc.dLength = dBytesToRW;
 
-            Data = USBMassIssueMassTransaction(DevInfo, &MassXactStruc);
+            dData = USBMassIssueMassTransaction(fpDevInfo);
 
-            if ((Data) && ((RetryNum != 0) || (Data == BytesToRw))) {    // Some data processed. Set return value
-                
+            if (dData) {    // Some data processed. Set return value
+                //
+                // Apacer USB flash drive (Model:Handy Steno HT202) workaround.
+                // Apacer USB flash drive's contents will lost if write data to device and
+                // reboot system immediately.
+                // Flush device ouput FIFO could avoid this problem.
+                // This issue is found with N-Vidia(CK8,CK8) and SiS963 chipsets, and might
+                // happen with other chipsets.
+                //
+                if((bOpCode == COMMON_WRITE_10_OPCODE) &&
+                        (fpDevInfo->wVendorId == 0x0B1131005)) {
+                    USBMassReadSector(
+                        fpDevInfo,
+                        0,
+                        gUsbData->fpUSBMassConsumeBuffer);
+                }
+
+                // TODO:: ApacerHT202Workaround
+
                 //
                 // Bug fix for installing Linux from USB CD-ROM.
                 // Linux64Bit Boot
                 // If data read is 64K or higher return 0FFFFh
                 //
-                if (Data >= 0x010000) {
-                    Data = 0xFFFF;
+                if(dData >= 0x010000) {
+                    dData = 0xFFFF;
                 }
 
-                RetCode = (UINT16)Data;
+                wRetCode = (UINT16)dData;
                 //
                 // Check for forced floppy emulated device
                 //
-                if ((DevInfo->bEmuType == USB_EMU_FORCED_FDD) &&
-                     (OpCode == COMMON_READ_10_OPCODE) &&
-                     (MassDataStruc->StartLba == 0) && 
+                if ((fpDevInfo->bEmuType == USB_EMU_FORCED_FDD) &&
+                     (bOpCode == COMMON_READ_10_OPCODE) &&
+                     (fpDataStruc->dStartLBA == 0) &&       //(EIP113379)
                     !(gUsbData->dUSBStateFlag & USB_FLAG_RUNNING_UNDER_EFI) ) {     //(EIP113379+)
                     //
                     // This is a floppy emulated ZIP drive, with read to
@@ -2757,58 +2565,55 @@ USBMassRWVCommand(
                     //
                     // Force #of hidden sectors to 0
                     //
-                    *(UINT32*)((UINTN)MassDataStruc->BufferPtr + 0xB + 0x11) = 0;
+                    *(UINT32*)((UINTN)fpDataStruc->fpBufferPtr + 0xB + 0x11) = 0;
 
                     //
                     // FreeDOS workaround
                     //
-                    if ((*(UINT32*)((UINTN)MassDataStruc->BufferPtr + 3)==0x65657246) &&  // 'eerF'
-                        (*(UINT32*)((UINTN)MassDataStruc->BufferPtr + 7)==0x20534F44) &&  // ' SOD'
-                        (*(UINT32*)((UINTN)MassDataStruc->BufferPtr + 0x3A)!=0x20202032)) {				//(EIP61388)
-                        *(UINT16*)((UINTN)MassDataStruc->BufferPtr + 0x42) =
-                            *(UINT16*)((UINTN)MassDataStruc->BufferPtr + 0x42)-(UINT16)DevInfo->bHiddenSectors;
-                        *(UINT16*)((UINTN)MassDataStruc->BufferPtr + 0x46) =
-                            *(UINT16*)((UINTN)MassDataStruc->BufferPtr + 0x46)-(UINT16)DevInfo->bHiddenSectors;
-                        *(UINT16*)((UINTN)MassDataStruc->BufferPtr + 0x4A) =
-                            *(UINT16*)((UINTN)MassDataStruc->BufferPtr + 0x4A)-(UINT16)DevInfo->bHiddenSectors;
+                    if ((*(UINT32*)((UINTN)fpDataStruc->fpBufferPtr+3)==0x65657246) &&  // 'eerF'
+                        (*(UINT32*)((UINTN)fpDataStruc->fpBufferPtr+7)==0x20534F44) &&  // ' SOD'
+                        (*(UINT32*)((UINTN)fpDataStruc->fpBufferPtr+0x3A)!=0x20202032)) {				//(EIP61388)
+                        *(UINT16*)((UINTN)fpDataStruc->fpBufferPtr+0x42) =
+                            *(UINT16*)((UINTN)fpDataStruc->fpBufferPtr+0x42)-(UINT16)fpDevInfo->bHiddenSectors;
+                        *(UINT16*)((UINTN)fpDataStruc->fpBufferPtr+0x46) =
+                            *(UINT16*)((UINTN)fpDataStruc->fpBufferPtr+0x46)-(UINT16)fpDevInfo->bHiddenSectors;
+                        *(UINT16*)((UINTN)fpDataStruc->fpBufferPtr+0x4A) =
+                            *(UINT16*)((UINTN)fpDataStruc->fpBufferPtr+0x4A)-(UINT16)fpDevInfo->bHiddenSectors;
                     }
                     //
                     // Force physical drive# to 0
                     // For FAT32, physical drive number is present in offset 40h
                     //
-                    if ((*(UINT32*)((UINTN)MassDataStruc->BufferPtr + 0x52)) ==
+                    if ((*(UINT32*)((UINTN)fpDataStruc->fpBufferPtr + 0x52)) ==
                                         0x33544146) {       // "3TAF", FAT3
-                        *(UINT8*)((UINTN)MassDataStruc->BufferPtr + 0x40) = 0;
+                        *(UINT8*)((UINTN)fpDataStruc->fpBufferPtr + 0x40) = 0;
                     }
                     else {
-                        *(UINT8*)((UINTN)MassDataStruc->BufferPtr + 0x24) = 0;
+                        *(UINT8*)((UINTN)fpDataStruc->fpBufferPtr + 0x24) = 0;
                     }
                 }
                 break;  // dData ready
 
             }
-            else {  // Error condition: dData = 0, RetCode = 0
+            else {  // Error condition: dData = 0, wRetCode = 0
                 //
                 // Check for error
                 //
-                SenseData = USBMassRequestSense(DevInfo);
-                MassDataStruc->SenseData = SenseData;
-                Data = SenseData;
+                dSenseData = USBMassRequestSense(fpDevInfo);
+                fpDataStruc->dSenseData = dSenseData;
+                dData = dSenseData;
 
                 //
                 // Check for write protect error code
                 //
-                if ((UINT8)SenseData == 7) {
-                    break;
-                }
+                if ((UINT8)dSenseData == 7) break;
 
-                if (((OpCode == COMMON_VERIFY_10_OPCODE) ||
-                    (OpCode == COMMON_VERIFY_16_OPCODE)) && (!SenseData)) {
+                if ((bOpCode == COMMON_VERIFY_OPCODE) && (!dSenseData)) {
                     //
                     // This is verify command so no data to send or read and
                     // also sense data is 0. So set return value to success.
                     //
-                    RetCode = 0xFFFF;
+                    wRetCode = 0xFFFF;
                     break;
                 }
             }
@@ -2819,39 +2624,42 @@ USBMassRWVCommand(
         // May be drive error, try to correct it
         // Check whether the drive is ready for read/write/verify command
         //
-        Data = USBMassCheckDeviceReady(DevInfo);
-        MassDataStruc->SenseData = Data;
+        dData = USBMassCheckDeviceReady(fpDevInfo);
+        fpDataStruc->dSenseData = dData;
 
-        if (Data) {
+        if (dData) {
             break;  // Return error
         }
 
-        ZeroMem((UINT8*)CmdBuffer, sizeof(COMN_RWV_16_CMD));
+        MemSet((UINT8*)fpCmdBuffer, sizeof(COMN_RWV_CMD), 0);
     }   // Fof loop
 
-    USB_MemFree(CmdBuffer, GET_MEM_BLK_COUNT_STRUC(COMN_RWV_16_CMD));
+    USB_MemFree(fpCmdBuffer, GET_MEM_BLK_COUNT_STRUC(COMN_RWV_CMD));
 
-    return RetCode;
+    return wRetCode;
 }
 
 
-/**
-    This function sends the start unit command to the mass device
-
-    @param fpDevInfo   Pointer to DeviceInfo structure
-
-    @retval Sense data: 0 - Success, <>0 - Error
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// PROCEDURE:   USBMassStartUnitCommand
+//
+// DESCRIPTION: This function sends the start unit command to the mass device
+//
+// PARAMETERS:  fpDevInfo   Pointer to DeviceInfo structure
+//
+// RETURN:      Sense data: 0 - Success, <>0 - Error
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT16
 USBMassStartUnitCommand (DEV_INFO* fpDevInfo)
 {
-    COMMON_START_STOP_UNIT_CMD  *       fpCmdBuffer;
-    MASS_XACT_STRUC                     MassXactStruc;
+    COMMON_START_STOP_UNIT_CMD  *fpCmdBuffer;
 //  MASS_START_STOP_UNIT        *fpStartData;
 
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_5, "USBMProStartUnitCommand ....  \n");
+    USB_DEBUG (DEBUG_LEVEL_5, "USBMProStartUnitCommand ....  \n");
 
     //
     // Check the compatibility flag for start unit command not supported
@@ -2877,20 +2685,20 @@ USBMassStartUnitCommand (DEV_INFO* fpDevInfo)
     //
     // Clear the common bulk transaction structure
     //
-    USBMassClearMassXactStruc(&MassXactStruc);
+    USBMassClearMassXactStruc();
     gUsbData->wBulkDataXferDelay = 10000;  // Start unit command may need long time delay
     //
     // Fill the common bulk transaction structure
     //
-    MassXactStruc.fpCmdBuffer = (UINT8*)fpCmdBuffer;
+    gUsbData->stMassXactStruc.fpCmdBuffer = (UINT8*)fpCmdBuffer;
                                         //(EIP51158+)>
     if (fpDevInfo->bSubClass == SUB_CLASS_SCSI) {
-		MassXactStruc.bCmdSize = 0x06;	//SBC-3_77
+		gUsbData->stMassXactStruc.bCmdSize = 0x06;	//SBC-3_77
     } else {
-    	MassXactStruc.bCmdSize = sizeof (COMMON_START_STOP_UNIT_CMD);
+    	gUsbData->stMassXactStruc.bCmdSize = sizeof (COMMON_START_STOP_UNIT_CMD);
     }
 										//<(EIP51158+)
-    USBMassIssueMassTransaction(fpDevInfo, &MassXactStruc);
+    USBMassIssueMassTransaction(fpDevInfo);
 
     //
     // No data to read/write. So do not process return code.
@@ -2902,22 +2710,26 @@ USBMassStartUnitCommand (DEV_INFO* fpDevInfo)
 }
 
 
-/**
-    This function requests the mode sense data page number 5 from
-    the USB mass storage device
-
-    @param fpDevInfo   Pointer to DeviceInfo structure
-
-    @retval USB_SUCCESS/USB_ERROR on Success/Failure
-        fpModeSenseData     Pointer to the mode sense data
-        dSenseData  Sense data
-        bNumHeads   Number of heads
-        wNumCylinders   Number of cylinders
-        bNumSectors Number of sectors
-        wBytesPerSector Number of bytes per sector
-        bMediaType  Media type
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// PROCEDURE:   USBMassModeSense
+//
+// DESCRIPTION: This function requests the mode sense data page number 5 from
+//              the USB mass storage device
+//
+// PARAMETERS:  fpDevInfo   Pointer to DeviceInfo structure
+//
+// RETURN:      USB_SUCCESS/USB_ERROR on Success/Failure
+//              fpModeSenseData     Pointer to the mode sense data
+//                  dSenseData  Sense data
+//                  bNumHeads   Number of heads
+//                  wNumCylinders   Number of cylinders
+//                  bNumSectors Number of sectors
+//                  wBytesPerSector Number of bytes per sector
+//                  bMediaType  Media type
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT8
 USBMassModeSense(
@@ -2929,7 +2741,6 @@ USBMassModeSense(
     COMN_MODE_SENSE_10CMD   *fpCmdBuffer;
     MODE_SENSE_10_HEADER    *fpModeSense10_Header;
     PAGE_CODE_5             *fpPageCode5;
-    MASS_XACT_STRUC         MassXactStruc;
 
     dData = 0;
     bRetCode = USB_ERROR;
@@ -2949,27 +2760,27 @@ USBMassModeSense(
     //
     // Clear the common bulk transaction structure
     //
-    USBMassClearMassXactStruc(&MassXactStruc);
+    USBMassClearMassXactStruc();
 
     //
     // Fill the common bulk transaction structure
     //
-    MassXactStruc.fpCmdBuffer = (UINT8*)fpCmdBuffer;
+    gUsbData->stMassXactStruc.fpCmdBuffer = (UINT8*)fpCmdBuffer;
                                         //(EIP51158+)>
     if (fpDevInfo->bSubClass == SUB_CLASS_SCSI) {
-		MassXactStruc.bCmdSize = 0x0A;	//SPC-4_280
+		gUsbData->stMassXactStruc.bCmdSize = 0x0A;	//SPC-4_280
     } else {
-    	MassXactStruc.bCmdSize = sizeof (COMN_MODE_SENSE_10CMD);
+    	gUsbData->stMassXactStruc.bCmdSize = sizeof (COMN_MODE_SENSE_10CMD);
     }
 										//<(EIP51158+)
-    MassXactStruc.bXferDir = BIT7;     // IN
-    MassXactStruc.fpBuffer = gUsbData->fpUSBTempBuffer;
-    MassXactStruc.dLength = 0x28;
+    gUsbData->stMassXactStruc.bXferDir = BIT7;     // IN
+    gUsbData->stMassXactStruc.fpBuffer = gUsbData->fpUSBTempBuffer;
+    gUsbData->stMassXactStruc.dLength = 0x28;
 
     //
     // Bulk in, with temp buffer & 40 bytes of data to read
     //
-    dData = USBMassIssueMassTransaction(fpDevInfo, &MassXactStruc);
+    dData = USBMassIssueMassTransaction(fpDevInfo);
 
     if (!dData) {
         USBMassRequestSense( fpDevInfo );
@@ -2993,7 +2804,7 @@ USBMassModeSense(
     fpPageCode5 = (PAGE_CODE_5*)((UINT8*)fpModeSense10_Header +
                                         fpModeSense10_Header->wBlkDescSize +
                                         sizeof (MODE_SENSE_10_HEADER));
-//  USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "USBMassModeSense ....  fpPageCode5->bPageCode %x\n",fpPageCode5->bPageCode);
+//  USB_DEBUG (DEBUG_LEVEL_3, "USBMassModeSense ....  fpPageCode5->bPageCode %x\n",fpPageCode5->bPageCode);
 
     bRetCode = USB_ERROR;
     if(fpPageCode5->bPageCode == 5) {
@@ -3019,30 +2830,33 @@ USBMassModeSense(
     fpModeSenseData->dSenseData = USBMassRequestSense( fpDevInfo );
 
     USB_MemFree(fpCmdBuffer, GET_MEM_BLK_COUNT_STRUC(COMN_MODE_SENSE_10CMD));
-// USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_5, "USBMProModeSense ....  wRetCode %x\n",wRetCode);
+// USB_DEBUG (DEBUG_LEVEL_5, "USBMProModeSense ....  wRetCode %x\n",wRetCode);
 
     return bRetCode;
 
 }
 
 
-/**
-    This function sends request sense command and returns
-    the sense key information
-
-    @param fpDevInfo   Pointer to DeviceInfo structure
-
-    @retval Sense data
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// PROCEDURE:   USBMassRequestSense
+//
+// DESCRIPTION: This function sends request sense command and returns
+//      the sense key information
+//
+// PARAMETERS:  fpDevInfo   Pointer to DeviceInfo structure
+//
+// RETURN:      Sense data
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT32
 USBMassRequestSense(DEV_INFO* fpDevInfo)
 {
-    UINT32                      dData;
-    UINT8                       *fpDataBuffer;
-    COMMON_REQ_SENSE_CMD        *fpCmdBuffer;
-    MASS_XACT_STRUC             MassXactStruc;
+    UINT32                  dData;
+    UINT8                   *fpDataBuffer;
+    COMMON_REQ_SENSE_CMD    *fpCmdBuffer;
 
     //
     // Allocate memory for the command buffer
@@ -3063,27 +2877,27 @@ USBMassRequestSense(DEV_INFO* fpDevInfo)
     fpCmdBuffer->bOpCode = COMMON_REQUEST_SENSE_OPCODE;
     fpCmdBuffer->bAllocLength = 0x12;   // Length of transfer
 
-    USBMassClearMassXactStruc(&MassXactStruc);    // Clear the common bulk transaction structure
+    USBMassClearMassXactStruc();    // Clear the common bulk transaction structure
 
     //
     // Fill the common bulk transaction structure
     //
-    MassXactStruc.fpCmdBuffer  = (UINT8*)fpCmdBuffer;
+    gUsbData->stMassXactStruc.fpCmdBuffer  = (UINT8*)fpCmdBuffer;
                                         //(EIP51158+)>
     if (fpDevInfo->bSubClass == SUB_CLASS_SCSI) {
-		MassXactStruc.bCmdSize = 0x06;	//SPC-4_350
+		gUsbData->stMassXactStruc.bCmdSize = 0x06;	//SPC-4_350
     } else {
-    	MassXactStruc.bCmdSize = sizeof (COMMON_REQ_SENSE_CMD);
+    	gUsbData->stMassXactStruc.bCmdSize = sizeof (COMMON_REQ_SENSE_CMD);
     }
 										//<(EIP51158+)
-    MassXactStruc.bXferDir = BIT7;     // IN
-    MassXactStruc.fpBuffer = fpDataBuffer;
-    MassXactStruc.dLength  = 0x12;
+    gUsbData->stMassXactStruc.bXferDir = BIT7;     // IN
+    gUsbData->stMassXactStruc.fpBuffer = fpDataBuffer;
+    gUsbData->stMassXactStruc.dLength  = 0x12;
 
     //
     // Bulk in, with locally allocated temp buffer & 12h bytes of data to read
     //
-    dData = USBMassIssueMassTransaction(fpDevInfo, &MassXactStruc);
+    dData = USBMassIssueMassTransaction(fpDevInfo);
 
     if(dData) {
         //
@@ -3109,18 +2923,22 @@ USBMassRequestSense(DEV_INFO* fpDevInfo)
 }
 
 
-/**
-    Translate USB sense key to USB MassStorage status.
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// PROCEDURE:   USBMassSenseKeyParsing
+//
+// DESCRIPTION: Translate USB sense key to USB MassStorage status.
+//
+// PARAMETERS:  fpDevInfo   Pointer to DeviceInfo structure
+//                 dCode[23..16]   ASCQ
+//                 dCode[15..08]   ASC
+//                 dCode[07..00]   Sense Code
 
-    @param fpDevInfo   Pointer to DeviceInfo structure
-        dCode[23..16]   ASCQ
-        dCode[15..08]   ASC
-        dCode[07..00]   Sense Code
-
-
-    @retval Sense data
-
-**/
+//
+// RETURN:      Sense data
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 VOID
 USBMassSenseKeyParsing(DEV_INFO* fpDevInfo, UINT32 dCode)
@@ -3139,68 +2957,67 @@ USBMassSenseKeyParsing(DEV_INFO* fpDevInfo, UINT32 dCode)
 }
 
 
-/**
-    This function sends test unit ready command
-
-    @param fpDevInfo   Pointer to DeviceInfo structure
-
-    @retval Sense data
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// PROCEDURE:   USBMassTestUnitReady
+//
+// DESCRIPTION: This function sends test unit ready command
+//
+// PARAMETERS:  fpDevInfo   Pointer to DeviceInfo structure
+//
+// RETURN:      Sense data
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT32
-USBMassTestUnitReady(
-    DEV_INFO* DevInfo
-)
+USBMassTestUnitReady(DEV_INFO* fpDevInfo)
 {
-    COMN_TEST_UNIT_READY_CMD        *CmdBuffer;
-    UINT32                          Data;
-    MASS_XACT_STRUC                 MassXactStruc;
+    COMN_TEST_UNIT_READY_CMD    *fpCmdBuffer;
 
-    CmdBuffer = (COMN_TEST_UNIT_READY_CMD*)USB_MemAlloc(
+    fpCmdBuffer = (COMN_TEST_UNIT_READY_CMD*)USB_MemAlloc(
                     GET_MEM_BLK_COUNT_STRUC(COMN_TEST_UNIT_READY_CMD));
-    if (!CmdBuffer) {
+    if(!fpCmdBuffer) {
         return USB_ERROR;       // Error - return no sense data
     }
 
-    CmdBuffer->bOpCode = COMMON_TEST_UNIT_READY_OPCODE;
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_5, "USBMassTestUnitReady ....  \n");
+    fpCmdBuffer->bOpCode = COMMON_TEST_UNIT_READY_OPCODE;
+    USB_DEBUG (DEBUG_LEVEL_5, "USBMassTestUnitReady ....  \n");
 
-    USBMassClearMassXactStruc(&MassXactStruc);    // Clear the common bulk transaction structure
+    USBMassClearMassXactStruc();    // Clear the common bulk transaction structure
 
     //
     // Fill the common bulk transaction structure
     //
-    MassXactStruc.fpCmdBuffer = (UINT8*)CmdBuffer;
+    gUsbData->stMassXactStruc.fpCmdBuffer = (UINT8*)fpCmdBuffer;
                                         //(EIP51158+)>
-    if (DevInfo->bSubClass == SUB_CLASS_SCSI) {
-		MassXactStruc.bCmdSize = 0x06;	//SPC-4_368
+    if (fpDevInfo->bSubClass == SUB_CLASS_SCSI) {
+		gUsbData->stMassXactStruc.bCmdSize = 0x06;	//SPC-4_368
     } else {
-    	MassXactStruc.bCmdSize = sizeof (COMN_TEST_UNIT_READY_CMD);
+    	gUsbData->stMassXactStruc.bCmdSize = sizeof (COMN_TEST_UNIT_READY_CMD);
     }
 										//<(EIP51158+)
-    Data = USBMassIssueMassTransaction(DevInfo, &MassXactStruc);
+    USBMassIssueMassTransaction(fpDevInfo);
 
-    USB_MemFree(CmdBuffer, GET_MEM_BLK_COUNT_STRUC(COMN_TEST_UNIT_READY_CMD));
+    USB_MemFree(fpCmdBuffer, GET_MEM_BLK_COUNT_STRUC(COMN_TEST_UNIT_READY_CMD));
 
-    if ((Data == USB_ERROR) || (DevInfo->bProtocol == PROTOCOL_CBI) || 
-        (DevInfo->bProtocol == PROTOCOL_CBI_NO_INT)) {
-        Data = USBMassRequestSense(DevInfo);
-    }
-
-    return Data;
+    return USBMassRequestSense(fpDevInfo);
 }
 
 
-/**
-    This function makes sure the device is ready for next
-    command
-
-    @param fpDevInfo   Pointer to DeviceInfo structure
-
-    @retval Sense code
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   USBMassCheckDeviceReady
+//
+// Description: This function makes sure the device is ready for next
+//      command
+//
+// Input:   fpDevInfo   Pointer to DeviceInfo structure
+//
+// Output:  Sense code
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT32
 USBMassCheckDeviceReady (DEV_INFO* fpDevInfo)
@@ -3221,7 +3038,7 @@ USBMassCheckDeviceReady (DEV_INFO* fpDevInfo)
         // Issue test unit ready command and check the return value
         //
         dData = USBMassTestUnitReady( fpDevInfo );
-//USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_3, "(%d)tur..%x ", fpDevInfo->bDeviceAddress, dData);
+//USB_DEBUG(DEBUG_LEVEL_3, "(%d)tur..%x ", fpDevInfo->bDeviceAddress, dData);
         if ((UINT8)dData == 0) { // Device ready
             break;
         }
@@ -3309,16 +3126,20 @@ USBMassCheckDeviceReady (DEV_INFO* fpDevInfo)
 }
 
 
-/**
-    This function obtains the device geometry from the device
-    using mode sense command and updates the global variables
-
-    @param Pointer to DeviceInfo structure
-
-    @retval USB_ERROR   On error
-        USB_SUCCESS On success
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   USBMassUpdateParamUsingModeSense
+//
+// Description: This function obtains the device geometry from the device
+//              using mode sense command and updates the global variables
+//
+// Input:   Pointer to DeviceInfo structure
+//
+// Output:  USB_ERROR   On error
+//          USB_SUCCESS On success
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT8
 USBMassUpdateParamUsingModeSense(DEV_INFO* fpDevInfo)
@@ -3346,7 +3167,7 @@ USBMassUpdateParamUsingModeSense(DEV_INFO* fpDevInfo)
     // Issue mode sense command
     //
     if (USBMassModeSense(fpDevInfo, &ModeSenseData)) {
-        USB_DEBUG(DEBUG_ERROR, DEBUG_LEVEL_3, "ms..err ");
+USB_DEBUG(DEBUG_LEVEL_3, "ms..err ");
         return  USB_ERROR;
     }
 
@@ -3360,12 +3181,13 @@ USBMassUpdateParamUsingModeSense(DEV_INFO* fpDevInfo)
     gUsbData->bDiskMediaType       = ModeSenseData.bMediaType;     // Media type
 
 
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_4, "ms..%x %x %x %x %x ",
-            gUsbData->wModeSenseCylinders,
-            gUsbData->bModeSenseHeads,
-            gUsbData->bModeSenseSectors,
-            gUsbData->wModeSenseBlockSize,
-            gUsbData->bDiskMediaType);
+USB_DEBUG(DEBUG_LEVEL_4, "ms..%x %x %x %x %x ",
+    gUsbData->wModeSenseCylinders,
+    gUsbData->bModeSenseHeads,
+    gUsbData->bModeSenseSectors,
+    gUsbData->wModeSenseBlockSize,
+    gUsbData->bDiskMediaType
+);
 
     if (fpDevInfo->bStorageType == USB_MASS_DEV_HDD) {
         gUsbData->bDiskMediaType = USB_UNKNOWN_MEDIA_TYPE;
@@ -3386,30 +3208,31 @@ USBMassUpdateParamUsingModeSense(DEV_INFO* fpDevInfo)
 }
 
 
-/**
-    This function obtains the device geometry from the device
-    using read capacity command and updates the global variables
-
-    @param Pointer to DeviceInfo structure
-
-    @retval USB_ERROR   On error
-        USB_SUCCESS On success
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   USBMassUpdateParamUsingReadCapacity
+//
+// Description: This function obtains the device geometry from the device
+//              using read capacity command and updates the global variables
+//
+// Input:   Pointer to DeviceInfo structure
+//
+// Output:  USB_ERROR   On error
+//          USB_SUCCESS On success
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT8
-USBMassUpdateParamUsingReadCapacity(
-    DEV_INFO* DevInfo
-)
+USBMassUpdateParamUsingReadCapacity(DEV_INFO* fpDevInfo)
 {
-    UINT8   Sectors;
-    UINT8   Heads;
+    UINT8   bSectors, bHeads;
 
     //
     // Either mode sense not supported or failed. Try read capacity
     // Issue read capacity command
     //
-    if (USBMassReadCapacity10Command(DevInfo)) {
+    if (USBMassReadCapacityCommand(fpDevInfo)) {
         return  USB_ERROR;
     }
 
@@ -3421,8 +3244,8 @@ USBMassUpdateParamUsingReadCapacity(
     //
     // Max LBA & block size are updated in MassDeviceInfo structure
     //
-    if (DevInfo->MaxLba < 0x4000) {    //  last LBA < 16MB
-        switch (DevInfo->MaxLba) {
+    if ( fpDevInfo->dMaxLba < 0x4000 ) {    //  last LBA < 16MB
+        switch ( fpDevInfo->dMaxLba ) {
             case USB_144MB_FDD_MAX_LBA:
                 gUsbData->bReadCapHeads    = USB_144MB_FDD_MAX_HEADS;
                 gUsbData->bReadCapSectors  = USB_144MB_FDD_MAX_SECTORS;
@@ -3442,65 +3265,60 @@ USBMassUpdateParamUsingReadCapacity(
     //
     // Convert to CHS
     //
-    gUsbData->wReadCapBlockSize = DevInfo->wBlockSize;
+    gUsbData->wReadCapBlockSize = fpDevInfo->wBlockSize;
 
     //
     // Do CHS conversion
     // Use fixed sectors/track & heads for CHS conversion
     //
-    if (DevInfo->MaxLba < 0x400) {   // < 512 KB
-        Sectors    = 1;
-        Heads      = 1;
+    if (fpDevInfo->dMaxLba < 0x400) {   // < 512 KB
+        bSectors    = 1;
+        bHeads      = 1;
     }
     else {
-        if (DevInfo->MaxLba < 0x200000) {  // < 1GB
-            Sectors    = USB_FIXED_LBA_SPT_BELOW_1GB;
-            Heads      = USB_FIXED_LBA_HPT_BELOW_1GB;
+        if ( fpDevInfo->dMaxLba < 0x200000 ) {  // < 1GB
+            bSectors    = USB_FIXED_LBA_SPT_BELOW_1GB;
+            bHeads      = USB_FIXED_LBA_HPT_BELOW_1GB;
         }
         else {                                  // > 1GB
-            Sectors    = USB_FIXED_LBA_SPT_ABOVE_1GB;
-            Heads      = USB_FIXED_LBA_HPT_ABOVE_1GB;
+            bSectors    = USB_FIXED_LBA_SPT_ABOVE_1GB;
+            bHeads      = USB_FIXED_LBA_HPT_ABOVE_1GB;
         }
     }
 
-    gUsbData->bReadCapSectors  = Sectors;
-    gUsbData->bReadCapHeads    = Heads;
+    gUsbData->bReadCapSectors  = bSectors;
+    gUsbData->bReadCapHeads    = bHeads;
 
     //
     // Calculate number of cylinders Cyl = LBA/(Head*Sec)
     //
-    if ((Sectors != 0) && (Heads != 0)) {
-        gUsbData->wReadCapCylinders = (UINT16)DivU64x64Remainder(DevInfo->MaxLba, (Sectors * Heads), NULL);
-    } else {
-        gUsbData->wReadCapCylinders = 0;
-    }
+    gUsbData->wReadCapCylinders = (UINT16)(fpDevInfo->dMaxLba / (bSectors * bHeads));
 
     return  USB_SUCCESS;
 
 }
 
 
-/**
-    This function updates the device geometry information
-
-    @param Pointer to device info structure
-
-    @retval USB_SUCCESS or USB_ERROR
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   USBMassUpdateDeviceGeometry
+//
+// Description: This function updates the device geometry information
+//
+// Input:       Pointer to device info structure
+//
+// Output:      USB_SUCCESS or USB_ERROR
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT8
-USBMassUpdateDeviceGeometry(
-    DEV_INFO* DevInfo
-)
+USBMassUpdateDeviceGeometry (DEV_INFO* fpDevInfo)
 {
-    UINT64          MaxLba;
-    UINT8           Heads;
-    UINT8           Sectors;
-    UINT16          Cylinders;
-    UINT8           Status;
-    EFI_STATUS      EfiStatus = EFI_SUCCESS;
-    USB_MASS_DEV    *MassDev;
+    UINT32  dMaxLba;
+    UINT8   bHeads, bSectors;
+    UINT16  wCylinders;
+    UINT8   bStatus;
 
     //
     // Try to update geometry if it is not valid
@@ -3508,21 +3326,20 @@ USBMassUpdateDeviceGeometry(
     // Additional check added to ensure the head, sector, and cylinder values are non-zero.
     //
                             //(EIP13457+)>
-    if ((DevInfo->Heads != 0) && 
-		(DevInfo->bSectors != 0) &&
-		(DevInfo->wCylinders != 0) &&
-        !(DevInfo->bLastStatus & USB_MASS_MEDIA_CHANGED) &&
-        (!((DevInfo->bLastStatus & USB_MASS_GET_MEDIA_FORMAT) &&
-        (DevInfo->bSubClass == SUB_CLASS_UFI)))) {
+    if ((fpDevInfo->bHeads!=0)
+        && (fpDevInfo->bSectors!=0)
+        && (fpDevInfo->wCylinders!=0)&&
+        (!((fpDevInfo->bLastStatus & USB_MASS_GET_MEDIA_FORMAT)&&
+        (fpDevInfo->bSubClass == SUB_CLASS_UFI)))) {
 
-        DevInfo->bLastStatus &= ~USB_MASS_GET_MEDIA_FORMAT;
+        fpDevInfo->bLastStatus &= ~USB_MASS_GET_MEDIA_FORMAT;
 
-        if (DevInfo->wBlockSize && (DevInfo->wBlockSize != 0xFFFF)) {
+        if (fpDevInfo->wBlockSize && (fpDevInfo->wBlockSize != 0xFFFF)) {
             return USB_SUCCESS;
         }
     }
 
-    DevInfo->bLastStatus &= ~USB_MASS_GET_MEDIA_FORMAT;
+    fpDevInfo->bLastStatus &= ~USB_MASS_GET_MEDIA_FORMAT;
 
     //
     // Set default values for the global variables
@@ -3534,14 +3351,13 @@ USBMassUpdateDeviceGeometry(
     //
     // Get disk geometry using Mode Sense
     //
-    if (DevInfo->bSubClass == SUB_CLASS_UFI) {  //(EIP94060)
-	    USBMassUpdateParamUsingModeSense(DevInfo);
-    }
+    if(fpDevInfo->bSubClass == SUB_CLASS_UFI)   //(EIP94060)
+	    USBMassUpdateParamUsingModeSense(fpDevInfo);
 
     //
     // Get disk geometry using Read Capacity
     //
-    Status = USBMassUpdateParamUsingReadCapacity(DevInfo);
+    bStatus = USBMassUpdateParamUsingReadCapacity(fpDevInfo);
 
     //
     // Parameters are obtained and stored in respective global variables;
@@ -3549,7 +3365,7 @@ USBMassUpdateDeviceGeometry(
     //
     if (!(gUsbData->bGeometryCommandStatus & (READ_CAPACITY_COMMAND_EXECUTED |
                         MODE_SENSE_COMMAND_EXECUTED)))  {
-        USB_DEBUG(DEBUG_ERROR, DEBUG_LEVEL_3, "-error\n");
+USB_DEBUG(DEBUG_LEVEL_3, "-error\n");
         return USB_ERROR;
     }
 
@@ -3568,54 +3384,15 @@ USBMassUpdateDeviceGeometry(
         //
         // Update the max LBA & block size using mode sense parameters
         //
-        DevInfo->wBlockSize = gUsbData->wModeSenseBlockSize;
-        DevInfo->MaxLba = gUsbData->dModeSenseMaxLBA;
-        USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_4, "size %x lba %lx\n", DevInfo->wBlockSize, DevInfo->MaxLba);
-    }
-
-    //
-    // Update Efi BlockIo device
-    //
-    if (gUsbData->dUSBStateFlag & USB_FLAG_RUNNING_UNDER_EFI) {
-        if (DevInfo->MassDev) {
-#if !USB_RT_DXE_DRIVER
-            EfiStatus = AmiValidateMemoryBuffer((VOID*)DevInfo->MassDev, sizeof(USB_MASS_DEV));
-            if (EFI_ERROR(Status)) {
-                return USB_ERROR;
-            }
-#endif
-            MassDev = DevInfo->MassDev;
-
-#if !USB_RT_DXE_DRIVER
-            EfiStatus = AmiValidateMemoryBuffer((VOID*)MassDev->Media, sizeof(EFI_BLOCK_IO_MEDIA));
-            if (EFI_ERROR(Status)) {
-                return USB_ERROR;
-            }
-#endif
-            MassDev->Media->BlockSize = DevInfo->wBlockSize;
-            if ((DevInfo->bLastStatus & USB_MASS_MEDIA_PRESENT) && 
-                (DevInfo->MaxLba != 0) && (DevInfo->wBlockSize != 0)) {
-                // For SCSI devices, this is reported in the READ CAPACITY (16) parameter 
-                // data Returned Logical Block Address field (see SBC-3) minus one.
-                MassDev->Media->LastBlock = DevInfo->MaxLba - 1;
-            } else {
-                MassDev->Media->LastBlock = 0; 
-            }
-        }
-    }
-
-    //Some usb mass storages report media change even if they don't, we already 
-    //update CHS from boot record and legacy boot doesn't support dynamic 
-    //media insertion, we should not update it from read capacity parameters.
-
-    if ((DevInfo->Heads != 0) && (DevInfo->bSectors != 0) && (DevInfo->wCylinders !=0)) {
-            return USB_SUCCESS;
+        fpDevInfo->wBlockSize = gUsbData->wModeSenseBlockSize;
+        fpDevInfo->dMaxLba = gUsbData->dModeSenseMaxLBA;
+USB_DEBUG(DEBUG_LEVEL_4, "size %x lba %x\n", fpDevInfo->wBlockSize, fpDevInfo->dMaxLba);
     }
 
     //
     // Update the media type byte
     //
-    DevInfo->bMediaType = gUsbData->bDiskMediaType;
+    fpDevInfo->bMediaType = gUsbData->bDiskMediaType;
 
     //
     // Check whether mode sense is executed. If so, then update CHS from mode
@@ -3625,61 +3402,72 @@ USBMassUpdateDeviceGeometry(
     //
     // Update the CHS values using mode sense parameters
     //
-    Heads      = gUsbData->bModeSenseHeads;
-    Sectors    = gUsbData->bModeSenseSectors;
-    Cylinders  = gUsbData->wModeSenseCylinders;
+    bHeads      = gUsbData->bModeSenseHeads;
+    bSectors    = gUsbData->bModeSenseSectors;
+    wCylinders  = gUsbData->wModeSenseCylinders;
 
 //  if ((gUsbData->bGeometryCommandStatus & MODE_SENSE_COMMAND_EXECUTED) &&
-    if ((Heads * Sectors * Cylinders) == 0) {
+    if ((bHeads * bSectors * wCylinders) == 0) {
         //
         // Update the CHS values using read capacity parameters
         //
-        Heads      = gUsbData->bReadCapHeads;
-        Sectors    = gUsbData->bReadCapSectors;
-        Cylinders  = gUsbData->wReadCapCylinders;
+        bHeads      = gUsbData->bReadCapHeads;
+        bSectors    = gUsbData->bReadCapSectors;
+        wCylinders  = gUsbData->wReadCapCylinders;
     }
 
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_4, "Cyl-%x, Hds-%x, Sec-%x", Cylinders, Heads, Sectors);
+USB_DEBUG (DEBUG_LEVEL_4, "Cyl-%x, Hds-%x, Sec-%x", wCylinders, bHeads, bSectors);
 
-    DevInfo->Heads       = Heads;
-    DevInfo->bSectors     = Sectors;
-    DevInfo->wCylinders   = Cylinders;
+    fpDevInfo->bHeads       = bHeads;
+    fpDevInfo->bSectors     = bSectors;
+    fpDevInfo->wCylinders   = wCylinders;
+
+    //
+    // Update Efi BlockIo device
+    //
+    if (gUsbData->dUSBStateFlag & USB_FLAG_RUNNING_UNDER_EFI) {
+        if (fpDevInfo->MassDev) {
+//          (*(EFI_BLOCK_IO_PROTOCOL*)fpDevInfo->MassDev).Media->MediaId++;
+            (*(EFI_BLOCK_IO_PROTOCOL*)fpDevInfo->MassDev).Media->BlockSize = fpDevInfo->wBlockSize;
+            (*(EFI_BLOCK_IO_PROTOCOL*)fpDevInfo->MassDev).Media->LastBlock = fpDevInfo->dMaxLba;
+        }
+    }
 
     //
     // Calculate non-LBA CHS values from max LBA
     //
-    MaxLba = DevInfo->MaxLba;
+    dMaxLba = fpDevInfo->dMaxLba;
 
     //
     // Do not translate sectors for non HDD devices
     //
-    if ((!DevInfo->bStorageType) || (DevInfo->bStorageType == USB_MASS_DEV_HDD)) {
+    if ((!fpDevInfo->bStorageType) || (fpDevInfo->bStorageType == USB_MASS_DEV_HDD)) {
         //
         // If Total number of sectors < 1032192(0FC000h) CHS translation is not
         // needed
         //
-        if (MaxLba >= 0xFC000) {
-            Sectors    = 63;
-            Heads      = 32;
+        if ( dMaxLba >= 0xFC000 ) {
+            bSectors    = 63;
+            bHeads      = 32;
             //
             // If Total number of sectors < 2064384(01F8000h) then use
             // 63 Sec/track and 32 head for translation
             //
-            if (MaxLba >= 0x01F8000) {
-                Heads = 64;
+            if ( dMaxLba >= 0x01F8000 ) {
+                bHeads = 64;
                 //
                 // If Total number of sectors < 4128768(03F0000h) then use
                 // 63 Sec/track and 64 head for translation
                 //
-                if (MaxLba >= 0x03F0000) {
-                    Heads = 128;
+                if (dMaxLba >= 0x03F0000) {
+                    bHeads = 128;
                     //
                     // If Total number of sectors < 8257536(07E0000h) then use
                     // 63 Sec/track and 128 head for translation else use 255 heads
                     //
-                    if (MaxLba >= 0x7E0000) {
-                        Heads      = 255;
-                        MaxLba = DevInfo->MaxLba;
+                    if (dMaxLba >= 0x7E0000) {
+                        bHeads      = 255;
+                        dMaxLba = fpDevInfo->dMaxLba;
                     }
                 }
             }
@@ -3693,83 +3481,77 @@ USBMassUpdateDeviceGeometry(
             //
             // Calculate translated number of cylinders
             //
-            if ((Sectors != 0) && (Heads != 0)) {
-                Cylinders = (UINT16)DivU64x64Remainder(MaxLba, (Heads * Sectors), NULL);
-            } else {
-                Cylinders = 0;
-            }
+            wCylinders = (UINT16)(dMaxLba/(bHeads * bSectors));
 
             //
             // Check whether number of cylinders is less than or equal to 1024
             //
-            if (Cylinders <= 1024) break;
+            if (wCylinders <= 1024) break;
 
             //
             // Cylinders are getting larger than usually supported try increasing
             // head count keeping cylinders within safe limit
             //
-            Cylinders = 1024;
-            if (Heads == 0xFF) {
-                break;  // Heads limit reached
-            }
+            wCylinders = 1024;
+            if (bHeads == 0xFF) break;  // Heads limit reached
             //
             // Double number of heads
             //
-            Heads <<= 1;
-            if (!Heads) {
-                Heads = 0xFF;
-            }
+            bHeads <<= 1;
+            if (!bHeads)
+                bHeads = 0xFF;
         }
     }
 
     //
     // Save the parameters
     //
-    DevInfo->NonLBAHeads     = Heads;
-    DevInfo->bNonLBASectors   = Sectors;
-    DevInfo->wNonLBACylinders = Cylinders;
+    fpDevInfo->bNonLBAHeads     = bHeads;
+    fpDevInfo->bNonLBASectors   = bSectors;
+    fpDevInfo->wNonLBACylinders = wCylinders;
 
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_5, "BPS %d H %d S %d C %d MT %d\n",
-        DevInfo->wBlockSize,
-        DevInfo->Heads,
-        DevInfo->bSectors,
-        DevInfo->wCylinders,
-        DevInfo->bMediaType);
+USB_DEBUG(DEBUG_LEVEL_5, "BPS %d H %d S %d C %d MT %d\n",
+        fpDevInfo->wBlockSize,
+        fpDevInfo->bHeads,
+        fpDevInfo->bSectors,
+        fpDevInfo->wCylinders,
+        fpDevInfo->bMediaType);
 
-    return USB_SUCCESS;
+    return  USB_SUCCESS;
 
 }
 
-/**
-    This function performs a mass storage transaction using bulk
-    only transport (BOT) protocol.
 
-    @param Pointer to DeviceInfo structure
-        stMassXactStruc
-        pCmdBuffer  Pointer to command buffer
-        bCmdSize    Size of command block
-        bXferDir    Transfer direction
-        fpBuffer    Data buffer far pointer
-        dwLength    Amount of data to be transferred
-        wPreSkip    Number of bytes to skip before data
-        wPostSkip   Number of bytes to skip after data
-
-    @retval Amount of data actually transferred
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   USBMassIssueBOTTransaction
+//
+// Description: This function performs a mass storage transaction using bulk
+//      only transport (BOT) protocol.
+//
+// Input:   Pointer to DeviceInfo structure
+//          stMassXactStruc
+//              pCmdBuffer  Pointer to command buffer
+//              bCmdSize    Size of command block
+//              bXferDir    Transfer direction
+//              fpBuffer    Data buffer far pointer
+//              dwLength    Amount of data to be transferred
+//              wPreSkip    Number of bytes to skip before data
+//              wPostSkip   Number of bytes to skip after data
+//
+// Output:  Amount of data actually transferred
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT32
-USBMassIssueBOTTransaction(
-    DEV_INFO*           DevInfo,
-    MASS_XACT_STRUC*    MassXactStruc
-)
+USBMassIssueBOTTransaction(DEV_INFO* fpDevInfo)
 {
-    UINT32  Data;
-    UINT8   Status;
+    UINT32  dData;
 
-    Data = USBMassSendBOTCommand(DevInfo, MassXactStruc);   // Send the command control transfer
+    dData = USBMassSendBOTCommand(fpDevInfo);   // Send the command control transfer
 
-    if (!Data) {
+    if (!dData) {
         //
         // Check for stall/timedout condition
         //
@@ -3777,16 +3559,16 @@ USBMassIssueBOTTransaction(
             //
             // Perform USB BOT reset recovery
             //
-            USBMassBOTResetRecovery(DevInfo);
+            USBMassBOTResetRecovery(fpDevInfo);
             return 0;
         }
         else {
-            return 0;  // Unknown error exit
+            return  0;  // Unknown error exit
         }
     }
 
-    if (!MassXactStruc->dLength) {  // No data
-        if (gUsbData->wBulkDataXferDelay) {
+    if (!gUsbData->stMassXactStruc.dLength) {  // No data
+        if(gUsbData->wBulkDataXferDelay) {
             //
             // Issue some delay
             //
@@ -3796,14 +3578,14 @@ USBMassIssueBOTTransaction(
         //
         // Get the status for the last transfer
         //
-        Data = USBMassGetBOTStatus(DevInfo, MassXactStruc);
-        return Data;
+        USBMassGetBOTStatus(fpDevInfo);
+        return  0;
     }
 
     //
     // Tranfer the bulk data
     //
-    Data = USBMassProcessBulkData(DevInfo, MassXactStruc);  // Actual data size
+    dData = USBMassProcessBulkData(fpDevInfo);  // Actual data size
 
     //
     // Check for stall/timeout condition
@@ -3812,11 +3594,11 @@ USBMassIssueBOTTransaction(
         //
         // Get the status for the last transfer
         //
-        Status = USBMassGetBOTStatus(DevInfo, MassXactStruc);
-		if ((Status == USB_ERROR) || (gUsbData->bLastCommandStatus & USB_BULK_TIMEDOUT)) {
+        USBMassGetBOTStatus(fpDevInfo);
+		if (gUsbData->bLastCommandStatus & USB_BULK_TIMEDOUT) {
 			return 0;
 		} else {
-        	return Data;
+        	return dData;
 		}
     }
 
@@ -3827,128 +3609,132 @@ USBMassIssueBOTTransaction(
         //
         // Perform USB BOT reset recovery
         //
-        USBMassBOTResetRecovery(DevInfo);
+        USBMassBOTResetRecovery(fpDevInfo);
         return 0;
     }
 
     //
     // Clear endpoint stall
     //
-    USBMassClearBulkEndpointStall(DevInfo, MassXactStruc->bXferDir);
+    USBMassClearBulkEndpointStall(fpDevInfo, gUsbData->stMassXactStruc.bXferDir);
 
     //
     // Get the status for the last transfer
     //
-    USBMassGetBOTStatus(DevInfo, MassXactStruc);
+    USBMassGetBOTStatus(fpDevInfo);
 
-    return Data;
+    return  dData;
 
 }
 
-/**
-    This function performs a mass storage transaction using bulk
-    only transport (BOT) protocol.
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// PROCEDURE:   USBBOTSendCommand
+//
+// DESCRIPTION: This function performs a mass storage transaction using bulk
+//              only transport (BOT) protocol.
+//
+// PARAMETERS:  fpDevInfo   Pointer to DeviceInfo structure
+//                  bXferDir    Transfer direction
+//                  dwDataSize  Amount of data to be transferred
+//                  fpCmdBuffer Pointer to the command buffer
+//                  bCmdSize    Size of command block
 
-    @param fpDevInfo   Pointer to DeviceInfo structure
-        bXferDir    Transfer direction
-        dwDataSize  Amount of data to be transferred
-        fpCmdBuffer Pointer to the command buffer
-        bCmdSize    Size of command block
-
-    @retval Amount of data actually transferred
-
-**/
+// RETURN:      Amount of data actually transferred
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT16
-USBMassSendBOTCommand(
-    DEV_INFO*           DevInfo,
-    MASS_XACT_STRUC*    MassXactStruc
-)
+USBMassSendBOTCommand(DEV_INFO* fpDevInfo)
 {
-    UINT8           Count;
-    UINT8           *Src;
-    UINT8           *Dest;
-    BOT_CMD_BLK     *BotCmdBlk;
-    UINT8           CmdSize;
+    UINT8           bCount;
+    UINT8           *fpSrc,
+                    *fpDest;
+    BOT_CMD_BLK     *fpBOTCmdBlk;
+    UINT8           bCmdSize;
 
-    BotCmdBlk = (BOT_CMD_BLK*)MassXactStruc->fpCmdBuffer;
+    fpBOTCmdBlk = (BOT_CMD_BLK*)gUsbData->stMassXactStruc.fpCmdBuffer;
 
-    CmdSize = MassXactStruc->bCmdSize;
+    bCmdSize = gUsbData->stMassXactStruc.bCmdSize;
 
+//    if( !VALID_DEVINFO2( fpDevInfo) )
+//        return 0;
     //
     // Make enough space for BOT command block wrapper
     // Move backwards
     //
-    Src = MassXactStruc->fpCmdBuffer + CmdSize - 1;
+    fpSrc = gUsbData->stMassXactStruc.fpCmdBuffer + bCmdSize - 1;
 
     //
     // BOT_COMMAND_BLOCK + end of command
     //
-    Dest = Src + ((UINT8*)BotCmdBlk->aCBWCB - (UINT8*)BotCmdBlk);
+    fpDest = fpSrc + ((UINT8*)fpBOTCmdBlk->aCBWCB - (UINT8*)fpBOTCmdBlk);
 
-    for (Count = 0; Count < CmdSize; Count++) {
-        *Dest = *Src;
-        --Dest;
-        --Src;
+    for (bCount = 0; bCount < bCmdSize; bCount++) {
+        *fpDest = *fpSrc;
+        --fpDest;
+        --fpSrc;
     }
 
-    //fpDest = gUsbData->stMassXactStruc.fpCmdBuffer;
+    fpDest = gUsbData->stMassXactStruc.fpCmdBuffer;
 
     //
     // Clear the BOT command block
     //
-    //for (bCount = 0; bCount < bCmdSize; bCount++) {
-    //    *fpDest = 0x00;
-    //    ++fpDest;
-    //}
+    for (bCount = 0; bCount < bCmdSize; bCount++) {
+        *fpDest = 0x00;
+        ++fpDest;
+    }
 
-    BotCmdBlk->dCbwSignature      = BOT_CBW_SIGNATURE;
-    BotCmdBlk->dCbwTag            = ++(gUsbData->dBOTCommandTag);
-    BotCmdBlk->dCbwDataLength     = MassXactStruc->dLength;
-    BotCmdBlk->bmCbwFlags         = MassXactStruc->bXferDir;
-    BotCmdBlk->bCbwLun            = DevInfo->bLUN;
-    BotCmdBlk->bCbwLength         = CmdSize;
+    fpBOTCmdBlk->dCbwSignature      = BOT_CBW_SIGNATURE;
+    fpBOTCmdBlk->dCbwTag            = ++(gUsbData->dBOTCommandTag);
+    fpBOTCmdBlk->dCbwDataLength     = gUsbData->stMassXactStruc.dLength;
+    fpBOTCmdBlk->bmCbwFlags         = gUsbData->stMassXactStruc.bXferDir;
+    fpBOTCmdBlk->bCbwLun            = fpDevInfo->bLUN;
+    fpBOTCmdBlk->bCbwLength         = bCmdSize;
 
     return (UINT16)USBMassIssueBulkTransfer(
-                    DevInfo,
+                    fpDevInfo,
                     0,
-                    (UINT8*)BotCmdBlk,
+                    (UINT8*)fpBOTCmdBlk,
                     sizeof (BOT_CMD_BLK));
-    
 }
 
-/**
-    This function gets the BOT status sequence using
-    bulk IN transfer
 
-    @param fpDevInfo   Pointer to DeviceInfo structure
-
-    @retval Nothing
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   USBBOTGetStatus
+//
+// Description: This function gets the BOT status sequence using
+//              bulk IN transfer
+//
+// Input:   fpDevInfo   Pointer to DeviceInfo structure
+//
+// Output:  Nothing
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT8
-USBMassGetBOTStatus(
-    DEV_INFO*           DevInfo,
-    MASS_XACT_STRUC*    MassXactStruc
-)
+USBMassGetBOTStatus(DEV_INFO* fpDevInfo)
 {
 										//(EIP90503)>
-    UINT8*  CmdBuffer;
-    UINT16  Data;
+    UINT8*          fpCmdBuffer;
+    UINT16          wData;
 
-    CmdBuffer = MassXactStruc->fpCmdBuffer;
+    fpCmdBuffer = gUsbData->stMassXactStruc.fpCmdBuffer;
 
-    Data = (UINT16)USBMassIssueBulkTransfer(DevInfo, BIT7,
-                    CmdBuffer, sizeof (BOT_STATUS_BLOCK));
-    if ((Data != sizeof (BOT_STATUS_BLOCK))) {
+    wData = (UINT16)USBMassIssueBulkTransfer(fpDevInfo, BIT7,
+                    fpCmdBuffer, sizeof (BOT_STATUS_BLOCK));
+    if ((wData != sizeof (BOT_STATUS_BLOCK))) {
         if (gUsbData->bLastCommandStatus & USB_BULK_STALLED) {
-            USBMassClearBulkEndpointStall(DevInfo, BIT7);
+            USBMassClearBulkEndpointStall(fpDevInfo, BIT7);
         }
-        Data = (UINT16)USBMassIssueBulkTransfer(DevInfo, BIT7,
-                    CmdBuffer, sizeof (BOT_STATUS_BLOCK));
+        wData = (UINT16)USBMassIssueBulkTransfer(fpDevInfo, BIT7,
+                    fpCmdBuffer, sizeof (BOT_STATUS_BLOCK));
         if (gUsbData->bLastCommandStatus & USB_BULK_STALLED) {
-            USBMassBOTResetRecovery(DevInfo);
+            USBMassBOTResetRecovery(fpDevInfo);
             return USB_ERROR;
         }
     }
@@ -3956,9 +3742,9 @@ USBMassGetBOTStatus(
     //
     // Check for valid CSW
     //
-    if ((Data != sizeof (BOT_STATUS_BLOCK)) ||
-        (((BOT_STATUS_BLOCK*)CmdBuffer)->dCswSignature != BOT_CSW_SIGNATURE) ||
-        (((BOT_STATUS_BLOCK*)CmdBuffer)->dCswTag != gUsbData->dBOTCommandTag)) {
+    if ((wData != sizeof (BOT_STATUS_BLOCK)) ||
+        (((BOT_STATUS_BLOCK*)fpCmdBuffer)->dCswSignature != BOT_CSW_SIGNATURE) ||
+        (((BOT_STATUS_BLOCK*)fpCmdBuffer)->dCswTag != gUsbData->dBOTCommandTag)) {
         //USBMassClearBulkEndpointStall(fpDevInfo, BIT7);	//(EIP63308-)
         //USBMassClearBulkEndpointStall(fpDevInfo, BIT0);	//(EIP63308-)
         return USB_ERROR;
@@ -3967,12 +3753,12 @@ USBMassGetBOTStatus(
     //
     // Check for meaningful CSW
     //
-    if (((BOT_STATUS_BLOCK*)CmdBuffer)->bmCswStatus) {
-   		if (((BOT_STATUS_BLOCK*)CmdBuffer)->bmCswStatus > 1) {
+    if (((BOT_STATUS_BLOCK*)fpCmdBuffer)->bmCswStatus) {
+   		if (((BOT_STATUS_BLOCK*)fpCmdBuffer)->bmCswStatus > 1) {
 	        //
 	        // Perform reset recovery if BOT status is phase error
 	        //
-        	USBMassBOTResetRecovery(DevInfo);
+        	USBMassBOTResetRecovery(fpDevInfo);
     	}
 		return USB_ERROR;
 	}
@@ -3980,12 +3766,17 @@ USBMassGetBOTStatus(
     return USB_SUCCESS;
 }
 
-/**
-    This function performs the BOT reset recovery
 
-    @param fpDevInfo   Pointer to DeviceInfo structure
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// PROCEDURE:   USBMassBOTResetRecovery
+//
+// DESCRIPTION: This function performs the BOT reset recovery
+//
+// PARAMETERS:  fpDevInfo   Pointer to DeviceInfo structure
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 VOID
 USBMassBOTResetRecovery(DEV_INFO* fpDevInfo)
@@ -4003,26 +3794,28 @@ USBMassBOTResetRecovery(DEV_INFO* fpDevInfo)
     USBMassClearBulkEndpointStall(fpDevInfo, BIT0);
 }
 
-/**
-    This function gets the maximum logical unit number(LUN)
-    supported by the device.  It is zero based value.
 
-    @param Pointer to DeviceInfo structure
-
-    @retval Max LUN supported
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   USBMassBOTGetMaxLUN
+//
+// Description: This function gets the maximum logical unit number(LUN)
+//      supported by the device.  It is zero based value.
+//
+// Input:   Pointer to DeviceInfo structure
+//
+// Output:  Max LUN supported
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT16
-USBMassBOTGetMaxLUN(
-    DEV_INFO* DevInfo
-)
+USBMassBOTGetMaxLUN(DEV_INFO* fpDevInfo)
 {
 	UINT8	*Buffer = NULL;
 	UINT8	MaxLun = 0;
-    UINT16  Status;
 
-    if (DevInfo->wIncompatFlags & USB_INCMPT_GETMAXLUN_NOT_SUPPORTED) {
+    if (fpDevInfo->wIncompatFlags & USB_INCMPT_GETMAXLUN_NOT_SUPPORTED) {
         return 0;
     }
 
@@ -4032,113 +3825,119 @@ USBMassBOTGetMaxLUN(
 		return 0;
 	}
 
-    Status = (*gUsbData->aHCDriverTable[GET_HCD_INDEX(gUsbData->HcTable
-            [DevInfo->bHCNumber - 1]->bHCType)].pfnHCDControlTransfer)
-            (gUsbData->HcTable[DevInfo->bHCNumber - 1],
-            DevInfo, ADSC_IN_REQUEST_TYPE + (BOT_GET_MAX_LUN_REQUEST_CODE << 8),
-            DevInfo->bInterfaceNum, 0, Buffer, 1);
-    if (Status) {
-	    MaxLun = *Buffer;
-    }
+    (*gUsbData->aHCDriverTable[GET_HCD_INDEX(gUsbData->HcTable
+        [fpDevInfo->bHCNumber - 1]->bHCType)].pfnHCDControlTransfer)
+        (gUsbData->HcTable[fpDevInfo->bHCNumber - 1],
+        fpDevInfo, ADSC_IN_REQUEST_TYPE + (BOT_GET_MAX_LUN_REQUEST_CODE << 8),
+        fpDevInfo->bInterfaceNum, 0, Buffer, 1);
+
+	MaxLun = *Buffer;
 	USB_MemFree(Buffer, 1);
 
     return MaxLun;
 }
 
 
-/**
-    This function performs a mass storage transaction using CBI
-    or CB protocol.
-
-    @param fpDevInfo   Pointer to DeviceInfo structure
-        fpCmdBuffer Pointer to command buffer
-        bCmdSize    Size of command block
-        bXferDir    Transfer direction
-        fpBuffer    Data buffer far pointer
-        dwLength    Amount of data to be transferred
-        wPreSkip    Number of bytes to skip before data
-        wPostSkip   Number of bytes to skip after data
-
-    @retval Amount of data actually transferred
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// PROCEDURE:   USBMassIssueCBITransaction
+//
+// DESCRIPTION: This function performs a mass storage transaction using CBI
+//              or CB protocol.
+//
+// PARAMETERS:  fpDevInfo   Pointer to DeviceInfo structure
+//              fpCmdBuffer Pointer to command buffer
+//                  bCmdSize    Size of command block
+//                  bXferDir    Transfer direction
+//                  fpBuffer    Data buffer far pointer
+//                  dwLength    Amount of data to be transferred
+//                  wPreSkip    Number of bytes to skip before data
+//                  wPostSkip   Number of bytes to skip after data
+//
+// RETURN:      Amount of data actually transferred
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT32
-USBMassIssueCBITransaction(
-    DEV_INFO*           DevInfo,
-    MASS_XACT_STRUC*    MassXactStruc    
-)
+USBMassIssueCBITransaction(DEV_INFO* fpDevInfo)
 {
-    UINT32  Data = 0;
+    UINT32  dData = 0;
 
-    if (!(USBMassSendCBICommand(DevInfo, MassXactStruc))) {  // Returns 0 on error
+    if (!(USBMassSendCBICommand(fpDevInfo))) {  // Returns 0 on error
         return  0;
     }
 
-    if (MassXactStruc->dLength) {
-        Data = USBMassProcessBulkData(DevInfo, MassXactStruc);
-        if (!Data) {
+    if (gUsbData->stMassXactStruc.dLength) {
+        dData   = USBMassProcessBulkData(fpDevInfo);
+        if (!dData) {
             if(gUsbData->bLastCommandStatus & USB_BULK_STALLED) {
-                USBMassClearBulkEndpointStall(DevInfo, MassXactStruc->bXferDir);
-                return Data;
+                USBMassClearBulkEndpointStall(fpDevInfo,
+                            gUsbData->stMassXactStruc.bXferDir);
+                return  dData;
             }
         }
     }
 
-    if (DevInfo->bProtocol != PROTOCOL_CBI_NO_INT && DevInfo->IntInEndpoint != 0) {
+    if(fpDevInfo->bProtocol != PROTOCOL_CBI_NO_INT && fpDevInfo->bIntEndpoint != 0) {
         //
         // Bypass interrupt transaction if it is CB protocol
         //
-        USBMassCBIGetStatus(DevInfo);
+        USBMassCBIGetStatus(fpDevInfo);
     }
 
-    return Data;
+    return dData;
 }
 
 
-/**
-    This function performs a mass storage transaction using CBI
-    or CB protocol.
-
-    @param fpDevInfo   Pointer to DeviceInfo structure
-        fpCmdBuffer Pointer to the command buffer
-        bCmdSize    Size of command block
-
-    @retval 0xFFFF  SUCCESS
-        0x00    ERROR
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// PROCEDURE:   USBMassSendCBICommand
+//
+// DESCRIPTION: This function performs a mass storage transaction using CBI
+//              or CB protocol.
+//
+// PARAMETERS:  fpDevInfo   Pointer to DeviceInfo structure
+//              fpCmdBuffer Pointer to the command buffer
+//              bCmdSize    Size of command block
+//
+// RETURN:      0xFFFF  SUCCESS
+//              0x00    ERROR
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT16
-USBMassSendCBICommand(
-    DEV_INFO*           DevInfo,
-    MASS_XACT_STRUC*    MassXactStruc
-)
+USBMassSendCBICommand(DEV_INFO* fpDevInfo)
 {
-    UINT16  RetValue;
+    UINT16  wRetValue;
 
-    RetValue = (*gUsbData->aHCDriverTable[GET_HCD_INDEX(gUsbData->HcTable
-                [DevInfo->bHCNumber - 1]->bHCType)].pfnHCDControlTransfer)
-                (gUsbData->HcTable[DevInfo->bHCNumber - 1],
-                DevInfo, ADSC_OUT_REQUEST_TYPE,
-                (UINT16)DevInfo->bInterfaceNum, 0,
-                MassXactStruc->fpCmdBuffer,
-                (UINT16)MassXactStruc->bCmdSize);
+    wRetValue   = (*gUsbData->aHCDriverTable[GET_HCD_INDEX(gUsbData->HcTable
+                [fpDevInfo->bHCNumber - 1]->bHCType)].pfnHCDControlTransfer)
+                (gUsbData->HcTable[fpDevInfo->bHCNumber - 1],
+                fpDevInfo, ADSC_OUT_REQUEST_TYPE,
+                (UINT16)fpDevInfo->bInterfaceNum, 0,
+                gUsbData->stMassXactStruc.fpCmdBuffer,
+                (UINT16)gUsbData->stMassXactStruc.bCmdSize);
 
-    return RetValue;
+    return wRetValue;
 
 }
 
 
-/**
-    This function gets the status of the mass transaction
-    through an interrupt transfer
-
-    @param pDevInfo    Pointer to DeviceInfo structure
-
-    @retval Return value from the interrupt transfer
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   USBMassCBIGetStatus
+//
+// Description: This function gets the status of the mass transaction
+//      through an interrupt transfer
+//
+// Input:   pDevInfo    Pointer to DeviceInfo structure
+//
+// Output:  Return value from the interrupt transfer
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT16
 USBMassCBIGetStatus(DEV_INFO*   fpDevInfo)
@@ -4146,36 +3945,39 @@ USBMassCBIGetStatus(DEV_INFO*   fpDevInfo)
     (*gUsbData->aHCDriverTable[GET_HCD_INDEX(gUsbData->HcTable
         [fpDevInfo->bHCNumber - 1]->bHCType)].pfnHCDInterruptTransfer)
         (gUsbData->HcTable[fpDevInfo->bHCNumber - 1],
-         fpDevInfo, fpDevInfo->IntInEndpoint, 
-         fpDevInfo->IntInMaxPkt, (UINT8*)&gUsbData->wInterruptStatus, 2);
+         fpDevInfo, (UINT8*)&gUsbData->wInterruptStatus, 2);
 
     return ((UINT16)gUsbData->wInterruptStatus);
 
 }
 
 
-/**
-    This function executes a bulk transaction on the USB. The
-    transfer may be either DATA_IN or DATA_OUT packets containing
-    data sent from the host to the device or vice-versa. This
-    function wil not return until the request either completes
-    successfully or completes with error (due to time out, etc.)
-    Size of data can be upto 64K
-
-    @param - DeviceInfo structure (if available else 0)
-        - Transfer direction
-        Bit 7   : Data direction
-        0 Host sending data to device
-        1 Device sending data to host
-        Bit 6-0 : Reserved
-        - Buffer containing data to be sent to the device or
-        buffer to be used to receive data. Value in
-        - Length request parameter, number of bytes of data
-        to be transferred in or out of the host controller
-
-    @retval Amount of data transferred
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   USBMiscIssueBulkTransfer
+//
+// Description: This function executes a bulk transaction on the USB. The
+//      transfer may be either DATA_IN or DATA_OUT packets containing
+//      data sent from the host to the device or vice-versa. This
+//      function wil not return until the request either completes
+//      successfully or completes with error (due to time out, etc.)
+//      Size of data can be upto 64K
+//
+// Input:   - DeviceInfo structure (if available else 0)
+//          - Transfer direction
+//              Bit 7   : Data direction
+//                          0 Host sending data to device
+//                          1 Device sending data to host
+//              Bit 6-0 : Reserved
+//          - Buffer containing data to be sent to the device or
+//            buffer to be used to receive data. Value in
+//          - Length request parameter, number of bytes of data
+//            to be transferred in or out of the host controller
+//
+// Output:  Amount of data transferred
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT32
 USBMassIssueBulkTransfer(DEV_INFO* fpDevInfo, UINT8 bXferDir,
@@ -4189,112 +3991,124 @@ USBMassIssueBulkTransfer(DEV_INFO* fpDevInfo, UINT8 bXferDir,
 }
 
 
-/**
-    This function fills and returns the mass get device geometry
-    structure
-
-    @param fpMassGetDevGeo     Pointer to mass get geometry struc
-
-    @retval Return value
-        fpMassGetDevGeo     Pointer to mass get geometry struc
-        dSenseData  Sense data of the last command
-        bNumHeads   Number of heads
-        wNumCylinders   Number of cylinders
-        bNumSectors Number of sectors
-        wBytesPerSector Number of bytes per sector
-        bMediaType  Media type
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   USBMassGetDeviceGeometry
+//
+// Description: This function fills and returns the mass get device geometry
+//      structure
+//
+// Input:   fpMassGetDevGeo     Pointer to mass get geometry struc
+//
+// Output:  Return value
+//      fpMassGetDevGeo     Pointer to mass get geometry struc
+//          dSenseData  Sense data of the last command
+//          bNumHeads   Number of heads
+//          wNumCylinders   Number of cylinders
+//          bNumSectors Number of sectors
+//          wBytesPerSector Number of bytes per sector
+//          bMediaType  Media type
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT8
-USBMassGetDeviceGeometry(
-    MASS_GET_DEV_GEO *GetDevGeometry
- )
+USBMassGetDeviceGeometry (MASS_GET_DEV_GEO *fpGetDevGeometry)
 {
-    DEV_INFO    *DevInfo;
-    UINT8       DevAddr = GetDevGeometry->bDevAddr;
+    DEV_INFO    *fpDevInfo;
+    UINT8       bDevAddr    = fpGetDevGeometry->bDevAddr;
     BOOLEAN     ValidGeo;
     MASS_GET_DEV_STATUS MassGetDevSts;
 
-    DevInfo = USB_GetDeviceInfoStruc(USB_SRCH_DEV_INDX, 0, DevAddr, 0);
+    fpDevInfo = USB_GetDeviceInfoStruc(USB_SRCH_DEV_INDX, 0, bDevAddr, 0);
 
-    if ((!DevInfo) || (!(DevInfo->Flag & DEV_INFO_DEV_PRESENT))) {   // Error
+    if ( (!fpDevInfo) || (!(fpDevInfo->bFlag & DEV_INFO_DEV_PRESENT)) ) {   // Error
         return USB_ERROR;
     }
 
-    MassGetDevSts.bDevAddr = DevAddr;
+    MassGetDevSts.bDevAddr = bDevAddr;
                         //(EIP13457+)>
-    if (GetDevGeometry->bInt13FuncNum == 0x20){
-        DevInfo->bLastStatus |= USB_MASS_GET_MEDIA_FORMAT;
+    if (fpGetDevGeometry->bInt13FuncNum==0x20){
+        fpDevInfo->bLastStatus |= USB_MASS_GET_MEDIA_FORMAT;
     }
-    if ((!DevInfo->wBlockSize) || (DevInfo->wBlockSize == 0xFFFF) ||
-            (!(DevInfo->bLastStatus & USB_MASS_MEDIA_PRESENT) ||
-            (GetDevGeometry->bInt13FuncNum == 0x20)) ) {
+    if ((!fpDevInfo->wBlockSize) || (fpDevInfo->wBlockSize == 0xFFFF) ||
+            (!(fpDevInfo->bLastStatus & USB_MASS_MEDIA_PRESENT) ||
+            (fpGetDevGeometry->bInt13FuncNum==0x20)) ) {
 //      USBMassCheckDeviceReady(fpDevInfo);
         USBMassGetDeviceStatus(&MassGetDevSts);
     }                   //<(EIP13457+)
-    ValidGeo = (BOOLEAN)((DevInfo->wBlockSize != 0xFFFF) && (DevInfo->wBlockSize != 0));
-    ValidGeo &= (DevInfo->bLastStatus & USB_MASS_MEDIA_PRESENT);
+    ValidGeo = (BOOLEAN)((fpDevInfo->wBlockSize != 0xFFFF) && (fpDevInfo->wBlockSize != 0));
+    ValidGeo &= (fpDevInfo->bLastStatus & USB_MASS_MEDIA_PRESENT);
                                         //(EIP107198+)>
-    GetDevGeometry->wBytesPerSector   = ValidGeo? DevInfo->wBlockSize : 0;
-    GetDevGeometry->LBANumHeads       = ValidGeo? DevInfo->Heads : 0;
-    GetDevGeometry->bLBANumSectors    = ValidGeo? DevInfo->bSectors : 1;
-    GetDevGeometry->wLBANumCyls       = ValidGeo? DevInfo->wCylinders : 0;
-    GetDevGeometry->NumHeads          = ValidGeo? DevInfo->NonLBAHeads : 0;
-    GetDevGeometry->bNumSectors       = ValidGeo? DevInfo->bNonLBASectors : 1;
-    GetDevGeometry->wNumCylinders     = ValidGeo? DevInfo->wNonLBACylinders : 0;
-    GetDevGeometry->bMediaType        = DevInfo->bMediaType;
-    GetDevGeometry->LastLBA           = ValidGeo? DevInfo->MaxLba : 0;
-    GetDevGeometry->BpbMediaDesc      = ValidGeo? DevInfo->BpbMediaDesc : 0;
+    fpGetDevGeometry->wBytesPerSector   = ValidGeo? fpDevInfo->wBlockSize : 0;
+    fpGetDevGeometry->bLBANumHeads      = ValidGeo? fpDevInfo->bHeads : 0;
+    fpGetDevGeometry->bLBANumSectors    = ValidGeo? fpDevInfo->bSectors : 0;
+    fpGetDevGeometry->wLBANumCyls       = ValidGeo? fpDevInfo->wCylinders : 0;
+    fpGetDevGeometry->bNumHeads         = ValidGeo? fpDevInfo->bNonLBAHeads : 0;
+    fpGetDevGeometry->bNumSectors       = ValidGeo? fpDevInfo->bNonLBASectors : 0;
+    fpGetDevGeometry->wNumCylinders     = ValidGeo? fpDevInfo->wNonLBACylinders : 0;
+    fpGetDevGeometry->bMediaType        = fpDevInfo->bMediaType;
+    fpGetDevGeometry->dLastLBA          = ValidGeo? fpDevInfo->dMaxLba : 0;
+    fpGetDevGeometry->BpbMediaDesc      = ValidGeo? fpDevInfo->BpbMediaDesc : 0;
 
+    if(!(fpDevInfo->bLastStatus & USB_MASS_MEDIA_PRESENT))
+        return USB_ATA_NO_MEDIA_ERR;
                                         //<(EIP107198+)
 
-    USB_DEBUG(DEBUG_INFO, DEBUG_LEVEL_4, "BPS %d H %d S %d C %d MT %d\n",
-                DevInfo->wBlockSize,
-                DevInfo->Heads,
-                DevInfo->bSectors,
-                DevInfo->wCylinders,
-                DevInfo->bMediaType);
+USB_DEBUG(DEBUG_LEVEL_4, "BPS %d H %d S %d C %d MT %d\n",
+        fpDevInfo->wBlockSize,
+        fpDevInfo->bHeads,
+        fpDevInfo->bSectors,
+        fpDevInfo->wCylinders,
+        fpDevInfo->bMediaType);
 
-    return USB_SUCCESS;
+    return  USB_SUCCESS;
 
 }
 
-/**
-    This function issues read capacity command to the mass
-    device and returns the value obtained
 
-    @param fpReadCapacity  Pointer to the read capacity structure
-        bDevAddr    USB device address of the device
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   USBMassReadCapacity
+//
+// Description: This function issues read capacity command to the mass
+//      device and returns the value obtained
+//
+// Input:   fpReadCapacity  Pointer to the read capacity structure
+//          bDevAddr    USB device address of the device
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT8
-USBMassReadCapacity(
-    MASS_READ_CAPACITY *ReadCapacity
-)
+USBMassReadCapacity (MASS_READ_CAPACITY *fpReadCapacity)
 {
-    DEV_INFO    *DevInfo;
-    UINT8       DevAddr = ReadCapacity->bDevAddr;
+    DEV_INFO    *fpDevInfo;
+    UINT8       bDevAddr = fpReadCapacity->bDevAddr;
 
-    DevInfo = USB_GetDeviceInfoStruc(USB_SRCH_DEV_INDX, 0, DevAddr, 0);
+    fpDevInfo   = USB_GetDeviceInfoStruc(USB_SRCH_DEV_INDX, 0, bDevAddr, 0);
 
-    if ((!DevInfo) || (!(DevInfo->Flag & DEV_INFO_DEV_PRESENT))) {   // Error
+    if ( (!fpDevInfo) || (!(fpDevInfo->bFlag & DEV_INFO_DEV_PRESENT)) ) {   // Error
         return USB_ERROR;
     }
 
-    return USBMassReadCapacity10Command(DevInfo);
+    return USBMassReadCapacityCommand(fpDevInfo);
 }
 
-/**
-    This function swaps the bytes in dword: 0-3,1-2,2-1,3-0. Can be
-    used for example in little endian->big endian conversions.
 
-    @param DWORD to swap
-
-    @retval Input value with the swapped bytes in it.
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   dabc_to_abcd
+//
+// Description: This function swaps the bytes in dword: 0-3,1-2,2-1,3-0. Can be
+//              used for example in little endian->big endian conversions.
+//
+// Input:   DWORD to swap
+//
+// Output:  Input value with the swapped bytes in it.
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 UINT32 dabc_to_abcd(UINT32 dData)
 {
@@ -4304,16 +4118,16 @@ UINT32 dabc_to_abcd(UINT32 dData)
             | ((dData & 0xFF000000) >> 24));
 }
 
-//**********************************************************************
-//**********************************************************************
-//**                                                                  **
-//**        (C)Copyright 1985-2016, American Megatrends, Inc.         **
-//**                                                                  **
-//**                       All Rights Reserved.                       **
-//**                                                                  **
-//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093        **
-//**                                                                  **
-//**                       Phone: (770)-246-8600                      **
-//**                                                                  **
-//**********************************************************************
-//**********************************************************************
+//****************************************************************************
+//****************************************************************************
+//**                                                                        **
+//**             (C)Copyright 1985-2009, American Megatrends, Inc.          **
+//**                                                                        **
+//**                          All Rights Reserved.                          **
+//**                                                                        **
+//**                 5555 Oakbrook Pkwy, Norcross, GA 30093                 **
+//**                                                                        **
+//**                          Phone (770)-246-8600                          **
+//**                                                                        **
+//****************************************************************************
+//****************************************************************************

@@ -2,7 +2,7 @@
 //*****************************************************************//
 //*****************************************************************//
 //**                                                             **//
-//**         (C)Copyright 2014, American Megatrends, Inc.        **//
+//**         (C)Copyright 2012, American Megatrends, Inc.        **//
 //**                                                             **//
 //**                     All Rights Reserved.                    **//
 //**                                                             **//
@@ -18,14 +18,6 @@
 // $Revision: 1 $
 //
 // $Date: 11/02/12 10:14a $
-//*****************************************************************
-//*****************************************************************
-//**********************************************************************
-// Revision History
-// ----------------
-// $Log: /AptioV/SRC/AMIDebugRx/DebugStatusCodeLib/DbgrHelp.c $
-// 
-//
 //*****************************************************************
 
 //**********************************************************************
@@ -58,7 +50,7 @@
 
 EFI_GUID  mPeiDebugDataGuidSts = PEI_DBGSUPPORT_DATA_GUID;
 EFI_GUID  mPeiDbgBasePpiGuidSts = EFI_PEI_DBG_BASEADDRESS_PPI_GUID;
-UINTN AMI_PEIDEBUGGER_DS1_SIZE = 0x500;
+UINTN AMI_PEIDEBUGGER_DS1_SIZE = 0x400;
 volatile UINT16 gS3ResumeSupport = AMI_DEBUG_RX_IN_S3_SUPPORT;
 
 VOID CPULib_SaveIdt(DESCRIPTOR_TABLE);
@@ -68,7 +60,7 @@ VOID CPULib_SaveIdt(DESCRIPTOR_TABLE);
 //*****************************************************************//
 //*****************************************************************//
 //**                                                             **//
-//**         (C)Copyright 2014, American Megatrends, Inc.        **//
+//**         (C)Copyright 2012, American Megatrends, Inc.        **//
 //**                                                             **//
 //**                     All Rights Reserved.                    **//
 //**                                                             **//

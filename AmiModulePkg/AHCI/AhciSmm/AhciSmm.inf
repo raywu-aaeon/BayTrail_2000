@@ -1,7 +1,7 @@
 #*************************************************************************
 #*************************************************************************
 #**                                                                     **
-#**        (C)Copyright 1985-2014, American Megatrends, Inc.            **
+#**        (C)Copyright 1985-2013, American Megatrends, Inc.            **
 #**                                                                     **
 #**                       All Rights Reserved.                          **
 #**                                                                     **
@@ -12,7 +12,7 @@
 #*************************************************************************
 #*************************************************************************
 ## @file
-# Produces the Ahci Smm Protocol
+#
 ##
 [Defines]
   INF_VERSION                    = 0x00010005
@@ -37,25 +37,22 @@
   AmiDxeLib
   UefiDriverEntryPoint
   AhciCspLib
-  PcdLib
   
 [Protocols]
+#  gEfiSmmBaseProtocolGuid
   gEfiSmmBase2ProtocolGuid
-  gAmiAhciSmmProtocolGuid
-  
-[Pcd]
-  gEfiMdePkgTokenSpaceGuid.PcdPciExpressBaseAddress
-  
+
 [Depex]
+#  gEfiSmmBaseProtocolGuid
+#  TRUE
   gEfiSmmBase2ProtocolGuid
 
 [BuildOptions.X64]
   *_*_X64_CC_FLAGS = /D EFIx64 
 
 #*************************************************************************
-#*************************************************************************
 #**                                                                     **
-#**        (C)Copyright 1985-2014, American Megatrends, Inc.            **
+#**        (C)Copyright 1985-2013, American Megatrends, Inc.            **
 #**                                                                     **
 #**                       All Rights Reserved.                          **
 #**                                                                     **

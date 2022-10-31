@@ -119,7 +119,7 @@ CreateIdentityMappingPageTables (
   } else {
     TotalPagesNum = NumberOfPml4EntriesNeeded + 1;
   }
-  BigPageAddress = (UINTN) AllocateRuntimePages (TotalPagesNum);    // EIP146838
+  BigPageAddress = (UINTN) AllocateRuntimePages (TotalPagesNum);    // EIP148973
   ASSERT (BigPageAddress != 0);
 
   //

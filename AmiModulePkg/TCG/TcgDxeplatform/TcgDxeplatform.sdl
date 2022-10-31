@@ -1,0 +1,11 @@
+PATH
+	Name  = "TCG_DXE_PLATFORM_DIR"
+	Help  = ""
+End
+
+INFComponent
+    Name  = "TcgDxeplatform"
+    File  = "TcgDxeplatform.inf"
+    Package  = "AmiModulePkg"
+    ModuleTypes  = "DXE_DRIVER"
+End

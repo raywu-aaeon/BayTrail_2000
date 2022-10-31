@@ -12,10 +12,7 @@ LIBRARY_CLASS = StyleHookBin
  LIB|StyleHook.lib		
  
 [binaries.X64]
- LIB | StyleHookx64.lib	
- 
-[binaries.AARCH64]
- LIB | StyleHookAarch64.lib     	
+ LIB | StyleHookx64.lib		
 
 [Sources]
  
@@ -48,4 +45,4 @@ LIBRARY_CLASS = StyleHookBin
   
 [BuildOptions]
 MSFT:*_*_*_CC_FLAGS = /DTSE_FOR_APTIO_4_50
-GCC:*_*_*_CC_FLAGS = -DTSE_FOR_APTIO_4_50 
+ 

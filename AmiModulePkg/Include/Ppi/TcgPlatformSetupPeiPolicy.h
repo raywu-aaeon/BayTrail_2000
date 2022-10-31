@@ -12,39 +12,11 @@
 //*************************************************************************
 //*************************************************************************
 //**********************************************************************
-// $Header: /Alaska/SOURCE/Modules/TcgNext/Common/TcgSetupPolicy/TcgPlatformSetupPeiPolicy.h 1     10/08/13 12:05p Fredericko $
+// $Header: /Alaska/SOURCE/Modules/TCG/TcgPlatformSetupPeiPolicy/TcgPlatformSetupPeiPolicy.h 2     12/18/11 10:25p Fredericko $
 //
-// $Revision: 1 $
+// $Revision: 2 $
 //
-// $Date: 10/08/13 12:05p $
-//**********************************************************************
-// Revision History
-// ----------------
-// $Log: /Alaska/SOURCE/Modules/TcgNext/Common/TcgSetupPolicy/TcgPlatformSetupPeiPolicy.h $
-// 
-// 1     10/08/13 12:05p Fredericko
-// Initial Check-In for Tpm-Next module
-// 
-// 1     7/10/13 5:56p Fredericko
-// [TAG]  		EIP120969
-// [Category]  	New Feature
-// [Description]  	TCG (TPM20)
-// 
-// 2     12/18/11 10:25p Fredericko
-// Changes to support TcgplatformPeiPolicy in relation to O.S. requests.
-// 
-// 1     9/27/11 10:10p Fredericko
-// [TAG]  		EIP67286
-// [Category]  	Improvement
-// [Description]  	Initial check-in for Tcg Setup policy for pei
-// [Files]  		TcgPlatformSetupPeiPolicy.cif
-// TcgPlatformSetupPeiPolicy.c
-// TcgPlatformSetupPeiPolicy.h
-// TcgPlatformSetupPeiPolicy.sdl
-// TcgPlatformSetupPeiPolicy.mak
-// TcgPlatformSetupPeiPolicy.dxs
-// 
-//
+// $Date: 12/18/11 10:25p $
 //**********************************************************************
 //<AMI_FHDR_START>
 //---------------------------------------------------------------------------
@@ -58,8 +30,10 @@
 #ifndef _TCG_PLATFORM_SETUP_PEI_POLICY_H_
 #define _TCG_PLATFORM_SETUP_PEI_POLICY_H_
 
-#include <UEFI.h>
-#include <Ppi\ReadOnlyVariable2.h>
+#include <Efi.h>
+#include <token.h>
+#include <Setup.h>
+#include <Ppi\ReadOnlyVariable.h>
 
 
 
@@ -96,8 +70,8 @@ typedef struct {
   UINT8   TpmAuthenticate;
   UINT8   TpmOperation;           // 0: Disabled; 1: Enabled
   UINT8   DisallowTpm;           // 0: Disabled; 1: Enabled
-  UINT32   HashPolicy;
-  UINT8   DeviceType;
+  UINT8   Reserved1;
+  UINT8   Reserved2;
 
   //
   // Byte 1, bit definition for Status Information 
@@ -121,12 +95,6 @@ typedef struct {
   //
   UINT8   Reserved5;
 
-  //TPM 20 Configuration
-  UINT8 Tpm20Device;
-  UINT8 PlatformHierarchy;
-  UINT8 StorageHierarchy;
-  UINT8 EndorsementHierarchy;
-  UINT8 InterfaceSel;
 } TCG_CONFIGURATION;
 
 #pragma pack()
@@ -148,19 +116,19 @@ typedef struct _TCG_PLATFORM_SETUP_INTERFACE {
   GET_TCG_PEI_POLICY    getTcgPeiPolicy;
 } TCG_PLATFORM_SETUP_INTERFACE;
 
-
+extern EFI_GUID gTcgPeiPolicyGuid;
 #endif
 
-//**********************************************************************//
-//**********************************************************************//
-//**                                                                  **//
-//**        (C)Copyright 1985-2012, American Megatrends, Inc.         **//
-//**                                                                  **//
-//**                       All Rights Reserved.                       **//
-//**                                                                  **//
-//**        5555 Oakbrook Pkwy, Suite 200, Norcross, GA 30093         **//
-//**                                                                  **//
-//**                       Phone: (770)-246-8600                      **//
-//**                                                                  **//
-//**********************************************************************//
-//**********************************************************************//
+//*************************************************************************
+//*************************************************************************
+//**                                                                     **
+//**        (C)Copyright 1985-2011, American Megatrends, Inc.            **
+//**                                                                     **
+//**                       All Rights Reserved.                          **
+//**                                                                     **
+//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093           **
+//**                                                                     **
+//**                       Phone: (770)-246-8600                         **
+//**                                                                     **
+//*************************************************************************
+//*************************************************************************

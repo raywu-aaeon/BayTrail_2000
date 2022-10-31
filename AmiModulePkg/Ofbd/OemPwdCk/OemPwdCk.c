@@ -1,35 +1,39 @@
-//***********************************************************************
-//***********************************************************************
-//**                                                                   **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.          **
-//**                                                                   **
-//**                       All Rights Reserved.                        **
-//**                                                                   **
-//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093         **
-//**                                                                   **
-//**                       Phone: (770)-246-8600                       **
-//**                                                                   **
-//***********************************************************************
-//***********************************************************************
+//**********************************************************************
+//**********************************************************************
+//**                                                                  **
+//**        (C)Copyright 1985-2012, American Megatrends, Inc.         **
+//**                                                                  **
+//**                       All Rights Reserved.                       **
+//**                                                                  **
+//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093        **
+//**                                                                  **
+//**                       Phone: (770)-246-8600                      **
+//**                                                                  **
+//**********************************************************************
+//**********************************************************************
 
-/** @file 
-OemPwdCk.c
-
-Password Check protocol is for BIOS to indicate AFU that BIOS password exists and 
-needs to initiate password checking before flashing BIOS. AFU will set OEM_PC_CK 
-in dbGetCkSts field and send OFBD data to BIOS to report password checking is 
-required or not.
- 
-If password check function is requested then BIOS should fill out password length 
-in dwPwdLen field. Afterward AFU asks user to input password with specified password
-length given from BIOS in field dwPwdLen and fill user input password in memory 
-buffer after signature of OFBD_EXT_TBL_END for BIOS to do the comparison. 
-*/
-
-//---------------------------------------------------------------------------
-// Include Files
-//---------------------------------------------------------------------------
-
+//**********************************************************************
+// $Header: /AptioV/Source/Modules/Ofbd/OemPwdCk/OemPwdCk.c $
+//
+// $Revision: $
+//
+// $Date: $
+//**********************************************************************
+//<AMI_FHDR_START>
+//
+// Name:	OemPwdCk.c
+//
+// Description:
+// Password Check protocol is for BIOS to indicate AFU that BIOS password exists and needs to initiate password
+// checking before flashing BIOS. AFU will set OEM_PC_CK in dbGetCkSts field and send OFBD data to BIOS to report
+// password checking is required or not.
+// 
+// If password check function is requested then BIOS should fill out password length in dwPwdLen field. Afterward AFU
+// asks user to input password with specified password length given from BIOS in field dwPwdLen and fill user input
+// password in memory buffer after signature of OFBD_EXT_TBL_END for BIOS to do the comparison. 
+//
+//<AMI_FHDR_END>
+//**********************************************************************
 #include <Efi.h>
 #include <Token.h>
 #include <AmiLib.h>
@@ -38,18 +42,19 @@ buffer after signature of OFBD_EXT_TBL_END for BIOS to do the comparison.
 #include "../Ofbd.h"
 
 static int ErrorNum = 0;
-
-/**
-   	Ofbd (Oem Password Get handle)
-	
-	This function is used to tell the Afu, the BIOS password length.
-	
-	@param pOFBDHdr - Ofbd header.
-
-  	@return EFI_STATUS
-  	@retval EFI_SUCCESS Function executed successfully
-*/ 
-
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:	OFBDPwdGetHandle
+//
+// Description:	OFBD Password Get Handle
+//
+// Input:
+//      IN OUT OFBD_HDR *pOFBDHdr
+// Output:
+//      EFI_STATUS
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
 OFBDPwdGetHandle( 
     IN OUT OFBD_HDR *pOFBDHdr)
@@ -82,17 +87,19 @@ OFBDPwdGetHandle(
     return(Status);
 }
 
-/**
-   	Ofbd (Oem Password Check handle)
-	
-	This function is used to check the user input password, which get from Afu.
-	
-	@param pOFBDHdr - Ofbd header.
-
-  	@return EFI_STATUS
-  	@retval EFI_SUCCESS Function executed successfully
-*/ 
-
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:	OFBDPwdCheckHandle
+//
+// Description:	OFBD Password Check Handle
+//
+// Input:
+//      IN OUT OFBD_HDR *pOFBDHdr
+// Output:
+//      EFI_STATUS
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
 OFBDPwdCheckHandle(
     IN OUT OFBD_HDR *pOFBDHdr)
@@ -137,16 +144,20 @@ OFBDPwdCheckHandle(
     return(Status);
 }
 
-/**
-   	This function is Ofbd Oem Password Check function entry point
-
-	@param Buffer - Ofbd header.
-  	@param pOFBDDataHandled - handle value returns
-  	
-	@retval	0xFF means Function executed successfully
-	@retval	0xFE means Function error occured
-*/ 
-
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:	OFBDEntryPoint
+//
+// Description:	OFBD OEM Password CHECK Entry Point
+//
+// Input:
+//      IN VOID             *Buffer
+//      IN OUT UINT8        *pOFBDDataHandled
+// Output:
+//      VOID
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID OEMPWDCKEntry (
     IN VOID             *Buffer,
     IN OUT UINT8        *pOFBDDataHandled )
@@ -209,7 +220,7 @@ VOID OEMPWDCKEntry (
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2012, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **

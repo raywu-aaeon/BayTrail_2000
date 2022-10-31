@@ -5,8 +5,7 @@
 	RefName = "FRAMEWORK"
 [files]
 "Uhcd.mak"	
-"Uhcd.h"
-"UsbIrq.h"	
+"Uhcd.h"	
 "Rt/UsbDef.h"	
 "Rt/AmiDef.h"	
 "Rt/AmiUsb.h"	

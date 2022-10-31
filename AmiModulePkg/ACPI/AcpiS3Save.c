@@ -12,12 +12,23 @@
 //**********************************************************************
 //**********************************************************************
 
+//**********************************************************************
+// $Header: /Alaska/BIN/Modules/ACPI/Template/S3Support/S3Save/AcpiS3Save.c 1     2/03/11 4:08p Oleksiyy $
+//
+// $Revision: 1 $
+//
+// $Date: 2/03/11 4:08p $
+//**********************************************************************
 
-
-/** @file AcpiS3Save.c
-    ACPI S3 support functions
-
-**/
+//<AMI_FHDR_START>
+//----------------------------------------------------------------------------
+//
+//  Name:    AcpiS3Save.c
+//
+//  Description: ACPI S3 support functions
+//
+//----------------------------------------------------------------------------
+//<AMI_FHDR_END>
 
 #include <Efi.h>
 #include <Dxe.h>
@@ -48,23 +59,28 @@ EFI_STATUS InitBootScript(
 	);
 
 
-/**
-    This function returns address of memory where FACS ACPI table resides
-
-         
-    @param VOID
-
-          
-    @retval Address of FACS table
-
-    @note  
-  The routine may fail if the FACS table is in a different location for 
-  ACPI 1.0 and ACPI 2.0 (e.g. 1 above 4G and 1 below 4G). WIN98 will read the
-  RSDT, and WINXP will read the XSDT. If the XSDT and RSDT aren't pointing to
-  the same tables, a S3 resume failure will occur.
-  Currently, the variable from Intel only supports one FACS table.
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//  Procedure:   GetAcpiFacsTable
+//
+//  Description:
+//  This function returns address of memory where FACS ACPI table resides
+//
+//  Input:
+// 	VOID
+//
+//  Output:
+//  EFI_PHYSICAL_ADDRESS - address of FACS table
+//
+//  Notes:
+//  The routine may fail if the FACS table is in a different location for 
+//  ACPI 1.0 and ACPI 2.0 (e.g. 1 above 4G and 1 below 4G). WIN98 will read the
+//  RSDT, and WINXP will read the XSDT. If the XSDT and RSDT aren't pointing to
+//  the same tables, a S3 resume failure will occur.
+//  Currently, the variable from Intel only supports one FACS table.
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 VOID GetAcpiFacsTable(EFI_PHYSICAL_ADDRESS *FacsTable)
 {
@@ -115,18 +131,23 @@ VOID GetAcpiFacsTable(EFI_PHYSICAL_ADDRESS *FacsTable)
     } 
 }
 
-/**
-    This function will be called when ReadyToBoot event will be signaled and 
-    will update data, needed for S3 resume control flow.
-
-         
-    @param Event signalled event
-    @param Context calling context
-
-          
-    @retval VOID
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//  Procedure:   CallbackReadyToBoot
+//
+//  Description:
+//  This function will be called when ReadyToBoot event will be signaled and 
+//  will update data, needed for S3 resume control flow.
+//
+//  Input:
+//  IN EFI_EVENT Event - signalled event
+//  IN VOID *Context - calling context
+//
+//  Output:
+//  VOID
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 VOID CallbackReadyToBoot(
 	IN EFI_EVENT	Event,
@@ -220,52 +241,35 @@ VOID CallbackReadyToBoot(
 	Status = pRS->SetVariable(
 		gAcpiGlobalVariable,
 		&gEfiAcpiVariableGuid,
-		EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS,
+		EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS,
 		sizeof(UINT32),
 		&AcpiVariableSet
 	);
-	//In case BIOS was updated with preserved NVRAM and AcpiGlobalVariable still has runtime attribute
-	if (Status == EFI_INVALID_PARAMETER)
-	{
-		Status = pRS->SetVariable(
-				gAcpiGlobalVariable,
-				&gEfiAcpiVariableGuid,
-				0,
-				0,
-				NULL
-			);
-		ASSERT_EFI_ERROR(Status);
-	
-	
-		Status = pRS->SetVariable(
-				gAcpiGlobalVariable,
-				&gEfiAcpiVariableGuid,
-				EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS,
-				sizeof(UINT32),
-				&AcpiVariableSet
-			);
-	}
-	
 	ASSERT_EFI_ERROR(Status);
 
 	S3ResumeInfo = TRUE;
 }
 
-/**
-    This function is ACPI S3 driver entry point 
-
-         
-    @param ImageHandle Image handle
-    @param SystemTable pointer to system table
-
-          
-    @retval EFI_SUCCESS if function executed successfully, error otherwise 
-
-    @note  
-  This function also creates ReadyToBoot event to save data 
-  needed for S3 resume control flow.
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//  Procedure:   AcpiS3SaveEntryPoint
+//
+//  Description:
+//  This function is ACPI S3 driver entry point 
+//
+//  Input:
+// 	IN EFI_HANDLE ImageHandle - Image handle
+// 	IN EFI_SYSTEM_TABLE *SystemTable - pointer to system table
+//
+//  Output:
+//  EFI_SUCCESS - Function executed successfully
+//
+//  Notes:
+//  This function also creates ReadyToBoot event to save data 
+//  needed for S3 resume control flow.
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 EFI_STATUS AcpiS3SaveEntryPoint(
 	IN EFI_HANDLE		ImageHandle,

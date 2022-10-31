@@ -12,12 +12,25 @@
 //**********************************************************************
 //**********************************************************************
 
+//**********************************************************************
+// $Header: /Alaska/BIN/Modules/ACPI/Template/Core/AmlNamespace.c 2     5/14/11 2:11p Yakovlevs $
+//
+// $Revision: 2 $
+//
+// $Date: 5/14/11 2:11p $
+//**********************************************************************
 
-/** @file AmlNamespace.c
-    ACPI AML Name space parsing/manipulation functions for ACPI SDT.
 
-**/
-
+//**********************************************************************
+//<AMI_FHDR_START>
+//
+// Name: AmlNamespace.c
+//
+// Description:	
+//  ACPI AML Name space parsing/manipulation functions for ACPI SDT.
+//
+//<AMI_FHDR_END>
+//**********************************************************************
 
 #include "AcpiCore.h"
 

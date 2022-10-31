@@ -25,10 +25,13 @@
 //*****************************************************************//
 //*****************************************************************//
 //*****************************************************************//
-/** @file Keymon.c
-    Contains key monitoring functions.
-
-**/
+//<AMI_FHDR_START>
+//
+// Name:		Keymon.c
+//
+// Description:	Contains key monitoring functions.
+//
+//<AMI_FHDR_END>
 //**********************************************************************
 
 #ifdef TSE_FOR_APTIO_4_50
@@ -44,8 +47,8 @@
 
 #if SETUP_SUPPORT_KEY_MONITORING
 
-#include <Protocol/KeyMonPlatform.h>
-#include <Protocol/MonitorKeyFilter.h>
+#include <Protocol\KeyMonPlatform.h>
+#include <Protocol\MonitorKeyFilter.h>
 
 #include "KeyMon.h"
 
@@ -125,18 +128,22 @@ VOID InstallKeyMonProtocol(VOID)
                         );
 }
 
-/**
-    This function registers keys with key monitor driver
-    for monitoring in the legacy mode.
-
-    @param This 
-    @param KeyList : List of keys to be monitored.
-    @param KeyListSize : Size of data returned in KeyList.
-
-    @retval Return Status based on errors that occurred in library
-        functions.
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:	GetPlatformMonitorKeyOptions
+//
+// Description:	This function registers keys with key monitor driver
+//              for monitoring in the legacy mode.
+//
+// Input:		EFI_USB_LEGACY_PLATFORM_PROTOCOL *This
+//              KEY_ELEMENT **KeyList: List of keys to be monitored.
+//              UINTN *KeyListSize: Size of data returned in KeyList.
+//
+// Output:		Return Status based on errors that occurred in library
+//              functions.
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
 GetPlatformMonitorKeyOptions(
   IN   EFI_KEYMON_PLATFORM_PROTOCOL   *This,
@@ -150,14 +157,18 @@ GetPlatformMonitorKeyOptions(
     return EFI_SUCCESS;
 }
 
-/**
-    This function receives keys from key monitor filter
-
-    @param VOID
-
-    @retval VOID
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:	GetKeysFromKeyMonFilter
+//
+// Description:	This function receives keys from key monitor filter
+//
+// Input:		VOID
+//
+// Output:		VOID
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID GetKeysFromKeyMonFilter(VOID)
 {
     UINT32  KeyDetected;

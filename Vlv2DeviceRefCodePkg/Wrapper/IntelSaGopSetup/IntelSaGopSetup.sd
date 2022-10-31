@@ -51,14 +51,12 @@
     #define SUPPRESS_GRAYOUT_ENDIF endif;
     #endif
 
-//EIP182845 >>  Update GUID
     #ifdef FORM_SET_VARSTORE
        varstore AMI_GOP_POLICY_SETUP_DATA,
        key   = AUTO_ID(AMI_GOP_POLICY_SETUP_DATA_ID),
        name  = AmiGopPolicySetupData,
-       guid  = AMI_GOP_POLICY_VARIABLE_GUID; 
-//EIP182845 <<           
-
+       guid  = SETUP_GUID; 
+           
        varstore NB_GOP_PLATFORM_DATA,
        key   = AUTO_ID(NB_GOP_PLATFORM_DATA_ID),
        name  = NBGopPlatformData,

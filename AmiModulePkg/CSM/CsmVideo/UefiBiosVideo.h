@@ -156,6 +156,23 @@ BiosVideoDriverBindingSupported (
   IN EFI_HANDLE                   Controller,
   IN EFI_DEVICE_PATH_PROTOCOL     *RemainingDevicePath
   )
+/*++
+
+Routine Description:
+
+  GC_TODO: Add function description
+
+Arguments:
+
+  This                - GC_TODO: add argument description
+  Controller          - GC_TODO: add argument description
+  RemainingDevicePath - GC_TODO: add argument description
+
+Returns:
+
+  GC_TODO: add return values
+
+--*/
 ;
 
 EFI_STATUS
@@ -165,6 +182,23 @@ BiosVideoDriverBindingStart (
   IN EFI_HANDLE                   Controller,
   IN EFI_DEVICE_PATH_PROTOCOL     *RemainingDevicePath
   )
+/*++
+
+Routine Description:
+
+  GC_TODO: Add function description
+
+Arguments:
+
+  This                - GC_TODO: add argument description
+  Controller          - GC_TODO: add argument description
+  RemainingDevicePath - GC_TODO: add argument description
+
+Returns:
+
+  GC_TODO: add return values
+
+--*/
 ;
 
 EFI_STATUS
@@ -175,6 +209,24 @@ BiosVideoDriverBindingStop (
   IN  UINTN                        NumberOfChildren,
   IN  EFI_HANDLE                   *ChildHandleBuffer
   )
+/*++
+
+Routine Description:
+
+  GC_TODO: Add function description
+
+Arguments:
+
+  This              - GC_TODO: add argument description
+  Controller        - GC_TODO: add argument description
+  NumberOfChildren  - GC_TODO: add argument description
+  ChildHandleBuffer - GC_TODO: add argument description
+
+Returns:
+
+  GC_TODO: add return values
+
+--*/
 ;
 
 //
@@ -187,12 +239,42 @@ BiosVideoCheckForVbe (
   PCI_TYPE00	 *PciConfSpace
 //*** AMI PORTING END *****//
 )
+/*++
+
+Routine Description:
+
+  GC_TODO: Add function description
+
+Arguments:
+
+  BiosVideoPrivate  - GC_TODO: add argument description
+
+Returns:
+
+  GC_TODO: add return values
+
+--*/
 ;
 
 EFI_STATUS
 BiosVideoCheckForVga (
   BIOS_VIDEO_DEV  *BiosVideoPrivate
   )
+/*++
+
+Routine Description:
+
+  GC_TODO: Add function description
+
+Arguments:
+
+  BiosVideoPrivate  - GC_TODO: add argument description
+
+Returns:
+
+  GC_TODO: add return values
+
+--*/
 ;
 
 STATIC

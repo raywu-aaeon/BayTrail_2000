@@ -2,7 +2,7 @@
 //*****************************************************************//
 //*****************************************************************//
 //**                                                             **//
-//**         (C)Copyright 2014, American Megatrends, Inc.        **//
+//**         (C)Copyright 2012, American Megatrends, Inc.        **//
 //**                                                             **//
 //**                     All Rights Reserved.                    **//
 //**                                                             **//
@@ -18,14 +18,6 @@
 // $Revision: 1 $
 //
 // $Date: 11/02/12 10:14a $
-//*****************************************************************
-//*****************************************************************
-//
-// Revision History
-// ----------------
-// $Log: /AptioV/SRC/AMIDebugRx/DbgRxXportLib/XportHdr.c $
-// 
-//
 //*****************************************************************
 //*****************************************************************
 
@@ -58,19 +50,17 @@
 #define CONVERT_TO_STRING(a) #a
 #define STR(a) CONVERT_TO_STRING(a)
 
-UINTN	AMI_PEIDEBUGGER_DS1_SIZE = 0x500;
-UINT8 m_ExceptionPending = 0;
+UINTN	AMI_PEIDEBUGGER_DS1_SIZE = 0x400;
 
 EFI_GUID  mPeiDebugDataGuidXp = PEI_DBGSUPPORT_DATA_GUID;
 EFI_GUID  mPeiDbgBasePpiGuidXp = EFI_PEI_DBG_BASEADDRESS_PPI_GUID;
 const char *sTargetProjectTag= STR(TARGET_PROJECT_TAG);
-UINT16 gEhciPciCmdRegVal = 0;
 
-#ifdef PeiDebugger_SUPPORT
-#if PeiDebugger_SUPPORT
-volatile UINTN gPeiDebuggerEnabled = 1;
+#ifdef REDIRECTION_ONLY_MODE
+#if REDIRECTION_ONLY_MODE
+volatile UINTN gRedirectionOnlyEnabled = 1;
 #else
-volatile UINTN gPeiDebuggerEnabled = 0;
+volatile UINTN gRedirectionOnlyEnabled = 0;
 #endif
 #endif
 
@@ -87,7 +77,9 @@ UINTN gDebugPortDetectionTimeout = 0;
 #endif
 
 volatile UINTN USB_DEBUGGER_ENABLED = USB_DEBUG_TRANSPORT;
-UINT8 HostMessage[64] = "AMIDebugRx Authentication Failed, Firmware update required...\n";
+
+//volatile UINTN gDbgWriteIO80Support = DBG_WRITE_IO_80_SUPPORT;
+
 typedef struct {
 	UINT16		Year;
 	UINT8		Month;
@@ -152,45 +144,12 @@ void Stall (UINTN Usec)
     }
 }
 
-//<AMI_PHDR_START>
-//--------------------------------------------------------------------
-// Procedure:	GetBuildTime()
-//
-// Description:	Sends the Build Time Details
-//
-// Input:		void*
-//
-// Output:		void
-//
-//--------------------------------------------------------------------
-//<AMI_PHDR_END>
-#define Str2No(A)	(A - '0')
 
-#define TwoDigitStr2BCD(String) (Str2No(String[0])*0x10+Str2No(String[1]))
-
-VOID GetBuildTime(void *Buffer)
-{
-	UINT8 *strYear = FOUR_DIGIT_YEAR;
-	UINT8 *strMonth = TWO_DIGIT_MONTH;
-	UINT8 *strDay = TWO_DIGIT_DAY;
-	UINT8 *strHour = TWO_DIGIT_HOUR;
-	UINT8 *strMin = TWO_DIGIT_MINUTE;
-	UINT8 *strSec = TWO_DIGIT_SECOND;
-
-
-	((DateTime_T*)Buffer)->Year=(Str2No(strYear[0])*0x1000+Str2No(strYear[1])*0x100+Str2No(strYear[2])*0x10+Str2No(strYear[3]));
-	((DateTime_T*)Buffer)->Month=TwoDigitStr2BCD(strMonth);
-	((DateTime_T*)Buffer)->Day=TwoDigitStr2BCD(strDay);
-	((DateTime_T*)Buffer)->Hour=TwoDigitStr2BCD(strHour);
-	((DateTime_T*)Buffer)->Minute=TwoDigitStr2BCD(strMin);
-	((DateTime_T*)Buffer)->Second=TwoDigitStr2BCD(strSec);
-	return;
-}
 //*****************************************************************//
 //*****************************************************************//
 //*****************************************************************//
 //**                                                             **//
-//**         (C)Copyright 2014, American Megatrends, Inc.        **//
+//**         (C)Copyright 2012, American Megatrends, Inc.        **//
 //**                                                             **//
 //**                     All Rights Reserved.                    **//
 //**                                                             **//

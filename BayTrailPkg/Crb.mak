@@ -1,7 +1,7 @@
 #**********************************************************************
 #**********************************************************************
 #**                                                                  **
-#**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+#**        (C)Copyright 1985-2011, American Megatrends, Inc.         **
 #**                                                                  **
 #**                       All Rights Reserved.                       **
 #**                                                                  **
@@ -32,20 +32,6 @@
 #
 #<AMI_FHDR_END>
 #**********************************************************************
-#EIP176554 >>
-Prepare : CreateDecFile 
-
-.PHONY : CreateDecFile
-CreateDecFile:
-	$(ECHO) \
-	"{$(EOL)\
-	gsub(/DEFINE REF_CODE_PATH = ./,\"DEFINE REF_CODE_PATH = ../$(PLATFORM_RC_PACKAGE)\",$(DOUBLEDOLLAR)0)$(EOL)\
-	print $(DOUBLEDOLLAR)0$(EOL)\
-	}"$(EOL)\
-> $(BUILD_DIR)/CrbPatchfile.txt
-		$(GAWK) -f $(BUILD_DIR)/CrbPatchfile.txt $(CHIPSET_REF_DEC_PATH) > $(BUILD_DIR)$(PATH_SLASH)$(CHIPSET_REF_DEC_NAME)
-#EIP176554 <<
-
 End : CopyRomFile
 
 .PHONY : CopyRomFile
@@ -131,7 +117,7 @@ ifeq ($(BYTI_SLIM_TXE_SUPPORT), 1)
 	$(RM) $(BUILD_DIR)$(PATH_SLASH)Desktop.bin
 endif
 ifeq ($(BYTI_DUAL_BOOT_TXE_SUPPORT), 1)
-	$(ROM_IMAGE_DIR)$(PATH_SLASH)BYT-I_DUAL_BOOT_TXE_KIT_RELEASE_1.1.5.1162.bat
+	$(ROM_IMAGE_DIR)$(PATH_SLASH)BYT-I_DUAL_BOOT_TXE_KIT_RELEASE_1.1.0.1089.bat
 	$(CP) $(BUILD_DIR)$(PATH_SLASH)Desktop.bin $(AMI_BYTI_ROM_DUAL_BOOT_TXE)
 	$(RM) $(BUILD_DIR)$(PATH_SLASH)Desktop.bin
 endif
@@ -187,7 +173,7 @@ endif
 #**********************************************************************
 #**********************************************************************
 #**                                                                  **
-#**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+#**        (C)Copyright 1985-2011, American Megatrends, Inc.         **
 #**                                                                  **
 #**                       All Rights Reserved.                       **
 #**                                                                  **

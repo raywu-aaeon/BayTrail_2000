@@ -36,19 +36,10 @@ extern "C" {
 
 #include <Ppi/BlockIo.h>
 
-#include "NTFSRecovery.h"
-#include "EXTRecovery.h"
-#include "ExFatRecovery.h"
-
 #define FAT12 0
 #define FAT16 1
 #define FAT32 2
-#define NTFS  3
-#define EXTx  4
-#define exFAT 5
 
-#define     ATTR_VOLUME_ID              0x08
-#define     ATTR_DIRECTORY              0x10
 
 #pragma pack(push, 1)
 
@@ -88,11 +79,14 @@ typedef struct _GUID_TABLE_HEADER
     UINT32 ArraySize;
 } GUID_TABLE_HEADER;
 
+
+
+
+
 typedef struct
 {
     CHAR8  FileName[11];
-    UINT8  DirAttr;
-    UINT8  Unused[2];        //NTRes, CrtTimeTenth;
+    UINT8  Unused[3];       //Attr, NTRes, CrtTimeTenth;
     UINT16 Unused1[3];       //CrtTime, CrtDate, LstAccDate;
     UINT16 FirstClusterHi;
     UINT16 Unused2[2];       //WrtTime, WrtDate;
@@ -233,17 +227,6 @@ typedef struct _MASTER_BOOT_RECORD
     UINT16        Sig;
 } MASTER_BOOT_RECORD;
 
-typedef struct _MEMORY_BLOCK {
-    MASTER_BOOT_RECORD  Mbr;                // Master boot record (all file systems)
-    BOOT_SECTOR         Bs;                 // Boot sector (FAT and NTFS)
-    UINT8               MFTRunList[256];    // Master File Table run list (NTFS)
-    UINT8               RootRunList[128];   // Root dir run list (NTFS)
-    UINT8               ResidentIndex[256]; // Stores resident index (NTFS)
-    VOLUME_SB           Sb;                 // Superblock (EXT(n))
-    VOLUME_IT           RootInode;          // Root directory inode (EXT(n))
-    VOLUME_IT           FileInode;          // File inode (EXT(n))
-} MEMORY_BLOCK;
-
 #pragma pack(pop)
 
 //**************** eLink override definitions *******************************
@@ -299,17 +282,6 @@ EFI_STATUS ReadDevice(
     IN UINTN            Size,
     OUT VOID            *Buffer );
 
-UINT32 GetClustersCount(
-    IN UINT8   FatType,
-    IN UINT32  CurrentCluster,
-    OUT UINT32 *NextCluster,
-    IN BOOLEAN Continuous );
-
-EFI_STATUS InitFat(
-    IN EFI_PEI_SERVICES **PeiServices,
-    IN RC_VOL_INFO      *Volume,
-    IN UINT32           FatSize );
-
 VOID AmiGetFileListFromPrimaryVolume(
     IN  DIR_RECORD          *Root,
     IN  UINT32              RootSize,
@@ -323,23 +295,6 @@ VOID AmiGetFileListFromFatVolume(
     OUT UINTN               *NumberOfFiles,
     OUT DIR_ENTRY           **Buffer
 );
-
-BOOLEAN FileCompare(
-    IN CHAR8 *RecoveryFileNamePattern, 
-    IN CHAR8 *FsFilename, 
-    IN BOOLEAN IgnoreSpacesInFilename,
-    IN UINT32 FileNameLength);
-
-#if SEARCH_PATH
-VOID AddRecoveryPath (
-    VOID IN OUT **FileName 
-);
-
-BOOLEAN IsolateName (
-    IN  CHAR8       **FilePath,
-    OUT CHAR8       **NextName
-);
-#endif
 
 /****** DO NOT WRITE BELOW THIS LINE *******/
 #ifdef __cplusplus

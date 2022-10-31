@@ -57,8 +57,6 @@
   SmmCorePlatformHookLib
   PerformanceLib
   TimerLib
-  HobLib                                        # EIP288532
-  SmmMemLib                                     # EIP288532
 ## AMI PORTING BEGIN ##
   PeCoffGetEntryPointLib
 ## AMI PORTING END   ##

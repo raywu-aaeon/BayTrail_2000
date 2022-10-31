@@ -1,7 +1,7 @@
 [Defines]
-INF_VERSION       = 0x00010015
-BASE_NAME         = SecureBootDXE
-FILE_GUID         = 4551F2F5-C684-4F27-936F-C7B04A5C5FF1
+INF_VERSION 	= 0x00010015
+BASE_NAME 		= SecureBootDXE
+FILE_GUID 		= 4551F2F5-C684-4F27-936F-C7B04A5C5FF1
 MODULE_TYPE                    = DXE_RUNTIME_DRIVER 
 VERSION_STRING                 = 1.0
 PI_SPECIFICATION_VERSION       = 0x0001000A
@@ -14,7 +14,9 @@ SecureBoot.h
 [Packages]
  MdePkg/MdePkg.dec
  AmiCompatibilityPkg/AmiCompatibilityPkg.dec
+ AmiModulePkg/AmiModulePkg.dec
  AmiCryptoPkg/AmiCryptoPkg.dec
+ IntelFrameworkPkg/IntelFrameworkPkg.dec
 
 [LibraryClasses]
  AmiDxeLib
@@ -31,6 +33,12 @@ SecureBoot.h
 [Depex]
 TRUE
 
-[BuildOptions]
-*_*_*_CC_FLAGS = -DNO_SETUP_COMPILE
+[BuildOptions.X64]
+*_*_X64_CC_FLAGS = /DNO_SETUP_COMPILE
 
+[BuildOptions.IA32]
+*_*_IA32_CC_FLAGS = /DNO_SETUP_COMPILE
+
+[BuildOptions.ARM]
+*_ARMGCC_ARM_CC_FLAGS = -DNO_SETUP_COMPILE
+# <<

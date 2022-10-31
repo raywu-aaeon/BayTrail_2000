@@ -1,7 +1,7 @@
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2012, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **
@@ -12,56 +12,156 @@
 //**********************************************************************
 //**********************************************************************
 
-/** @file
-  This file contains Reflash driver flash update code
+//**********************************************************************
+// $Header: /Alaska/BIN/Core/Modules/Recovery/ReFlashWorker.c 5     8/02/12 12:00p Artems $
+//
+// $Revision: 5 $
+//
+// $Date: 8/02/12 12:00p $
+//**********************************************************************
+//<AMI_FHDR_START>
+//
+// Name:    ReFlashWorker.c
+//
+// Description: Implementation of Reflash driver
+//
+//<AMI_FHDR_END>
+//**********************************************************************
 
-**/
 #include <Token.h>
-#include <Ffs.h>
+#include <FFS.h>
 #include <AmiCspLib.h>
-#include <AmiRomLayout.h>
-#include <Protocol/AMIPostMgr.h>
+#include <Protocol/AmiPostMgr.h>
 #include <Protocol/ConsoleControl.h>
-#include <Protocol/FirmwareVolume2.h>
-#include <Library/PcdLib.h>
-#include <Library/AmiRomLayoutLib.h>
-#include "ReFlash.h"
+#include "Reflash.h"
 
-#ifndef FtRecovery_SUPPORT
-#define FtRecovery_SUPPORT 0
+#define FLASH_PART_START_ADDRESS (0xFFFFFFFF - FLASH_SIZE + 1)
+#define OFFSET_TO_ADDRESS(Offset) (0xFFFFFFFF - FLASH_SIZE + (Offset) + 1)
+#if !VERIFY_BOOT_SUPPORT
+#define FV_BB_OFFSET (FLASH_SIZE - FV_BB_SIZE - FV_PRE_BB_SIZE)
 #endif
+static UINT32 FlashEraser       = (FLASH_ERASE_POLARITY) ? 0 : 0xffffffff;
+static UINT8 *FlashPartStart    = (UINT8 *)(UINTN)FLASH_PART_START_ADDRESS;
 
-#ifndef BUILD_TIME_BACKUP
-#define BUILD_TIME_BACKUP 0
+FLASH_AREA_EX BlocksToUpdate[] = {
+#if FtRecovery_SUPPORT
+    { 
+        (UINT8 *)OFFSET_TO_ADDRESS(FV_RECOVERY_OFFSET), 
+        (UINT8 *)FV_RECOVERY_BACKUP_ADDRESS, 
+        FV_RECOVERY_SIZE, 
+        FLASH_BLOCK_SIZE, 
+        FvTypeBootBlock,
+        REFLASH_UPDATE_BOOT_BLOCK,
+        FALSE,
+        AmiFlashBackUp,
+        AmiFlashProgram,
+        STRING_TOKEN(STR_FLASH_PROGRESS_MESSAGE_BACKUP_RECOVERY),
+        STRING_TOKEN(STR_FLASH_PROGRESS_MESSAGE_FLASH_RECOVERY)
+    },
+    { 
+        (UINT8 *)OFFSET_TO_ADDRESS(FV_BB_OFFSET), 
+        (UINT8 *)FV_BB_BACKUP_ADDRESS, 
+        FV_BB_SIZE + FV_PRE_BB_SIZE,
+        FLASH_BLOCK_SIZE, 
+        FvTypeBootBlock,
+        REFLASH_UPDATE_BOOT_BLOCK,
+        TRUE,
+        AmiFlashBackUp,
+        AmiFlashProgram,
+        STRING_TOKEN(STR_FLASH_PROGRESS_MESSAGE_BACKUP_BB),
+        STRING_TOKEN(STR_FLASH_PROGRESS_MESSAGE_FLASH_BB)
+    },
+#else
+    { 
+        (UINT8 *)OFFSET_TO_ADDRESS(FV_BB_OFFSET), 
+        NULL, 
+//EIP143190 >>
+#if VERIFY_BOOT_SUPPORT
+        FV_BB_SIZE + FV_PRE_BB_SIZE + FV_BB_BACKUP_SIZE + FV_RSV_SIZE, 
+#else
+        FV_BB_SIZE + FV_PRE_BB_SIZE, 	
 #endif
+//EIP143190 <<
+        FLASH_BLOCK_SIZE, 
+        FvTypeBootBlock,
+        REFLASH_UPDATE_BOOT_BLOCK, 
+        FALSE,
+        NULL,
+        AmiFlashProgram,
+        0,
+        STRING_TOKEN(STR_FLASH_PROGRESS_MESSAGE_FLASH_BB)
+    },
+#endif
+    { 
+        (UINT8 *)OFFSET_TO_ADDRESS(MICROCODE_OFFSET),  //EIP128356
+        NULL, 
+        MICROCODE_SIZE + FV_MAIN_SIZE, //EIP128356
+        FLASH_BLOCK_SIZE, 
+        FvTypeMain,
+        REFLASH_UPDATE_MAIN_BLOCK, 
+        FALSE,
+        NULL,
+        AmiFlashProgram,
+        0,
+        STRING_TOKEN(STR_FLASH_PROGRESS_MESSAGE_FLASH_MAIN)
+    },
+    { 
+        (UINT8 *)NVRAM_ADDRESS, 
+        NULL, 
+        NVRAM_BLOCKS * FLASH_BLOCK_SIZE, 
+        FLASH_BLOCK_SIZE, 
+        FvTypeNvRam,
+        REFLASH_UPDATE_NVRAM, 
+        FALSE,
+        NULL,
+        AmiFlashProgram,
+        0,
+        STRING_TOKEN(STR_FLASH_PROGRESS_MESSAGE_FLASH_NVRAM)
+    },
+    { 
+        NULL, 
+        NULL,
+        0,
+        0,
+        FvTypeMax,
+        FALSE, 
+        FALSE,
+        NULL,
+        NULL,
+        0,
+        0
+    }       //terminator
+};
 
-extern EFI_STATUS RecoveryStatus;
 
-FLASH_AREA_EX *BlocksToUpdate = NULL;
 
 static EFI_GUID AmiPostManagerProtocolGuid = AMI_POST_MANAGER_PROTOCOL_GUID;
 static AMI_POST_MANAGER_PROTOCOL *AmiPostMgr = NULL;
 static EFI_CONSOLE_CONTROL_PROTOCOL *ConsoleControl = NULL;
-static BOOLEAN UserConfirmation = TRUE;
 
-
-/**
-  This function draws message box on screen and waits till user presses a key
-  
-  @param Caption    Pointer to a Message Box caption string 
-  @param Message    Pointer to a Message Box message string 
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:    DrawMessageBox
+// 
+// Description:  This function draws message box on screen and waits till user presses Enter
+//               
+// Input:   
+//  IN CHAR16 *Caption - message box caption
+//  IN CHAR16 *Message - message box message
+//
+// Output: 
+//  None
+// 
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID DrawMessageBox(
     IN CHAR16 *Caption,
     IN CHAR16 *Message
 )
 {
-    EFI_EVENT ev;
-    UINTN i;
-
-    if(!UserConfirmation)
-        return;
+    EFI_STATUS Status;
+    UINT8 MsgKey;
 
     if(AmiPostMgr != NULL) {
         if(ConsoleControl != NULL)
@@ -69,38 +169,28 @@ VOID DrawMessageBox(
 
         pST->ConIn->Reset(pST->ConIn, FALSE);    //discard all keystrokes happend during flash update
             
-        AmiPostMgr->DisplayInfoBox(Caption, Message, 5, &ev);
-        pBS->SetTimer(ev, TimerCancel, 0);
-        pBS->WaitForEvent(1, &pST->ConIn->WaitForKey, &i);
-        pBS->SignalEvent(ev);
+        Status = AmiPostMgr->DisplayMsgBox(Caption, Message, MSGBOX_TYPE_OK, &MsgKey);
     }
 }
 
-/**
-  This function establishes pause in non-interactive mode
-  to make error messages readable for humans
-  
-**/
-VOID CountDown(
-    VOID
-)
-{
-    pBS->Stall(5000000);
-}
-
-/**
-  This function sets flash update environment
-  
-  @param Interactive       TRUE if flash update is interactive, FALSE otherwise
-  @param Win8StyleUpdate   TRUE if flash update was initiated by Windows 8
-
-  @retval EFI_SUCCESS Environment set successfully
-  @retval other       error occured during execution
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:    Prologue
+// 
+// Description:  This function is called before actual flashing takes place
+//               
+// Input:   
+//  None
+//
+// Output: 
+//  EFI_SUCCESS - system prepared for flashing
+//  EFI_NOT_STARTED - recovery image not found
+// 
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS Prologue(
-    IN BOOLEAN Interactive,
-    IN BOOLEAN Win8StyleUpdate
+    IN BOOLEAN Interactive
 )
 {
     static BOOLEAN Executed = FALSE;
@@ -110,26 +200,16 @@ EFI_STATUS Prologue(
         return Status;
 
     Executed = TRUE;
-    
-    if(!Win8StyleUpdate)    //we do not report progress during Win8-style flash update
-        Status = pBS->LocateProtocol(&AmiPostManagerProtocolGuid, NULL, &AmiPostMgr);
-
-    Status = CreateFlashUpdateArea();
-    if(EFI_ERROR(Status))
-    	return Status;
-    
     ApplyUserSelection(Interactive);
 
     if(Interactive) {
+        Status = pBS->LocateProtocol(&AmiPostManagerProtocolGuid, NULL, &AmiPostMgr);
+        if(EFI_ERROR(Status))
+            return Status;
+
         Status = pBS->LocateProtocol(&gEfiConsoleControlProtocolGuid, NULL, &ConsoleControl);
         if(!EFI_ERROR(Status))
             ConsoleControl->LockStdIn(ConsoleControl, L"");
-    } else {
-        if(EFI_ERROR(RecoveryStatus)) { //we can't perform flash update, inform user and return error for resetting system
-            CountDown();
-            return EFI_ABORTED;
-        }
-        UserConfirmation = FALSE;
     }
 
     OemBeforeFlashCallback();
@@ -137,32 +217,48 @@ EFI_STATUS Prologue(
     return Status;
 }
 
-/**
-  This function finishes flash update process
-  It's not supposed to return control to the caller
-  
-  @retval EFI_DEVICE_ERROR  Something went wrong
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:    Epilogue
+// 
+// Description:  This function is called after actual flashing takes place
+//               
+// Input:   
+//  None
+//
+// Output: (this function is not supposed to return control to caller
+//  EFI_SUCCESS - flash updated successfully
+// 
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS Epilogue(VOID)
 {
     Flash->DeviceWriteDisable();
     OemAfterFlashCallback();
 
-    DrawMessageBox(L"Flash update", L"Flash update completed. Press any key to reset the system");
+    DrawMessageBox(L"Flash update", L"Flash update completed. Press Enter key to reset the system");
     pRS->ResetSystem(EfiResetCold, EFI_SUCCESS, 0, NULL);
-    return EFI_DEVICE_ERROR;
+    return EFI_SUCCESS;
 }
 
-/**
-  This function creates backups or programs flash regions
-  
-  @param BackUp       TRUE if respective flash regions should be backed up
-
-  @retval EFI_SUCCESS Execution went successfully
-  @retval other       error occured during execution
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:    FlashWalker
+// 
+// Description:  This function walks through flash regions and calls respective
+//  backup and flash functions
+//               
+// Input:   
+//  IN BOOLEAN BackUp - if TRUE, backup functions should be called on this pass
+//  flash programm functions should be called otherwise
+//
+// Output:
+//  EFI_SUCCESS - flash updated successfully
+// 
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS FlashWalker(
     IN BOOLEAN BackUp
 )
@@ -207,9 +303,9 @@ EFI_STATUS FlashWalker(
         /* prepare display progress window */
             Message = NULL;
             if(BackUp)
-                GetHiiString(ReflashHiiHandle, BlocksToUpdate[i].BackUpStringId, &Size, &Message);
+                GetHiiString(ReflashHiiHandle, BlocksToUpdate[i].BackUpString, &Size, &Message);
             else
-                GetHiiString(ReflashHiiHandle, BlocksToUpdate[i].ProgramStringId, &Size, &Message);
+                GetHiiString(ReflashHiiHandle, BlocksToUpdate[i].ProgramString, &Size, &Message);
         }
 
     /* calculate number of blocks to flash */
@@ -247,15 +343,15 @@ EFI_STATUS FlashWalker(
             }
         }
         
+#if FtRecovery_SUPPORT
     /* check if TopSwap should be triggered */
-        if(FtRecovery_SUPPORT) {
-            if(BlocksToUpdate[i].TopSwapTrigger) {
-                if(BackUp)
-                    SetTopSwap(TRUE);
-                else
-                    SetTopSwap(FALSE);
-            }
+        if(BlocksToUpdate[i].TopSwapTrigger) {
+            if(BackUp)
+                SetTopSwap(TRUE);
+            else
+                SetTopSwap(FALSE);
         }
+#endif
     }
 
     if(AmiPostMgr != NULL) {
@@ -272,38 +368,28 @@ EFI_STATUS FlashWalker(
     return EFI_SUCCESS;
 }
 
-/**
-  This function modifies setup control values to enable flash process
-  that was disabled previously
-  
-**/
-VOID EnableFlash(VOID)
-{
-    EFI_STATUS Status;
-    AUTOFLASH FlashUpdateControl;
-    UINTN Size = sizeof(FlashUpdateControl);
-    static EFI_GUID guidRecovery = RECOVERY_FORM_SET_GUID;
-
-    Status = HiiLibGetBrowserData(&Size, &FlashUpdateControl, &guidRecovery, L"Setup");
-    FlashUpdateControl.UserOverride = 0;
-    Status = HiiLibSetBrowserData(Size, &FlashUpdateControl, &guidRecovery, L"Setup");
-}
-
-/**
-  This function is the setup browser callback to perform flash update
-  
-  @param This           Pointer to EFI_HII_CONFIG_ACCESS_PROTOCOL instance
-  @param Action         Action that setup browser is prepared to take
-  @param KeyValue       ID of setup control, that browser is currently processing
-  @param Type           Value type of setup control, that browser is currently processing
-  @param Value          Value of setup control, that browser is currently processing
-  @param ActionRequest  Action that callback wants browser to perform
-
-  @retval EFI_SUCCESS     Execution went successfully
-  @retval EFI_UNSUPPORTED Browser action is not supported
-  @retval other           error occured during execution
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:    FlashProgressEx
+// 
+// Description:  This function is called by Setup browser to perform flash update
+//               
+// Input:   
+//  IN CONST EFI_HII_CONFIG_ACCESS_PROTOCOL *This - pointer to the instance of 
+//                                                  ConfigAccess protocol
+//  IN EFI_BROWSER_ACTION Action - action, that setup browser is performing
+//  IN EFI_QUESTION_ID KeyValue - value of currently processed setup control
+//  IN UINT8 Type - value type of setup control data
+//  IN EFI_IFR_TYPE_VALUE *Value - pointer to setup control data
+//  OUT EFI_BROWSER_ACTION_REQUEST *ActionRequest - pointer where to store requested action
+//
+// Output:
+//  EFI_SUCCESS - flash updated successfully
+//  EFI_UNSUPPORTED - browser action is not supported
+// 
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS FlashProgressEx(
     IN CONST EFI_HII_CONFIG_ACCESS_PROTOCOL *This,
     IN EFI_BROWSER_ACTION Action,
@@ -324,18 +410,13 @@ EFI_STATUS FlashProgressEx(
 
 #if REFLASH_INTERACTIVE
     if(KeyValue == FLASH_START_KEY) {
-        Status = Prologue(TRUE, FALSE);
+        Status = Prologue(TRUE);
         if(EFI_ERROR(Status)) {
         /* inform user, that flashing can't be performed */
-            DrawMessageBox(L"ERROR!!!!", L"Flash update failed to initialize. Press any key to reset system");
+            DrawMessageBox(L"ERROR!!!!", L"Flash update failed to initialize. Press Enter key to reset system");
             pRS->ResetSystem(EfiResetCold, EFI_SUCCESS, 0, NULL);
         }
     /* we have to give control back to setup browser to refresh the screen */
-        return EFI_SUCCESS;
-    }
-
-    if(KeyValue == FLASH_ENABLE_KEY) {
-        EnableFlash();
         return EFI_SUCCESS;
     }
 /* nothing to do here, wait for user response */
@@ -343,21 +424,27 @@ EFI_STATUS FlashProgressEx(
         return EFI_SUCCESS;     
     }
 #else
-    Status = Prologue(FALSE, FALSE);
+    Status = Prologue(FALSE);
     if(EFI_ERROR(Status)) {
         pRS->ResetSystem(EfiResetCold, EFI_SUCCESS, 0, NULL);
     }
 #endif
 
-    if(FtRecovery_SUPPORT) {
-        Status = FtControlFlow();
-    } else {
+    Status = EFI_SUCCESS;
+
+#if FtRecovery_SUPPORT
+    if(!IsTopSwapOn()) {
+        Status = FlashWalker(TRUE);
+    }
+#endif
+
+    if(!EFI_ERROR(Status)) {
         Status = FlashWalker(FALSE);
     }
-    
+
     if(EFI_ERROR(Status)) {
     /* something was wrong - inform user */
-        DrawMessageBox(L"ERROR!!!!", L"Flash update failed. Press any key to reset system");
+        DrawMessageBox(L"ERROR!!!!", L"Flash update failed. Press Enter key to reset system");
         pRS->ResetSystem(EfiResetCold, EFI_SUCCESS, 0, NULL);
     }
 
@@ -365,34 +452,53 @@ EFI_STATUS FlashProgressEx(
     return Status;
 }
 
-/**
-  This function prepares FV_MAIN region to be backup region
-  
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:    SetBackUpArea
+// 
+// Description:  This function prepares FV_MAIN region to be backup region
+//               
+// Input:   
+//  None
+//
+// Output:
+//  None
+// 
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID SetBackUpArea(VOID)
 {
     static BOOLEAN FirstRun = TRUE;
     static UINT32 FlashEraser = (FLASH_ERASE_POLARITY) ? 0 : 0xffffffff;
     EFI_FIRMWARE_VOLUME_HEADER *Fv;
+    const UINTN FvMainBase = OFFSET_TO_ADDRESS(FV_MAIN_OFFSET);
 
     if(!FirstRun)
         return;
 
     FirstRun = FALSE;
-    Fv = (EFI_FIRMWARE_VOLUME_HEADER *)(UINTN)AMI_ROM_LAYOUT_FV_MAIN_ADDRESS;
+    Fv = (EFI_FIRMWARE_VOLUME_HEADER *)FvMainBase;
     Flash->Write(&(Fv->Signature), sizeof(UINT32), &FlashEraser);
 }
 
-/**
-  This function performs backup of certain flash area
-  
-  @param Block          Pointer to the flash area 
-  @param BlockNumber    Block number within flash area
-
-  @retval EFI_SUCCESS   Execution went successfully
-  @retval other         error occured during execution
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:    AmiFlashBackUp
+// 
+// Description:  This function backs up given block from given region
+//               
+// Input:   
+//  IN FLASH_AREA_EX *Block - flash region to work with
+//  IN UINTN BlockNumber - block number within flash region
+//
+// Output:
+//  EFI_SUCCESS - block saved successfully
+//  EFI_ERROR - there was an error during operation
+// 
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS AmiFlashBackUp(
     IN FLASH_AREA_EX *Block,
     IN UINTN BlockNumber
@@ -429,16 +535,23 @@ EFI_STATUS AmiFlashBackUp(
     return Status;
 }
 
-/**
-  This function performs update of certain flash area
-  
-  @param Block          Pointer to the flash area 
-  @param BlockNumber    Block number within flash area
-
-  @retval EFI_SUCCESS   Execution went successfully
-  @retval other         error occured during execution
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:    AmiFlashProgram
+// 
+// Description:  This function programs given block from given region
+//               
+// Input:   
+//  IN FLASH_AREA_EX *Block - flash region to work with
+//  IN UINTN BlockNumber - block number within flash region
+//
+// Output:
+//  EFI_SUCCESS - block updated successfully
+//  EFI_ERROR - there was an error during operation
+// 
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS AmiFlashProgram(
     IN FLASH_AREA_EX *Block,
     IN UINTN BlockNumber
@@ -450,317 +563,22 @@ EFI_STATUS AmiFlashProgram(
     EFI_STATUS Status;
     EFI_TPL OldTpl;
 
-    ImageStart = RecoveryBuffer + Block->RomFileOffset;
+    ImageStart = Block->BlockAddress - FlashPartStart + RecoveryBuffer;
     Source = ImageStart + BlockNumber * Block->BlockSize;
     Destination = Block->BlockAddress + BlockNumber * Block->BlockSize;
 
     OldTpl = pBS->RaiseTPL(TPL_HIGH_LEVEL);
     Status = Flash->Update(Destination, Block->BlockSize, Source);
+    Status = EFI_SUCCESS;
     pBS->RestoreTPL(OldTpl);
 
-    return Status;
-}
-
-/**
-  This function performs update of TOP_SWAP flash area
-  
-  @param Block          Pointer to the flash area 
-  @param BlockNumber    Block number within flash area
-
-  @retval EFI_SUCCESS   Execution went successfully
-  @retval other         error occured during execution
-
-**/
-EFI_STATUS AmiFlashProgramTs(
-    IN FLASH_AREA_EX *Block,
-    IN UINTN BlockNumber
-)
-{
-    UINT8 *ImageStart;
-    UINT8 *Source;
-    UINT8 *Destination;
-    EFI_STATUS Status;
-    EFI_TPL OldTpl;
-    
-    ImageStart = RecoveryBuffer + Block->RomFileOffset;
-    Source = ImageStart + BlockNumber * Block->BlockSize;
-    Destination = Block->BlockAddress + BlockNumber * Block->BlockSize;
-
-    OldTpl = pBS->RaiseTPL(TPL_HIGH_LEVEL);
-    Status = Flash->Erase(Destination, Block->BlockSize);
-    if(!EFI_ERROR(Status)){
-    	Status = Flash->Write(Destination, Block->BlockSize, Source);
-    }
-    pBS->RestoreTPL(OldTpl);
-
-    return Status;
-}
-
-/**
-  This function checks if given flash area is a TOP_SWAP flash area
-  
-  @param Area          Pointer to the flash area 
-
-  @retval TRUE   Area is a TOP_SWAP flash area
-  @retval FALSE  Area is not a TOP_SWAP flash area
-
-**/
-BOOLEAN IsTopSwapArea(
-	IN AMI_ROM_AREA *Area
-)
-{
-	return ((Area->Address - 1 + Area->Size) == 0xFFFFFFFF) ? TRUE : FALSE;
-}
-
-/**
-  This function returns ID of the string that describes given flash region type
-  
-  @param Type    Type of the flash region
-
-  @return   Corresponding String ID
-
-**/
-EFI_STRING_ID GetStringIdByType(FLASH_FV_TYPE Type)
-{
-	return (Type == FvTypeBootBlock) ? STRING_TOKEN(STR_FLASH_PROGRESS_MESSAGE_FLASH_BB) :
-		   (Type == FvTypeMain) ? STRING_TOKEN(STR_FLASH_PROGRESS_MESSAGE_FLASH_MAIN) :
-		   (Type == FvTypeNvRam) ? STRING_TOKEN(STR_FLASH_PROGRESS_MESSAGE_FLASH_NVRAM) : STRING_TOKEN(STR_FLASH_PROGRESS_CAPTION_FLASH);
-}
-
-/**
-  This function returns address within flash to use as backup address
-  
-  @param Size    Size of the region, that needs to be backed up
-
-  @return   Pointer to backup area
-
-**/
-UINT8 *GetRuntimeBackupAddress (
-        UINT32 Size
-        )
-{
-    /*
-    AMI_ROM_AREA *Area;
-    UINT8 *Result = NULL;
-    
-    for (Area = AmiGetFirstRomArea (); Area != NULL; Area = AmiGetNextRomArea (Area)) {
-        if (Area->Type != 0 ||                                          //we need usable FV
-            (Area->Attributes & AMI_ROM_AREA_VITAL) ||                   //it can't be boot block
-            !(Area->Attributes & AMI_ROM_AREA_FV_ACCESS_ATTRIBUTES) || //it can't be backup or nvram
-            Area->Size - Size < 0x10000)                                //it should be big enough
-            continue;
-            
-            Result = (UINT8 *)(UINTN)Area->Address;
-            Result += 0x10000;
-    }
-    return Result;
-    */
-    UINT8 *Result = (UINT8 *)(UINTN)AMI_ROM_LAYOUT_FV_MAIN_ADDRESS;
-    Result += 0x10000;
-    return Result;
-}
-
-/**
-  This function adds flash area to the list of updatable areas
-  
-  @param Area    Pointer to the flash area
-  @param Index   Index within flash update array
-  @param Type    Flash area type
-
-**/
-VOID AddBlockToList(
-	IN AMI_ROM_AREA *Area OPTIONAL,
-	IN UINT32 Index,
-	IN FLASH_FV_TYPE Type
-)
-{
-	if(Type == FvTypeMax) {
-		MemSet(&BlocksToUpdate[Index], sizeof(FLASH_AREA_EX), 0);
-		BlocksToUpdate[Index].Type = FvTypeMax;
-		return;
-	}
-	
-	BlocksToUpdate[Index].BlockAddress = (UINT8 *)(UINTN)(Area->Address);
-	BlocksToUpdate[Index].RomFileOffset = Area->Offset;
-	BlocksToUpdate[Index].Size = Area->Size;
-	BlocksToUpdate[Index].BlockSize = FLASH_BLOCK_SIZE;
-	BlocksToUpdate[Index].Type = Type;
-	BlocksToUpdate[Index].Update = TRUE;
-	BlocksToUpdate[Index].TopSwapTrigger = FALSE;
-	BlocksToUpdate[Index].Program = (IsTopSwapArea(Area)) ? AmiFlashProgramTs : AmiFlashProgram;
-	BlocksToUpdate[Index].ProgramStringId = GetStringIdByType(Type);
-	if(Type != FvTypeBootBlock || BUILD_TIME_BACKUP) {		//no runtime backup or non-backup FV
-		BlocksToUpdate[Index].BackUpAddress = NULL;
-		BlocksToUpdate[Index].BackUpStringId = 0;
-		BlocksToUpdate[Index].BackUp = NULL;
-	} else {
-		BlocksToUpdate[Index].BackUpAddress = (IsTopSwapArea(Area)) ? (UINT8 *)(UINTN)(Area->Address - Area->Size) : GetRuntimeBackupAddress (Area->Size);
-		BlocksToUpdate[Index].BackUpStringId = STRING_TOKEN(STR_FLASH_PROGRESS_MESSAGE_BACKUP_BB);
-		BlocksToUpdate[Index].BackUp = AmiFlashBackUp;
-	}
-
-}
-
-//<AMI_PHDR_START>
-//----------------------------------------------------------------------------
-//
-// Procedure:    CreateFlashUpdateArea
-// 
-// Description:  This function converts given ROM layout to FLASH_AREA_EX records array
-//               
-// Input:   
-//  None
-//
-// Output:
-//  EFI_SUCCESS - ROM layout converted successfully
-//	EFI_ERROR - error occured during conversion
-// 
-//----------------------------------------------------------------------------
-//<AMI_PHDR_END>
-
-EFI_STATUS TempGetRomLayout (
-    AMI_ROM_AREA **Layout,
-    UINT32 *AreaSize,
-    UINT32 *LayoutSize
-    );
-
-/**
-  This function creates flash update array, based on current ROM layout
-  
-  @retval EFI_SUCCESS   Flash update array created successfully
-  @retval other         error occured during execution
-
-**/
-EFI_STATUS CreateFlashUpdateArea(
-    VOID
-)
-{
-	EFI_STATUS Status;
-	AMI_ROM_AREA *Area;
-	AMI_ROM_AREA *Layout;
-	UINT32 Count = 0;
-	UINT32 Start = 0;
-	UINT32 End;
-	BOOLEAN FirstMain = TRUE;
-	
-//	UINT32 Version;
-	UINT32 AreaSize;
-	UINT32 LayoutSize;
-	UINT32 AreaCount;
-	UINTN ImageSize;
-	
-	UINT32 i;
-	
-	ImageSize = (UINTN) PcdGet32 (PcdRecoveryImageSize);
-//	Status = AmiGetImageRomLayout (RecoveryBuffer, ImageSize, &Layout, &Version, &AreaSize, &LayoutSize);
-	Status = TempGetRomLayout (&Layout, &AreaSize, &LayoutSize);
-	if (EFI_ERROR (Status))
-		return Status;
-	
-	//get number of firmware volumes in ROM layout
-	AreaCount = LayoutSize / AreaSize;
-	Area = Layout;
-	for (i = 0; i < AreaCount; i++, Area++) {
-	    if (Area->Type == 0 || Area->Attributes & AMI_ROM_AREA_VITAL)
-	        Count++;
-	}
-	
-	Status = pBS->AllocatePool (EfiBootServicesData, (Count + 1) * sizeof(FLASH_AREA_EX), &BlocksToUpdate);	//add one more member as terminator
-	if(EFI_ERROR(Status))
-		return Status;
-	
-	//We need update areas to be in particular order:
-	// 0: BootBlock0
-	// 1: BootBlock1
-	// ...
-	// X: BootBlockX - last boot block area with TopSwap trigger set
-	// X+1: AnyBlock0
-	// ...
-	// Count-2: AnyBlockY
-	// Count-1: FirstMainBlock - first encountered MainBlock
-	// Count: Terminator
-	// Total size of array is Count+1, where Count is number of FVs in ROM layout
-	// AnyBlock can be NvramBlock, BackupBlock or MainBlock
-	// The reason that one of possible several main blocks should be flashed last
-	// is to verify, that flash update was successful.
-	// Otherwise, if any backup blocks were flashed last and failed, we may not know
-	// about it right away, since they are not taking part in regular boot and not verified
-	End = Count - 2;
-    AddBlockToList(NULL, Count, FvTypeMax);     //add terminator member
-	
-    Area = Layout;
-    for (i = 0; i < AreaCount; i++, Area++) {
-		if (Area->Type != 0 && !(Area->Attributes & AMI_ROM_AREA_VITAL))
-			continue;
-		
-		if(Start > End)
-			return EFI_DEVICE_ERROR;			//something wrong - indexes are overlapped
-		
-		if (Area->Attributes & AMI_ROM_AREA_FV_ACCESS_ATTRIBUTES) {
-		    if (Area->Attributes & AMI_ROM_AREA_VITAL) {
-		        AddBlockToList (Area, Start, FvTypeBootBlock);
-		        Start++;
-		    } else {    //FV has access attributes, but not VITAL - it is main block
-		        if (FirstMain) {
-		            AddBlockToList (Area, Count - 1, FvTypeMain);
-		            FirstMain = FALSE;
-		        } else {
-		            AddBlockToList (Area, End, FvTypeMain);
-		            End--;
-		        }
-		    }
-		} else {    //no access attributes - either backup or custom or nvram
-		    //TODO: add NVRAM distinguisher
-		    AddBlockToList(Area, End, FvTypeCustom);
-		    End--;
-		}
-	}
-	
-    i = 0;
-	if (FtRecovery_SUPPORT == 1) {
-		//set top swap trigger to last FV of type FvTypeBootBlock
-		while(BlocksToUpdate[i].Type == FvTypeBootBlock)
-			i++;
-		BlocksToUpdate[i - 1].TopSwapTrigger = TRUE;
-	}
-	
-	return EFI_SUCCESS;
-}
-
-/**
-  This function establishes correct backup/update control flow for different scenarios
-  
-  @retval EFI_SUCCESS   Flash update executed successfully
-  @retval other         error occured during execution
-
-**/
-EFI_STATUS FtControlFlow(
-    VOID
-)
-{
-    EFI_STATUS Status;
-    
-    if(IsTopSwapOn()) {                 //top swap is  ON already - reflash new image
-        Status = FlashWalker(FALSE);
-        return Status;
-    }
-    
-    if(BUILD_TIME_BACKUP) {         //we have build-time backup image - no runtime backup needed
-        SetTopSwap(TRUE);
-        Status = FlashWalker(FALSE);
-    } else {                        //create runtime backup image and flash new image
-        Status = FlashWalker(TRUE);
-        if(!EFI_ERROR(Status)) {
-            Status = FlashWalker(FALSE);
-        }
-    }
     return Status;
 }
 
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2012, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **

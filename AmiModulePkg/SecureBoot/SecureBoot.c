@@ -1,7 +1,7 @@
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2015, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2013, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **
@@ -21,9 +21,6 @@
 #include <Setup.h>
 #include <SecureBoot.h>
 #include "TimeStamp.h"
-
-#if !defined(NO_SETUP_COMPILE) && !defined(SMIFLASH_COMPILE)
-
 #include <AutoId.h>
 
 #include <Protocol/AMIPostMgr.h> 
@@ -32,8 +29,6 @@
 #include <Protocol/DevicePath.h>
 #include <Protocol/LegacyBios.h>
 #include <Guid/GlobalVariable.h>
-
-#endif
 
 extern EFI_RUNTIME_SERVICES *pRS;
 
@@ -47,6 +42,8 @@ static EFI_GUID DbxFileGuid  =  // {9D7A05E9-F740-44c3-858B-75586A8F9C8E}
 { 0x9d7a05e9, 0xf740, 0x44c3, 0x85, 0x8b, 0x75, 0x58, 0x6a, 0x8f, 0x9c, 0x8e };
 static EFI_GUID DbtFileGuid  =  // {C246FBBF-F75C-43F7-88A6-B5FD0CF1DB7F}
 { 0xC246FBBF, 0xF75C, 0x43F7, 0x88, 0xa6, 0xb5, 0xfd, 0x0c, 0xf1, 0xdb, 0x7f };
+
+static AMI_POST_MANAGER_PROTOCOL *mPostMgr = NULL;
 
 static EFI_GUID *SecureVariableFileGuid [] = {
     &DbxFileGuid,
@@ -79,16 +76,17 @@ static SECURE_BOOT_SETUP_VAR SecureBootSetup = {
     DEFAULT_SECURE_BOOT_ENABLE, 
     DEFAULT_SECURE_BOOT_MODE, 
     DEFAULT_PROVISION_SECURE_VARS,
-    0x0, // former LOAD_FROM_FV - now used to store BackDoorEvent Value
+    LOAD_FROM_FV,
     LOAD_FROM_OROM,
     LOAD_FROM_REMOVABLE_MEDIA,
     LOAD_FROM_FIXED_MEDIA};
 
 static EFI_GUID guidSecurity = SECURITY_FORM_SET_GUID;
-static UINT8 bKey[5] = {0, 0, 0, 0, 0}; // 1 - custom, 2 - vendor, 3 - vendor+custom
-static UINT8 mBackDoorVendorKeyChange = 0; // bit mask for each Secure Vendor Key, e.g PK bit4, KEK - bit3 etc.
-
+static UINT8 bKey[5] = {0, 0, 0, 0, 0};
 typedef enum { RESET_NV_KEYS=1, SET_NV_DEFAULT_KEYS=2, SET_RT_DEFAULT_KEYS=4};
+
+EFI_STATUS InstallSecureVariables (UINT16);
+VOID UpdateSecureVariableBrowserInfo (VOID);
 
 // 
 //
@@ -116,18 +114,17 @@ typedef struct {
 #define EFI_CERT_TYPE_CERT_X509_SHA384_GUID_SIZE        64
 #define EFI_CERT_TYPE_CERT_X509_SHA512_GUID_SIZE        80
 
-// InstallVars
-#define SET_SECURE_VARIABLE_DEL 1
-#define SET_SECURE_VARIABLE_SET 2
-#define SET_SECURE_VARIABLE_APPEND 4
+static EFI_TIME EfiTime = {
+    FOUR_DIGIT_YEAR_INT,
+    TWO_DIGIT_MONTH_INT,
+    TWO_DIGIT_DAY_INT,
+    TWO_DIGIT_HOUR_INT,
+    TWO_DIGIT_MINUTE_INT,
+    TWO_DIGIT_SECOND_INT,0,0,0,0,0};
 
-#define StrMaxSize 200
-static CHAR16 StrTitle[StrMaxSize], StrMessage[StrMaxSize];
-static CHAR16 StrTemp[StrMaxSize];
-//
-#if !defined( TSE_FOR_APTIO_4_50) && !defined(NO_SETUP_COMPILE) && !defined(SMIFLASH_COMPILE)
-//
-static AMI_POST_MANAGER_PROTOCOL *mPostMgr = NULL;
+static EFI_GUID mSignatureSupport[SIGSUPPORT_NUM] = {SIGSUPPORT_LIST};
+
+#ifndef TSE_FOR_APTIO_4_50
 
 typedef struct
 {
@@ -137,101 +134,38 @@ typedef struct
     STRING_REF Token;
 } FILE_TYPE;
 
+BOOLEAN gValidOption = FALSE;
+
 static EFI_HII_STRING_PROTOCOL *HiiString = NULL;
 static EFI_HII_HANDLE gHiiHandle;
 
-static STRING_REF SecureVariableStringTitle[] = {
-    STRING_TOKEN(STR_DBX_TITLE),
-    STRING_TOKEN(STR_DBT_TITLE),
-    STRING_TOKEN(STR_DB_TITLE),
-    STRING_TOKEN(STR_KEK_TITLE),
-    STRING_TOKEN(STR_PK_TITLE),
-    0
-};
-static STRING_REF SecureVariableStringRef[] = {
-    STRING_TOKEN(STR_DBX_TITLE_TEXT),
-    STRING_TOKEN(STR_DBT_TITLE_TEXT),
-    STRING_TOKEN(STR_DB_TITLE_TEXT),
-    STRING_TOKEN(STR_KEK_TITLE_TEXT),
-    STRING_TOKEN(STR_PK_TITLE_TEXT),
-    0
-};
+#define StrMaxSize 200
+static CHAR16 StrTitle[StrMaxSize], StrMessage[StrMaxSize];
+static CHAR16 StrTemp[StrMaxSize];
+
+// InstallVars
+#define SET_SECURE_VARIABLE_DEL 1
+#define SET_SECURE_VARIABLE_SET 2
+#define SET_SECURE_VARIABLE_APPEND 4
+
+BOOLEAN gBrowserCallbackEnabled = FALSE;
+
 EFI_STATUS DevicePathToStr(EFI_DEVICE_PATH_PROTOCOL *Path,CHAR8    **Str);
+EFI_STATUS PostManagerDisplayMsgBox (IN CHAR16  *MsgBoxTitle, IN CHAR16  *Message, IN UINT8   MsgBoxType, OUT UINT8  *MsgBoxSel);
 EFI_STATUS FileBrowserLaunchFileSystem(BOOLEAN bSelectFile, OUT EFI_HANDLE **outFsHandle, OUT CHAR16 **outFilePath, OUT UINT8 **outFileBuf,OUT UINTN *size );
 VOID GetHiiString(IN EFI_HII_HANDLE HiiHandle, IN STRING_REF Token, UINTN DataSize, CHAR16  * pData);
-VOID SetAppendSecureBootDBCallback(EFI_HII_HANDLE HiiHandle, UINT8 VarSetMode, UINT8 index);
-VOID DeleteSecureBootDBCallback(EFI_HII_HANDLE HiiHandle, UINT8 index);
-#endif // no Setup link
 
-#ifdef TSE_FOR_APTIO_4_50
-extern BOOLEAN gBrowserCallbackEnabled;
 #else
-BOOLEAN gBrowserCallbackEnabled = FALSE;
+
+extern BOOLEAN gBrowserCallbackEnabled;
+
 #endif //#ifndef TSE_FOR_APTIO_4_50
-
-//----------------------------------------------------------------------------
-// Function forward declaration
-//----------------------------------------------------------------------------
-VOID UpdateSecureVariableBrowserInfo();
-VOID UpdateSecureBootBrowserInfo ();
-EFI_STATUS InstallSecureVariables (UINT16);
-VOID UpdateSecureBootSetupVariable(UINT8);
-
-EFI_STATUS ValidateSignatureList (
-    IN VOID         *Data,
-    IN UINTN        DataSize,
-    IN OUT UINTN    *SigCount OPTIONAL
-    );
-
-//----------------------------------------------------------------------------
-
-//<AMI_PHDR_START>
-//----------------------------------------------------------------------------
-// Procedure:   UpdateSecureBootBrowserInfo
-//
-// Description: Update Secure Boot flags status
-//
-// Input:       none
-//
-// Output:      none
-//
-// Modified:
-//
-// Referrals:
-//
-// Notes:
-//----------------------------------------------------------------------------
-//<AMI_PHDR_END>
-VOID UpdateSecureBootBrowserInfo ()
-{
-    UINT8       Byte;
-    UINTN       Size;
-    BOOLEAN     tmpBrowserCallbackEnabled = gBrowserCallbackEnabled;
-
-    gBrowserCallbackEnabled = TRUE;
-    Size = sizeof(bKey);
-    pRS->GetVariable(AMI_SECURE_VAR_PRESENT_VAR, &guidSecurity, NULL, &Size, bKey);
-    HiiLibSetBrowserData( sizeof(bKey), &bKey, &guidSecurity, AMI_SECURE_VAR_PRESENT_VAR);
-    Size = 1;
-    pRS->GetVariable(EFI_SECURE_BOOT_MODE_NAME, &gEfiGlobalVariableGuid, NULL, &Size, &Byte);
-    TRACE((-1,"%S=%x\n", EFI_SECURE_BOOT_MODE_NAME, Byte));
-    HiiLibSetBrowserData(Size, &Byte, &gEfiGlobalVariableGuid, EFI_SECURE_BOOT_MODE_NAME);
-    Size = 1;
-    pRS->GetVariable(EFI_SETUP_MODE_NAME, &gEfiGlobalVariableGuid, NULL, &Size, &Byte);
-    TRACE((-1,"%S =%x\n",EFI_SETUP_MODE_NAME,  Byte));
-    HiiLibSetBrowserData( Size, &Byte, &gEfiGlobalVariableGuid, EFI_SETUP_MODE_NAME);
-    Size = 1;
-    pRS->GetVariable(EFI_VENDOR_KEYS_NAME, &gEfiGlobalVariableGuid, NULL, &Size, &Byte);
-    TRACE((-1,"%S=%x\n",EFI_VENDOR_KEYS_NAME,  Byte));
-    HiiLibSetBrowserData(Size, &Byte, &gEfiGlobalVariableGuid, EFI_VENDOR_KEYS_NAME);
-    gBrowserCallbackEnabled = tmpBrowserCallbackEnabled;
-}
 
 //<AMI_PHDR_START>
 //----------------------------------------------------------------------------
 // Procedure:   UpdateSecureVariableBrowserInfo
 //
-// Description: Detect 5 EFI Variables: PK, KEK, db, dbt & dbx
+// Description: Detect 4 EFI Variables: PK, KEK, db & dbx
 //
 // Input:       none
 //
@@ -244,15 +178,16 @@ VOID UpdateSecureBootBrowserInfo ()
 // Notes:
 //----------------------------------------------------------------------------
 //<AMI_PHDR_END>
-VOID UpdateSecureVariableBrowserInfo()
+VOID UpdateSecureVariableBrowserInfo ()
 {
     EFI_STATUS  Status;
+    UINTN       Size;
     UINT8       Index;
     EFI_GUID    *EfiVarGuid;
-    UINTN       SigCount;
-    UINTN       Size, Size2;
-    UINT8       *Buf1, *Buf2;
-
+    UINT8       Byte;
+    UINT32      Attributes=0;
+    BOOLEAN     tmpBrowserCallbackEnabled = gBrowserCallbackEnabled;
+    
     Index = 0;
     while(SecureVariableFileName[Index] != NULL)
     {
@@ -262,130 +197,31 @@ VOID UpdateSecureVariableBrowserInfo()
             EfiVarGuid = &gEfiGlobalVariableGuid;
 
         Size = 0;
-        Size2 = 0;
-        SigCount = 0;
         bKey[Index] = 0;
         Status = pRS->GetVariable( SecureVariableFileName[Index], EfiVarGuid, NULL, &Size, NULL);
-        TRACE((-1,"NV Var %S(%d),  status=%r\n",  SecureVariableFileName[Index], Size, Status));
-        if(Status == EFI_BUFFER_TOO_SMALL) {
-            bKey[Index] = 1; //custom
-//
-// enhanced logic for vendor/custom key detection
-// 
-            Buf1 = NULL;
-//get var size
-            Status = pBS->AllocatePool(EfiBootServicesData, Size, &Buf1);
-            ASSERT_EFI_ERROR (Status);
-//read Key var to a buffer
-            Status = pRS->GetVariable( SecureVariableFileName[Index], EfiVarGuid, NULL, &Size, Buf1);
-            if(!EFI_ERROR(Status)) {
-#if !defined( TSE_FOR_APTIO_4_50) && !defined(NO_SETUP_COMPILE) && !defined(SMIFLASH_COMPILE)
-                ValidateSignatureList (Buf1, Size, &SigCount);
-#endif                
- //get Default Key from Volatile key var (use Key size)
-                Buf2 = NULL;
-                Status = pBS->AllocatePool(EfiBootServicesData, Size, &Buf2);
-                ASSERT_EFI_ERROR (Status);
-                EfiVarGuid = &gEfiGlobalVariableGuid;
-                Size2 = Size;
-                Status = pRS->GetVariable( SecureVariableFileNameDefault[Index], EfiVarGuid, NULL, &Size2, Buf2);
-                TRACE((-1,"RT Var %S(%d),  status=%r\n",  SecureVariableFileName[Index], Size2, Status));
-                if( !EFI_ERROR(Status) && 
-//do bin compare using size from a Default var (Key var sz must be >= Def key var)
-                    !MemCmp(Buf1, Buf2, Size2) 
-                ){
-                    bKey[Index] = 2;      //vendor
-                    if(Size > Size2)
-                       bKey[Index] = 3;   // vendor+extra keys
-                }
-            }
-//Release all Data, Var....
-            if(Buf1) pBS->FreePool(Buf1);
-            if(Buf2) pBS->FreePool(Buf2);
-        } 
-#if !defined( TSE_FOR_APTIO_4_50) && !defined(NO_SETUP_COMPILE) && !defined(SMIFLASH_COMPILE)
-        switch(bKey[Index]) 
-        {
-            case 1: GetHiiString(gHiiHandle, STRING_TOKEN(STR_CUSTOM_KEY), sizeof(StrMessage), StrMessage);
-                break;
-            case 2: GetHiiString(gHiiHandle, STRING_TOKEN(STR_DEFAULT_KEY), sizeof(StrMessage), StrMessage);
-                break;
-            case 3: GetHiiString(gHiiHandle, STRING_TOKEN(STR_MIXED_KEY), sizeof(StrMessage), StrMessage);
-                break;
-            case 0:
-            default: GetHiiString(gHiiHandle, STRING_TOKEN(STR_ABSENT_KEY), sizeof(StrMessage), StrMessage);
-                break;
-        }
-        GetHiiString(gHiiHandle, SecureVariableStringRef[Index], sizeof(StrTitle), StrTitle);
-        Swprintf_s(StrTitle, sizeof(StrTitle), L"%s| %5d| %4d| %s", StrTitle,  Size, SigCount, StrMessage);
-        if(mBackDoorVendorKeyChange & (1 << Index)) {
-            Swprintf_s(StrTitle, sizeof(StrTitle), L"%s *", StrTitle);
-        }
-//        TRACE((-1,"StrTitle '%S'\n", StrTitle));
-        HiiLibSetString(gHiiHandle, SecureVariableStringTitle[Index], StrTitle);
-#endif
+        TRACE((-1,"NV Var %S,  status=%r\n",  SecureVariableFileName[Index], Status));
+        if(Status == EFI_BUFFER_TOO_SMALL)
+             bKey[Index] = 1;
+
         Index++;
     }
     pRS->SetVariable(AMI_SECURE_VAR_PRESENT_VAR, &guidSecurity, EFI_VARIABLE_BOOTSERVICE_ACCESS, sizeof(bKey), &bKey);
 
-    UpdateSecureBootBrowserInfo();
+    gBrowserCallbackEnabled = TRUE;
+    HiiLibSetBrowserData( sizeof(bKey), &bKey, &guidSecurity, AMI_SECURE_VAR_PRESENT_VAR);
+    Size = 1;
+    Status=pRS->GetVariable(EFI_SECURE_BOOT_MODE_NAME, &gEfiGlobalVariableGuid, (UINT32*)&Attributes, &Size, &Byte);
+    TRACE((-1,"SecureBoot=%x,  status=%r\n",  Byte, Status));
+    HiiLibSetBrowserData(Size, &Byte, &gEfiGlobalVariableGuid, EFI_SECURE_BOOT_MODE_NAME);
+    Size = 1;
+    Status=pRS->GetVariable(EFI_SETUP_MODE_NAME, &gEfiGlobalVariableGuid, (UINT32*)&Attributes, &Size, &Byte);
+    TRACE((-1,"SetupMode=%x, Status %r\n",  Byte, Status));
+    HiiLibSetBrowserData( Size, &Byte, &gEfiGlobalVariableGuid, EFI_SETUP_MODE_NAME);
+    gBrowserCallbackEnabled = tmpBrowserCallbackEnabled;
 }
+
 
 #ifndef TSE_FOR_APTIO_4_50
-//<AMI_PHDR_START>
-//----------------------------------------------------------------------------
-// Procedure:   UpdateSecureBootSetupVariable
-//
-// Description: Update Browser Info with Vendor Key status change
-//
-// Input:       UINT8 updated BackDoorVendorKeyChange
-//
-// Output:      none 
-//
-// Modified:
-//
-// Referrals:
-//
-// Notes:
-//----------------------------------------------------------------------------
-//<AMI_PHDR_END>
-VOID UpdateSecureBootSetupVariable( 
-  UINT8 BackDoorVendorKeyChange
-  )
-{
-    EFI_STATUS  Status;
-    UINTN       Size;
-    UINT32      Attributes=0;
-    UINT8       Value=0;
-    BOOLEAN     tmpBrowserCallbackEnabled = gBrowserCallbackEnabled;
-    SECURE_BOOT_SETUP_VAR SecureBootSetup1;
-
-    TRACE((-1,"VendorKey bitmap Change - %s (org %02X, new %02X)\n", (mBackDoorVendorKeyChange != BackDoorVendorKeyChange)?"Yes":"No",
-          mBackDoorVendorKeyChange, BackDoorVendorKeyChange));
-    if(mBackDoorVendorKeyChange != BackDoorVendorKeyChange )
-    {
-        mBackDoorVendorKeyChange = BackDoorVendorKeyChange;
-
-        Size = sizeof(SECURE_BOOT_SETUP_VAR);
-        pRS->GetVariable (AMI_SECURE_BOOT_SETUP_VAR ,&guidSecurity, &Attributes, &Size, &SecureBootSetup1);
-        SecureBootSetup1.BackDoorVendorKeyChange = mBackDoorVendorKeyChange;
-        Status = pRS->SetVariable (AMI_SECURE_BOOT_SETUP_VAR, &guidSecurity, Attributes, Size, &SecureBootSetup1);
-        TRACE((-1,"Update %S %r\n", AMI_SECURE_BOOT_SETUP_VAR, Status));
-
-        gBrowserCallbackEnabled = TRUE;
-        Size = sizeof(SECURE_BOOT_SETUP_VAR);
-        HiiLibGetBrowserData( &Size, &SecureBootSetup, &guidSecurity, AMI_SECURE_BOOT_SETUP_VAR);
-        SecureBootSetup.BackDoorVendorKeyChange = mBackDoorVendorKeyChange;
-        HiiLibSetBrowserData( Size, &SecureBootSetup, &guidSecurity, AMI_SECURE_BOOT_SETUP_VAR);
-        gBrowserCallbackEnabled = tmpBrowserCallbackEnabled;
-
-        Size = 1;
-        // EFI_VENDOR_KEYS_NAME is a RO. The value will be set according to internal logic
-        Status = pRS->SetVariable (EFI_VENDOR_KEYS_NAME, &gEfiGlobalVariableGuid, 
-                 EFI_VARIABLE_RUNTIME_ACCESS | EFI_VARIABLE_BOOTSERVICE_ACCESS, Size, &Value);
-        TRACE((-1,"Update %S %r\n",EFI_VENDOR_KEYS_NAME,  Status));
-    }
-}
 //**********************************************************************
 //<AMI_PHDR_START>
 //
@@ -466,11 +302,11 @@ CryptoGetRawImage (
 //----------------------------------------------------------------------------
 // Procedure:   InstallSecureVariables
 //
-// Description: Install 5 EFI Variables: PK, KEK, db, dbt & dbx
+// Description: Install 4 EFI Variables: PK, KEK, db & dbx
 //
 // Input:       BOOLEAN InstallVars
-//                  TRUE  - attempt to install secure variables
-//                  FALSE - erase secure variables
+//                  TRUE  - attempt to install 4 secure variables
+//                  FALSE - erase 4 secure variables
 //
 // Output:      EFI_STATUS
 //
@@ -484,20 +320,20 @@ CryptoGetRawImage (
 EFI_STATUS
 InstallSecureVariables (
     UINT16    InstallVars
-){
+)
+{
     EFI_STATUS  Status = EFI_SUCCESS;
     UINT8      *pVarBuffer = NULL;
     UINTN       Size, FileSize, Offset;
     UINT8       Index;
     EFI_GUID    *EfiVarGuid;
     UINT32      Attributes;
+    UINT8       *pSig;
     AMI_EFI_VARIABLE_AUTHENTICATION_2 *AuthHdr2;
-    UINT8       temp;
 
-    temp = mBackDoorVendorKeyChange;
 ///////////////////////////////////////////////////////////////////////////////
-// Initial provisioning of Authenticated non-volatile EFI Variables 
-///////////////////////////////////////////////////////////////////////////////
+// Initial provisioning of Authenticated non-volitile EFI Variables 
+////////////////////////////////////////////////////////////////////////////////
     Attributes = EFI_VARIABLE_RUNTIME_ACCESS |
                  EFI_VARIABLE_BOOTSERVICE_ACCESS; 
     Index = 0;
@@ -511,64 +347,66 @@ InstallSecureVariables (
 /*
 1. check if File is present CryptoGetRawImage
 2. if not - skip to next var
-3. if present -> move to Erase... 
+3. if present -> move to Erase... .
 */        
         if(InstallVars & (SET_NV_DEFAULT_KEYS | SET_RT_DEFAULT_KEYS)) {
-            pVarBuffer = NULL;
-            FileSize = 0 ; 
-            Status = CryptoGetRawImage( SecureVariableFileGuid[Index], &pVarBuffer, (UINTN*)&FileSize);
-//            TRACE((-1,"Get Raw image %S, Status %r, sz = %x\n",SecureVariableFileName[Index], Status, FileSize));
-            if(EFI_ERROR(Status)) {
-                Index++;
-                continue;
-            }
-        }
+                pVarBuffer = NULL;
+                FileSize = 0 ; 
+                if(EFI_ERROR(CryptoGetRawImage( SecureVariableFileGuid[Index], &pVarBuffer, (UINTN*)&FileSize))) {
+                    Index++;
+                    continue;
+                }
+         }
         if((InstallVars & RESET_NV_KEYS)== RESET_NV_KEYS) {
         // try to erase. should succeed if system in pre-boot and Admin mode
             Status = pRS->SetVariable(SecureVariableFileName[Index],EfiVarGuid,0,0,NULL);
             TRACE((-1,"Clear NV Var %S, Status %r\n",SecureVariableFileName[Index], Status));
-            if(!EFI_ERROR(Status))
-                temp |= (1<<Index);
-            else 
-                if(Status == EFI_NOT_FOUND) 
-                    Status = EFI_SUCCESS;
+            if(EFI_ERROR(Status) && Status == EFI_NOT_FOUND) 
+                Status = EFI_SUCCESS;
         }
-        if((InstallVars & (SET_NV_DEFAULT_KEYS | SET_RT_DEFAULT_KEYS)) &&
-            pVarBuffer && FileSize ) {
-            if(InstallVars & (SET_RT_DEFAULT_KEYS)) {
-                AuthHdr2 = (AMI_EFI_VARIABLE_AUTHENTICATION_2*)pVarBuffer;
-                Offset = sizeof(EFI_TIME) + AuthHdr2->AuthInfo.Hdr.dwLength;
-                Status = pRS->SetVariable(SecureVariableFileNameDefault[Index],
-                       &gEfiGlobalVariableGuid,
-                        Attributes,
-                        FileSize - Offset,
-                        (UINT8*)pVarBuffer + Offset
-                );
-                TRACE((-1,"Set RT Var %S, Status %r\n",SecureVariableFileNameDefault[Index], Status));
-            }
-            if(InstallVars & (SET_NV_DEFAULT_KEYS)) {
-                Size = 0;
-                Status = pRS->GetVariable( SecureVariableFileName[Index], EfiVarGuid, NULL, &Size, NULL);
-                if(EFI_ERROR(Status) && Status == EFI_NOT_FOUND ) {
-                    Status = pRS->SetVariable(SecureVariableFileName[Index],
-                            EfiVarGuid,
-                            (UINT32)(Attributes | EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS),
-                            FileSize,
-                            pVarBuffer
-                    );
-                    TRACE((-1,"Set NV Var %S, Status %r\n",SecureVariableFileName[Index], Status));
-                    if(!EFI_ERROR(Status))
-                        temp &= ~(1<<Index);
+        if(InstallVars & (SET_NV_DEFAULT_KEYS | SET_RT_DEFAULT_KEYS))
+        {
+            Size = 0;
+            Status = pRS->GetVariable( SecureVariableFileName[Index], EfiVarGuid, NULL, &Size, NULL);
+            if((InstallVars &  SET_RT_DEFAULT_KEYS) ||
+               (EFI_ERROR(Status) && Status == EFI_NOT_FOUND) 
+            ) {
+//                pVarBuffer = NULL;
+//               Size = 0 ; 
+//                Status = CryptoGetRawImage( SecureVariableFileGuid[Index], &pVarBuffer, (UINTN*)&Size);
+//                if(!EFI_ERROR(Status)){
+                if(pVarBuffer && FileSize){
+                    if(InstallVars & (SET_NV_DEFAULT_KEYS)) {
+                        Attributes |= EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS;
+                        Status = pRS->SetVariable(SecureVariableFileName[Index],
+                                EfiVarGuid,
+                                Attributes,
+                                FileSize,
+                                pVarBuffer
+                        );
+                        TRACE((-1,"Set NV Var %S, Status %r\n",SecureVariableFileName[Index], Status));
+                    } else {
+                        AuthHdr2 = (AMI_EFI_VARIABLE_AUTHENTICATION_2*)pVarBuffer;
+                        Offset = sizeof(EFI_TIME) + AuthHdr2->AuthInfo.Hdr.dwLength;
+                        pSig = pVarBuffer + Offset;
+                        FileSize -= Offset;
+                        EfiVarGuid = &gEfiGlobalVariableGuid;
+                        Status = pRS->SetVariable(SecureVariableFileNameDefault[Index],
+                                EfiVarGuid,
+                                Attributes,
+                                FileSize,
+                                pSig
+                        );
+                        TRACE((-1,"Set RT Var %S, Status %r\n",SecureVariableFileNameDefault[Index], Status));
+                    }
+                    ASSERT_EFI_ERROR (Status);
+                    pBS->FreePool(pVarBuffer);
                 }
             }
-            pBS->FreePool(pVarBuffer);
         }
         Index++;
     }
-    if(temp != mBackDoorVendorKeyChange) {
-        // set new defaults if change was successful
-        UpdateSecureBootSetupVariable(temp);
-    }
+
     return Status;
 }
 
@@ -587,23 +425,13 @@ InstallSecureVariables (
 //----------------------------------------------------------------------
 //<AMI_PHDR_END>
 static VOID FillAuthHdr(
-    UINT8*  pVar,
-    UINT8   VarSetMode
+    UINT8*  pVar
 )
 {
     AMI_EFI_VARIABLE_AUTHENTICATION_2 *AuthHdr2;
-    static EFI_TIME EfiTime = {
-    FOUR_DIGIT_YEAR_INT,
-    TWO_DIGIT_MONTH_INT,
-    TWO_DIGIT_DAY_INT,
-    TWO_DIGIT_HOUR_INT,
-    TWO_DIGIT_MINUTE_INT,
-    TWO_DIGIT_SECOND_INT,0,0,0,0,0};
 
     AuthHdr2 = (AMI_EFI_VARIABLE_AUTHENTICATION_2*)pVar;
     MemCpy (&AuthHdr2->TimeStamp, &EfiTime, sizeof (EFI_TIME));
-    if((VarSetMode & SET_SECURE_VARIABLE_APPEND)== SET_SECURE_VARIABLE_APPEND)
-        AuthHdr2->TimeStamp.Year = 2000; // append should not change the original date the var was created
     AuthHdr2->AuthInfo.Hdr.dwLength = sizeof(WIN_CERTIFICATE_UEFI_GUID_1);
     AuthHdr2->AuthInfo.Hdr.wRevision = 0x200;
     AuthHdr2->AuthInfo.Hdr.wCertificateType = WIN_CERT_TYPE_EFI_GUID;
@@ -612,8 +440,329 @@ static VOID FillAuthHdr(
     return;
 }
 
-// only linked with the Setup
-#if /* not defined( TSE_FOR_APTIO_4_50) &&*/ !defined(NO_SETUP_COMPILE) && !defined(SMIFLASH_COMPILE)
+#ifndef NO_SETUP_COMPILE
+
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------
+// Procedure:   FillAuthVarHdr
+//
+// Description: 
+//
+// Input:       NONE
+//
+// Output:      NONE
+//
+// Returns:     NONE
+//
+//----------------------------------------------------------------------
+//<AMI_PHDR_END>
+static VOID FillAuthVarHdr(
+    UINT8 *pVar,
+    UINT8 *pCert,
+    UINTN CertSize
+)
+{
+    EFI_VARIABLE_SIG_HDR_2 *AuthHdr2;    
+    static EFI_GUID    AmiSigOwner = AMI_APTIO_SIG_OWNER_GUID;
+
+    AuthHdr2 = (EFI_VARIABLE_SIG_HDR_2*)pVar;
+
+    // Append AuthHdr to Var data.
+    FillAuthHdr(pVar);
+
+    //      CopyMem (&AuthHdr2->SigList.SignatureType, gEfiCertSha256Guid, sizeof (EFI_GUID));
+    if(CertSize == EFI_CERT_TYPE_SHA256_SIZE)
+        AuthHdr2->SigList.SignatureType = gEfiCertSha256Guid;
+    if(CertSize == EFI_CERT_TYPE_CERT_X509_SHA256_GUID_SIZE)
+        AuthHdr2->SigList.SignatureType = gEfiCertX509Sha256Guid;
+    if(CertSize == EFI_CERT_TYPE_CERT_X509_SHA384_GUID_SIZE)
+        AuthHdr2->SigList.SignatureType = gEfiCertX509Sha384Guid;
+    if(CertSize == EFI_CERT_TYPE_CERT_X509_SHA512_GUID_SIZE)
+        AuthHdr2->SigList.SignatureType = gEfiCertX509Sha512Guid;
+    if(CertSize == EFI_CERT_TYPE_RSA2048_SIZE)
+        AuthHdr2->SigList.SignatureType = gEfiCertRsa2048Guid;
+    if(CertSize > EFI_CERT_TYPE_RSA2048_SIZE)
+        AuthHdr2->SigList.SignatureType = gEfiCertX509Guid;
+
+    AuthHdr2->SigList.SignatureSize = (UINT32)(sizeof(EFI_GUID)+CertSize);
+    AuthHdr2->SigList.SignatureListSize = AuthHdr2->SigList.SignatureSize+sizeof(EFI_SIGNATURE_LIST);
+    AuthHdr2->SigList.SignatureHeaderSize = 0;
+    AuthHdr2->SigData.SignatureOwner = AmiSigOwner;
+
+TRACE((TRACE_ALWAYS,"SigList GUID: %g\nSigSize=%x\nListSize=%x", AuthHdr2->SigList.SignatureType,  AuthHdr2->SigList.SignatureSize, AuthHdr2->SigList.SignatureListSize));
+
+//    MemCpy(AuthHdr2->SigData.SignatureData, pCert, CertSize);
+
+    return;
+}   
+
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   ValidateSignatureList
+//
+// Description: 
+//              Validate the data payload begins with valid Signature List header
+//              and based on the results returns Status.
+//
+// Input:
+//              IN VOID *Data - pointer to the Var data
+//              IN UINTN DataSize - size of Var data
+//
+// Output:      EFI_STATUS
+//              UINTN RealDataSize - only the size of the combined length of Signature Lists
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
+EFI_STATUS ValidateSignatureList (
+    IN VOID         *Data,
+    IN UINTN        DataSize
+)
+{
+    EFI_STATUS          Status;
+    EFI_SIGNATURE_LIST   *SigList;
+    UINTN                 Index;
+
+    Status = EFI_SECURITY_VIOLATION;
+
+    if(DataSize == 0 || Data == NULL)
+        return Status; // Sig not found
+
+    SigList  = (EFI_SIGNATURE_LIST *)Data;
+
+// loop till end of DataSize for all available SigLists
+
+// Verify signature is one from SigDatabase list mSignatureSupport / sizeof(EFI_GUID)
+// SigData begins with SigOwner GUID
+// SignatureHdrSize = 0 for known Sig Types
+
+    while ((DataSize > 0) && (DataSize >= SigList->SignatureListSize)) {
+
+        for (Index = 0; Index < SIGSUPPORT_NUM; Index++) {
+            if (!guidcmp ((EFI_GUID*) &(SigList->SignatureType), &mSignatureSupport[Index]))
+                break;
+        }
+TRACE((TRACE_ALWAYS,"SigList.Type-"));
+        if(Index >= SIGSUPPORT_NUM)
+            return EFI_SECURITY_VIOLATION; // Sig not found
+
+TRACE((TRACE_ALWAYS,"OK\nSigList.Size-"));
+        if(SigList->SignatureListSize < 0x4C || // Min size for SHA2 Hash Certificate sig list
+           SigList->SignatureListSize > NVRAM_SIZE)
+            return EFI_SECURITY_VIOLATION; 
+
+TRACE((TRACE_ALWAYS,"OK\nSigList.HdrSize-"));
+        if(SigList->SignatureHeaderSize != 0)
+            return EFI_SECURITY_VIOLATION; // Sig not found
+
+TRACE((TRACE_ALWAYS,"OK\n"));
+        DataSize -= SigList->SignatureListSize;
+        SigList = (EFI_SIGNATURE_LIST *) ((UINT8 *) SigList + SigList->SignatureListSize);
+
+        Status = EFI_SUCCESS;
+    }
+    
+    return Status;
+}
+
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:    IsCsmEnabled
+//
+// Description:  This function checks if CSM is enabled
+//
+//  Input:
+//     None
+//
+//  Output:
+//  0 - CSM is disabled
+//  1 - CSM is enabled
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
+BOOLEAN
+IsCsmEnabled(VOID)
+{
+    EFI_STATUS Status;
+    UINTN Size = sizeof(EFI_HANDLE);
+    EFI_HANDLE Handle;
+
+    Status = pBS->LocateHandle(ByProtocol, &gEfiLegacyBiosProtocolGuid, NULL, &Size, &Handle);
+    return (EFI_ERROR(Status)) ? 0 : 1;
+}
+
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   ForceSetupModeCallback
+//
+// Description: 
+//
+// Input:       none
+//
+// Output:      VOID
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
+EFI_STATUS
+ForceSetupModeCallback(EFI_HII_HANDLE HiiHandle, UINT16 Class, UINT16 SubClass, UINT16 Key)
+{
+    EFI_STATUS Status;
+    UINT8       Sel = 0;
+    UINTN     Size;
+    UINT32      Attributes=0;
+    CALLBACK_PARAMETERS *Callback;
+    EFI_BROWSER_ACTION_REQUEST *rq;
+
+    Callback = GetCallbackParameters();
+    TRACE((-1,"\n====ForceSetupModeCallback==== Key = %d, Callback %x\n",  Key, Callback));
+    if(!Callback) {
+        return EFI_SUCCESS;
+    }
+    TRACE((-1,"Callback->Action=%x\n",  Callback->Action));
+    if( Callback->Action != EFI_BROWSER_ACTION_CHANGING) {
+        if(Callback->Action==EFI_BROWSER_ACTION_RETRIEVE)
+            UpdateSecureVariableBrowserInfo();
+        return EFI_UNSUPPORTED;
+    }
+    if(mPostMgr == NULL)
+    {
+        Status = pBS->LocateProtocol(&gAmiPostManagerProtocolGuid, NULL, &mPostMgr);
+        if(EFI_ERROR(Status) || !mPostMgr) {
+            return EFI_SUCCESS;
+        }
+    }
+    Status = EFI_SUCCESS;
+    switch(Key) {
+        case SECURE_BOOT_SUPPORT_CHANGE_KEY:
+            if( Callback->Value->u8 == 1) // trying to switch Secure Boot from Disable to Enable
+            {
+                rq = Callback->ActionRequest;
+                *rq = EFI_BROWSER_ACTION_REQUEST_NONE;
+                Size = 1;
+                Status=pRS->GetVariable(EFI_SETUP_MODE_NAME, &gEfiGlobalVariableGuid, (UINT32*)&Attributes, &Size, &Sel);
+                if(Sel) {
+                    GetHiiString(HiiHandle, STRING_TOKEN(STR_ENABLE_ERROR_MODE_TITLE), sizeof(StrTitle), StrTitle);
+                    GetHiiString(HiiHandle, STRING_TOKEN(STR_ENABLE_ERROR_MODE), sizeof(StrMessage),StrMessage);
+                    mPostMgr->DisplayMsgBox( StrTitle,  StrMessage, MSGBOX_TYPE_OK,NULL);
+        #if DEFAULT_SECURE_BOOT_ENABLE == 0
+                    Status = EFI_UNSUPPORTED;
+        #endif
+                }  else
+                    if (IsCsmEnabled()) {
+                        GetHiiString(HiiHandle, STRING_TOKEN(STR_CSM_LOAD_TITLE), sizeof(StrTitle),StrTitle);
+                        GetHiiString(HiiHandle, STRING_TOKEN(STR_CSM_LOAD), sizeof(StrMessage),StrMessage);
+                        mPostMgr->DisplayMsgBox( StrTitle,  StrMessage, MSGBOX_TYPE_OK,NULL);
+/* this should be enough, but TSE has a bug that doesn't support FORM_DISCARD action try a workaround instead 
+                       {
+                           SETUP_DATA Setup;
+                           UINTN Size = sizeof(Setup);
+                           static EFI_GUID SetupGuid = SETUP_GUID;
+                           Status = HiiLibGetBrowserData(&Size, &Setup, &SetupGuid, L"Setup");
+                            TRACE((-1, "Setup.CsmSupport=: %x, Size = %x\n", Setup.CsmSupport, Size));
+                           if(!EFI_ERROR(Status) && Setup.CsmSupport == 1) {
+                               GetHiiString(HiiHandle, STRING_TOKEN(STR_CSM_LOAD_TITLE), sizeof(StrTitle),StrTitle);
+                               GetHiiString(HiiHandle, STRING_TOKEN(STR_CSM_LOAD), sizeof(StrMessage),StrMessage);
+                               mPostMgr->DisplayMsgBox( StrTitle,  StrMessage, (UINT8)MSGBOX_TYPE_YESNO, &Sel);
+                               if (Sel == 1) {
+                                   Setup.CsmSupport = 0;
+                                   Status = HiiLibSetBrowserData(Size, &Setup, &SetupGuid, L"Setup");
+//                                    pRS->SetVariable ( L"Setup", &SetupGuid, Attributes, Size, &Setup);                                   
+                               }
+                           }
+                       }
+end of workaround */
+                        
+        #if DEFAULT_SECURE_BOOT_ENABLE == 0
+                       Status = EFI_UNSUPPORTED;
+        #endif
+                    }
+            }
+            break;
+
+        case KEY_PROVISION_CHANGE_KEY:
+            if( Callback->Value->u8 == 0) // trying to switch from Disable to Enable
+                break;
+        case FORCE_SETUP_KEY:
+        case FORCE_DEFAULT_KEY:
+            if (Key == FORCE_SETUP_KEY)
+            {
+                GetHiiString(HiiHandle, STRING_TOKEN(STR_FORCE_SETUP_MODE), sizeof(StrTitle),StrTitle);
+                GetHiiString(HiiHandle, STRING_TOKEN(STR_RESET_TO_SETUP), sizeof(StrMessage),StrMessage);
+                mPostMgr->DisplayMsgBox( StrTitle,  StrMessage, (UINT8)MSGBOX_TYPE_YESNO, &Sel);
+                if (Sel == 0)
+                   Status = InstallSecureVariables(RESET_NV_KEYS);    // erase
+            }
+            else
+            if (Key == FORCE_DEFAULT_KEY || KEY_PROVISION_CHANGE_KEY)
+            {
+                GetHiiString(HiiHandle, STRING_TOKEN(STR_LOAD_DEFAULT_VARS_TITLE), sizeof(StrTitle),StrTitle);
+                GetHiiString(HiiHandle, STRING_TOKEN(STR_LOAD_DEFAULT_VARS), sizeof(StrMessage),StrMessage);
+                mPostMgr->DisplayMsgBox( StrTitle,  StrMessage, (UINT8)MSGBOX_TYPE_YESNO, &Sel);
+                if (Sel == 0)
+                    Status = InstallSecureVariables(RESET_NV_KEYS | SET_NV_DEFAULT_KEYS);    // erase+set
+            }
+            UpdateSecureVariableBrowserInfo();
+            if (EFI_ERROR(Status))
+            {
+                GetHiiString(HiiHandle, STRING_TOKEN(STR_VAR_UPDATE_LOCKED_TITLE), sizeof(StrTitle),StrTitle);
+                GetHiiString(HiiHandle, STRING_TOKEN(STR_VAR_UPDATE_LOCKED), sizeof(StrMessage),StrMessage);
+                mPostMgr->DisplayMsgBox( StrTitle,  StrMessage, MSGBOX_TYPE_OK,NULL);
+                Status = EFI_SUCCESS;
+            }
+            break;
+
+        default: 
+            break;   
+    }
+    return Status;//EFI_SUCCESS;
+}
+
+EFI_STATUS SetSecureVariable(UINT8 Index, UINT16 InstallVars, UINT8 *pVarBuffer, UINTN VarSize )
+{
+    EFI_STATUS  Status = EFI_SUCCESS;
+    EFI_GUID    *EfiVarGuid;
+    UINT32      Attributes;
+
+///////////////////////////////////////////////////////////////////////////////
+// Initial provisioning of Authenticated non-volitile EFI Variables 
+///////////////////////////////////////////////////////////////////////////////
+    if(SecureVariableFileName[Index] != NULL)
+    {
+        if(Index < 3) 
+            EfiVarGuid = &gEfiImageSecurityDatabaseGuid;
+        else
+            EfiVarGuid = &gEfiGlobalVariableGuid;
+
+        if((InstallVars & SET_SECURE_VARIABLE_DEL) == SET_SECURE_VARIABLE_DEL) {
+        // try to erase. should succeed if system in pre-boot and Admin mode
+            Status = pRS->SetVariable(SecureVariableFileName[Index],EfiVarGuid,0,0,NULL);
+            TRACE((-1,"Set(0) Var %S, Status %r\n",SecureVariableFileName[Index], Status));
+        }
+        if((InstallVars & SET_SECURE_VARIABLE_SET)==SET_SECURE_VARIABLE_SET &&
+            pVarBuffer && VarSize) {
+
+            Attributes = EFI_VARIABLE_RUNTIME_ACCESS |
+                         EFI_VARIABLE_NON_VOLATILE | 
+                         EFI_VARIABLE_BOOTSERVICE_ACCESS |
+                         EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS; 
+
+            if((InstallVars & SET_SECURE_VARIABLE_APPEND)== SET_SECURE_VARIABLE_APPEND)
+                Attributes |= EFI_VARIABLE_APPEND_WRITE;
+
+            Status = pRS->SetVariable(SecureVariableFileName[Index], EfiVarGuid, Attributes, VarSize, pVarBuffer);
+            TRACE((-1,"Set Var %S, Status %r\n",SecureVariableFileName[Index], Status));
+        }
+    }
+
+    UpdateSecureVariableBrowserInfo();
+
+    return Status;
+}
 
 //<AMI_PHDR_START>
 //----------------------------------------------------------------------------
@@ -645,389 +794,23 @@ VOID GetHiiString(
     ASSERT_EFI_ERROR (Status);
     if (EFI_ERROR (Status)) ppData=L"??? ";
 
-//TRACE((-1,"%r, StrRef '%S', Size %d, Token=%d\n",Status, ppData, DataSize, Token));
-}
-
-//#ifndef NO_SETUP_COMPILE
-//<AMI_PHDR_START>
-//----------------------------------------------------------------------------
-//
-// Procedure:   InitSecureBootStrings
-//
-// Description: Initializes Secure Boot page Setup String
-//
-// Input:       HiiHandle - Handle to HII database
-//              Class - Indicates the setup class
-//
-// Output:      None
-//
-// Notes:       PORTING REQUIRED
-//----------------------------------------------------------------------------
-//<AMI_PHDR_END>
-VOID InitSecureBootStrings (
-    IN EFI_HII_HANDLE   HiiHandle,
-    IN UINT16           Class )
-{
-    EFI_STATUS          Status;
-    UINTN               VarSize;
-
-// 1. Init VendorKey backdoor change
-    VarSize = sizeof(SECURE_BOOT_SETUP_VAR);
-    Status = pRS->GetVariable (AMI_SECURE_BOOT_SETUP_VAR, &guidSecurity,NULL,&VarSize,&SecureBootSetup);
-    mBackDoorVendorKeyChange = SecureBootSetup.BackDoorVendorKeyChange;
-    
-}
-//<AMI_PHDR_START>
-//----------------------------------------------------------------------
-// Procedure:   FillAuthVarHdr
-//
-// Description: 
-//
-// Input:       NONE
-//
-// Output:      NONE
-//
-// Returns:     NONE
-//
-//----------------------------------------------------------------------
-//<AMI_PHDR_END>
-static VOID FillAuthVarHdr(
-    UINT8 *pVar,
-    UINT8 *pCert,
-    UINTN CertSize,
-    UINT8 VarSetMode
-)
-{
-    EFI_VARIABLE_SIG_HDR_2 *AuthHdr2;    
-    static EFI_GUID    AmiSigOwner = AMI_APTIO_SIG_OWNER_GUID;
-    EFI_GUID          *pGuid;
-
-    AuthHdr2 = (EFI_VARIABLE_SIG_HDR_2*)pVar;
-
-    FillAuthHdr(pVar, VarSetMode); // Append AuthHdr to Var data.
-
-    if(CertSize == EFI_CERT_TYPE_SHA256_SIZE)
-        pGuid = &gEfiCertSha256Guid;
-    if(CertSize == EFI_CERT_TYPE_CERT_X509_SHA256_GUID_SIZE)
-        pGuid = &gEfiCertX509Sha256Guid;
-    if(CertSize == EFI_CERT_TYPE_CERT_X509_SHA384_GUID_SIZE)
-        pGuid = &gEfiCertX509Sha384Guid;
-    if(CertSize == EFI_CERT_TYPE_CERT_X509_SHA512_GUID_SIZE)
-        pGuid = &gEfiCertX509Sha512Guid;
-    if(CertSize == EFI_CERT_TYPE_RSA2048_SIZE)
-        pGuid = &gEfiCertRsa2048Guid;
-    if(CertSize > EFI_CERT_TYPE_RSA2048_SIZE)
-        pGuid = &gEfiCertX509Guid;
-    
-//      CopyMem (&AuthHdr2->SigList.SignatureType, *pGuid, sizeof (EFI_GUID));
-    AuthHdr2->SigList.SignatureType = *pGuid;
-    AuthHdr2->SigList.SignatureSize = (UINT32)(sizeof(EFI_GUID)+CertSize);
-    AuthHdr2->SigList.SignatureListSize = AuthHdr2->SigList.SignatureSize+sizeof(EFI_SIGNATURE_LIST);
-    AuthHdr2->SigList.SignatureHeaderSize = 0;
-    AuthHdr2->SigData.SignatureOwner = AmiSigOwner;
-
-TRACE((TRACE_ALWAYS,"SigList Type=%g\nSigSize=%x\nListSize=%x\n", &(AuthHdr2->SigList.SignatureType), AuthHdr2->SigList.SignatureSize, AuthHdr2->SigList.SignatureListSize));
-
-//    MemCpy(AuthHdr2->SigData.SignatureData, pCert, CertSize);
-
-    return;
-}   
-
-//<AMI_PHDR_START>
-//----------------------------------------------------------------------------
-// Procedure:   ValidateSignatureList
-//
-// Description: 
-//              Validate the data payload begins with valid Signature List header
-//              and based on the results returns Status.
-//
-// Input:
-//              IN VOID *Data - pointer to the Var data
-//              IN UINTN DataSize - size of Var data
-//              OUT     *SigCount - Number of Sig Lists encountered inside Data
-//
-// Output:      EFI_STATUS
-//              UINTN RealDataSize - only the size of the combined length of Signature Lists
-//
-//----------------------------------------------------------------------------
-//<AMI_PHDR_END>
-EFI_STATUS ValidateSignatureList (
-    IN VOID         *Data,
-    IN UINTN        DataSize,
-    IN OUT UINTN    *SigCount OPTIONAL
-)
-{
-    EFI_STATUS          Status;
-    EFI_SIGNATURE_LIST *SigList;
-    UINTN               Index, count, SigSize;
-    static EFI_GUID mSignatureSupport[SIGSUPPORT_NUM] = {SIGSUPPORT_LIST};
-
-    Status = EFI_SECURITY_VIOLATION;
-
-    if(DataSize == 0 || Data == NULL)
-        return Status; // Sig not found
-
-    SigList  = (EFI_SIGNATURE_LIST *)Data;
-
-// loop till end of DataSize for all available SigLists
-// Verify signature is one from SigDatabase list mSignatureSupport / sizeof(EFI_GUID)
-// SigData begins with SigOwner GUID
-// SignatureHdrSize = 0 for known Sig Types
-    
-    count = 0;
-    while ((DataSize > 0) && (DataSize >= SigList->SignatureListSize)) {
-
-        for (Index = 0; Index < SIGSUPPORT_NUM; Index++) {
-            if (!guidcmp ((EFI_GUID*) &(SigList->SignatureType), &mSignatureSupport[Index]))
-                break;
-        }
-TRACE((TRACE_ALWAYS,"SigList.Type(%g) -", &(SigList->SignatureType)));
-        if(Index >= SIGSUPPORT_NUM)
-            return EFI_SECURITY_VIOLATION; // Sig not found
-
-TRACE((TRACE_ALWAYS,"OK\nSigList.Size(4C < %X < %X)-",SigList->SignatureListSize, NVRAM_SIZE));
-        if(SigList->SignatureListSize < 0x4C || // Min size for SHA2 Hash Certificate sig list
-           SigList->SignatureListSize > NVRAM_SIZE)
-            return EFI_SECURITY_VIOLATION; 
-
-TRACE((TRACE_ALWAYS,"OK\nSigList.HdrSize(%X)-",SigList->SignatureHeaderSize));
-        if(SigList->SignatureHeaderSize != 0)
-            return EFI_SECURITY_VIOLATION; // Sig not found
-
-TRACE((TRACE_ALWAYS,"OK\nSigList.SigSize(%X)\n",SigList->SignatureSize));
-        for(SigSize=sizeof(EFI_SIGNATURE_LIST); SigSize < SigList->SignatureListSize; SigSize+=SigList->SignatureSize)
-            count++;
-            
-TRACE((TRACE_ALWAYS,"Sig.Count(%d)\n", count));
-        DataSize -= SigList->SignatureListSize;
-        SigList = (EFI_SIGNATURE_LIST *) ((UINT8 *) SigList + SigList->SignatureListSize);
-        TRACE((TRACE_ALWAYS,"DataSize left(%X)\n", DataSize));
-
-        Status = EFI_SUCCESS;
-    }
-    if(SigCount)
-        *SigCount = count;
-    
-    return Status;
-}
-//<AMI_PHDR_START>
-//----------------------------------------------------------------------------
-//
-// Procedure:    IsCsmEnabled
-//
-// Description:  This function checks if CSM is enabled
-//
-//  Input:
-//     None
-//
-//  Output:
-//  0 - CSM is disabled
-//  1 - CSM is enabled
-//
-//----------------------------------------------------------------------------
-//<AMI_PHDR_END>
-#if defined(CSM_SUPPORT) && CSM_SUPPORT
-BOOLEAN
-IsCsmEnabled(VOID)
-{
-    EFI_STATUS Status;
-    UINTN Size = sizeof(EFI_HANDLE);
-    EFI_HANDLE Handle;
-
-    Status = pBS->LocateHandle(ByProtocol, &gEfiLegacyBiosProtocolGuid, NULL, &Size, &Handle);
-    return (EFI_ERROR(Status)) ? 0 : 1;
-}
-#endif
-//<AMI_PHDR_START>
-//----------------------------------------------------------------------------
-// Procedure:   ForceSetupModeCallback
-//
-// Description: 
-//
-// Input:       none
-//
-// Output:      VOID
-//
-// Modified:
-//
-// Referrals:
-//
-// Notes:
-//----------------------------------------------------------------------------
-//<AMI_PHDR_END>
-EFI_STATUS
-ForceSetupModeCallback(EFI_HII_HANDLE HiiHandle, UINT16 Class, UINT16 SubClass, UINT16 Key)
-{
-    EFI_STATUS Status;
-    UINT8       Sel = 0;
-    UINTN       Size;
-
-    CALLBACK_PARAMETERS *Callback;
-    EFI_BROWSER_ACTION_REQUEST *rq;
-
-    Callback = GetCallbackParameters();
-    if(!Callback) {
-        return EFI_SUCCESS;
-    }
-    TRACE((-1,"\n====ForceSetupModeCallback==== Key=%0X, Action=%0X\n",  Key, Callback->Action));
-    if( Callback->Action != EFI_BROWSER_ACTION_CHANGING) {
-//        if(Callback->Action==EFI_BROWSER_ACTION_RETRIEVE)
-//            UpdateSecureVariableBrowserInfo();
-        return EFI_UNSUPPORTED;
-    }
-    if(mPostMgr == NULL)
-    {
-        Status = pBS->LocateProtocol(&gAmiPostManagerProtocolGuid, NULL, &mPostMgr);
-        if(EFI_ERROR(Status) || !mPostMgr) {
-            return EFI_SUCCESS;
-        }
-    }
-    Status = EFI_SUCCESS;
-    gHiiHandle = HiiHandle;
-    switch(Key) {
-        case  SECURE_BOOT_MENU_REFRESH:
-            UpdateSecureBootBrowserInfo();
-            break;
-        case  KEY_MANAGEMENT_MENU_REFRESH:
-            UpdateSecureVariableBrowserInfo();
-            break;
-        case SECURE_BOOT_SUPPORT_CHANGE_KEY:
-            if( Callback->Value->u8 == 1) // trying to switch Secure Boot from Disable to Enable
-            {
-                rq = Callback->ActionRequest;
-                *rq = EFI_BROWSER_ACTION_REQUEST_NONE;
-                Size = 1;
-                Status=pRS->GetVariable(EFI_SETUP_MODE_NAME, &gEfiGlobalVariableGuid, NULL, &Size, &Sel);
-                if(Sel) {
-                    GetHiiString(HiiHandle, STRING_TOKEN(STR_ENABLE_ERROR_MODE_TITLE), sizeof(StrTitle), StrTitle);
-                    GetHiiString(HiiHandle, STRING_TOKEN(STR_ENABLE_ERROR_MODE), sizeof(StrMessage),StrMessage);
-                    mPostMgr->DisplayMsgBox( StrTitle,  StrMessage, MSGBOX_TYPE_OK,NULL);
-        #if DEFAULT_SECURE_BOOT_ENABLE == 0
-                    Status = EFI_UNSUPPORTED;
-        #endif
-                }  
-#if defined(CSM_SUPPORT) && CSM_SUPPORT
-                else if (IsCsmEnabled()) {
-                        GetHiiString(HiiHandle, STRING_TOKEN(STR_CSM_LOAD_TITLE), sizeof(StrTitle),StrTitle);
-                        GetHiiString(HiiHandle, STRING_TOKEN(STR_CSM_LOAD), sizeof(StrMessage),StrMessage);
-                        mPostMgr->DisplayMsgBox( StrTitle,  StrMessage, MSGBOX_TYPE_OK,NULL);
-/* this should be enough, but TSE has a bug that doesn't support FORM_DISCARD action try a workaround instead 
-                       {
-                           SETUP_DATA Setup;
-                           UINTN Size = sizeof(Setup);
-                           static EFI_GUID SetupGuid = SETUP_GUID;
-                           Status = HiiLibGetBrowserData(&Size, &Setup, &SetupGuid, L"Setup");
-                            TRACE((-1, "Setup.CsmSupport=: %x, Size = %x\n", Setup.CsmSupport, Size));
-                           if(!EFI_ERROR(Status) && Setup.CsmSupport == 1) {
-                               GetHiiString(HiiHandle, STRING_TOKEN(STR_CSM_LOAD_TITLE), sizeof(StrTitle),StrTitle);
-                               GetHiiString(HiiHandle, STRING_TOKEN(STR_CSM_LOAD), sizeof(StrMessage),StrMessage);
-                               mPostMgr->DisplayMsgBox( StrTitle,  StrMessage, (UINT8)MSGBOX_TYPE_YESNO, &Sel);
-                               if (Sel == 1) {
-                                   Setup.CsmSupport = 0;
-                                   Status = HiiLibSetBrowserData(Size, &Setup, &SetupGuid, L"Setup");
-//                                    pRS->SetVariable ( L"Setup", &SetupGuid, Attributes, Size, &Setup); 
-                               }
-                           }
-                       }
-end of workaround */
-                        
-        #if DEFAULT_SECURE_BOOT_ENABLE == 0
-                       Status = EFI_UNSUPPORTED;
-        #endif
-                    }
-#endif // CSM                
-            }
-            break;
-        case SECURE_BOOT_MODE_CHANGE_KEY:
-            if( Callback->Value->u8 == 1) // trying to switch from Custom to Standard
-                break;
-        case KEY_PROVISION_CHANGE_KEY:
-            if(Key == KEY_PROVISION_CHANGE_KEY && 
-                Callback->Value->u8 == 0) // trying to switch from Disable to Enable
-                break;
-        case FORCE_SETUP_KEY:
-        case FORCE_DEFAULT_KEY:
-            if (Key == FORCE_SETUP_KEY)
-            {
-                GetHiiString(HiiHandle, STRING_TOKEN(STR_FORCE_SETUP_MODE), sizeof(StrTitle),StrTitle);
-                GetHiiString(HiiHandle, STRING_TOKEN(STR_RESET_TO_SETUP), sizeof(StrMessage),StrMessage);
-                mPostMgr->DisplayMsgBox( StrTitle,  StrMessage, (UINT8)MSGBOX_TYPE_YESNO, &Sel);
-                if (Sel == 0)
-                   Status = InstallSecureVariables(RESET_NV_KEYS);    // erase
-            }
-            else
-            if (Key == FORCE_DEFAULT_KEY || Key == KEY_PROVISION_CHANGE_KEY || Key == SECURE_BOOT_MODE_CHANGE_KEY)
-            {
-                GetHiiString(HiiHandle, STRING_TOKEN(STR_LOAD_DEFAULT_VARS_TITLE), sizeof(StrTitle),StrTitle);
-                GetHiiString(HiiHandle, STRING_TOKEN(STR_LOAD_DEFAULT_VARS), sizeof(StrMessage),StrMessage);
-                mPostMgr->DisplayMsgBox( StrTitle,  StrMessage, (UINT8)MSGBOX_TYPE_YESNO, &Sel);
-                if (Sel == 0)
-                    Status = InstallSecureVariables(RESET_NV_KEYS | SET_NV_DEFAULT_KEYS);    // erase+set
-            }
-            UpdateSecureVariableBrowserInfo();
-            if (EFI_ERROR(Status))
-            {
-                GetHiiString(HiiHandle, STRING_TOKEN(STR_VAR_UPDATE_LOCKED_TITLE), sizeof(StrTitle),StrTitle);
-                GetHiiString(HiiHandle, STRING_TOKEN(STR_VAR_UPDATE_LOCKED), sizeof(StrMessage),StrMessage);
-                mPostMgr->DisplayMsgBox( StrTitle,  StrMessage, MSGBOX_TYPE_OK,NULL);
-                Status = EFI_SUCCESS;
-            }
-            break;
-
-        default:
-            break;
-    }
-    return Status;//EFI_SUCCESS;
-}
-
-EFI_STATUS SetSecureVariable(UINT8 Index, UINT16 InstallVars, UINT8 *pVarBuffer, UINTN VarSize )
-{
-    EFI_STATUS  Status = EFI_SUCCESS;
-    EFI_GUID    *EfiVarGuid;
-    UINT32      Attributes;
-
-///////////////////////////////////////////////////////////////////////////////
-// Initial provisioning of Authenticated non-volatile EFI Variables 
-///////////////////////////////////////////////////////////////////////////////
-    if(SecureVariableFileName[Index] != NULL)
-    {
-        if(Index < 3) 
-            EfiVarGuid = &gEfiImageSecurityDatabaseGuid;
-        else
-            EfiVarGuid = &gEfiGlobalVariableGuid;
-
-        if((InstallVars & SET_SECURE_VARIABLE_DEL) == SET_SECURE_VARIABLE_DEL) {
-        // try to erase. should succeed if system in pre-boot and Admin mode
-            Status = pRS->SetVariable(SecureVariableFileName[Index],EfiVarGuid,0,0,NULL);
-            TRACE((-1,"Del Var %S, Status %r\n",SecureVariableFileName[Index], Status));
-        }
-        if((InstallVars & SET_SECURE_VARIABLE_SET)==SET_SECURE_VARIABLE_SET &&
-            pVarBuffer && VarSize) {
-
-            Attributes = EFI_VARIABLE_RUNTIME_ACCESS |
-                         EFI_VARIABLE_NON_VOLATILE | 
-                         EFI_VARIABLE_BOOTSERVICE_ACCESS |
-                         EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS; 
-
-            if((InstallVars & SET_SECURE_VARIABLE_APPEND)== SET_SECURE_VARIABLE_APPEND)
-                Attributes |= EFI_VARIABLE_APPEND_WRITE;
-
-            Status = pRS->SetVariable(SecureVariableFileName[Index], EfiVarGuid, Attributes, VarSize, pVarBuffer);
-            TRACE((-1,"Set Var %S, Status %r\n",SecureVariableFileName[Index], Status));
-        }
-    }
-
-    return Status;
+TRACE((-1,"%r, StrRef '%S', Size %d, Token=%d\n",Status, ppData, DataSize, Token));
 }
 
 EFI_STATUS
-ManageSecureBootKeysCallback(EFI_HII_HANDLE HiiHandle, UINT16 Class, UINT16 SubClass, UINT16 Key)
+SetAppendSecureBootDBCallback(EFI_HII_HANDLE HiiHandle, UINT16 Class, UINT16 SubClass, UINT16 Key)
 {
     EFI_STATUS Status;
+    EFI_HANDLE *FsHandle;
+    UINT8 *FileBuf=NULL;
+    UINT8 *Data=NULL;
+    UINTN size, VarSize; //DataSize;
+    CHAR16 *FilePath=NULL;
     UINT8 index;
-    UINT16 CertSel = 0;
-    UINT8 MenuSize, DelItem, SetItem, AppendItem;
-    POSTMENU_TEMPLATE MenuList[3];
+    UINT8 Sel = 1;
+    UINT16 CertSel = 0, AddSize;
+    POSTMENU_TEMPLATE MenuList[2];
+    UINT8  VarSetMode = SET_SECURE_VARIABLE_SET;
     CALLBACK_PARAMETERS *Callback;
 
     Callback = GetCallbackParameters();
@@ -1036,94 +819,59 @@ ManageSecureBootKeysCallback(EFI_HII_HANDLE HiiHandle, UINT16 Class, UINT16 SubC
 
     switch(Key)
     {
-    case MANAGE_PK_KEY:
-                    index = 4;
-                    break;
-    case MANAGE_KEK_KEY:
+    case APPEND_KEK_KEY:
                     index = 3;
+                    VarSetMode |= SET_SECURE_VARIABLE_APPEND;
                     break;
-    case MANAGE_DB_KEY:
+    case APPEND_DB_KEY:
                     index = 2;
+                    VarSetMode |= SET_SECURE_VARIABLE_APPEND;
                     break;
-    case MANAGE_DBT_KEY:
-                    index = 1;
+    case APPEND_DBT_KEY:
+                    index =1;
+                    VarSetMode |= SET_SECURE_VARIABLE_APPEND;
                     break;
-    case MANAGE_DBX_KEY:
+    case APPEND_DBX_KEY:
                     index = 0;
+                    VarSetMode |= SET_SECURE_VARIABLE_APPEND;
+                    break;
+    case SET_PK_KEY:
+                    index = 4;
+                    VarSetMode |= SET_SECURE_VARIABLE_DEL;
+                    break;
+    case SET_KEK_KEY:
+                    index = 3;
+                    VarSetMode |= SET_SECURE_VARIABLE_DEL;
+                    break;
+    case SET_DB_KEY:
+                    index = 2;
+                    VarSetMode |= SET_SECURE_VARIABLE_DEL;
+                    break;
+    case SET_DBT_KEY:
+                    index = 1;
+                    VarSetMode |= SET_SECURE_VARIABLE_DEL;
+                    break;
+    case SET_DBX_KEY:
+                    index = 0;
+                    VarSetMode |= SET_SECURE_VARIABLE_DEL;
                     break;
     default:
         return EFI_SUCCESS;
     }
 
     if(mPostMgr == NULL)
-        return EFI_SUCCESS;
+    {
+        Status = pBS->LocateProtocol(&gAmiPostManagerProtocolGuid, NULL, &mPostMgr);
+        if(EFI_ERROR(Status)) {
+            return EFI_SUCCESS;
+        }
+    }
 
     gHiiHandle = HiiHandle;
 
-    SetItem = 0;
-    AppendItem = 1;
-    DelItem = 2;
-    MenuSize = 3; 
-    if(!bKey[index]) { // no Key - no Del
-        MenuSize--;
-    }
-    if(index == 4) { // PK - no Append
-        MenuSize--;
-        DelItem--; // move Del up
-        AppendItem = 2;
-    }
-
-    // Clear the memory allocated 
-    MemSet(MenuList, sizeof(MenuList), 0);
-    MenuList[SetItem].ItemToken = STRING_TOKEN(STR_SECURE_SET);
-    MenuList[AppendItem].ItemToken = STRING_TOKEN(STR_SECURE_APPEND);
-    MenuList[DelItem].ItemToken = STRING_TOKEN(STR_SECURE_DELETE);
-
-    // Call post manager to display the menu
-    Status = mPostMgr->DisplayPostMenu(HiiHandle,
-                        STRING_TOKEN(STR_KEY_MANAGEMENT_TITLE),
-                        0,
-                        MenuList,
-                        MenuSize,
-                        &CertSel);
-
-    if(!EFI_ERROR(Status))
-    {
-        if(CertSel == DelItem) {
-            if(bKey[index])
-                DeleteSecureBootDBCallback( HiiHandle,  index);
-        } else
-                if(CertSel == SetItem) {
-                    SetAppendSecureBootDBCallback( HiiHandle,  SET_SECURE_VARIABLE_SET | SET_SECURE_VARIABLE_DEL, index);
-                } else 
-                        if(CertSel == AppendItem) {
-                            if(index!=4)
-                                SetAppendSecureBootDBCallback( HiiHandle,  SET_SECURE_VARIABLE_SET | SET_SECURE_VARIABLE_APPEND,  index);
-                        }
-    }
-    return EFI_SUCCESS;
-}
-
-VOID
-SetAppendSecureBootDBCallback(EFI_HII_HANDLE HiiHandle, UINT8 VarSetMode, UINT8 index)
-{
-    EFI_STATUS Status;
-    EFI_HANDLE *FsHandle;
-    UINT8 *FileBuf=NULL;
-    UINT8 *Data=NULL;
-    UINTN size, VarSize; //DataSize;
-    CHAR16 *FilePath=NULL;
-    UINT8 Sel;
-    UINT16 CertSel, AddSize;
-    UINT8 MenuSize;
-    POSTMENU_TEMPLATE MenuList[3];
-    UINT8       temp;
-
     MemSet(StrTemp, sizeof(StrTemp), 0);
+
     Sel = 1; // No
-    CertSel = 0;
-    temp = mBackDoorVendorKeyChange;
-    
 //    DataSize = sizeof(StrTitle);
     if(VarSetMode & SET_SECURE_VARIABLE_APPEND)
 //        HiiLibGetString(HiiHandle, STRING_TOKEN(STR_SECURE_APPEND), &DataSize, (EFI_STRING)StrTitle);
@@ -1139,15 +887,10 @@ SetAppendSecureBootDBCallback(EFI_HII_HANDLE HiiHandle, UINT8 VarSetMode, UINT8 
     {
         size = 0 ; 
         Status = CryptoGetRawImage( SecureVariableFileGuid[index], &FileBuf, (UINTN*)&size);
-        temp &= ~(1 << index); // Clearing corresponding key backdoor
     } else
     {
         size = 0;
         AddSize = 0;
-//        MenuSize = (index == 3 || index == 4)?2:3;
-        MenuSize = 2;
-        // updating keys from external media - consider non-Vendor keys
-        temp |= (1 << index); // setting corresponding key backdoor
         Status = FileBrowserLaunchFileSystem(TRUE, &FsHandle, &FilePath, &FileBuf, &size);
         if(!EFI_ERROR(Status) && FileBuf)
         {
@@ -1155,37 +898,27 @@ SetAppendSecureBootDBCallback(EFI_HII_HANDLE HiiHandle, UINT8 VarSetMode, UINT8 
             MemSet(MenuList, sizeof(MenuList), 0);
             MenuList[0].ItemToken = STRING_TOKEN(STR_SECURE_CER);
             MenuList[1].ItemToken = STRING_TOKEN(STR_SECURE_VAR);
-//            MenuList[2].ItemToken = STRING_TOKEN(STR_SECURE_EFI);
-            
+    
             // Call post manager to display the menu
             Status = mPostMgr->DisplayPostMenu(gHiiHandle,
-                                                STRING_TOKEN(STR_SECURE_FILE_TITLE), // Change this
+                                                STRING_TOKEN(STR_SECURE_TITLE), // Change this
                                                 0,
                                                 MenuList,
-                                                MenuSize,
+                                                2,
                                                 &CertSel);
 
             if(!EFI_ERROR(Status))
             {
                 GetHiiString(HiiHandle, STRING_TOKEN(STR_UPDATE_FROM_FILE), sizeof(StrMessage), StrMessage);
                 Swprintf_s(StrTemp, sizeof(StrTemp),StrMessage, SecureVariableFileName[index],FilePath);
-
-
-//                if(CertSel==2) // Efi executable
-//                    TRACE((-1,"Efi executable %S, Status %r\n",StrTemp, Status));
-/*
-Install New protocol ImageVerificationExt
-GetSignerInfo(pSignerCert, CertSize, Instance)
-Instance - Output - number of signers, Input - select SignerCert instance 
-Draw the drop Down box with names of Signers Subjects
- */                
+        
                 if(CertSel==0) {
                     AddSize = sizeof(EFI_VARIABLE_SIG_HDR_2)-1; // decrement by 1 byte as SIG_DATA adds 1 dummy byte
                 }
-
+        
                 // Validate Signature List integrity 
-                if(!EFI_ERROR(ValidateSignatureList (FileBuf, size, NULL))) {
-                    CertSel=MenuSize;
+                if(!EFI_ERROR(ValidateSignatureList (FileBuf, size))) {
+                    CertSel=2;
                     AddSize = sizeof(AMI_EFI_VARIABLE_AUTHENTICATION_2);
                 }
                 //
@@ -1197,11 +930,10 @@ Draw the drop Down box with names of Signers Subjects
                 ASSERT_EFI_ERROR (Status);
                 // Append AuthHdr to Var data.
                 if(CertSel==0)
-                    FillAuthVarHdr(Data,FileBuf,size, VarSetMode);
+                    FillAuthVarHdr(Data,FileBuf,size);
                 else 
-                if(CertSel==MenuSize) // unsupported - append from SigList
-                    FillAuthHdr(Data, VarSetMode);
-
+                if(CertSel==2) // unsupported - append from SigList
+                    FillAuthHdr(Data);
                 MemCpy ((VOID*)((UINTN)Data+AddSize), FileBuf, size);
                 if(FileBuf)
                     pBS->FreePool(FileBuf);
@@ -1210,8 +942,8 @@ Draw the drop Down box with names of Signers Subjects
             }
         }
     }
-    if(FileBuf) {
 
+    if(!EFI_ERROR(Status) && FileBuf){
         if(Sel == 1)
             mPostMgr->DisplayMsgBox( StrTitle, StrTemp, (UINT8)MSGBOX_TYPE_YESNO, &Sel);
 
@@ -1220,56 +952,90 @@ Draw the drop Down box with names of Signers Subjects
             Status = SetSecureVariable(index, VarSetMode, FileBuf, size);
             if(!EFI_ERROR(Status)){
                 GetHiiString(HiiHandle, STRING_TOKEN(STR_SUCCESS), sizeof(StrMessage),StrMessage);
-                // set new defaults if change was successful
-                UpdateSecureBootSetupVariable(temp);
             }
             else
             {
                 GetHiiString(HiiHandle, STRING_TOKEN(STR_FAILED), sizeof(StrMessage),StrMessage);
             }
-            mPostMgr->DisplayMsgBox( StrTitle, StrMessage, MSGBOX_TYPE_OK, NULL );
-            UpdateSecureVariableBrowserInfo();
+            mPostMgr->DisplayMsgBox( StrTitle,StrMessage , MSGBOX_TYPE_OK, NULL );
         }
     }
+
     if(FileBuf)
         pBS->FreePool(FileBuf);
 
     if(FilePath)
         pBS->FreePool(FilePath);
+
+    return EFI_SUCCESS;
 }
 
-VOID
-DeleteSecureBootDBCallback(EFI_HII_HANDLE HiiHandle, UINT8 index)
+EFI_STATUS
+DeleteSecureBootDBCallback(EFI_HII_HANDLE HiiHandle, UINT16 Class, UINT16 SubClass, UINT16 Key)
 {
     EFI_STATUS Status;
+    UINT8 index;
     UINT8 Sel = 0;    
+    
+    CALLBACK_PARAMETERS *Callback;
 
-    MemSet(StrTemp, sizeof(StrTemp), 0);
+    Callback = GetCallbackParameters();
+    if(!Callback || Callback->Action != EFI_BROWSER_ACTION_CHANGING)
+       return EFI_UNSUPPORTED;
 
-    GetHiiString(HiiHandle, STRING_TOKEN(STR_DELETE_SEC_KEY_TITLE), sizeof(StrTitle),StrTitle);
-    if(index == 4) { // del PK
-        GetHiiString(HiiHandle, STRING_TOKEN(STR_PK_DEL_WARNING), sizeof(StrTemp),StrTemp);
-        mPostMgr->DisplayMsgBox( StrTitle,  StrTemp, (UINT8)MSGBOX_TYPE_OK, NULL);
+    switch(Key)
+    {
+    case DELETE_PK_KEY:
+                    index = 4;
+                    break;
+    case DELETE_KEK_KEY:
+                    index = 3;
+                    break;
+    case DELETE_DB_KEY:
+                    index = 2;
+                    break;
+    case DELETE_DBT_KEY:
+                    index = 1;
+                    break;
+    case DELETE_DBX_KEY:
+                    index = 0;
+                    break;
+    default:
+       return EFI_SUCCESS;
     }
-    GetHiiString(HiiHandle, STRING_TOKEN(STR_DELETE_SEC_KEY), sizeof(StrMessage), StrMessage);
+
+    if(mPostMgr == NULL)
+    {
+        Status = pBS->LocateProtocol(&gAmiPostManagerProtocolGuid, NULL, &mPostMgr);
+        if(EFI_ERROR(Status) || !mPostMgr) {
+            return EFI_SUCCESS;
+        }
+    }
+
+    gHiiHandle = HiiHandle;
+
     MemSet(StrTemp, sizeof(StrTemp), 0);
+    
+    GetHiiString(HiiHandle, STRING_TOKEN(STR_DELETE_SEC_KEY_TITLE), sizeof(StrTitle),StrTitle);
+    GetHiiString(HiiHandle, STRING_TOKEN(STR_DELETE_SEC_KEY), sizeof(StrMessage),StrMessage);
     Swprintf_s(StrTemp, sizeof(StrTemp), StrMessage, SecureVariableFileName[index]);
     mPostMgr->DisplayMsgBox( StrTitle,  StrTemp, (UINT8)MSGBOX_TYPE_YESNO, &Sel);
+
     if(Sel == 0)
     {
-        Status = SetSecureVariable(index, SET_SECURE_VARIABLE_DEL, NULL, 0);
+        Status = SetSecureVariable(index,SET_SECURE_VARIABLE_DEL, NULL, 0);
+
         if(!EFI_ERROR(Status)){
             GetHiiString(HiiHandle, STRING_TOKEN(STR_SUCCESS), sizeof(StrMessage),StrMessage);
-            // setting a corresponding key back-door
-            UpdateSecureBootSetupVariable(mBackDoorVendorKeyChange | (1 << index));
         }
         else
         {
             GetHiiString(HiiHandle, STRING_TOKEN(STR_FAILED), sizeof(StrMessage),StrMessage);
         }            
         mPostMgr->DisplayMsgBox( StrTitle, StrMessage, MSGBOX_TYPE_OK, NULL );
-        UpdateSecureVariableBrowserInfo();
     }
+
+     return EFI_SUCCESS;
 }
 
 EFI_STATUS
@@ -1682,7 +1448,7 @@ static VOID AddFileTypeEntry(FILE_TYPE **List, UINTN *FileCount, EFI_FILE_INFO *
 // Description: Parse all the files in the current directory and add valid files to the
 //      FILE_TYPE list and update the filecount
 //
-// Input:   EFI_FILE_PROTOCOL *FileProtocol - the current directory to parse
+// Input:   EFI_FILE_PROTOCOL *FileProtocol - the current direcotry to parse
 //
 // Output:  FILE_TYPE **FileList - pointer in which to return the array of FileType items
 //          UINTN *FileCount - the count of filetype items discovered
@@ -1824,7 +1590,7 @@ VOID UpdateFilePathString(CHAR16 *FilePath, CHAR16 * CurFile, UINT16 idx)
                     if ( Length )
                         FilePath[Length-1] = L'\0';
                     else
-                        FilePath[Length] = L'\0'; 
+                        FilePath[Length] = L'\0';    
             }
         }
         else {
@@ -1837,7 +1603,7 @@ VOID UpdateFilePathString(CHAR16 *FilePath, CHAR16 * CurFile, UINT16 idx)
     }
 }
 
-EFI_STATUS FileBrowserLaunchFilePath(IN EFI_HANDLE *FileHandle, IN BOOLEAN ValidOption, OUT CHAR16 **outFilePath, OUT UINT8 **outFileBuf,OUT UINTN *size );
+EFI_STATUS FileBrowserLaunchFilePath(IN EFI_HANDLE *FileHandle, OUT CHAR16 **outFilePath, OUT UINT8 **outFileBuf,OUT UINTN *size );
 
 //<AMI_PHDR_START>
 //----------------------------------------------------------------------
@@ -1861,14 +1627,18 @@ EFI_STATUS FileBrowserLaunchFileSystem(BOOLEAN bSelectFile, OUT EFI_HANDLE **out
     UINT16 i = 0;
     EFI_HANDLE *gSmplFileSysHndlBuf = NULL;    
     UINT16 gSelIdx=0;
-    BOOLEAN ValidOption = FALSE;
     
     EFI_DEVICE_PATH_PROTOCOL *Dp = NULL;
 
     POSTMENU_TEMPLATE *PossibleFileSystems = NULL;
 
     if(mPostMgr == NULL)
-        return EFI_UNSUPPORTED;
+    {
+        Status = pBS->LocateProtocol(&gAmiPostManagerProtocolGuid, NULL, &mPostMgr);
+        if(EFI_ERROR(Status)) {
+            return EFI_UNSUPPORTED;
+        }
+    }
     
     // To launch the files from the selected file system
     if(!size)
@@ -1900,7 +1670,7 @@ EFI_STATUS FileBrowserLaunchFileSystem(BOOLEAN bSelectFile, OUT EFI_HANDLE **out
                     Name = StrDup8to16(Name8);
 
                     // Add the name to the Hii Database
-                    //PossibleFileSystems[i].ItemToken = AddStringToHii(Name);
+                    ///PossibleFileSystems[i].ItemToken = AddStringToHii(Name);
                     PossibleFileSystems[i].ItemToken = HiiAddString(gHiiHandle, Name ); 
 
                     PossibleFileSystems[i].Attribute = AMI_POSTMENU_ATTRIB_FOCUS;
@@ -1924,10 +1694,11 @@ EFI_STATUS FileBrowserLaunchFileSystem(BOOLEAN bSelectFile, OUT EFI_HANDLE **out
                                                 (UINT16)Count,
                                                 &gSelIdx);
 
+
             // A valid item was selected by the user
             if(!EFI_ERROR(Status))
             {
-                ValidOption = TRUE;
+                    gValidOption = TRUE;
             }
         }
     }
@@ -1946,7 +1717,7 @@ EFI_STATUS FileBrowserLaunchFileSystem(BOOLEAN bSelectFile, OUT EFI_HANDLE **out
 
      *size = 0; 
      if(bSelectFile)
-         Status = FileBrowserLaunchFilePath(*outFsHandle, ValidOption, outFilePath, outFileBuf,size );//EIP:41615 Returning the status of Filebrowselaunchfilepath
+         Status = FileBrowserLaunchFilePath(*outFsHandle,outFilePath, outFileBuf,size );//EIP:41615 Returning the status of Filebrowselaunchfilepath
 
      if(gSmplFileSysHndlBuf != NULL) 
         pBS->FreePool(gSmplFileSysHndlBuf);
@@ -1968,7 +1739,7 @@ EFI_STATUS FileBrowserLaunchFileSystem(BOOLEAN bSelectFile, OUT EFI_HANDLE **out
 //
 //----------------------------------------------------------------------
 //<AMI_PHDR_END>
-EFI_STATUS FileBrowserLaunchFilePath(IN EFI_HANDLE *FileHandle,IN BOOLEAN ValidOption, OUT CHAR16 **outFilePath, OUT UINT8 **outFileBuf,OUT UINTN *size )
+EFI_STATUS FileBrowserLaunchFilePath(IN EFI_HANDLE *FileHandle,OUT CHAR16 **outFilePath, OUT UINT8 **outFileBuf,OUT UINTN *size )
 {
     EFI_STATUS Status;
 
@@ -1981,26 +1752,28 @@ EFI_STATUS FileBrowserLaunchFilePath(IN EFI_HANDLE *FileHandle,IN BOOLEAN ValidO
     EFI_FILE_PROTOCOL *gFs = NULL;
 
     // Attempt to locate the post manager protocol
-    if(mPostMgr == NULL)
-        return EFI_UNSUPPORTED;
-
-    if( ValidOption == TRUE ) 
+    Status = pBS->LocateProtocol(&gAmiPostManagerProtocolGuid, NULL, &mPostMgr);
+    if(!EFI_ERROR(Status))
     {
-
-        // Get the simple file system protocol 
-        Status = pBS->HandleProtocol(FileHandle, &gEfiSimpleFileSystemProtocolGuid, &SimpleFs);
-        if(!EFI_ERROR(Status))
+        if( gValidOption == TRUE ) 
         {
-            // And open it and return the efi file protocol
-            Status = SimpleFs->OpenVolume(SimpleFs, &gFs);
-        }
-    }
-    else {
-            return EFI_UNSUPPORTED;
-    }
+            gValidOption = FALSE;
 
-    // clean up the file list and strings used in getting the file system
-    CleanFileTypes(&FileList, &FileCount);
+            // Get the simple file system protocol 
+            Status = pBS->HandleProtocol(FileHandle, &gEfiSimpleFileSystemProtocolGuid, &SimpleFs);
+            if(!EFI_ERROR(Status))
+            {
+                // And open it and return the efi file protocol
+                Status = SimpleFs->OpenVolume(SimpleFs, &gFs);
+            }
+        }
+        else {
+                return EFI_UNSUPPORTED;
+        }
+
+        // clean up the file list and strings used in getting the file system
+        CleanFileTypes(&FileList, &FileCount);
+    }
 
     while(!EFI_ERROR(Status) && gFs != NULL)
     {
@@ -2069,14 +1842,16 @@ EFI_STATUS FileBrowserLaunchFilePath(IN EFI_HANDLE *FileHandle,IN BOOLEAN ValidO
         }
     }
     // Set the File path for the new boot option added.
-    Status = pBS->AllocatePool(EfiBootServicesData, ((Wcslen(FilePath)+1)*sizeof(CHAR16)), (void**)outFilePath);
+    Status = pBS->AllocatePool(EfiBootServicesData, ((Wcslen(FilePath)+1)*sizeof(CHAR16)), outFilePath);
     Wcscpy (*outFilePath, FilePath);
 
     return Status;
 }
-#endif // #ifdef NO_SETUP_COMPILE
+#else //#ifdef NO_SETUP_COMPILE
 
-#if defined(SMIFLASH_COMPILE) && defined(PRESERVE_SECURE_VARIABLES) && PRESERVE_SECURE_VARIABLES==1
+#ifdef SMIFLASH_COMPILE
+
+#if defined(PRESERVE_SECURE_VARIABLES) && PRESERVE_SECURE_VARIABLES==1
 
 static EFI_GUID AmiNvramControlProtocolGuid = { 0xf7ca7568, 0x5a09, 0x4d2c, { 0x8a, 0x9b, 0x75, 0x84, 0x68, 0x59, 0x2a, 0xe2 } };
 typedef EFI_STATUS (*SHOW_BOOT_TIME_VARIABLES)(BOOLEAN Show);
@@ -2085,12 +1860,12 @@ typedef struct{
     SHOW_BOOT_TIME_VARIABLES ShowBootTimeVariables;
 } AMI_NVRAM_CONTROL_PROTOCOL;
 
-static AMI_NVRAM_CONTROL_PROTOCOL *NvramControl = NULL;
+AMI_NVRAM_CONTROL_PROTOCOL *NvramControl = NULL;
 
 // Array of pointers to Secure Variables in TSEG.
-static UINT8* SecureFlashVar[6];
-static UINTN SecureFlashVarSize[6];
-static UINT32 SecureFlashVarAttr[6];
+static UINT8* SecureFlashVar[6] = {NULL, NULL, NULL, NULL, NULL, NULL};
+static UINTN SecureFlashVarSize[6] = {0,0,0,0,0,0};
+static UINT32 SecureFlashVarAttr[6] = {0,0,0,0,0,0};
 static UINT32 SecBootVar_Attr=0;
 //<AMI_PHDR_START>
 //----------------------------------------------------------------------
@@ -2122,10 +1897,7 @@ TRACE((TRACE_ALWAYS,"PreserveVar:\n"));
             EfiVarGuid = &gEfiImageSecurityDatabaseGuid;
         else
             EfiVarGuid = &gEfiGlobalVariableGuid;
-        
-        SecureFlashVar[Index] = NULL;
-        SecureFlashVarSize[Index] = 0;
-        SecureFlashVarAttr[Index] = 0;
+
         Status = pRS->GetVariable( SecureVariableFileName[Index], EfiVarGuid, &SecureFlashVarAttr[Index], &SecureFlashVarSize[Index], SecureFlashVar[Index]);
         if(Status == EFI_BUFFER_TOO_SMALL) {
             VarSize = SecureFlashVarSize[Index]+sizeof(AMI_EFI_VARIABLE_AUTHENTICATION_2);
@@ -2135,7 +1907,7 @@ TRACE((TRACE_ALWAYS,"PreserveVar:\n"));
             Status = pRS->GetVariable(SecureVariableFileName[Index], EfiVarGuid, &SecureFlashVarAttr[Index],&SecureFlashVarSize[Index], SecureFlashVar[Index]+sizeof(AMI_EFI_VARIABLE_AUTHENTICATION_2));
 
             SecureFlashVarSize[Index] = VarSize;
-            FillAuthHdr(SecureFlashVar[Index], SET_SECURE_VARIABLE_SET);
+            FillAuthHdr(SecureFlashVar[Index]);
       
 TRACE((TRACE_ALWAYS,"%S (%r) Size=%x\n", SecureVariableFileName[Index], Status, SecureFlashVarSize[Index]));
         }
@@ -2189,7 +1961,17 @@ TRACE((TRACE_ALWAYS,"RestoreVar:\n"));
                 EfiVarGuid = &gEfiImageSecurityDatabaseGuid;
             else
                 EfiVarGuid = &gEfiGlobalVariableGuid;
-
+// TBD Security check: 
+// Verify if target Var is already present in NVRAM and is different from a default
+/*
+    GetVar size
+    if different -> call the Alarm!!!!
+    same size - allocate pool to read var
+    GetVar(size)
+    compare with one preserved in buffer 
+    if different -> call the Alarm!!!!
+ */            
+            
             Status = pRS->SetVariable(SecureVariableFileName[Index], EfiVarGuid, SecureFlashVarAttr[Index], SecureFlashVarSize[Index], SecureFlashVar[Index] );
 TRACE((TRACE_ALWAYS,"%S (%r) Size=%x Attr=%x\n", SecureVariableFileName[Index], Status, SecureFlashVarSize[Index], SecureFlashVarAttr[Index]));
             pSmst->SmmFreePool(SecureFlashVar[Index]);
@@ -2210,9 +1992,9 @@ TRACE((TRACE_ALWAYS,"SecureBootSetup (%r)\n", Status));
     NvramControl->ShowBootTimeVariables(FALSE);
 
 }
-#endif //#if SMIFLASH_COMPILE defined(PRESERVE_SECURE_VARIABLES) && PRESERVE_SECURE_VARIABLES==1
+#endif //#if defined(PRESERVE_SECURE_VARIABLES) && PRESERVE_SECURE_VARIABLES==1
+#endif // #ifdef SMIFLASH_COMPILE
 
-#ifdef NO_SETUP_COMPILE
 //<AMI_PHDR_START>
 //----------------------------------------------------------------------------
 // Procedure:   SecureMod_Init
@@ -2241,57 +2023,39 @@ SecureBootMod_Init (
     UINTN      DataSize;
     UINT8      Byte;
     UINT32     Attributes;
-    VOID      *pHobList;
-    static EFI_GUID gHobListGuid  = HOB_LIST_GUID;
 
     InitAmiLib(ImageHandle, SystemTable);
+
+    Byte        = 0;
+    Attributes  = EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_NON_VOLATILE;
     //
     // Look up for Secure Boot policy in "SecureBootSetup" variable. If not defined - create one with SDL defaults
     //
     DataSize = sizeof(SECURE_BOOT_SETUP_VAR);
     Status = pRS->GetVariable (AMI_SECURE_BOOT_SETUP_VAR, &guidSecurity,&Attributes,&DataSize,&SecureBootSetup);
-TRACE((TRACE_ALWAYS,"SecureBootSetup (%r) Attrib=%x,\nSecBoot-%d, SecMode-%d, DefaultProvision-%d, BackDoorVendorKeyChange-%d\n", 
-    Status, Attributes, SecureBootSetup.SecureBootSupport, SecureBootSetup.SecureBootMode, SecureBootSetup.DefaultKeyProvision, SecureBootSetup.BackDoorVendorKeyChange));
+TRACE((TRACE_ALWAYS,"SecureBootSetup (%r) Attrib=%x, SecBoot-%d, SecMode-%d,DefaultProvision-%d\n", Status, Attributes, SecureBootSetup.SecureBootSupport, SecureBootSetup.SecureBootMode,SecureBootSetup.DefaultKeyProvision));    
     // Default variable is created with RT attribute which violates 
     // Intel's Secure Boot technical advisory #527669 and MS Windows Secure Boot requirements
     if((!EFI_ERROR(Status) && 
-        (Attributes & EFI_VARIABLE_RUNTIME_ACCESS)==EFI_VARIABLE_RUNTIME_ACCESS)
-        || Status == EFI_NOT_FOUND) // Var is not yet initialized
+    	(Attributes & EFI_VARIABLE_RUNTIME_ACCESS)==EFI_VARIABLE_RUNTIME_ACCESS)
+    	|| Status == EFI_NOT_FOUND) // Var is not yet initialized
     {
         // Clear RT attributes if set for "SecureBootSetup" 
         pRS->SetVariable (AMI_SECURE_BOOT_SETUP_VAR, &guidSecurity, Attributes, 0, NULL);
         pRS->SetVariable (AMI_SECURE_BOOT_SETUP_VAR, &guidSecurity,(Attributes & ~EFI_VARIABLE_RUNTIME_ACCESS), DataSize, &SecureBootSetup);
     }
-    
-    mBackDoorVendorKeyChange = SecureBootSetup.BackDoorVendorKeyChange;
-    
-    // Provisioning of secure boot defaults
-    if(SecureBootSetup.DefaultKeyProvision == 1) 
-    {
-        DataSize = 1;
-        Status = pRS->GetVariable(EFI_SETUP_MODE_NAME, &gEfiGlobalVariableGuid, NULL, &DataSize, &Byte);
-        if(!EFI_ERROR(Status) && Byte == SETUP_MODE) 
-        {
-            Status = InstallSecureVariables(SET_NV_DEFAULT_KEYS);
-            // Status of last key to be installed - PK
-            if(!EFI_ERROR(Status) && SecureBootSetup.SecureBootSupport) 
-            {
-                // Issue reset only if in User Mode and SecureBootSupport flag is enabled
-                Status = pRS->GetVariable(EFI_SETUP_MODE_NAME, &gEfiGlobalVariableGuid, NULL, &DataSize, &Byte);
-                if(!EFI_ERROR(Status) && Byte == USER_MODE) 
-                    //Get Boot Mode
-                    pHobList = GetEfiConfigurationTable(SystemTable, &gHobListGuid);
-                    if (pHobList)
-                    {
-                        if (((EFI_HOB_HANDOFF_INFO_TABLE*)pHobList)->BootMode!=BOOT_IN_RECOVERY_MODE && 
-                            ((EFI_HOB_HANDOFF_INFO_TABLE*)pHobList)->BootMode!=BOOT_ON_FLASH_UPDATE
-                        ) 
-                            pRS->ResetSystem(EfiResetCold, Status, 0, NULL);
-                    }
-            }
-        }
-    }
-    InstallSecureVariables(SET_RT_DEFAULT_KEYS);
+
+    if(SecureBootSetup.DefaultKeyProvision == 1)
+        InstallSecureVariables(SET_NV_DEFAULT_KEYS);
+
+#if ALWAYS_INSTALL_DEFAULT_RT_KEYS == 0
+    DataSize = 1;
+    if(!EFI_ERROR(pRS->GetVariable(EFI_SETUP_MODE_NAME, &gEfiGlobalVariableGuid, (UINT32*)&Attributes, &DataSize, &Byte)) &&
+        Byte == SETUP_MODE)
+#endif
+        InstallSecureVariables(SET_RT_DEFAULT_KEYS);
+
+    UpdateSecureVariableBrowserInfo();
 
     return EFI_SUCCESS;
 }
@@ -2301,7 +2065,7 @@ TRACE((TRACE_ALWAYS,"SecureBootSetup (%r) Attrib=%x,\nSecBoot-%d, SecMode-%d, De
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2015, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2013, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **

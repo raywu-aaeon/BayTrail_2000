@@ -17,7 +17,7 @@
 //
 // Name: RsaKeyImport.c - Helper routines for PEI and DXE crypto library
 //
-// Description:     Implements following auxiliary functions:
+// Description:     Implements following auxilary functions:
 //                  -crypto_import_rsa2048_public_key
 //                  -crypto_import_asn1_public_key
 //                  -ASN.1 DER base64_decode
@@ -67,24 +67,22 @@ struct crypto_rsa_key *
 crypto_import_rsa2048_public_key(const u8 *KeyN, size_t lenN, const u8 *KeyE, size_t lenE)
 {
     struct crypto_rsa_key *key;
-    u8 *KeyNmod;
+    u8 *KeyNmod    ;
     
     if(!KeyN || !KeyE)
         return NULL;
     
     KeyNmod = (u8*)KeyN;
 // !!! NOTE !!!!
-// KeyGen adds a leading ZERO if the msb of the first byte of the n-modulus is ONE.
+// KeyGen adds a leading ZERO if the msb of the first byte of the n-modulus is ONE. 
 // This is to avoid this integer to be treated as negative value.
-// If your calculations produce a number with the high bit set to 1,
-// just increase the length by another byte and pad the beginning with 0x00
+// If your calculations produce a number with the high bit set to 1, 
+// just increase the length by another byte and pad the beginning with 0x00 
 // to keep it positive.
     if(KeyN[0] >> 7 == 1)
     {
         KeyNmod = os_malloc((UINTN)(lenN+1));
-        if (KeyNmod == NULL)
-            return NULL;
-        memcpy(KeyNmod+1, (void*)KeyN, lenN);
+        MemCpy(KeyNmod+1, (void*)KeyN, lenN);
         KeyNmod[0] = 0;
         lenN++;
     }
@@ -96,22 +94,21 @@ crypto_import_rsa2048_public_key(const u8 *KeyN, size_t lenN, const u8 *KeyE, si
     key->n = bignum_init();
     key->e = bignum_init();
     if (key->n == NULL || key->e == NULL) {
-        goto error;
+            crypto_rsa_free(key);
+            return NULL;
     }
 
 //         * RSA2048PublicKey ::= 
 //         *     modulus INTEGER, -- n
 
     if(bignum_set_unsigned_bin(key->n, KeyNmod, lenN) < 0 )
-        goto error;
+            goto error;
     if(bignum_set_unsigned_bin(key->e, KeyE, lenE) < 0 )
-        goto error;
+            goto error;
 
     return key;
 
 error:
-    if(KeyNmod != (u8*)KeyN)
-        os_free(KeyNmod);
     crypto_rsa_free(key);
     return NULL;
 }
@@ -223,95 +220,6 @@ int crypto_public_key_decrypt_pkcs1(struct crypto_public_key *key,
 
     return 0;
 }
-
-#if 0
-//<AMI_PHDR_START>
-//**********************************************************************
-//
-// Procedure:  crypto_x509_key_hdr_strip
-//
-// Description:    Strips the Key header in ASN.1 buffer leaving only standard Public Key structure
-//
-// Input:
-//  buf      - Pointer to ASN.1 public key buffer
-//  len      - Size of buffer
-//
-// Output:      Updated offset and length within Key buffer
-//            -1 if failed to process the Key hdr
-//
-//**********************************************************************
-//<AMI_PHDR_END>
-static int
-crypto_x509_key_hdr_strip(const u8 **buf, size_t *len)
-{
-    struct asn1_hdr hdr;
-    const u8 *pos, *end;
-
-/*
-*  SubjectPublicKeyInfo  ::=  SEQUENCE  {
-*       algorithm            AlgorithmIdentifier,
-*       subjectPublicKey     BIT STRING }
-*/
-    if (asn1_get_next(*buf, *len, &hdr) < 0 ||
-        hdr.class != ASN1_CLASS_UNIVERSAL ||
-        hdr.tag != ASN1_TAG_SEQUENCE) {
-            //"PKCS #8: Does not start with PKCS #8 header (SEQUENCE); assume PKCS #8 not used");
-            return -1;
-    }
-    pos = hdr.payload;
-    end = pos + hdr.length;
-
-    /* version Version (Version ::= INTEGER) */
-    if (asn1_get_next(pos, end - pos, &hdr) < 0 ||
-        hdr.class != ASN1_CLASS_UNIVERSAL || hdr.tag != ASN1_TAG_SEQUENCE) {
-            return -1;
-    }
-
-    /* Description of the key parameters per PKCS #1,8 */
-    pos = hdr.payload + hdr.length;
-    if (asn1_get_next(pos, end - pos, &hdr) < 0 ||
-        hdr.class != ASN1_CLASS_UNIVERSAL || hdr.tag != ASN1_TAG_BITSTRING) {
-            return -1;
-    }
-    pos = hdr.payload + 1;
-    end = pos + hdr.length;
-
-    *buf = pos;
-    *len = end - pos;
-
-    return 0;
-}
-
-//<AMI_PHDR_START>
-//**********************************************************************
-//
-// Procedure:  crypto_import_asn1_public_key
-//
-// Description:    Imports RSA2048 public key from ASN.1 DER format into 
-//              internal crypto_rsa_key data structure
-//
-// Input:
-//  key       - Pointer to public key buffer
-//  len       - Size of key buffer
-//
-// Output:      Pointer to Key data structure crypto_rsa_key 
-//            NULL if failed to import Key
-//
-//**********************************************************************
-//<AMI_PHDR_END>
-struct crypto_rsa_key * crypto_import_asn1_public_key(const u8 *key, size_t len)
-{
-    int res;
-    /* First, check for possible X.509 public key encoding */
-    res = crypto_x509_key_hdr_strip(&key, &len);
-
-    /* Not PKCS#7, so try to import PKCS #1 encoded RSA public key */
-    return (struct crypto_rsa_key *)
-            crypto_rsa_import_public_key(key, len );
-
-}
-#endif
-
 #if defined(ASN1_BASE64_DECODE) && ASN1_BASE64_DECODE == 1
 //<AMI_PHDR_START>
 //**********************************************************************
@@ -408,8 +316,92 @@ base64_decode (char *buffer, size_t length)
 
   return d - buffer;
 }
-#endif
+//<AMI_PHDR_START>
+//**********************************************************************
+//
+// Procedure:  crypto_x509_key_hdr_strip
+//
+// Description:    Strips the Key header in ASN.1 buffer leaving only standard Public Key structure
+//
+// Input:
+//  buf      - Pointer to ASN.1 public key buffer
+//  len      - Size of buffer
+//
+// Output:      Updated offset and length within Key buffer
+//            -1 if failed to process the Key hdr
+//
+//**********************************************************************
+//<AMI_PHDR_END>
+static int
+crypto_x509_key_hdr_strip(const u8 **buf, size_t *len)
+{
+    struct asn1_hdr hdr;
+    const u8 *pos, *end;
 
+/*
+*  SubjectPublicKeyInfo  ::=  SEQUENCE  {
+*       algorithm            AlgorithmIdentifier,
+*       subjectPublicKey     BIT STRING }
+*/
+    if (asn1_get_next(*buf, *len, &hdr) < 0 ||
+        hdr.class != ASN1_CLASS_UNIVERSAL ||
+        hdr.tag != ASN1_TAG_SEQUENCE) {
+            //"PKCS #8: Does not start with PKCS #8 header (SEQUENCE); assume PKCS #8 not used");
+            return -1;
+    }
+    pos = hdr.payload;
+    end = pos + hdr.length;
+
+    /* version Version (Version ::= INTEGER) */
+    if (asn1_get_next(pos, end - pos, &hdr) < 0 ||
+        hdr.class != ASN1_CLASS_UNIVERSAL || hdr.tag != ASN1_TAG_SEQUENCE) {
+            return -1;
+    }
+
+    /* Description of the key parameters per PKCS #1,8 */
+    pos = hdr.payload + hdr.length;
+    if (asn1_get_next(pos, end - pos, &hdr) < 0 ||
+        hdr.class != ASN1_CLASS_UNIVERSAL || hdr.tag != ASN1_TAG_BITSTRING) {
+            return -1;
+    }
+    pos = hdr.payload + 1;
+    end = pos + hdr.length;
+
+    *buf = pos;
+    *len = end - pos;
+
+    return 0;
+}
+
+//<AMI_PHDR_START>
+//**********************************************************************
+//
+// Procedure:  crypto_import_asn1_public_key
+//
+// Description:    Imports RSA2048 public key from ASN.1 DER format into 
+//              internal crypto_rsa_key data structure
+//
+// Input:
+//  key       - Pointer to public key buffer
+//  len       - Size of key buffer
+//
+// Output:      Pointer to Key data structure crypto_rsa_key 
+//            NULL if failed to import Key
+//
+//**********************************************************************
+//<AMI_PHDR_END>
+struct crypto_rsa_key * crypto_import_asn1_public_key(const u8 *key, size_t len)
+{
+    int res;
+    /* First, check for possible X.509 public key encoding */
+    res = crypto_x509_key_hdr_strip(&key, &len);
+
+    /* Not PKCS#7, so try to import PKCS #1 encoded RSA public key */
+    return (struct crypto_rsa_key *)
+            crypto_rsa_import_public_key(key, len );
+
+}
+#endif
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **

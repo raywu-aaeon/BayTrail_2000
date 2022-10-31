@@ -1,7 +1,7 @@
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2013, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **
@@ -11,12 +11,28 @@
 //**                                                                  **
 //**********************************************************************
 //**********************************************************************
-/** @file
-  SmiFlash SMM Driver Sub-Procedure File.
-**/
 
-//----------------------------------------------------------------------
-// header includes
+//**********************************************************************
+// $Header: $
+//
+// $Revision: $
+//
+// $Date: $
+//**********************************************************************
+// Revision History
+// ----------------
+// $Log: $
+// 
+//
+//**********************************************************************
+//<AMI_FHDR_START>
+//
+// Name:    SMIFlashLinks.c
+//
+// Description: Elinks to SMIFlash.
+//
+//<AMI_FHDR_END>
+//**********************************************************************
 #include <AmiDxeLib.h>
 #include <Token.h>
 #include <Protocol\SmiFlash.h>
@@ -27,7 +43,6 @@
 #include <TimeStamp.h>
 #if AMIUSB_SUPPORT == 1
 #include <Protocol\AmiUsbController.h>
-extern EFI_GUID gAmiUsbSmmProtocolGuid;
 #endif  // #if AMIUSB_SUPPORT == 1
 
 //----------------------------------------------------------------------
@@ -74,17 +89,8 @@ extern FLASH_PROTOCOL *Flash;
 
 #if !defined _OUTSIDE_SMM_
 //*********** INSIDE SMM ***********************************************
-#if defined EMUL6064_SUPPORT && (EMUL6064_SUPPORT == 1)
-#include <Protocol\Emul6064Trap.h>
-EFI_EMUL6064TRAP_PROTOCOL *gEmulationTrap = NULL;
-#endif
-
 #if AMIUSB_SUPPORT == 1
-#if USB_DRIVER_MAJOR_VER >= 10
-API_FUNC gUsbRtKbcAccessControl = NULL;
-#else
-EFI_KBC_ACCESS_CONTROL gUsbRtKbcAccessControl = NULL;
-#endif
+EFI_USB_PROTOCOL    *gAmiUsb = NULL;
 #endif
 
 EFI_FFS_FILE_STATE  NvramFFSState;
@@ -107,29 +113,46 @@ typedef struct{
 } AMI_NVRAM_CONTROL_PROTOCOL;
 
 AMI_NVRAM_CONTROL_PROTOCOL *NvramControl;
-UINT8       gKbcPortData;
+
 //----------------------------------------------------------------------
 // externally defined variables
 
 //----------------------------------------------------------------------
 // Function definitions
-/**
- * Procedure to locates the Nvram Control Protocol for enabling Boot Time Variable search.
- *
- * @retval AMI_NVRAM_CONTROL_PROTOCOL* Nvram Control Protocol pointer.
- * @retval NULL Nvram Control Protocol not located.
- */
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------
+// Procedure:   LocateNvramControlSmmProtocol
+//
+// Description: This Procedure locates Nvram Control Protocol for enabling
+//              Boot Time Variable search.
+//
+// Input:       NONE
+//
+// Output:      NONE
+//
+// Returns:     NONE
+//
+//----------------------------------------------------------------------
+//<AMI_PHDR_END>
 AMI_NVRAM_CONTROL_PROTOCOL *LocateNvramControlSmmProtocol(VOID){
     static EFI_GUID gAmiNvramControlProtocolGuid = \
     { 0xf7ca7568, 0x5a09, 0x4d2c, { 0x8a, 0x9b, 0x75, 0x84, 0x68, 0x59, 0x2a, 0xe2 } };
     return GetSmstConfigurationTable(&gAmiNvramControlProtocolGuid);
 }
-
-/**
- * Procedure to update the authentication Header of Variable.
- *
- * @param pVar Pointer to the Variable.
- */
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------
+// Procedure:   FillAuthHeader
+//
+// Description: 
+//
+// Input:       NONE
+//
+// Output:      NONE
+//
+// Returns:     NONE
+//
+//----------------------------------------------------------------------
+//<AMI_PHDR_END>
 #if defined SecureBoot_SUPPORT && SecureBoot_SUPPORT == 1
 #if defined SECURE_BOOT_MODULE_REVISION && SECURE_BOOT_MODULE_REVISION < 14
 static VOID FillAuthHeader(
@@ -156,14 +179,20 @@ static VOID FillAuthHeader(
 }  
 #endif  // #if defined SECURE_BOOT_MODULE_REVISION && SECURE_BOOT_MODULE_REVISION < 14
 #endif  // #if defined SecureBoot_SUPPORT && SecureBoot_SUPPORT == 1
-
-/**
- * Procedure to check whether it's a Boot LoadOption variable.
- *
- * @param Name Variable Name Pointer.
- * @param Guid Variable GUID Pointer.
- * @param Data Variable Data Pointer.
- */
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------
+// Procedure:   IsBootVarsValid
+//
+// Description: 
+//
+// Input:       NONE
+//
+// Output:      NONE
+//
+// Returns:     NONE
+//
+//----------------------------------------------------------------------
+//<AMI_PHDR_END>
 BOOLEAN
 IsEfiBootVarsValid (
     IN CHAR16               *Name,
@@ -192,17 +221,26 @@ IsEfiBootVarsValid (
     }        
     return FALSE;
 }
-
-/**
- * Procedure to preserve NVRAM Variables before re-flashing.
- *
- */
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------
+// Procedure:   PreserveVariables
+//
+// Description: Preserve all variables that GUID is {77fa9abd-0359-4d32-bd60-28f4e78f784b}.
+//
+// Input:       NONE
+//
+// Output:      NONE
+//
+// Returns:     NONE
+//
+//----------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID PreserveVariables(VOID)
 {
-    UINTN               VarNameSize, VariableSize, ExtAuthHdrSize, Result;
+    UINTN               VarNameSize = 2, VariableSize, ExtAuthHdrSize, Result;
     UINTN               MaxVarNameSize;
     CHAR16              *VarName = NULL, *OldVarName = NULL;
-    UINT8               *VariableData, *pData, i, j;
+    UINT8               *VariableData, *pData, i, j, IsEfiBootVars = 0;
     UINT32              VariableAttr;
     EFI_GUID            VarGuid;
     EFI_STATUS          Status;
@@ -375,17 +413,27 @@ VOID PreserveVariables(VOID)
     if (NvramControl) NvramControl->ShowBootTimeVariables(FALSE);
     pSmst->SmmFreePool(VarName);
 }
-
-/**
- * Procedure to restore the preserved Variables after re-flashing.
- *
- */
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------
+// Procedure:   RestoreVariables
+//
+// Description: Restore all variables that GUID is {77fa9abd-0359-4d32-bd60-28f4e78f784b}.
+//
+// Input:       NONE
+//
+// Output:      NONE
+//
+// Returns:     NONE
+//
+//----------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID RestoreVariables (VOID)
 {
     SAVED_VAR           *TempPoint;
-    UINTN               Index = 0;
+    UINTN               VariableSize = 0, Index = 0;
+    UINT8               *VariableData = NULL;
+    EFI_STATUS          Status;
 
-    if (NvramControl) NvramControl->ShowBootTimeVariables(TRUE);
     while ((FixedSaveVarsList[Index].Name != NULL) || (gRestoreVarList != NULL)) {
     
         // In order to restore Secure Boot Variables by order (dbx->db->kek->pk).
@@ -430,21 +478,33 @@ VOID RestoreVariables (VOID)
             }
 #endif  // #if PRESERVE_PASSWORDS
 
-            pRS->SetVariable (TempPoint->BootVarName, &TempPoint->Guid, \
-                        TempPoint->Attrib, TempPoint->Size, TempPoint->Data );
+            Status = pRS->SetVariable (  TempPoint->BootVarName,
+                                         &TempPoint->Guid,
+                                         TempPoint->Attrib,
+                                         TempPoint->Size,
+                                         TempPoint->Data );
         }
         pSmst->SmmFreePool(TempPoint->BootVarName);
         pSmst->SmmFreePool(TempPoint->Data);
         pSmst->SmmFreePool(TempPoint);
     }    
-    if (NvramControl) NvramControl->ShowBootTimeVariables(FALSE);
 }
 
-/**
- * Procedure to re-enable the BIOS Write Enable bit before Write/Erase procedures 
- * if BIOS_LOCK_ENABLE is set. 
- *
- */
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------
+// Procedure:   BiosLockEnablePatch
+//
+// Description: The procedure re-enable the BIOS Write Enable bit before
+//              Write/Erase procedures if BIOS_LOCK_ENABLE is set. 
+//
+// Input:       NONE
+//
+// Output:      NONE
+//
+// Returns:     NONE
+//
+//----------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID 
 BiosLockEnablePatchHook (
     IN UINT8            SwSmiNum,
@@ -457,10 +517,20 @@ BiosLockEnablePatchHook (
 
 #ifdef FAULT_TOLERANT_NVRAM_UPDATE
 #if FAULT_TOLERANT_NVRAM_UPDATE
-/**
- * Procedure to get the Main NVRAM state.
- *
- */
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------
+// Procedure:   GetNvramMainFFSStats
+//
+// Description: Get NVRAM Main FFS state.
+//
+// Input:       NONE
+//
+// Output:      NONE
+//
+// Returns:     NONE
+//
+//----------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_FFS_FILE_STATE*
 GetNvramMainFFSStats(
     VOID
@@ -480,11 +550,20 @@ GetNvramMainFFSStats(
     }else
         return NULL;
 }
-
-/**
- * Procedure to check the NVRAM state.
- *
- */
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------
+// Procedure:   CheckNVRAMArea
+//
+// Description: Check NVRam FFS state.
+//
+// Input:       NONE
+//
+// Output:      NONE
+//
+// Returns:     NONE
+//
+//----------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID
 CheckNVRAMArea(
     VOID
@@ -493,11 +572,20 @@ CheckNVRAMArea(
     NvramFFSState = *GetNvramMainFFSStats();
     NvramFFSStatePtr = GetNvramMainFFSStats();
 }
-
-/**
- * Procedure to Check Location of NVRAM region.
- *
- */
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------
+// Procedure:   NVRAMChanged
+//
+// Description: Check Location of NVRAM region.
+//
+// Input:       NONE
+//
+// Output:      NONE
+//
+// Returns:     TRUE - Location of NVRAM been changed.
+//
+//----------------------------------------------------------------------
+//<AMI_PHDR_END>
 BOOLEAN
 NVRAMChanged(
     VOID
@@ -520,12 +608,21 @@ NVRAMChanged(
 
     return FALSE;
 }
-
-
-/**
- * Procedure to update Backup NVRAM area if NVRAM is working in Backup.
- *
- */
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------
+// Procedure:   UpdateNVRAMArea
+//
+// Description: If NVRam updated and current NVRam runs at Backup address.
+//              also update NVRAM Backup address.
+//
+// Input:       NONE
+//
+// Output:      NONE
+//
+// Returns:     NONE
+//
+//----------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID
 UpdateNVRAMArea(
     VOID
@@ -552,7 +649,6 @@ UpdateNVRAMArea(
         return;
     NumberOfPages = ((NVRAM_SIZE) >> 12);
     Status = pSmst->SmmAllocatePages(AllocateAnyPages, EfiRuntimeServicesData, NumberOfPages, &Phy_Address);
-    Buffer = (UINT8*)Phy_Address;
 
     // NVRAM updated !!
     // Move NVRAM Main to NVRAM Backup
@@ -561,6 +657,7 @@ UpdateNVRAMArea(
     // AMD SPI can't read SPI ROM as buffer.
     if(!EFI_ERROR(Status))
     {
+        Buffer = (UINT8*)Phy_Address;
         Flash->Read(
               (UINT8*)(NVRAM_ADDRESS), NVRAM_SIZE, Buffer);
 
@@ -587,23 +684,39 @@ UpdateNVRAMArea(
 }
 #endif
 #endif
-
-
-/**
- * Procedure to Disable Power Button while flashing.
- *
- */
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------
+// Procedure:   DisablePowerButton
+//
+// Description: Disable Power Button when AFU.
+//
+// Input:       NONE
+//
+// Output:      NONE
+//
+// Returns:     NONE
+//
+//----------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID DisablePowerButton(VOID)
 {
     // Disable PWR Button SMI
     IoWrite16(PM_BASE_ADDRESS + 0x02, IoRead16(PM_BASE_ADDRESS + 0x02) & 0xFEDF);
 }
-
-
-/**
- * Procedure to Enable Power Button after flashing.
- *
- */
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------
+// Procedure:   EnablePowerButton
+//
+// Description: Re-Enable PowerButton after flash BIOS
+//
+// Input:       NONE
+//
+// Output:      NONE
+//
+// Returns:     NONE
+//
+//----------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID EnablePowerButton (VOID)
 {
     //Clear All PM  Statuses
@@ -611,99 +724,74 @@ VOID EnablePowerButton (VOID)
     // Re-ensable PWR Button SMI
     IoWrite16(PM_BASE_ADDRESS + 0x02, BIT05 + BIT08);
 }
-
-
-/**
- * Procedure to Wait till KBC I/P buffer is free..
- *
- * @retval EFI_SUCCESS KBC I/P buffer is free.
- * @retval EFI_TIMEOUT Wait for KBC I/P buffer free is Timeout.
- * @retval EFI_NO_RESPONSE KBC is not supproted.
- *
- */
-static EFI_STATUS KbcIbFree(VOID)
-{
-    UINT32      i;
-    if (IoRead8(0x64) == 0xff) return EFI_NO_RESPONSE;
-    for (i = 0; i < 0x100000; i++) {
-        if (!(IoRead8(0x64) & BIT01)) return EFI_SUCCESS;
-    }
-    return EFI_TIMEOUT;
-}
- 
-/**
- * Procedure to Disable USB Keyboard while flashing.
- *
- */
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------
+// Procedure:   DisableUSBKBD
+//
+// Description: Disable USB Keyboard when flashing BIOS.
+//
+// Input:       NONE
+//
+// Output:      NONE
+//
+// Returns:     NONE
+//
+//----------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID DisableUSBKBD(VOID)
 {
-    EFI_STATUS Status;
-#if AMIUSB_SUPPORT == 1
-#if USB_DRIVER_MAJOR_VER >= 10
-    AMI_USB_SMM_PROTOCOL	*UsbSmmProtocol = NULL;
-    URP_STRUC               UrpStruc;
-    Status = pSmst->SmmLocateProtocol(&gAmiUsbSmmProtocolGuid, NULL, &UsbSmmProtocol);
-    if (EFI_ERROR(Status)) return;
-    // USBAPI_KbcAccessControl is the 17th API_FUNC in UsbApiTable.    
-    UrpStruc.ApiData.KbcControlCode = 1;    
-    gUsbRtKbcAccessControl = (API_FUNC)UsbSmmProtocol->UsbApiTable[17];
-    if (gUsbRtKbcAccessControl != NULL) gUsbRtKbcAccessControl(&UrpStruc);
-#else
-    UINTN    VariableSize = sizeof(UINTN);
     EFI_GUID AmiGlobalVariableGuid = AMI_GLOBAL_VARIABLE_GUID;
-    Status = pRS->GetVariable (L"USB_POINT", \
-                &AmiGlobalVariableGuid, NULL, &VariableSize, &gUsbRtKbcAccessControl);
-    if (EFI_ERROR(Status)) return;
-    // Directly invoke th UsbRtKbcAccessContol avoiding to call outside SMM.
-    if (gUsbRtKbcAccessControl != NULL) gUsbRtKbcAccessControl(1);
-#endif
-#endif
+    UINTN    VariableSize = sizeof(UINTN);
+    UINTN    pUSB;
+    EFI_STATUS Status;
 
-    // Disable KBC.
-#if defined EMUL6064_SUPPORT && (EMUL6064_SUPPORT == 1)
-    Status = pSmst->SmmLocateProtocol(&gEmul6064TrapProtocolGuid, NULL, &gEmulationTrap);
-    if (!EFI_ERROR(Status) && gEmulationTrap) gEmulationTrap->TrapDisable(gEmulationTrap);
+    Status = pRS->GetVariable (  L"USB_POINT",
+                        &AmiGlobalVariableGuid,
+                        NULL,
+                        &VariableSize,
+                        &pUSB);
+#if AMIUSB_SUPPORT == 1
+    if (!EFI_ERROR(Status)) gAmiUsb = (EFI_USB_PROTOCOL*)pUSB;
+    if (gAmiUsb != NULL) gAmiUsb->UsbRtKbcAccessControl(1);
 #endif
-    Status = KbcIbFree();
-    if (!EFI_ERROR(Status)) IoWrite8(0x64, 0xad);
-    if (!((gKbcPortData = IoRead8(0x21)) & BIT01)) IoWrite8(0x21, gKbcPortData | BIT01);
 }
-
-
-/**
- * Procedure to Re-enable USB Keyboard after flashing.
- *
- */
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------
+// Procedure:   EnableUSBKBD
+//
+// Description: Re-Enable USB KeyBoard after flashing BIOS
+//
+// Input:       NONE
+//
+// Output:      NONE
+//
+// Returns:     NONE
+//
+//----------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID EnableUSBKBD (VOID)
 {
-    // Enable KBC.
-    if (!EFI_ERROR(KbcIbFree())) IoWrite8(0x64, 0xae);
-    if (!(gKbcPortData & BIT01)) IoWrite8(0x21, gKbcPortData & ~BIT01);
-#if defined EMUL6064_SUPPORT && (EMUL6064_SUPPORT == 1)
-    if (gEmulationTrap) gEmulationTrap->TrapEnable(gEmulationTrap);
-#endif	
 #if AMIUSB_SUPPORT == 1
-{
-#if USB_DRIVER_MAJOR_VER >= 10
-    URP_STRUC               UrpStruc;
-    UrpStruc.ApiData.KbcControlCode = 0;    
-    if (gUsbRtKbcAccessControl != NULL) gUsbRtKbcAccessControl(&UrpStruc);
-#else
-    if (gUsbRtKbcAccessControl != NULL) gUsbRtKbcAccessControl(0);
-#endif
-}    
+    if (gAmiUsb != NULL) gAmiUsb->UsbRtKbcAccessControl(0);
 #endif
 }
 
 #if AFU_BUFFER_IN_SHADOW
 #include <AmiCspLib.h>
-/**
- * Procedure to transfer data via Shadow RAM between BIOS and Flash Tool.
- *
- * @param Data Software SMI function of SmiFlash.
- * @param pCommBuff Buffer provided from Flash Tool.
- *
- */
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------
+// Procedure:   UpdateShadowBuffer
+//
+// Description:
+//
+// Input:
+//
+// Output:
+//
+// Returns:
+//
+//----------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID UpdateShadowBuffer(
   IN     UINT8  Data, 
   IN OUT UINT64 pCommBuff
@@ -713,42 +801,47 @@ VOID UpdateShadowBuffer(
     static UINT8*   Buffer = 0;
     UINT32          LowBufferAddress, HighBufferAddress;
 
-    if(Data == SMIFLASH_ENABLE_FLASH) {
+    if(Data == SMIFLASH_ENABLE_FLASH)
         OemRuntimeShadowRamWrite(TRUE);
-        return ;
-    }    
-    if((UINTN)Buffer == 0)
+    else
     {
-        Buffer = (UINT8*)0xF0000;
-        for(;*(UINT32*)Buffer != 0x46534124 && 
-                    ((UINTN)Buffer < 0x100000);(UINTN)Buffer++);
+        if((UINTN)Buffer == 0)
+        {
+            Buffer = (UINT8*)0xF0000;
+            for(;*(UINT32*)Buffer != 0x46534124 && 
+                        ((UINTN)Buffer < 0x100000);(UINTN)Buffer++);
+        }
+
+        if((UINTN)Buffer == 0xFFFFF)
+            return;
+        // Skip Sig
+        FixLen = *(Buffer + 4);
+
+        if(*(UINT32*)(Buffer + FixLen) == 0 || 
+           *(UINT32*)(Buffer + FixLen) == 0xFFFFFFFF)
+            return;
+
+        LowBufferAddress = *(UINT32*)(Buffer + FixLen);
+        HighBufferAddress = 0;
+        pCommBuff           = HighBufferAddress;
+        pCommBuff           = Shl64(pCommBuff, 32);
+        pCommBuff           += LowBufferAddress;
     }
-    
-    if((UINTN)Buffer == 0xFFFFF)
-        return;
-    // Skip Sig
-    FixLen = *(Buffer + 4);
-    
-    if(*(UINT32*)(Buffer + FixLen) == 0 || 
-       *(UINT32*)(Buffer + FixLen) == 0xFFFFFFFF)
-        return;
-    
-    LowBufferAddress = *(UINT32*)(Buffer + FixLen);
-    HighBufferAddress = 0;
-    pCommBuff           = HighBufferAddress;
-    pCommBuff           = Shl64(pCommBuff, 32);
-    pCommBuff           += LowBufferAddress;
-    
 }
-
-
-/**
- * Procedure to clear the used Shadow RAM.
- *
- * @param Data Software SMI function of SmiFlash.
- * @param pCommBuff Buffer provided from Flash Tool.
- *
- */
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------
+// Procedure:   ClearShadowBuffer
+//
+// Description: Elink for Disable shadow and clear buffer pointer
+//
+// Input:
+//
+// Output:
+//
+// Returns:
+//
+//----------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID ClearShadowBuffer (
   IN     UINT8  Data, 
   IN OUT UINT64 pCommBuff
@@ -757,34 +850,43 @@ VOID ClearShadowBuffer (
     UINT8           FixLen;
     static UINT8*   Buffer = 0;
 
-    if(Data == SMIFLASH_DISABLE_FLASH) {
+    if(Data == SMIFLASH_DISABLE_FLASH)
         OemRuntimeShadowRamWrite(FALSE);
-        return ;
-    }
-    if((UINTN)Buffer == 0)
+    else
     {
-        Buffer = (UINT8*)0xF0000;
-        for(;*(UINT32*)Buffer != 0x46534124 && 
-                    ((UINTN)Buffer < 0x100000);(UINTN)Buffer++);
-        
-    }
-    if((UINTN)Buffer == 0xFFFFF)
-        return;
+        if((UINTN)Buffer == 0)
+        {
+            Buffer = (UINT8*)0xF0000;
+            for(;*(UINT32*)Buffer != 0x46534124 && 
+                        ((UINTN)Buffer < 0x100000);(UINTN)Buffer++);
+            
+        }
+        if((UINTN)Buffer == 0xFFFFF)
+            return;
 
-    // Skip Sig
-    FixLen = *(Buffer + 4);
-    // Clear Buffer address
-    *(UINT32*)(Buffer + FixLen) = 0;
-    
+        // Skip Sig
+        FixLen = *(Buffer + 4);
+        // Clear Buffer address
+        *(UINT32*)(Buffer + FixLen) = 0;
+    }
 }
 #endif
 #else // #if defined _OUTSIDE_SMM_
 //*********** OUTSIDE SMM ***********************************************
 #if defined RECOVERY_PRESERVE_VARS_IN_SMM && RECOVERY_PRESERVE_VARS_IN_SMM == 1
-/**
- * Procedure to generate the SW SMI Call.
- *
- */
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:   mSMIFlashSmi
+//
+// Description: mSMIFlashSmi structure for generating SW SMI call. 
+//
+// Input:       
+//
+// Output:      
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 static FUNC_BLOCK FuncBlock = {0,0,0,0};
 static UINT8 mSMIFlashSmi[] = {
     0x50,                   // push eax
@@ -802,12 +904,19 @@ static UINT8 mSMIFlashSmi[] = {
     0x58,                   // pop eax
     0xC3,                   // ret
 };//mSMIFlashSmi[]
-
-
-/**
- * Procedure to preserve variable in SMM before BIOS recovery.
- *
- */
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:   RecoveryHookBeforeFlash
+//
+// Description: This hook preserves variables in SMM while reflash update.
+//
+// Input:       
+//
+// Output:      
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID ReflashBeforeUpdateHook (VOID)
 {
     void    (*IssueSWSMI)(void);
@@ -821,11 +930,19 @@ VOID ReflashBeforeUpdateHook (VOID)
     Flash->DeviceWriteDisable(); 
 #endif
 }
-
-/**
- * Procedure to restores variables from SMM after BIOS recovery.
- *
- */
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:   RecoveryHookAfterFlash
+//
+// Description: This hook restores variables from SMM after reflash update.
+//
+// Input:       
+//
+// Output:      
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID ReflashAfterUpdateHook (VOID)
 {
     void    (*IssueSWSMI)(void);
@@ -845,7 +962,7 @@ VOID ReflashAfterUpdateHook (VOID)
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2013, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **

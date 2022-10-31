@@ -34,14 +34,6 @@
 //----------------------------------------------------------------------------
 //<AMI_FHDR_END>
 
-//EIP176554 >>
-#include <Token.h>
-
-#if SB_DEVICE_REGS_RC_DEFINITION_SUPPORT
-#include SB_DEVICE_REGS_RC_DEFINITION_HEADER
-#endif
-//EIP176554 <<
-
 //----------------------------------------------------------------------------
 
 #define SB_PCI_CFG_ADDRESS(bus,dev,func,reg)    \
@@ -91,11 +83,11 @@
 #define SB_DEV                  0x1f    // South Bridge Device Number
 #define LPC_DEVICE              SB_DEV
 #define SMBUS_DEV				SB_DEV	// SMBUS Device Number
-#define LPSS_SPI_DEV			0x1E	// LPSS SPI Device Number
-#define LPSS_HSUART_DEV			0x1E	// LPSS HSUART Device Number
-#define LPSS_PWM_DEV			0x1E	// LPSS PWM Device Number
+#define LPSS_SPI_DEV			0x1d	// LPSS SPI Device Number
+#define LPSS_HSUART_DEV			0x1d	// LPSS HSUART Device Number
+#define LPSS_PWM_DEV			0x1d	// LPSS PWM Device Number
 #define LPSS_DMAC1_DEV			0x18	// LPSS_DMAC 1 Device Number
-#define LPSS_DMAC0_DEV			0x1E	// LPSS_DMAC 0 Device Number
+#define LPSS_DMAC0_DEV			0x1d	// LPSS_DMAC 0 Device Number
 #define LPSS_I2C_DEV			0x18	// LPSS_I2C Device Number
 #define XHCI_DEV                0x14    // XHCI Controller Device Number
 #define EHCI_DEV                0x1d    // EHCI Controller Device Number
@@ -283,6 +275,7 @@ VOID SaveRestoreRegisters(BOOLEAN Save);
 #define CMOS_IO_EXT_DATA        0x73    // CMOS I/O Extended Data Port
 #define IO_DELAY_PORT           0xed    // Use for I/O delay
 
+#endif  // #ifndef  _SB_H_
 
 //(EIP131491+)>>
 //----------------------------------------------------------------------------
@@ -438,57 +431,6 @@ VOID SaveRestoreRegisters(BOOLEAN Save);
 #define SEC_DEVICE_BUS_DEV_FUN      	SEC_DEVICE_REG(0)
 //#define LAN_BUS_DEV_FUN             	LAN_REG(0)
 #define SATA_BUS_DEV_FUN            	SATA_REG(0)
-
-//EIP176554 >>
-#define SB_PCIE_BUS                   0
-#define SB_PCIE_DEV                   PCI_DEVICE_NUMBER_PCH_PCIE_ROOT_PORTS
-#define SB_PCIE1_FUN                  PCI_FUNCTION_NUMBER_PCH_PCIE_ROOT_PORT_1
-#define SB_PCIE2_FUN                  PCI_FUNCTION_NUMBER_PCH_PCIE_ROOT_PORT_2
-#define SB_PCIE3_FUN                  PCI_FUNCTION_NUMBER_PCH_PCIE_ROOT_PORT_3
-#define SB_PCIE4_FUN                  PCI_FUNCTION_NUMBER_PCH_PCIE_ROOT_PORT_4
-
-#define SB_PCIE_MAX_PORTS             PCH_PCIE_MAX_ROOT_PORTS
-#define SB_USB_MAX_PHYSICAL_PORTS     PCH_USB_MAX_PHYSICAL_PORTS
-#define SB_SATA_MAX_PORTS             PCH_AHCI_MAX_PORTS
-#define SB_HDA_DEV                    AZALIA_DEV
-#define SB_HDA_FUN                    AZALIA_FUNC
-#define R_SB_HDA_COMMAND              R_PCH_HDA_STSCMD
-#define B_SB_HDA_COMMAND_MSE          B_PCH_HDA_STSCMD_MSE
-#define B_SB_HDA_COMMAND_BME          B_PCH_HDA_STSCMD_BME
-#define R_SB_HDA_STATESTS             R_HDA_STATESTS
-#define R_SB_HDA_HDBARU               R_PCH_HDA_HDBARU
-#define R_SB_HDA_HDBARL               R_PCH_HDA_HDBARL
-#define R_SB_HDA_IC                   R_HDA_IC
-#define R_SB_HDA_IR                   R_HDA_IR
-#define R_SB_HDA_IRS                  R_HDA_ICS
-#define B_SB_HDA_IRS_IRV              B_HDA_ICS_IRV
-#define B_SB_HDA_IRS_ICB              B_HDA_ICS_ICB
-#define V_SB_HDA_HDBAR_SIZE           V_PCH_HDA_HDBAR_SIZE
-#define SB_HDA_MAX_LOOP_TIME          10
-#define SB_HDA_MAX_SID_NUMBER         4
-
-#define SB_SATA_BUS                   0
-#define SB_SATA_DEV                   PCI_DEVICE_NUMBER_PCH_SATA
-#define SB_SATA_FUN                   PCI_FUNCTION_NUMBER_PCH_SATA
-#define R_SB_SATA_PI                  R_PCH_SATA_PI_REGISTER
-#define R_SB_SATA_IDETIM              R_PCH_SATA_PTIM
-#define R_SB_SATA_PCS                 R_PCH_SATA_PCS
-#define R_SB_SATA_SIRI                R_PCH_SATA_SIRI
-#define R_SB_SATA_STRD                R_PCH_SATA_SIRD
-#define R_SB_SATA_COMMAND             R_PCH_SATA_COMMAND 
-#define R_SB_SATA_ABAR                R_PCH_SATA_ABAR
-#define R_SB_SATA_AHCI_PI             R_PCH_SATA_AHCI_PI
-#define R_SB_SATA_AHCI_CAP            R_PCH_SATA_AHCI_CAP
-#define R_SB_SATA_AHCI_P0CMD          R_PCH_SATA_AHCI_P0CMD
-
-#define SB_ACPI_PM1_STS               R_PCH_ACPI_PM1_STS
-#define SB_ACPI_PM1_EN                R_PCH_ACPI_PM1_EN
-#define SB_ACPI_PM1_CNTL              R_PCH_ACPI_PM1_CNT
-#define SB_ACPI_GPE0_STS              R_PCH_ACPI_GPE0a_STS
-#define SB_ACPI_GPE0_EN               R_PCH_ACPI_GPE0a_EN
-#define SB_ACPI_ALTGP_SMI_STS         R_PCH_ALT_GP_SMI_STS
-//EIP176554 <<
-#endif  // #ifndef  _SB_H_
 
 //*************************************************************************
 //*************************************************************************

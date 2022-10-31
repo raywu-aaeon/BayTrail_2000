@@ -1,59 +1,73 @@
-//***********************************************************************
-//***********************************************************************
-//**                                                                   **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.          **
-//**                                                                   **
-//**                       All Rights Reserved.                        **
-//**                                                                   **
-//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093         **
-//**                                                                   **
-//**                       Phone: (770)-246-8600                       **
-//**                                                                   **
-//***********************************************************************
-//***********************************************************************
+//**********************************************************************
+//**********************************************************************
+//**                                                                  **
+//**        (C)Copyright 1985-2013, American Megatrends, Inc.         **
+//**                                                                  **
+//**                       All Rights Reserved.                       **
+//**                                                                  **
+//**         5555 Oakbrook Pkwy, Suite 200, Norcross, GA 30093        **
+//**                                                                  **
+//**                       Phone: (770)-246-8600                      **
+//**                                                                  **
+//**********************************************************************
+//**********************************************************************
+//**********************************************************************
+// $Header: /Alaska/SOURCE/Modules/HddSecurity/HddPassword/ForceHddPassword.c 2     10/11/10 6:19p Krishnakumarg $
+//
+// $Revision: 2 $
+//
+// $Date: 10/11/10 6:19p $
+//**********************************************************************
 
-/** @file ForceHddPassword.c
-    Send Disable Software Preservation command when the 
-    FORCE_HDD_PASSWORD_PROMPT token is set to 1
+//<AMI_FHDR_START>
+//----------------------------------------------------------------------------
+//
+// Name:        ForceHddPassword.c
+//
+// Description: Send Disable Software Preservation command when the 
+//              FORCE_HDD_PASSWORD_PROMPT token is set to 1
+//
+//----------------------------------------------------------------------------
+//<AMI_FHDR_END>
 
-**/
-
-//---------------------------------------------------------------------------
-
-#include "Token.h"
-#if ( defined(AHCI_SUPPORT) && (AHCI_SUPPORT != 0) )
+#include "Efi.h"
+#include "token.h"
+#include <AmiLib.h>
 #include <AmiDxeLib.h>
-#include "Protocol/PciIo.h"
-#include "Protocol/DevicePath.h"
-#include "Protocol/DriverBinding.h"
-#include "Protocol/BlockIo.h"
-#include <IndustryStandard/AmiAtaAtapi.h>
-#include <Protocol/AmiAhciBus.h>
+#include "Protocol\PciIo.h"
+#include "Protocol\DevicePath.h"
+#include "protocol\DriverBinding.h"
+#include "protocol\BlockIo.h"
+#include "Protocol\PDiskInfo.h"
+#include "Protocol\PIDEController.h"
+#include "Protocol\PIDEBus.h"
+#include "Protocol\PAhciBus.h"
+#include "Protocol\PIDEBus.h"
 
-//---------------------------------------------------------------------------
 
 EFI_RUNTIME_SERVICES  *gRT;
 EFI_BOOT_SERVICES     *gBS;
-#endif
 
-/**
-    Send the Disable software Preservation 
-
-    @param VOID
-
-    @retval VOID
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   DisableSoftwarePreservation
+//
+// Description: Send the Disable software Preservation 
+//
+// Input:       None
+//
+// Output:      None
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID
-DisableSoftwarePreservation (
-)
+DisableSoftwarePreservation ( )
 {
 #if FORCE_HDD_PASSWORD_PROMPT
-#if ( defined(AHCI_SUPPORT) && (AHCI_SUPPORT != 0) )
-    UINTN                    HandleCount;
-    EFI_HANDLE              *HandleBuffer;
-    UINT8                   i;
-    AMI_AHCI_BUS_PROTOCOL   *AhciBusInterface;
+    UINTN               HandleCount;
+    EFI_HANDLE          *HandleBuffer;
+    UINT8               i;
+    AHCI_BUS_PROTOCOL   *AhciBusInterface;
     SATA_DEVICE_INTERFACE   *SataDeviceInterface;
     DLINK                   *dlink;
     COMMAND_STRUCTURE       CommandStructure = {0};
@@ -76,7 +90,7 @@ DisableSoftwarePreservation (
     // Issue Disable Software Preservation command all the Sata Devices connected.
     //
     for (i = 0; i < HandleCount; i++) {
-        Status = gBS->HandleProtocol (HandleBuffer[i], &gAmiAhciBusProtocolGuid, (VOID**)&AhciBusInterface);
+        Status = gBS->HandleProtocol (HandleBuffer[i], &gAmiAhciBusProtocolGuid, &AhciBusInterface);
         if (!EFI_ERROR(Status)) {
             dlink = AhciBusInterface->SataDeviceList.pHead; 
             if (dlink){ 
@@ -102,20 +116,21 @@ DisableSoftwarePreservation (
          }
      }
 #endif
-#endif
     return;
 }
 
-//***********************************************************************
-//***********************************************************************
-//**                                                                   **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.          **
-//**                                                                   **
-//**                       All Rights Reserved.                        **
-//**                                                                   **
-//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093         **
-//**                                                                   **
-//**                       Phone: (770)-246-8600                       **
-//**                                                                   **
-//***********************************************************************
-//***********************************************************************
+
+//**********************************************************************
+//**********************************************************************
+//**                                                                  **
+//**        (C)Copyright 1985-2013, American Megatrends, Inc.         **
+//**                                                                  **
+//**                       All Rights Reserved.                       **
+//**                                                                  **
+//**         5555 Oakbrook Pkwy, Suite 200, Norcross, GA 30093        **
+//**                                                                  **
+//**                       Phone: (770)-246-8600                      **
+//**                                                                  **
+//**********************************************************************
+//**********************************************************************
+//**********************************************************************

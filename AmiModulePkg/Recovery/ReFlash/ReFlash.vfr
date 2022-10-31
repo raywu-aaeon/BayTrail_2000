@@ -12,10 +12,21 @@
 //**********************************************************************
 //**********************************************************************
 
-/** @file
-  Definition of module setup controls
-
-**/
+//**********************************************************************
+// $Header: /Alaska/BIN/Core/Modules/Recovery/ReFlash.vfr 16    11/12/11 6:48p Artems $
+//
+// $Revision: 16 $
+//
+// $Date: 11/12/11 6:48p $
+//**********************************************************************
+//<AMI_FHDR_START>
+//
+// Name:	ReFlash.vfr
+//
+// Description:	Reflash formset
+//
+//<AMI_FHDR_END>
+//**********************************************************************
 #include "ReFlash.h"
 
 formset guid = RECOVERY_FORM_SET_GUID,
@@ -33,27 +44,13 @@ formset guid = RECOVERY_FORM_SET_GUID,
 
 #if REFLASH_INTERACTIVE
 
-
 	form formid = RECOVERY_MAIN,
 		title = STRING_TOKEN(STR_RECOVERY);
 
-suppressif ideqval AUTOFLASH.UserOverride == 0;
-
-		    SUBTITLE(STRING_TOKEN(STR_SUBTITLE1))
-		    SUBTITLE(STRING_TOKEN(STR_SUBTITLE2))
-
-        suppressif NOT ideqval AUTOFLASH.VerificationStatus == 0;
-    		goto RECOVERY_MAIN,
-    			prompt  = STRING_TOKEN(STR_FLASH_ENABLE),
-    			help    = STRING_TOKEN(STR_EMPTY),
-                flags   = INTERACTIVE, key = FLASH_ENABLE_KEY;
-        endif;
-
-endif;
-
-suppressif NOT ideqval AUTOFLASH.UserOverride == 0;
-
-	suppressif ideqval SYSTEM_ACCESS.Access == SYSTEM_PASSWORD_ADMIN;
+		SUBTITLE(STRING_TOKEN(STR_SUBTITLE1))
+		SUBTITLE(STRING_TOKEN(STR_SUBTITLE2))
+		
+		suppressif ideqval SYSTEM_ACCESS.Access == SYSTEM_PASSWORD_ADMIN;
             text
                 help  = STRING_TOKEN(STR_EMPTY),
                 text  = STRING_TOKEN(STR_ACCESS_DENIED),
@@ -70,7 +67,7 @@ suppressif NOT ideqval AUTOFLASH.UserOverride == 0;
 
 		SUBTITLE(STRING_TOKEN(STR_OPTIONS))
 
-        grayoutif NOT ideqval AUTOFLASH.VerificationStatus == 0 OR ideqval SYSTEM_ACCESS.Access == SYSTEM_PASSWORD_USER;
+        grayoutif NOT ideqval AUTOFLASH.FailedRecovery == 0 OR ideqval SYSTEM_ACCESS.Access == SYSTEM_PASSWORD_USER;
 
 #if REFLASH_UPDATE_NVRAM_CONTROL
             checkbox varid = AUTOFLASH.UpdateNv,
@@ -87,8 +84,6 @@ suppressif NOT ideqval AUTOFLASH.UserOverride == 0;
     		endcheckbox;
 #endif
 
-/*
-
             checkbox varid = AUTOFLASH.UpdateMain,
     			prompt    = STRING_TOKEN(STR_UPDATE_MAIN),
     			help      = STRING_TOKEN(STR_UPDATE_MAIN_HELP),
@@ -101,8 +96,6 @@ suppressif NOT ideqval AUTOFLASH.UserOverride == 0;
                 endif
 #endif
     		endcheckbox;
-*/
-
 #if REFLASH_UPDATE_EC_FIRMWARE_CONTROL
             checkbox varid = AUTOFLASH.UpdateEC,
     			prompt    = STRING_TOKEN(STR_UPDATE_EC),
@@ -120,22 +113,17 @@ suppressif NOT ideqval AUTOFLASH.UserOverride == 0;
 
         endif;//grayoutif
 
-        suppressif NOT ideqval AUTOFLASH.VerificationStatus == 0 OR ideqval SYSTEM_ACCESS.Access == SYSTEM_PASSWORD_USER;
+        suppressif NOT ideqval AUTOFLASH.FailedRecovery == 0 OR ideqval SYSTEM_ACCESS.Access == SYSTEM_PASSWORD_USER;
     		goto RECOVERY_FLASH,
     			prompt  = STRING_TOKEN(STR_FLASH),
     			help    = STRING_TOKEN(STR_FLASH_HELP),
                 flags   = INTERACTIVE, key = FLASH_START_KEY;
         endif;
-
-endif;
-
 	endform;
 #endif //#if REFLASH_INTERACTIVE
 
 	form formid = RECOVERY_FLASH,
 		title = STRING_TOKEN(STR_RECOVERY_FLASH);
-
-    suppressif NOT ideqval AUTOFLASH.VerificationStatus == 0;
 		SUBTITLE(STRING_TOKEN(STR_UPDATE_WARNING1))
 		SUBTITLE(STRING_TOKEN(STR_UPDATE_WARNING2))
 		SUBTITLE(STRING_TOKEN(STR_UPDATE_WARNING3))
@@ -145,23 +133,12 @@ endif;
 #else
 		SUBTITLE(STRING_TOKEN(STR_UPDATE_WARNING_RESET_AUTO))
 #endif
-    endif;
-
-    suppressif ideqval AUTOFLASH.VerificationStatus == 0;
-		SUBTITLE(STRING_TOKEN(STR_UPDATE_ERROR1))
-		SUBTITLE(STRING_TOKEN(STR_UPDATE_ERROR2))
-		SUBTITLE(STRING_TOKEN(STR_UPDATE_ERROR3))
-    endif;
-
 		SEPARATOR
 
         INTERACTIVE_TEXT(STRING_TOKEN(STR_FLASH_PROGRESS_HELP), STRING_TOKEN(STR_EMPTY), STRING_TOKEN(STR_EMPTY), FLASH_PROGRESS_KEY)
-/*
 #define REFLASH_PROGRESS
 #include <ReflashDefinitions.h>
 #undef REFLASH_PROGRESS
-*/
-
 	endform;
 endformset;
 //**********************************************************************

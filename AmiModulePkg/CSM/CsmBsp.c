@@ -51,6 +51,16 @@ typedef EFI_STATUS (CSM_GET_NMI_INFORMATION)(OUT UINTN   *NmiInfo);
 extern CSM_GET_NMI_INFORMATION CSM_GET_NMI_INFORMATION_FUNCTIONS EndOfGetNmiInformationFunctions;
 CSM_GET_NMI_INFORMATION *CsmGetNmiInformationFunctions[] = { CSM_GET_NMI_INFORMATION_FUNCTIONS NULL };
 
+typedef EFI_STATUS (CSM_GET_OEM_INT_DATA)(  IN struct _EFI_LEGACY_BIOS_PLATFORM_PROTOCOL *This,
+                                            OUT VOID    **Table,
+                                            OUT UINTN   *TableSize,
+                                            OUT UINTN   *Location,
+                                            OUT UINTN   *Alignment,
+                                            IN  UINT16  LegacySegment,
+                                            IN  UINT16  LegacyOffset);
+extern CSM_GET_OEM_INT_DATA CSM_GET_OEM_INT_DATA_FUNCTIONS EndOfGetOemIntDataFunctions;
+CSM_GET_OEM_INT_DATA *CsmGetGetOemIntDataFunctions[] = { CSM_GET_OEM_INT_DATA_FUNCTIONS NULL };
+
 // Get Platform Handle ELINK function list
 typedef EFI_STATUS (CSM_GET_PLATFORM_HANDLE)(
     EFI_LEGACY_BIOS_PLATFORM_PROTOCOL *This,
@@ -174,7 +184,7 @@ UINT32 gSkipBcvDeviceList[] = SKIP_EARLY_BCV_DEVICES;
     @retval EFI_UNSUPPORTED     The value of SetTxtSwitchingMode is not valid.
 
 
-    @note  This function can change the policy of video switching for selected
+    @note  This function can change the policy of video swithcing for selected
           Option ROMs by looking up the PCI VID/DID. It also can change this
           policy for all OpROMs.
 
@@ -397,6 +407,35 @@ GetNmiInformation(
 }
 
 
+/**
+    Gets the OEM INT custom data
+
+    @note  This function returns EFI_UNSUPPORTED as it is currently replaced
+              with OEM interrupts support.
+
+**/
+
+EFI_STATUS GetOemIntData (
+    IN struct _EFI_LEGACY_BIOS_PLATFORM_PROTOCOL *This,
+    OUT VOID    **Table,
+    OUT UINTN   *TableSize,
+    OUT UINTN   *Location,
+    OUT UINTN   *Alignment,
+    IN  UINT16  LegacySegment,
+    IN  UINT16  LegacyOffset)
+{
+    UINTN i = 0;
+    EFI_STATUS Status = EFI_UNSUPPORTED;
+
+    for(i = 0; CsmGetGetOemIntDataFunctions[i] != NULL; i++)
+    {
+        Status = CsmGetGetOemIntDataFunctions[i](This, Table, TableSize, Location, Alignment, LegacySegment, LegacyOffset);
+        if(!EFI_ERROR(Status)) break;
+    }
+
+    return Status;
+}
+
 
 /**
     Finds the binary data or other platform information.
@@ -464,12 +503,17 @@ GetPlatformInfo (
             *Location = OPROM_MAX_ADDRESS;
             return EFI_SUCCESS;
 
+        case EfiGetPlatformBinaryOemIntData:
+            return GetOemIntData(This,
+                    Table, TableSize, Location, Alignment,
+                    LegacySegment, LegacyOffset);
+
         case EfiGetPlatformBinarySystemRom:
             return FindEmbeddedRom(CSM16_MODULEID, CSM16_VENDORID, CSM16_DEVICEID,
                     Table, TableSize);
 
         case EfiGetPlatformPciExpressBase:
-            *(UINT64*)Location =  PcdGet64 (PcdPciExpressBaseAddress);
+            *(UINT64*)Location = PcdGet64 (PcdPciExpressBaseAddress);
             return EFI_SUCCESS;
 
     }
@@ -786,7 +830,8 @@ SmmInit(
     SmmEntry->SmmPort = SW_SMI_IO_ADDRESS;
     SmmEntry->SmmData = USB_SWSMI;
 
-    //CSM specification 0.96 defines the pointer as UINT32
+//TODOx64: What is SmmTable pointer is more the 4G in 64 bit mode?
+//CSM specification 0.96 defines the pointer as UINT32
     ((EFI_TO_COMPATIBILITY16_BOOT_TABLE*)EfiToCompatibility16BootTable)->SmmTable = (UINT32)SmmTable;
 
     return EFI_SUCCESS;

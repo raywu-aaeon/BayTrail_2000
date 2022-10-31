@@ -11,8 +11,6 @@ LIBRARY_CLASS = LegacyBin
 LIB | TseStyleLegacy.lib
 [binaries.X64]
 LIB | TseStyleLegacyx64.lib
-[binaries.AARCH64]
-LIB | TseStyleLegacyAarch64.lib
 
 [Sources]
 
@@ -52,14 +50,13 @@ LIB | TseStyleLegacyAarch64.lib
   DebugLib
   UefiLib
   PrintLib
-#  UefiDriverEntryPoint
+  UefiDriverEntryPoint
 #  AmiIntrinsicLib
   ReportStatusCodeLib
   
   
  [BuildOptions]
 MSFT:*_*_*_CC_FLAGS = /DTSE_FOR_APTIO_4_50 
-GCC:*_*_*_CC_FLAGS = -DTSE_FOR_APTIO_4_50  
 *_*_*_BUILD_FLAGS   = -s 
 
 

@@ -80,7 +80,7 @@ typedef union _AMI_SDL_PCI_DEV_FLAGS{
         UINT8        Reserved3           	: 3; //BIT 37..39
         UINT8		 Reserved4; 			//bit 40..47
 //byte 7..8
-        UINT8        Reserved5[2];		// Reserved for future use
+        UINT8        Reserved5[2];		//TBD
     } Bits;
 } AMI_SDL_PCI_DEV_FLAGS;
 
@@ -137,8 +137,9 @@ typedef struct _AMI_SDL_CHIPSET_RESOURCE {
 	UINT64			ResBase;	//Base Address
 	UINT64			ResLength;	//Resource Length in bytes
 	EFI_GCD_MEMORY_TYPE	ResType;	//Same as in PI 1.2 Spec Vol 2.
+//	UINT64			ResType;
 	UINT64			Attributes; //if this field == -1 IO; !=-1 MMIO;
-	UINT64			SdlFlags;	// Reserved for future use
+	UINT64			SdlFlags;	//TBD
 } AMI_SDL_CHIPSET_RESOURCE;
 
 //<AMI_SHDR_START>
@@ -250,20 +251,26 @@ typedef struct _AMI_SDL_PCI_DEV_INFO {
 	EFI_GUID					RomSectionGuid;
 	AMI_SDL_PCI_FIX_BAR			FixedResources[7]; //Including RomBAR
 	UINT64              		ResourcePadding[7];
-	AMI_SDL_PCI_INIT_ROUTINE 	InitRoutine;
-   	UINT8                       SmbiosInfo[0x10];   // Reserved for future use
+	AMI_SDL_PCI_INIT_ROUTINE 	InitRoutine;        //TBD
+   	UINT8                       SmbiosInfo[0x10];   //TBD
 } AMI_SDL_PCI_DEV_INFO;
 
 
 typedef struct _AMI_SDL_PCI_DATA {
 	AMI_SDL_TBL_HEADER		Hdr;
-	UINT64             		PciGlobalFlags; // Reserved for future use
+//	UINT64					PciExpressBase;
+//	UINT64					PciExpressLength;
+	UINT64             		PciGlobalFlags;     //TBD
 	UINT32					PciDevCount;
 	UINT32					CspResCount;
 //PCI Device Table
-	AMI_SDL_PCI_DEV_INFO	PciDevices[1]; // There are PciDevCount elements in the array
+//TODO: Cange 41 to 1
+	AMI_SDL_PCI_DEV_INFO	PciDevices[1];
+//	AMI_SDL_PCI_DEV_INFO	PciDevices[41];
 //Chipset Specific resources table
-//  AMI_SDL_CHIPSET_RESOURCE CspResources[CspResCount];
+//TODO: Cange 11 to 1
+//  AMI_SDL_CHIPSET_RESOURCE CspResources[1];
+//   AMI_SDL_CHIPSET_RESOURCE CspResources[21];
 } AMI_SDL_PCI_DATA;
 
 
@@ -331,19 +338,21 @@ typedef struct _AMI_SDL_SIO_CHIP_INFO {
 	UINT8			        Dma2Reg;
    	UINT8                   GlobalRegMask[32];
    	UINT8                   LocalRegMask[32];
-	UINT8                   EnterCfgMode[0x10]; // Reserved for future use
-	UINT8                   ExitCfgMode[0x10]; // Reserved for future use
-   	UINT8                   SmbiosInfo[0x10];  // Reserved for future use
+	UINT8                   EnterCfgMode[0x10]; //TBD
+	UINT8                   ExitCfgMode[0x10];  //TBD
+   	UINT8                   SmbiosInfo[0x10];  //TBD
    	UINT32			        LogicalDevCount;
- 	AMI_SDL_LOGICAL_DEV_INFO LogicalDev[1]; // There are LogicalDevCount elements in the array
+//TODO  replace following line with correct definition
+ 	AMI_SDL_LOGICAL_DEV_INFO LogicalDev[1];
+//   	AMI_SDL_LOGICAL_DEV_INFO LogicalDev[14];
 } AMI_SDL_SIO_CHIP_INFO;
 
 
 typedef struct _AMI_SDL_SIO_DATA {
 	AMI_SDL_TBL_HEADER          Header; //Signature ="$SIODATA"
-    UINT64                      GlobalSioFalsgs; // Reserved for future use
+    UINT64                      GlobalSioFalsgs; //TBD
     UINT32                      SioCount;
-    AMI_SDL_SIO_CHIP_INFO       SioDev[1]; // There are SioCount elements in the array
+    AMI_SDL_SIO_CHIP_INFO       SioDev[1];
 } AMI_SDL_SIO_DATA;
 
 //<AMI_SHDR_START>

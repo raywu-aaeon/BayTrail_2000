@@ -3,7 +3,7 @@
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2015, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2013, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **
@@ -30,17 +30,12 @@
 /* Insert configuration defines, e.g., #define EAP_MD5, here, if needed. */
 // build_config.h
 #define PKCS12_FUNCS
-#define INTERNAL_MD5
 #define INTERNAL_SHA1
 #define INTERNAL_SHA256
-#define LTC_SHA512
 #define CONFIG_INTERNAL_X509        // x509
-#if CONFIG_X509_CERTIFICATE_EXPIRATION == 0
-#define CONFIG_IGNORE_X509_CERTIFICATE_EXPIRATION
-#endif
 #ifndef PEI_BUILD
 //#define INTERNAL_AES
-//#define INTERNAL_MD5
+#define INTERNAL_MD5
 #else // PEI_BUILD
 #if CONFIG_PEI_PKCS7 == 0
 #define CONFIG_NO_INTERNAL_PEI_PKCS7        //  x509 & PKCS7 
@@ -52,13 +47,6 @@
 #define CONFIG_NO_STDOUT_DEBUG
 #endif
 
-/* Hash fast generates a faster hash at a cost of ~20k in uncompressed code*/
-/* Size penalty to compressed Crypto PPI and DXE driver binaries is ~4.5k*/
-#if SHA256_FAST == 0
-#define HASH_SMALL_CODE
-#define LTC_SMALL_CODE
-#endif
-
 #define __BYTE_ORDER __BIG_ENDIAN
 
 // bignum math
@@ -67,64 +55,40 @@
 void *malloc(unsigned int Size);
 void free(void *ptr);
 void *realloc(void *OldPtr, unsigned int NewSize);
-void *memset(void* pBuffer, UINT8 Value, UINTN Size);
-void *memcpy(void* pDestination, void* pSource, unsigned long Length);
-int _stricmp( const CHAR8 *string1, const CHAR8 *string2 ); //for build error, conflicting types, Scrtlib.c : 106
+//void memset(void* pBuffer, UINT8 Value, UINTN Size);
+//void memcpy(void* pDestination, void* pSource, unsigned long Length);
+
+int _stricmp( const CHAR8 *string1, const CHAR8 *string2 ); //for build error, conflictiong types, Scrtlib.c : 106
 char *_strdup(const CHAR8 *s);
+
+//#define memcmp(s1, s2, n) MemCmp((s1), (s2), (n))
+#define memcmp MemCmp
+//#define memcpy(d, s, n) MemCpy((d), (s), (n))
+#define memcpy MemCpy
+#define memmove MemCpy
+//#define memset MemSet
+#define memset(d, n, s) MemSet((d), (s), (n))
+
 // defines for x509v3.c
+int sscanf (const char *buffer, const char *format, ...);
 int AtoiEX(char *s, UINT8 s_len, int* value);
-int Snprintf(char *str, UINTN size, const char *format, ...);
-
-//#define os_snprintf AsciiSPrint
-// AMI override in scrtlib.c. MDE version process '%s' as unicode strings
-#define os_snprintf Snprintf
-#define _stricmp (int)AsciiStriCmp
-#define memcmp CompareMem
-#define memcpy CopyMem
-#define memmove CopyMem
-//#ifndef memset
-#define memset(d, n, s) SetMem((d), (s), (n))
-//#endif
-#ifndef Atoi
-#define Atoi (int)AsciiStrDecimalToUintn
-#endif
-
-
+EFI_STATUS GetTime(EFI_TIME *Time, EFI_TIME_CAPABILITIES *Capabilities);
+#define os_snprintf (int)Sprintf_s
 #if defined(_WIN64)
 //typedef unsigned __int64        size_t;
 #else
+
 #ifndef __size_t__
 #define __size_t__
-//typedef unsigned int            size_t;
-typedef UINTN            size_t;
+typedef unsigned int            size_t;
 #endif // __size_t__
 
 #endif
 
-// Define var arg macros via their EDKII counterparts.
-// Unlike Aptio 4 definitions, EDKII macros support multiple tool chains.
-#ifndef va_list
-//typedef CHAR8   *va_list;
-#define va_list VA_LIST
-#endif
-#ifndef va_start
-//#define va_start(ap,v)  ( ap = (va_list)&(v) + _INTSIZEOF(v) )
-#define va_start(ap,v)  ( VA_START(ap,v),ap )
-#endif
-#ifndef va_arg
-//#define va_arg(ap,t)    ( *(t *)((ap += _INTSIZEOF(t)) - _INTSIZEOF(t)) )
-#define va_arg VA_ARG
-#endif
-#ifndef va_end
-//#define va_end(ap)      ( ap = (va_list)0 )
-#define va_end VA_END
-#endif
-// end variable argument support
-
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2015, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2013, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **

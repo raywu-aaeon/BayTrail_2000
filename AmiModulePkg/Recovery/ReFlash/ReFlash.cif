@@ -7,5 +7,5 @@
 "ReFlash.inf"
 [files]
 "ReFlash.sdl"	
-"ReFlash.txt"	
+"ReFlash.mak"	
 <endComponent>

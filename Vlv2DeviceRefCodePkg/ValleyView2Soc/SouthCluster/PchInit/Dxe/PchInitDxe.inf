@@ -85,7 +85,6 @@
   gEfiPciHostBridgeResourceAllocationProtocolGuid
   gLpssDummyProtocolGuid                             ## PRODUCES
   gEfiBootScriptSaveProtocolGuid
-  gEfiPciEnumerationCompleteProtocolGuid
 
 [Guids]
   gEfiPlatformInfoGuid

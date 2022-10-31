@@ -6,7 +6,6 @@
 [INF]
 "Elink\ElinkPei.inf"
 [files]
-"Elink\SbElinks.txt"
 "AmiChipsetModulePkg.sdl"	
 "AmiChipsetModulePkg.dec"	
 [parts]

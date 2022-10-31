@@ -1,0 +1,22 @@
+TOKEN
+    Name  = "AmiTcgOemlib_SUPPORT"
+    Value  = "1"
+    Help  = "Main switch to enable AmiTcmlib support in Project"
+    TokenType = Boolean
+End
+
+PATH
+    Name  = "AmiTcgOemlib_DIR"
+    Path  = "AmiModulePkg\TCG\AmiTcgOemLib"
+End
+
+INFComponent
+    Name  = "AmiTcgOemLib"
+    File  = "AmiTcgOemlib.inf"
+    Package  = "AmiModulePkg"
+End
+
+LibraryMapping
+    Class  = "BaseAmiTcgOemLib"
+    Instance  = "AmiModulePkg.AmiTcgOemLib"
+End

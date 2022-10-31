@@ -1,7 +1,7 @@
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2012, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **
@@ -12,19 +12,27 @@
 //**********************************************************************
 //**********************************************************************
 
-/** @file AmiGopPolicy.h
-    AmiGopPolicy Header File.
-
-**/
+//**********************************************************************
+// $Header: /Alaska/SOURCE/Modules/AmiGopPolicy/AmiGopPolicy.h 2     7/26/12 7:30a Josephlin $
+//
+// $Revision: 2 $
+//
+// $Date: 7/26/12 7:30a $
+//**********************************************************************
+//<AMI_FHDR_START>
+//
+// Name:        AmiGopPolicy.h
+//
+// Description:	AmiGopPolicy Header File.
+//
+//<AMI_FHDR_END>
+//**********************************************************************
 
 #ifndef _AMI_GOP_POLICY_H_
 #define _AMI_GOP_POLICY_H_
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#define AMI_GOP_POLICY_VARIABLE_GUID \
-    {0xc143929c, 0xbf5d, 0x423b, 0x99, 0x9b, 0xf, 0x2d, 0xd2, 0xb6, 0x1f, 0xf7}
 
 #pragma pack(1)
 
@@ -45,7 +53,7 @@ typedef struct _AMI_GOP_POLICY_SETUP_DATA
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2012, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **

@@ -1,150 +1,187 @@
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2012, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **
-//**         5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093     **
+//**         5555 Oakbrook Pkwy, Suite 200, Norcross, GA 30093        **
 //**                                                                  **
 //**                       Phone: (770)-246-8600                      **
 //**                                                                  **
 //**********************************************************************
 //**********************************************************************
 
-/** @file AhciController.c
-    Provides Access to AHCI Controller
-
-**/
-
-//---------------------------------------------------------------------------
+//**********************************************************************
+// $Header: /Alaska/SOURCE/Modules/AHCI/AhciController.c 34    8/21/12 2:28a Rameshr $
+//
+// $Revision: 34 $
+//
+// $Date: 8/21/12 2:28a $
+//**********************************************************************
+//<AMI_FHDR_START>
+//
+// Name: AhciController.c
+//
+// Description: Provides Access to AHCI Controller
+//
+//<AMI_FHDR_END>
+//**********************************************************************
 
 #include "AhciBus.h"
 
-//---------------------------------------------------------------------------
-
-#if BOOT_SECTOR_WRITE_PROTECT
-#include <Protocol/AmiBlockIoWriteProtection.h>
-extern AMI_BLOCKIO_WRITE_PROTECTION_PROTOCOL *AmiBlkWriteProtection;
-#endif
 
 BOOLEAN gPortReset = FALSE;             // Avoid Re-entry
 BOOLEAN gSoftReset = FALSE;             // Avoid Re-entry
-UINT64  gCommandListBaseAddress = 0;
-UINT64  gFisBaseAddress;
-extern  AHCI_PLATFORM_POLICY_PROTOCOL   *AhciPlatformPolicy;;
+UINT32  gCommandListBaseAddress = 0;
+UINT32  gFisBaseAddress;
+UINT32  gCommandListBaseAddress2;
+UINT32  gFisBaseAddress2;
 
-/**
-    Read from the Sata ATA Device
-
-    @param This 
-    @param MediaId 
-    @param IN EFI_LBA                      LBA,
-    @param BufferSize 
-    @param Buffer 
-
-    @retval EFI_STATUS
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:   SataBlkRead
+//
+// Description: Read from the Sata ATA Device
+//
+// Input:
+//  IN EFI_BLOCK_IO_PROTOCOL        *This,
+//  IN UINT32                       MediaId,
+//  IN EFI_LBA                      LBA,
+//  IN UINTN                        BufferSize,
+//  OUT VOID                        *Buffer
+//
+// Output:
+//      EFI_STATUS
+//
+// Modified:
+//      
+// Referrals: SataAtaBlkReadWrite 
+//
+// Notes:   
+//
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
-SataBlkRead (
-    IN EFI_BLOCK_IO_PROTOCOL    *This,
-    IN UINT32                   MediaId,
-    IN EFI_LBA                  LBA,
-    IN UINTN                    BufferSize,
-    OUT VOID                    *Buffer
-)
+SataBlkRead(
+    IN EFI_BLOCK_IO_PROTOCOL        *This,
+    IN UINT32                       MediaId,
+    IN EFI_LBA                      LBA,
+    IN UINTN                        BufferSize,
+    OUT VOID                        *Buffer
+ )
 {
-    return SataAtaBlkReadWrite(This, MediaId, LBA, BufferSize, Buffer, 0);
-}
 
-/**
-    Write to Sata ATA Device
-
-    @param This 
-    @param MediaId 
-    @param IN EFI_LBA                      LBA,
-    @param BufferSize 
-    @param Buffer 
-
-    @retval EFI_STATUS
-
-**/
-
-EFI_STATUS
-SataBlkWrite (
-    IN EFI_BLOCK_IO_PROTOCOL    *This,
-    IN UINT32                   MediaId,
-    IN EFI_LBA                  LBA,
-    IN UINTN                    BufferSize,
-    OUT VOID                    *Buffer
-)
-{
-#if BOOT_SECTOR_WRITE_PROTECT
     EFI_STATUS  Status;
-    
-    if(AmiBlkWriteProtection != NULL) {
-        // Get user input
-        Status = AmiBlkWriteProtection->BlockIoWriteProtectionCheck ( 
-                                                    AmiBlkWriteProtection,
-                                                    This,
-                                                    LBA,
-                                                    BufferSize
-                                                    );
-        // Abort operation if denied
-        if(Status == EFI_ACCESS_DENIED) {
-            return Status;
-        }
-    }
-#endif
 
-    return SataAtaBlkReadWrite(This, MediaId, LBA, BufferSize, Buffer, 1);
+    Status =  SataAtaBlkReadWrite(This, MediaId, LBA, BufferSize, Buffer, 0);
+
+    return Status;
 }
 
-/**
-    Read/Write to/from Sata ATA Device
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:   SataBlkWrite
+//
+// Description: Write to Sata ATA Device
+//
+// Input:
+//  IN EFI_BLOCK_IO_PROTOCOL        *This,
+//  IN UINT32                       MediaId,
+//  IN EFI_LBA                      LBA,
+//  IN UINTN                        BufferSize,
+//  OUT VOID                        *Buffer
+//
+// Output:
+//      EFI_STATUS
+//
+// Modified:
+//      
+// Referrals: SataAtaBlkReadWrite 
+//
+// Notes:   
+//
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
+EFI_STATUS
+SataBlkWrite(
+    IN EFI_BLOCK_IO_PROTOCOL        *This,
+    IN UINT32                       MediaId,
+    IN EFI_LBA                      LBA,
+    IN UINTN                        BufferSize,
+    OUT VOID                        *Buffer
+ )
+{
 
-    @param This 
-    @param MediaId 
-    @param IN EFI_LBA                      LBA,
-    @param BufferSize 
-    @param Buffer 
-    @param BOOLEAN                         READWRITE
+    EFI_STATUS  Status;
 
-    @retval EFI_STATUS
+    Status =  SataAtaBlkReadWrite(This, MediaId, LBA, BufferSize, Buffer, 1);
 
-    @note  
-      1. Check for validity of the input
-      2. Issue DMA or PIO Read/Write call.
+    return Status;
 
-**/
+}
 
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:   SataAtaBlkReadWrite
+//
+// Description: Read/Write to/from Sata ATA Device
+//
+// Input:
+//  IN EFI_BLOCK_IO_PROTOCOL        *This,
+//  IN UINT32                       MediaId,
+//  IN EFI_LBA                      LBA,
+//  IN UINTN                        BufferSize,
+//  OUT VOID                        *Buffer,
+//  BOOLEAN                         READWRITE
+//
+// Output:
+//      EFI_STATUS
+//
+// Modified:
+//      
+// Referrals: SataReadWriteBusMaster, SataReadWritePio 
+//
+// Notes:   
+//  1. Check for validity of the input
+//  2. Issue DMA or PIO Read/Write call.
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
 SataAtaBlkReadWrite (
-    IN EFI_BLOCK_IO_PROTOCOL    *This,
-    IN UINT32                   MediaId,
-    IN EFI_LBA                  LBA,
-    IN UINTN                    BufferSize,
-    OUT VOID                    *Buffer,
-    BOOLEAN                     READWRITE
+    IN EFI_BLOCK_IO_PROTOCOL        *This,
+    IN UINT32                       MediaId,
+    IN EFI_LBA                      LBA,
+    IN UINTN                        BufferSize,
+    OUT VOID                        *Buffer,
+    BOOLEAN                         READWRITE
 )
 {
-    EFI_STATUS               Status = EFI_DEVICE_ERROR;
-    SATA_DEVICE_INTERFACE    *SataDevInterface = ((SATA_BLOCK_IO *)This)->SataDevInterface;
-    EFI_BLOCK_IO_MEDIA       *BlkMedia = This->Media;
-    UINTN                    DataN;
-    UINTN                    BufferAddress;
+
+    EFI_STATUS  Status = EFI_DEVICE_ERROR;
+    SATA_DEVICE_INTERFACE   *SataDevInterface = ((SATA_BLOCK_IO *)This)->SataDevInterface;
+    EFI_BLOCK_IO_MEDIA      *BlkMedia = This->Media;
+    UINTN                   DataN;
+    UINTN                   BufferAddress;
 
     // Check if Media ID matches
     if (BlkMedia->MediaId != MediaId) return EFI_MEDIA_CHANGED;
 
     if (BufferSize == 0) return EFI_SUCCESS;
-
+    
+    //
     // If IoAlign values is 0 or 1, means that the buffer can be placed 
     // anywhere in memory or else IoAlign value should be power of 2. To be
     // properly aligned the buffer address should be divisible by IoAlign  
     // with no remainder. 
-    BufferAddress = (UINTN)Buffer;
+    // 
+   BufferAddress = (UINTN)Buffer;
     if((BlkMedia->IoAlign > 1 ) && (BufferAddress % BlkMedia->IoAlign)) {
         return EFI_INVALID_PARAMETER;
     }
@@ -174,100 +211,154 @@ SataAtaBlkReadWrite (
                         READWRITE);
 
     return Status;
+
 }
 
-/**
-    Read from the Sata ATAPI Device
-
-    @param This 
-    @param MediaId 
-    @param IN EFI_LBA                      LBA,
-    @param BufferSize 
-    @param Buffer 
-
-    @retval EFI_STATUS
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:   SataAtapiBlkRead
+//
+// Description: Read from the Sata ATAPI Device
+//
+// Input:
+//  IN EFI_BLOCK_IO_PROTOCOL        *This,
+//  IN UINT32                       MediaId,
+//  IN EFI_LBA                      LBA,
+//  IN UINTN                        BufferSize,
+//  OUT VOID                        *Buffer
+//
+// Output:
+//      EFI_STATUS
+//
+// Modified:
+// 
+// Referrals: SataAtapiBlkReadWrite 
+//
+// Notes:
+//
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 EFI_STATUS
 SataAtapiBlkRead(
-    IN EFI_BLOCK_IO_PROTOCOL    *This,
-    IN UINT32                   MediaId,
-    IN EFI_LBA                  LBA,
-    IN UINTN                    BufferSize,
-    OUT VOID                    *Buffer
+    IN EFI_BLOCK_IO_PROTOCOL        *This,
+    IN UINT32                       MediaId,
+    IN EFI_LBA                      LBA,
+    IN UINTN                        BufferSize,
+    OUT VOID                        *Buffer
  )
 {
-    return SataAtapiBlkReadWrite(This, MediaId, LBA, BufferSize, Buffer, 0);
+
+    EFI_STATUS  Status;
+
+    Status =  SataAtapiBlkReadWrite(This, MediaId, LBA, BufferSize, Buffer, 0);
+
+    return Status;
+
+
+
 }
 
-/**
-    Write to Sata ATAPI Device
-
-    @param This 
-    @param MediaId 
-    @param IN EFI_LBA                      LBA,
-    @param BufferSize 
-    @param Buffer 
-
-    @retval EFI_STATUS
-
-**/
-
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:   SataAtapiBlkWrite
+//
+// Description: Write to Sata ATAPI Device
+//
+// Input:
+//  IN EFI_BLOCK_IO_PROTOCOL        *This,
+//  IN UINT32                       MediaId,
+//  IN EFI_LBA                      LBA,
+//  IN UINTN                        BufferSize,
+//  OUT VOID                        *Buffer
+//
+// Output:
+//      EFI_STATUS
+//
+// Modified:
+//      
+// Referrals: SataAtapiBlkReadWrite
+//
+// Notes:
+//
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
-SataAtapiBlkWrite (
-    IN EFI_BLOCK_IO_PROTOCOL    *This,
-    IN UINT32                   MediaId,
-    IN EFI_LBA                  LBA,
-    IN UINTN                    BufferSize,
-    OUT VOID                    *Buffer
-)
+SataAtapiBlkWrite(
+    IN EFI_BLOCK_IO_PROTOCOL        *This,
+    IN UINT32                       MediaId,
+    IN EFI_LBA                      LBA,
+    IN UINTN                        BufferSize,
+    OUT VOID                        *Buffer
+ )
 {
-    return SataAtapiBlkReadWrite(This, MediaId, LBA, BufferSize, Buffer, 1);
+
+    EFI_STATUS  Status;
+
+    Status =  SataAtapiBlkReadWrite(This, MediaId, LBA, BufferSize, Buffer, 1);
+
+    return Status;
+
 }
 
-/**
-    Read/Write to/from Sata ATAPI Device
-
-        
-    @param This 
-    @param MediaId 
-    @param IN EFI_LBA                      LBA,
-    @param BufferSize 
-    @param Buffer 
-
-    @retval EFI_STATUS
-
-    @note  
-      1. Check for validity of Inputs
-      2. Check whether Media is present or not
-      3. Issue ATAPi Packet command
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:   SataAtapiBlkReadWrite
+//
+// Description: Read/Write to/from Sata ATAPI Device
+//
+// Input:
+//  IN EFI_BLOCK_IO_PROTOCOL        *This,
+//  IN UINT32                       MediaId,
+//  IN EFI_LBA                      LBA,
+//  IN UINTN                        BufferSize,
+//  OUT VOID                        *Buffer
+//
+// Output:
+//      EFI_STATUS
+//
+// Modified:
+//      
+// Referrals: 
+//
+// Notes:   
+//  1. Check for validity of Inputs
+//  2. Check whether Media is present or not
+//  3. Issue ATAPi Packet command
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
 SataAtapiBlkReadWrite(
-    IN EFI_BLOCK_IO_PROTOCOL    *This,
-    IN UINT32                   MediaId,
-    IN EFI_LBA                  LBA,
-    IN UINTN                    BufferSize,
-    OUT VOID                    *Buffer,
-    BOOLEAN                     READWRITE
+    IN EFI_BLOCK_IO_PROTOCOL        *This,
+    IN UINT32                       MediaId,
+    IN EFI_LBA                      LBA,
+    IN UINTN                        BufferSize,
+    OUT VOID                        *Buffer,
+    BOOLEAN                         READWRITE
  )
 {
-    EFI_STATUS               Status = EFI_DEVICE_ERROR;
-    SATA_DEVICE_INTERFACE    *SataDevInterface = ((SATA_BLOCK_IO *)This)->SataDevInterface;
-    EFI_BLOCK_IO_MEDIA       *BlkMedia = This->Media;
-    UINTN                    DataN;
-    ATAPI_DEVICE             *AtapiDevice = SataDevInterface->AtapiDevice;
-    COMMAND_STRUCTURE        CommandStructure;
-    INTN                     TotalNumberofBlocks;
-    INTN                     TransferLength;
-    UINTN                    BytesRemainingTobeRead;
-    VOID                     *TempBuffer = Buffer;
-    UINTN                    BufferAddress;
+
+    EFI_STATUS  Status = EFI_DEVICE_ERROR;
+    SATA_DEVICE_INTERFACE   *SataDevInterface = ((SATA_BLOCK_IO *)This)->SataDevInterface;
+    EFI_BLOCK_IO_MEDIA      *BlkMedia = This->Media;
+    UINTN                   DataN;
+    ATAPI_DEVICE            *AtapiDevice = SataDevInterface->AtapiDevice;
+    COMMAND_STRUCTURE       CommandStructure;
+    INTN                    TotalNumberofBlocks;
+    INTN                    TransferLength;
+    UINTN                   BytesRemainingTobeRead;
+    VOID                    *TempBuffer = Buffer;
+    UINTN                   BufferAddress;
 
 
     //  Check if Media Present
+
     if (BlkMedia->MediaPresent == FALSE) {
         Status = DetectAtapiMedia(SataDevInterface);
         if (Status == EFI_SUCCESS) return EFI_MEDIA_CHANGED;
@@ -276,6 +367,7 @@ SataAtapiBlkReadWrite(
     }
 
     //  Check if Media ID matches
+
     if (BlkMedia->MediaId != MediaId) return EFI_MEDIA_CHANGED;
 
     if (BufferSize == 0) return EFI_SUCCESS;
@@ -284,12 +376,14 @@ SataAtapiBlkReadWrite(
     // anywhere in memory or else IoAlign value should be power of 2. To be
     // properly aligned the buffer address should be divisible by IoAlign
     // with no remainder.
+
     BufferAddress = (UINTN)Buffer;
     if((BlkMedia->IoAlign > 1 ) && (BufferAddress % BlkMedia->IoAlign)) {
         return EFI_INVALID_PARAMETER;
     }
 
     //  Check whether the block size is multiple of BlkMedia->BlockSize
+
     DataN = BufferSize % BlkMedia->BlockSize;
     if (DataN) return EFI_BAD_BUFFER_SIZE;
 
@@ -298,6 +392,7 @@ SataAtapiBlkReadWrite(
     if (LBA > BlkMedia->LastBlock) return EFI_INVALID_PARAMETER;
 
     //  Check for Valid End LBA #8
+
     DataN = BufferSize / BlkMedia->BlockSize;
     if (LBA + DataN > BlkMedia->LastBlock + 1) return EFI_INVALID_PARAMETER;
 
@@ -309,6 +404,7 @@ SataAtapiBlkReadWrite(
         ZeroMemory (&CommandStructure, sizeof(CommandStructure));
 
         // Calculate # of blocks to be transferred
+
         if (TotalNumberofBlocks > 0x1000) //EIP132392
             TransferLength = 0x1000; //EIP132392
         else
@@ -332,8 +428,9 @@ SataAtapiBlkReadWrite(
 
         if (Status != EFI_SUCCESS) {
 
-            // Some error has occurred
+            // Some error has occured
             // Check if Device is getting ready. If yes, wait till it gets ready
+
             if (AtapiDevice->Atapi_Status == BECOMING_READY) {
                 Status = TestUnitReady(SataDevInterface);
             }
@@ -352,6 +449,7 @@ SataAtapiBlkReadWrite(
         if (CommandStructure.ByteCount != BytesRemainingTobeRead) return EFI_DEVICE_ERROR;
 
         // Update pointer
+
          TempBuffer =  (UINT8*)TempBuffer +BytesRemainingTobeRead;
         LBA += TransferLength;
     }
@@ -359,87 +457,121 @@ SataAtapiBlkReadWrite(
     return Status;
 }
 
-/**
-    Reset ATA device
-
-    @param This 
-    @param ExtendedVerification 
-
-    @retval EFI_STATUS
-
-**/
-
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:   SataReset
+//
+// Description: Reset ATA device
+//
+// Input:
+//  IN EFI_BLOCK_IO_PROTOCOL        *This,
+//  IN BOOLEAN                      ExtendedVerification
+//
+// Output:
+//  EFI_STATUS
+//
+// Modified:
+//      
+// Referrals: 
+//
+// Notes:
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
 SataReset (
-    IN EFI_BLOCK_IO_PROTOCOL    *This,
-    IN BOOLEAN                  ExtendedVerification
-)
+    IN EFI_BLOCK_IO_PROTOCOL        *This,
+    IN BOOLEAN                      ExtendedVerification
+ )
 {
     return EFI_SUCCESS;
 }
 
-/**
-    Flush the cache
-        
-    @param This 
-
-    @retval EFI_STATUS
-
-**/
-
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:   SataBlkFlush
+//
+// Description: Flush the cache
+// Input:
+//  IN EFI_BLOCK_IO_PROTOCOL            *This,
+//
+// Output:
+//  EFI_STATUS
+//
+// Modified:
+//      
+// Referrals:  
+//
+// Notes:
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
-SataBlkFlush (
-    IN EFI_BLOCK_IO_PROTOCOL    *This
-)
+SataBlkFlush(
+    IN EFI_BLOCK_IO_PROTOCOL        *This
+ )
 {
     return EFI_SUCCESS;
 }
 
 
-/**
-    Issues Read/Write Command and Read/Write the data from/to the ATA device
-
-        
-    @param IdeBusInterface 
-    @param Buffer 
-    @param UINTN                           ByteCount,
-    @param UINT64                          LBA
-    @param ReadWriteCommand 
-    @param ReadWrite Read/Write = 0/1
-
-    @retval *Buffer, EFI_STATUS
-
-    @note  
-  1. Get the Max. number of sectors that can be Read/written in one Read/Write PIO command
-  2. Update the Command Structure
-  3. Issue ExecutePioDataCommand.
-  4. If all the bytes are read exit else goto step 2 
-
-**/
-
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:   SataReadWritePio
+//
+// Description: Issues Read/Write Command and Read/Write the data from/to the ATA device
+//
+// Input:
+//  IN IDE_BUS_PROTOCOL             *IdeBusInterface,
+//  IN OUT VOID                     *Buffer,
+//  UINTN                           ByteCount,
+//  UINT64                          LBA
+//  IN UINT8                        ReadWriteCommand,
+//  IN BOOLEAN                      ReadWrite        Read/Write = 0/1
+//
+// Output:
+//  *Buffer, EFI_STATUS
+//
+// Modified:
+//      
+// Referrals: ExecutePioDataCommand 
+//
+// Notes:   
+//  1. Get the Max. number of sectors that can be Read/written in one Read/Write PIO command
+//  2. Update the Command Structure
+//  3. Issue ExecutePioDataCommand.
+//  4. If all the bytes are read exit else goto step 2 
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
-SataReadWritePio (
-    IN SATA_DEVICE_INTERFACE    *SataDevInterface,
-    IN OUT VOID                 *Buffer,
-    IN UINTN                    ByteCount,
-    IN UINT64                   LBA,
-    IN UINT8                    ReadWriteCommand,
-    IN BOOLEAN                  READWRITE
-) 
+SataReadWritePio(
+    IN SATA_DEVICE_INTERFACE        *SataDevInterface,
+    IN OUT VOID                     *Buffer,
+    IN UINTN                        ByteCount,
+    IN UINT64                       LBA,
+    IN UINT8                        ReadWriteCommand,
+    IN BOOLEAN                      READWRITE
+ ) 
 {
-    EFI_STATUS           Status;
-    UINT32               SectorCount;
-    INT64                MaxSectorCount;
-    INT64                Total_Number_Of_Sectors;
-    COMMAND_STRUCTURE    CommandStructure;
-    UINT32               SectorSize = ATA_SECTOR_BYTES;
-    UINT8                *TempBuffer = Buffer;
+    EFI_STATUS                      Status;
+    UINT32                          SectorCount;
+    INT64                           MaxSectorCount;
+    INT64                           Total_Number_Of_Sectors;
+    COMMAND_STRUCTURE               CommandStructure;
+    UINT32                          SectorSize = ATA_SECTOR_BYTES;
+    UINT8                           *TempBuffer = Buffer;
     if (Check48BitCommand(ReadWriteCommand)) 
         MaxSectorCount = MAX_SECTOR_COUNT_PIO_48BIT;
     else 
         MaxSectorCount = MAX_SECTOR_COUNT_PIO;
 
+    //
     // Calculate Sector Size
+    //
     if((SataDevInterface->IdentifyData.Reserved_104_126[2] & BIT14) && // WORD 106 valid? - BIT 14 - 1
        (!(SataDevInterface->IdentifyData.Reserved_104_126[2] & BIT15)) && // WORD 106 valid? - BIT 15 - 0
        (SataDevInterface->IdentifyData.Reserved_104_126[2] & BIT12)) { // WORD 106 bit 12 - Sectorsize > 256 words
@@ -488,70 +620,92 @@ SataReadWritePio (
         TempBuffer += CommandStructure.ByteCount;
         SectorCount = CommandStructure.ByteCount / SectorSize ;
         LBA += SectorCount;
+
     }
+
     return EFI_SUCCESS;
+
 }
 
-/**
-    Issues Read/Write Command with SubCommand feature
-    and Reads/Writes data to the ATA device.
-
-        
-    @param SataDevInterface 
-    @param Buffer 
-    @param ByteCount 
-    @param Features 
-    @param LBALow 
-    @param LBALowExp 
-    @param LBAMid 
-    @param LBAMidExp 
-    @param LBAHigh 
-    @param LBAHighExp 
-    @param ReadWriteCommand 
-    @param IN BOOLEAN                      READWRITE
-
-    @retval EFI_STATUS
-
-    @note  
-  1. Get the Max. number of sectors that can be transferred in one Read/Write PIO command
-  2. Update the Command Structure
-  3. Issue ExecutePioDataCommand.
-
-**/
-
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:   SataPioDataOut
+//
+// Description: Issues Read/Write Command with SubCommand feature
+//              and Reads/Writes data to the ATA device.
+//
+// Input:
+//    IN SATA_DEVICE_INTERFACE        *SataDevInterface,
+//    IN OUT VOID                     *Buffer,
+//    IN UINTN                        ByteCount,
+//    IN UINT8                        Features,
+//    IN UINT16                       LBALow,
+//    IN UINT8                        LBALowExp,
+//    IN UINT8                        LBAMid,
+//    IN UINT8                        LBAMidExp,
+//    IN UINT8                        LBAHigh,
+//    IN UINT8                        LBAHighExp,
+//    IN UINT8                        ReadWriteCommand
+//    IN BOOLEAN                      READWRITE
+//
+// Output:
+//    EFI_STATUS
+//
+// Modified:
+//      
+// Referrals: ExecutePioDataCommand 
+//
+// Notes:   
+//  1. Get the Max. number of sectors that can be transferred in one Read/Write PIO command
+//  2. Update the Command Structure
+//  3. Issue ExecutePioDataCommand.
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS SataPioDataOut (
-    IN SATA_DEVICE_INTERFACE    *SataDevInterface,
-    IN OUT VOID                 *Buffer,
-    IN UINTN                    ByteCount,
-    IN UINT8                    Features,
-    IN UINT8                    LBALow,
-    IN UINT8                    LBALowExp,
-    IN UINT8                    LBAMid,
-    IN UINT8                    LBAMidExp,
-    IN UINT8                    LBAHigh,
-    IN UINT8                    LBAHighExp,
-    IN UINT8                    ReadWriteCommand,
-    IN BOOLEAN                  READWRITE
-)
+    IN SATA_DEVICE_INTERFACE        *SataDevInterface,
+    IN OUT VOID                     *Buffer,
+    IN UINTN                        ByteCount,
+    IN UINT8                        Features,
+    IN UINT8                        LBALow,
+    IN UINT8                        LBALowExp,
+    IN UINT8                        LBAMid,
+    IN UINT8                        LBAMidExp,
+    IN UINT8                        LBAHigh,
+    IN UINT8                        LBAHighExp,
+    IN UINT8                        ReadWriteCommand,
+    IN BOOLEAN                      READWRITE
+ )
 {
-    EFI_STATUS           Status;
-    UINT32               SectorCount;
-    INT64                MaxSectorCount;
-    INT64                Total_Number_Of_Sectors;
-    COMMAND_STRUCTURE    CommandStructure;
-    UINT32               SectorSize = ATA_SECTOR_BYTES;
-    UINT64               LBAHighDword = 0;
+    EFI_STATUS                      Status;
+    UINT32                          SectorCount;
+    INT64                           MaxSectorCount;
+    INT64                           Total_Number_Of_Sectors;
+    COMMAND_STRUCTURE               CommandStructure;
+    UINT32                          SectorSize = ATA_SECTOR_BYTES;
+
+    UINT64                          LBAHighDword = 0;
 
     if (Check48BitCommand(ReadWriteCommand)) { 
         MaxSectorCount = MAX_SECTOR_COUNT_PIO_48BIT;
+        //
         //	if 48 Bit LBA form Upper Dword
+        //
         LBAHighDword |= LBAHighExp;
         LBAHighDword = ( Shl64(( Shl64( LBAHighDword, 8)| LBAMidExp), 8)| LBALowExp);
     } else { 
         MaxSectorCount = MAX_SECTOR_COUNT_PIO;
     }
 
+
+
+
+
+
+    //
     // Calculate Sector Size
+    //
     if((SataDevInterface->IdentifyData.Reserved_104_126[2] & BIT14) && // WORD 106 valid? - BIT 14 - 1
        (!(SataDevInterface->IdentifyData.Reserved_104_126[2] & BIT15)) && // WORD 106 valid? - BIT 15 - 0
        (SataDevInterface->IdentifyData.Reserved_104_126[2] & BIT12)) { // WORD 106 bit 12 - Sectorsize > 256 words
@@ -573,12 +727,15 @@ EFI_STATUS SataPioDataOut (
         ZeroMemory (&CommandStructure, sizeof(COMMAND_STRUCTURE));
 
         if (Check48BitCommand (ReadWriteCommand)) {
+            //
             // If 48Bit LBA then form Upper DWord  
+            //
             CommandStructure.LBALowExp  = LBALowExp;
             CommandStructure.LBAMidExp  = LBAMidExp;
             CommandStructure.LBAHighExp = LBAHighExp;
             CommandStructure.Device     = 0x40;
-        } else {                                                              // 28 Bit LBA
+        }
+        else {                                                              // 28 Bit LBA
             CommandStructure.Device = ((UINT8) LBAHigh & 0x0f) | 0x40;   
         }
 
@@ -596,55 +753,71 @@ EFI_STATUS SataPioDataOut (
         if (EFI_ERROR(Status)) return EFI_DEVICE_ERROR;
 
         SectorCount = CommandStructure.ByteCount / SectorSize ;
+        
+
     }
+
     return EFI_SUCCESS;
+
 }
 
-/**
-    Issues Read/Write Command and Read/Write the data from/to the ATA device
-    using BusMaster
-
-        
-    @param SATA_DEVICE_INTERFACE           *SataDevInterface,
-    @param Buffer 
-    @param ByteCount 
-    @param IN UINT64                       LBA,
-    @param ReadWriteCommand 
-    @param IN BOOLEAN                      READWRITE
-
-    @retval EFI_STATUS
-
-    @note  
-  1. Get the Max. number of sectors that can be Read/written in one Read/Write Bus master command
-  2. Update the Command Structure
-  3. Issue ExecutePioDataCommand.
-  4. If all the bytes are read exit else goto step 2 
-
-**/
-
+//**********************************************************************
+//<AMI_PHDR_START>
+//
+// Procedure:   SataReadWriteBusMaster
+//
+// Description: Issues Read/Write Command and Read/Write the data from/to the ATA device
+//              using BusMaster
+//
+// Input:
+//  SATA_DEVICE_INTERFACE           *SataDevInterface,
+//  IN OUT VOID                     *Buffer,
+//  IN UINTN                        ByteCount,
+//  IN UINT64                       LBA,
+//  IN UINT8                        ReadWriteCommand,
+//  IN BOOLEAN                      READWRITE
+//
+// Output:
+//  EFI_STATUS
+//
+// Modified:
+//      
+// Referrals: ExecuteDmaDataCommand
+//
+// Notes:   
+//  1. Get the Max. number of sectors that can be Read/written in one Read/Write Bus master command
+//  2. Update the Command Structure
+//  3. Issue ExecutePioDataCommand.
+//  4. If all the bytes are read exit else goto step 2 
+//
+//<AMI_PHDR_END>
+//**********************************************************************                
 EFI_STATUS
-SataReadWriteBusMaster (
-    SATA_DEVICE_INTERFACE    *SataDevInterface,
-    IN OUT VOID              *Buffer,
-    IN UINTN                 ByteCount,
-    IN UINT64                LBA,
-    IN UINT8                 ReadWriteCommand,
-    IN BOOLEAN               READWRITE
-) 
+SataReadWriteBusMaster(
+    SATA_DEVICE_INTERFACE           *SataDevInterface,
+    IN OUT VOID                     *Buffer,
+    IN UINTN                        ByteCount,
+    IN UINT64                       LBA,
+    IN UINT8                        ReadWriteCommand,
+    IN BOOLEAN                      READWRITE
+ ) 
 {
-    EFI_STATUS           Status;
-    UINTN                Total_Number_Of_Sectors,MaxSectorCount;
-    UINTN                CurrentSectorCount,CurrentByteCount;
-    UINT8                *TempBuffer = Buffer;
-    COMMAND_STRUCTURE    CommandStructure;
-    UINT32               SectorSize = ATA_SECTOR_BYTES;
+
+    EFI_STATUS              Status;
+    UINTN                   Total_Number_Of_Sectors,MaxSectorCount;
+    UINTN                   CurrentSectorCount,CurrentByteCount;
+    UINT8                   *TempBuffer = Buffer;
+    COMMAND_STRUCTURE       CommandStructure;
+    UINT32                  SectorSize = ATA_SECTOR_BYTES;
 
     if (Check48BitCommand(ReadWriteCommand)) 
         MaxSectorCount = MAX_SECTOR_COUNT_PIO_48BIT;
     else 
         MaxSectorCount = MAX_SECTOR_COUNT_PIO;
 
+    //
     // Calculate Sector Size
+    //
     if((SataDevInterface->IdentifyData.Reserved_104_126[2] & BIT14) && // WORD 106 valid? - BIT 14 - 1
        (!(SataDevInterface->IdentifyData.Reserved_104_126[2] & BIT15)) && // WORD 106 valid? - BIT 15 - 0
        (SataDevInterface->IdentifyData.Reserved_104_126[2] & BIT12)) { // WORD 106 bit 12 - Sectorsize > 256 words
@@ -674,7 +847,8 @@ SataReadWriteBusMaster (
             CommandStructure.LBAMidExp = (UINT8) Shr64(LBA,32);
             CommandStructure.LBAHighExp = (UINT8) Shr64(LBA,40);
             CommandStructure.Device = 0x40;     // 48Bit LBA
-        } else {                                                  // 28 Bit LBA
+        }
+        else {                                                  // 28 Bit LBA
             CommandStructure.Device = ((UINT8) ((UINT32) LBA >> 24) & 0x0f) | 0x40;
         }
 
@@ -699,19 +873,32 @@ SataReadWriteBusMaster (
 
 }
 
-/**
-    Checks if the command is for 48-bit LBA
 
-    @param Command 
-
-    @retval TRUE/FLASE
-
-**/
-
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:   Check48BitCommand
+//
+// Description: Checks if the command is for 48-bit LBA
+//
+// Input:
+//  IN UINT8            Command
+//
+// Output:
+//      TRUE/FLASE
+//
+// Modified:
+//      
+// Referrals: 
+//
+// Notes:   
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 BOOLEAN
 Check48BitCommand (
-    IN UINT8    Command
-)
+    IN UINT8                        Command
+ )
 {
     if ( Command == READ_SECTORS_EXT || 
          Command == READ_MULTIPLE_EXT || 
@@ -724,31 +911,40 @@ Check48BitCommand (
         return FALSE; 
 }   
 
-/**
-    Issue a  Non-Data command to the SATA Device
-
-    @param    SataDevInterface 
-    @param    CommandStructure 
-
-    @retval   EFI_STATUS     
-
-    @note  
-  1. Stop the Controller
-  2. Check if the device is ready to accept a Command. 
-  3. Build Command list
-  4. Start the Controller.
-  5. Wait till command completes. Check for errors.
-
-**/ 
-
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   ExecuteNonDataCommand
+//
+// Description: Issue a  Non-Data command to the SATA Device
+//
+// Input:           
+//  IN SATA_DEVICE_INTERFACE               *SataDevInterface,  
+//  IN COMMAND_STRUCTURE                   CommandStructure
+//
+// Output: 
+//      EFI_STATUS     
+//
+// Modified:
+//
+// Referrals: StopController, ReadytoAcceptCmd, StartController, WaitforCommandComplete
+//
+// Notes:   
+//  1. Stop the Controller
+//  2. Check if the device is ready to accept a Command. 
+//  3. Build Command list
+//  4. Start the Controller.
+//  5. Wait till command completes. Check for errors.
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END> 
 EFI_STATUS
 ExecuteNonDataCommand (
-    IN SATA_DEVICE_INTERFACE    *SataDevInterface, 
-    IN COMMAND_STRUCTURE        CommandStructure
+    IN SATA_DEVICE_INTERFACE               *SataDevInterface, 
+    IN COMMAND_STRUCTURE                   CommandStructure
 )
 {
     EFI_STATUS           Status;
-    AMI_AHCI_BUS_PROTOCOL    *AhciBusInterface = SataDevInterface->AhciBusInterface; 
+    AHCI_BUS_PROTOCOL    *AhciBusInterface = SataDevInterface->AhciBusInterface; 
     AHCI_COMMAND_LIST    *CommandList = (AHCI_COMMAND_LIST *)(UINTN) SataDevInterface->PortCommandListBaseAddr;
     AHCI_COMMAND_TABLE   *Commandtable = (AHCI_COMMAND_TABLE *)(UINTN)AhciBusInterface->PortCommandTableBaseAddr;
 
@@ -778,119 +974,68 @@ ExecuteNonDataCommand (
     StopController(AhciBusInterface, SataDevInterface,FALSE);
 
     return Status;    
-}
-
-/**
-    Map DMA BusMaster Buffer for the Input Buffer
-
-    @param EFI_PCI_IO_PROTOCOL          *PciIO
-    @param IN OUT VOID                  *CommandStructureBufferAddr
-    @param IN OUT UINTN                 *ByteCountPtr
-    @param IN BOOLEAN                   READWRITE
-    @param EFI_PHYSICAL_ADDRESS         *MappedAddrPtr
-    @param IN VOID                      **Mapping 
-
-    @retval EFI_STATUS
-
-**/ 
-
-EFI_STATUS
-MapBusMasterDMAAddress (
-    EFI_PCI_IO_PROTOCOL          *PciIO, 
-    IN OUT VOID                  *CommandStructureBufferAddr,
-    IN OUT UINTN                 *ByteCountPtr,
-    IN BOOLEAN                   READWRITE,
-    EFI_PHYSICAL_ADDRESS         *MappedAddrPtr,
-    IN VOID                      **Mapping
-)
-{
-    // Find DMA BusMaster Buffer for the Input Buffer using PCIIO Protocol Mapping
-    return (  PciIO->Map (
-                          PciIO,
-                          (READWRITE ? EfiPciIoOperationBusMasterRead : EfiPciIoOperationBusMasterWrite),
-                          (void*)(CommandStructureBufferAddr),
-                          ByteCountPtr,
-                          (void*)MappedAddrPtr,
-                          Mapping
-                          ) ) ;
 
 }
 
-/**
-    Execute PIO Data In/Out command
-
-    @param SataDevInterface 
-    @param CommandStructure 
-    @param IN BOOLEAN                             READWRITE
-
-    @retval EFI_STATUS, CommandStructure->ByteCount 
-
-    @note  
-      1. Stop the Controller
-      2. Check if the device is ready to accept a Command. 
-      3. Build Command list
-      4. Start the Controller.
-      5. Wait till command completes. Check for errors.
-
-**/ 
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   ExecutePioDataCommand
+//
+// Description: Ececute PIO Data In/Out command
+//
+// Input:           
+//  IN SATA_DEVICE_INTERFACE               *SataDevInterface,  
+//  IN OUT COMMAND_STRUCTURE               *CommandStructure
+//  IN BOOLEAN                             READWRITE
+//
+// Output:      
+//         EFI_STATUS, CommandStructure->ByteCount 
+//
+// Modified:
+//
+// Referrals: StopController, ReadytoAcceptCmd, BuildCommandList, BuildCommandFIS, BuildAtapiCMD
+//            BuildPRDT, StartController, WaitforCommandComplete
+//  
+// Notes:   
+//  1. Stop the Controller
+//  2. Check if the device is ready to accept a Command. 
+//  3. Build Command list
+//  4. Start the Controller.
+//  5. Wait till command completes. Check for errors.
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END> 
 EFI_STATUS
 ExecutePioDataCommand (
-    IN SATA_DEVICE_INTERFACE    *SataDevInterface, 
-    IN OUT COMMAND_STRUCTURE    *CommandStructure,
-    IN BOOLEAN                  READWRITE
+    IN SATA_DEVICE_INTERFACE               *SataDevInterface, 
+    IN OUT COMMAND_STRUCTURE               *CommandStructure,
+    IN BOOLEAN                             READWRITE
 )
 {
-    EFI_STATUS               Status;
-    AMI_AHCI_BUS_PROTOCOL    *AhciBusInterface = SataDevInterface->AhciBusInterface;
-    AHCI_COMMAND_LIST        *CommandList = (AHCI_COMMAND_LIST *)(UINTN) SataDevInterface->PortCommandListBaseAddr;
-    AHCI_COMMAND_TABLE       *Commandtable = (AHCI_COMMAND_TABLE *)(UINTN)AhciBusInterface->PortCommandTableBaseAddr;
-    VOID                     *Mapping=NULL;
-    UINTN                    Bytes = CommandStructure->ByteCount;
-    EFI_PHYSICAL_ADDRESS     MappedAddr;
-    void                     *InputBuffer;
+    EFI_STATUS              Status;
+    AHCI_BUS_PROTOCOL       *AhciBusInterface = SataDevInterface->AhciBusInterface;
+    AHCI_COMMAND_LIST       *CommandList = (AHCI_COMMAND_LIST *)(UINTN) SataDevInterface->PortCommandListBaseAddr;
+    AHCI_COMMAND_TABLE      *Commandtable = (AHCI_COMMAND_TABLE *)(UINTN)AhciBusInterface->PortCommandTableBaseAddr;
 
-    if(AhciPlatformPolicy->PciMapAddressForDataTransfer) {
-        // Find DMA BusMaster Buffer for the Input Buffer using PCIIO Protocol Mapping
-        // if the Input Buffer is not NULL and Bytecount is not Zero
-        if( (CommandStructure->Buffer != NULL) && (CommandStructure->ByteCount != 0) ) {
-            Status = MapBusMasterDMAAddress ( SataDevInterface->AhciBusInterface->PciIO, 
-                                              CommandStructure->Buffer,
-                                              &Bytes,
-                                              READWRITE, 
-                                              &MappedAddr,
-                                              &Mapping ); 
-            if (EFI_ERROR(Status) || Bytes != CommandStructure->ByteCount) {
-                if(Status == EFI_OUT_OF_RESOURCES) {
-                    return EFI_BAD_BUFFER_SIZE;
-                }
-                return EFI_NOT_FOUND;
-            }
-            InputBuffer = (void *)CommandStructure->Buffer;
-            CommandStructure->Buffer = (VOID *)MappedAddr;
-        }
-    }
 
     Status = StopController(AhciBusInterface, SataDevInterface,TRUE);
-
-    if (EFI_ERROR(Status)) {
-        goto PioError;
-    }
+    if (EFI_ERROR(Status)) return Status;
 
     Status = ReadytoAcceptCmd(SataDevInterface);
     if (EFI_ERROR(Status)) {
         StopController(AhciBusInterface, SataDevInterface,FALSE);
-        goto PioError;
+        return Status;
     }
-
     BuildCommandList(SataDevInterface, CommandList, AhciBusInterface->PortCommandTableBaseAddr);
     BuildCommandFIS(SataDevInterface, *CommandStructure, CommandList, Commandtable);
     BuildAtapiCMD(SataDevInterface, *CommandStructure, CommandList, Commandtable);
     BuildPRDT(SataDevInterface, *CommandStructure, CommandList, Commandtable);
 
     if (READWRITE) {
-        CommandList->Ahci_Cmd_W = 1;
-    } else {
-        CommandList->Ahci_Cmd_W = 0;
+        CommandList->Ahci_Cmd_W = 1;        
+    }
+    else {
+        CommandList->Ahci_Cmd_W = 0;        
     }
     Commandtable->CFis.Ahci_CFis_C = 1;
 
@@ -899,16 +1044,7 @@ ExecutePioDataCommand (
     // For Security Erase command the time out value comes from Identify Data.    
     if(CommandStructure->Command == SECURITY_ERASE_UNIT ) {
         UINT32  EraseCommandTimeout;
-        UINT8   *Buffer=(UINT8*)CommandStructure->Buffer;
-
-        // BIT:1 of the Buffer[0] refers Enhanced Security Erase Mode.
-        // If this Bit is set, Identify Data Word 90 is used for Erase command timeout
-        // else Word 89 will be used for the timeout.
-        if(Buffer[0] & 2 ) {
-            EraseCommandTimeout= (UINT32)(SataDevInterface->IdentifyData.Time_Esecurity_Earse_90);
-        } else {
-            EraseCommandTimeout= (UINT32)(SataDevInterface->IdentifyData.Time_security_Earse_89);
-        }
+        EraseCommandTimeout= (UINT32)(SataDevInterface->IdentifyData.Time_security_Earse_89);
         if(EraseCommandTimeout <= 254) {
             EraseCommandTimeout=EraseCommandTimeout * 2 * 1000 * 60; //Value * 2Minitues
         } else {
@@ -920,94 +1056,65 @@ ExecutePioDataCommand (
                     SataDevInterface->DeviceType == ATA? DMA_ATA_COMMAND_COMPLETE_TIMEOUT \
                     : DMA_ATAPI_COMMAND_COMPLETE_TIMEOUT );
     }
-
+    
     CommandStructure->ByteCount = CommandList->Ahci_Cmd_PRDBC;
 
     //  Stop Controller
     StopController(AhciBusInterface, SataDevInterface,FALSE);
 
-PioError:
-
-    // Unmap the Mapped Memory, Restore the Inputbuffer Address 
-    if(AhciPlatformPolicy->PciMapAddressForDataTransfer) {
-        if( (CommandStructure->Buffer != NULL) && (CommandStructure->ByteCount != 0) ) {
-            SataDevInterface->AhciBusInterface->PciIO->Unmap ( 
-                    SataDevInterface->AhciBusInterface->PciIO,
-                    Mapping
-                    );
-                
-            CommandStructure->Buffer = (void *)InputBuffer;
-        }
-    }
-
     return Status;    
 
 }
 
-/**
-
-                   
-    @param SataDevInterface 
-    @param CommandStructure 
-    @param IN BOOLEAN                              READWRITE
-
-    @retval EFI_STATUS
-
-    @note  
-      1. Stop the Controller
-      2. Check if the device is ready to accept a Command. 
-      3. Build Command list
-      4. Start the Controller.
-      5. Wait till command completes. Check for errors.
-
-**/ 
-
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   ExecuteDmaDataCommand
+//
+// Description: 
+//
+// Input:           
+//  IN SATA_DEVICE_INTERFACE               *SataDevInterface,  
+//  IN COMMAND_STRUCTURE                   *CommandStructure
+//  IN BOOLEAN                              READWRITE
+//
+// Output:      
+//  EFI_STATUS
+//
+// Modified:
+//      
+// Referrals: StopController, ReadytoAcceptCmd, BuildCommandList, BuildCommandFIS, BuildAtapiCMD
+//            BuildPRDT, StartController, WaitforCommandComplete 
+//
+// Notes:   
+//  1. Stop the Controller
+//  2. Check if the device is ready to accept a Command. 
+//  3. Build Command list
+//  4. Start the Controller.
+//  5. Wait till command completes. Check for errors.
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END> 
 EFI_STATUS
 ExecuteDmaDataCommand (
-    IN SATA_DEVICE_INTERFACE    *SataDevInterface, 
-    IN COMMAND_STRUCTURE        *CommandStructure,
-    IN BOOLEAN                  READWRITE
+    IN SATA_DEVICE_INTERFACE               *SataDevInterface, 
+    IN COMMAND_STRUCTURE                   *CommandStructure,
+    IN BOOLEAN                             READWRITE
 )
 {
-    EFI_STATUS               Status;
-    AMI_AHCI_BUS_PROTOCOL    *AhciBusInterface = SataDevInterface->AhciBusInterface;
-    AHCI_COMMAND_LIST        *CommandList = (AHCI_COMMAND_LIST *)(UINTN) SataDevInterface->PortCommandListBaseAddr;
-    AHCI_COMMAND_TABLE       *Commandtable = (AHCI_COMMAND_TABLE *)(UINTN)AhciBusInterface->PortCommandTableBaseAddr;
-    VOID                     *Mapping=NULL;
-    UINTN                    Bytes = CommandStructure->ByteCount;
-    EFI_PHYSICAL_ADDRESS     MappedAddr;
-    void                     *InputBuffer;
 
-    if(AhciPlatformPolicy->PciMapAddressForDataTransfer) {
-        // Find DMA BusMaster Buffer for the Input Buffer using PCIIO Protocol Mapping
-        // if the Input Buffer is not NULL and Bytecount is not Zero
-        if( (CommandStructure->Buffer != NULL) && (CommandStructure->ByteCount != 0) ) {
-            Status = MapBusMasterDMAAddress (SataDevInterface->AhciBusInterface->PciIO, 
-                                             CommandStructure->Buffer,
-                                             &Bytes,
-                                             READWRITE, 
-                                             &MappedAddr,
-                                             &Mapping); 
-            if (EFI_ERROR(Status) || Bytes != CommandStructure->ByteCount) {
-                if(Status == EFI_OUT_OF_RESOURCES) {
-                    return EFI_BAD_BUFFER_SIZE;
-                }
-                return EFI_NOT_FOUND;
-            }
-            InputBuffer = (void *)CommandStructure->Buffer;
-            CommandStructure->Buffer = (VOID *)MappedAddr;
-        }
-    }
+    EFI_STATUS              Status;
+    AHCI_BUS_PROTOCOL       *AhciBusInterface = SataDevInterface->AhciBusInterface;
+    AHCI_COMMAND_LIST       *CommandList = (AHCI_COMMAND_LIST *)(UINTN) SataDevInterface->PortCommandListBaseAddr;
+    AHCI_COMMAND_TABLE      *Commandtable = (AHCI_COMMAND_TABLE *)(UINTN)AhciBusInterface->PortCommandTableBaseAddr;
+
 
     Status = StopController(AhciBusInterface, SataDevInterface,TRUE);
-    if (EFI_ERROR(Status)) { 
-        goto DmaDataError;
-    }
+    if (EFI_ERROR(Status)) return Status;
 
     Status = ReadytoAcceptCmd(SataDevInterface);
     if (EFI_ERROR(Status)) {
         StopController(AhciBusInterface, SataDevInterface,FALSE);
-        goto DmaDataError;
+        return Status;
     }
     BuildCommandList(SataDevInterface, CommandList, AhciBusInterface->PortCommandTableBaseAddr);
     BuildCommandFIS(SataDevInterface, *CommandStructure, CommandList, Commandtable);
@@ -1040,94 +1147,66 @@ ExecuteDmaDataCommand (
 
     CommandStructure->ByteCount = CommandList->Ahci_Cmd_PRDBC;
 
-DmaDataError:
+    return Status;    
 
-    // Unmap the Mapped Memory, Restore the Inputbuffer Address 
-    if(AhciPlatformPolicy->PciMapAddressForDataTransfer) {
-        if( (CommandStructure->Buffer != NULL) && (CommandStructure->ByteCount != 0) ) {
-            SataDevInterface->AhciBusInterface->PciIO->Unmap ( 
-                    SataDevInterface->AhciBusInterface->PciIO,
-                    Mapping
-                    );
-                    
-            CommandStructure->Buffer = (void *)InputBuffer;
-        }
-    }
-    return Status;
 }
 
-/**
-    Execute a Atapi Packet command
-
-    @param SataDevInterface 
-    @param CommandStructure 
-    @param IN BOOLEAN                              READWRITE
-
-    @retval EFI_STATUS
-
-    @note  
-      1. Stop the Controller
-      2. Check if the device is ready to accept a Command. 
-      3. Build Command list
-      4. Start the Controller.
-      5. Wait till command completes. Check for errors.
-
-**/ 
-
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   ExecutePacketCommand
+//
+// Description: Execute a Atapi Packet command
+//
+// Input:           
+//  IN SATA_DEVICE_INTERFACE               *SataDevInterface,  
+//  IN COMMAND_STRUCTURE                   *CommandStructure
+//  IN BOOLEAN                              READWRITE
+//
+// Output:      
+//  EFI_STATUS
+//
+// Modified:
+//      
+// Referrals: StopController, ReadytoAcceptCmd, BuildCommandList, BuildCommandFIS, BuildAtapiCMD
+//            BuildPRDT, StartController, WaitforCommandComplete 
+//
+// Notes:   
+//  1. Stop the Controller
+//  2. Check if the device is ready to accept a Command. 
+//  3. Build Command list
+//  4. Start the Controller.
+//  5. Wait till command completes. Check for errors.
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END> 
 EFI_STATUS 
 ExecutePacketCommand (
-    IN SATA_DEVICE_INTERFACE    *SataDevInterface, 
-    IN COMMAND_STRUCTURE        *CommandStructure,
-    IN BOOLEAN                  READWRITE
-)
+    IN SATA_DEVICE_INTERFACE               *SataDevInterface, 
+    IN COMMAND_STRUCTURE                   *CommandStructure,
+    IN BOOLEAN                             READWRITE
+ )
 {
-    EFI_STATUS               Status;
-    AMI_AHCI_BUS_PROTOCOL    *AhciBusInterface = SataDevInterface->AhciBusInterface;
-    AHCI_COMMAND_LIST        *CommandList = (AHCI_COMMAND_LIST *)(UINTN) SataDevInterface->PortCommandListBaseAddr;
-    AHCI_COMMAND_TABLE       *Commandtable = (AHCI_COMMAND_TABLE *)(UINTN)AhciBusInterface->PortCommandTableBaseAddr;
-    ATAPI_DEVICE             *AtapiDevice = SataDevInterface->AtapiDevice;
-    UINT8                    Port = SataDevInterface->PortNumber;
-    UINT8                    Data8;
-    VOID                     *Mapping=NULL;
-    UINTN                    Bytes = CommandStructure->ByteCount;
-    EFI_PHYSICAL_ADDRESS     MappedAddr;
-    void                     *InputBuffer;
 
-    if(AhciPlatformPolicy->PciMapAddressForDataTransfer) {
-        // Find DMA BusMaster Buffer for the Input Buffer using PCIIO Protocol Mapping
-        // if the Input Buffer is not NULL and Bytecount is not Zero
-        if( (CommandStructure->Buffer != NULL) && (CommandStructure->ByteCount != 0) ) {
-            Status = MapBusMasterDMAAddress (SataDevInterface->AhciBusInterface->PciIO, 
-                                             CommandStructure->Buffer,
-                                             &Bytes,
-                                             READWRITE, 
-                                             &MappedAddr,
-                                             &Mapping); 
+    EFI_STATUS              Status;
+    AHCI_BUS_PROTOCOL       *AhciBusInterface = SataDevInterface->AhciBusInterface;
+    AHCI_COMMAND_LIST       *CommandList = (AHCI_COMMAND_LIST *)(UINTN) SataDevInterface->PortCommandListBaseAddr;
+    AHCI_COMMAND_TABLE      *Commandtable = (AHCI_COMMAND_TABLE *)(UINTN)AhciBusInterface->PortCommandTableBaseAddr;
+    UINT32                  AhciBaseAddr = (UINT32)AhciBusInterface->AhciBaseAddress;
+    ATAPI_DEVICE            *AtapiDevice = SataDevInterface->AtapiDevice;
+    UINT8                   Port = SataDevInterface->PortNumber;
+    UINT8                   Data8;
 
-            if (EFI_ERROR(Status) || Bytes != CommandStructure->ByteCount) {
-                // return Bad buffer size for SCT to pass in case of insufficient resources.
-                if(Status == EFI_OUT_OF_RESOURCES) {
-                    return EFI_BAD_BUFFER_SIZE;
-                }
-                return EFI_NOT_FOUND;
-            }
-            InputBuffer = (void *)CommandStructure->Buffer;
-            CommandStructure->Buffer = (VOID *)MappedAddr;
-        }
-    }
     CommandStructure->LBAMid = (UINT8)(CommandStructure->ByteCount);
     CommandStructure->LBAHigh = (UINT8)(CommandStructure->ByteCount >> 8);
     CommandStructure->Command = PACKET_COMMAND;
 
     Status = StopController(AhciBusInterface, SataDevInterface,TRUE);
-    if (EFI_ERROR(Status)) {
-        goto PacketError;
-    }
+    if (EFI_ERROR(Status)) return Status;
 
     Status = ReadytoAcceptCmd(SataDevInterface);
     if (EFI_ERROR(Status)) {
         StopController(AhciBusInterface, SataDevInterface,FALSE);
-        goto PacketError;
+        return Status;
     }
     BuildCommandList(SataDevInterface, CommandList, AhciBusInterface->PortCommandTableBaseAddr);
     BuildCommandFIS(SataDevInterface, *CommandStructure, CommandList, Commandtable);
@@ -1148,16 +1227,14 @@ ExecutePacketCommand (
                     SataDevInterface->DeviceType == ATA? DMA_ATA_COMMAND_COMPLETE_TIMEOUT \
                     : DMA_ATAPI_COMMAND_COMPLETE_TIMEOUT );
 
+
     // Handle ATAPI device error
     if (EFI_ERROR(Status) && SataDevInterface->DeviceType == ATAPI) {
-        Data8 = HBA_PORT_REG8 (AhciBusInterface, Port, HBA_PORTS_TFD);
-        if (Data8 & IDE_CHK ){
-            // Avoid requesting sense data for sense data command failure.
-            if (CommandStructure->AtapiCmd.Ahci_Atapi_Command[0] != ATAPI_REQUEST_SENSE) {
-                Status = HandleAtapiError(SataDevInterface);
-            }
-            goto PacketError;
-        }
+        Data8 = HBA_PORT_REG8 (AhciBaseAddr, Port, HBA_PORTS_TFD);
+        if (Data8 & CHK ){
+            return HandleAtapiError(SataDevInterface);
+            
+        }        
     }
     AtapiDevice->Atapi_Status = EFI_SUCCESS;
 
@@ -1166,46 +1243,46 @@ ExecutePacketCommand (
     //  Stop Controller
     StopController(AhciBusInterface, SataDevInterface,FALSE);
 
-PacketError:
+    return Status;    
 
-    // Unmap the Mapped Memory, Restore the Inputbuffer Address 
-    if(AhciPlatformPolicy->PciMapAddressForDataTransfer) {
-        if( (CommandStructure->Buffer != NULL) && (CommandStructure->ByteCount != 0) ) {
-            SataDevInterface->AhciBusInterface->PciIO->Unmap ( 
-                SataDevInterface->AhciBusInterface->PciIO,
-                Mapping
-                );
-
-            CommandStructure->Buffer = (void *)InputBuffer;
-        }
-    }
-    return Status;
 }
 
-/**
-    Check for ATAPI Errors
-
-    @param SataDevInterface 
-
-    @retval EFI_STATUS  
-
-    @note  
-  1. Execute ATAPI Request Sense command.
-  2. Check for Device getting ready, Media Change, No Media and other errors. Update AtapiDevice->Atapi_Status
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   HandleAtapiError
+//
+// Description: Check for ATAPI Errors
+//
+// Input:           
+//    IN SATA_DEVICE_INTERFACE               *SataDevInterface,
+//
+// Output:      
+//  EFI_STATUS  
+//
+// Modified:
+//      
+// Referrals: ExecutePacketCommand
+//
+// Notes:   
+//  1. Execute ATAPI Request Sense command.
+//  2. Check for Device getting ready, Media Change, No Media and other errors. Update AtapiDevice->Atapi_Status
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
 HandleAtapiError (
-    IN SATA_DEVICE_INTERFACE    *SataDevInterface
-)
+    IN SATA_DEVICE_INTERFACE               *SataDevInterface
+ )
 {
-    EFI_STATUS               Status;
-    UINT8                    Data8 = 0;
-    UINT8                    SenseData[256];
-    COMMAND_STRUCTURE        CommandStructure;
-    ATAPI_DEVICE             *AtapiDevice = SataDevInterface->AtapiDevice;
-    AMI_AHCI_BUS_PROTOCOL    *AhciBusInterface = SataDevInterface->AhciBusInterface;
-    UINT8                    Port = SataDevInterface->PortNumber;
+
+    EFI_STATUS              Status;
+    UINT8                   Data8 = 0;
+    UINT8                   SenseData[256];
+    COMMAND_STRUCTURE       CommandStructure;
+    ATAPI_DEVICE            *AtapiDevice = SataDevInterface->AtapiDevice;
+    AHCI_BUS_PROTOCOL       *AhciBusInterface = SataDevInterface->AhciBusInterface;
+    UINT32                  AhciBaseAddr = (UINT32)AhciBusInterface->AhciBaseAddress;
+    UINT8                   Port = SataDevInterface->PortNumber;
 
     AtapiDevice->Atapi_Status = DEVICE_ERROR;
 
@@ -1221,18 +1298,20 @@ HandleAtapiError (
     Status = ExecutePacketCommand(SataDevInterface, &CommandStructure, 0);
 
     if (EFI_ERROR(Status)) {
-        Data8 = HBA_PORT_REG8 (AhciBusInterface, Port, HBA_PORTS_TFD);
+        Data8 = HBA_PORT_REG8 (AhciBaseAddr, Port, HBA_PORTS_TFD);
     }
 
     SataDevInterface->AtapiSenseDataLength = 0;
 
     // Check for DF and CHK
-    if (Data8 & (IDE_DF | IDE_CHK)) { 
+    if (Data8 & (DF | CHK)) { 
         goto exit_HandleAtapiError_with_Reset;
     }    
 
     if (!EFI_ERROR(Status)){
-        // Store the SenseData which would be used by ScsiPassThruAtapi PassThru Interface.
+        //
+        // Store the SenseData whcih would be used by ScsiPassThruAtapi PassThru Interface.
+        //
         pBS->CopyMem( SataDevInterface->AtapiSenseData, SenseData, 256);
         SataDevInterface->AtapiSenseDataLength = CommandStructure.ByteCount;
 
@@ -1247,7 +1326,7 @@ HandleAtapiError (
             Status = EFI_MEDIA_CHANGED;
             AtapiDevice->Atapi_Status = BECOMING_READY;
         }
-
+    
         if (((SenseData[2] & 0xf) == 6) && (SenseData[12] == 0x28)){
                 Status = EFI_MEDIA_CHANGED;
                 AtapiDevice->Atapi_Status = MEDIA_CHANGED;
@@ -1269,42 +1348,53 @@ HandleAtapiError (
 
 exit_HandleAtapiError_with_Reset:
         return Status;
+
 }
 
-/**
-    Read/Write routine to PM ports
-
-                   
-    @param SataDevInterface 
-    @param Port 
-    @param RegNum 
-    @param Data 
-    @param IN BOOLEAN                      READWRITE       // TRUE for Write
-
-    @retval EFI_STATUS
-
-    @note  
-      1. Update Command Structure for READ/Write Port Multiplier command
-      2. Issue command
-      3. Check for errors.
-      4. Read the out data in case of READ.
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   ReadWritePMPort
+//
+// Description: Read/Write routine to PM ports
+//
+// Input:           
+//  IN SATA_DEVICE_INTERFACE       *SataDevInterface,
+//  IN UINT8                        Port,
+//  IN UINT8                        RegNum,
+//  IN OUT UINT32                   *Data
+//  IN BOOLEAN                      READWRITE       // TRUE for Write
+//
+// Output:      
+//  EFI_STATUS
+//
+// Modified:
+//
+// Referrals: StopController, ReadytoAcceptCmd, BuildCommandList, BuildCommandFIS, BuildAtapiCMD
+//            BuildPRDT, StartController, WaitforCommandComplete 
+//
+// Notes:   
+//  1. Update Command Structure for READ/Write Port Multiplier command
+//  2. Issue command
+//  3. Check for errors.
+//  4. Read the out data in case of READ.
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
 ReadWritePMPort (
-    IN SATA_DEVICE_INTERFACE    *SataDevInterface,
-    IN UINT8                    Port,
-    IN UINT8                    RegNum,
-    IN OUT UINT32               *Data,
-    IN BOOLEAN                  READWRITE
+    IN SATA_DEVICE_INTERFACE        *SataDevInterface,
+    IN UINT8                        Port,
+    IN UINT8                        RegNum,
+    IN OUT UINT32                   *Data,
+    IN BOOLEAN                      READWRITE
 )
 {
-    EFI_STATUS               Status;
-    COMMAND_STRUCTURE        CommandStructure;
-    AHCI_RECEIVED_FIS        *PortFISBaseAddr = (AHCI_RECEIVED_FIS *)(UINTN)(SataDevInterface->PortFISBaseAddr);
-    AMI_AHCI_BUS_PROTOCOL    *AhciBusInterface = SataDevInterface->AhciBusInterface; 
-    AHCI_COMMAND_LIST        *CommandList = (AHCI_COMMAND_LIST *)(UINTN) SataDevInterface->PortCommandListBaseAddr;
-    AHCI_COMMAND_TABLE       *Commandtable = (AHCI_COMMAND_TABLE *)(UINTN)AhciBusInterface->PortCommandTableBaseAddr;
+    EFI_STATUS                  Status;
+    COMMAND_STRUCTURE           CommandStructure;
+    AHCI_RECEIVED_FIS           *PortFISBaseAddr = (AHCI_RECEIVED_FIS *)(UINTN)(SataDevInterface->PortFISBaseAddr);
+    AHCI_BUS_PROTOCOL           *AhciBusInterface = SataDevInterface->AhciBusInterface; 
+    AHCI_COMMAND_LIST           *CommandList = (AHCI_COMMAND_LIST *)(UINTN) SataDevInterface->PortCommandListBaseAddr;
+    AHCI_COMMAND_TABLE          *Commandtable = (AHCI_COMMAND_TABLE *)(UINTN)AhciBusInterface->PortCommandTableBaseAddr;
 
     ZeroMemory (&CommandStructure, sizeof(COMMAND_STRUCTURE));
 
@@ -1346,7 +1436,7 @@ ReadWritePMPort (
     StartController(AhciBusInterface, SataDevInterface, BIT00);
 
     Status = WaitforCommandComplete(SataDevInterface, NON_DATA_CMD, TIMEOUT_1SEC);
-
+    
     //  Stop Controller
     StopController(AhciBusInterface, SataDevInterface,FALSE);
 
@@ -1359,31 +1449,41 @@ ReadWritePMPort (
                     (PortFISBaseAddr->Ahci_Rfis[6] << 24);  
         }
     }
-
+    
     return Status;
+
 }
 
-/**
-    Return Identify data from SATA device
-
-    @param SataDevInterface 
-
-    @retval gIdentifyDataBuffer
-    @retval EFI_STATUS
-    @note  
-      1. Build CommandStructure.
-      2. Issue ExecutePioDataCommand
-
-**/ 
-
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   GetIdentifyData
+//
+// Description: Reaturn Identify data from SATA device
+//
+// Input:           
+//    IN SATA_DEVICE_INTERFACE               *SataDevInterface,  
+//
+// Output:      
+//      gIdentifyDataBuffer
+//      EFI_STATUS
+// Modified:
+//      
+// Referrals: 
+//
+// Notes:   
+//  1. Build CommandStructure.
+//  2. Issue ExecutePioDataCommand
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END> 
 EFI_STATUS
 GetIdentifyData (
-    IN SATA_DEVICE_INTERFACE    *SataDevInterface 
+    IN SATA_DEVICE_INTERFACE               *SataDevInterface 
 )
 {
-    EFI_STATUS           Status;
-    COMMAND_STRUCTURE    CommandStructure;
-    IDENTIFY_DATA        tIdentifyData;
+    EFI_STATUS                  Status;
+    COMMAND_STRUCTURE           CommandStructure;
+    IDENTIFY_DATA               tIdentifyData;
 
     ZeroMemory (&CommandStructure, sizeof(COMMAND_STRUCTURE));
 
@@ -1401,32 +1501,44 @@ GetIdentifyData (
         pBS->CopyMem(&(SataDevInterface->IdentifyData), &tIdentifyData, sizeof(IDENTIFY_DATA)); 
 
     return Status;
+
 }
 
-/**
-    Return ATAPI Inquiry data
-
-    @param SataDevInterface 
-    @param InquiryData 
-    @param InquiryDataSize 
-
-    @retval EFI_STATUS
-
-    @note  
-      1. Update CommandStructure
-      2. Issue ExecutePioDataCommand
-
-**/
-
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:   SataAtapiInquiryData
+//
+// Description: Return ATAPI Inquiry data
+//
+// Input:
+//  IN SATA_DEVICE_INTERFACE           *SataDevInterface,
+//  OUT UINT8                          *InquiryData,
+//  IN OUT UINT16                      *InquiryDataSize
+//
+// Output:
+//  EFI_STATUS
+//
+// Modified:
+//      
+// Referrals: ExecutePioDataCommand
+//
+// Notes:   
+//  1. Update CommandStructure
+//  2. Issue ExecutePioDataCommand
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
 SataAtapiInquiryData (
-    IN SATA_DEVICE_INTERFACE     *SataDevInterface,
-    OUT UINT8                    *InquiryData,
-    IN OUT UINT16                *InquiryDataSize
+    IN SATA_DEVICE_INTERFACE           *SataDevInterface,
+    OUT UINT8                          *InquiryData,
+    IN OUT UINT16                      *InquiryDataSize
 )
 {
-    EFI_STATUS           Status;
-    COMMAND_STRUCTURE    CommandStructure;
+
+    EFI_STATUS          Status;
+    COMMAND_STRUCTURE   CommandStructure;
     
     ZeroMemory (&CommandStructure, sizeof(COMMAND_STRUCTURE));
     CommandStructure.Buffer = InquiryData;
@@ -1447,35 +1559,45 @@ SataAtapiInquiryData (
     return Status;
 }
 
-/**
-    Detects whether a Media is present in the ATAPI Removable device or not.
-
-    @param SataDevInterface 
-
-    @retval EFI_STATUS
-
-    @note  
-      1. Issue Read Capacity command for CDROM or Read Format command for other ATAPI devices.
-      2. If step 1  is successful, update last LBA, Block Size, Read/Write capable, Media ID
-
-**/
-
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:   DetectAtapiMedia
+//
+// Description: Detects whether a Media is present in the ATAPI Removable device or not.
+//
+// Input:
+//  IN SATA_DEVICE_INTERFACE           *SataDevInterface,
+//
+// Output:
+//  EFI_STATUS
+//
+// Modified:
+//      
+// Referrals: TestUnitReady, ExecutePacketCommand 
+//
+// Notes:   
+//  1. Issue Read Capacity command for CDROM or Read Format command for other ATAPI devices.
+//  2. If step 1  is successfull, update last LBA, Block Size, Read/Write capable, Media ID
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
-DetectAtapiMedia (
-    IN SATA_DEVICE_INTERFACE    *SataDevInterface
-)
+DetectAtapiMedia(
+    IN SATA_DEVICE_INTERFACE           *SataDevInterface
+ )
 {
-    UINT8                *InputData, LoopCount;
-    ATAPI_DEVICE         *AtapiDevice = SataDevInterface->AtapiDevice;
-    EFI_BLOCK_IO_MEDIA   *BlkMedia = SataDevInterface->SataBlkIo->BlkIo.Media;
-    EFI_STATUS           Status ;
-    UINT16               ByteCount = 256, Data16;
-    COMMAND_STRUCTURE    CommandStructure;
-    BOOLEAN              ReadCapacity=FALSE;
+    UINT8               *InputData, LoopCount;
+    ATAPI_DEVICE        *AtapiDevice = SataDevInterface->AtapiDevice;
+    EFI_BLOCK_IO_MEDIA  *BlkMedia = SataDevInterface->SataBlkIo->BlkIo.Media;
+    EFI_STATUS          Status ;
+    UINT16              ByteCount = 256, Data16;
+    COMMAND_STRUCTURE   CommandStructure;
+    BOOLEAN             ReadCapacity=FALSE;
     
     ZeroMemory (&CommandStructure, sizeof(COMMAND_STRUCTURE));
 
-    // Default Values
+//  Default Values
     BlkMedia->MediaPresent = FALSE;
     BlkMedia->LastBlock = 0x100;                            // Dummy value
     SataDevInterface->ReadCommand = ATAPI_READ_10;  
@@ -1486,11 +1608,11 @@ DetectAtapiMedia (
         return Status;
     }
 
-    // Issue Read Capacity command
+//  Issue Read Capacity command
     Status = pBS->AllocatePool (EfiBootServicesData, ByteCount, (VOID**)&InputData);
     if (EFI_ERROR(Status)) return Status;
 
-    // For CDROM use Read Capacity command else use Read Format Command
+//  For CDROM use Read Capacity command else use Read Format Command
     if (AtapiDevice->DeviceType == CDROM_DEVICE){
         BlkMedia->BlockSize = CDROM_BLOCK_SIZE;         // Default size
         AtapiDevice->BlockSize = (UINT16)(BlkMedia->BlockSize);
@@ -1559,7 +1681,7 @@ DetectAtapiMedia (
             AtapiDevice->BlockSize = (UINT16)(BlkMedia->BlockSize);
         }
 
-        // Update ReadOnly Status
+//      Update ReadOnly Status
         if (AtapiDevice->DeviceType != CDROM_DEVICE) {
             ByteCount = 256;
             ZeroMemory (InputData, ByteCount);
@@ -1582,24 +1704,38 @@ DetectAtapiMedia (
 
 }
 
-/**
-    Return ODD type
-
-    @param SataDevInterface 
-
-    @retval EFI_STATUS
-
-**/
-
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:   SataCheckOddType
+//
+// Description: Return ODD type
+//
+// Input:
+//  IN SATA_DEVICE_INTERFACE           *SataDevInterface,
+//
+// Output:
+//  EFI_STATUS
+//
+// Modified:
+//      
+// Referrals: ExecutePioDataCommand
+//
+// Notes:   
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
 SataGetOddType (
-    IN SATA_DEVICE_INTERFACE    *SataDevInterface,
-    IN OUT UINT16               *OddType
+    IN SATA_DEVICE_INTERFACE           *SataDevInterface,
+    IN OUT UINT16                      *OddType
 )
+
 {
-    EFI_STATUS           Status;
-    COMMAND_STRUCTURE    CommandStructure;
-    UINT8                *ProfileData;    
+
+    EFI_STATUS          Status;
+    COMMAND_STRUCTURE   CommandStructure;
+    UINT8               *ProfileData;    
 
     Status = pBS->AllocatePool (EfiBootServicesData,16,(VOID**)&ProfileData);
 
@@ -1615,51 +1751,71 @@ SataGetOddType (
     CommandStructure.LBAHigh = 0;
 
     CommandStructure.AtapiCmd.Ahci_Atapi_Command[0]= ATAPI_GET_CONFIGURATION;
-    // Get the Feature Descriptor.
+    //
+    // Get the Feature Discriptor.
+    //
     CommandStructure.AtapiCmd.Ahci_Atapi_Command[1] = FEATURE_DISCRIPTOR;
+    //
     // Get the Profile list
+    //
     CommandStructure.AtapiCmd.Ahci_Atapi_Command[3] = GET_PROFILE_LIST;
-    // Response Data Size
+    //
+    // Responce Data Size
+    //
     CommandStructure.AtapiCmd.Ahci_Atapi_Command[8] = 0x10;
 
     Status = ExecutePioDataCommand (SataDevInterface, &CommandStructure, 0); 
 
     if (!EFI_ERROR(Status)) {
+        //
         // Get the Profile Number
+        //
         *OddType=(UINT16 )(((ProfileData[sizeof(GET_CONFIGURATION_HEADER)+4]) << 8) + ProfileData[sizeof(GET_CONFIGURATION_HEADER)+5]);
     }
+   
     pBS->FreePool(ProfileData);
     return Status;
 }
 
-/**
-    Return ODD Loading type information
-
-        
-    @param SataDevInterface 
-
-    @retval 
-        EFI_STATUS
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//
+// Procedure:   SataGetOddLoadingType
+//
+// Description: Return ODD Loading type information
+//
+// Input:
+//  IN SATA_DEVICE_INTERFACE           *SataDevInterface,
+//
+// Output:
+//  EFI_STATUS
+//
+// Modified:
+//      
+// Referrals: ExecutePioDataCommand
+//
+// Notes:   
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
 SataGetOddLoadingType (
-    IN SATA_DEVICE_INTERFACE    *SataDevInterface,
-    IN OUT UINT8                *OddLoadingType
+    IN SATA_DEVICE_INTERFACE           *SataDevInterface,
+    IN OUT UINT8                       *OddLoadingType
 )
-{
-    EFI_STATUS           Status;
-    COMMAND_STRUCTURE    CommandStructure;
-    UINT8                *ProfileData;    
 
-    Status = pBS->AllocatePool (EfiBootServicesData,
-                                16,
-                                (VOID**)&ProfileData);
+{
+
+    EFI_STATUS          Status;
+    COMMAND_STRUCTURE   CommandStructure;
+    UINT8               *ProfileData;    
+
+    Status = pBS->AllocatePool (EfiBootServicesData,16,(VOID**)&ProfileData);
 
     if (EFI_ERROR(Status)) {
         return Status;
     }
-
+    
     ZeroMemory (&CommandStructure, sizeof(COMMAND_STRUCTURE));
     CommandStructure.Buffer = ProfileData;
     CommandStructure.ByteCount = 16;
@@ -1668,53 +1824,70 @@ SataGetOddLoadingType (
     CommandStructure.LBAHigh = 0;
 
     CommandStructure.AtapiCmd.Ahci_Atapi_Command[0]= ATAPI_GET_CONFIGURATION;
-    // Get the Feature Descriptor.
+    //
+    // Get the Feature Discriptor.
+    //
     CommandStructure.AtapiCmd.Ahci_Atapi_Command[1] = FEATURE_DISCRIPTOR;
+    //
     // Get the Removable Medium feature
+    //
     CommandStructure.AtapiCmd.Ahci_Atapi_Command[3] = GET_REMOVEABLE_MEDIUM_FEATURE;
-    // Response Data Size
+    //
+    // Responce Data Size
+    //
     CommandStructure.AtapiCmd.Ahci_Atapi_Command[8] = 0x10;
 
     Status = ExecutePioDataCommand (SataDevInterface, &CommandStructure, 0); 
 
     if (!EFI_ERROR(Status)) {
+        //
         // Get the ODD Loading Type
+        //
         *OddLoadingType=(UINT8 )(((ProfileData[sizeof(GET_CONFIGURATION_HEADER)+4]) & 0xE0) >> 5);
     }
-
+   
     pBS->FreePool(ProfileData);
     return Status;
 }
 
-/**
-    Issues Start/Stop unit Command
-
-        
-    @param SataDevInterface 
-
-    @retval EFI_STATUS          EFI_SUCCESS           : If Media is accessible
-    @retval EFI_NO_MEDIA
-    @retval EFI_MEDIA_CHANGED
-    @retval EFI_DEVICE_ERROR
-
-    @note  
-  1. Update CommandStructure for ATAPI_TEST_UNIT_READY command
-  2. Issue ExecutePacketCommand
-  3. Check if the device is ready to accept command, whether Media is present or not.
-
-**/
-
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:   TestUnitReady
+//
+// Description: Issues Start/Stop unit Command
+//
+// Input:
+//  IN SATA_DEVICE_INTERFACE           *SataDevInterface
+//
+// Output:
+//      EFI_STATUS          EFI_SUCCESS           : If Media is accessible
+//                          EFI_NO_MEDIA
+//                          EFI_MEDIA_CHANGED
+//                          EFI_DEVICE_ERROR
+//
+// Modified:
+//      
+// Referrals: ExecutePacketCommand
+//
+// Notes:   
+//  1. Update CommandStructure for ATAPI_TEST_UNIT_READY command
+//  2. Issue ExecutePacketCommand
+//  3. Check if the device is ready to accept command, whether Media is present or not.
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
-TestUnitReady (
-    IN SATA_DEVICE_INTERFACE    *SataDevInterface
-)
+TestUnitReady(
+    IN SATA_DEVICE_INTERFACE           *SataDevInterface
+ )
 {
 
-    EFI_STATUS           Status = EFI_SUCCESS;
-    ATAPI_DEVICE         *AtapiDevice = SataDevInterface->AtapiDevice;
-    UINT16               LoopCount;
-    COMMAND_STRUCTURE    CommandStructure;
-
+    EFI_STATUS                      Status = EFI_SUCCESS;
+    ATAPI_DEVICE                    *AtapiDevice = SataDevInterface->AtapiDevice;
+    UINT16                          LoopCount;
+    COMMAND_STRUCTURE               CommandStructure;
+    
     ZeroMemory (&CommandStructure, sizeof(COMMAND_STRUCTURE));
     CommandStructure.AtapiCmd.Ahci_Atapi_Command[0] = ATAPI_TEST_UNIT_READY;
     CommandStructure.AtapiCmd.Ahci_Atapi_Command[1] = AtapiDevice->Lun << 5;
@@ -1730,30 +1903,43 @@ TestUnitReady (
     } 
 
     return Status;
+
 }
 
-/**
-    Builds command list
-
-    @param SataDevInterface 
-    @param CommandList 
-    @param CommandTableBaseAddr 
-
-    @retval EFI_STATUS
-  
-    @note  
-      1. Update CommandList bits
-      2. Not all fields like Ahci_Cmd_A are updated.
-      3. Port number is set to 0xF (Control port) if PM Port number is 0xFF.  
-
-**/ 
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   BuildCommandList
+//
+// Description: Builds command list
+//
+// Input:           
+//  IN SATA_DEVICE_INTERFACE            *SataDevInterface,  
+//  IN AHCI_COMMAND_LIST                *CommandList,
+//  IN UINT32                           CommandTableBaseAddr
+//
+// Output:      
+//  EFI_STATUS
+//  
+// Modified:
+//      
+// Referrals: 
+//
+// Notes:   
+//  1. Update CommandList bits
+//  2. Not all fields like Ahci_Cmd_A are updated.
+//  3. Port number is set to 0xF (Control port) if PM Port number is 0xFF.  
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END> 
 EFI_STATUS
 BuildCommandList (
-    IN SATA_DEVICE_INTERFACE    *SataDevInterface, 
-    IN AHCI_COMMAND_LIST        *CommandList,
-    IN UINT64                   CommandTableBaseAddr
+    IN SATA_DEVICE_INTERFACE            *SataDevInterface, 
+    IN AHCI_COMMAND_LIST                *CommandList,
+    IN UINT32                           CommandTableBaseAddr
 )
 {
+
+ 
     ZeroMemory (CommandList, sizeof(AHCI_COMMAND_LIST));
     // CommandList->Ahci_Cmd_A = SataDevInterface->DeviceType == ATAPI ? 1 : 0;      // set elsewhere 
     CommandList->Ahci_Cmd_P = 0;       
@@ -1763,40 +1949,53 @@ BuildCommandList (
     CommandList->Ahci_Cmd_PMP = SataDevInterface->PMPortNumber == 0xFF ? 0x0 : SataDevInterface->PMPortNumber;       
     CommandList->Ahci_Cmd_PRDTL = 0;       
     CommandList->Ahci_Cmd_PRDBC = 0;       
-    CommandList->Ahci_Cmd_CTBA = (UINT32)CommandTableBaseAddr;       
-    CommandList->Ahci_Cmd_CTBAU = (UINT32)(Shr64(CommandTableBaseAddr,32));   // Store Upper 32 bit value of CommandTableAddr
+    CommandList->Ahci_Cmd_CTBA = CommandTableBaseAddr;       
+    CommandList->Ahci_Cmd_CTBAU = 0;
 
     return EFI_SUCCESS;
+
 }
 
-/**
-    Build Command FIS
-
-    @param SataDevInterface 
-    @param CommandStructure 
-    @param CommandList 
-    @param Commandtable 
-
-    @retval EFI_STATUS
-
-    @note  
-  1. Update Command FIS data area.
-  2. Update the Command FIS length in Command List table  
-
-**/ 
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   BuildCommandFIS
+//
+// Description: Build Command FIS
+//
+// Input:           
+//  IN SATA_DEVICE_INTERFACE                *SataDevInterface,  
+//  IN COMMAND_STRUCTURE                    CommandStructure,
+//  IN AHCI_COMMAND_LIST                    *CommandList,
+//  IN AHCI_COMMAND_TABLE                   *Commandtable
+//
+// Output:      
+//  EFI_STATUS
+//
+// Modified:
+//
+// Referrals: 
+//
+// Notes:   
+//  1. Update Command FIS data area.
+//  2. Update the Command FIS lenght in Command List table  
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END> 
 EFI_STATUS
 BuildCommandFIS (
-    IN SATA_DEVICE_INTERFACE    *SataDevInterface, 
-    IN COMMAND_STRUCTURE        CommandStructure,
-    IN AHCI_COMMAND_LIST        *CommandList,
-    IN AHCI_COMMAND_TABLE       *Commandtable
+    IN SATA_DEVICE_INTERFACE                *SataDevInterface, 
+    IN COMMAND_STRUCTURE                    CommandStructure,
+    IN AHCI_COMMAND_LIST                    *CommandList,
+    IN AHCI_COMMAND_TABLE                   *Commandtable
 )
 {
+
+
     ZeroMemory (Commandtable, sizeof(AHCI_COMMAND_TABLE));
 
     Commandtable->CFis.Ahci_CFis_Type = FIS_REGISTER_H2D;
     Commandtable->CFis.AHci_CFis_PmPort = SataDevInterface->PMPortNumber == 0xFF ? 0x0 : SataDevInterface->PMPortNumber;
-    // Commandtable->CFis.Ahci_CFis_C = 1;          // Set elsewhere
+//  Commandtable->CFis.Ahci_CFis_C = 1;          // Set elsewhere
     Commandtable->CFis.Ahci_CFis_Cmd = CommandStructure.Command;
 
     Commandtable->CFis.Ahci_CFis_Features = CommandStructure.Features;
@@ -1820,65 +2019,91 @@ BuildCommandFIS (
     CommandList->Ahci_Cmd_CFL = FIS_REGISTER_H2D_LENGTH / 4;
 
     return EFI_SUCCESS;
+
 }
 
-/**
-
-    @param SataDevInterface 
-    @param CommandStructure 
-    @param CommandList 
-    @param Commandtable 
-
-    @retval EFI_STATUS
-
-    @note  
-      1. Copy Packet data to command table
-      2. Set Atapi bit in Command List    
-
-**/ 
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   BuildAtapiCMD
+//
+// Description: 
+//
+// Input:           
+//  IN SATA_DEVICE_INTERFACE                *SataDevInterface,  
+//  IN COMMAND_STRUCTURE                    CommandStructure
+//  IN AHCI_COMMAND_LIST                    *CommandList,
+//  IN AHCI_COMMAND_TABLE                   *Commandtable
+//
+// Output:      
+//  EFI_STATUS
+//
+// Modified:
+//
+// Referrals: 
+//
+// Notes:
+//  1. Copy Packet data to command table
+//  2. Set Atapi bit in Command List    
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END> 
 EFI_STATUS
-BuildAtapiCMD (
-    IN SATA_DEVICE_INTERFACE    *SataDevInterface, 
-    IN COMMAND_STRUCTURE        CommandStructure,
-    IN AHCI_COMMAND_LIST        *CommandList,
-    IN AHCI_COMMAND_TABLE       *Commandtable
+BuildAtapiCMD(
+    IN SATA_DEVICE_INTERFACE                *SataDevInterface, 
+    IN COMMAND_STRUCTURE                    CommandStructure,
+    IN AHCI_COMMAND_LIST                    *CommandList,
+    IN AHCI_COMMAND_TABLE                   *Commandtable
 )
 {
+
+
     pBS->CopyMem(&(Commandtable->AtapiCmd),&(CommandStructure.AtapiCmd),sizeof(AHCI_ATAPI_COMMAND));
 
     if (Commandtable->CFis.Ahci_CFis_Cmd == PACKET_COMMAND){ // Is it a packet command?         
         CommandList->Ahci_Cmd_A = 1;
     }
+
     return EFI_SUCCESS;
+
 }
 
-/**
-    Build PRDT table
-
-    @param SataDevInterface 
-    @param CommandStructure 
-    @param CommandList 
-    @param Commandtable 
-
-    @retval EFI_STATUS
-
-    @note  
-      1. Build as many PRDT table entries based on ByteCount.
-      2. Set the I flag for the lasr PRDT table.
-      3. Update PRDT table length in CommandList  
-
-**/ 
-
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   BuildPRDT
+//
+// Description: Build PRDT table
+//
+// Input:           
+//  IN SATA_DEVICE_INTERFACE                *SataDevInterface,  
+//  IN COMMAND_STRUCTURE                    CommandStructure
+//  IN AHCI_COMMAND_LIST                    *CommandList,
+//  IN AHCI_COMMAND_TABLE                   *Commandtable
+//
+// Output:      
+//  EFI_STATUS
+//
+// Modified:
+//
+// Referrals: 
+//
+// Notes:
+//  1. Build as many PRDT table entries based on ByteCount.
+//  2. Set the I flag for the lasr PRDT table.
+//  3. Update PRDT table lenght in CommandList
+//  
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END> 
 EFI_STATUS
 BuildPRDT (
-    IN SATA_DEVICE_INTERFACE    *SataDevInterface, 
-    IN COMMAND_STRUCTURE        CommandStructure,
-    IN AHCI_COMMAND_LIST        *CommandList,
-    IN AHCI_COMMAND_TABLE       *Commandtable
+    IN SATA_DEVICE_INTERFACE                *SataDevInterface, 
+    IN COMMAND_STRUCTURE                    CommandStructure,
+    IN AHCI_COMMAND_LIST                    *CommandList,
+    IN AHCI_COMMAND_TABLE                   *Commandtable
 )
 {
 
-    AMI_AHCI_BUS_PROTOCOL  *AhciBusInterface = SataDevInterface->AhciBusInterface; 
+    AHCI_BUS_PROTOCOL       *AhciBusInterface = SataDevInterface->AhciBusInterface; 
     UINT32                  ByteCount = CommandStructure.ByteCount;
     UINT16                  Prdtlength = 0;
     AHCI_COMMAND_PRDT       *PrdtTable = &(Commandtable->PrdtTable);
@@ -1902,42 +2127,55 @@ BuildPRDT (
     CommandList->Ahci_Cmd_PRDTL = Prdtlength / sizeof(AHCI_COMMAND_PRDT);
 
     return EFI_SUCCESS;
+
 }
 
-/**
-
-    @param AhciBusInterface 
-    @param SataDevInterface 
-    @param CIBitMask 
-
-    @retval EFI_STATUS
-
-    @note  
-      1. Clear Status register
-      2. Enable FIS and CR running bit
-      3. Enable Start bit
-      4. Update CI bit mask
-
-**/ 
-
+ 
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   StartController
+//
+// Description: 
+//
+// Input:           
+//    IN AHCI_BUS_PROTOCOL                  *AhciBusInterface,
+//    IN SATA_DEVICE_INTERFACE              *SataDevInterface,
+//    IN UINT32                             CIBitMask
+//
+// Output:      
+//  EFI_STATUS
+// Modified:
+//
+// Referrals: 
+//
+// Notes:   
+//  1. Clear Status register
+//  2. Enable FIS and CR running bit
+//  3. Enable Start bit
+//  4. Update CI bit mask
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END> 
 EFI_STATUS
 StartController (
-    IN AMI_AHCI_BUS_PROTOCOL    *AhciBusInterface, 
-    IN SATA_DEVICE_INTERFACE    *SataDevInterface,
-    IN UINT32                   CIBitMask
+    IN AHCI_BUS_PROTOCOL                    *AhciBusInterface, 
+    IN SATA_DEVICE_INTERFACE                *SataDevInterface,
+    IN UINT32                               CIBitMask
 )
 {
+
+    UINT32      AhciBaseAddr = (UINT32)(AhciBusInterface->AhciBaseAddress);
     UINT8       Port = SataDevInterface->PortNumber;
 
     // Clear Status
-    HBA_PORT_REG32_OR (AhciBusInterface, Port, HBA_PORTS_SERR, HBA_PORTS_ERR_CLEAR); 
-    HBA_PORT_REG32_OR (AhciBusInterface, Port, HBA_PORTS_IS, HBA_PORTS_IS_CLEAR); 
+    HBA_PORT_REG32_OR (AhciBaseAddr, Port, HBA_PORTS_SERR, HBA_PORTS_ERR_CLEAR); 
+    HBA_PORT_REG32_OR (AhciBaseAddr, Port, HBA_PORTS_IS, HBA_PORTS_IS_CLEAR); 
 
     // Enable FIS Receive
-    HBA_PORT_REG32_OR (AhciBusInterface, Port, HBA_PORTS_CMD, HBA_PORTS_CMD_FRE);     
+    HBA_PORT_REG32_OR (AhciBaseAddr, Port, HBA_PORTS_CMD, HBA_PORTS_CMD_FRE);     
 
     // Wait till FIS is running
-    WaitForMemSet(AhciBusInterface, Port, HBA_PORTS_CMD,
+    WaitForMemSet(AhciBaseAddr, Port, HBA_PORTS_CMD,
                                     HBA_PORTS_CMD_FR,
                                     HBA_PORTS_CMD_FR,
                                     HBA_FR_CLEAR_TIMEOUT);
@@ -1946,64 +2184,75 @@ StartController (
     ZeroMemory ((VOID *)(UINTN)SataDevInterface->PortFISBaseAddr, RECEIVED_FIS_SIZE);
 
     // Enable ST
-    HBA_PORT_REG32_OR (AhciBusInterface, Port, HBA_PORTS_CMD, HBA_PORTS_CMD_ST);
+    HBA_PORT_REG32_OR (AhciBaseAddr, Port, HBA_PORTS_CMD, HBA_PORTS_CMD_ST);
 
     // Enable Command Issued
-    HBA_PORT_REG32_OR (AhciBusInterface, Port, HBA_PORTS_CI, CIBitMask);
+    HBA_PORT_REG32_OR (AhciBaseAddr, Port, HBA_PORTS_CI, CIBitMask);
 
     return EFI_SUCCESS;
+
 }
 
-/**
-    Wait till command completes
-
-    @param SataDevInterface 
-    @param CommandType 
-    @param TimeOut 
-
-    @retval EFI_STATUS
-
-    @note  
-      1. Check for SError bits. If set return error.
-      2. For PIO IN/Out and Packet IN/OUT command wait till PIO Setup FIS is received
-      3. If D2H register FIS is received, exit the loop.
-      4. Check for SError and TFD bits.
-
-**/
-
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   WaitforCommandComplete
+//
+// Description: Wait till cmd completes
+//
+// Input:           
+//    IN SATA_DEVICE_INTERFACE               *SataDevInterface,
+//    IN COMMAND_TYPE                        CommandType,
+//    IN UINTN                               TimeOut
+//
+// Output:      
+//  EFI_STATUS
+//
+// Modified:
+//
+// Referrals: 
+//
+// Notes:
+//  1. Check for SError bits. If set return error.
+//  2. For PIO IN/Out and Packet IN/OUT command wait till PIO Setup FIS is received
+//  3. If D2H register FIS is received, exit the loop.
+//  4. Check for SError and TFD bits.
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
-WaitforCommandComplete (
-    IN SATA_DEVICE_INTERFACE    *SataDevInterface,
-    IN COMMAND_TYPE             CommandType,
-    IN UINTN                    TimeOut    
+WaitforCommandComplete  (
+    IN SATA_DEVICE_INTERFACE               *SataDevInterface,
+    IN COMMAND_TYPE                        CommandType,
+    IN UINTN                               TimeOut    
 )
 {
 
-    AMI_AHCI_BUS_PROTOCOL  *AhciBusInterface = SataDevInterface->AhciBusInterface; 
-    UINT8                       Port = SataDevInterface->PortNumber;
-    UINT32                      Data32_SERR, Data32_IS, i;
-    BOOLEAN                     PxSERR_ERROR = FALSE, PIO_SETUP_FIS = FALSE;
-    volatile AHCI_RECEIVED_FIS  *FISReceiveAddress = (AHCI_RECEIVED_FIS *)(UINTN)SataDevInterface->PortFISBaseAddr;
-    UINTN                       TimeOutCount = TimeOut;
+    AHCI_BUS_PROTOCOL  *AhciBusInterface = SataDevInterface->AhciBusInterface; 
+    UINT32      AhciBaseAddr = (UINT32)AhciBusInterface->AhciBaseAddress;
+    UINT8       Port = SataDevInterface->PortNumber;
+    UINT32      Data32_SERR, Data32_IS, i;
+    BOOLEAN     PxSERR_ERROR = FALSE, PIO_SETUP_FIS = FALSE;
+    volatile AHCI_RECEIVED_FIS   *FISReceiveAddress = (AHCI_RECEIVED_FIS *)(UINTN)SataDevInterface->PortFISBaseAddr;
+    UINTN       TimeOutCount = TimeOut;
 
     i=0;
     do {
         pBS->Stall(500);
 
         //  Check for Error bits
-        Data32_SERR = HBA_PORT_REG32 (AhciBusInterface, Port, HBA_PORTS_SERR);
+        Data32_SERR = HBA_PORT_REG32 (AhciBaseAddr, Port, HBA_PORTS_SERR);
         if (Data32_SERR & HBA_PORTS_ERR_CHK) {
             PxSERR_ERROR = TRUE;
             break;
         }
 
         //  Check for Error bits
-        Data32_IS = HBA_PORT_REG32 (AhciBusInterface, Port, HBA_PORTS_IS);
+        Data32_IS = HBA_PORT_REG32 (AhciBaseAddr, Port, HBA_PORTS_IS);
         if (Data32_IS & HBA_PORTS_IS_ERR_CHK) {
             PxSERR_ERROR = TRUE;
             break;
         }
-
+        
         switch (CommandType) {
 
             case PIO_DATA_IN_CMD:
@@ -2019,13 +2268,15 @@ WaitforCommandComplete (
                 break;
             default: 
                 break;
+            
         }
+
         // check if D2H register FIS is received
         if(FISReceiveAddress->Ahci_Rfis[0] == FIS_REGISTER_D2H) break;
 
         // For PIO Data in D2H register FIS is not received. So rely on BSY bit
         if ((CommandType == PIO_DATA_IN_CMD) &&  PIO_SETUP_FIS &&
-                    !((HBA_PORT_REG32 (AhciBusInterface, Port, HBA_PORTS_TFD) & 
+                    !((HBA_PORT_REG32 (AhciBaseAddr, Port, HBA_PORTS_TFD) & 
                     (HBA_PORTS_TFD_BSY | HBA_PORTS_TFD_DRQ)))){
             break;
         }
@@ -2038,82 +2289,90 @@ WaitforCommandComplete (
 
     if (PxSERR_ERROR) {
         // clear the status and return error
-        HBA_PORT_REG32_OR (AhciBusInterface, Port, HBA_PORTS_SERR, HBA_PORTS_ERR_CLEAR); 
-        HBA_PORT_REG32_OR (AhciBusInterface, Port, HBA_PORTS_IS, HBA_PORTS_IS_CLEAR);         
+        HBA_PORT_REG32_OR (AhciBaseAddr, Port, HBA_PORTS_SERR, HBA_PORTS_ERR_CLEAR); 
+        HBA_PORT_REG32_OR (AhciBaseAddr, Port, HBA_PORTS_IS, HBA_PORTS_IS_CLEAR);         
         return EFI_DEVICE_ERROR;    
-    }
+    }    
 
     // check if CI register is zero
-    if (HBA_PORT_REG32 (AhciBusInterface, Port, HBA_PORTS_CI)){
+    if (HBA_PORT_REG32 (AhciBaseAddr, Port, HBA_PORTS_CI)){
         return EFI_DEVICE_ERROR;                
     }
 
     // check for status bits
-    if (HBA_PORT_REG32 (AhciBusInterface, Port, HBA_PORTS_TFD) & (HBA_PORTS_TFD_ERR | HBA_PORTS_TFD_DRQ)){
+    if (HBA_PORT_REG32 (AhciBaseAddr, Port, HBA_PORTS_TFD) & (HBA_PORTS_TFD_ERR | HBA_PORTS_TFD_DRQ)){
         return EFI_DEVICE_ERROR;                
     }
 
     return EFI_SUCCESS;
+
 }
 
-/**
-    Stop FIS and CR
-
-    @param AhciBusInterface 
-    @param SataDevInterface 
-
-    @retval EFI_STATUS
-
-    @note  
-      1. clear ST bit and wait till CR bits gets reset
-      2. if not generate Port reset
-      3. Clear FIS running bit.
-      4. Clear status register
-
-**/ 
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   StopController
+//
+// Description: Stop FIS and CR
+//
+// Input:           
+//    IN AHCI_BUS_PROTOCOL                   *AhciBusInterface, 
+//    IN SATA_DEVICE_INTERFACE               *SataDevInterface
+//
+// Output:      
+//  EFI_STATUS
+//
+// Modified:
+//
+// Referrals: GeneratePortReset
+//
+// Notes:
+//  1. clear ST bit and wait till CR bits gets reset
+//  2. if not generate Port reset
+//  3. Clear FIS running bit.
+//  4. Clear status register
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END> 
 EFI_STATUS
-StopController (
-    IN AMI_AHCI_BUS_PROTOCOL    *AhciBusInterface, 
-    IN SATA_DEVICE_INTERFACE    *SataDevInterface,
-    IN BOOLEAN                  StartOrStop
+StopController(
+    IN AHCI_BUS_PROTOCOL                   *AhciBusInterface, 
+    IN SATA_DEVICE_INTERFACE               *SataDevInterface,
+    IN BOOLEAN                              StartOrStop
 ) 
 {
-    UINT8         Port = SataDevInterface->PortNumber;
-    UINT8         PMPort = SataDevInterface->PMPortNumber;
-    EFI_STATUS    Status;
-    UINT64        PortFISBaseAddr = SataDevInterface->PortFISBaseAddr;
-    UINT64        CommandListBaseAddress = SataDevInterface->PortCommandListBaseAddr;
-    UINT32        Data32;
 
-    if(StartOrStop && (HBA_PORT_REG64(AhciBusInterface,Port,HBA_PORTS_CLB) != CommandListBaseAddress)) {
-        gCommandListBaseAddress=HBA_PORT_REG64(AhciBusInterface,Port,HBA_PORTS_CLB);
-        gFisBaseAddress=HBA_PORT_REG64(AhciBusInterface,Port,HBA_PORTS_FB);
+    UINT8   Port = SataDevInterface->PortNumber;
+    UINT8   PMPort = SataDevInterface->PMPortNumber;
+    UINT32  AhciBaseAddr = (UINT32)(AhciBusInterface->AhciBaseAddress);
+    EFI_STATUS  Status;
+    UINT32      PortFISBaseAddr = SataDevInterface->PortFISBaseAddr;
+    UINT32      CommandListBaseAddress = SataDevInterface->PortCommandListBaseAddr;
 
-        // Saving FIS and Command List Registers
-        HBA_PORT_WRITE_REG64(AhciBusInterface,Port,HBA_PORTS_CLB,CommandListBaseAddress);
-        HBA_PORT_WRITE_REG64(AhciBusInterface,Port,HBA_PORTS_FB,PortFISBaseAddr);
+    if(StartOrStop && (HBA_PORT_REG32(AhciBaseAddr,Port,HBA_PORTS_CLB) != CommandListBaseAddress)) {
+        gCommandListBaseAddress=HBA_PORT_REG32(AhciBaseAddr,Port,HBA_PORTS_CLB);
+        gFisBaseAddress=HBA_PORT_REG32(AhciBaseAddr,Port,HBA_PORTS_FB);
+        HBA_PORT_WRITE_REG32(AhciBaseAddr,Port,HBA_PORTS_CLB,CommandListBaseAddress);
+        HBA_PORT_WRITE_REG32(AhciBaseAddr,Port,HBA_PORTS_FB,PortFISBaseAddr);
+        
+        //
+        // Saving the Upper 32 bits of FIS and Command List Registers
+        //
+        gCommandListBaseAddress2=HBA_PORT_REG32(AhciBaseAddr,Port,HBA_PORTS_CLBU);
+        gFisBaseAddress2=HBA_PORT_REG32(AhciBaseAddr,Port,HBA_PORTS_FBU);
+        HBA_PORT_WRITE_REG32(AhciBaseAddr,Port,HBA_PORTS_CLBU,0);
+        HBA_PORT_WRITE_REG32(AhciBaseAddr,Port,HBA_PORTS_FBU,0);
     }
 
     // Clear Start
-    HBA_PORT_REG32_AND (AhciBusInterface, Port, HBA_PORTS_CMD, ~(HBA_PORTS_CMD_ST));
+    HBA_PORT_REG32_AND (AhciBaseAddr, Port, HBA_PORTS_CMD, ~(HBA_PORTS_CMD_ST));
     // Make sure CR is 0 with in 500msec
-    Status = WaitForMemClear(AhciBusInterface, Port, HBA_PORTS_CMD,
+    Status = WaitForMemClear(AhciBaseAddr, Port, HBA_PORTS_CMD,
                             HBA_PORTS_CMD_CR,
                             HBA_CR_CLEAR_TIMEOUT);
 
     if (EFI_ERROR(Status)) { 
-
-        // Get the Port Speed allowed and Interface Power Management Transitions Allowed
-        // Pass the values for PortReset. 
-        Data32 = HBA_PORT_REG32 (AhciBusInterface, Port, HBA_PORTS_SCTL);
-        Data32 &= 0xFF0;          
-
-        Status = GeneratePortReset(AhciBusInterface,
-                                   SataDevInterface,
-                                   Port,
-                                   PMPort,
-                                   (UINT8)((Data32 & 0xF0) >> 4),
-                                   (UINT8)(Data32 >> 8));
+        Status = GeneratePortReset(AhciBusInterface, SataDevInterface, Port, PMPort,
+                                        HBA_PORTS_SCTL_SPD_NSNR, HBA_PORTS_SCTL_IPM_DIS);
     };
 
     if (EFI_ERROR(Status)) {
@@ -2121,12 +2380,10 @@ StopController (
     }
 
     //  Clear FIS receive enable.
-    HBA_PORT_REG32_AND (AhciBusInterface,
-                        Port, 
-                        HBA_PORTS_CMD,
-                        ~(HBA_PORTS_CMD_FRE));
+    HBA_PORT_REG32_AND (AhciBaseAddr, Port, 
+                                    HBA_PORTS_CMD, ~(HBA_PORTS_CMD_FRE));
     //  Make sure FR is 0 with in 500msec
-    Status = WaitForMemClear(AhciBusInterface, Port, HBA_PORTS_CMD,
+    Status = WaitForMemClear(AhciBaseAddr, Port, HBA_PORTS_CMD,
                             HBA_PORTS_CMD_FR,
                             HBA_FR_CLEAR_TIMEOUT);
 
@@ -2134,14 +2391,17 @@ StopController (
 StopController_ErrorExit:
 
     // Clear Status register
-    HBA_PORT_REG32_OR (AhciBusInterface, Port, HBA_PORTS_SERR, HBA_PORTS_ERR_CLEAR); 
-    HBA_PORT_REG32_OR (AhciBusInterface, Port, HBA_PORTS_IS, HBA_PORTS_IS_CLEAR); 
+    HBA_PORT_REG32_OR (AhciBaseAddr, Port, HBA_PORTS_SERR, HBA_PORTS_ERR_CLEAR); 
+    HBA_PORT_REG32_OR (AhciBaseAddr, Port, HBA_PORTS_IS, HBA_PORTS_IS_CLEAR); 
 
     if(!StartOrStop  && gCommandListBaseAddress) {
-
-        // Restoring FIS and Command List Registers
-        HBA_PORT_WRITE_REG64(AhciBusInterface,Port,HBA_PORTS_CLB,gCommandListBaseAddress);
-        HBA_PORT_WRITE_REG64(AhciBusInterface,Port,HBA_PORTS_FB,gFisBaseAddress);
+        HBA_PORT_WRITE_REG32(AhciBaseAddr,Port,HBA_PORTS_CLB,gCommandListBaseAddress);
+        HBA_PORT_WRITE_REG32(AhciBaseAddr,Port,HBA_PORTS_FB,gFisBaseAddress);
+        //
+        // Restoring the Upper 32 bits of FIS and Command List Registers
+        //
+        HBA_PORT_WRITE_REG32(AhciBaseAddr,Port,HBA_PORTS_CLBU,gCommandListBaseAddress2);
+        HBA_PORT_WRITE_REG32(AhciBaseAddr,Port,HBA_PORTS_FBU,gFisBaseAddress2);
 
         gCommandListBaseAddress = 0;
     }
@@ -2149,26 +2409,38 @@ StopController_ErrorExit:
     return Status;
 }
 
-/**
-    Check if the device is ready to accept command.
-
-    @param SataDevInterface 
-
-    @retval EFI_STATUS      
-
-    @note  
-  1. Check the device is ready to accept the command. BSY and DRQ should be de-asserted.  
-  2. If set, generate Port reset
-  3. In case Port Multiplier is connected to the port, enable all the ports of the Port Multiplier.
-
-**/ 
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   ReadytoAcceptCmd
+//
+// Description: Check if the device is ready to accept cmd.
+//
+// Input:           
+//  IN SATA_DEVICE_INTERFACE               *SataDevInterface,
+//
+// Output:
+//  EFI_STATUS      
+//
+// Modified:
+//      
+// Referrals: GeneratePortReset, ReadWritePMPort
+//
+// Notes:
+//  1. Check the device is ready to accept the command. BSY and DRQ should be de-asserted.  
+//  2. If set, generate Port reset
+//  3. In case Port Multiplier is connected to the port, enable all the ports of the Port Multiplier.
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END> 
 EFI_STATUS
 ReadytoAcceptCmd (
     IN SATA_DEVICE_INTERFACE               *SataDevInterface
 )
 {
+
     EFI_STATUS              Status = EFI_SUCCESS;
-    AMI_AHCI_BUS_PROTOCOL   *AhciBusInterface = SataDevInterface->AhciBusInterface; 
+    AHCI_BUS_PROTOCOL       *AhciBusInterface = SataDevInterface->AhciBusInterface; 
+    UINT32                  AhciBaseAddr = (UINT32)(AhciBusInterface->AhciBaseAddress);
     UINT8                   Port = SataDevInterface->PortNumber;
     UINT8                   PMPort = SataDevInterface->PMPortNumber;
     SATA_DEVICE_INTERFACE   *SataPMDevInterface, *SataPMPortDevInterface;
@@ -2176,8 +2448,8 @@ ReadytoAcceptCmd (
     UINT8                   PowerManagement, Speed;
 
     // Is the Device ready to accept the command
-    if (HBA_PORT_REG8 (AhciBusInterface, Port, HBA_PORTS_TFD) & (HBA_PORTS_TFD_BSY | HBA_PORTS_TFD_DRQ)){
-        Data32 = HBA_PORT_REG32 (AhciBusInterface, Port, HBA_PORTS_SCTL);
+    if (HBA_PORT_REG8 (AhciBaseAddr, Port, HBA_PORTS_TFD) & (HBA_PORTS_TFD_BSY | HBA_PORTS_TFD_DRQ)){
+        Data32 = HBA_PORT_REG32 (AhciBaseAddr, Port, HBA_PORTS_SCTL);
         Data32 &= 0xFF0;          
         // make sure the status we read is for the right port
         Status = GeneratePortReset(AhciBusInterface, SataDevInterface, Port, 0xFF,
@@ -2212,52 +2484,76 @@ ReadytoAcceptCmd (
     return Status;
 }
 
-/**
-
-    @param AhciBusInterface 
-
-    @retval 
-
-**/ 
-
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   HostReset
+//
+// Description: 
+//
+// Input:           
+//  IN AHCI_BUS_PROTOCOL                   *AhciBusInterface, 
+//
+// Output:      
+//
+// Modified:
+//      
+//
+// Referrals: 
+//
+// Notes:   
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END> 
 EFI_STATUS
 HostReset (
-    IN AMI_AHCI_BUS_PROTOCOL    *AhciBusInterface 
+    IN AHCI_BUS_PROTOCOL                   *AhciBusInterface 
 )
 {
 
     return EFI_SUCCESS;
+
 }
 
-/**
-    Issue a Port Reset
-
-    @param AhciBusInterface 
-    @param SataDevInterface 
-    @param CurrentPort 
-    @param Speed 
-    @param PowerManagement 
-
-    @retval EFI_STATUS
-
-    @note  
-      1. Issue port reset by setting DET bit in SControl register
-      2. Call HandlePortComReset to check the status of the reset.
-
-**/ 
-
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   GeneratePortReset
+//
+// Description: Issue a Port Reset
+//
+// Input:           
+//  IN AHCI_BUS_PROTOCOL                   *AhciBusInterface
+//  IN SATA_DEVICE_INTERFACE               *SataDevInterface, 
+//  IN UINT8                               CurrentPort, 
+//  IN UINT8                               Speed,
+//  IN UINT8                               PowerManagement
+//
+// Output:      
+//  EFI_STATUS
+//
+// Modified:
+//
+// Referrals: ReadWritePMPort, HandlePortComReset
+//
+// Notes:   
+//  1. Issue port reset by setting DET bit in SControl register
+//  2. Call HandlePortComReset to check the status of the reset.
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END> 
 EFI_STATUS
 GeneratePortReset (
-    AMI_AHCI_BUS_PROTOCOL   *AhciBusInterface, 
-    SATA_DEVICE_INTERFACE   *SataDevInterface, 
-    UINT8                   Port,
-    UINT8                   PMPort,
-    UINT8                   Speed,
-    UINT8                   PowerManagement
+    AHCI_BUS_PROTOCOL                   *AhciBusInterface, 
+    SATA_DEVICE_INTERFACE               *SataDevInterface, 
+    UINT8                               Port,
+    UINT8                               PMPort,
+    UINT8                               Speed,
+    UINT8                               PowerManagement
 )
 {
+
     EFI_STATUS  Status;
-    volatile    AHCI_RECEIVED_FIS  *FISAddress =  (AHCI_RECEIVED_FIS *)( (UINT64)(HBA_PORT_REG64(AhciBusInterface, Port, HBA_PORTS_FB)) );
+    UINT32      AhciBaseAddr = (UINT32) AhciBusInterface->AhciBaseAddress;
+    volatile    AHCI_RECEIVED_FIS  *FISAddress =  (AHCI_RECEIVED_FIS *)((UINTN) HBA_PORT_REG32(AhciBaseAddr, Port, HBA_PORTS_FB));
     UINT32      Data32;
 
     TRACE_AHCI_LEVEL2((-1,"AHCI: PortReset on Port : %x PMPort : %x", Port, PMPort));
@@ -2268,50 +2564,52 @@ GeneratePortReset (
     gPortReset = TRUE;
 
     // Disable Start bit
-    HBA_PORT_REG32_AND (AhciBusInterface, Port, HBA_PORTS_CMD, ~HBA_PORTS_CMD_ST);
+    HBA_PORT_REG32_AND (AhciBaseAddr, Port, HBA_PORTS_CMD, ~HBA_PORTS_CMD_ST);
 
     // Wait till CR is cleared    
-    Status = WaitForMemClear(AhciBusInterface, Port, HBA_PORTS_CMD,
+    Status = WaitForMemClear(AhciBaseAddr, Port, HBA_PORTS_CMD,
                             HBA_PORTS_CMD_CR,
                             HBA_CR_CLEAR_TIMEOUT);
 
     // Clear Status register
-    HBA_PORT_REG32_OR (AhciBusInterface, Port, HBA_PORTS_SERR, HBA_PORTS_ERR_CLEAR); 
+    HBA_PORT_REG32_OR (AhciBaseAddr, Port, HBA_PORTS_SERR, HBA_PORTS_ERR_CLEAR); 
     if (PMPort != 0xFF) {
         Data32 = HBA_PORTS_ERR_CLEAR;
         ReadWritePMPort (SataDevInterface, PMPort, PSCR_1_SERROR, &Data32, TRUE);
     }
-    HBA_PORT_REG32_OR (AhciBusInterface, Port, HBA_PORTS_IS, HBA_PORTS_IS_CLEAR); 
+    HBA_PORT_REG32_OR (AhciBaseAddr, Port, HBA_PORTS_IS, HBA_PORTS_IS_CLEAR); 
     
     //  Enable FIS Receive Enable
-    HBA_PORT_REG32_OR (AhciBusInterface, Port, HBA_PORTS_CMD, HBA_PORTS_CMD_FRE);     
+    HBA_PORT_REG32_OR (AhciBaseAddr, Port, HBA_PORTS_CMD, HBA_PORTS_CMD_FRE);     
 
     // Wait till FIS is running and then clear the data area
-    WaitForMemSet(AhciBusInterface, Port, HBA_PORTS_CMD,
+    WaitForMemSet(AhciBaseAddr, Port, HBA_PORTS_CMD,
                                     HBA_PORTS_CMD_FR,
                                     HBA_PORTS_CMD_FR,
                                     HBA_FR_CLEAR_TIMEOUT);
 
+        
     FISAddress->Ahci_Rfis[0] = 0;
 
     if (PMPort == 0xFF) {
         // Issue Port COMRESET
-       HBA_PORT_REG32_AND_OR (AhciBusInterface, Port, HBA_PORTS_SCTL, 0xFFFFF000, 
+       HBA_PORT_REG32_AND_OR (AhciBaseAddr, Port, HBA_PORTS_SCTL, 0xFFFFF000, 
                     HBA_PORTS_SCTL_DET_INIT + (Speed << 4) + (PowerManagement << 8));     
         pBS->Stall (1000);                               // 1msec
-        HBA_PORT_REG32_AND (AhciBusInterface, Port, HBA_PORTS_SCTL, ~HBA_PORTS_SCTL_DET_MASK);
-    } else {
+        HBA_PORT_REG32_AND (AhciBaseAddr, Port, HBA_PORTS_SCTL, ~HBA_PORTS_SCTL_DET_MASK);
+    }
+    else {
         Data32 = HBA_PORTS_SCTL_DET_INIT + (Speed << 4) + (PowerManagement << 8);
         ReadWritePMPort (SataDevInterface, PMPort, PSCR_2_SCONTROL, &Data32, TRUE);
         pBS->Stall (1000);                               // 1msec
         Data32 = (Speed << 4) + (PowerManagement << 8);
         ReadWritePMPort (SataDevInterface, PMPort, PSCR_2_SCONTROL, &Data32, TRUE);
     }
-
+    
     Status = HandlePortComReset(AhciBusInterface, SataDevInterface, Port, PMPort);
 
     //  Disable FIS Receive Enable
-    HBA_PORT_REG32_AND (AhciBusInterface, Port, HBA_PORTS_CMD, ~HBA_PORTS_CMD_FRE);
+    HBA_PORT_REG32_AND (AhciBaseAddr, Port, HBA_PORTS_CMD, ~HBA_PORTS_CMD_FRE);
 
     SataDevInterface->SControl = (Speed << 4) + (PowerManagement << 8);
 
@@ -2327,30 +2625,41 @@ GeneratePortReset (
 
 }
 
-/**
-    Generate Soft Reset
-
-    @param SataDevInterface 
-    @param In UINT8                                PMPort
-
-    @retval EFI_STATUS
-
-    @note  
-  1. Issue a Control register update, H2D register FIS with reset bit set.
-  2. Wait for 100usec
-  3. Issue a Control register update, H2D register FIS with reset bit reset.
-
-**/ 
-
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   GenerateSoftReset
+//
+// Description: Generate Soft Reset
+//
+// Input:           
+//  IN SATA_DEVICE_INTERFACE                *SataDevInterface,
+//  In UINT8                                PMPort
+//
+// Output:      
+//  EFI_STATUS
+//
+// Modified:
+//
+// Referrals: StopController, ReadytoAcceptCmd, BuildCommandList, BuildCommandFIS, StartController
+//
+// Notes:   
+//  1. Issue a Control register update, H2D register FIS with reset bit set.
+//  2. Wait for 100usec
+//  3. Issue a Control register update, H2D register FIS with reset bit reset.
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END> 
 EFI_STATUS
 GenerateSoftReset (
     IN SATA_DEVICE_INTERFACE                *SataDevInterface,
     IN UINT8                                PMPort
+
 )
 {
 
     EFI_STATUS           Status;
-    AMI_AHCI_BUS_PROTOCOL    *AhciBusInterface = SataDevInterface->AhciBusInterface; 
+    AHCI_BUS_PROTOCOL    *AhciBusInterface = SataDevInterface->AhciBusInterface; 
+    UINT32               AhciBaseAddr = (UINT32)(AhciBusInterface->AhciBaseAddress);
     AHCI_COMMAND_LIST    *CommandList = (AHCI_COMMAND_LIST *)(UINTN) SataDevInterface->PortCommandListBaseAddr;
     AHCI_COMMAND_TABLE   *Commandtable = (AHCI_COMMAND_TABLE *)(UINTN)AhciBusInterface->PortCommandTableBaseAddr;
     COMMAND_STRUCTURE     CommandStructure;
@@ -2372,16 +2681,18 @@ GenerateSoftReset (
         goto GenerateSoftReset_Exit;
     }
 
+
     // if Command list Override is supported, set CLO bit
-    Data32 = HBA_PORT_REG32 (AhciBusInterface, Port, HBA_PORTS_TFD) & (HBA_PORTS_TFD_DRQ | HBA_PORTS_TFD_BSY);
+    Data32 = HBA_PORT_REG32 (AhciBaseAddr, Port, HBA_PORTS_TFD) & (HBA_PORTS_TFD_DRQ | HBA_PORTS_TFD_BSY);
     if ((AhciBusInterface->HBACapability & HBA_CAP_SCLO) && Data32){
-        HBA_PORT_REG32_OR (AhciBusInterface, Port, HBA_PORTS_CMD, HBA_PORTS_CMD_CLO);
-        Status = WaitForMemClear(AhciBusInterface, Port, HBA_PORTS_CMD,
+        HBA_PORT_REG32_OR (AhciBaseAddr, Port, HBA_PORTS_CMD, HBA_PORTS_CMD_CLO);
+        Status = WaitForMemClear(AhciBaseAddr, Port, HBA_PORTS_CMD,
                             HBA_PORTS_CMD_CLO,
                             BUSY_CLEAR_TIMEOUT);
     }
+
     CommandStructure.Control = 4;
-    BuildCommandList(SataDevInterface, CommandList, (UINT64)Commandtable);
+    BuildCommandList(SataDevInterface, CommandList, (UINT32)(UINTN)Commandtable);
     BuildCommandFIS(SataDevInterface, CommandStructure, CommandList, Commandtable);
 
     CommandList->Ahci_Cmd_W = 0; 
@@ -2394,7 +2705,7 @@ GenerateSoftReset (
 
     StartController(AhciBusInterface, SataDevInterface, BIT00);
     // Wait till command is processed
-    Status = WaitForMemClear(AhciBusInterface, Port, HBA_PORTS_CI,
+    Status = WaitForMemClear(AhciBaseAddr, Port, HBA_PORTS_CI,
                             BIT00,
                             ONE_MILLISECOND * 5);
 
@@ -2405,7 +2716,7 @@ GenerateSoftReset (
     pBS->Stall (100);               // 100 usec
 
     ZeroMemory (&CommandStructure, sizeof(COMMAND_STRUCTURE));
-    BuildCommandList(SataDevInterface, CommandList, (UINT64)Commandtable);
+    BuildCommandList(SataDevInterface, CommandList, (UINT32)(UINTN)Commandtable);
     BuildCommandFIS(SataDevInterface, CommandStructure, CommandList, Commandtable);
 
     CommandList->Ahci_Cmd_W = 0; 
@@ -2424,38 +2735,51 @@ GenerateSoftReset_Exit:
     gSoftReset = FALSE;
     TRACE_AHCI_LEVEL2((-1," Status : %r\n", Status));
     return Status;
+
 }
 
-/**
-    Check if COM Reset is successful or not
-
-    @param AhciBusInterface 
-    @param SataDevInterface 
-    @param Port 
-    @param PMPort 
-  
-    @retval EFI_STATUS      
-
-    @note  
-  1. Check if Link is active. If not return error.
-  2. If Link is present, wait for PhyRdy Change bit to be set.
-  3. Clear SError register
-  4. Wait for D2H register FIS
-  5. Check the Status register for errors.
-  6. If COMRESET is success wait for sometime if the device is ATAPI or GEN1
-
-**/ 
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   HandlePortComReset
+//
+// Description: Check if COM Reset is successful or not
+//
+// Input:           
+//  IN AHCI_BUS_PROTOCOL                   *AhciBusInterface, 
+//  IN SATA_DEVICE_INTERFACE               *SataDevInterface,
+//  IN UINT8                               Port, 
+//  IN UINT8                               PMPort, 
+//  
+// Output:      
+//  EFI_STATUS      
+//
+// Modified:
+//
+// Referrals: ReadSCRRegister, WriteSCRRegister
+//
+// Notes:   
+//  1. Check if Link is active. If not return error.
+//  2. If Link is present, wait for PhyRdy Change bit to be set.
+//  3. Clear SError register
+//  4. Wait for D2H register FIS
+//  5. Check the Status register for errors.
+//  6. If COMRESET is success wait for sometime if the device is ATAPI or GEN1
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END> 
 EFI_STATUS
-HandlePortComReset (
-    IN AMI_AHCI_BUS_PROTOCOL    *AhciBusInterface, 
-    IN SATA_DEVICE_INTERFACE    *SataDevInterface,
-    IN UINT8                    Port,
-    IN UINT8                    PMPort
+HandlePortComReset(
+    IN AHCI_BUS_PROTOCOL                   *AhciBusInterface, 
+    IN SATA_DEVICE_INTERFACE               *SataDevInterface,
+    IN UINT8                               Port,
+    IN UINT8                               PMPort
 )
 {
+
     EFI_STATUS Status = EFI_SUCCESS;
     BOOLEAN     DeviceDetected = FALSE;
     UINT32      Data32, i, SStatusData;
+    UINT32      AhciBaseAddr = (UINT32)(AhciBusInterface->AhciBaseAddress);
     volatile    AHCI_RECEIVED_FIS  *FISAddress;
     UINT32      SError = 0;
     //  Check if detection is complete
@@ -2472,16 +2796,17 @@ HandlePortComReset (
     if (DeviceDetected) {
         // Wait till PhyRdy Change bit is set
         if (PMPort == 0xFF) {
-            Status = WaitForMemSet(AhciBusInterface, Port, HBA_PORTS_SERR,
+            Status = WaitForMemSet(AhciBaseAddr, Port, HBA_PORTS_SERR,
                             HBA_PORTS_SERR_EX,
                             HBA_PORTS_SERR_EX,
                             ATAPI_BUSY_CLEAR_TIMEOUT);
-        } else {
+        }
+        else {
             Status = WaitforPMMemSet (SataDevInterface, PMPort, PSCR_1_SERROR, 
                     HBA_PORTS_SERR_EX, HBA_PORTS_SERR_EX, ATAPI_BUSY_CLEAR_TIMEOUT);
         }
 
-        FISAddress = (AHCI_RECEIVED_FIS*)((UINT64)(HBA_PORT_REG64(AhciBusInterface, Port, HBA_PORTS_FB)));
+        FISAddress =  (AHCI_RECEIVED_FIS *)(UINTN)HBA_PORT_REG32(AhciBaseAddr, Port, HBA_PORTS_FB);
 
         for (i = 0; i < ATAPI_BUSY_CLEAR_TIMEOUT; ) {
             SError = ReadSCRRegister (AhciBusInterface, SataDevInterface, Port, PMPort, 2); // SError
@@ -2490,95 +2815,119 @@ HandlePortComReset (
             }
             if(FISAddress->Ahci_Rfis[0] == FIS_REGISTER_D2H) {break;}
             pBS->Stall (1000);              // 1msec Strange. Delay is needed for read to succeed. 
-                if (PMPort != 0xFF) {
-                    i+= 100;  // For device behind PM Port, there is a delay in writing to the register. So count can be decreased.
-                } else {
-                    i++;
-                }
+                if (PMPort != 0xFF) {i+= 100;}  // For device behind PM Port, there is a delay in writing to the register. So count can be decreased.
+                    else { i++; }
         } 
 
         // Wait till PxTFD gets updated from D2H FIS
         for (i = 0; i < 100; i++){   // Total delay 10msec        
             WriteSCRRegister (AhciBusInterface, SataDevInterface, Port, PMPort, 1, HBA_PORTS_ERR_CLEAR); //SError
-            if((FISAddress->Ahci_Rfis[2] & HBA_PORTS_TFD_MASK) == (HBA_PORT_REG32 (AhciBusInterface, Port, HBA_PORTS_TFD) & HBA_PORTS_TFD_MASK)) break;
+            if((FISAddress->Ahci_Rfis[2] & HBA_PORTS_TFD_MASK) == (HBA_PORT_REG32 (AhciBaseAddr, Port, HBA_PORTS_TFD) & HBA_PORTS_TFD_MASK)) break;
             pBS->Stall (100);                               // 100usec
         }
 
         // check for errors
         if (FISAddress->Ahci_Rfis[2] & (HBA_PORTS_TFD_BSY | HBA_PORTS_TFD_ERR)) Status = EFI_DEVICE_ERROR;
 
-        Data32 = HBA_PORT_REG32 (AhciBusInterface, Port, HBA_PORTS_IS); 
+        Data32 = HBA_PORT_REG32 (AhciBaseAddr, Port, HBA_PORTS_IS); 
         if (Data32 & (BIT30 + BIT29 + BIT28 + BIT27 + BIT26)) Status = EFI_DEVICE_ERROR;
 
         // Clear the status
         WriteSCRRegister (AhciBusInterface, SataDevInterface, Port, PMPort, 1, HBA_PORTS_ERR_CLEAR); //SError
-        HBA_PORT_REG32_OR (AhciBusInterface, Port, HBA_PORTS_IS, HBA_PORTS_IS_CLEAR); 
+        HBA_PORT_REG32_OR (AhciBaseAddr, Port, HBA_PORTS_IS, HBA_PORTS_IS_CLEAR); 
 
-    } else {
+    }
+    else {
         Status = EFI_DEVICE_ERROR;
     }
 
+
     return Status;   
+
 }
 
-/**
 
-    @param AhciBusInterface 
-    @param SataDevInterface 
-    @param Port 
-    @param PMPort 
-    @param Register (0 : SStatus 1: SError 2: SControl)
-
-    @retval UINT32
-    @note  
-  1. Check if the device is connected directly to the port
-  2. if yes, read to the AHCI Controller else write to the Port Multiplier register. 
-
-**/ 
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   ReadSCRRegister
+//
+// Description: 
+//
+// Input:           
+//  IN AHCI_BUS_PROTOCOL                   *AhciBusInterface, 
+//  IN SATA_DEVICE_INTERFACE               *SataDevInterface, 
+//  IN UINT8                               Port, 
+//  IN UINT8                               PMPort,
+//  IN UINT8                               Register (0 : SStatus 1: SError 2: SControl)
+//
+// Output:      
+//      UINT32
+// Modified:
+//
+// Referrals: 
+//
+// Notes:   
+//  1. Check if the device is connected directly to the port
+//  2. if yes, read to the AHCI Controller else write to the Port Multiplier register. 
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END> 
 UINT32
 ReadSCRRegister (
-    IN AMI_AHCI_BUS_PROTOCOL    *AhciBusInterface, 
-    IN SATA_DEVICE_INTERFACE    *SataDevInterface,
-    IN UINT8                     Port, 
-    IN UINT8                     PMPort, 
-    IN UINT8                     Register
+    IN AHCI_BUS_PROTOCOL       *AhciBusInterface, 
+    IN SATA_DEVICE_INTERFACE   *SataDevInterface,
+    IN UINT8                    Port, 
+    IN UINT8                    PMPort, 
+    IN UINT8                    Register
 )
 {
+
     UINT32  Data32 = 0;
     UINT32  Reg = HBA_PORTS_SSTS;
 
     if (PMPort != 0xFF) {
         ReadWritePMPort (SataDevInterface, PMPort, Register, &Data32, FALSE);
-    } else {
+    }
+    else {
         if (Register == 1) Reg = HBA_PORTS_SCTL;
         if (Register == 2) Reg = HBA_PORTS_SERR;
-        Data32 = HBA_PORT_REG32 (AhciBusInterface, Port, Reg);
+        Data32 = HBA_PORT_REG32 (AhciBusInterface->AhciBaseAddress, Port, Reg);
     }
 
     return Data32;
 }
 
-/**
-    Write to SCONTROL/Serror/SStatus register
-
-    @param AhciBusInterface 
-    @param SataDevInterface 
-    @param Port 
-    @param PMPort 
-    @param Register (0 : SStatus 1: SError 2: SControl)
-    @param Data32 
-  
-    @retval EFI_STATUS
-
-    @note  
-  1. Check if the device is connected directly to the port
-  2. if yes, write to the AHCI Controller else write to the Port Multiplier register
-  
-**/ 
-
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   WriteSCRRegister
+//
+// Description: Write to SCONTROL/Serror/SStatus register
+//
+// Input:           
+//  IN AHCI_BUS_PROTOCOL                   *AhciBusInterface, 
+//  IN SATA_DEVICE_INTERFACE               *SataDevInterface, 
+//  IN UINT8                               Port, 
+//  IN UINT8                               PMPort,
+//  IN UINT8                               Register, (0 : SStatus 1: SError 2: SControl)
+//  IN UINT32                              Data32
+//  
+// Output:      
+//  EFI_STATUS
+//
+// Modified:
+//      
+// Referrals: 
+//
+// Notes:   
+//  1. Check if the device is connected directly to the port
+//  2. if yes, write to the AHCI Controller else write to the Port Multiplier register
+//  
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END> 
 EFI_STATUS
 WriteSCRRegister (
-    IN AMI_AHCI_BUS_PROTOCOL   *AhciBusInterface, 
+    IN AHCI_BUS_PROTOCOL       *AhciBusInterface, 
     IN SATA_DEVICE_INTERFACE   *SataDevInterface,
     IN UINT8                    Port, 
     IN UINT8                    PMPort, 
@@ -2586,40 +2935,54 @@ WriteSCRRegister (
     IN UINT32                   Data32
 )
 {
+
     UINT32  Reg = HBA_PORTS_SSTS;
 
     if (PMPort != 0xFF) {
         ReadWritePMPort (SataDevInterface, PMPort, Register, &Data32, TRUE);
-    } else {
+    }
+    else {
         if (Register == 2) Reg = HBA_PORTS_SCTL;
         if (Register == 1) Reg = HBA_PORTS_SERR;
-        HBA_PORT_REG32_OR (AhciBusInterface, Port, Reg, Data32); 
+        HBA_PORT_REG32_OR (AhciBusInterface->AhciBaseAddress, Port, Reg, Data32); 
     }
+
     return EFI_SUCCESS;
 }
 
-/**
-    Wait for memory to be set to the test value.
-
-    @param  SATA_DEVICE_INTERFACE   *SataDevInterface,
-    @param  PMPort
-    @param  Register
-    @param  MaskValue        - The mask value of memory
-    @param  TestValue        - The test value of memory
-    @param  WaitTimeInMs     - The time out value for wait memory set
-
-    @retval EFI_SUCCESS HBA reset successfully.
-    @retval EFI_DEVICE_ERROR HBA failed to complete hardware reset.
-
-**/ 
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   WaitforPMMemSet
+//
+// Description: Wait for memory to be set to the test value.
+//
+// Input:       
+//              SATA_DEVICE_INTERFACE   *SataDevInterface,
+//              PMPort
+//              Register
+//              MaskValue        - The mask value of memory
+//              TestValue        - The test value of memory
+//              WaitTimeInMs     - The time out value for wait memory set
+//
+// Output:      EFI_SUCCESS      - HBA reset successfully.
+//              EFI_DEVICE_ERROR - HBA failed to complete hardware reset.
+//
+// Modified:
+//
+// Referrals: 
+//
+// Notes:   
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END> 
 EFI_STATUS 
 WaitforPMMemSet (
-    IN SATA_DEVICE_INTERFACE    *SataDevInterface,
-    IN UINT8                    PMPort,
-    IN UINT8                    Register,
-    IN UINT32                   AndMask,
-    IN UINT32                   TestValue,
-    IN UINT32                   WaitTimeInMs
+    IN SATA_DEVICE_INTERFACE   *SataDevInterface,
+    IN UINT8                   PMPort,
+    IN UINT8                   Register,
+    IN UINT32                  AndMask,
+    IN UINT32                  TestValue,
+    IN UINT32                  WaitTimeInMs
 )
 {
     UINT32  Data32;
@@ -2633,75 +2996,86 @@ WaitforPMMemSet (
    return EFI_DEVICE_ERROR;
 }
 
-/**
-    Check for valid ATA/ATAPI/PMPORT signature 
 
-                   
-    @param AhciBusInterface 
-    @param Port 
-    @param PMPort 
-
-    @retval EFI_STATUS
-
-    @note  
-      1. Check if Link is active
-      2. Enable FIS and Command list run bits
-      3. Check for valid signature    
-
-**/ 
-
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   CheckValidDevice
+//
+// Description: Check for valid ATA/ATAPI/PMPORT signature 
+//
+// Input:           
+//  IN AHCI_BUS_PROTOCOL                   *AhciBusInterface, 
+//  IN UINT8                               Port, 
+//  IN UINT8                               PMPort
+//
+// Output:      
+//  EFI_STATUS
+//
+// Modified:
+//
+// Referrals: 
+//
+// Notes:
+//  1. Check if Link is active
+//  2. Enable FIS and Command list run bits
+//  3. Check for valid signature    
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END> 
 EFI_STATUS 
 CheckValidDevice (
-    IN AMI_AHCI_BUS_PROTOCOL    *AhciBusInterface, 
-    IN UINT8                    Port,
-    IN UINT8                    PMPort
+    IN AHCI_BUS_PROTOCOL                   *AhciBusInterface, 
+    IN UINT8                               Port,
+    IN UINT8                               PMPort
 )
 {
+
     UINT8   Data8;
     UINT32  Data32;
+    UINT32      AhciBaseAddr = (UINT32)(AhciBusInterface->AhciBaseAddress);
 
     // Check if Link is active
-    Data8 = (UINT8)(HBA_PORT_REG32 (AhciBusInterface, Port, HBA_PORTS_SSTS) & HBA_PORTS_SSTS_DET_MASK);
+    Data8 = (UINT8)(HBA_PORT_REG32 (AhciBaseAddr, Port, HBA_PORTS_SSTS) & HBA_PORTS_SSTS_DET_MASK);
     if (Data8 != HBA_PORTS_SSTS_DET_PCE)  return EFI_DEVICE_ERROR;
 
     // Enable FIS receive and CI so that TFD gets updated properly
     // Clear out the command slot
-    HBA_PORT_REG32_AND (AhciBusInterface, Port, HBA_PORTS_CI, 0);
+    HBA_PORT_REG32_AND (AhciBaseAddr, Port, HBA_PORTS_CI, 0);
 
-    // Enable FIS Receive
-    HBA_PORT_REG32_OR (AhciBusInterface, Port, HBA_PORTS_CMD, HBA_PORTS_CMD_FRE | HBA_PORTS_CMD_ST);
+   // Enable FIS Receive
+    HBA_PORT_REG32_OR (AhciBaseAddr, Port, HBA_PORTS_CMD, HBA_PORTS_CMD_FRE | HBA_PORTS_CMD_ST);
 
     // Wait till FIS is running
-    WaitForMemSet(AhciBusInterface, Port, HBA_PORTS_CMD,
+    WaitForMemSet(AhciBaseAddr, Port, HBA_PORTS_CMD,
                                     HBA_PORTS_CMD_FR,
                                     HBA_PORTS_CMD_FR,
                                     HBA_FR_CLEAR_TIMEOUT);
     
     // Wait till CR list is running
-    WaitForMemSet(AhciBusInterface, Port, HBA_PORTS_CMD,
+    WaitForMemSet(AhciBaseAddr, Port, HBA_PORTS_CMD,
                                     HBA_PORTS_CMD_CR,
                                     HBA_PORTS_CMD_CR,
                                     HBA_FR_CLEAR_TIMEOUT);
 
     // Clear Start Bit
-    HBA_PORT_REG32_AND (AhciBusInterface, Port, HBA_PORTS_CMD, ~(HBA_PORTS_CMD_ST));
-    WaitForMemClear(AhciBusInterface, Port, HBA_PORTS_CMD,
+    HBA_PORT_REG32_AND (AhciBaseAddr, Port, HBA_PORTS_CMD, ~(HBA_PORTS_CMD_ST));
+    WaitForMemClear(AhciBaseAddr, Port, HBA_PORTS_CMD,
                             HBA_PORTS_CMD_CR,
                             HBA_CR_CLEAR_TIMEOUT);
 
     //Clear FIS Receive enable bit
-    HBA_PORT_REG32_AND (AhciBusInterface, Port, HBA_PORTS_CMD, ~(HBA_PORTS_CMD_FRE));
-    WaitForMemClear(AhciBusInterface, Port, HBA_PORTS_CMD,
+    HBA_PORT_REG32_AND (AhciBaseAddr, Port, HBA_PORTS_CMD, ~(HBA_PORTS_CMD_FRE));
+    WaitForMemClear(AhciBaseAddr, Port, HBA_PORTS_CMD,
                             HBA_PORTS_CMD_FR,
                             HBA_FR_CLEAR_TIMEOUT);
 
 
     // Check if valid signature is present
-    Data32 = HBA_PORT_REG32(AhciBusInterface, Port, HBA_PORTS_SIG);
+    Data32 = HBA_PORT_REG32(AhciBaseAddr, Port, HBA_PORTS_SIG);
     if (Data32 != ATA_SIGNATURE_32 && Data32 != ATAPI_SIGNATURE_32 && Data32 != PMPORT_SIGNATURE)
         return EFI_DEVICE_ERROR;
 
-    Data8 = HBA_PORT_REG8 (AhciBusInterface, Port, HBA_PORTS_TFD);
+    Data8 = HBA_PORT_REG8 (AhciBaseAddr, Port, HBA_PORTS_TFD);
     if (Data8 & (HBA_PORTS_TFD_BSY | HBA_PORTS_TFD_DRQ)) return EFI_DEVICE_ERROR;
 
     return EFI_SUCCESS;
@@ -2711,11 +3085,11 @@ CheckValidDevice (
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2012, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **
-//**         5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093     **
+//**         5555 Oakbrook Pkwy, Suite 200, Norcross, GA 30093        **
 //**                                                                  **
 //**                       Phone: (770)-246-8600                      **
 //**                                                                  **

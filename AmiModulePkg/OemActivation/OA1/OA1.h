@@ -1,7 +1,7 @@
 //****************************************************************************
 //****************************************************************************
 //**                                                                        **
-//**             (C)Copyright 1985-2015, American Megatrends, Inc.          **
+//**             (C)Copyright 1985-2013, American Megatrends, Inc.          **
 //**                                                                        **
 //**                          All Rights Reserved.                          **
 //**                                                                        **
@@ -19,10 +19,13 @@
 //
 // $Date: $
 //*****************************************************************************
-/** @file OA1.h
-    Header file for OA1 module.
-
-**/
+//<AMI_FHDR_START>
+//
+// Name: OA3.h
+//
+// Description: Header file for OA1 module.
+//
+//<AMI_FHDR_END>
 //*****************************************************************************
 
 
@@ -50,19 +53,23 @@ extern "C" {
 #pragma pack(1)
 
 
-/**
-    This structure comes out of the AMI Utility Specification.
-
- Fields:   
-  Name        Type        Description
- ---------------------------------------------------------------------------
-  Guid        EFI_GUID    Firmware Section GUID 
-  Identifier  CHAR8       Identifier String "$ODB$"
-  Flag        UINT16      Data Flag
-  Size        UINT16      Data Size
-  Data        UINT8       Data Buffer (OEM OA 1.0 String)
-
-**/
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name: BIOS_OEM_DATA
+//
+// Description: This structure comes out of the AMI Utility Specification.
+//
+// Fields:   
+//  Name        Type        Description
+// ---------------------------------------------------------------------------
+//  Guid        EFI_GUID    Firmware Section GUID 
+//  Identifier  CHAR8       Identifier String "$ODB$"
+//  Flag        UINT16      Data Flag
+//  Size        UINT16      Data Size
+//  Data        UINT8       Data Buffer (OEM OA 1.0 String)
+//
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
 
 typedef struct _BIOS_OEM_DATA {
     EFI_GUID Guid;
@@ -93,7 +100,7 @@ typedef struct _OA1_STRUC {
 //****************************************************************************
 //****************************************************************************
 //**                                                                        **
-//**             (C)Copyright 1985-2015, American Megatrends, Inc.          **
+//**             (C)Copyright 1985-2013, American Megatrends, Inc.          **
 //**                                                                        **
 //**                          All Rights Reserved.                          **
 //**                                                                        **

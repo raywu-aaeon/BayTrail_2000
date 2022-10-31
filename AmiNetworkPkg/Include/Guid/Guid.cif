@@ -5,6 +5,5 @@
 	RefName = "AmiNetworkPkg.Guid"
 [files]
 "Ip6ConfigHii.h"	
-"IScsiConfigHii.h"
-"NetworkStackSetup.h"	
+"IScsiConfigHii.h"	
 <endComponent>

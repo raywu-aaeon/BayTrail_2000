@@ -1,7 +1,7 @@
 //****************************************************************************
 //****************************************************************************
 //**                                                                        **
-//**           (C)Copyright 1985-2015, American Megatrends, Inc.            **
+//**           (C)Copyright 1985-2013, American Megatrends, Inc.            **
 //**                                                                        **
 //**                          All Rights Reserved.                          **
 //**                                                                        **
@@ -11,11 +11,23 @@
 //**                                                                        **
 //****************************************************************************
 //****************************************************************************
+//****************************************************************************
+// $Header: /Alaska/BIN/Modules/SMBIOS/SmbiosBoard.c 26    5/04/11 3:33p Davidd $
+//
+// $Revision: 26 $
+//
+// $Date: 5/04/11 3:33p $
+//****************************************************************************
 
-/** @file SmbiosBoard.c
-    This file contains Smbios porting code for OEM
-
-**/
+//<AMI_FHDR_START>
+//----------------------------------------------------------------------------
+//
+// Name:    SmbiosBoard.C
+//
+// Description: This file contains code for OEM related code for SMBIOS
+//
+//----------------------------------------------------------------------------
+//<AMI_FHDR_END>
 
 //----------------------------------------------------------------------------
 // Includes
@@ -23,9 +35,11 @@
 #include <Token.h>
 #include <Efi.h>
 #include <AmiDxeLib.h>
+#include <CacheSubClass.h>
 #include <Protocol/AmiCpuInfo.h>
 #include <Protocol/PciRootBridgeIo.h>
 #include <Protocol/SmbiosDynamicData.h>
+#include <AmiCSPLibInc.h>
 #include <Protocol/SmBus.h>
 #include <Protocol/AmiSmbios.h>
 #include <SmbiosOemUpdateList.h>
@@ -33,7 +47,7 @@
 #define PCI_CFG_ADDRESS(bus,dev,func,reg) \
     ((UINT64)((((UINTN)bus) << 24) + (((UINTN)dev) << 16) + (((UINTN)func) << 8) + ((UINTN)reg)))& 0x00000000ffffffff
 
-#if (SMBIOS_STATIC_DATA_SUPPORT == 0) && (SMBIOS_STATIC_DATA_DT_SUPPORT == 0)
+#if (SMBIOS_STATIC_DATA_SUPPORT == 0)
 #define BASE_BOARD_INFO 0
 #define SYS_CHASSIS_INFO 0
 #define OEM_STRING_INFO 0
@@ -50,10 +64,6 @@
 #define ONBOARD_DEVICE_EXT_COUNT 0
 #endif
 
-#ifndef PROCESSOR_DMIEDIT_SUPPORT
-#define PROCESSOR_DMIEDIT_SUPPORT 0
-#endif
-
 extern  EFI_BOOT_SERVICES   *pBS;
 
 #if AMI_SMBIOS_PROTOCOL_ENABLE
@@ -62,18 +72,6 @@ AMI_SMBIOS_PROTOCOL         *gAmiSmbiosProtocol;
 
 UINT8                       SmbusCmdReg;
 EFI_SMBUS_HC_PROTOCOL       *gSMBus = NULL;
-
-EFI_STATUS CreateBaseBoardDataForSMBios();
-EFI_STATUS CreateChassisDataForSMBios();
-EFI_STATUS CreateCPUDataForSMBios();
-EFI_STATUS CreateSlotDataForSMBios();
-EFI_STATUS CreateOnBoardDevDataForSMBios();
-EFI_STATUS CreateBatteryDataForSMBios();
-EFI_STATUS CreateOnBoardDevExtInfoForSMBios();
-EFI_STATUS EnableSmbusController();
-EFI_STATUS RestoreSmbusController();
-EFI_STATUS GetSpdByte(EFI_SMBUS_DEVICE_ADDRESS SpdAddr, UINTN Offset, UINT8 *Data);
-VOID       OemUpdate();
 
 EFI_SMBIOS_BOARD_PROTOCOL   SmbiosBoardProtocol = {BASE_BOARD_INFO,
                                                   SYS_CHASSIS_INFO,
@@ -119,24 +117,25 @@ typedef VOID (SMBIOS_OEM_UPDATE) (VOID);
 extern SMBIOS_OEM_UPDATE SMBIOS_OEM_UPDATE_LIST EndOfSmbiosOemUpdateList;
 SMBIOS_OEM_UPDATE* SmbiosOemUpdate[] = {SMBIOS_OEM_UPDATE_LIST NULL};
 
-#if ((defined(SPIFlash_SUPPORT) && (SPIFlash_SUPPORT == 1)) && \
-     (defined(ICHx_SPI_SUPPORT) && (ICHx_SPI_SUPPORT == 1)))
-EFI_STATUS GetMaxRegionLimit(UINTN*);
-#endif
-
-/**
-    ***** PORTING REQUIRED *****
-    (if SMBIOS module is part of the project)
-
-    The purpose of this function is to allow OEM to update the
-    SMBIOS table as needed. OEM can use the EFI_SMBIOS_PROTOCOL
-    to read, add, delete, and write to the SMBIOS table.
-
-    @param None
-
-    @retval None
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//                     ***** PORTING REQUIRED *****
+//               (if SMBIOS module is part of the project)
+//----------------------------------------------------------------------------
+// Procedure:   OemUpdate
+//
+// Description: The purpose of this function is to allow OEM to update the
+//              SMBIOS table as needed. OEM can use the EFI_SMBIOS_PROTOCOL
+//              to read, add, delete, and write to the SMBIOS table.
+//
+// Input:  None
+//
+// Output: None
+//
+// Note:
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID
 OemUpdate (VOID)
 {
@@ -203,30 +202,7 @@ OemUpdate (VOID)
 }
 */
 //----------------------------------------------------------------------------
-//===========================================================================
-//           BIOS ROM Size (Physical Flash device) dynamic update
-//===========================================================================
-#if ((defined(SPIFlash_SUPPORT) && (SPIFlash_SUPPORT == 1)) && \
-     (defined(ICHx_SPI_SUPPORT) && (ICHx_SPI_SUPPORT == 1)))
-{
-    EFI_STATUS          Status;
-    UINT8               *Buffer;
-    UINT16              Handle, BSize;
-    UINTN               MaxFlashLimit = 0;
 
-    if (EFI_ERROR(GetMaxRegionLimit(&MaxFlashLimit))) return;
-    Status = pBS->LocateProtocol(&gAmiSmbiosProtocolGuid, NULL, &gAmiSmbiosProtocol);
-    if (EFI_ERROR(Status)) return ;
-    Status = gAmiSmbiosProtocol->SmbiosReadStrucByType(0, 1, &Buffer, &BSize);
-    if (EFI_ERROR(Status)) return ;
-    // Update BIOS ROM Size data field
-    Handle = ((SMBIOS_STRUCTURE_HEADER*)Buffer)->Handle;
-   ((SMBIOS_BIOS_INFO*)Buffer)->BiosRomSize = (UINT8)(MaxFlashLimit / 0x10000);
-    gAmiSmbiosProtocol->SmbiosWriteStructure(Handle, Buffer, BSize);
-    // Free memory allocated by the earlier gAmiSmbiosProtocol->SmbiosReadStrucByType call
-    pBS->FreePool(Buffer);
-}
-#endif // #if (defined(SPIFlash_SUPPORT) && (SPIFlash_SUPPORT == 1))
 //===========================================================================
 // 			 EC Version (Type 0 Offset 0x16-0x17) dynamic update
 //
@@ -395,19 +371,25 @@ exitEcVersionUpdate:
 //===========================================================================
 }
 
-/**
-                     ***** PORTING REQUIRED *****
-               (if SMBIOS module is part of the project)
-
-    This function saves the current setting of the Smbus
-    Controller CMD register and then enables it so that SPD data
-    can be accessed.
-
-    @param None
-
-    @return EFI_STATUS
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//                     ***** PORTING REQUIRED *****
+//               (if SMBIOS module is part of the project)
+//----------------------------------------------------------------------------
+// Procedure:   EnableSmbusController
+//
+// Description: This function saves the current setting of the Smbus
+//              Controller CMD register and then enables it so that SPD data
+//              can be accessed.
+//
+// Input:   None
+//
+// Output:  EFI_STATUS
+//
+// Note:
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
 EnableSmbusController (VOID)
 {
@@ -418,18 +400,24 @@ EnableSmbusController (VOID)
     return pBS->LocateProtocol( &EfiSMBusProtocolGuid, NULL, (void **)&gSMBus );
 }
 
-/**
-                     ***** PORTING REQUIRED *****
-               (if SMBIOS module is part of the project)
-
-    This function restores the Smbus Controller CMD register
-    to the previously saved setting.
-
-    @param None
-
-    @return EFI_STATUS
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//                     ***** PORTING REQUIRED *****
+//               (if SMBIOS module is part of the project)
+//----------------------------------------------------------------------------
+// Procedure:   RestoreSmbusController
+//
+// Description: This function restores the Smbus Controller CMD register
+//              to the previously saved setting.
+//
+// Input:   None
+//
+// Output:  EFI_STATUS
+//
+// Note:
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
 RestoreSmbusController (VOID)
 {
@@ -438,24 +426,30 @@ RestoreSmbusController (VOID)
     return Status;
 }
 
-/**
-                     ***** PORTING REQUIRED *****
-               (if SMBIOS module is part of the project)
-
-    This function reads a byte from the system memory SPD
-
-    @param SpdAddr
-    @param Offset
-    @param Data
-
-    @return EFI_STATUS \n
-            if success, *Data contains SPD data byte
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//                     ***** PORTING REQUIRED *****
+//               (if SMBIOS module is part of the project)
+//----------------------------------------------------------------------------
+// Procedure:   GetSpdByte
+//
+// Description: This function reads a byte from the system memory SPD
+//
+// Input:   IN      EFI_SMBUS_DEVICE_ADDRESS    SpdAddr
+//          IN      UINT8                       Offset
+//          IN OUT  UINT8                       *Data
+//
+// Output:  EFI_STATUS
+//          UINT8       *Data
+//
+// Note:
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
 GetSpdByte (
     IN      EFI_SMBUS_DEVICE_ADDRESS    SpdAddr,
-    IN      UINTN                       Offset,
+    IN      UINT8                       Offset,
     IN OUT  UINT8                       *Data
 )
 {
@@ -472,56 +466,158 @@ GetSpdByte (
                             Data );
 }
 
-/**
-                     ***** PORTING REQUIRED *****
-               (if SMBIOS module is part of the project)
-
-    This function gathers the System Slot status information and
-    saves them in a variable named "SmbiosSlotsVar". This variable
-    with the slot information is needed by the SMBIOS module to
-    create the REQUIRED "Type 9" structure
-
-    @param None
-
-    @return EFI_STATUS \n
-            Variable named "SmbiosSlotsVar" with system slot information
-
-    @remark Refer to SYSTEM_SLOT_DYNAMIC_DATA in SmbiosDynamicData.h for\n
-            structure information.
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//                     ***** PORTING REQUIRED *****
+//               (if SMBIOS module is part of the project)
+//----------------------------------------------------------------------------
+// Procedure:   CreateSlotDataForSMBios
+//
+// Description: This function gathers the System Slot status information and
+//              saves them in a variable named "SmbiosSlotsVar". This variable
+//              with the slot information is needed by the SMBIOS module to
+//              create the REQUIRED "Type 9" structure
+//
+// Input:   None
+//
+// Output:  EFI_STATUS
+//          Variable named "SmbiosSlotsVar" with system slot information
+//
+// Note:    Refer to SYSTEM_SLOT_DYNAMIC_DATA in SmbiosDynamicData.h for
+//          structure information.
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
 CreateSlotDataForSMBios (VOID)
 {
     EFI_STATUS                      Status = EFI_SUCCESS;
 
 #if UPDATE_SLOT_TYPE9
-    SmbiosSlotsVar = NULL;          // Remove this line when porting this function
 /*
 //----------------------------------------------------------------------------
-//   PORTING REQUIRED   -   PORTING REQUIRED   -   PORTING REQUIRED
+    // ==================================================================
+    // ==================================================================
+    // ==================================================================
+    // ===                                                            ===
+    // ===   Start of SAMPLE TEMPLATE CODE for Intel Weybridge CRB    ===
+    // ===   platform. Uncomment this block to use.                   ===
+    // ===                                                            ===
+    // ===   Might need changes for other platforms.                  ===
+    // ===                                                            ===
+    // ==================================================================
+    // ==================================================================
+    // ==================================================================
+    UINTN                           VarSize;
+    UINT32                          Attributes = EFI_VARIABLE_BOOTSERVICE_ACCESS;
+    SYSTEM_SLOT_DYNAMIC_DATA        SlotInfo;
+    UINT64                          PciAddress, OrgAddress;
+    UINT8                           i;
+    UINT8                           Value8;
+    UINT16                          Value16;
+    EFI_PCI_ROOT_BRIDGE_IO_PROTOCOL *gPciRootBridgeIo;
+
+    Status = pBS->LocateProtocol(
+                    &gEfiPciRootBridgeIoProtocolGuid,
+                    NULL,
+                    &gPciRootBridgeIo);
+    ASSERT_EFI_ERROR(Status);
+
+    for (i = 0; i < NUMBER_OF_SYSTEM_SLOTS; i++) {
+        switch (i) {
+            case 0 :    PciAddress = PCI_CFG_ADDRESS (0, 1, 0, 0x19);
+                        break;
+            case 1 :    PciAddress = PCI_CFG_ADDRESS (0, 0x1C, 3, 0x19);
+                        break;
+            case 2 :    PciAddress = PCI_CFG_ADDRESS (0, 0x1C, 4, 0x19);
+                        break;
+            case 3 :    PciAddress = PCI_CFG_ADDRESS (0, 0x1E, 0, 0x19);
+        }
+
+	    // Save current secondary / subordinate bus numbers
+        OrgAddress = PciAddress;
+        gPciRootBridgeIo->Pci.Read (
+                                gPciRootBridgeIo,
+                                EfiPciWidthUint16,
+                                PciAddress,
+                                1,
+                                &Value16);
+
+        SlotInfo.BusNumber[i] = (UINT8)Value16;
+
+	    // Temporarily assign secondary/subordinate bus numbers
+        Value8 = 0x20;
+        gPciRootBridgeIo->Pci.Write (
+                                gPciRootBridgeIo,
+                                EfiPciWidthUint8,
+                                PciAddress,
+                                1,
+                                &Value8);
+        gPciRootBridgeIo->Pci.Write (
+                                gPciRootBridgeIo,
+                                EfiPciWidthUint8,
+                                ++PciAddress,
+                                1,
+                                &Value8);
+
+        PciAddress = PCI_CFG_ADDRESS (Value8, 0, 0, 0);
+        gPciRootBridgeIo->Pci.Read (
+                                gPciRootBridgeIo,
+                                EfiPciWidthUint8,
+                                PciAddress,
+                                1,
+                                &Value8);
+        if (Value8 == 0xFF) {
+            SlotInfo.CurrentUsage[i] = 0x03;
+        }
+        else {
+            SlotInfo.CurrentUsage[i] = 0x04;
+        }
+
+	    // Restore secondary /subordinate bus numbers
+        gPciRootBridgeIo->Pci.Write (
+                                gPciRootBridgeIo,
+                                EfiPciWidthUint16,
+                                OrgAddress,
+                                1,
+                                &Value16);
+    }
+    VarSize = sizeof(SYSTEM_SLOT_DYNAMIC_DATA);
+    Status = pRS->SetVariable(SmbiosSlotsVar, &gAmiSmbiosDynamicDataGuid,
+                                Attributes, VarSize, &SlotInfo);
+    // ==================================================================
+    // ==================================================================
+    // ==================================================================
+    // ===                                                            ===
+    // ===   End of SAMPLE TEMPLATE CODE for Intel Weybridge CRB      ===
+    // ===   platform. Uncomment this block to use.                   ===
+    // ===                                                            ===
+    // ===   Might need changes for other platforms.                  ===
+    // ===                                                            ===
+    // ==================================================================
+    // ==================================================================
+    // ==================================================================
 //----------------------------------------------------------------------------
-//
-// Create a SYSTEM_SLOT_DYNAMIC_DATA structure and fill it with system slots
-// information - bus number for the slot and its current usage status.
-// Return the slot structure information in a variable named "SmbiosSlotsVar"
-//
 */
 #endif                                          // UPDATE_SLOT_TYPE9
 
     return Status;
 }
 
-/**
-    This function fills the input buffer with spaces. The number
-    of spaces to be filled is specified in the input BufferSize
-
-    @param BufferPtr
-    @param BufferSize
-
-    @return Buffer pointed by BufferPtr is filled with spaces
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   FillStringBufferWithSpaces
+//
+// Description: This function fills the input buffer with spaces. The number
+//              of spaces to be filled is specified in the input BufferSize
+//
+// Input:   IN UINT8    *BufferPtr
+//          IN UINT8    BufferSize
+//
+// Output:  Buffer pointed by BufferPtr is filled with spaces
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 VOID
 FillStringBufferWithSpaces (
     IN UINT8    *BufferPtr,
@@ -537,23 +633,26 @@ FillStringBufferWithSpaces (
     *BufferPtr = 0;
 }
 
-/**
-        ***** PORTING REQUIRED *****
-        (if SMBIOS module is part of the project)
-
-    This function provides system chassis information. SMBIOS
-    Core uses these information to dynamically update SMBIOS
-    Chassis Type 2.
-
-    @param None
-
-    @return EFI_STATUS \n
-            Creates variable named "SmbiosBaseBoardVar" with Chassis information
-
-    @remark Refer to BASE_BOARD_DATA in SmbiosDynamicData.h for structure\n
-            information.
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//                     ***** PORTING REQUIRED *****
+//               (if SMBIOS module is part of the project)
+//----------------------------------------------------------------------------
+// Procedure: CreateBaseBoardDataForSMBios
+//
+// Description: This function provides system chassis information. SMBIOS
+//              Core uses these information to dynamically update SMBIOS
+//              Chassis Type 2.
+//
+// Input:  None
+//
+// Output: Creates variable named "SmbiosBaseBoardVar" with Chassis information
+//
+// Note: Refer to BASE_BOARD_DATA in SmbiosDynamicData.h for structure
+//       information.
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
 CreateBaseBoardDataForSMBios (
 )
@@ -561,7 +660,6 @@ CreateBaseBoardDataForSMBios (
     EFI_STATUS  Status = EFI_SUCCESS;
 
 #if UPDATE_BASEBOARD_TYPE2
-    SmbiosBaseBoardVar = NULL;      // Remove this line when porting this function
 /*
 //----------------------------------------------------------------------------
     // ==================================================================
@@ -633,23 +731,26 @@ CreateBaseBoardDataForSMBios (
     return Status;
 }
 
-/**
-                     ***** PORTING REQUIRED *****
-               (if SMBIOS module is part of the project)
-
-    This function provides system chassis information. SMBIOS
-    Core uses these information to dynamically update SMBIOS
-    Chassis Type 3.
-
-    @param None
-
-    @return EFI_STATUS \n
-            Creates variable named "SmbiosChassisVar" with Chassis information
-
-    @remark Refer to CHASSIS_DATA in SmbiosDynamicData.h for structure\n
-            information.
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//                     ***** PORTING REQUIRED *****
+//               (if SMBIOS module is part of the project)
+//----------------------------------------------------------------------------
+// Procedure: CreateChassisDataForSMBios
+//
+// Description: This function provides system chassis information. SMBIOS
+//              Core uses these information to dynamically update SMBIOS
+//              Chassis Type 3.
+//
+// Input:  None
+//
+// Output: Creates variable named "SmbiosChassisVar" with Chassis information
+//
+// Note: Refer to CHASSIS_DATA in SmbiosDynamicData.h for structure
+//       information.
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
 CreateChassisDataForSMBios (
 )
@@ -657,7 +758,6 @@ CreateChassisDataForSMBios (
     EFI_STATUS          Status = EFI_SUCCESS;
 
 #if UPDATE_SYSTEM_CHASSIS_TYPE3
-    SmbiosChassisVar = NULL;      // Remove this line when porting this function
 /*
 //----------------------------------------------------------------------------
     // ==================================================================
@@ -720,36 +820,39 @@ CreateChassisDataForSMBios (
     return Status;
 }
 
-/**
-                     ***** PORTING REQUIRED *****
-               (if SMBIOS module is part of the project)
-
-    This function gathers the System Processor information and
-    saves them in a variable named "SmbiosCpuVar". This variable
-    with the CPU information is needed by the SMBIOS module to
-    create the "Type 4, 7" structure.
-
-    @param None
-
-    @return EFI_STATUS \n
-            Variable named "SmbiosCpuVar" with System CPU information
-
-    @remark Refer to CPU_DYNAMIC_DATA in SmbiosDynamicData.h for\n
-            structure information.
-
-          ******************** PORTING NOTE ********************\n
-          By default, this function only returns EFI_SUCCESS and should\n
-          only be ported if the CPU module does not install the\n
-          SMBIOS_CPU_INFO_PROTOCOL.
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//                     ***** PORTING REQUIRED *****
+//               (if SMBIOS module is part of the project)
+//----------------------------------------------------------------------------
+// Procedure:   CreateCPUDataForSMBios
+//
+// Description: This function gathers the System Processor information and
+//              saves them in a variable named "SmbiosCpuVar". This variable
+//              with the CPU information is needed by the SMBIOS module to
+//              create the "Type 4, 7" structure.
+//
+// Input:   None
+//
+// Output:  EFI_STATUS
+//          Variable named "SmbiosCpuVar" with System CPU information
+//
+// Note:    Refer to CPU_DYNAMIC_DATA in SmbiosDynamicData.h for
+//          structure information.
+//
+//          ******************** PORTING NOTE ********************
+//          By default, this function only returns EFI_SUCCESS and should
+//          only be ported if the CPU module does not install the
+//          SMBIOS_CPU_INFO_PROTOCOL.
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
 CreateCPUDataForSMBios (VOID)
 {
     EFI_STATUS                  Status = EFI_SUCCESS;
 
 #if UPDATE_CPU_TYPE4
-    SmbiosCpuVar = NULL;        // Remove this line when porting this function
 /*
 //----------------------------------------------------------------------------
     // ==================================================================
@@ -1186,37 +1289,40 @@ CreateCPUDataForSMBios (VOID)
     return Status;
 }
 
-/**
-                         ***** OPTIONAL *****
-               (if SMBIOS module is part of the project)
-
-    This function gathers the Onboard Device status information and
-    saves them in a variable named "SmbiosOnBoardVar". This variable
-    with the OnBoard Device information is needed by the SMBIOS
-    module to create the "Type 10" structure.
-
-    @param None
-
-    @return EFI_STATUS \n
-            Variable named "SmbiosOnBoardVar" with on-board device information
-
-    @remark Refer to ONBOARD_DEV_DYNAMIC_DATA in SmbiosDynamicData.h for\n
-            structure information.\n
-
-            @li Set device status to 0 if disabled.
-            @li Set device status to 0x80 if enabled.\n
-            Ex: In sample code\n
-                OnBoardDevInfo.OnBoardDev[0] = 0;           // Disabled\n
-                OnBoardDevInfo.OnBoardDev[0] = 0x80;        // Enabled
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//                         ***** OPTIONAL *****
+//               (if SMBIOS module is part of the project)
+//----------------------------------------------------------------------------
+// Procedure:   CreateOnBoardDevDataForSMBios
+//
+// Description: This function gathers the Onboard Device status information and
+//              saves them in a variable named "SmbiosOnBoardVar". This variable
+//              with the OnBoard Device information is needed by the SMBIOS
+//              module to create the "Type 10" structure.
+//
+// Input:   None
+//
+// Output:  EFI_STATUS
+//          Variable named "SmbiosOnBoardVar" with on-board device information
+//
+// Note:    Refer to ONBOARD_DEV_DYNAMIC_DATA in SmbiosDynamicData.h for
+//          structure information.
+//
+//          Set device status to 0 if disabled.
+//          Set device status to 0x80 if enabled.
+//          Ex: In sample code
+//              OnBoardDevInfo.OnBoardDev[0] = 0;           // Disabled
+//              OnBoardDevInfo.OnBoardDev[0] = 0x80;        // Enabled
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
 CreateOnBoardDevDataForSMBios (VOID)
 {
     EFI_STATUS                      Status = EFI_SUCCESS;
 
 #if UPDATE_ONBOARD_DEV_TYPE10
-    SmbiosOnBoardVar = NULL;        // Remove this line when porting this function
 /*
 //----------------------------------------------------------------------------
     // ==================================================================
@@ -1302,39 +1408,42 @@ CreateOnBoardDevDataForSMBios (VOID)
     return Status;
 }
 
-/**
-                         ***** OPTIONAL *****
-               (if SMBIOS module is part of the project)
-
-    This function gathers the Onboard Device status information
-    and saves them in a variable named "SmbiosOnBoardExtVar".
-    This variable with the OnBoard Device Extended information
-    is needed by the SMBIOS module to create the "Type 41"
-    structure.
-
-    @param None
-
-    @return EFI_STATUS \n
-            Variable named "SmbiosOnBoardExtVar" with on-board device\n
-            information.
-
-    @remark Refer to ONBOARD_DEV_EXT_DYNAMIC_DATA in SmbiosDynamicData.h for\n
-            structure information.\n
-
-            @li Set device status to 0 if disabled.
-            @li Set device status to 0x80 if enabled.\n
-            Ex: In sample code\n
-                OnBoardDevInfo.OnBoardDev[0] = 0;           // Disabled\n
-                OnBoardDevInfo.OnBoardDev[0] = 0x80;        // Enabled
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//                         ***** OPTIONAL *****
+//               (if SMBIOS module is part of the project)
+//----------------------------------------------------------------------------
+// Procedure:   CreateOnBoardDevExtInfoForSMBios
+//
+// Description: This function gathers the Onboard Device status information
+//              and saves them in a variable named "SmbiosOnBoardExtVar".
+//              This variable with the OnBoard Device Extended information
+//              is needed by the SMBIOS module to create the "Type 41"
+//              structure.
+//
+// Input:   None
+//
+// Output:  EFI_STATUS
+//          Variable named "SmbiosOnBoardExtVar" with on-board device
+//          information.
+//
+// Note:    Refer to ONBOARD_DEV_EXT_DYNAMIC_DATA in SmbiosDynamicData.h for
+//          structure information.
+//
+//          Set device status to 0 if disabled.
+//          Set device status to 0x80 if enabled.
+//          Ex: In sample code
+//              OnBoardDevInfo.OnBoardDev[0] = 0;           // Disabled
+//              OnBoardDevInfo.OnBoardDev[0] = 0x80;        // Enabled
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
 CreateOnBoardDevExtInfoForSMBios (VOID)
 {
     EFI_STATUS                      Status = EFI_SUCCESS;
 
 #if UPDATE_DEVICE_EXT_TYPE41
-    SmbiosOnBoardExtVar = NULL;     // Remove this line when porting this function
 /*
 //----------------------------------------------------------------------------
     // ==================================================================
@@ -1434,30 +1543,33 @@ CreateOnBoardDevExtInfoForSMBios (VOID)
     return Status;
 }
 
-/**
-                     ***** PORTING REQUIRED *****
-               (if SMBIOS module is part of the project)
-
-    This function provides system battery information. SMBIOS
-    Core uses these information to dynamically update SMBIOS
-    Portable Battery Data structure Type 22.
-
-    @param None
-
-    @return EFI_STATUS \n
-            Variable named "SmbiosBatteryVar" with Battery information
-
-    @remark Refer to BATTERY_DYNAMIC_DATA in SmbiosDynamicData.h for\n
-            structure information.
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+//                     ***** PORTING REQUIRED *****
+//               (if SMBIOS module is part of the project)
+//----------------------------------------------------------------------------
+// Procedure:   CreateBatteryDataForSMBios
+//
+// Description: This function provides system battery information. SMBIOS
+//              Core uses these information to dynamically update SMBIOS
+//              Portable Battery Data structure Type 22.
+//
+// Input:   None
+//
+// Output:  EFI_STATUS
+//          Variable named "SmbiosBatteryVar" with Battery information
+//
+// Note:    Refer to BATTERY_DYNAMIC_DATA in SmbiosDynamicData.h for
+//          structure information.
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
 CreateBatteryDataForSMBios (VOID)
 {
     EFI_STATUS              Status = EFI_SUCCESS;
 
 #if UPDATE_BATTERY_TYPE22
-    SmbiosBatteryVar = NULL;        // Remove this line when porting this function
 /*
 //----------------------------------------------------------------------------
     // ==================================================================
@@ -1547,15 +1659,24 @@ CreateBatteryDataForSMBios (VOID)
     return Status;
 }
 
-/**
-    SMBIOS Board driver entry point
-
-    @param ImageHandle
-    @param SystemTable
-
-    @return EFI_STATUS
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   SMIBiosBoardDriverEntryPoint
+//
+// Description: SMBIOS Board driver entry point
+//
+// Input:       IN EFI_HANDLE           ImageHandle,
+//              IN EFI_SYSTEM_TABLE     *SystemTable
+//
+// Output:      EFI_STATUS
+//
+// Modified:
+//
+// Referrals:
+//
+// Notes:
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 EFI_STATUS
 SMIBiosBoardDriverEntryPoint(
     IN EFI_HANDLE           ImageHandle,
@@ -1565,9 +1686,6 @@ SMIBiosBoardDriverEntryPoint(
     EFI_STATUS              Status;
 
     InitAmiLib(ImageHandle, SystemTable);
-
-    SmbiosMemVar = NULL;    // SmbiosMemVar is not used in this file
-                            // Set to NULL to correct build error using GCC
 
     Status = pBS->InstallProtocolInterface(&ImageHandle,
                                           &gAmiSmbiosBoardProtocolGuid,
@@ -1579,7 +1697,7 @@ SMIBiosBoardDriverEntryPoint(
 //****************************************************************************
 //****************************************************************************
 //**                                                                        **
-//**           (C)Copyright 1985-2015, American Megatrends, Inc.            **
+//**           (C)Copyright 1985-2013, American Megatrends, Inc.            **
 //**                                                                        **
 //**                          All Rights Reserved.                          **
 //**                                                                        **

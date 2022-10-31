@@ -33,15 +33,26 @@
 //
 //<AMI_FHDR_END>
 //**********************************************************************
-#include <Token.h>
 #include <AmiPeiLib.h>
+#include <Token.h>
 #include <Ppi/DeviceRecoveryModule.h>
 #include <Ppi/BlockIo.h>
 #include <Guid/AmiRecoveryDevice.h>
+#include <AmiModulePkg\Recovery\FsRecovery\FsRecovery.h>
+#include <EXTRecovery.h>
 
-#include "EXTRecovery.h"
-#include "FsRecovery.h"
 
+
+extern UINTN               PartCount;
+extern BOOLEAN             IsMbr;
+extern UINT32              GpeCount;
+extern UINT32              PartSector;
+extern MASTER_BOOT_RECORD  Mbr;
+extern UINT8               *ReadBuffer;
+extern UINT8               *RootBuffer;
+extern UINTN               RootBufferSize ;
+extern UINT32              RootEntries ;
+extern UINT32              RootSize;
 
 
 DIR_ENTRY_EXT       *ExtRecoveryFiles[10];
@@ -49,35 +60,22 @@ UINT32              InodeBlock;     // First block of inode table
 UINT8               Indirect;
 UINT32              *BlockList;
 UINT32              *BlockList2;
-#if SEARCH_PATH
-RC_VOL_INFO     	*gExtVolume;
-VOLUME_SB			*gSb;
-#endif
 
-extern UINTN               PartCount;
-extern BOOLEAN             IsMbr;
-extern UINT32              GpeCount;
-extern UINT32              PartSector;
-extern UINT32              ExtOffset;
-extern UINT8               *ReadBuffer;
-extern UINT8               *RootBuffer;
-extern UINTN               RootBufferSize ;
-extern UINT32              RootEntries ;
-extern UINT32              RootSize;
-extern MEMORY_BLOCK        *MemBlk;
-extern BOOLEAN             RootAllocated;
+
+
+
 
 //<AMI_PHDR_START>
 //----------------------------------------------------------------------------
 // Procedure:   IsExt
 //
-// Description: 
+// Description:
 //  Checks if given data block describes EXT Superblock structure
 //
-// Input:       
+// Input:
 //  VOLUME_SB *pSb - pointer to data block to check
 //
-// Output:      
+// Output:
 //  TRUE - data block is a EXT Superblock structure
 //  FALSE - data block is not a EXT Superblock structure
 //
@@ -165,7 +163,7 @@ EFI_STATUS GetNextBlock(
             return EFI_END_OF_FILE;
         }
         BlockList = (UINT32*)((UINTN)Allocate);
-    
+
         BlockListPtr = &BlockList[0];
         TmpBlock = TmpBlkNo - 12;
         *Block = BlockListPtr[TmpBlock];
@@ -181,7 +179,7 @@ EFI_STATUS GetNextBlock(
             return EFI_END_OF_FILE;
         }
         BlockList2 = (UINT32*)((UINTN)Allocate);
-    
+
         TmpBlock = Inode->Alloc.Ext2.Blocks[13];
         Offset = Mul64(TmpBlock, BlockSize);
         ReadDevice (PeiServices, Volume, Offset, BlockSize, &BlockList[0]);
@@ -220,27 +218,27 @@ EFI_STATUS GetNextBlock(
 //----------------------------------------------------------------------------
 // Procedure:   ReadExtFile
 //
-// Description: 
+// Description:
 //  Reads a file from a device formatted in Ext(n).
 //
-// Input:       
+// Input:
 // Parameters:  VOLUME_INFO *Vi - Volume Info Structure
 //              VOLUME_SB   *Sb - Superblock structure
 //              VOLUME_IT   *Inode - Inode table structure
 //              VIOD        *Buffer - Buffer to read into
 //              UINT64      *Size - Size of file to read
 //
-// Output:      
-//  EFI_STATUS - possible return values 
+// Output:
+//  EFI_STATUS - possible return values
 //
 //----------------------------------------------------------------------------
 //<AMI_PHDR_END>
-EFI_STATUS ReadExtFile( 
+EFI_STATUS ReadExtFile(
     IN EFI_PEI_SERVICES **PeiServices,
-    RC_VOL_INFO         *Volume, 
-    VOLUME_SB           *Sb, 
-    VOLUME_IT           *Inode, 
-    VOID                *Buffer, 
+    RC_VOL_INFO         *Volume,
+    VOLUME_SB           *Sb,
+    VOLUME_IT           *Inode,
+    VOID                *Buffer,
     UINT64              *Size )
 {
     EFI_STATUS  Status;
@@ -355,41 +353,36 @@ EFI_STATUS ReadExtFile(
 
 //<AMI_PHDR_START>
 //----------------------------------------------------------------------------
-// Procedure:   ReadExtDirectory
+// Procedure:   ReadExtRoot
 //
-// Description: 
+// Description:
 //  Prepares given volume for read operations. Reads Ext(n) root directory.
 //
-// Input:       
+// Input:
 //  IN  EFI_PEI_SERVICES **PeiServices - pointer to PEI services
 //  IN  OUT RC_VOL_INFO *Volume - pointer to volume description structure
 //  IN  VOLUME_SB *Sb - pointer to Superblock
-//  IN  UINT32 Inode - Inode number of directory (root is 2)
 //
-// Output:      
-//  EFI_STATUS - possible return values 
+// Output:
+//  EFI_STATUS - possible return values
 //
 //----------------------------------------------------------------------------
 //<AMI_PHDR_END>
-EFI_STATUS ReadExtDirectory(
+EFI_STATUS ReadExtRoot(
     IN EFI_PEI_SERVICES **PeiServices,
     IN OUT RC_VOL_INFO  *Volume,
-    IN VOLUME_SB        *Sb,
-    IN UINT32           Inode )
+    IN VOLUME_SB        *Sb )
 {
     EFI_STATUS          Status;
     UINT32              BlockSize;
     UINT16              InodeSize;
     UINT32              BgdtBlock;
     VOLUME_BGDT         Bgdt;
+    VOLUME_IT           RootInode;
     UINT64              Offset;
     UINT64              TmpRootSize;
     UINTN               RootPages;
     EFI_PHYSICAL_ADDRESS Allocate;
-    UINT32              InodesPerGroup;
-    UINT32              GroupNumber = 0;
-    UINT32              InodePtr;
-    UINT32              BGDTOffset = 0;
 
     BlockSize = 1024 << Sb->SB_BlockSize;
     if (BlockSize == 1024)
@@ -401,71 +394,48 @@ EFI_STATUS ReadExtDirectory(
 
     // Read in the Block Group Descriptor Table
     Offset = Mul64(BlockSize, BgdtBlock);
-
-    InodePtr = Inode - 1; // Work with a 0-based Inode pointer
-    InodesPerGroup = Sb->SB_InodesPerGroup;
-//
-// If the Inode is far out on the volume, it will not be in the first group
-// Find out which group it is in, and get the offset to it's descriptor in
-// the Block Group Descriptor Table
-//
-    if (InodePtr > InodesPerGroup) {
-        GroupNumber = InodePtr / InodesPerGroup;
-        InodePtr = InodePtr % InodesPerGroup;
-        BGDTOffset = GroupNumber * sizeof(VOLUME_BGDT);
-    }
-    Offset += BGDTOffset;
-
-    Status = ReadDevice (PeiServices, 
-                         Volume, 
-                         Offset, 
-                         sizeof(VOLUME_BGDT), 
+    Status = ReadDevice (PeiServices,
+                         Volume,
+                         Offset,
+                         sizeof(VOLUME_BGDT),
                          &Bgdt);
     if (EFI_ERROR(Status))
     {
-        PEI_TRACE((-1, PeiServices, "\nRead BGBT error\n"));
         return EFI_NOT_FOUND;
     }
 
     InodeBlock = Bgdt.BGDT_InodeTableBlk;
     InodeSize = Sb->SB_InodeStrucSize;
 
-    // Read in the directory's inode.
-    Offset = Mul64(BlockSize, InodeBlock) + \
-             Mul64(InodePtr, InodeSize);
-    Status = ReadDevice (PeiServices, 
-                         Volume, 
-                         Offset, 
-                         sizeof(VOLUME_IT), 
-                         &MemBlk->RootInode);
+    // The root directory's inode is always the 2nd inode in the
+    // inode table. Read in that inode.
+    Offset = Mul64(BlockSize, InodeBlock) + InodeSize;
+    Status = ReadDevice (PeiServices,
+                         Volume,
+                         Offset,
+                         sizeof(VOLUME_IT),
+                         &RootInode);
     if (EFI_ERROR(Status))
     {
-        PEI_TRACE((-1, PeiServices, "\nRead dir inode error. Inode is %x\n", Inode));
         return EFI_NOT_FOUND;
     }
 
-    TmpRootSize = MemBlk->RootInode.IT_SizeLo + Shl64(MemBlk->RootInode.IT_SizeHi, 0x20);
+    TmpRootSize = RootInode.IT_SizeLo + Shl64(RootInode.IT_SizeHi, 0x20);
 
-    if (!RootAllocated) {
-        RootPages = (UINTN) (Shr64( TmpRootSize, EFI_PAGE_SHIFT ) + ((TmpRootSize & EFI_PAGE_MASK) ? 1 : 0) );
-        Status = (*PeiServices)->AllocatePages( PeiServices, EfiBootServicesData, RootPages, &Allocate );
-        if ( EFI_ERROR( Status )) {
-            PEI_TRACE((-1, PeiServices, "\nRead EXT dir allocate error\n"));
-            return Status;
-        }
-        RootBuffer     = (UINT8*)((UINTN)Allocate);
-        RootBufferSize = EFI_PAGES_TO_SIZE( RootPages );
-        MemSet( RootBuffer, RootBufferSize, 0 );
-        RootAllocated = TRUE;
-    } else {
-        if ( TmpRootSize > RootBufferSize ) TmpRootSize = RootBufferSize;
+    RootPages = EFI_SIZE_TO_PAGES( (UINTN)TmpRootSize );
+    Status = (*PeiServices)->AllocatePages( PeiServices, EfiBootServicesData, RootPages, &Allocate );
+    if ( EFI_ERROR( Status )) {
+        return Status;
     }
-    
-    Status = ReadExtFile( PeiServices, 
-                          Volume, 
-                          Sb, 
-                          &MemBlk->RootInode, 
-                          RootBuffer, 
+    RootBuffer     = (UINT8*)((UINTN)Allocate);
+    RootBufferSize = EFI_PAGES_TO_SIZE( RootPages );
+    MemSet( RootBuffer, RootBufferSize, 0 );
+
+    Status = ReadExtFile( PeiServices,
+                          Volume,
+                          Sb,
+                          &RootInode,
+                          RootBuffer,
                           &TmpRootSize );
     RootSize = (UINT32)TmpRootSize;
 
@@ -476,10 +446,10 @@ EFI_STATUS ReadExtDirectory(
 //----------------------------------------------------------------------------
 // Procedure:   ProcessExtVolume
 //
-// Description: 
+// Description:
 //  Reads recovery capsule from Ext(n) volume
 //
-// Input:       
+// Input:
 //  IN  EFI_PEI_SERVICES **PeiServices - pointer to PEI services
 //  IN  OUT RC_VOL_INFO *Volume - pointer to volume description structure
 //  IN  CHAR8 *FileName - recovery capsule file name
@@ -496,8 +466,9 @@ EFI_STATUS ProcessExtVolume(
     IN OUT UINTN        *FileSize,
     OUT VOID            *Buffer )
 {
-
-	EFI_STATUS          Status;
+    EFI_STATUS          Status;
+    VOLUME_SB           Sb;
+    VOLUME_IT           FileInode;
     UINT32              i;
     UINT32              Inode;
     UINT64              TmpFileSize;
@@ -506,132 +477,64 @@ EFI_STATUS ProcessExtVolume(
     UINT32              BlockSize;
     UINT16              InodeSize;
     UINT8               *TmpPtr;
-    UINT32              InodesPerGroup;
-    UINT32              GroupNumber;
-    UINT32              BGDTOffset;
-    UINT32              BgdtBlock;
-    VOLUME_BGDT         Bgdt;
-#if MATCH_VOLUME_NAME
-    CHAR8 *VolumeName = CONVERT_TO_STRING(VOLUME_NAME);
-#endif
-    
-    Status = ReadDevice( PeiServices, Volume, 0, 512, &MemBlk->Sb );
+
+    Status = ReadDevice( PeiServices, Volume, 0, 512, &Sb );
 
     if ( EFI_ERROR( Status )) {
-        PEI_TRACE((-1, PeiServices, "\nRead first sector failed\n"));
         return Status;
     }
 
     // On an EXT(n) volume, the first sector will be all zeros
-    TmpPtr = (UINT8*)&MemBlk->Sb.SB_TotalInodes;
+    TmpPtr = (UINT8*)&Sb.SB_TotalInodes;
     for (i=0; i<512; i++)
     {
         if ((UINT8)TmpPtr[i] != 0)
         {
-            PEI_TRACE((-1, PeiServices, "\nFirst sector not blank\n"));
             return EFI_NOT_FOUND; // Not an EXT(n) volume
         }
     }
 
     // The Superblock is always 1024 bytes in on the volume
-    Status = ReadDevice( PeiServices, Volume, 1024, 512, &MemBlk->Sb );
+    Status = ReadDevice( PeiServices, Volume, 1024, 512, &Sb );
 
-    if (!IsExt( &MemBlk->Sb )) {
-        PEI_TRACE((-1, PeiServices, "\nIsExt failed\n"));
+    if (!IsExt( &Sb )) {
         return EFI_NOT_FOUND;
     }
 
-#if MATCH_VOLUME_NAME
-    if( Strlen(&MemBlk->Sb.SB_VolumeName[0]) == 0 ) return EFI_NOT_FOUND; // No vol name
-    PEI_TRACE((-1, PeiServices, "\nVolume name is %s\n", &MemBlk->Sb.SB_VolumeName[0]));
-    if( !(FileCompare(&MemBlk->Sb.SB_VolumeName[0], VolumeName, FALSE, Strlen(VolumeName))) ) {
-        PEI_TRACE((-1, PeiServices, "\nName did not match\n"));
-        return EFI_NOT_FOUND;
-    }
-#endif
-
-    RootAllocated = FALSE;
-    // The root is always Inode 2.
-    Status = ReadExtDirectory( PeiServices, Volume, &MemBlk->Sb, 2 );
+    Status = ReadExtRoot( PeiServices, Volume, &Sb );
 
     if ( EFI_ERROR( Status )) {
-        PEI_TRACE((-1, PeiServices, "\nRead EXT root failed\n"));
         return Status;
     }
-
-#if SEARCH_PATH
-    gExtVolume = Volume;
-    gSb = &MemBlk->Sb;
-#endif    
 
     AmiGetFileListFromExtVolume(PeiServices, (UINT8*)RootBuffer, RootSize, &NumberOfFiles, ExtRecoveryFiles);
 
     if ( NumberOfFiles == 0 )
         return EFI_NOT_FOUND;
 
-    BlockSize = 1024 << MemBlk->Sb.SB_BlockSize;
-    InodeSize = MemBlk->Sb.SB_InodeStrucSize;
-    if (BlockSize == 1024)
-    {
-        BgdtBlock = 2;
-    } else {
-        BgdtBlock = 1;
-    }
-
-    // Read in the Block Group Descriptor Table
-    Offset = Mul64(BlockSize, BgdtBlock);
-
+    BlockSize = 1024 << Sb.SB_BlockSize;
+    InodeSize = Sb.SB_InodeStrucSize;
     for(i = 0; i < NumberOfFiles; i++) {
         // An EXT(n) directory  entry only contains the name and inode, so we have to
         // read the inode to get the size.
         Inode = ExtRecoveryFiles[i]->DIR_Inode;
-
-        Inode = Inode - 1; // Work with a 0-based Inodes
-        InodesPerGroup = MemBlk->Sb.SB_InodesPerGroup;
-        GroupNumber = 0;
-        BGDTOffset = 0;
-//
-// If the Inode is far out on the volume, it will not be in the first group
-// Find out which group it is in, and get the offset to it's descriptor in
-// the Block Group Descriptor Table
-//
-        if (Inode > InodesPerGroup) {
-            GroupNumber = Inode / InodesPerGroup;
-            Inode = Inode % InodesPerGroup;
-            BGDTOffset = GroupNumber * sizeof(VOLUME_BGDT);
-        }
-
-        Offset += BGDTOffset;
-
-        Status = ReadDevice (PeiServices, 
-                             Volume, 
-                             Offset, 
-                             sizeof(VOLUME_BGDT), 
-                             &Bgdt);
-        if (EFI_ERROR(Status))
-        {
-            PEI_TRACE((-1, PeiServices, "\nRead BGBT error\n"));
-            return EFI_NOT_FOUND;
-        }
-        InodeBlock = Bgdt.BGDT_InodeTableBlk; // Block where this file's Inode is
-
         Offset = Mul64(BlockSize, InodeBlock) + \
-                 Mul64((Inode), InodeSize);
-        Status = ReadDevice (PeiServices,  // Read in the file's Inode
-                             Volume, 
-                             Offset, 
-                             sizeof(VOLUME_IT), 
-                             &MemBlk->FileInode);
+                 Mul64((Inode-1), InodeSize);
+        Status = ReadDevice (PeiServices,
+                             Volume,
+                             Offset,
+                             sizeof(VOLUME_IT),
+                             &FileInode);
         if (EFI_ERROR(Status)) continue;
 
-        TmpFileSize = MemBlk->FileInode.IT_SizeLo + Shl64(MemBlk->FileInode.IT_SizeHi, 0x20);
+        TmpFileSize = FileInode.IT_SizeLo + Shl64(FileInode.IT_SizeHi, 0x20);
         if ( *FileSize < (UINTN)TmpFileSize )
             continue;
-        Status = ReadExtFile( PeiServices, 
-                              Volume, 
-                              &MemBlk->Sb, 
-                              &MemBlk->FileInode, 
-                              Buffer, 
+        Status = ReadExtFile( PeiServices,
+                              Volume,
+                              &Sb,
+                              &FileInode,
+                              Buffer,
                               &TmpFileSize );
         if ( EFI_ERROR( Status )) {
             return Status;
@@ -642,26 +545,26 @@ EFI_STATUS ProcessExtVolume(
             return EFI_SUCCESS;
         }
     }
-    
     return EFI_NOT_FOUND;
 }
+
 
 //<AMI_PHDR_START>
 //----------------------------------------------------------------------------
 // Procedure:   ProcessExtDevice
 //
-// Description: 
+// Description:
 //  Reads recovery capsule from Ext(n) device. Tries to discover primary partitions
 //  and search for capsule there.
 //
-// Input:       
+// Input:
 //  IN  EFI_PEI_SERVICES **PeiServices - pointer to PEI services
 //  IN  OUT RC_VOL_INFO *Volume - pointer to volume description structure
 //  IN  CHAR8 *FileName - recovery capsule file name
 //  IN  UINTN *FileSize - pointer to size of provided buffer
 //  OUT VOID *Buffer - pointer to buffer to store data
 //
-// Output:      
+// Output:
 //  EFI_STATUS
 //
 //----------------------------------------------------------------------------
@@ -672,13 +575,13 @@ EFI_STATUS ProcessExtDevice(
     IN OUT UINTN        *FileSize,
     OUT VOID            *Buffer )
 {
-	EFI_STATUS          Status = 0;
-    EFI_STATUS          Status2 = 0;
+    EFI_STATUS          Status;
+    EFI_STATUS          Status2;
 
+    Volume->PartitionOffset = 0;
     //
     // Assume the volume is floppy-formatted.
     //
-    Volume->PartitionOffset = 0; // Reset this to zero
     Status = ProcessExtVolume( PeiServices, Volume, FileSize, Buffer );
 
     if ( !EFI_ERROR( Status )) {
@@ -688,19 +591,18 @@ EFI_STATUS ProcessExtDevice(
     //
     // Not floppy formatted, look for partitions. Read sector 0 (MBR).
     //
-    Status = ReadDevice( PeiServices, Volume, 0, 512, &MemBlk->Mbr );
+    Status = ReadDevice( PeiServices, Volume, 0, 512, &Mbr );
 
     if ( EFI_ERROR( Status )) {
         return Status;
     }
 
-    if ( MemBlk->Mbr.Sig != 0xaa55 ) {
+    if ( Mbr.Sig != 0xaa55 ) {
         return EFI_NOT_FOUND;
     }
-    
+
     PartCount = 0;
     PartSector = 0;
-    ExtOffset = 0;
     IsMbr = TRUE;
 
     //
@@ -721,74 +623,14 @@ EFI_STATUS ProcessExtDevice(
     return EFI_NOT_FOUND;
 }
 
-//<AMI_PHDR_START>
-//----------------------------------------------------------------------
-//
-// Procedure:	FindFileInExtDirectory
-//
-// Description:	
-//  Find the specified file in the EXT directory at DirPtr
-//
-// Input:
-//  UINT8 *DirPtr - Pointer to a buffer containing the directory
-//  UINT32 DirSize - Size of the directory
-//  VOID *FileName - Name of the file to find
-//  DIR_ENTRY_EXT **EntryPtr - Pointer to buffer containing directory 
-//    entry of the file that was found.
-//
-// Output:
-//  TRUE - File found. FALSE - File not found
-//
-//----------------------------------------------------------------------
-//<AMI_PHDR_END>
-BOOLEAN FindFileInExtDirectory(
-    IN  UINT8               *DirPtr,
-    IN  UINT32              DirSize,
-    IN  VOID                *FileName,
-    OUT DIR_ENTRY_EXT       **EntryPtr
-)
-{
-	DIR_ENTRY_EXT           *TmpPtr;
-    UINT16                  EntryLength;
-    UINT8                   NameLength;
-    UINT8                   i;
-    CHAR8                   TmpFileName[128];
 
-    do { // do loop handling entries in the directory
-
-        TmpPtr = (DIR_ENTRY_EXT*)&DirPtr[0];
-        EntryLength = TmpPtr->DIR_EntryLength;
-        if (EntryLength == 0) break; // End of directory, file not found
-        NameLength = TmpPtr->DIR_NameLength;
-
-        for ( i=0; i<NameLength; i++ )
-        {
-            TmpFileName[i] = TmpPtr->DIR_Name[i];
-        }
-        TmpFileName[i] = 0; // Zero-terminate name
-
-        if(!EFI_ERROR(FileSearch((CHAR8*)FileName, 
-                                 TmpFileName, 
-                                 FALSE, 
-                                 NameLength))) {
-            *EntryPtr = TmpPtr; // Save pointer to this entry
-            return TRUE;
-        }
-
-        DirPtr += EntryLength;
-        DirSize -= EntryLength;
-
-    } while (DirSize);
-
-    return FALSE;
-}
 
 //<AMI_PHDR_START>
 //----------------------------------------------------------------------
 //
-// Procedure:	AmiGetFileListFromExtVolume
+// Procedure:   AmiGetFileListFromExtVolume
 //
-// Description:	
+// Description:
 //  Gets a list of valid recovery files from an EXT(n) volume.
 //  As currently written, gets only one file.
 //
@@ -808,72 +650,57 @@ BOOLEAN FindFileInExtDirectory(
 //----------------------------------------------------------------------
 //<AMI_PHDR_END>
 VOID AmiGetFileListFromExtVolume(
-    EFI_PEI_SERVICES 		**PeiServices,
+    IN EFI_PEI_SERVICES **PeiServices,
     IN  UINT8               *Root,
     IN  UINT32              RootSize,
     OUT UINTN               *NumberOfFiles,
     OUT DIR_ENTRY_EXT       **Buffer
 )
 {
-    DIR_ENTRY_EXT *EntryPtr = NULL;
-    VOID *FileName;
-    UINTN FileSize;
-    EFI_STATUS Status;
-    CHAR8 *FilePath;
-    CHAR8 *DirPtr;
-    CHAR8 LocalPath[256];
-#if SEARCH_PATH
-    CHAR8 *NextName;
-    UINT32 Inode;
-#endif
+
+    EFI_STATUS              Status;
+    DIR_ENTRY_EXT           *TmpPtr;
+    UINT16                  EntryLength;
+    UINT8                   NameLength;
+    VOID                    *FileName;
+    UINTN                   FileSize;
+    UINT8                   i;
+    CHAR8                   TmpFileName[13];
 
     *NumberOfFiles = 0;     //no files found yet
 
     Status = GetRecoveryFileInfo(PeiServices, &FileName, &FileSize, NULL);
     if(EFI_ERROR(Status))
         return;
-#if SEARCH_PATH
-    AddRecoveryPath(&FileName);
-#endif
 
-    MemCpy( LocalPath, FileName, Strlen(FileName)+1 );
-    FilePath = &LocalPath[0];
-    DirPtr = Root;
+    do { // do loop handling entries in the root
 
-#if SEARCH_PATH
-    NextName = FilePath;
+        TmpPtr = (DIR_ENTRY_EXT*)&Root[0];
+        EntryLength = TmpPtr->DIR_EntryLength;
+        if (EntryLength == 0) break; // End of directory, file not found
+        NameLength = TmpPtr->DIR_NameLength;
+        if (NameLength > 12) NameLength = 12;
+        for ( i=0; i<NameLength; i++ )
+        {
+            TmpFileName[i] = TmpPtr->DIR_Name[i];
+        }
+        TmpFileName[i] = 0; // Zero-terminate name
 
-    while ( IsolateName (&FilePath, &NextName) == FALSE ) {
-        //
-        //Find path name in directory
-        //
-        if (FindFileInExtDirectory(DirPtr, RootSize, FilePath, &EntryPtr)) {
-            // An EXT(n) directory  entry only contains the name and inode, so we have to
-            // read the inode to get the size.
-            Inode = EntryPtr->DIR_Inode;
-            Status = ReadExtDirectory( PeiServices, gExtVolume, gSb, Inode );
-            if (EFI_ERROR(Status)) {
-                PEI_TRACE((-1, PeiServices, "\nDirectory not read\n"));
-                return; // not found
-            }
-            FilePath = NextName;
-        } else return; // not found
-    } // end while
+        if(!EFI_ERROR(FileSearch((CHAR8*)FileName,
+                                 TmpFileName,
+                                 FALSE,
+                                 NameLength))) {
+            Buffer[*NumberOfFiles] = TmpPtr; // Save pointer to this entry
+            *NumberOfFiles = 1;
+            return;
+        }
 
-    if (FindFileInExtDirectory(DirPtr, RootSize, FilePath, &EntryPtr)) {
-        Buffer[*NumberOfFiles] = EntryPtr; // Save pointer to this entry
-        *NumberOfFiles = 1;
-    }
-    return;
-#else
-    if (FindFileInExtDirectory(DirPtr, RootSize, FilePath, &EntryPtr)) {
-        Buffer[*NumberOfFiles] = EntryPtr; // Save pointer to this entry
-        *NumberOfFiles = 1;
-    }
-    return;
-#endif
+        Root += EntryLength;
+        RootSize -= EntryLength;
+
+    } while (RootSize);
+
 }
-
 
 //**********************************************************************
 //**********************************************************************

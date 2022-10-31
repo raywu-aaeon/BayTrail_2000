@@ -5,9 +5,8 @@
 	RefName = "AmiCryptoLib"
 [INF]
 "AmiCryptLib.inf"
-"PeiCryptLib.inf"
 "BaseCryptLib.inf"
-"RuntimeAmiCryptLib.inf"
+"PeiCryptLib.inf"
 [files]
 "CryptoLib.sdl"	
 "Install.cmd"	

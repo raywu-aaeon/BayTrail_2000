@@ -25,14 +25,17 @@
 // 
 // 
 //*************************************************************************
-/** @file CpuPolicy.h
-    CPU setup data header file, define all the CPU
-    setup items and a structures in this file. 
-
-    @note  The context of the CPU_SETUP_DATA may be able to copy from
-              CPU.SD directly 
-
-**/
+//<AMI_FHDR_START>
+//
+// Name:        CpuPolicy.h
+//
+// Description: CPU setup data header file, define all the CPU
+//              setup items and a structures in this file. 
+//
+// Notes:       The context of the CPU_SETUP_DATA may be able to copy from
+//              CPU.SD directly 
+//
+//<AMI_FHDR_END>
 //*************************************************************************
 #include <Setup.h>
 

@@ -33,7 +33,6 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 //
 EFI_PCI_IO_PROTOCOL         *mPciIo;
 V2P                         *mV2p = NULL; // undi3.0 map_list head
-EFI_EVENT	                gLegacyBootEvent; // AMI PORTING : Register Legacy Boot Event for Pxe Shutdown.
 // End Global variables
 //
 
@@ -46,7 +45,7 @@ EFI_EVENT	                gLegacyBootEvent; // AMI PORTING : Register Legacy Boo
 **/
 VOID
 EFIAPI
-ShutdownStopUndiDriver (      // AMI PORTING : Register Legacy Boot Event for Pxe Shutdown.
+SnpNotifyExitBootServices (
   EFI_EVENT Event,
   VOID      *Context
   )
@@ -695,7 +694,7 @@ SimpleNetworkDriverStart (
   Status = gBS->CreateEventEx (
                   EVT_NOTIFY_SIGNAL,
                   TPL_NOTIFY,
-                  ShutdownStopUndiDriver,// AMI PORTING : Register Legacy Boot Event for Pxe Shutdown.
+                  SnpNotifyExitBootServices,
                   Snp,
                   &gEfiEventExitBootServicesGuid,
                   &Snp->ExitBootServicesEvent
@@ -703,27 +702,6 @@ SimpleNetworkDriverStart (
   if (EFI_ERROR (Status)) {
     goto Error_DeleteSNP;
   }
-  //
-  // AMI PORTING START: Register Legacy Boot Event for Pxe Shutdown.
-  //
-
-  //
-  // Register an Legacy boot event to stop UNDI driver.
-  //
-
-  Status = EfiCreateEventLegacyBootEx (
-            TPL_NOTIFY,
-            ShutdownStopUndiDriver,
-            Snp,
-            &gLegacyBootEvent );
-  
-  if (EFI_ERROR (Status)) {
-    goto Error_DeleteSNP;
-  }
-  
-  //
-  // AMI PORTING END: Register Legacy Boot Event for Pxe Shutdown.
-  //
 
   //
   //  add SNP to the undi handle
@@ -840,12 +818,6 @@ SimpleNetworkDriverStop (
   // Close EXIT_BOOT_SERIVES Event
   //
   gBS->CloseEvent (Snp->ExitBootServicesEvent);
-
-  
-  //
-  // Close the Legacy boot event
-  //
-  gBS->CloseEvent(gLegacyBootEvent);   // AMI PORTING : Register Legacy Boot Event for Pxe Shutdown.
 
   Status = gBS->CloseProtocol (
                   Controller,
@@ -1068,6 +1040,7 @@ InitializeSnpNiiDriver (
   //
   // AMI PORTING START : Check whether network stack is enabled or not. If not return EFI_UNSUPPORTED.
   //
+  EFI_GUID	          NetworkStackGuid = NETWORK_STACK_GUID;
   NETWORK_STACK	      NetworkStackSetupData;
   UINTN               VarSize;
   EFI_STATUS          Status; 
@@ -1075,7 +1048,7 @@ InitializeSnpNiiDriver (
   VarSize = sizeof (NETWORK_STACK);
 
   Status= gRT->GetVariable(L"NetworkStackVar", 
-                   &gEfiNetworkStackSetupGuid, 
+                   &NetworkStackGuid, 
                    NULL, 
                    &VarSize, 
                    &NetworkStackSetupData);

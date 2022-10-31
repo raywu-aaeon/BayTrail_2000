@@ -7,9 +7,8 @@
 "BaseUefiCpuLib\BaseUefiCpuLib.inf"
 "BaseXApicLib\BaseXApicLib.inf"
 "BaseXApicX2ApicLib\BaseXApicX2ApicLib.inf"
-"CpuExceptionHandlerLib\DxeCpuExceptionHandlerLib.inf"
+"CpuExceptionHandlerLib\DxeSmmCpuExceptionHandlerLib.inf"
 "CpuExceptionHandlerLib\SecPeiCpuExceptionHandlerLib.inf"
-"CpuExceptionHandlerLib\SmmCpuExceptionHandlerLib.inf"
 "MtrrLib\MtrrLib.inf"
 "SecPeiDxeTimerLibUefiCpu\SecPeiDxeTimerLibUefiCpu.inf"
 <endComponent>

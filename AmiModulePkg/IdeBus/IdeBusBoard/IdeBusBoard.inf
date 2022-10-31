@@ -1,7 +1,7 @@
 #**********************************************************************
 #**********************************************************************
 #**                                                                  **
-#**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+#**        (C)Copyright 1985-2012, American Megatrends, Inc.         **
 #**                                                                  **
 #**                       All Rights Reserved.                       **
 #**                                                                  **
@@ -12,7 +12,7 @@
 #**********************************************************************
 #**********************************************************************
 
-## @file IdeBusBoard.inf
+## @file
 #  This driver installs Installs PlatformIdeProtocol Interface and Initializes it
 ##
 
@@ -44,23 +44,10 @@
   UefiDriverEntryPoint
 
 [Protocols]
-  gAmiPlatformIdeProtocolGuid           ## PRODUCES
+  gPlatformIdeProtocolGuid              ## PRODUCES
   gEfiIdeControllerInitProtocolGuid     ## CONSUMES
+  gEfiIdeControllerProtocolGuid         ## CONSUMES
   gEfiComponentName2ProtocolGuid        ## CONSUMES
   
 [Depex]
   TRUE
-
-#**********************************************************************
-#**********************************************************************
-#**                                                                  **
-#**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
-#**                                                                  **
-#**                       All Rights Reserved.                       **
-#**                                                                  **
-#**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093        **
-#**                                                                  **
-#**                       Phone: (770)-246-8600                      **
-#**                                                                  **
-#**********************************************************************
-#**********************************************************************

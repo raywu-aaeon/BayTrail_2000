@@ -3,6 +3,8 @@
 	category = ModulePart
 	LocalRoot = "AMIDebugRxPkg\Include\"
 	RefName = "AMIDebugRxPkg.Include"
+[files]
+"AmiDebugPort.h"	
 [parts]
 "AMIDebugRxPkg.IncludeLibrary"
 "AMIDebugRxPkg.Protocol"

@@ -1,7 +1,7 @@
 //*************************************************************************
 //*************************************************************************
 //**                                                                     **
-//**        (C)Copyright 1985-2017, American Megatrends, Inc.            **
+//**        (C)Copyright 1985-2014, American Megatrends, Inc.            **
 //**                                                                     **
 //**                       All Rights Reserved.                          **
 //**                                                                     **
@@ -156,7 +156,7 @@ VOID InitCrbStrings (
         // Get KSC Version
         //
         Status = SendKscCommand(0x90);      // SMC_READ_REVISION
-//        ASSERT_EFI_ERROR(Status);
+        ASSERT_EFI_ERROR(Status);
         if (!EFI_ERROR(Status)) {
             Status = ReceiveKscData(&KscVerHigh);
             Status = ReceiveKscData(&KscVerLow);
@@ -172,7 +172,7 @@ VOID InitCrbStrings (
 //*************************************************************************
 //*************************************************************************
 //**                                                                     **
-//**        (C)Copyright 1985-2017, American Megatrends, Inc.            **
+//**        (C)Copyright 1985-2014, American Megatrends, Inc.            **
 //**                                                                     **
 //**                       All Rights Reserved.                          **
 //**                                                                     **

@@ -1,0 +1,54 @@
+#**********************************************************************
+#**********************************************************************
+#**                                                                  **
+#**        (C)Copyright 1985-2012, American Megatrends, Inc.         **
+#**                                                                  **
+#**                       All Rights Reserved.                       **
+#**                                                                  **
+#**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093        **
+#**                                                                  **
+#**                       Phone: (770)-246-8600                      **
+#**                                                                  **
+#**********************************************************************
+#**********************************************************************
+
+## @file
+#   This driver creates the TCG library
+##
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = AmiTcgOemLib
+  FILE_GUID                      = BFA436A9-19EC-4678-BF4E-49C89A6EFFA7					  
+  MODULE_TYPE                    = BASE
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = BaseAmiTcgOemLib
+
+[Sources]
+AmiTcgOemlib.h
+AmiTcgOemlib.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  AmiModulePkg/AmiModulePkg.dec
+  AmiCompatibilityPkg/AmiCompatibilityPkg.dec
+  IntelFrameworkPkg/IntelFrameworkPkg.dec
+  
+[LibraryClasses]
+    AmiPeiLib
+
+[Guids]
+  
+[Protocols]
+
+#*************************************************************************
+#**                                                                     **
+#**        (C)Copyright 1985-2012, American Megatrends, Inc.            **
+#**                                                                     **
+#**                       All Rights Reserved.                          **
+#**                                                                     **
+#**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093           **
+#**                                                                     **
+#**                       Phone: (770)-246-8600                         **
+#**                                                                     **
+#*************************************************************************
+#*************************************************************************

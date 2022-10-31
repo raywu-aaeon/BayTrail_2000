@@ -1,7 +1,7 @@
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2012, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **
@@ -11,10 +11,22 @@
 //**                                                                  **
 //**********************************************************************
 //**********************************************************************
-/** @file 
-    Graphics console driver that produces the Simple Text Out interface
 
-*/
+//**********************************************************************
+// $Header: $
+//
+// $Revision: $
+//
+// $Date: $
+//**********************************************************************
+//<AMI_FHDR_START>
+//
+// Name:  GraphicsConsole.h
+//
+// Description:  Graphics console driver that produces the Simple Text Out
+//		interface
+//
+//<AMI_FHDR_END>
 //**********************************************************************
 
 #ifndef _GRAPHCICS_CONSOLE_H_
@@ -41,53 +53,93 @@
 
 //-----------------------------------------------------------------------------
 
-#define	NARROW_GLYPH_WIDTH	EFI_GLYPH_WIDTH ///< width of a narrow glyph in this project
-#define WIDE_GLYPH_WIDTH	NARROW_GLYPH_WIDTH * 2 ///< width of a width Glyph in this project
+#define	NARROW_GLYPH_WIDTH	EFI_GLYPH_WIDTH
+#define WIDE_GLYPH_WIDTH	NARROW_GLYPH_WIDTH * 2
 
-#define MODE_ZERO_MIN_HOR_RES NARROW_GLYPH_WIDTH * 80 ///< width of the page, in pixels
-#define MODE_ZERO_MIN_VER_RES EFI_GLYPH_HEIGHT * 25 ///< height of the page, in pixels
+#define MODE_ZERO_MIN_HOR_RES NARROW_GLYPH_WIDTH * 80
+#define MODE_ZERO_MIN_VER_RES EFI_GLYPH_HEIGHT * 25
 
-#define CURSOR_THICKNESS	3	///< thickness of the cursor
-#define CURSOR_OFFSET   	15  ///< base line of simple narrow font
+#define CURSOR_THICKNESS	3
+#define CURSOR_OFFSET   	15      //base line of simple narrow font
 
 #define MAX_RES             0
 #define MIN_RES             -1
 
-#define	NULL_CHAR			0x0000 ///< value for a unicode null character
-#define	BACKSPACE			0x0008 ///< value for a unicode backspace character
-#define	LINE_FEED			0x000A ///< value for a unicode Line Feed character
-#define	CARRIAGE_RETURN		0x000D ///< value for a unicode Carriage return character
+#define	NULL_CHAR			0x0000
+#define	BACKSPACE			0x0008
+#define	LINE_FEED			0x000A
+#define	CARRIAGE_RETURN		0x000D
 
 //-----------------------------------------------------------------------------
 // Data Structures
 
 #pragma pack(1)
 
-/**
-    This structure represents text mode internal information structure
-*/
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name: TEXT_MODE
+//
+// Description: 
+// This structure represents text mode internal information structure
+//
+// Fields: Name          Type                    Description
+//----------------------------------------------------------------------------
+// ModeNum              INT32               Mode number
+// Col                  INT32               Max number of columns
+// Row                  INT32               Max number of rows
+// VideoCol             UINT32              Horizontal screen resolution
+// VideoRow             UINT32              Vertical screen resolution
+// 
+// Notes:  
+//
+// Referrals:
+//
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
+
 typedef struct _TEXT_MODE  {
-	INT32	ModeNum; ///< Mode number
-	INT32	Col; ///< Max number of columns
-	INT32	Row; ///< Max number of rows
-	UINT32	VideoCol; ///< Horizontal screen resolution in pixels
-	UINT32	VideoRow; ///< Vertical screen resolution in pixels
+	INT32	ModeNum;
+	INT32	Col;
+	INT32	Row;
+	UINT32	VideoCol; // horizontal pixels
+	UINT32	VideoRow; // vertical pixels
 } TEXT_MODE;
 
-/**
-    This structure represents text mode extended internal information structure
-*/
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name: GC_TEXT_MODE
+//
+// Description: 
+// This structure represents text mode extended internal information structure
+//
+// Fields: Name          Type                    Description
+//----------------------------------------------------------------------------
+// ModeNum              INT32               Mode number
+// Col                  INT32               Max number of columns
+// Row                  INT32               Max number of rows
+// VideoCol             UINT32              Horizontal screen resolution
+// VideoRow             UINT32              Vertical screen resolution
+// Supported            BOOLEAN             Flag if this mode supported
+// GraphicsMode         UINT32              Correspondent graphics mode
+// 
+// Notes:  
+//
+// Referrals:
+//
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
+
 typedef struct _GC_TEXT_MODE  {
-	INT32	ModeNum; ///< Mode number
-	INT32	Col; ///< Max number of columns
-	INT32	Row; ///< Max number of rows
-	UINT32	VideoCol; ///< Horizontal screen resolution in pixels
-	UINT32	VideoRow; ///< Vertical screen resolution in pixels
-    BOOLEAN Supported; ///< Flag if this mode supported
-    UINT32  GraphicsMode; ///< Correspondent graphics mode
+	INT32	ModeNum;
+	INT32	Col;
+	INT32	Row;
+	UINT32	VideoCol; // horizontal pixels
+	UINT32	VideoRow; // vertical pixels
+    BOOLEAN Supported;
+    UINT32  GraphicsMode;
 } GC_TEXT_MODE;
 
-typedef struct _GC_DATA GC_DATA; ///< forward type definition of GC_DATA
+typedef struct _GC_DATA GC_DATA;
 
 typedef VOID (* AGC_UPDATE_BLT_BUFFER ) (
 	IN     GC_DATA 			             *This,
@@ -104,27 +156,56 @@ typedef VOID (* AGC_SCROLL_UP) (
 	IN GC_DATA *This
 	);
 
-/**
-    This structure represents internal information structure for Graphics console
-    driver
-*/
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name: GC_DATA
+//
+// Description: 
+// This structure represents internal information structure for Graphics console
+// driver
+//
+// Fields: Name          Type                               Description
+//----------------------------------------------------------------------------
+// SimpleTextOut        EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL     Protocol structure
+// Signature            UINT32                              Unique signature
+// GraphicsOutput       EFI_GRAPHICS_OUTPUT_PROTOCOL*       Pointer to Gop driver
+// Hii                  EFI_HII_PROTOCOL*                   Pointer to HII driver
+// SupportedModes       GC_TEXT_MODE*                       Pointer to supported modes array
+// MaxRows              UINT32                              Max rows in current mode
+// MaxColumns           UINT32                              Max columns in current mode
+// DeltaX               UINT32                              Horizontal indent of text window on screen in pixels
+// DeltaY               UINT32                              Vertical indent of text window on screen in  pixels
+// Cursor               EFI_GRAPHICS_OUTPUT_BLT_PIXEL       Array for saving cursor image
+// BlinkVisible         BOOLEAN                             Current state of cursor in blinking mode
+// CursorEvent          EFI_EVENT                           Event generated to blink cursor
+// OemUpdateBltBuffer   AGC_UPDATE_BLT_BUFFER               Custom porting hook
+// OemClearScreen       AGC_CLEAR_SCREEN                    Custom porting hook
+// OemScrollUp          AGC_SCROLL_UP                       Custom porting hook
+// 
+// Notes:  
+//
+// Referrals:
+//
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
+
 struct _GC_DATA{
-	EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL	SimpleTextOut; ///< Pointer to the SimpleText Output Protocol
-	UINT32				            Signature; ///< Signature (must be 0x54445348 ('GRCS') )
-    UINT32                          Version; ///< Current version of the Graphics Console Driver
-	EFI_GRAPHICS_OUTPUT_PROTOCOL	*GraphicsOutput; ///< Pointer to Gop driver
-	EFI_HII_FONT_PROTOCOL		    *HiiFont; ///< Pointer to HII driver
-    GC_TEXT_MODE                    *SupportedModes; ///< Pointer to supported modes arra
-    UINT32                          MaxRows; ///< Max number of rows in current mode
-    UINT32                          MaxColumns; ///< Max number of columns in current mode
-    UINT32                          DeltaX; ///< Horizontal offset in pixels for current text mode
-    UINT32                          DeltaY; ///< Vertical offset in pixels for current text mode
-    EFI_GRAPHICS_OUTPUT_BLT_PIXEL   Cursor[NARROW_GLYPH_WIDTH * 3]; ///< Array for saving current cursor image
-	BOOLEAN				            BlinkVisible; ///< If true cursor is visible, otherwise - invisible
-	EFI_EVENT			            CursorEvent; ///< This event makes the cursor blink
-	AGC_UPDATE_BLT_BUFFER		    OemUpdateBltBuffer; ///< Pointer to custom hook before Updating the BLT Buffer
-	AGC_CLEAR_SCREEN		        OemClearScreen; ///< Pointer to custom hook before clear screen is called
-	AGC_SCROLL_UP			        OemScrollUp; ///< Pointer to custom hook before Scroll up is called
+	EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL	SimpleTextOut;
+	UINT32				            Signature;			            //signature (must be 0x54445348 ('GRCS') )
+    UINT32                          Version;
+	EFI_GRAPHICS_OUTPUT_PROTOCOL	*GraphicsOutput;
+	EFI_HII_FONT_PROTOCOL		    *HiiFont;
+    GC_TEXT_MODE                    *SupportedModes;
+    UINT32                          MaxRows;                        //max number of rows in current mode
+    UINT32                          MaxColumns;                     //max number of columns in current mode
+    UINT32                          DeltaX;                         //horizontal offset in pixels for current text mode
+    UINT32                          DeltaY;                         //vertical offset in pixels for current text mode
+    EFI_GRAPHICS_OUTPUT_BLT_PIXEL   Cursor[NARROW_GLYPH_WIDTH * 3]; //Save cursor image
+	BOOLEAN				            BlinkVisible;                   //if true cursor is visible, otherwise - invisible
+	EFI_EVENT			            CursorEvent;
+	AGC_UPDATE_BLT_BUFFER		    OemUpdateBltBuffer;		        //pointer to custom hook
+	AGC_CLEAR_SCREEN		        OemClearScreen;		            //pointer to custom hook
+	AGC_SCROLL_UP			        OemScrollUp;			        //pointer to custom hook
 };
 #pragma pack()
 
@@ -133,7 +214,7 @@ struct _GC_DATA{
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2012, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **

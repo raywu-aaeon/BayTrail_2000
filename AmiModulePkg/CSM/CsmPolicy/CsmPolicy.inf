@@ -34,7 +34,6 @@
   gOpromStartEndProtocolGuid
   gEfiDriverBindingProtocolGuid
   gAmiOpromPolicyProtocolGuid
-  gAmiCsmOpromPolicyProtocolGuid
   gEfiPlatformDriverOverrideProtocolGuid
   gEfiBusSpecificDriverOverrideProtocolGuid
   gEfiGraphicsOutputProtocolGuid

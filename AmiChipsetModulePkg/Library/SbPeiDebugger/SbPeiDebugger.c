@@ -121,7 +121,6 @@ Returns:
   return Status;
 }
 
-#if USB_DEBUG_TRANSPORT
 //<AMI_PHDR_START>
 //----------------------------------------------------------------------------
 // Procedure:   SBPEIDBG_InitUsbEhci
@@ -204,7 +203,6 @@ EFI_STATUS SBPEIDBG_InitUsbEhci (
 
   return EFI_SUCCESS;
 }
-#endif
 
 //<AMI_PHDR_START>
 //----------------------------------------------------------------------------

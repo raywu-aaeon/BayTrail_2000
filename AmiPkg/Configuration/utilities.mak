@@ -39,7 +39,7 @@ BUILD_OS_WINDOWS := 0
 BUILD_OS_LINUX := 1
 
 ifndef BUILD_OS
-ifeq ($(OS),Windows_NT)
+ifneq ($(shell set WINDIR),)
  # Windows OS
  BUILD_OS := $(BUILD_OS_WINDOWS)
 else

@@ -11,8 +11,6 @@ LIBRARY_CLASS = EzportPlusBin
 LIB | TseStyleEzportPlus.lib
 [binaries.X64]
 LIB | TseStyleEzportPlusx64.lib
-[binaries.AARCH64]
-LIB | TseStyleEzportPlusAarch64.lib
 
 [Sources]
 
@@ -53,12 +51,11 @@ LIB | TseStyleEzportPlusAarch64.lib
   DebugLib
   UefiLib
   PrintLib
-#  UefiDriverEntryPoint
+  UefiDriverEntryPoint
 #  AmiIntrinsicLib
   ReportStatusCodeLib
   
   
  [BuildOptions]
 MSFT:*_*_*_CC_FLAGS = /DTSE_FOR_APTIO_4_50 
-GCC:*_*_*_CC_FLAGS = -DTSE_FOR_APTIO_4_50  
 *_*_*_BUILD_FLAGS   = -s 

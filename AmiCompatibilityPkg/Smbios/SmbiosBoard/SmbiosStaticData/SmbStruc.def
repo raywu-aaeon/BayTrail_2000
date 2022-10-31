@@ -7,7 +7,7 @@
 ;****************************************************************************
 ;****************************************************************************
 ;**                                                                        **
-;**           (C)Copyright 1985-2015, American Megatrends, Inc.            **
+;**           (C)Copyright 1985-2013, American Megatrends, Inc.            **
 ;**                                                                        **
 ;**                          All Rights Reserved.                          **
 ;**                                                                        **
@@ -230,9 +230,6 @@ PROC_STRUC                      STRUCT      ; 4
         bThreadCount            BYTE  ?
         wProcessorChar          WORD  ?
         wProcFamily2            WORD  ?
-        wCoreCount2             WORD  ?
-        wCoreEnabled2           WORD  ?
-        wThreadCount2           WORD  ?
 PROC_STRUC                      ENDS
 ;----------------------------------------------------------------------------
 MEMCTRL_STRUC                   STRUCT      ; 5
@@ -721,7 +718,7 @@ INTEL_ASF_STRUC                         ENDS
 ;****************************************************************************
 ;****************************************************************************
 ;**                                                                        **
-;**           (C)Copyright 1985-2015, American Megatrends, Inc.            **
+;**           (C)Copyright 1985-2013, American Megatrends, Inc.            **
 ;**                                                                        **
 ;**                          All Rights Reserved.                          **
 ;**                                                                        **

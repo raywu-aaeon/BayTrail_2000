@@ -1,7 +1,7 @@
 //**********************************************************************//
 //**********************************************************************//
 //**                                                                  **//
-//**        (C)Copyright 1985-2015, American Megatrends, Inc.         **//
+//**        (C)Copyright 1985-2012, American Megatrends, Inc.         **//
 //**                                                                  **//
 //**                       All Rights Reserved.                       **//
 //**                                                                  **//
@@ -12,15 +12,19 @@
 //**********************************************************************//
 //**********************************************************************//
 
-/** @file SmbiosGetFlashDataProtocol.h
-    AMI SmbiosGetFlashDataProtocol Header file.
-
-**/
+//**********************************************************************//
+// $Header: /Alaska/BIN/Modules/SMBIOS/SmbiosProtocol/SmbiosGetFlashDataProtocol.h 7     5/18/10 5:15p Davidd $
+//
+// $Revision: 7 $
+//
+// $Date: 5/18/10 5:15p $
+//**********************************************************************//
+//**********************************************************************//
 
 #ifndef _EFI_SMBOS_GET_FLASH_DATA_PROTOCOL_H_
 #define _EFI_SMBOS_GET_FLASH_DATA_PROTOCOL_H_
 
-#include <Token.h>
+#include <token.h>
 
 extern EFI_GUID gAmiSmbiosFlashDataProtocolGuid;
 
@@ -39,9 +43,6 @@ typedef EFI_STATUS (*GET_FIELD) (
     OUT VOID                            **String
 );
 
-/**
-    AMI SmbiosGetFlashData Protocol
-**/
 struct _EFI_SMBIOS_FLASH_DATA_PROTOCOL {
     GET_FLASH_TABLE_INFO                GetFlashTableInfo;
     GET_FIELD                           GetField;
@@ -52,7 +53,7 @@ struct _EFI_SMBIOS_FLASH_DATA_PROTOCOL {
 //**********************************************************************//
 //**********************************************************************//
 //**                                                                  **//
-//**        (C)Copyright 1985-2015, American Megatrends, Inc.         **//
+//**        (C)Copyright 1985-2012, American Megatrends, Inc.         **//
 //**                                                                  **//
 //**                       All Rights Reserved.                       **//
 //**                                                                  **//

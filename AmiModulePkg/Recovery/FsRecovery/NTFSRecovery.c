@@ -33,15 +33,16 @@
 //
 //<AMI_FHDR_END>
 //**********************************************************************
-#include <Token.h>
+#include <NTFSRecovery.h>
+#include <AmiModulePkg\Recovery\FsRecovery\FsRecovery.h>
 #include <AmiPeiLib.h>
+#include <Token.h>
 #include <Ppi/DeviceRecoveryModule.h>
 #include <Ppi/BlockIo.h>
+
 #include <Guid/AmiRecoveryDevice.h>
 
-#include "NTFSRecovery.h"
-#include "FsRecovery.h"
-
+extern BOOLEAN NtfsRecoverySupport;
 
 INDEX_ENTRY         *NtfsRecoveryFiles[10];
 UINT8               MFTRunList[256];
@@ -49,20 +50,22 @@ UINT8               RootRunList[128];
 UINT8               ResidentIndex[256];
 BOOLEAN             ResidentPresent;
 UINT32              ResidentSize;
-
 extern UINTN               PartCount;
 extern BOOLEAN             IsMbr;
 extern UINT32              GpeCount;
 extern UINT32              PartSector;
-extern UINT32              ExtOffset;
+extern MASTER_BOOT_RECORD  Mbr;
 extern UINT8               *ReadBuffer;
+extern UINTN               BufferSize0;
+extern UINT8               *FatBuffer;
+extern UINTN               FatBufferSize;
 extern UINT8               *RootBuffer;
 extern UINTN               RootBufferSize ;
+extern UINT32              RootEntries ;
 extern UINT32              RootSize;
-extern MEMORY_BLOCK        *MemBlk;
-extern BOOLEAN             RootAllocated;
-RC_VOL_INFO     		   *gVolume;
-BOOT_SECTOR                *gBs;
+
+//EFI_PEI_SERVICES    **ThisPeiServices;
+
 
 
 //<AMI_PHDR_START>
@@ -95,90 +98,6 @@ BOOLEAN IsNtfs(
            && pBpb->Signature == 0xAA55
            && (pBpb->jmp[0] == 0xEB || pBpb->jmp[0] == 0xE9);
 }
-
-//<AMI_PHDR_START>
-//----------------------------------------------------------------------
-//
-// Procedure:   ApplyFixup
-//
-// Description: Applies fixup on a File or Index record if necessary
-//
-// Parameters:  VOLUME_INFO *Vi - Volume Info Structure
-//              UINT8 *Buffer - Buffer containing File or Index record
-//
-// Return value: EFI_STATUS Status (EFI_SUCCESS or EFI_VOLUME_CORRUPTED)
-//
-// Modified:
-//
-// Referral(s):
-//
-// NOTE(S):     The "Fixup" is a method NTFS uses to protect important
-//              records from bad sectors.
-//              For more information, see "NTFS Documentation" by
-//              Richard Russon and Yuval Fledel, chapter 14,
-//              "Concept - Fixup".
-//              For a record that requires fixup, the last two bytes
-//              of each sector are stored in a "Fixup array", and are
-//              replaced with sequence numbers. This function compares
-//              those bytes with a table, replaces them with the
-//              stored originals, and reports a corrupt volume if
-//              there is a comparison mis-match.
-//
-//----------------------------------------------------------------------
-//<AMI_PHDR_END>
-
-EFI_STATUS
-ApplyFixup (
-    RC_VOL_INFO *Volume,
-    UINT8       *Buffer
-)
-{
-    UINT16      *FixupPtr;
-    UINT16      *ArrayPtr;
-    UINT16      *FixupArray;
-    UINT16      FixupCount;
-
-    //check for signature 'FILE' or 'INDX'
-    if ( ((Buffer[0] != 'F') || \
-          (Buffer[1] != 'I') || \
-          (Buffer[2] != 'L') || \
-          (Buffer[3] != 'E')) &&
-         ((Buffer[0] != 'I') || \
-          (Buffer[1] != 'N') || \
-          (Buffer[2] != 'D') || \
-          (Buffer[3] != 'X')) ) {
-        return EFI_NOT_FOUND;
-    }
-
-    FixupArray = (UINT16*)(Buffer + \
-        ((MFT_FILE_RECORD*)Buffer)->FR_UpdateSeqOffset);
-    FixupCount = (((MFT_FILE_RECORD*)Buffer)->FR_UpdateSeqSize) - 1;
-
-    // Check if fixup needed to be applied
-    if (*FixupArray == 0) {
-        return EFI_SUCCESS;
-    }
-
-    ArrayPtr = FixupArray + 1; // Array starts after the check word.
-    // Point FixpuPtr to the last word of a sector or 512-byte piece
-    FixupPtr = (UINT16*)(Buffer + 510);
-
-    // Apply fixup
-    do {
-        if (*FixupPtr != *FixupArray) {
-            return EFI_VOLUME_CORRUPTED;
-        }
-
-        *FixupPtr = *ArrayPtr;
-        ArrayPtr++;
-        FixupPtr += (Volume->BlockSize)/sizeof(*FixupPtr);
-    } while (--FixupCount);
-
-    *FixupArray = 0;
-
-    return EFI_SUCCESS;
-}
-
 //<AMI_PHDR_START>
 //----------------------------------------------------------------------
 //
@@ -230,7 +149,7 @@ GetRunListElementData (
 
 //
 // If the size byte is 0, we have reached the end of the file.
-//    
+//
     RunListPtr = *pRunList;
     if (RunListPtr[0] == 0)
     {
@@ -242,7 +161,7 @@ GetRunListElementData (
     RunListPtr++;
 //
 // Get run length.
-//    
+//
     for (i=LowNibble; i>0; i--)
     {
         TempCount = Shl64(TempCount, 8);
@@ -251,7 +170,7 @@ GetRunListElementData (
     RunListPtr += LowNibble;
 //
 // Get the run offset.
-//    
+//
     HighByte = RunListPtr[HighNibble-1];
     for (i=HighNibble; i>0; i--)
     {
@@ -261,8 +180,8 @@ GetRunListElementData (
     RunListPtr += HighNibble;
 //
 // If the offset is negative, left-fill the empty bytes with 0xFF.
-//    
-    if ((HighByte & 0x80) && (HighNibble < 8)) 
+//
+    if ((HighByte & 0x80) && (HighNibble < 8))
     {
         for (i=8; i>HighNibble; i--)
         {
@@ -313,13 +232,13 @@ GetFrAttribute (
 
     TempBuffer = BufferIn;
 
-//    
+//
 // Point to 1st attribute.
-//    
-    TempBuffer += ((MFT_FILE_RECORD*)TempBuffer)->FR_AttributeOffset; 
+//
+    TempBuffer += ((MFT_FILE_RECORD*)TempBuffer)->FR_AttributeOffset;
 //
 // Search for the attribute.
-//    
+//
     while (TempBuffer[0] != AttributeNumber)
     {
         if (TempBuffer[0] > AttributeNumber) return EFI_NOT_FOUND;
@@ -382,7 +301,7 @@ GetFileRecord (
     UINT32     RecordSize;
 
     Cluster = 0;
-    pRunList = &MemBlk->MFTRunList[0];
+    pRunList = &MFTRunList[0];
 
     MFTRecordNo &= MAXIMUM_RECORD_NUMBER; // Isolate number part
 
@@ -407,7 +326,7 @@ GetFileRecord (
     do {
         if (ByteCount > 0)
         {
-            Sector += SecPerRecord; 
+            Sector += SecPerRecord;
             ByteCount -= RecordSize;
         } else { // We've used up a run, read from the next one.
             Status = GetRunListElementData(&pRunList, &Count, &Cluster, TRUE);
@@ -433,14 +352,6 @@ GetFileRecord (
          (FrBuffer[3] != 0x45) ) return EFI_NOT_FOUND;
 
     *MFTSector = Sector; // Return sector where the record was found
-//
-// Check if fixup is needed, and apply it if so
-//
-    Status = ApplyFixup (Volume, FrBuffer);
-
-    if (EFI_ERROR(Status))
-        return EFI_NOT_FOUND;
-
     return EFI_SUCCESS;
 }
 
@@ -448,27 +359,27 @@ GetFileRecord (
 //----------------------------------------------------------------------------
 // Procedure:   ReadNTFSFile
 //
-// Description: 
+// Description:
 //  Reads a file from a device formatted in NTFS.
 //
-// Input:       
+// Input:
 // Parameters:  VOLUME_INFO *Vi - Volume Info Structure
 //              BOOT_SECTOR *Bs - Boot sector structure
 //              UINT8       *RunList - Run List of file to read
 //              VIOD        *Buffer - Buffer to read into
 //              UINT64      *Size - Size of file to read
 //
-// Output:      
-//  EFI_STATUS - possible return values 
+// Output:
+//  EFI_STATUS - possible return values
 //
 //----------------------------------------------------------------------------
 //<AMI_PHDR_END>
-EFI_STATUS ReadNTFSFile( 
+EFI_STATUS ReadNTFSFile(
     IN EFI_PEI_SERVICES **PeiServices,
-    RC_VOL_INFO         *Volume, 
-    BOOT_SECTOR         *Bs, 
-    UINT8               *RunList, 
-    VOID                *Buffer, 
+    RC_VOL_INFO         *Volume,
+    BOOT_SECTOR         *Bs,
+    UINT8               *RunList,
+    VOID                *Buffer,
     UINT64              *Size )
 {
     UINT64      TotalContiguousBytes;
@@ -497,21 +408,20 @@ EFI_STATUS ReadNTFSFile(
             return EFI_VOLUME_CORRUPTED; // Will happen if early EOF.
         }
 
-        Status = ReadDevice( PeiServices, 
-                             Volume, 
-                             AbsByte, 
-                             (UINTN)AccessBytes, 
+        Status = ReadDevice( PeiServices,
+                             Volume,
+                             AbsByte,
+                             (UINTN)AccessBytes,
                              Buffer );
 
         if (EFI_ERROR(Status)) {
             break;
         }
 
-//        (UINT8 *)Buffer += AccessBytes;
-        Buffer = (UINT8 *)Buffer + AccessBytes;
+        (UINT8 *)Buffer += AccessBytes;
         TotalBytesRead +=AccessBytes;
 
-        *Size   -= AccessBytes; 
+        *Size   -= AccessBytes;
 
         if (AccessBytes == TotalContiguousBytes)
         {
@@ -528,206 +438,18 @@ EFI_STATUS ReadNTFSFile(
 
 //<AMI_PHDR_START>
 //----------------------------------------------------------------------------
-// Procedure:   ReadNTFSDirectory
+// Procedure:   ReadNTFSRoot
 //
-// Description: 
-//  Reads an NTFS directory, specified by MFT record number.
-//
-// Input:       
-//  IN  EFI_PEI_SERVICES **PeiServices - pointer to PEI services
-//  IN  OUT RC_VOL_INFO *Volume - pointer to volume description structure
-//  IN  BOOT_SECTOR *Bs - pointer to MBR
-//  IN  UINT64 MFTRecord - MFT record number of the directory to read
-//  IN  UINT8 *FrBuffer - Buffer for reading MFT record number.
-//
-// Output:      
-//  EFI_STATUS - possible return values 
-//
-// NOTE: The root buffer is re-used for any subsequent directories.
-//----------------------------------------------------------------------------
-//<AMI_PHDR_END>
-EFI_STATUS ReadNTFSDirectory(
-    IN EFI_PEI_SERVICES **PeiServices,
-    IN OUT RC_VOL_INFO  *Volume,
-    IN BOOT_SECTOR      *Bs,
-    IN UINT64           MFTRecord,
-    IN UINT8            *FrBuffer )
-{
-    UINT8       *Buffer;
-    UINT8       *Buffer2;
-    UINT8       *pRunList;
-    EFI_STATUS  Status;
-    UINT32      Temp32;
-    UINT16      Temp16;
-    UINT32      IndexSize;
-    UINT64      Cluster = 0;
-    UINT64      ClusterCount;
-    UINT64      TmpDirSize;
-    UINTN       DirPages;
-    EFI_PHYSICAL_ADDRESS Allocate;
-
-    Buffer = &FrBuffer[0];
-
-    Status = GetFileRecord( PeiServices, Volume, Bs, MFTRecord, Buffer, NULL ); 
-    if ( EFI_ERROR( Status )) {
-        PEI_TRACE((-1, PeiServices, "\nRead directory: record not found\n"));
-        return Status;
-    }
-    //
-    // Check for a resident index. It will be in the Index Root Attribute.
-    // If one if found, it will be saved for searching later.
-    //
-    ResidentPresent = FALSE;
-    Buffer2 = Buffer;
-    Status = GetFrAttribute( Buffer, FR_ATTRIBUTE_INDEX_ROOT, &Buffer2 );
-    if ( Status == EFI_SUCCESS) { // Root Attribute found
-        Temp16 = ((FR_ATTR_HEADER_RES*)Buffer2)->AHR_InfoOffset;
-        Buffer2 += Temp16;
-        IndexSize = ((FR_INDEX_ROOT_ATTRIBUTE*)Buffer2)->IRA_TotalSize;
-        Temp32 = ((FR_INDEX_ROOT_ATTRIBUTE*)Buffer2)->IRA_Offset;
-        Buffer2 += Temp32 + EFI_FIELD_OFFSET(FR_INDEX_ROOT_ATTRIBUTE, IRA_Offset);
-        if (IndexSize >= MINIMUM_ENTRY_SIZE) { // Resident index is not empty
-            PEI_TRACE((-1, PeiServices, "\nRead directory: resident part found\n"));
-            MemCpy ( MemBlk->ResidentIndex, Buffer2, IndexSize );
-            ResidentPresent = TRUE;
-            ResidentSize = IndexSize;
-        }
-    }
-    //
-    // Now, check for a non-resident index.
-    //
-    Status = GetFrAttribute( Buffer, FR_ATTRIBUTE_INDEX_ALLOC, &Buffer );
-    if ( EFI_ERROR( Status )) {
-        PEI_TRACE((-1, PeiServices, "\nRead directory: no index allocation attribute\n"));
-        if (ResidentPresent) return EFI_SUCCESS; else return Status;
-    }
-    Buffer += ((FR_ATTR_HEADER_NONRES*)Buffer)->AHNR_RunOffset; // Point to run list
-    MemCpy( MemBlk->RootRunList, Buffer, 128 ); // Copy Root run list
-    //
-    // Calculate root directory size by running its run list.
-    //
-    pRunList = &MemBlk->RootRunList[0];
-    TmpDirSize = 0;
-    Cluster = 0;
-    do {
-        Status = GetRunListElementData( &pRunList, &ClusterCount, &Cluster, TRUE );
-        if ( Status == EFI_SUCCESS ) TmpDirSize += ClusterCount;
-    } while ( Status == EFI_SUCCESS );
-    TmpDirSize = Mul64 ( TmpDirSize, Bs->SecPerClus );
-    TmpDirSize = Mul64 ( TmpDirSize, Bs->BytsPerSec );
-
-    if (!RootAllocated) {
-//        DirPages = (UINTN)EFI_SIZE_TO_PAGES( TmpDirSize );
-        DirPages = (UINTN) (Shr64( TmpDirSize, EFI_PAGE_SHIFT ) + ((TmpDirSize & EFI_PAGE_MASK) ? 1 : 0) );
-        Status = (*PeiServices)->AllocatePages( PeiServices, EfiBootServicesData, DirPages, &Allocate );
-        if ( EFI_ERROR( Status )) {
-            PEI_TRACE((-1, PeiServices, "\nRead directory: can't allocate memory\n"));
-            return Status;
-        }
-        RootBuffer     = (UINT8*)((UINTN)Allocate);
-        RootBufferSize = EFI_PAGES_TO_SIZE( DirPages );
-        MemSet( RootBuffer, RootBufferSize, 0 );
-        RootAllocated = TRUE;
-    } else {
-        if ( TmpDirSize > RootBufferSize ) TmpDirSize = RootBufferSize;
-    }
-    
-    pRunList = &MemBlk->RootRunList[0];
-    Status = ReadNTFSFile( PeiServices, Volume, Bs, pRunList, RootBuffer, &TmpDirSize );
-    if (EFI_ERROR(Status)) {
-        PEI_TRACE((-1, PeiServices, "\nRead directory: error reading dir file\n"));
-    }
-    RootSize = (UINT32)TmpDirSize;
-
-    return Status;
-}
-
-#if MATCH_VOLUME_NAME
-//<AMI_PHDR_START>
-//----------------------------------------------------------------------------
-// Procedure:   CheckNTFSVolumeName
-//
-// Description: 
-//  Reads the volume name of the current NTFS volume and checks it against token
+// Description:
+//  Prepares given volume for read operations. Reads NTFS root directory.
 //
 // Input:
 //  IN  EFI_PEI_SERVICES **PeiServices - pointer to PEI services
-//  IN  RC_VOL_INFO *Volume - pointer to volume description structure
-//  IN  BOOT_SECTOR *Bs - pointer to MBR
-//  IN  UINT8 *FrBuffer - File Record Buffer
-//
-// Output:      
-//  EFI_STATUS - possible return values 
-//
-//----------------------------------------------------------------------------
-//<AMI_PHDR_END>
-
-EFI_STATUS CheckNTFSVolumeName(
-    IN EFI_PEI_SERVICES **PeiServices,
-    IN RC_VOL_INFO      *Volume,
-    IN BOOT_SECTOR      *Bs,
-    IN UINT8            *FrBuffer )
-{
-    EFI_STATUS Status;
-    UINTN Length;
-    UINT8 i;
-    UINT8 *TmpBuffer = &FrBuffer[0];
-    UINT8 NameBuffer[128];
-    CHAR8 *VolumeName = CONVERT_TO_STRING(VOLUME_NAME);
-
-//
-// The volume name is record no. 3 in the MFT.
-//    
-    Status = GetFileRecord( PeiServices, Volume, Bs, 3, TmpBuffer, NULL );
-    if (EFI_ERROR(Status)) 
-    {
-        PEI_TRACE((-1, PeiServices, "\nVolume name record not found\n"));
-        return Status;
-    }
-//
-// Find the Volume Name Attribute, then get the name length and
-// point to the name.
-//    
-    Status = GetFrAttribute ( TmpBuffer, FR_ATTRIBUTE_VOLUME_NAME, &TmpBuffer );
-    if (Status == EFI_SUCCESS)
-    {
-        Length = (UINTN)((FR_ATTR_HEADER_RES*)TmpBuffer)->AHR_InfoLength;
-        if( Length == 0 ) return EFI_NOT_FOUND; // No volume name
-        TmpBuffer += ((FR_ATTR_HEADER_RES*)TmpBuffer)->AHR_InfoOffset;
-//
-// Copy the name to the supplied buffer
-// The name is CHAR16, so we reduce it to CHAR8
-//    
-        Length = Length / 2;
-        for (i=0; i<Length; i++) {
-            NameBuffer[i] = TmpBuffer[i*2];
-        }
-        NameBuffer[i] = 0; // Terminate name
-        Status = EFI_NOT_FOUND;
-        Length = Strlen(VolumeName); // Use supplied name length for comparison
-        if( FileCompare((CHAR8*)NameBuffer, VolumeName, FALSE, Length) ) {
-            PEI_TRACE((-1, PeiServices, "\nVolume found: %s\n", NameBuffer));
-            Status = EFI_SUCCESS;
-        }
-    }
-    return Status;
-}
-#endif
-
-//<AMI_PHDR_START>
-//----------------------------------------------------------------------------
-// Procedure:   ReadNTFSRoot
-//
-// Description: 
-//  Prepares given volume for read operations. Reads NTFS root directory.
-//
-// Input:       
-//  IN  EFI_PEI_SERVICES **PeiServices - pointer to PEI services
 //  IN  OUT RC_VOL_INFO *Volume - pointer to volume description structure
 //  IN  BOOT_SECTOR *Bs - pointer to MBR
 //
-// Output:      
-//  EFI_STATUS - possible return values 
+// Output:
+//  EFI_STATUS - possible return values
 //
 //----------------------------------------------------------------------------
 //<AMI_PHDR_END>
@@ -738,11 +460,23 @@ EFI_STATUS ReadNTFSRoot(
 {
     UINT8       FrBuffer[FILE_RECORD_SIZE]; // This needs to be 4096 for 4k secs.
     UINT8       *Buffer2;
+    UINT8       *Buffer3;
+    UINT8       *pRunList;
     EFI_STATUS  Status;
     UINT64      TotalSectors;
+    UINT64      DataSectors;
     UINT64      Temp64;
+    UINT32      Temp32;
+    UINT16      Temp16;
+    UINT32      IndexSize;
+    UINT64      Cluster = 0;
+    UINT64      ClusterCount;
+    UINT64      TmpRootSize;
+    UINTN       RootPages;
+    EFI_PHYSICAL_ADDRESS Allocate;
 
     TotalSectors = Bs->Fat.Ntfs.TotSec64;
+    DataSectors  = TotalSectors - Bs->RsvdSecCnt;
 
     Temp64 = Mul64( Bs->Fat.Ntfs.MFTClus, Bs->SecPerClus );
     Volume->FatOffset = Mul64( Temp64, Bs->BytsPerSec ); // For NTFS, FatOffset is MFT Offset
@@ -760,24 +494,69 @@ EFI_STATUS ReadNTFSRoot(
         return Status;
     }
     Buffer2 += ((FR_ATTR_HEADER_NONRES*)Buffer2)->AHNR_RunOffset; // Point to run list
-    MemCpy( MemBlk->MFTRunList, Buffer2, 256 ); // Copy MFT run list
-
-#if MATCH_VOLUME_NAME
-    Status = CheckNTFSVolumeName( PeiServices, Volume, Bs, &FrBuffer[0] );
-    if ( EFI_ERROR( Status )) {
-        return Status;
-    }
-#endif
+    MemCpy( MFTRunList, Buffer2, 256 ); // Copy MFT run list
     //
     // Get the root directory file record, to get its run list.
     //
     Buffer2 = &FrBuffer[0];
+    Status = GetFileRecord( PeiServices, Volume, Bs, 5, Buffer2, NULL ); // Root is always record no. 5
+    if ( EFI_ERROR( Status )) {
+        return Status;
+    }
+    //
+    // Check for a resident index. It will be in the Index Root Attribute.
+    // If one if found, it will be saved for searching later.
+    //
+    ResidentPresent = FALSE;
+    Buffer3 = Buffer2;
+    Status = GetFrAttribute( Buffer2, FR_ATTRIBUTE_INDEX_ROOT, &Buffer3 );
+    if ( Status == EFI_SUCCESS) { // Root Attribute found
+        Temp16 = ((FR_ATTR_HEADER_RES*)Buffer3)->AHR_InfoOffset;
+        Buffer3 += Temp16;
+        IndexSize = ((FR_INDEX_ROOT_ATTRIBUTE*)Buffer3)->IRA_TotalSize;
+        Temp32 = ((FR_INDEX_ROOT_ATTRIBUTE*)Buffer3)->IRA_Offset;
+        Buffer3 += Temp32 + EFI_FIELD_OFFSET(FR_INDEX_ROOT_ATTRIBUTE, IRA_Offset);
+        if (IndexSize >= MINIMUM_ENTRY_SIZE) { // Resident index is not empty
+            MemCpy ( ResidentIndex, Buffer3, IndexSize );
+            ResidentPresent = TRUE;
+            ResidentSize = IndexSize;
+        }
+    }
+    //
+    // Now, check for a non-resident index.
+    //
+    Status = GetFrAttribute( Buffer2, FR_ATTRIBUTE_INDEX_ALLOC, &Buffer2 );
+    if ( EFI_ERROR( Status )) {
+        return Status;
+    }
+    Buffer2 += ((FR_ATTR_HEADER_NONRES*)Buffer2)->AHNR_RunOffset; // Point to run list
+    MemCpy( RootRunList, Buffer2, 128 ); // Copy Root run list
+    //
+    // Calculate root directory size
+    //
+    pRunList = &RootRunList[0];
+    TmpRootSize = 0;
+    Cluster = 0;
+    do {
+        Status = GetRunListElementData( &pRunList, &ClusterCount, &Cluster, TRUE );
+        if ( Status == EFI_SUCCESS ) TmpRootSize += ClusterCount;
+    } while ( Status == EFI_SUCCESS );
+    TmpRootSize = Mul64 ( TmpRootSize, Bs->SecPerClus );
+    TmpRootSize = Mul64 ( TmpRootSize, Bs->BytsPerSec );
 
-    //
-    // Read in ROOT directory
-    //
-    RootAllocated = FALSE; // First directory read, so space not allocated yet
-    Status = ReadNTFSDirectory( PeiServices, Volume, Bs, 5, Buffer2 ); // Root is always record no. 5
+    Buffer2 = &FrBuffer[0];
+    RootPages = EFI_SIZE_TO_PAGES( (UINTN)TmpRootSize );
+    Status = (*PeiServices)->AllocatePages( PeiServices, EfiBootServicesData, RootPages, &Allocate );
+    if ( EFI_ERROR( Status )) {
+        return Status;
+    }
+    RootBuffer     = (UINT8*)((UINTN)Allocate);
+    RootBufferSize = EFI_PAGES_TO_SIZE( RootPages );
+    MemSet( RootBuffer, RootBufferSize, 0 );
+
+    pRunList = &RootRunList[0];
+    Status = ReadNTFSFile( PeiServices, Volume, Bs, pRunList, RootBuffer, &TmpRootSize );
+    RootSize = (UINT32)TmpRootSize;
 
     return Status;
 }
@@ -807,6 +586,7 @@ EFI_STATUS ProcessNTFSVolume(
     OUT VOID            *Buffer )
 {
     EFI_STATUS           Status;
+    BOOT_SECTOR          Bs;
     UINT32               i;
     UINTN               NumberOfFiles;
     UINT64              MFTRecord;
@@ -814,26 +594,21 @@ EFI_STATUS ProcessNTFSVolume(
     UINT8               *pRunList;
     UINT64              TmpFileSize;
 
-    Status = ReadDevice( PeiServices, Volume, 0, 512, &MemBlk->Bs );
+    Status = ReadDevice( PeiServices, Volume, 0, 512, &Bs );
 
     if ( EFI_ERROR( Status )) {
         return Status;
     }
 
-    if (!IsNtfs( &MemBlk->Bs )) {
-        PEI_TRACE((-1, PeiServices, "\nIsNTFS failed\n"));
+    if (!IsNtfs( &Bs )) {
         return EFI_NOT_FOUND;
     }
 
-    Status = ReadNTFSRoot( PeiServices, Volume, &MemBlk->Bs );
+    Status = ReadNTFSRoot( PeiServices, Volume, &Bs );
 
     if ( EFI_ERROR( Status )) {
-        PEI_TRACE((-1, PeiServices, "\nRead root failed\n"));
         return Status;
     }
-
-    gVolume = Volume;
-    gBs = &MemBlk->Bs;
 
     AmiGetFileListFromNtfsVolume(PeiServices, (UINT8*)RootBuffer, RootSize, &NumberOfFiles, NtfsRecoveryFiles);
 
@@ -850,18 +625,18 @@ EFI_STATUS ProcessNTFSVolume(
         // Get the file's MFT record number, and from that it's run list
         //
         MFTRecord = NtfsRecoveryFiles[i]->INDE_MFTRecord & MAXIMUM_RECORD_NUMBER;
-        Status = GetFileRecord( PeiServices, Volume, &MemBlk->Bs, MFTRecord, TmpBuffer, NULL );
+        Status = GetFileRecord( PeiServices, Volume, &Bs, MFTRecord, TmpBuffer, NULL );
         Status = GetFrAttribute( TmpBuffer, FR_ATTRIBUTE_DATA, &TmpBuffer );
         if ( EFI_ERROR( Status )) {
             return Status;
         }
         TmpBuffer += ((FR_ATTR_HEADER_NONRES*)TmpBuffer)->AHNR_RunOffset; // Point to run list
-        MemCpy( MemBlk->RootRunList, TmpBuffer, 128 ); // Copy the file's run list
+        MemCpy( RootRunList, TmpBuffer, 128 ); // Copy the file's run list
         //
         // Read the file into the provided buffer
         //
-        pRunList = &MemBlk->RootRunList[0];
-        Status = ReadNTFSFile( PeiServices, Volume, &MemBlk->Bs, pRunList, Buffer, &TmpFileSize );
+        pRunList = &RootRunList[0];
+        Status = ReadNTFSFile( PeiServices, Volume, &Bs, pRunList, Buffer, &TmpFileSize );
         if ( EFI_ERROR( Status )) {
             return Status;
         }
@@ -873,252 +648,6 @@ EFI_STATUS ProcessNTFSVolume(
     }
     return EFI_NOT_FOUND;
 }
-
-#if NTFS_NAME_CORRECTION
-//<AMI_PHDR_START>
-//----------------------------------------------------------------------
-//
-// Procedure:       FixName
-//
-// Description:     Copies a name from one location to another, but skips
-//                  over any characters less than 0x20.
-//
-// Parameters:
-//  CHAR16      *Name1
-//  CHAR16      *Name2
-//  BOOLEAN     ShortName
-//
-// Return value:    None
-//
-// Modified:
-//
-// Referral(s):
-//
-// NOTE(S):
-//
-//----------------------------------------------------------------------
-//<AMI_PHDR_END>
-
-VOID
-FixName (
-    CHAR16 *Name1,
-    CHAR16 *Name2,
-    BOOLEAN ShortName
-    )
-{
-    if (ShortName) {
-    while (*Name1) {
-        if ((*Name2 >= 0x20) && (*Name2 < 0x60))
-        {
-            *Name1++ = *Name2++;
-        } else {
-            *Name1++;
-            *Name2++;
-        }
-    }
-    } else {
-    while (*Name1) {
-        if (*Name2 >= 0x20)
-        {
-            *Name1++ = *Name2++;
-        } else {
-            *Name1++;
-            *Name2++;
-        }
-    }
-    }
-}
-#endif
-
-//<AMI_PHDR_START>
-//----------------------------------------------------------------------
-//
-// Procedure:   FindFileInNtfsDirectory
-//
-// Description: 
-//  Finds a specified file in an NTFS directory.
-//
-// Input:
-//  UINT8 *DirPtr - Pointer to a buffer containing the directory
-//  UINT32 DirSize - Size of the directory
-//  VOIKD *FileName - Name of the file to find
-//  INDEX_ENTRY **IndxPtr - Pointer to buffer containing index entry of
-//    the file that was found.
-//
-// Output:
-//  TRUE - File found. FALSE - File not found
-//
-//----------------------------------------------------------------------
-//<AMI_PHDR_END>
-BOOLEAN FindFileInNtfsDirectory(
-    IN EFI_PEI_SERVICES **PeiServices,
-    IN  UINT8               *DirPtr,
-    IN  UINT32              DirSize,
-    IN  VOID                *FileName,
-    OUT INDEX_ENTRY         **IndxPtr
-)
-{
-    UINT8       i;
-    UINT32      IndexSize;
-    UINT32      IndexSize2;
-    UINTN       Offset;
-    UINT8       *TmpPtr;
-    CHAR16      *NamePtr;
-    CHAR8       TmpFileName[256];
-    UINT8       LfnSize;
-    UINT16      EntrySize;
-    EFI_STATUS  Status;
-#if NTFS_NAME_CORRECTION
-    UINT8       TmpBuf[FILE_RECORD_SIZE];
-    CHAR16      TmpName16[256];
-    UINT8       *TmpPtr2;
-    UINT8       *TmpPtr3;
-    BOOLEAN     DosName;
-#endif
-
-    if (ResidentPresent) { // If resident index found...
-        PEI_TRACE((-1, PeiServices, "\nEntering resident search\n"));
-        TmpPtr = &MemBlk->ResidentIndex[0];
-        IndexSize = ResidentSize;
-
-        do { // loop inside the index
-            EntrySize = ((INDEX_ENTRY*)TmpPtr)->INDE_EntrySize;
-            LfnSize = ((INDEX_ENTRY*)TmpPtr)->INDE_NameLength;
-            NamePtr = &((INDEX_ENTRY*)TmpPtr)->INDE_Name[0];
-            for ( i=0; i<LfnSize; i++ )
-            {
-                TmpFileName[i] = (CHAR8)(CHAR16)NamePtr[i];
-            }
-            TmpFileName[i] = 0; // Zero-terminate name
-
-            if(!EFI_ERROR(FileSearch((CHAR8*)FileName, TmpFileName, FALSE, LfnSize))) {
-                *IndxPtr = (INDEX_ENTRY*)&TmpPtr[0];
-                PEI_TRACE((-1, PeiServices, "\nResident file found: %s\n", FileName));
-                return TRUE;
-            }
-
-            TmpPtr += EntrySize;
-            IndexSize -= EntrySize;
-            if ( IndexSize < MINIMUM_ENTRY_SIZE ) break;
-
-        } while (IndexSize);
-    }
-
-    PEI_TRACE((-1, PeiServices, "\nBeginning non-resident search\n"));
-    do { // do loop handling indexes in the directory
-        Offset = 0;
-        // Look for "INDX", start of index record
-        if ( (DirPtr[0] == 0x49) && \
-             (DirPtr[1] == 0x4E) && \
-             (DirPtr[2] == 0x44) && \
-             (DirPtr[3] == 0x58) ) 
-        {
-//
-// Check if fixup is needed, and apply it if so
-//
-            Status = ApplyFixup (gVolume, DirPtr);
-            if (EFI_ERROR(Status)) {
-                return FALSE;
-            }
-
-            IndexSize = ((INDEX_RECORD*)DirPtr)->INDR_IndxEntrySize;
-            IndexSize2 = IndexSize;
-            Offset += ((INDEX_RECORD*)DirPtr)->INDR_IndxEntryOff + \
-                        EFI_FIELD_OFFSET(INDEX_RECORD, INDR_IndxEntryOff);
-            TmpPtr = DirPtr;
-            TmpPtr += Offset; // Point to first entry in index
-            if (IndexSize < MINIMUM_ENTRY_SIZE) { // Empty index
-                return FALSE;
-            }
-        } else return FALSE; // no index found
-
-        do { // loop inside the index
-            EntrySize = ((INDEX_ENTRY*)TmpPtr)->INDE_EntrySize;
-            if (EntrySize == 0) {
-                return FALSE; // This would cause endless loop
-            }
-            LfnSize = ((INDEX_ENTRY*)TmpPtr)->INDE_NameLength;
-
-            NamePtr = &((INDEX_ENTRY*)TmpPtr)->INDE_Name[0];
-// Insert name correction here
-#if NTFS_NAME_CORRECTION
-            MemCpy( TmpName16, NamePtr, (LfnSize*2) ); // Get a copy of the name
-            Status = GetFileRecord (PeiServices, gVolume, gBs,
-                        ((INDEX_ENTRY*)TmpPtr)->INDE_MFTRecord,
-                        TmpBuf, NULL);
-            if (EFI_ERROR(Status))
-            {
-                goto UseIndexName;
-            }
-            Status = GetFrAttribute (TmpBuf, 
-                                     FR_ATTRIBUTE_NAME,
-                                     &TmpPtr2);
-            if (EFI_ERROR(Status))
-            {
-                goto UseIndexName;
-            }
-            TmpPtr3 = TmpPtr2;
-            TmpPtr2 += \
-                ((FR_ATTR_HEADER_RES*)TmpPtr2)->AHR_InfoOffset;
-//
-// If the original name was a long name, get the long name from the MFT.
-//
-            DosName = FALSE;
-            if ( (((INDEX_ENTRY*)TmpPtr)->INDE_NameType != 2) && \
-                 (((FR_NAME_ATTRIBUTE*)TmpPtr2)->NA_NameType == 2) )
-            { // First name found was DOS name, get next one.
-                TmpPtr3 += \
-                    ((FR_ATTR_HEADER_RES*)TmpPtr3)->AHR_Length;
-                if (TmpPtr3[0] != FR_ATTRIBUTE_NAME)
-                { // No long name is there, use short one.
-                    TmpPtr3 = TmpPtr2;
-                    DosName = TRUE;
-                }
-                TmpPtr2 = TmpPtr3;
-                TmpPtr2 += \
-                    ((FR_ATTR_HEADER_RES*)TmpPtr2)->AHR_InfoOffset;
-            }
-            LfnSize = \
-                ((FR_NAME_ATTRIBUTE*)TmpPtr2)->NA_NameLength;
-            NamePtr = \
-                &((FR_NAME_ATTRIBUTE*)TmpPtr2)->NA_Name[0];
-            TmpName16[LfnSize*2] = 0; // Zero-terminate name
-            FixName (TmpName16, NamePtr, DosName);
-UseIndexName:
-#endif
-            for ( i=0; i<LfnSize; i++ )
-            {
-#if NTFS_NAME_CORRECTION
-                TmpFileName[i] = (CHAR8)(CHAR16)TmpName16[i];
-#else
-                TmpFileName[i] = (CHAR8)(CHAR16)NamePtr[i];
-#endif
-            }
-            TmpFileName[i] = 0; // Zero-terminate name
-
-            if(!EFI_ERROR(FileSearch((CHAR8*)FileName, TmpFileName, FALSE, LfnSize))) {
-                *IndxPtr = (INDEX_ENTRY*)&TmpPtr[0];
-                PEI_TRACE((-1, PeiServices, "\nNon-resident file found: %s\n", FileName));
-                return TRUE;
-            }
-
-            TmpPtr += EntrySize;
-            IndexSize -= EntrySize;
-            if ( IndexSize < MINIMUM_ENTRY_SIZE ) break;
-
-        } while (IndexSize);
-        if ( IndexSize2 < 0x1000 ) {
-            IndexSize2 = 0x1000;
-        } else {
-            IndexSize2 = (IndexSize2 + 0x100) & 0xffffff00 ; // Round off
-        }
-        DirPtr += IndexSize2;
-        DirSize -= IndexSize2;
-
-    } while (DirSize);
-    return FALSE;
-}
-
 //<AMI_PHDR_START>
 //----------------------------------------------------------------------
 //
@@ -1151,74 +680,110 @@ VOID AmiGetFileListFromNtfsVolume(
     OUT INDEX_ENTRY         **Buffer
 )
 {
-    INDEX_ENTRY *IndxPtr = NULL;
-    VOID *FileName;
-    UINTN FileSize;
-    EFI_STATUS Status;
-    CHAR8 *FilePath;
-    CHAR8 *DirPtr;
-    CHAR8 LocalPath[256];
-#if SEARCH_PATH
-    CHAR8 *NextName;
-    UINT64 MFTRecord;
-#endif
+
+    UINT8       i;
+    UINT32      IndexSize;
+    UINT32      IndexSize2;
+    UINTN       Offset;
+    UINT8       *TmpPtr;
+    CHAR16      *NamePtr;
+    CHAR8       TmpFileName[13];
+    UINT8       LfnSize;
+    UINT16      EntrySize;
+    INDEX_ENTRY *IndxPtr;
+    VOID        *FileName;
+    UINTN       FileSize;
+    EFI_STATUS  Status;
 
     *NumberOfFiles = 0;     //no files found yet
+
     Status = GetRecoveryFileInfo(PeiServices, &FileName, &FileSize, NULL);
-    if(EFI_ERROR(Status)) {
-        PEI_TRACE((-1, PeiServices, "\nGet info error\n"));
+    if(EFI_ERROR(Status))
         return;
-    }
-#if SEARCH_PATH
-    AddRecoveryPath(&FileName);
-#endif
 
-    MemCpy( LocalPath, FileName, Strlen(FileName)+1 );
-    FilePath = &LocalPath[0];
-    DirPtr = Root;
+    if (ResidentPresent) { // If resident index found...
+        TmpPtr = &ResidentIndex[0];
+        IndexSize = ResidentSize;
 
-#if SEARCH_PATH
-    NextName = FilePath;
-
-    PEI_TRACE((-1, PeiServices, "\nTotal path is %s\n", FilePath));
-    while ( IsolateName (&FilePath, &NextName) == FALSE ) {
-        PEI_TRACE((-1, PeiServices, "\nLooking for %s\n", FilePath));
-        //
-        //Find path name in directory
-        //
-        if (FindFileInNtfsDirectory(PeiServices, DirPtr, RootSize, FilePath, &IndxPtr)) {
-            MFTRecord = ((INDEX_ENTRY*)IndxPtr)->INDE_MFTRecord;
-            PEI_TRACE((-1, PeiServices, "\nFound directory in path, record no. %lx\n", MFTRecord));
-            Status = ReadNTFSDirectory( PeiServices, gVolume, gBs, MFTRecord, DirPtr );
-            if (EFI_ERROR(Status)) {
-                PEI_TRACE((-1, PeiServices, "\nDirectory not read\n"));
-                return; // not found
+        do { // loop inside the index
+            EntrySize = ((INDEX_ENTRY*)TmpPtr)->INDE_EntrySize;
+            LfnSize = ((INDEX_ENTRY*)TmpPtr)->INDE_NameLength;
+            if (LfnSize > 12) LfnSize = 12; // Limit name to 12 chars
+            NamePtr = &((INDEX_ENTRY*)TmpPtr)->INDE_Name[0];
+            for ( i=0; i<LfnSize; i++ )
+            {
+                TmpFileName[i] = (CHAR8)(CHAR16)NamePtr[i];
             }
-            FilePath = NextName;
-        } else return; // not found
-    } // end while
-    //
-    // End of path found, now find the file.
-    //
-    if (FindFileInNtfsDirectory(PeiServices, DirPtr, RootSize, FilePath, &IndxPtr)) {
-        Buffer[*NumberOfFiles] = IndxPtr; // Save pointer to this entry
-        *NumberOfFiles = 1;
-        PEI_TRACE((-1, PeiServices, "\nRecovery file found\n"));
-        return;
+            TmpFileName[i] = 0; // Zero-terminate name
+
+            if(!EFI_ERROR(FileSearch((CHAR8*)FileName, TmpFileName, FALSE, LfnSize))) {
+                IndxPtr = (INDEX_ENTRY*)&TmpPtr[0];
+                Buffer[*NumberOfFiles] = IndxPtr; // Save pointer to this entry
+                *NumberOfFiles = 1;
+                return;
+            }
+
+            TmpPtr += EntrySize;
+            IndexSize -= EntrySize;
+            if ( IndexSize < MINIMUM_ENTRY_SIZE ) break;
+
+        } while (IndexSize);
     }
-    PEI_TRACE((-1, PeiServices, "\nRecovery file not found\n"));
-    return;
-#else
-    if (FindFileInNtfsDirectory(PeiServices, DirPtr, RootSize, FilePath, &IndxPtr)) {
-        Buffer[*NumberOfFiles] = IndxPtr; // Save pointer to this entry
-        *NumberOfFiles = 1;
-        PEI_TRACE((-1, PeiServices, "\nRecovery file found\n"));
-        return;
-    }
-    PEI_TRACE((-1, PeiServices, "\nRecovery file not found\n"));
-    return;
-#endif
+
+    do { // do loop handling indexes in the root
+        Offset = 0;
+        // Look for "INDX", start of index record
+        if ( (Root[0] == 0x49) && \
+             (Root[1] == 0x4E) && \
+             (Root[2] == 0x44) && \
+             (Root[3] == 0x58) )
+        {
+            IndexSize = ((INDEX_RECORD*)Root)->INDR_IndxEntrySize;
+            IndexSize2 = IndexSize;
+            Offset += ((INDEX_RECORD*)Root)->INDR_IndxEntryOff + \
+                        EFI_FIELD_OFFSET(INDEX_RECORD, INDR_IndxEntryOff);
+            TmpPtr = Root;
+            TmpPtr += Offset; // Point to first entry in index
+            if (IndexSize < MINIMUM_ENTRY_SIZE) { // Empty index
+                return;
+            }
+        } else return; // no index found
+
+        do { // loop inside the index
+            EntrySize = ((INDEX_ENTRY*)TmpPtr)->INDE_EntrySize;
+            LfnSize = ((INDEX_ENTRY*)TmpPtr)->INDE_NameLength;
+            if (LfnSize > 12) LfnSize = 12; // Limit name to 12 chars
+            NamePtr = &((INDEX_ENTRY*)TmpPtr)->INDE_Name[0];
+            for ( i=0; i<LfnSize; i++ )
+            {
+                TmpFileName[i] = (CHAR8)(CHAR16)NamePtr[i];
+            }
+            TmpFileName[i] = 0; // Zero-terminate name
+
+            if(!EFI_ERROR(FileSearch((CHAR8*)FileName, TmpFileName, FALSE, LfnSize))) {
+                IndxPtr = (INDEX_ENTRY*)&TmpPtr[0];
+                Buffer[*NumberOfFiles] = IndxPtr; // Save pointer to this entry
+                *NumberOfFiles = 1;
+                return;
+            }
+
+            TmpPtr += EntrySize;
+            IndexSize -= EntrySize;
+            if ( IndexSize < MINIMUM_ENTRY_SIZE ) break;
+
+        } while (IndexSize);
+        if ( IndexSize2 < 0x1000 ) {
+            IndexSize2 = 0x1000;
+        } else {
+            IndexSize2 = (IndexSize2 + 0x100) & 0xffffff00 ; // Round off
+        }
+        *Root += IndexSize2;
+        RootSize -= IndexSize2;
+
+    } while (RootSize);
 }
+
+
 
 //<AMI_PHDR_START>
 //----------------------------------------------------------------------------
@@ -1253,7 +818,7 @@ EFI_STATUS ProcessNTFSDevice(
     //
     // Assume the volume is floppy-formatted.
     //
-    Volume->PartitionOffset = 0; // Reset this to zero
+    Volume->PartitionOffset = 0;
     Status = ProcessNTFSVolume( PeiServices, Volume, FileSize, Buffer );
 
     if ( !EFI_ERROR( Status )) {
@@ -1263,21 +828,18 @@ EFI_STATUS ProcessNTFSDevice(
     //
     // Not floppy formatted, look for partitions. Read sector 0 (MBR).
     //
-    Status = ReadDevice( PeiServices, Volume, 0, 512, &MemBlk->Mbr );
+    Status = ReadDevice( PeiServices, Volume, 0, 512, &Mbr );
 
     if ( EFI_ERROR( Status )) {
-        PEI_TRACE((-1, PeiServices, "\nRead MBR failed\n"));
         return Status;
     }
 
-    if ( MemBlk->Mbr.Sig != 0xaa55 ) {
-        PEI_TRACE((-1, PeiServices, "\naa55 not found\n"));
+    if ( Mbr.Sig != 0xaa55 ) {
         return EFI_NOT_FOUND;
     }
 
     PartCount = 0;
     PartSector = 0;
-    ExtOffset = 0;
     IsMbr = TRUE;
 
     //

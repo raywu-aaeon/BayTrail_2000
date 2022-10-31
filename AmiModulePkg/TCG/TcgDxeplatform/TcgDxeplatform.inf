@@ -1,0 +1,61 @@
+#*************************************************************************
+#*************************************************************************
+#**                                                                     **
+#**        (C)Copyright 1985-2012, American Megatrends, Inc.            **
+#**                                                                     **
+#**                       All Rights Reserved.                          **
+#**                                                                     **
+#**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093           **
+#**                                                                     **
+#**                       Phone: (770)-246-8600                         **
+#**                                                                     **
+#*************************************************************************
+#*************************************************************************
+## @file
+#
+##
+[Defines]
+INF_VERSION = 0x00010005
+VERSION_STRING = 1.0
+BASE_NAME = TcgDxeplatform
+MODULE_TYPE = DXE_DRIVER
+FILE_GUID = 2688B232-9C02-4c12-BE1F-857C0FF2AAE3
+ENTRY_POINT = TcgDxeplatformEntry
+
+[Sources]
+TcgDxeplatform.c
+TcgDxeplatform.h
+
+[Packages]
+  MdePkg/MdePkg.dec
+  IntelFrameworkPkg/IntelFrameworkPkg.dec
+  AmiCompatibilityPkg/AmiCompatibilityPkg.dec
+  AmiModulePkg/AmiModulePkg.dec
+
+[LibraryClasses]
+  AmiDxeLib
+  UefiDriverEntryPoint
+  AmiTcgLibDxe
+  
+[Protocols]
+   gAmiTcgPlatformProtocolguid
+   gEfiFirmwareVolume2ProtocolGuid
+
+[Depex]
+   gAmiTcgPlatformProtocolguid
+
+[BuildOptions.X64]
+  *_*_X64_CC_FLAGS = /D EFIx64 
+
+#*************************************************************************
+#**                                                                     **
+#**        (C)Copyright 1985-2012, American Megatrends, Inc.            **
+#**                                                                     **
+#**                       All Rights Reserved.                          **
+#**                                                                     **
+#**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093           **
+#**                                                                     **
+#**                       Phone: (770)-246-8600                         **
+#**                                                                     **
+#*************************************************************************
+#*************************************************************************

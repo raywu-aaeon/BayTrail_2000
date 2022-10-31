@@ -1,7 +1,7 @@
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2013, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **
@@ -13,9 +13,15 @@
 //**********************************************************************
 
 //**********************************************************************
+// $Header: /Alaska/SOURCE/Core/Modules/NVRAM/NVRAMDXE.c 106   2/22/13 4:42p Oleksiyy $
+//
+// $Revision: 106 $
+//
+// $Date: 2/22/13 4:42p $
+//**********************************************************************
 //<AMI_FHDR_START>
 //
-// Name:	NvramDxe.c
+// Name:	NVRAMDXE.h
 //
 // Description:	
 //
@@ -74,7 +80,7 @@ EFI_STATUS VerifyVariable (
 ){
 //UEFI 2.3.1 requres to return SECURITY_VIOLATION error if no Auth Var support present
     if (*Attributes & UEFI23_1_AUTHENTICATED_VARIABLE_ATTRIBUTES)
-        return EFI_SECURITY_VIOLATION; 
+        return EFI_INVALID_PARAMETER; 
     else
         return EFI_SUCCESS;
 }
@@ -161,15 +167,6 @@ typedef struct{
 #define LTEB_GUID  \
     {0xC8BCA618, 0xBFC6, 0x46B7, 0x8D, 0x19, 0x83, 0x14, 0xE2, 0xE5, 0x6E, 0xC1}
 
-typedef struct {
-    CHAR16 *Name;
-    EFI_GUID Guid;
-} SDL_VAR_ENTRY;
-
-typedef struct {
-    CHAR16 *Name;
-    UINT32 Attributes;
-} STD_EFI_VAR_ENTRY;
 //======================================================================
 //Function Prototypes
 EFI_STATUS NvramReinitialize();
@@ -188,7 +185,6 @@ extern const BOOLEAN FlashNotMemoryMapped;
 static BOOLEAN Runtime = FALSE;
 static BOOLEAN HideBtVariables = TRUE;
 static EFI_GUID gAmiNvramControlProtocolGuid = { 0xf7ca7568, 0x5a09, 0x4d2c, { 0x8a, 0x9b, 0x75, 0x84, 0x68, 0x59, 0x2a, 0xe2 } };
-static BOOLEAN SaveOnlyPreservedVars = FALSE;
 
 #ifdef DO_NOT_ACCESS_DATA_OUTSIDE_OF_SMM_AT_RUNTIME
 BOOLEAN NoAccessOutsideofSmm = FALSE;
@@ -219,52 +215,6 @@ HOOK_GET_NEXT_VARIABLE_NAME* GetNextVarNameHookList[]=
 
 EFI_STATUS ShowBootTimeVariables (BOOLEAN Show);
 AMI_NVRAM_CONTROL_PROTOCOL NvramControl = {ShowBootTimeVariables };
-
-// Build time array of variables to be preserved.
-SDL_VAR_ENTRY gSdlVarLst[] = {
-    NVRAM_PRESERVE_VARIABLES_LIST {NULL, {0,0,0,0,0,0,0,0,0,0,0}}
-};
-
-STD_EFI_VAR_ENTRY gStdEfiVarList[] = {
-	{L"LangCodes",              EFI_VARIABLE_RUNTIME_ACCESS | EFI_VARIABLE_BOOTSERVICE_ACCESS},
-	{L"Lang",                   EFI_VARIABLE_RUNTIME_ACCESS | EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_NON_VOLATILE},
-	{L"Timeout",                EFI_VARIABLE_RUNTIME_ACCESS | EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_NON_VOLATILE},
-	{L"PlatformLangCodes",      EFI_VARIABLE_RUNTIME_ACCESS | EFI_VARIABLE_BOOTSERVICE_ACCESS},
-	{L"PlatformLang",           EFI_VARIABLE_RUNTIME_ACCESS | EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_NON_VOLATILE},
-	{L"ConIn",                  EFI_VARIABLE_RUNTIME_ACCESS | EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_NON_VOLATILE},
-	{L"ConOut",                 EFI_VARIABLE_RUNTIME_ACCESS | EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_NON_VOLATILE},
-	{L"ErrOut",                 EFI_VARIABLE_RUNTIME_ACCESS | EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_NON_VOLATILE},
-	{L"ConInDev",               EFI_VARIABLE_RUNTIME_ACCESS | EFI_VARIABLE_BOOTSERVICE_ACCESS},
-	{L"ConOutDev",              EFI_VARIABLE_RUNTIME_ACCESS | EFI_VARIABLE_BOOTSERVICE_ACCESS},
-	{L"ErrOutDev",              EFI_VARIABLE_RUNTIME_ACCESS | EFI_VARIABLE_BOOTSERVICE_ACCESS},
-	{L"BootOrder",              EFI_VARIABLE_RUNTIME_ACCESS | EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_NON_VOLATILE},
-	{L"BootNext",               EFI_VARIABLE_RUNTIME_ACCESS | EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_NON_VOLATILE},
-	{L"BootCurrent",            EFI_VARIABLE_RUNTIME_ACCESS | EFI_VARIABLE_BOOTSERVICE_ACCESS},
-	{L"BootOptionSupport",      EFI_VARIABLE_RUNTIME_ACCESS | EFI_VARIABLE_BOOTSERVICE_ACCESS},
-	{L"DriverOrder",            EFI_VARIABLE_RUNTIME_ACCESS | EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_NON_VOLATILE},
-	{L"HwErrRecSupport",        EFI_VARIABLE_RUNTIME_ACCESS | EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_NON_VOLATILE},
-	{L"SetupMode",              EFI_VARIABLE_RUNTIME_ACCESS | EFI_VARIABLE_BOOTSERVICE_ACCESS},
-	{L"KEK",                    EFI_VARIABLE_RUNTIME_ACCESS | EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS},
-	{L"PK",                     EFI_VARIABLE_RUNTIME_ACCESS | EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS},
-	{L"SignatureSupport",       EFI_VARIABLE_RUNTIME_ACCESS | EFI_VARIABLE_BOOTSERVICE_ACCESS},
-	{L"SecureBoot",             EFI_VARIABLE_RUNTIME_ACCESS | EFI_VARIABLE_BOOTSERVICE_ACCESS},
-	{L"KEKDefault",             EFI_VARIABLE_RUNTIME_ACCESS | EFI_VARIABLE_BOOTSERVICE_ACCESS},
-	{L"PKDefault",              EFI_VARIABLE_RUNTIME_ACCESS | EFI_VARIABLE_BOOTSERVICE_ACCESS},
-	{L"dbDefault",              EFI_VARIABLE_RUNTIME_ACCESS | EFI_VARIABLE_BOOTSERVICE_ACCESS},
-	{L"dbxDefault",             EFI_VARIABLE_RUNTIME_ACCESS | EFI_VARIABLE_BOOTSERVICE_ACCESS},
-	{L"dbtDefault",             EFI_VARIABLE_RUNTIME_ACCESS | EFI_VARIABLE_BOOTSERVICE_ACCESS},
-	{L"OsIndicationsSupported", EFI_VARIABLE_RUNTIME_ACCESS | EFI_VARIABLE_BOOTSERVICE_ACCESS},
-	{L"OsIndications",          EFI_VARIABLE_RUNTIME_ACCESS | EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_NON_VOLATILE},
-	{L"VendorKeys",             EFI_VARIABLE_RUNTIME_ACCESS | EFI_VARIABLE_BOOTSERVICE_ACCESS},
-	{NULL, 0}
-};
-
-STD_EFI_VAR_ENTRY gStdEfiVarListWildCard[] = {
-	{L"Boot****",                              EFI_VARIABLE_RUNTIME_ACCESS | EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_NON_VOLATILE},
-	{L"Driver****",                            EFI_VARIABLE_RUNTIME_ACCESS | EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_NON_VOLATILE},
-	{L"Key****",                               EFI_VARIABLE_RUNTIME_ACCESS | EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_NON_VOLATILE},
-	{NULL, 0}
-};
 
 EFI_STATUS GetVariableHook(
     IN CHAR16 *VariableName, IN EFI_GUID *VendorGuid,
@@ -1033,7 +983,7 @@ BOOLEAN IsNvramRuntime()
 
 EFI_STATUS ShowBootTimeVariables (BOOLEAN Show){
     HideBtVariables = !Show;
-    NVRAM_TRACE((-1,"Setting HideBtVariables to %d\n",HideBtVariables));
+    TRACE((-1,"Setting HideBtVariables to %d\n",HideBtVariables));
     return EFI_SUCCESS;
 }
 
@@ -1818,8 +1768,6 @@ EFI_STATUS CreateVariableEx(
         
         Size+=(UINT8*)s-(UINT8*)VariableName;
     }
-    if ((UINTN)(~0) - Size < DataSize + ExtSize)
-    	return EFI_OUT_OF_RESOURCES;
     
     Size += DataSize + ExtSize;
     
@@ -2279,114 +2227,6 @@ EFI_STATUS CopyVariable(
 //Varstore maintenance
 //<AMI_PHDR_START>
 //----------------------------------------------------------------------------
-// Procedure:   VarNotInPreserveList
-//
-// Description: Looks for the provided variable in the preserved list.
-//
-// Input:       IN CHAR16 *VarName - Variable name to be found.
-//              IN EFI_GUID *Guid  - Variable GUID to be found.
-//
-// Output:      BOOLEAN - Depending on result. 
-//              TRUE - if not in list, FALSE - if in list.
-//
-//----------------------------------------------------------------------------
-//<AMI_PHDR_END>
-
-BOOLEAN VarNotInPreserveList(
-    IN CHAR16 *VarName,
-    IN EFI_GUID *Guid
-)
-{
-    SDL_VAR_ENTRY *Entry;
-    UINTN	Index;
-    if (VarName == NULL || Guid == NULL)
-        return TRUE; // If it has no name or GUID - it is not in the list 
-    // Determine the size in bytes of the variable name string.
-
-
-    // Scan list 
-    for (Index = 0, Entry = gSdlVarLst; 
-                Entry->Name != NULL; 
-                Entry = &gSdlVarLst[++Index] )  
-    {
-        // Check the GUID's for a match.
-        if (!guidcmp(&Entry->Guid, Guid)) {
-            //NVRAM_TRACE((TRACE_DXE_CORE,"VarNotInPreserveList: GUID Match found.\n"));
-            // Compare variable name strings.
-        	if (StrCmp(Entry->Name, VarName) == 0){
-                //NVRAM_TRACE((TRACE_DXE_CORE,"VarNotInPreserveList: Compleat Match found!!!.\n"));
-                // Match found!
-                return FALSE;
-            }
-        }
-    }
-
-    return TRUE;
-}
-
-//<AMI_PHDR_START>
-//----------------------------------------------------------------------------
-// Procedure:   VarNotInEfiGlobalVarList
-//
-// Description: Searches for the passed variable in the EFI Global Var lists and 
-//				if found, makes sure, that it has the same attributes.
-//
-// Input:       IN CHAR16 *VarName - Variable name to be found.
-//              IN UINT32 Attributes  - Variable attributes.
-//
-// Output:      BOOLEAN - Depending on result. 
-//              TRUE - if not in list, FALSE - if in list.
-//
-//----------------------------------------------------------------------------
-//<AMI_PHDR_END>
-
-BOOLEAN VarNotInEfiGlobalVarList (
-  IN CHAR16             *VariNameToTest,
-  IN UINT32             Attributes
-  )
-{
-	UINT32    i, j;
-	UINTN     CommonLength;
-
-
-   	// Search through list where names are strictly predefined
-    for (i = 0; gStdEfiVarList[i].Name != NULL; i ++)
-    {
-    	if ((StrCmp (gStdEfiVarList[i].Name, VariNameToTest) == 0) &&
-    		(gStdEfiVarList[i].Attributes == Attributes || Attributes == 0)) 
-    		return FALSE; 
-    }
-
-    // Look in the list where names could have 4 different hexadecimal numbers at the end
-    CommonLength = StrLen(VariNameToTest) - 4; // Subtract 4 last characters, that can be different from those, that are in list
-    for (i = 0; gStdEfiVarListWildCard[i].Name != NULL; i ++)
-    {
-    	if ((CommonLength + 4 == StrLen (gStdEfiVarListWildCard[i].Name)) && 
-    		  (StrnCmp (gStdEfiVarListWildCard[i].Name, VariNameToTest, CommonLength) == 0) &&
-    		  (gStdEfiVarListWildCard[i].Attributes == Attributes || Attributes == 0))
-    	{
-      
-    		for (j = 0; j < 4;)
-    		{
-    			// if 4 lasrt characters are not hexadecimal numbers - this is not a legal Efi Global Variable
-    			if ((VariNameToTest[CommonLength + j] >= L'0' && VariNameToTest[CommonLength + j] <= L'9') ||
-    		        (VariNameToTest[CommonLength + j] >= L'a' && VariNameToTest[CommonLength + j] <= L'f') ||
-                    (VariNameToTest[CommonLength + j] >= L'A' && VariNameToTest[CommonLength + j] <= L'F'))
-    				j ++;
-    			else
-    				return TRUE;
-    			
-    		}
-    		return FALSE;
-    	}
-    }
-
-    return TRUE;
-
-}
-
-//<AMI_PHDR_START>
-//----------------------------------------------------------------------------
 // Procedure:   SkipSpecificNvar
 //
 // Description: Helper varstore filtering function. 
@@ -2480,8 +2320,7 @@ EFI_STATUS CopyVariables(
         if (   FilterFunction!=NULL 
             && FilterFunction(FilterContext, TmpName, &Guid, Info)
         ) continue;
-        if (SaveOnlyPreservedVars && VarNotInPreserveList(TmpName, &Guid))
-        	continue;    
+            
         Status=CopyVariable(
                    TmpName, &Guid, NvramSize, TmpData, Info, NewInfo, NewInterface
                );
@@ -2491,7 +2330,6 @@ EFI_STATUS CopyVariables(
             if (Status==EFI_NOT_FOUND) continue;
             
             SelectiveFree (TmpBuffer);
-            SaveOnlyPreservedVars = FALSE;
             return Status;
         }
     }
@@ -2500,7 +2338,7 @@ EFI_STATUS CopyVariables(
     SelectiveFree (TmpBuffer);
     
     if (Status==EFI_NOT_FOUND) Status=EFI_SUCCESS;
-    SaveOnlyPreservedVars = FALSE;
+    
     return Status;
 }
 
@@ -2775,7 +2613,7 @@ EFI_STATUS UpdateFtVarstore(
 	}
 #endif
     *Info = BackupInfo;
-    NVRAM_TRACE((TRACE_DXE_CORE,"NVRAM areas swapped(NVRAM address: %p; Backup address: %p).\n", Info->NvramAddress, VarStoreInfo.BackupAddress));
+    NVRAM_TRACE((TRACE_DXE_CORE,"NVRAM areas swapped(NVRAM address: %X; Backup address: %X).\n", Info->NvramAddress, VarStoreInfo.BackupAddress));
     return EFI_SUCCESS;
 }
 
@@ -3160,11 +2998,11 @@ EFI_STATUS DxeGetVariable(
                  VarStoreInfo.InfoCount, VarStoreInfo.NvramInfo
              );
              
-    if (!EFI_ERROR(Status) || Status == EFI_BUFFER_TOO_SMALL)
+    if (!EFI_ERROR(Status))
     {
         if (AreBtVariablesHidden() && !(Attrib & EFI_VARIABLE_RUNTIME_ACCESS)) return EFI_NOT_FOUND;
         
-        if (Status != EFI_BUFFER_TOO_SMALL && Attributes) *Attributes=Attrib;
+        if (Attributes) *Attributes=Attrib;
     }
     
     return Status;
@@ -3243,7 +3081,6 @@ EFI_STATUS DxeSetVariable(
     UINTN OldDataSize=0;
     VOID *OldData=NULL;
     EXT_SEC_FLAGS ExtSecFlags = {0, 0,{0}};
-
     if (
         !VariableName || VariableName[0]==0 || !VendorGuid
         || ( Attributes & ~ALL_VARIABLE_ATTRIBUTES)
@@ -3253,16 +3090,7 @@ EFI_STATUS DxeSetVariable(
                                         !(Attributes & EFI_VARIABLE_NON_VOLATILE) 
                                      || !(Attributes & EFI_VARIABLE_RUNTIME_ACCESS) && AreBtVariablesHidden()
                                     )
-    ) return EFI_INVALID_PARAMETER;  
-    if (guidcmp(VendorGuid, &gEfiGlobalVariableGuid) == 0)
-    {
-    	if (VarNotInEfiGlobalVarList(VariableName, Attributes))
-    	{
-    		NVRAM_TRACE((TRACE_DXE_CORE, "Variable with EfiGlobalVariableGuid has illegal name: %S or attributes: %x ! Please use different GUID. \n", VariableName, Attributes));
-    		ASSERT(FALSE);
-    		return EFI_INVALID_PARAMETER;
-    	}
-    }
+    ) return EFI_INVALID_PARAMETER;
     Status = SetVariableHook (
                  VariableName,VendorGuid,Attributes,DataSize,Data
              );
@@ -3361,7 +3189,7 @@ EFI_STATUS DxeSetVariable(
         OldDataSize = 0;
         OldData = NULL;
     }
-
+#if AuthVariable_SUPPORT
     Status = VerifyVariable(VariableName, VendorGuid, &Attributes, &Data, &DataSize, OldData, OldDataSize, &ExtSecFlags);
     if (EFI_ERROR(Status)) {
     // case for SigDb Append mode. EFI_ALREADY_STARTED treat as Ok to exit SetVar
@@ -3369,7 +3197,7 @@ EFI_STATUS DxeSetVariable(
             Status = EFI_SUCCESS;
         return Status;
     }
-
+#endif //#if AuthVariable_SUPPORT
 
 // Function called with empty access attributes - the variable shall be erased.
     if(!Attributes)
@@ -3439,21 +3267,18 @@ EFI_STATUS DxeSetVariable(
 #if NV_CACHE_SUPPORT
         if (!EFI_ERROR(Status))
         {
-        	if (UpdateIndex)
-        	{
-        		if (    ( !( VarStoreInfo.NvramMode & (NVRAM_MODE_DEFAULT_CONFIGURATION|NVRAM_MODE_MANUFACTORING) ) )
-                         || Info!=VarStoreInfo.NvInfo ) 
-        		{
-                           IndexUpdateVariable(
-                                        (NVAR*)(Info->pEndOfVars-Info->LastVarSize),Info
-                           );
-                
-                }
+        	if ( (    VarStoreInfo.NvramMode & NVRAM_MODE_DEFAULT_CONFIGURATION)!=NVRAM_MODE_DEFAULT_CONFIGURATION
+        	       || Info!=VarStoreInfo.NvInfo ) {
+        		if (UpdateIndex)
+        			IndexUpdateVariable(
+        					(NVAR*)(Info->pEndOfVars-Info->LastVarSize),Info
+        			);
+        		else
+        			IndexAddVariable(
+        					(NVAR*)(Info->pEndOfVars-Info->LastVarSize),Info
+        			);
         	}
-        	else
-                           IndexAddVariable(
-                                        (NVAR*)(Info->pEndOfVars-Info->LastVarSize),Info
-                           );
+        	
         }
         
 #endif
@@ -3480,53 +3305,39 @@ EFI_STATUS DxeSetVariable(
     if (   Status==EFI_OUT_OF_RESOURCES
             || Status==EFI_DEVICE_ERROR && !IsStoreOk(Info)
        )
-	{
-		BOOLEAN FirstPass=TRUE;
-        do{
-            if (!SaveOnlyPreservedVars)
-            {    
-                NVRAM_TRACE((TRACE_DXE_CORE,"NVRAM: SetVariable failed. Status=%r. Starting Recovery...\n",Status));
-            }
-            else 
-            {
-                NVRAM_TRACE((TRACE_DXE_CORE,"NVRAM: SetVariable failed After Recovery. Clearing NVRAM...\n"));
-            }
-            NewInfo.NvramAddress = NULL;
-            if (EFI_ERROR(CopyVarStoreToMemStore(Info,Var,&NewInfo))){
-                if (NewInfo.NvramAddress!=NULL) SelectiveFree (NewInfo.NvramAddress);
-                return Status;
-            }
-            if (Attributes & EFI_VARIABLE_APPEND_WRITE)
-                Status = CreateVariableEx(
-                            VariableName,VendorGuid,Attributes,
-                            DataSize, Data, &NewInfo, &MemInterface, NULL, &ExtSecFlags, 
-                            OldData, OldDataSize
-                        );
-            else
-                Status = CreateVariable(
-                            VariableName,VendorGuid,Attributes,
-                            DataSize, Data, &NewInfo, &MemInterface, NULL, &ExtSecFlags
-                        );         
-                 
-            if (!EFI_ERROR(Status))
-            {
-                Status = UpdateVarstore(Info,Interface,&NewInfo);
-            }
-        
-            else
-            {   
-                if ((Status==EFI_OUT_OF_RESOURCES) && (FirstPass)) SaveOnlyPreservedVars = TRUE;
-
-                CheckStore(TRUE);
-            }
-        
-            SelectiveFree (NewInfo.NvramAddress);
-            
-            NVRAM_TRACE((TRACE_DXE_CORE,"NVRAM: SetVariable Status after recovery=%r.\n",Status));
-            FirstPass = FALSE;
+    {
+        NVRAM_TRACE((TRACE_DXE_CORE,"NVRAM: SetVariable failed. Status=%r. Starting Recovery...\n",Status));
+        NewInfo.NvramAddress = NULL;
+        if (EFI_ERROR(CopyVarStoreToMemStore(Info,Var,&NewInfo))){
+            if (NewInfo.NvramAddress!=NULL) SelectiveFree (NewInfo.NvramAddress);
+            return Status;
         }
-        while (SaveOnlyPreservedVars);
+        if (Attributes & EFI_VARIABLE_APPEND_WRITE)
+            Status = CreateVariableEx(
+                        VariableName,VendorGuid,Attributes,
+                        DataSize, Data, &NewInfo, &MemInterface, NULL, &ExtSecFlags, 
+                        OldData, OldDataSize
+                    );
+        else
+            Status = CreateVariable(
+                        VariableName,VendorGuid,Attributes,
+                        DataSize, Data, &NewInfo, &MemInterface, NULL, &ExtSecFlags
+                    );         
+                 
+        if (!EFI_ERROR(Status))
+        {
+            Status = UpdateVarstore(Info,Interface,&NewInfo);
+        }
+        
+        else
+        {
+            CheckStore(TRUE);
+        }
+        
+        SelectiveFree (NewInfo.NvramAddress);
+        NVRAM_TRACE((TRACE_DXE_CORE,"NVRAM: SetVariable Status after recovery=%r.\n",Status));
     }
+    
     return Status;
 }
 
@@ -3766,8 +3577,6 @@ VOID VarStoreDiscovery(NVRAM_STORE_INFO *NvInfo, NVRAM_STORE_INFO *MemInfo)
         //add regular NVRAM
         VarStoreInfo.NvramInfo[VarStoreInfo.InfoCount]=*NvInfo;
         VarStoreInfo.NvInfo = &VarStoreInfo.NvramInfo[VarStoreInfo.InfoCount];
-        if (VarStoreInfo.NvramMode & NVRAM_MODE_MANUFACTORING)
-    		VarStoreInfo.NvramInfo[VarStoreInfo.InfoCount].Flags |= NVRAM_STORE_FLAG_DO_NOT_ENUMERATE;
         VarStoreInfo.InfoCount++;
         
         //add defaults
@@ -3794,7 +3603,6 @@ VOID VarStoreDiscovery(NVRAM_STORE_INFO *NvInfo, NVRAM_STORE_INFO *MemInfo)
         //add regular NVRAM
         VarStoreInfo.NvramInfo[VarStoreInfo.InfoCount]=*NvInfo;
         VarStoreInfo.NvInfo = &VarStoreInfo.NvramInfo[VarStoreInfo.InfoCount];
-        VarStoreInfo.NvramInfo[VarStoreInfo.InfoCount].Flags |= NVRAM_STORE_FLAG_DO_NOT_ENUMERATE;
         VarStoreInfo.InfoCount++;
     }
     
@@ -3850,7 +3658,7 @@ EFI_STATUS NvramInitialize()
     	VarStoreInfo.BackupAddress = (UINT8*)NvramHob->BackupAddress;
 #ifdef EFI_DEBUG
     	if (VarStoreInfo.BackupAddress)
-    		NVRAM_TRACE((TRACE_DXE_CORE,"NVRAM back up address: %p\n", VarStoreInfo.BackupAddress));
+    		NVRAM_TRACE((TRACE_DXE_CORE,"NVRAM back up address: %X\n", VarStoreInfo.BackupAddress));
 #endif
     	VarStoreInfo.MemInterface=&MemInterface;
     	InitVolatileStore(
@@ -4858,7 +4666,7 @@ EFI_STATUS EFIAPI NvRamSmmEntry(
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2012, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **

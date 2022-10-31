@@ -1,24 +1,3 @@
-/**@file
-
-  Code which support multi-processor
-
-
-@copyright
- Copyright (c) 1999 - 2014 Intel Corporation. All rights reserved
- This software and associated documentation (if any) is furnished
- under a license and may only be used or copied in accordance
- with the terms of the license. Except as permitted by the
- license, no part of this software or documentation may be
- reproduced, stored in a retrieval system, or transmitted in any
- form or by any means without the express written consent of
- Intel Corporation.
-
-This file contains an 'Intel Peripheral Driver' and is uniquely
- identified as "Intel Reference Module" and is licensed for Intel
- CPUs and chipsets under the terms of your license agreement with
- Intel or your vendor. This file may be modified by the user, subject
- to additional terms of the license agreement.
-**/
 /*++
 
 Copyright (c) 1999 - 2008 Intel Corporation. All rights reserved
@@ -206,6 +185,7 @@ Returns:
   if (EFI_ERROR (Status)) {
     goto Done;
   }
+#if defined NOCS_S3_SUPPORT
 //
 //On BB platform, gExitPmAuthProtocolGuid isn't installed and gEfiLegacyBiosProtocolGuid is installed.
 //According to previous code, it is ok not to reallocate memory for AP.
@@ -226,6 +206,34 @@ Returns:
                   &RegistrationExitPmAuth
                   );
 
+#else
+  Status = gBS->CreateEvent (
+                  EVT_NOTIFY_SIGNAL,
+                  TPL_CALLBACK,
+                  ReAllocateMemoryForAP,
+                  NULL,
+                  &ReAllocExitPmAuthEvent
+                  );
+  ASSERT_EFI_ERROR (Status);
+  Status = gBS->RegisterProtocolNotify (
+                  &gExitPmAuthProtocolGuid,
+                  ReAllocExitPmAuthEvent,
+                  &RegistrationExitPmAuth
+                  );
+  Status = gBS->CreateEvent (
+                  EVT_NOTIFY_SIGNAL,
+                  TPL_CALLBACK,
+                  ReAllocateMemoryForAP,
+                  NULL,
+                  &ReAllocLegacyEvent
+                  );
+  ASSERT_EFI_ERROR (Status);
+  Status = gBS->RegisterProtocolNotify (
+                  &gEfiLegacyBiosProtocolGuid,
+                  ReAllocLegacyEvent,
+                  &RegistrationLegacy
+                  );
+#endif
   Status = EfiCreateEventLegacyBootEx (
              TPL_CALLBACK,
              ResetAPs,
@@ -1385,19 +1393,13 @@ Returns:
                   NULL,
                   &mMPSystemData->CheckAllAPsEvent
                   );
-  for (Index = 0; Index < mMPSystemData->NumberOfCpus; Index++) {
-    CpuData = &mMPSystemData->CpuData[Index];
-    if (Index == mMPSystemData->BSP) {
-      continue;
-    }
-    Status = gBS->CreateEvent (
-                    EVT_TIMER | EVT_NOTIFY_SIGNAL,
-                    TPL_CALLBACK,
-                    CheckThisAPStatus,
-                    (VOID *) CpuData,
-                    &CpuData->CheckThisAPEvent
-                    );
-  }
+  Status = gBS->CreateEvent (
+                  EVT_TIMER | EVT_NOTIFY_SIGNAL,
+                  TPL_CALLBACK,
+                  CheckThisAPStatus,
+                  NULL,
+                  &mMPSystemData->CheckThisAPEvent
+                  );
 
   if (mPlatformCpu->BspSelection == 16) {
     Status = SwitchToLowestFeatureProcess (&mMpService);
@@ -2232,7 +2234,7 @@ Returns:
   EFI_STATUS      Status;
   CPU_STATE       CpuState;
 
-  CpuData = (CPU_DATA_BLOCK *) Context;
+  CpuData = &mMPSystemData->CpuData[mMPSystemData->StartedCpuNumber];
 
   AsmAcquireMPLock (&CpuData->StateLock);
   CpuState = CpuData->State;
@@ -2240,11 +2242,11 @@ Returns:
 
   if (CpuState == CPU_STATE_FINISHED) {
     gBS->SetTimer (
-          CpuData->CheckThisAPEvent,
+          mMPSystemData->CheckThisAPEvent,
           TimerCancel,
           0
           );
-    Status = gBS->SignalEvent (CpuData->WaitEvent);
+    Status = gBS->SignalEvent (mMPSystemData->WaitEvent);
     AsmAcquireMPLock (&CpuData->StateLock);
     CpuData->State = CPU_STATE_IDLE;
     AsmReleaseMPLock (&CpuData->StateLock);
@@ -2578,10 +2580,8 @@ R9StartupThisAP (
   if (Procedure == NULL) {
     return EFI_INVALID_PARAMETER;
   }
-  if (Finished != NULL) {
-    *Finished = TRUE;
-  }
 
+  *Finished = FALSE;
   CpuData = &mMPSystemData->CpuData[CpuNumber];
 
   //
@@ -2606,9 +2606,8 @@ R9StartupThisAP (
   // If WaitEvent is NULL, execute in blocking mode.
   // BSP checks AP's state until it finishes or TimeoutInMicrosecsond expires.
   //
-  CpuData->StartedCpuNumber         = CpuNumber;
-  CpuData->Finished                 = Finished;
-  CpuData->WaitEvent				= WaitEvent;
+  mMPSystemData->StartedCpuNumber = CpuNumber;
+  mMPSystemData->WaitEvent        = WaitEvent;
 
   if (WaitEvent == NULL) {
     while (TRUE) {
@@ -2626,7 +2625,7 @@ R9StartupThisAP (
         // Save data into private data structure, and create timer to poll AP state before exiting
         //
         Status = gBS->SetTimer (
-                        CpuData->CheckThisAPEvent,
+                        mMPSystemData->CheckThisAPEvent,
                         TimerPeriodic,
                         CPU_CHECK_AP_INTERVAL * MICROSECOND
                         );
@@ -2641,11 +2640,12 @@ R9StartupThisAP (
   // If WaitEvent is not NULL, execute in non-blocking mode.
   // BSP checks AP's state until it finishes or TimeoutInMicrosecsond expires.
   //
-  Status = gBS->SetTimer (
-                    CpuData->CheckThisAPEvent,
+	Status = gBS->SetTimer (
+                    mMPSystemData->CheckThisAPEvent,
                     TimerPeriodic,
                     CPU_CHECK_AP_INTERVAL * MICROSECOND
                     );
+  *Finished = TRUE;
   return EFI_SUCCESS;
 }
 

@@ -1,21 +1,34 @@
-//**********************************************************************
-//**********************************************************************
-//**                                                                  **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
-//**                                                                  **
-//**                       All Rights Reserved.                       **
-//**                                                                  **
-//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093        **
-//**                                                                  **
-//**                       Phone: (770)-246-8600                      **
-//**                                                                  **
-//**********************************************************************
-//**********************************************************************
+//****************************************************************************
+//****************************************************************************
+//**                                                                        **
+//**             (C)Copyright 1985-2008, American Megatrends, Inc.          **
+//**                                                                        **
+//**                          All Rights Reserved.                          **
+//**                                                                        **
+//**                 5555 Oakbrook Pkwy, Norcross, GA 30093                 **
+//**                                                                        **
+//**                          Phone (770)-246-8600                          **
+//**                                                                        **
+//****************************************************************************
+//****************************************************************************
 
-/** @file Ohci.h
-    AMI USB OHCI driver header
+//****************************************************************************
+// $Header: /Alaska/SOURCE/Modules/USB/ALASKA/RT/ohci.h 7     5/04/12 5:25a Wilsonlee $
+//
+// $Revision: 7 $
+//
+//  01/08/05 11:10a
+//****************************************************************************
 
-**/
+//<AMI_FHDR_START>
+//-----------------------------------------------------------------------------
+//
+//  Name:           Ohci.h
+//
+//  Description:    AMI USB OHCI driver header
+//
+//-----------------------------------------------------------------------------
+//<AMI_FHDR_END>
 
 // Avoid including multiple instance of this file
 #ifndef     __OHCI_H
@@ -28,22 +41,26 @@
 
 // HCCA - Host Controller Commumications Area
 //----------------------------------------------------------------------------
-/**
-    OHCI host controller communications area is used by the
-    host controller driver(BIOS) to communicate with the
-    OHCI based host controller.  This data area should be
-    bus master capable.  Refer OHCI data sheet for more
-    information.
-
- Fields:   Name       Type        Description
-      ------------------------------------------------------------
-      INTERRUPTLIST   ARRAY   32 entries of periodic transfer pointer
-      HCCAFRAMENUMBER WORD    Current frame number
-      HCCAPAD1    WORD    Reserved
-      HCCADONEHEAD    DWORD   Location where the done head pointers will be placed
-      RES_HCCA    ARRAY   120 bytes of reserved data
-
-**/
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name:        OHCIHCCA
+//
+// Description: OHCI host controller communications area is used by the
+//      host controller driver(BIOS) to communicate with the
+//      OHCI based host controller.  This data area should be
+//      bus master capable.  Refer OHCI data sheet for more
+//      information.
+//
+// Fields:   Name       Type        Description
+//      ------------------------------------------------------------
+//      INTERRUPTLIST   ARRAY   32 entries of periodic transfer pointer
+//      HCCAFRAMENUMBER WORD    Current frame number
+//      HCCAPAD1    WORD    Reserved
+//      HCCADONEHEAD    DWORD   Location where the done head pointers will be placed
+//      RES_HCCA    ARRAY   120 bytes of reserved data
+//
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
 
 //OHCIHCCA      STRUC
 //  INTERRUPTLIST       DD  OHCI_FRAME_LIST_SIZE DUP (?)
@@ -62,27 +79,31 @@ typedef struct {
     UINT8       aResHcca[120];
 } OHCI_HCCA_PTRS;
 
-/**
-    OHCI general transfer descriptor structure. This structure is
-    used for bulk, interrupt and control transfers. This structure
-    holds the information needed for the transfer like buffer
-    size, address etc.  Refer to OHCI specification for more
-    information.  The last sixteen bytes in the structure (after
-    BufferEnd) is AMIBIOS internal data structure.
-
- Fields:   Name       Type        Description
-      ------------------------------------------------------------
-      dControlStatus  DWORD       Control & status (OHCI_TD_CONTROL)
-      fpCurrentBufferPointer DWORD    Current buffer pointer
-      fpLinkPointer   DWORD       Pointer to the next GTD
-      fpBufferEnd DWORD       Pointer to the end of the buffer
-      dCSReloadValue  DWORD       Copy of control status during scheduling
-      bCallBack   NEAR        Pointer to call back function
-      bActiveFlag BYTE        Non-zero value indicates TD is active
-      bDeviceAddr BYTE        USB device address
-      aSetupData  ARRAY       8 byte setup data buffer
-
-**/
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name:        OHCI_TD
+//
+// Description: OHCI general transfer descriptor structure. This structure is
+//      used for bulk, interrupt and control transfers. This structure
+//      holds the information needed for the transfer like buffer
+//      size, address etc.  Refer to OHCI specification for more
+//      information.  The last sixteen bytes in the structure (after
+//      BufferEnd) is AMIBIOS internal data structure.
+//
+// Fields:   Name       Type        Description
+//      ------------------------------------------------------------
+//      dControlStatus  DWORD       Control & status (OHCI_TD_CONTROL)
+//      fpCurrentBufferPointer DWORD    Current buffer pointer
+//      fpLinkPointer   DWORD       Pointer to the next GTD
+//      fpBufferEnd DWORD       Pointer to the end of the buffer
+//      dCSReloadValue  DWORD       Copy of control status during scheduling
+//      bCallBack   NEAR        Pointer to call back function
+//      bActiveFlag BYTE        Non-zero value indicates TD is active
+//      bDeviceAddr BYTE        USB device address
+//      aSetupData  ARRAY       8 byte setup data buffer
+//
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
 /*
 OHCI_TD     STRUC
 
@@ -114,21 +135,25 @@ typedef struct {
 } OHCI_TD;
 
 
-/**
-    OHCI Endpoint descriptor structure. This structure is needed
-    for all the USB transaction. This structure had the
-    information regarding the transfer.  Refer to OHCI specification
-    for more information
-
- Fields:   Name       Type        Description
-      ------------------------------------------------------------
-      dControl        DWORD   ED control fields (refer OHCI_ED_CONTROL)
-      fpTDTailPtr DWORD   TD queue tail pointer
-      fpTDHeadPointer DWORD   TD queue head pointer
-      fpEDLinkPointer DWORD   Pointer to the next ED
-      aReserved   ARRAY   16 bytes of reserved data
-
-**/
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name:        OHCI_ED
+//
+// Description: OHCI Endpoint descriptor structure. This structure is needed
+//      for all the USB transaction. This structure had the
+//      information regarding the transfer.  Refer to OHCI specification
+//      for more information
+//
+// Fields:   Name       Type        Description
+//      ------------------------------------------------------------
+//      dControl        DWORD   ED control fields (refer OHCI_ED_CONTROL)
+//      fpTDTailPtr DWORD   TD queue tail pointer
+//      fpTDHeadPointer DWORD   TD queue head pointer
+//      fpEDLinkPointer DWORD   Pointer to the next ED
+//      aReserved   ARRAY   16 bytes of reserved data
+//
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
 
 typedef struct _OHCI_ED {
     UINT32      dControl;               //  ED control fields
@@ -165,32 +190,36 @@ typedef struct
 //} OHCI_DESC_PTRS, _FAR_ *FPOHCI_DESC_PTRS;
 
 
-/**
-    Descriptors structure is used to hold the host controller
-    instance specific general transfer descriptor and endpoint
-    descriptor pointers.  The following structure defines such
-    the descriptors for OHCI based host controller instances.
-
- Fields:   Name       Type        Description
-      ------------------------------------------------------------
-      fpED1ms     OHCI_ED ED scheduled in 1ms timeframe
-      fpED2ms     OHCI_ED ED scheduled in 2ms timeframe
-      fpED8ms     OHCI_ED ED scheduled in 8ms timeframe
-      fpED32ms    OHCI_ED ED scheduled in 32ms timeframe
-      fpTD32ms    OHCI_TD TD scheduled in 32ms timeframe
-      fpEDRepeat  OHCI_ED ED scheduled for keyboard repeat rate generator
-      fpTDRepeat  OHCI_TD TD scheduled for keybord repeat rate generator
-               TDRepeat   OHCI_TD TD associated with generation of repeat data
-      fpEDControl OHCI_ED ED associated for control transfer
-               fpTDControlSetup   OHCI_TD TD associated with control setup
-               fpTDControlData    OHCI_TD TD associated with control data
-               fpTDControlStatus OHCI_TD TD associated with control status
-      fpEDInterrupt   OHCI_ED ED associated for interrupt transfer
-               fpTDInterruptData OHCI_TD TD associated to transfer interrupt data
-      fpEDBulk        OHCI_ED ED associated for bulk transfer
-      fpTDBulkData    OHCI_TD TD associated to transfer bulk data
-
-**/
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name:        OHCIDescriptors
+//
+// Description: Descriptors structure is used to hold the host controller
+//      instance specific general transfer descriptor and endpoint
+//      descriptor pointers.  The following structure defines such
+//      the descriptors for OHCI based host controller instances.
+//
+// Fields:   Name       Type        Description
+//      ------------------------------------------------------------
+//      fpED1ms     OHCI_ED ED scheduled in 1ms timeframe
+//      fpED2ms     OHCI_ED ED scheduled in 2ms timeframe
+//      fpED8ms     OHCI_ED ED scheduled in 8ms timeframe
+//      fpED32ms    OHCI_ED ED scheduled in 32ms timeframe
+//      fpTD32ms    OHCI_TD TD scheduled in 32ms timeframe
+//      fpEDRepeat  OHCI_ED ED scheduled for keyboard repeat rate generator
+//      fpTDRepeat  OHCI_TD TD scheduled for keybord repeat rate generator
+//               TDRepeat   OHCI_TD TD associated with generation of repeat data
+//      fpEDControl OHCI_ED ED associated for control transfer
+//               fpTDControlSetup   OHCI_TD TD associated with control setup
+//               fpTDControlData    OHCI_TD TD associated with control data
+//               fpTDControlStatus OHCI_TD TD associated with control status
+//      fpEDInterrupt   OHCI_ED ED associated for interrupt transfer
+//               fpTDInterruptData OHCI_TD TD associated to transfer interrupt data
+//      fpEDBulk        OHCI_ED ED associated for bulk transfer
+//      fpTDBulkData    OHCI_TD TD associated to transfer bulk data
+//
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
 /*
 OHCIDescriptors     STRUC
     ED1ms           DW  ?
@@ -233,21 +262,25 @@ typedef struct {
 
 #define USB_OHCI_DESCRIPTOR_SIZE_BLK    ((size of OHCIDescriptors + USB_MEM_BLK_SIZE - 1) >> USB_MEM_BLK_SIZE_SHIFT)
 
-/**
-    Bit definition for OHCI_ED control field
-
- Fields:   Name       Type        Description
-      ------------------------------------------------------------
-      FuncAddress BITS:06-00  USB device address
-      EndpointNum BITS:10-07  Endpoint number
-      Direction   BITS:12-11  Direction of data flow
-      Speed       BITS:13     Endpoint speed
-      Skip        BITS:14     If set ED will be skipped
-      Format      BITS:15     Set for isochronous endpoint
-      MaxPacketSize   BITS:26-16  Endpoint max packet size
-      Reserved    BITS:31-27  Reserved bits
-
-**/
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name:        OHCI_ED_CONTROL
+//
+// Description: Bit definition for OHCI_ED control field
+//
+// Fields:   Name       Type        Description
+//      ------------------------------------------------------------
+//      FuncAddress BITS:06-00  USB device address
+//      EndpointNum BITS:10-07  Endpoint number
+//      Direction   BITS:12-11  Direction of data flow
+//      Speed       BITS:13     Endpoint speed
+//      Skip        BITS:14     If set ED will be skipped
+//      Format      BITS:15     Set for isochronous endpoint
+//      MaxPacketSize   BITS:26-16  Endpoint max packet size
+//      Reserved    BITS:31-27  Reserved bits
+//
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>
 
 
 // Bit definitions for endpoint descriptor control field
@@ -277,20 +310,24 @@ typedef struct {
 #define OHCI_TERMINATE      0x00000000
 
 
-/**
-    Bit definition for OHCI_TD ControlStatus field
-
- Fields:   Name       Type        Description
-      ------------------------------------------------------------
-      Reserved    BITS:17-00  Reserved bits
-      BufferRounding  BITS:18     Buffer rounding (1-Allow small packets)
-      DirectionPid    BITS:20-19  Direction & PID (SETUP/IN/OUT etc)
-      DelayInt    BITS:23-21  Num. frames to wait before interrupting
-      DataToggle  BITS:25-24  Data toggle
-      ErrorCount  BITS:27-26  Error count
-      ConditionCode   BITS:31-28  Completion condition code
-
-**/
+//<AMI_SHDR_START>
+//----------------------------------------------------------------------------
+// Name:        OHCI_TD_CONTROL
+//
+// Description: Bit definition for OHCI_TD ControlStatus field
+//
+// Fields:   Name       Type        Description
+//      ------------------------------------------------------------
+//      Reserved    BITS:17-00  Reserved bits
+//      BufferRounding  BITS:18     Buffer rounding (1-Allow small packets)
+//      DirectionPid    BITS:20-19  Direction & PID (SETUP/IN/OUT etc)
+//      DelayInt    BITS:23-21  Num. frames to wait before interrupting
+//      DataToggle  BITS:25-24  Data toggle
+//      ErrorCount  BITS:27-26  Error count
+//      ConditionCode   BITS:31-28  Completion condition code
+//
+//----------------------------------------------------------------------------
+//<AMI_SHDR_END>*/
 
 // Bit definition for general transfer descriptor control fields
 //-------------------------------------------------------------------------
@@ -512,16 +549,16 @@ typedef struct {
 
 #endif      // __OHCI_H
 
-//**********************************************************************
-//**********************************************************************
-//**                                                                  **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
-//**                                                                  **
-//**                       All Rights Reserved.                       **
-//**                                                                  **
-//**      5555 Oakbrook Parkway, Suite 200, Norcross, GA 30093        **
-//**                                                                  **
-//**                       Phone: (770)-246-8600                      **
-//**                                                                  **
-//**********************************************************************
-//**********************************************************************
+//****************************************************************************
+//****************************************************************************
+//**                                                                        **
+//**             (C)Copyright 1985-2008, American Megatrends, Inc.          **
+//**                                                                        **
+//**                          All Rights Reserved.                          **
+//**                                                                        **
+//**                 5555 Oakbrook Pkwy, Norcross, GA 30093                 **
+//**                                                                        **
+//**                          Phone (770)-246-8600                          **
+//**                                                                        **
+//****************************************************************************
+//****************************************************************************

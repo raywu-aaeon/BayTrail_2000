@@ -1,6 +1,6 @@
 TOKEN
     Name  = "OA3_SMM_SUPPORT"
-    Value = "1"
+    Value = "0"
     Help  = "Switch to enable Update ACPI in the OS Runtime through the SW SMI for OEM Activation without rebooting the system."
     TokenType = Boolean
     TargetH = Yes

@@ -28,7 +28,6 @@
 "MtcVendor.h"
 "NicIp4ConfigNvData.h"
 "PcdDataBaseHobGuid.h"
-"PcdDataBaseSignatureGuid.h"
 "Performance.h"
 "PlatDriOverrideHii.h"
 "RecoveryDevice.h"

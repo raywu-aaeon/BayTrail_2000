@@ -1,7 +1,7 @@
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2013, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **
@@ -13,15 +13,14 @@
 //**********************************************************************
 
 #include "AuthVariable.h"
-#include <CryptLib.h> // os_mktime
+#include <CryptLib.h>
 
 ///
 /// Global database array for scratch
 /// 
 extern BOOLEAN AVarRuntime;
-extern UINT8 mCustomMode;
-extern UINT8 mPlatformMode;
-extern UINT8 PublicKeyHashArray[HASH_SHA256_LEN];
+extern UINT8  mPlatformMode;
+extern UINT8  PublicKeyHashArray[HASH_SHA256_LEN];
 
 extern AMI_DIGITAL_SIGNATURE_PROTOCOL *mDigitalSigProtocol;
 extern EFI_GUID gEfiGlobalVariableGuid;
@@ -364,7 +363,7 @@ EFI_STATUS ConstructDataParameter (
 // !!!sha256 is the only digest algorithm supported.
 // temp w/a: determine the digest algorithm from contentInfo hdr
 // 
-    // quick cheat. CertBlock->CerData is a beginning of Pkcs7 Cert
+    // quick cheat. CertBlock->CerData is a begining of Pkcs7 Cert
     Pkcs7Cert  = (UINT8*)&(CertData->AuthInfo.CertData);
     Pkcs7Cert_len = CertHdrSize - ((UINTN)Pkcs7Cert - (UINTN)Data);
 
@@ -481,9 +480,9 @@ EFI_STATUS VerifyVariable2 (
     EFI_STATUS Status;
     VOID        *RealData;
     EFI_VARIABLE_AUTHENTICATION_2 *CertData;
-    UINTN       CertHdrSize, Pkcs7Cert_len, i;
+    UINTN       CertHdrSize, Pkcs7Cert_len;
     UINT8       *Pkcs7Cert;
-    INT32       TimeStamp, NonZeroTime;
+    INT32       TimeStamp;
     UINT8       *PubKeyHash;
     UINTN       PubKeyHashLen;
     UINT8       AuthVarType;
@@ -527,6 +526,7 @@ is later than the current timestamp value associated with the variable.
 
     CertData  = (EFI_VARIABLE_AUTHENTICATION_2 *) *Data;
     CertHdrSize = AUTHINFO_2_SIZE(CertData);//(CertData->AuthInfo.Hdr.Hdr.dwLength + sizeof(EFI_TIME));
+
     if(*DataSize < CertHdrSize)
         return EFI_SECURITY_VIOLATION;
 
@@ -551,41 +551,32 @@ is later than the current timestamp value associated with the variable.
     // Time check fail, suspicious replay attack, return EFI_SECURITY_VIOLATION.
     //
     TimeStamp = 0;
-    if(os_mktime( CertData->TimeStamp.Year, CertData->TimeStamp.Month, 
-                CertData->TimeStamp.Day, CertData->TimeStamp.Hour, 
-                CertData->TimeStamp.Minute, CertData->TimeStamp.Second, &TimeStamp ))
-    {
-        NonZeroTime = 0;
-        for(i=0;i < sizeof(EFI_TIME); i++)
-        	NonZeroTime+=(INT32)((UINT8*)CertData)[i];
-
-        if(NonZeroTime || ((Attributes & EFI_VARIABLE_APPEND_WRITE) == 0)) {
-              AVAR_TRACE((TRACE_ALWAYS,"Invalid Time Stamp\n"));
-              return EFI_SECURITY_VIOLATION;
-        }
-    }        
-    AVAR_TRACE((TRACE_ALWAYS,"Update Time Stamp\nOld=%x\nNew=%x\n", ExtFlags->Mc, TimeStamp));
-    if( (Attributes & EFI_VARIABLE_APPEND_WRITE) == EFI_VARIABLE_APPEND_WRITE) {
-    // AppendWrite: Only update Timestamp if New one is greater then current
-        if(OldData && (INT32)ExtFlags->Mc > TimeStamp)
-            TimeStamp = (INT32)ExtFlags->Mc;
-    } else {
-        //Unless the EFI_VARIABLE_APPEND_WRITE attribute is set, verify that the TimeStamp value
-        //is later than the current timestamp value associated with the variable.
-        // and reserved TimeStamp fields must be set to 0
-        if(  CertData->TimeStamp.Pad1 ||
-             CertData->TimeStamp.Pad2 ||
-             CertData->TimeStamp.Nanosecond ||
-             CertData->TimeStamp.TimeZone ||
-             CertData->TimeStamp.Daylight ||
-            (OldData && (INT32)ExtFlags->Mc >= TimeStamp)
-        ) {
-            AVAR_TRACE((TRACE_ALWAYS,"Failed\n"));
-            return EFI_SECURITY_VIOLATION;
-        }
-    } 
-    ExtFlags->Mc = TimeStamp;
-    AVAR_TRACE((TRACE_ALWAYS,"Upd=%x\n", ExtFlags->Mc));
+      if(os_mktime( CertData->TimeStamp.Year, CertData->TimeStamp.Month, 
+                    CertData->TimeStamp.Day, CertData->TimeStamp.Hour, 
+                    CertData->TimeStamp.Minute, CertData->TimeStamp.Second, &TimeStamp))
+          return EFI_SECURITY_VIOLATION;
+    //Unless the EFI_VARIABLE_APPEND_WRITE attribute is set, verify that the TimeStamp value
+    //is later than the current timestamp value associated with the variable.
+    // and reserved TimeStamp fields must be set to 0
+AVAR_TRACE((TRACE_ALWAYS,"Check Time Stamp\nOld=%x\nNew=%x\n", ExtFlags->Mc, TimeStamp));
+    if( ((Attributes & EFI_VARIABLE_APPEND_WRITE) == 0) && 
+        (CertData->TimeStamp.Pad1 ||
+         CertData->TimeStamp.Pad2 ||
+         CertData->TimeStamp.Nanosecond ||
+         CertData->TimeStamp.TimeZone ||
+         CertData->TimeStamp.Daylight ||
+        (OldData && (INT32)ExtFlags->Mc >= TimeStamp) )
+    ) {
+        AVAR_TRACE((TRACE_ALWAYS,"Failed\n"));
+        return EFI_SECURITY_VIOLATION;
+    }
+AVAR_TRACE((TRACE_ALWAYS,"Pass\n"));
+// AppendWrite: Only update Timestamp if New one is greater then current
+    if( (Attributes & EFI_VARIABLE_APPEND_WRITE) && 
+        (OldData && (INT32)ExtFlags->Mc > TimeStamp)
+      );
+    else
+        ExtFlags->Mc = TimeStamp;
     //
     // Process PK, KEK, seperately.
     //
@@ -609,7 +600,7 @@ is later than the current timestamp value associated with the variable.
         if ((Attributes & EFI_VARIABLE_NON_VOLATILE) == 0) {
             return EFI_INVALID_PARAMETER;
         }
-        if (mPlatformMode == SETUP_MODE || mCustomMode == 1 ) {
+        if (mPlatformMode == SETUP_MODE) {
             Status = EFI_SUCCESS;
             goto Exit_SetupMode;
         }
@@ -663,7 +654,7 @@ is later than the current timestamp value associated with the variable.
         AVAR_TRACE((TRACE_ALWAYS,"PK for db check %r\n", Status));
             }
         //
-        // Process PK, KEK separately.
+        // Process PK, KEK seperately.
         //
         } else 
             if (AuthVarType == IsPkVarType || AuthVarType == IsKekVarType)
@@ -697,7 +688,7 @@ Exit_SetupMode:
 //**********************************************************************
 //**********************************************************************
 //**                                                                  **
-//**        (C)Copyright 1985-2014, American Megatrends, Inc.         **
+//**        (C)Copyright 1985-2013, American Megatrends, Inc.         **
 //**                                                                  **
 //**                       All Rights Reserved.                       **
 //**                                                                  **

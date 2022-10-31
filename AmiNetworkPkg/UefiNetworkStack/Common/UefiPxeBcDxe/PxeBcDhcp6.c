@@ -14,7 +14,7 @@
 /** @file
   Functions implementation related with DHCPv6 for UefiPxeBc Driver.
 
-  Copyright (c) 2009 - 2014, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2009 - 2012, Intel Corporation. All rights reserved.<BR>
 
   This program and the accompanying materials
   are licensed and made available under the terms and conditions of the BSD License
@@ -730,7 +730,6 @@ PxeBcRequestBootService (
              PXEBC_DHCP6_OPT_SERVER_ID
              );
   if (Option == NULL) {
-    FreePool (Discover);            // AMI Porting - Cpp Check Memory Leak
     return EFI_NOT_FOUND;
   }
   
@@ -788,7 +787,6 @@ PxeBcRequestBootService (
                     );
 
   if (EFI_ERROR (Status)) {
-    FreePool (Discover);  // AMI Porting - Cpp Check Memory Leak
     return Status;
   }
 
@@ -804,7 +802,6 @@ PxeBcRequestBootService (
   //
   Status = Private->Udp6Read->Configure (Private->Udp6Read, &Private->Udp6CfgData);
   if (EFI_ERROR (Status)) {
-    FreePool (Discover);  // AMI Porting - Cpp Check Memory Leak
     return Status;
   }
     
@@ -826,7 +823,6 @@ PxeBcRequestBootService (
   Private->Udp6Read->Configure (Private->Udp6Read, NULL);
 
   if (EFI_ERROR (Status)) {
-    FreePool (Discover);  // AMI Porting - Cpp Check Memory Leak
     return Status;
   }
 
@@ -834,7 +830,7 @@ PxeBcRequestBootService (
   // Update length
   //
   Reply->Length = (UINT32) ReadSize;
-  FreePool (Discover);  // AMI Porting - Cpp Check Memory Leak
+
   return EFI_SUCCESS;
 }
 
@@ -1486,22 +1482,6 @@ PxeBcDhcp6CallBack (
   switch (Dhcp6Event) {
 
   case Dhcp6SendSolicit:
-  	//
-	// AMI PORTING STARTS.
-	//
-#if (NET_PKG_AMI_PORTING_ENABLE == 1)
-  	if (Packet->Length > PXEBC_DHCP6_PACKET_MAX_SIZE) {
-		//
-		// If the to be sent packet exceeds the maximum length, abort the DHCP process.
-		//
-		Status = EFI_ABORTED;
-		break;
-	}
-#endif	// NET_PKG_AMI_PORTING_ENABLE
-	//
-	// AMI PORTING ENDS.
-	//
-	
     //
     // Record the first Solicate msg time
     //
@@ -1517,21 +1497,6 @@ PxeBcDhcp6CallBack (
 
   case Dhcp6RcvdAdvertise:
     Status = EFI_NOT_READY;
-	//
-	// AMI PORTING STARTS.
-	//
-#if (NET_PKG_AMI_PORTING_ENABLE == 1)
-	if (Packet->Length > PXEBC_DHCP6_PACKET_MAX_SIZE) {
-		//
-		// Ignore the incoming packets which exceed the maximum length.
-		//
-		Status = EFI_ABORTED;
-		break;
-	}
-#endif	// NET_PKG_AMI_PORTING_ENABLE
-	//
-	// AMI PORTING ENDS.
-	//
     if (Private->OfferNum < PXEBC_OFFER_MAX_NUM) {
       //
       // Cache the dhcp offers to OfferBuffer[] for select later, and record
@@ -1542,22 +1507,6 @@ PxeBcDhcp6CallBack (
     break;
 
   case Dhcp6SendRequest:
-  	//
-	// AMI PORTING STARTS.
-	//
-#if (NET_PKG_AMI_PORTING_ENABLE == 1)
-  	if (Packet->Length > PXEBC_DHCP6_PACKET_MAX_SIZE) {
-		//
-		// If the to be sent packet exceeds the maximum length, abort the DHCP process.
-		//
-		Status = EFI_ABORTED;
-		break;
-	}
-#endif	// NET_PKG_AMI_PORTING_ENABLE
-	//
-	// AMI PORTING ENDS.
-	//
-
     //
     // Store the request packet as seed packet for discover.
     //
@@ -1589,22 +1538,6 @@ PxeBcDhcp6CallBack (
     break;
 
   case Dhcp6RcvdReply:
-	//
-	// AMI PORTING STARTS.
-	//
-#if (NET_PKG_AMI_PORTING_ENABLE == 1)
-	if (Packet->Length > PXEBC_DHCP6_PACKET_MAX_SIZE) {
-		//
-		// Abort the DHCP if the ACK packet exceeds the maximum length.
-		//
-		Status = EFI_ABORTED;
-		break;
-	}
-#endif	// NET_PKG_AMI_PORTING_ENABLE
-	//
-	// AMI PORTING ENDS.
-	//
-	
     //
     // Cache the dhcp ack to Private->Dhcp6Ack, but it's not the final ack in mode data
     // without verification.
@@ -1932,7 +1865,7 @@ PxeBcDhcp6Sarr (
     return Status;
   }
 
-  Status = PxeBcFlushStationIp (Private, &Private->StationIp, NULL);
+  Status = PxeBcFlushStaionIp (Private, &Private->StationIp, NULL);
   if (EFI_ERROR (Status)) {
     PxeBcUnregisterIp6Address (Private);
     Dhcp6->Stop (Dhcp6);

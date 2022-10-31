@@ -543,17 +543,6 @@ Device(H_EC)  // Nuvoton Embedded Controller
         ^VGBI.UPBT(WINDOWS_BUTTON, Zero)
         Notify(^VGBI, 0xC3) // Notify Virtual GPIO driver that Windows Home button is released.
       }
-
-      If(LAnd(CondRefOf(^HEFD._STA),LEqual(And(^HEFD._STA(),One),One))) // HID driver is loaded(means it is Win10)
-      {
-        Sleep(1000)
-        
-        ^HEFD.UPBT(WINDOWS_BUTTON, One)
-        Notify(^HEFD, 0xC2) // Notify Virtual GPIO driver that Windows Home button is pressed.
-        
-        ^HEFD.UPBT(WINDOWS_BUTTON, Zero)
-        Notify(^HEFD, 0xC3) // Notify Virtual GPIO driver that Windows Home button is released.
-      }
     }
 
     // "J" Scan Code = 0x24 (=Volume Up)
@@ -571,17 +560,6 @@ Device(H_EC)  // Nuvoton Embedded Controller
         
         ^VGBI.UPBT(VOLUME_UP_BUTTON, Zero)
         Notify(^VGBI, 0xC5) // Notify Virtual GPIO driver that Volume UP button is released.
-      }
-
-      If(LAnd(CondRefOf(^HEFD._STA),LEqual(And(^HEFD._STA(),One),One))) // HID driver is loaded(means it is Win10)
-      {
-        Sleep(1000)
-        
-        ^HEFD.UPBT(VOLUME_UP_BUTTON, One)
-        Notify(^HEFD, 0xC4) // Notify Virtual GPIO driver that Windows Home button is pressed.
-        
-        ^HEFD.UPBT(VOLUME_UP_BUTTON, Zero)
-        Notify(^HEFD, 0xC5) // Notify Virtual GPIO driver that Windows Home button is released.
       }
     }
 
@@ -601,16 +579,6 @@ Device(H_EC)  // Nuvoton Embedded Controller
         ^VGBI.UPBT(VOLUME_DOWN_BUTTON, Zero)
         Notify(^VGBI, 0xC7) // Notify Virtual GPIO driver that Volue Down button is released.
       }
-      If(LAnd(CondRefOf(^HEFD._STA),LEqual(And(^HEFD._STA(),One),One))) // HID driver is loaded(means it is Win10)
-      {
-        Sleep(1000)
-        
-        ^HEFD.UPBT(VOLUME_DOWN_BUTTON, One)
-        Notify(^HEFD, 0xC6) // Notify Virtual GPIO driver that Windows Home button is pressed.
-        
-        ^HEFD.UPBT(VOLUME_DOWN_BUTTON, Zero)
-        Notify(^HEFD, 0xC7) // Notify Virtual GPIO driver that Windows Home button is released.
-      }
     }
 
     // "L" Scan Code = 0x26 (Rotation Lock)
@@ -629,17 +597,6 @@ Device(H_EC)  // Nuvoton Embedded Controller
         ^VGBI.UPBT(ROTATION_LOCK_BUTTON, Zero)
         Notify(^VGBI, 0xC9) 	// Notify Virtual GPIO driver that Rotation Lock button is released.
       }
-
-      If(LAnd(CondRefOf(^HEFD._STA),LEqual(And(^HEFD._STA(),One),One))) // HID driver is loaded(means it is Win10)
-      {
-        Sleep(1000)
-        
-        ^HEFD.UPBT(ROTATION_LOCK_BUTTON, One)
-        Notify(^HEFD, 0xC8) // Notify Virtual GPIO driver that Windows Home button is pressed.
-        
-        ^HEFD.UPBT(ROTATION_LOCK_BUTTON, Zero)
-        Notify(^HEFD, 0xC9) // Notify Virtual GPIO driver that Windows Home button is released.
-      }
     }
 
 
@@ -653,13 +610,15 @@ Device(H_EC)  // Nuvoton Embedded Controller
         
         If(And(PB1E, 0x08)) 	// Slave/Laptop Mode changed 0 -> 1 Laptop mode
         {
-          ^VGBI.UPBT(CONVERTIBLE_BUTTON, Zero)
-          Notify(^VGBI, 0xCC) 	// Notify Virtual GPIO driver that the system is now in Laptop mode.
-        } 
-		Else 
-		{ 		// Slave/Laptop Mode Changed 1 -> 0 Slate/Tablet Mode                              
+    P8XH(0,0x1)
           ^VGBI.UPBT(CONVERTIBLE_BUTTON, One)
-          Notify(^VGBI, 0xCD) 	// Notify Virtual GPIO driver that the system is now in Slate/Tablet mode.
+          Notify(^VGBI, 0xCD) 	// Notify Virtual GPIO driver that the system is now in Laptop mode.
+        } 
+	Else 
+	{ 		// Slave/Laptop Mode Changed 1 -> 0 Slate/Tablet Mode                              
+    P8XH(0,0x0)
+          ^VGBI.UPBT(CONVERTIBLE_BUTTON, Zero)
+          Notify(^VGBI, 0xCC) 	// Notify Virtual GPIO driver that the system is now in Slate/Tablet mode.
         }
         Xor(PB1E, 0x08, PB1E) 	// Toggle Slate/Laptop Lock Status
       }
@@ -676,13 +635,15 @@ Device(H_EC)  // Nuvoton Embedded Controller
         
         If(And(PB1E, 0x10))		// Dock/Undock status changed 0 -> 1 Dock mode
         {
-          ^VGBI.UPBT(DOCK_INDICATOR, Zero)
-          Notify(^VGBI, 0xCB)		// Notify Virtual GPIO driver that the system is now in Dock mode.
-        }
-		Else
-		{			// Dock/Undock status Changed 1 -> 0 Undock mode                              
+    P8XH(0,0x1)
           ^VGBI.UPBT(DOCK_INDICATOR, One)
-          Notify(^VGBI, 0xCA)		// Notify Virtual GPIO driver that the system is now in Undock mode.
+          Notify(^VGBI, 0xCA)		// Notify Virtual GPIO driver that the system is now in Dock mode.
+        }
+	Else
+	{			// Dock/Undock status Changed 1 -> 0 Undock mode                              
+    P8XH(0,0x0)
+          ^VGBI.UPBT(DOCK_INDICATOR, Zero)
+          Notify(^VGBI, 0xCB)		// Notify Virtual GPIO driver that the system is now in Undock mode.
         }
         Xor(PB1E, 0x10, PB1E)		// Toggle Dock/Undock Status
       }
@@ -914,22 +875,6 @@ Device(H_EC)  // Nuvoton Embedded Controller
         ^VGBI.UPBT(VOLUME_UP_BUTTON, Zero)
         Notify(^VGBI, 0xC5) // Notify Virtual GPIO driver that Volume UP button is released.
       } //EndIf
-
-      If(LAnd(CondRefOf(^HEFD._STA),LEqual(And(^HEFD._STA(),One),One)))
-      {
-    P8XH(0,0x80)
-        ^HEFD.UPBT(VOLUME_UP_BUTTON, One)
-        Notify(^HEFD, 0xC4) // Notify Virtual GPIO driver that Volume UP button is pressed.
-        ^HEFD.UPBT(VOLUME_UP_BUTTON, Zero)
-        Notify(^HEFD, 0xC5) // Notify Virtual GPIO driver that Volume UP button is released.
-      } //EndIf
-      //Notify Android
-      If (LEqual(OSEL, 1))
-      {
-        Notify(\_SB.PIND, 0x80) // VOL_UP event index 
-      }
-
-
   }
   
   
@@ -951,19 +896,6 @@ Device(H_EC)  // Nuvoton Embedded Controller
         ^VGBI.UPBT(VOLUME_DOWN_BUTTON, Zero)
         Notify(^VGBI, 0xC7) // Notify Virtual GPIO driver that Volue Down button is released.
       }
-      If(LAnd(CondRefOf(^HEFD._STA),LEqual(And(^HEFD._STA(),One),One)))
-      {
-    P8XH(0,0x81)
-        ^HEFD.UPBT(VOLUME_UP_BUTTON, One)
-        Notify(^HEFD, 0xC6) // Notify Virtual GPIO driver that Volume UP button is pressed.
-        ^HEFD.UPBT(VOLUME_UP_BUTTON, Zero)
-        Notify(^HEFD, 0xC7) // Notify Virtual GPIO driver that Volume UP button is released.
-      } //EndIf
-      //Notify Android
-      If (LEqual(OSEL, 1))
-      {
-        Notify(\_SB.PIND, 0x81) // VOL_DOWN event index
-      }
   }
   
   Method(_Q85)    // Windows Home button
@@ -984,19 +916,7 @@ Device(H_EC)  // Nuvoton Embedded Controller
         ^VGBI.UPBT(WINDOWS_BUTTON, Zero)
         Notify(^VGBI, 0xC3) // Notify Virtual GPIO driver that Windows Home button is released.
       }
-      If(LAnd(CondRefOf(^HEFD._STA),LEqual(And(^HEFD._STA(),One),One)))
-      {
-    P8XH(0,0x85)
-        ^HEFD.UPBT(WINDOWS_BUTTON, One)
-        Notify(^HEFD, 0xC2) // Notify Virtual GPIO driver that Volume UP button is pressed.
-        ^HEFD.UPBT(WINDOWS_BUTTON, Zero)
-        Notify(^HEFD, 0xC3) // Notify Virtual GPIO driver that Volume UP button is released.
-      } //EndIf
-      //Notify Android
-      If (LEqual(OSEL, 1))
-      {
-        Notify(\_SB.PIND, 0x82) // HOME_BUTTON event index
-      }
+
   }
 
   Method(_Q86)    // Power button
@@ -1017,14 +937,6 @@ Device(H_EC)  // Nuvoton Embedded Controller
         ^VGBI.UPBT(POWER_BUTTON, Zero)
         Notify(^VGBI, 0xC1) // Notify Virtual GPIO driver that Power button is released.
       }
-      If(LAnd(CondRefOf(^HEFD._STA),LEqual(And(^HEFD._STA(),One),One)))
-      {
-    P8XH(0,0x86)
-        ^HEFD.UPBT(POWER_BUTTON, One)
-        Notify(^HEFD, 0xCE) // Notify Virtual GPIO driver that Volume UP button is pressed.
-        ^HEFD.UPBT(POWER_BUTTON, Zero)
-        Notify(^HEFD, 0xCF) // Notify Virtual GPIO driver that Volume UP button is released.
-      } //EndIf
   }
 
 
@@ -1046,14 +958,6 @@ Device(H_EC)  // Nuvoton Embedded Controller
         ^VGBI.UPBT(ROTATION_LOCK_BUTTON, Zero)
         Notify(^VGBI, 0xC9) // Notify Virtual GPIO driver that Rotation Lock button is released.
       }
-      If(LAnd(CondRefOf(^HEFD._STA),LEqual(And(^HEFD._STA(),One),One)))
-      {
-    P8XH(0,0x87)
-        ^HEFD.UPBT(ROTATION_LOCK_BUTTON, One)
-        Notify(^HEFD, 0xC8) // Notify Virtual GPIO driver that Volume UP button is pressed.
-        ^HEFD.UPBT(ROTATION_LOCK_BUTTON, Zero)
-        Notify(^HEFD, 0xC9) // Notify Virtual GPIO driver that Volume UP button is released.
-      } //EndIf
   }
   Method(_QD5)    // 10 second power button press.
   {
@@ -1163,142 +1067,14 @@ Device(H_EC)  // Nuvoton Embedded Controller
        //If(LAnd(And(IUCE,1), LGreaterEqual(OSYS, 2012)))
        If(LGreaterEqual(OSYS, 2012))
        {
+         If(And(PB1E, 1)) // Virtual Power Button is enabled?
+         {
 			Return(0x000F)
+		 }
        }
        Return(0x00)
      }
   }
-
-  Device(DOCK)  // docking/undocking.
-  {
-     Name(_HID, "INT33D4")
-     Name(_CID, "PNP0C70")								// define for dock
-    
-     Method(_STA, 0,Serialized)
-     {
-       If(LGreaterEqual(OSYS, 2012))
-       {
-			Return(0x000F)
-       }
-       Return(0x00)
-     }
-  }
-
-  Device(HEFD)                                  //  Intel HID Event Filter Driver 
-  {
-  
-    Name(_HID, EISAID("INT33D5"))               // HID for Intel Virtual GPIO Button Interface.
-    Name(BTHS, 0)
-    Name(HDSA, 0)                               // The driver will call this ASL function during D0 entry and D0 exit to let the platform know its current status
-    
-    Method(_STA,0,Serialized)
-    {
-      If(LGreaterEqual(OSYS,2013))              // Intel HID Event Filter Driver  applicable for Win10 and higher version of WinOS
-      {
-        If(LAnd(HIDE, 1))						// Intel HID Event Filter Driver is enabled?
-        {
-			Return(0x0F)                        // Device present,enabled and should be shown in UI.
-		} 
-      }
-      Return(0x00)                              // Device NOT present
-    }// End of _STA
-
-    Method(HDMM,0,Serialized)
-    {
-      Return (0)  //Simple mode
-    }
-
-    Method(HDSM,1,Serialized)
-    {
-      Store (Arg0, HDSA)                         // 0 - Driver not available.  1 - Driver available.
-	  Return (0)
-    }
-
-    Method(HDEM,0,Serialized)
-    {
-      // Notification Code to be sent by BIOS: 0xC0.
-      // Index values returned by 'HDEM' method:
-    
-      //turn (Index)  
-	  Return (0)
-    }
-
-    Method(BTNE,1,Serialized) 
-    {
-      // Bits [5-31] - Reserved 
-      // Bits [4] – Rotation Lock Button  
-      // 0 = Rotation Lock Button needs to be disabled
-      // 1 = Rotation Lock Button needs to be enabled
-      // Bits [3] – Volume Down Button  
-      // 0 = Volume Down Button needs to be disabled
-      // 1 = Volume Down Button needs to be enabled
-      // Bits [2] – Volume Up Button  
-      // 0 = Volume Up Button needs to be disabled
-      // 1 = Volume Up Button needs to be enabled
-      // Bits [1] – Windows Button  
-      // 0 = Windows Button needs to be disabled
-      // 1 = Windows Button needs to be enabled
-      // Bits [0] – Power Button 
-      // 0 = Power Button needs to be disabled
-      // 1 = Power Button needs to be enabled
-
-      If (LAnd (Arg0, POWER_BUTTON))
-      {
-        UPBT(POWER_BUTTON, One)
-      }
-
-      If (LAnd (Arg0, WINDOWS_BUTTON))
-      {
-        UPBT(WINDOWS_BUTTON, One)
-      }      
-
-      If (LAnd (Arg0, VOLUME_UP_BUTTON))
-      {
-        UPBT(VOLUME_UP_BUTTON, One)
-      }
-
-      If (LAnd (Arg0, VOLUME_DOWN_BUTTON))
-      {
-        UPBT(VOLUME_DOWN_BUTTON, One)
-      }     
-
-      If (LAnd (Arg0, ROTATION_LOCK_BUTTON))
-      {
-        UPBT(ROTATION_LOCK_BUTTON, One)
-      }       
-    }
-    
-    Method(BTNS,0,Serialized) 
-    {
-      Return(BTHS)
-    }
-
-    //
-    // UPBT Update Button Status
-    //
-    // Arg0: Bit location of the target button
-    //       0: Power Button
-    //       1: Windows Button
-    //       2: Volume up Button
-    //       3: Volume down Button
-    //       4: Rotation Lock Button
-    //       5: Reserved
-    //       6: Convertible state 0 - Slate, 1 - Notebook
-    //       7: Dock Indicator 0 - Undock, 1 - Dock
-    //       
-    // Arg1: On/Off state, 0 - Clear the target bit, 1 - Set the target bit.
-    // 
-    Method(UPBT,2,Serialized)  // Update Button Status 
-    {
-      ShiftLeft(One, Arg0, Local0)
-      if(Arg1){                // Button Press/ON
-        Or(BTHS, Local0, BTHS)
-      } Else {                 // Button Press/OFF
-        And(BTHS, Not(Local0),BTHS) 
-      }
-    } // End of UPBT
-
-  } // End of HEFD
 
   Device(VGBI)                                  // Virtual GPIO Button "Interface."
   {
@@ -1348,7 +1124,7 @@ Device(H_EC)  // Nuvoton Embedded Controller
       If(LEqual(ONTM,0))
       {
         // Initial setup option on VBDS and thereafter hotkeys should be updating the VBDS
-        If(And(PB1E, 0x08)) 	// Slave/Laptop Mode changed 0 -> 1 Laptop mode
+        if(LEqual(And(PB1E,0x08),0x08)) // Slate/Laptop(CalmShell)
         {
           UPBT(CONVERTIBLE_BUTTON,One)
         }
@@ -1357,7 +1133,7 @@ Device(H_EC)  // Nuvoton Embedded Controller
           UPBT(CONVERTIBLE_BUTTON,Zero)
         }
 
-        If(And(PB1E, 0x10))		// Dock/Undock status changed 0 -> 1 Dock mode
+        if(LEqual(And(PB1E,0x10),0x10))  // Undock/Dock
         {
           UPBT(DOCK_INDICATOR,One)
         }

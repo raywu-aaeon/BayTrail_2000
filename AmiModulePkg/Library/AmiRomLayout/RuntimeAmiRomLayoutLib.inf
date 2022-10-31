@@ -22,7 +22,6 @@
   MODULE_TYPE                    = DXE_RUNTIME_DRIVER
   LIBRARY_CLASS                  = AmiRomLayoutLib|DXE_RUNTIME_DRIVER
   CONSTRUCTOR                    = RuntimeAmiRomLayoutLibConstructor
-  DESTRUCTOR                     = RuntimeAmiRomLayoutLibDestructor
   
 [Sources]
   RuntimeAmiRomLayoutLib.c
@@ -44,7 +43,6 @@
   MemoryAllocationLib
   BaseMemoryLib
   HobLib
-  DebugLib
 
 #**********************************************************************
 #**********************************************************************

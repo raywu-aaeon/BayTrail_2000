@@ -585,16 +585,16 @@ PchInitSingleRootPort (
     );
 
   ///
-  /// Set B0:D28:F0~F3 + D0h[24] = 0h
-  /// Set B0:D28:F0~F3 + D0h[15] = 1h
-  /// Set B0:D28:F0~F3 + D0h[14] = 1h
+  /// Set B0:D28:F0 + D0h[24] = 0h
+  /// Set B0:D28:F0 + D0h[15] = 1h
+  /// Set B0:D28:F0 + D0h[14] = 1h
   ///
   Data32And = (UINT32) (~B_PCH_PCIE_CHCFG_UPSD);
   Data32Or  = (UINT32) (B_PCH_PCIE_CHCFG_UNRS | B_PCH_PCIE_CHCFG_UPRS);
   MmioAndThenOr32 (RPBase1 + R_PCH_PCIE_CHCFG, Data32And, Data32Or);
   S3BootScriptSaveMemReadWrite (
     EfiBootScriptWidthUint32,
-    (UINTN) (RPBase1 + R_PCH_PCIE_CHCFG),
+    (UINTN) (RPBase + R_PCH_PCIE_CHCFG),
     &Data32Or,  /// Data to be ORed
     &Data32And  /// Data to be ANDed
     );

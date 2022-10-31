@@ -1,8 +1,8 @@
 <component>
-    name = "SdioInt13Protocols"
-    category = ModulePart
-    LocalRoot = "AmiModulePkg\Include\Protocol\"
-    RefName = "SdioInt13Protocols"
+	name = "SdioInt13Protocols"
+	category = ModulePart
+	LocalRoot = "AmiModulePkg\Include\Protocol\"
+	RefName = "SdioInt13Protocols"
 [files]
-"SdioInt13Protocol.h"
+"SdioInt13Protocol.h"	
 <endComponent>

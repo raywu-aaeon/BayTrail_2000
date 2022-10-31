@@ -151,10 +151,15 @@
 //
 //**********************************************************************
 
-/** @file CpuSetup.c
-    CPU Setup Rountines
-
-**/
+//<AMI_FHDR_START>
+//---------------------------------------------------------------------------
+//
+// Name:	CPUSetup.c
+//
+// Description:	CPU Setup Rountines
+//
+//---------------------------------------------------------------------------
+//<AMI_FHDR_END>
 
 #include <Setup.h>
 #include <AmiCspLibInc.h>
@@ -278,45 +283,56 @@ UINT16 mValleyViewFSBTable[4] = {
   1167          // 116.7MHz
 };
 
-/**
-    Get the cpu signature.
-
-    @param VOID
-
-    @retval Cpu Signature
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   GetCpuSignature
+//
+// Description: Get the cpu signature.
+//
+// Input:       VOID
+//
+// Output:      Cpu Signature
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 UINT32 GetCpuSignature()
 {
     UINT32 CpuSignature, CpuIdEBX, CpuIdECX, CpuIdEDX;
     CPULib_CpuID(1, &CpuSignature, &CpuIdEBX, &CpuIdECX, &CpuIdEDX);
     return CpuSignature;
 }
-
-/**
-    Get the cpu Fsb From Msr 0xCD.
-
-    @param VOID
-
-    @retval FSB Value
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:   GetCpuFsbFromMsr
+//
+// Description: Get the cpu Fsb From Msr 0xCD.
+//
+// Input:       VOID
+//
+// Output:      FSB Value
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 UINT32 GetCpuFsbFromMsr()
 {
     UINT64	Temp;
     Temp = (AsmReadMsr64 (0xCD)) & 0x03;
     return mValleyViewFSBTable[(UINT32)(Temp)];
 }
-
-/**
-    Get socket number from Apic ID.
-
-        
-    @param ApicId 
-
-    @retval UINT32 Physical Socket Id
-
-**/
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:   GetBoardSocketNumber
+//
+// Description: Get socket number from Apic ID.
+//
+// Input:
+//  IN UINT32 ApicId
+//
+// Output:  UINT32 - Physical Socket Id
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 static UINT32 GetBoardSocketNumber(IN UINT32 ApicId)
 {
@@ -330,16 +346,23 @@ static UINT32 GetBoardSocketNumber(IN UINT32 ApicId)
     return ApicId / MaxThreadsPackage;
 }
 
-/**
-    Get the max speed from the brand string.
 
-        
-    @param CpuBrandString Pointer to CPU brand string. 
-    @param CpuMaxSpeedString Pointer to string with format "9999 MHz"; 9999 can be any 4 digit number.
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:   GetMaxSpeedFromBrandString
+//
+// Description: Get the max speed from the brand string.
+//
+// Input:
+//  IN CHAR8    *CpuBrandString - Pointer to CPU brand string. 
+//  OUT CHAR8   *CpuMaxSpeedString -Pointer to string with format "9999 MHz"; 9999 can be any 4 digit number.
+//
+// Output:  BOOLEAN - TRUE if frequency found.
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
-    @retval BOOLEAN TRUE if frequency found.
-
-**/
 BOOLEAN GetMaxSpeedFromBrandString(IN CHAR8 *CpuBrandString, OUT CHAR8 *CpuMaxSpeedString)
 {
     UINT32  i;
@@ -422,14 +445,20 @@ VOID FillCacheData(IN AMI_CPU_INFO_2_CACHE_DESCR *CacheDesc, IN UINT32 NumCacheE
     }
 }
 
-/**
-    Update setup for Tdc Tdp.
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:   UpdateSetupTdcTdp
+//
+// Description: Update setup for Tdc Tdp.
+//
+// Input: VOID
+//
+// Output:  VOID
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
-    @param VOID
-
-    @retval VOID
-
-**/
 VOID UpdateSetupTdcTdp()
 {
    if (gTdcTdpHob->IsSandyBridge) {
@@ -481,46 +510,64 @@ VOID UpdateSetupTdcTdp()
     }
 }
 
-/**
-    Callback on AMI CPU INFO protocol. Then call to init strings.
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:   LocateCpuInfoProt
+//
+// Description: Callback on AMI CPU INFO protocol. Then call to init strings.
+//
+// Input:
+//  IN EFI_EVENT Event - Not used
+//  IN VOID *Context - Not Used
+//
+// Output:  VOID
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
-        
-    @param Event Not used
-    @param Context Not Used
-
-    @retval VOID
-
-**/
 VOID LocateCpuInfoProt(IN EFI_EVENT Event, IN VOID *Context)
 {
     pBS->LocateProtocol (&gAmiCpuInfoProtocolGuid, NULL, &gCpuInfoProt);
     InitCpuInfo();
 }
 
-/**
-    Callback on AMI CPU INFO 2 protocol. Then call to init strings.
+//<AMI_PHDR_START>
+//---------------------------------------------------------------------------
+//
+// Procedure:   LocateCpuInfoProt
+//
+// Description: Callback on AMI CPU INFO 2 protocol. Then call to init strings.
+//
+// Input:
+//  IN EFI_EVENT Event - Not used
+//  IN VOID *Context - Not Used
+//
+// Output:  VOID
+//
+//---------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
-        
-    @param Event Not used
-    @param Context Not Used
-
-    @retval VOID
-
-**/
 VOID LocateCpuInfo2Prot(IN EFI_EVENT Event, IN VOID *Context)
 {
     pBS->LocateProtocol (&gAmiCpuInfo2ProtocolGuid, NULL, &gCpuInfo2Prot);
     InitCpuInfo();
 }
 
-/**
-    Initialize CPU strings.
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:	InitCpuInfo
+//
+// Description:	Initialize CPU strings.
+//
+// Input: VOID
+//
+// Output:
+//      VOID
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
-    @param VOID
-
-    @retval VOID
-
-**/
 static VOID InitCpuInfo()
 {
     UINTN                   CpuNumber = 0;
@@ -834,16 +881,21 @@ static VOID InitCpuInfo()
     }
 }
 
-/**
-    Initialize CPU strings.
-
-        
-    @param HiiHandle 
-    @param Class 
-
-    @retval VOID
-
-**/
+//<AMI_PHDR_START>
+//----------------------------------------------------------------------------
+// Procedure:	InitCpuInfo
+//
+// Description:	Initialize CPU strings.
+//
+// Input:
+//      IN EFI_HII_HANDLE   HiiHandle
+//      IN UINT16           Class
+//
+// Output:
+//      VOID
+//
+//----------------------------------------------------------------------------
+//<AMI_PHDR_END>
 
 VOID InitCPUStrings(EFI_HII_HANDLE HiiHandle, UINT16 Class)
 {
