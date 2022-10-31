@@ -840,7 +840,7 @@ End
 
 TOKEN
 	Name  = "DEBUG_MODE"
-	Value  = "0"
+	Value  = "1"
 	TokenType = Boolean
 	TargetH = Yes
 	TargetMAK = Yes
@@ -857,7 +857,7 @@ End
 
 TOKEN
 	Name  = "SERIAL_DEBUG"
-	Value  = "0"
+	Value  = "1"
 	Help  = "A switch to print TSE Debug messages over Serial Port."
 	TokenType = Boolean
 	TargetH = Yes
@@ -891,23 +891,23 @@ TOKEN
 	TargetH = Yes
 	Token = "DEBUG_MODE" "=" "1"
 End
-
-INFComponent
-	Name  = "PlatformHookSerialPortLib"
-	File  = "PlatformHookSerialPortLib.inf"
-	Package  = "AmiModulePkg"
-	Token = "DEBUG_MODE" "=" "1"
-	Disable = Yes
-End
-
-LibraryMapping
-	Class  = "PlatformHookLib"
-	Instance  = "AmiModulePkg.PlatformHookSerialPortLib"
-	Token = "DEBUG_MODE" "=" "1"
-	Token = "SOC_UART_PRESENT" "=" "0"
-	ModuleTypes  = "PEIM PEI_CORE"
-	Disable = Yes
-End
+#
+#INFComponent
+#	Name  = "PlatformHookSerialPortLib"
+#	File  = "PlatformHookSerialPortLib.inf"
+#	Package  = "AmiModulePkg"
+#	Token = "DEBUG_MODE" "=" "1"
+#	Disable = Yes
+#End
+#
+#LibraryMapping
+#	Class  = "PlatformHookLib"
+#	Instance  = "AmiModulePkg.PlatformHookSerialPortLib"
+#	Token = "DEBUG_MODE" "=" "1"
+#	Token = "SOC_UART_PRESENT" "=" "0"
+#	ModuleTypes  = "PEIM PEI_CORE"
+#	Disable = Yes
+#End
 
 TOKEN
 	Name  = " "
