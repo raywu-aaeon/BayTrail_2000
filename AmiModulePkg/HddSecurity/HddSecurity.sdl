@@ -1,6 +1,6 @@
 TOKEN
     Name  = "HDD_SECURITY_SUPPORT"
-    Value  = "1"
+    Value  = "0"
     Help  = "Main switch to enable HddSecurity support in Project"
     TokenType = Boolean
     TargetEQU = Yes
