@@ -359,11 +359,11 @@ Method(_OSC,4,Serialized)
       // Disable GPEs for features granted native control.
       If(And(CTRL,0x01))
       {
-        NHPG()
+        //NHPG()
       }
       If(And(CTRL,0x04))      // PME control granted?
       {
-        NPME()
+        //NPME()
       }
     }
 #else
@@ -378,11 +378,11 @@ Method(_OSC,4,Serialized)
         // Disable GPEs for features granted native control.
         If(And(CTRL,0x01))
         {
-          NHPG()
+          //NHPG()
         }
         If(And(CTRL,0x04))      // PME control granted?
         {
-          NPME()
+          //NPME()
         }
       }
     }
