@@ -84,7 +84,11 @@
 "MdeModulePkg\Universal\SecurityStubDxe\SecurityStub.cif"= "SS: AptioV;$/AptioV/Source/Modules/SecurityStub;5.004_SecurityStub_01"
 "UefiCpuPkg\CpuIo.cif"= "SS: AptioV;$/AptioV/Source/Modules/CpuIo;5.004_CpuIo_01"
 "AmiModulePkg\IO\AmiSioCore.cif"= Private
-"AmiModulePkg\IO\NPCE791x\NPCE791x.cif"= Private
+"AaeonIoPkg\SioDynamicSetupLoadDefaults_Mod\SioDynamicSetupLoadDefaults.cif"
+"AaeonIoPkg\F81866\F81866.cif"= "SS: AptioV;$/AptioV/Source/Hardware/SuperIo/Fintek/F81866;5.004_SIO_F81866_Gen03_A00"
+"AaeonIoPkg\F81866\F81866Asl.cif"= "SS: AptioV;$/AptioV/Source/Hardware/SuperIo/Fintek/F81866;5.004_SIO_F81866_Gen03_A00"
+"AaeonIoPkg\F81866\F81866Setup.cif"= "SS: AptioV;$/AptioV/Source/Hardware/SuperIo/Fintek/F81866;5.004_SIO_F81866_Gen03_A00"
+"AaeonIoPkg\F81866\F81866HwMonitor.cif"= "SS: AptioV;$/AptioV/Source/Hardware/SuperIo/Fintek/F81866;5.004_SIO_F81866_Gen03_A00"
 "AmiModulePkg\Flash\Flash.cif"= "SS: AptioV;$/AptioV/Source/Hardware/Flash/Flash;5.004_Flash_09"
 "AmiModulePkg\Flash\FWH\FwhFlash.cif"= "SS: AptioV;$/AptioV/Source/Hardware/Flash/Flash/FWH;5.004_Flash_09"
 "AmiModulePkg\Flash\LPC\LpcFlash.cif"= "SS: AptioV;$/AptioV/Source/Hardware/Flash/Flash/LPC;5.004_Flash_09"
@@ -461,6 +465,7 @@
 "FOTA\CapsuleGen\CapsuleGen.cif"= Private
 "FOTA\SysFwUpdStitcher\SysFwUpdStitcher.cif"= Private
 "FOTA\SysFwUpdStitcher\v0.6\v0.6.cif"= Private
+"AmiModulePkg\NTFS\NTFS.cif"
 "BayTrailPkg\Crb.cif"= Private
 "BayTrailPkg\CrbSetup\CrbSetup.cif"= Private
 "BayTrailPkg\Include\Include.cif"= Private
@@ -470,3 +475,47 @@
 "BayTrailPkg\Library\LibraryInstances.cif"= Private
 "BayTrailPkg\Library\KscLib\KscLib.cif"= Private
 "BayTrail.cif"= Private
+"AaeonIoPkg\AaeonIoPkg.cif"
+"AaeonCommonPkg\AaeonCommonPkg.cif"= Private
+"AaeonCommonPkg\AaeonBfpi\AaeonBfpi.cif"= Private
+"AaeonCommonPkg\AaeonBfpi\AaeonBfpiReportCapability\AaeonBfpiReportCapability.cif"= Private
+"AaeonCommonPkg\F75111PeiPkg\F75111PeiPkg.cif"= Private
+"AaeonCommonPkg\Ptn3460PeiPkg\Ptn3460PeiPkg.cif"= Private
+"AaeonCommonPkg\SecDecodePkg\SecDecodePkg.cif"= Private
+"AaeonCommonPkg\AaeonSetup\AaeonSetup.cif"= Private
+"AaeonCommonPkg\AaeonSetup\LibraryInstances\LibraryInstances.cif"= Private
+"AaeonCommonPkg\AaeonSetup\SignOnMessage\SignOnMessage.cif"= Private
+"AaeonCommonPkg\AaeonSecureBoot\AaeonSecureBoot.cif"= Private
+"AaeonCommonPkg\AaeonDioPkg\AaeonDioPkg.cif"= Private
+"AaeonCommonPkg\AaeonDio2Pkg\AaeonDio2Pkg.cif"= Private
+"AaeonCommonPkg\AaeonDio3\AaeonDio3.cif"= Private
+"AaeonCommonPkg\AaeonDio3\AaeonDio3ReportCapability\AaeonDio3ReportCapability.cif"= Private
+"AaeonCommonPkg\AaeonMagicWordPkg\AaeonMagicWordPkg.cif"= Private
+"AaeonCommonPkg\AaeonUartModePkg\AaeonUartModePkg.cif"= Private
+"AaeonCommonPkg\AaeonUartMode2Pkg\AaeonUartMode2Pkg.cif"= Private
+"AaeonCommonPkg\AaeonMultiVbiosPkg\AaeonMultiVbiosPkg.cif"= Private
+"AaeonCommonPkg\AaeonOemBeepMap\AaeonOemBeepMap.cif"= Private
+"AaeonCommonPkg\AaeonRtcWakePkg\AaeonRtcWakePkg.cif"= Private
+"AaeonCommonPkg\AaeonPowerMode\AaeonPowerMode.cif"= Private
+"AaeonCommonPkg\AaeonGpioIdPkg\AaeonGpioIdPkg.cif"= Private
+"AaeonCommonPkg\PTN3460Cfg\PTN3460Cfg.cif"= Private
+"AaeonCommonPkg\PTN3460Cfg\PTN3460CfgSetup.cif"= Private
+"AaeonCommonPkg\PTN3460Cfg\PTN3460OemHooks/PTN3460OemHooks.cif"= Private
+"AaeonCommonPkg\AutoLoadDefault\AutoLoadDefault.cif"= Private
+"AaeonCommonPkg\IPCBU_BiosInfoPeiPkg\BiosInfoPei.cif"= Private
+"AaeonCommonPkg\HiManagerUUID\HiManagerUUID.cif"= Private
+"AaeonCommonPkg\AaeonUefiLanPkg\AaeonLanUefiDriver.cif"= Private
+"AaeonCommonPkg\SioLdnDefaultDisable\SioLdnDefaultDisable.cif"= Private
+"AaeonCommonPkg\AaeonSWSmm\AaeonSWSmm.cif"= Private
+"AaeonCommonPkg\MacToUUIDPkg\MacToUUID.cif"= Private
+"AaeonCommonPkg\AaeonRunningTime\AaeonRunningTime.cif"= Private
+"AaeonCommonPkg\AaeonDefaultPwd\AaeonDefaultPwd.cif"= Private
+"AaeonCommonPkg\AaeonUartOverride\AaeonUartOverride.cif"= Private
+"AaeonCommonPkg\AaeonBiosRobot\AaeonBiosRobot.cif"= Private
+"AaeonCommonPkg\AaeonBiosRobot\PowerOnRobot\PowerOnRobot.cif"= Private
+"AaeonCommonPkg\AaeonBiosRobot\SentryRobot\SentryRobot.cif"= Private
+"AaeonCommonPkg\AaeonBiosRobot\WatchRobot\WatchRobot.cif"= Private
+"AaeonCommonPkg\AaeonCapsuleUpdate\AaeonCapsuleUpdate.cif"= Private
+"AaeonCommonPkg\ScreenRotation\ScreenRotation.cif"= "SS: AptioV;$/AptioV/Source/Modules/ScreenRotation;ScreenRotation_04"
+"AaeonCommonPkg\ScreenRotation\AbsolutePointerRotation\AbsolutePointerRotation.cif"= "SS: AptioV;$/AptioV/Source/Modules/ScreenRotation/AbsolutePointerRotation;ScreenRotation_04"
+"AaeonProject\AaeonProject.cif"

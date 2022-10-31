@@ -28,6 +28,7 @@
   IntelFrameworkPkg/IntelFrameworkPkg.dec       # Optional. should use Mde Library instead.
   AmiCompatibilityPkg/AmiCompatibilityPkg.dec   # Optional. should use Mde Library instead.
   AmiChipsetModulePkg/AmiChipsetModulePkg.dec   # Optional. should use Mde Library instead.
+  AaeonCommonPkg\AaeonCommonPkg.dec
 
 [LibraryClasses]
   PeimEntryPoint
@@ -36,6 +37,7 @@
   PciLib
   AmiPeiLib # Optional. should use Mde Library instead.
   AmiCspLib # Optional. should use Mde Library instead.
+  SbGetSetupData
 
 [Ppis]
   gEfiPeiSmbus2PpiGuid

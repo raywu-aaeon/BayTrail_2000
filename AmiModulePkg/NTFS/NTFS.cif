@@ -1,0 +1,11 @@
+<component>
+	name = "NTFS Driver"
+	category = eModule
+	LocalRoot = "AmiModulePkg\NTFS"
+	RefName = "NTFS"
+[INF]
+"NTFS.inf"
+[files]
+"NTFS.sdl"	
+"NTFS.chm" 
+<endComponent>

@@ -51,6 +51,8 @@
 #include <ppi\NBPPI.h>
 #include <ppi\SBPPI.h>
 
+#include <Library/SbPolicy.h>
+#include <AaeonCommonLib.h>
 //---------------------------------------------------------------------------
 // Constant, Macro and Type Definition(s)
 //---------------------------------------------------------------------------
@@ -101,6 +103,7 @@ CHAR8 CONST ProjectTag[5] = CONVERT_TO_STRING(CRB_PROJECT_TAG); //EIP137196
 AMI_GPIO_INIT_TABLE_STRUCT CrbGpioTable [] = {
 //    {13, GPIO_NC_OFFSET + IS_GPO + GPIO_PULL_DOWN},      //Program NCore GPIO_13 (It is a sample.)
 //    {01, GPIO_SC_OFFSET + GPIO_FUNC2 + GPIO_PULL_DOWN},  //Program SCore GPIO_01 (It is a sample.)
+    #include <OemGpio.h> // For 2000
     {0xffff, 0xffff}, // End of the table.
 };
 
@@ -129,7 +132,7 @@ static EFI_PEI_PPI_DESCRIPTOR gCrbPpiList[] =  {
 AMI_GPIO_INIT_PPI CrbGpioInitPpi = {
     IO_BASE_ADDRESS,
     CrbGpioTable,
-    TRUE
+    FALSE
 };
 
 AMI_SB_PCI_SSID_TABLE_STRUCT CrbSbSsidTable[] = {
@@ -385,6 +388,7 @@ CrbPeiInit (
   )
 {
     EFI_STATUS                  Status = EFI_SUCCESS;
+    SB_SETUP_DATA               PchPolicyData;
 
     Status = PeiServicesInstallPpi(gCrbPpiList); //EIP137196
 
@@ -392,6 +396,19 @@ CrbPeiInit (
     Status = (*PeiServices)->InstallPpi( PeiServices, CrbCustomPpi );
     ASSERT_PEI_ERROR( PeiServices, Status );
 #endif
+
+    GetSbSetupData((VOID *)PeiServices, &PchPolicyData, TRUE);
+
+    #if defined(F81866_SUPPORT) && (F81866_SUPPORT == 1)
+	if ( PchPolicyData.WdtEnabled )
+    {
+        F81866EnableWdt(PchPolicyData.WdtUnit, PchPolicyData.WdtTimer);	
+    }
+    else
+    {
+        F81866DisableWdt();
+    }
+    #endif
 
     return Status;
 }

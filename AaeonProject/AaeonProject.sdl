@@ -1,0 +1,1262 @@
+TOKEN
+	Name  = "AaeonProject_SUPPORT"
+	Value  = "1"
+	TokenType = Boolean
+	TargetEQU = Yes
+	TargetMAK = Yes
+	TargetH = Yes
+	Master = Yes
+End
+
+TOKEN
+	Name  = "PROJECT_TAG"
+	Value  = "2000A"
+	TokenType = Expression
+	TargetMAK = Yes
+	TargetH = Yes
+	TargetEQU = Yes
+End
+TOKEN
+	Name  = "AAEON_MAJOR_VERSION"
+	Value  = "0"
+	TokenType = Expression
+	TargetMAK = Yes
+	TargetH = Yes
+	TargetEQU = Yes
+	Range  = "Maximum 3 digits"
+End
+TOKEN
+	Name  = "AAEON_MINOR_VERSION"
+	Value  = "2"
+	TokenType = Expression
+	TargetMAK = Yes
+	TargetH = Yes
+	TargetEQU = Yes
+	Range  = "Maximum 3 digits"
+End
+TOKEN
+	Name  = "BUILD_FOR_TEST"
+	Value  = "0"
+	TokenType = Boolean
+	TargetMAK = Yes
+	TargetH = Yes
+	TargetEQU = Yes
+End
+TOKEN
+	Name  = "AAEON_ROM"
+	Value  = "$(PROJECT_TAG)$(PROJECT_BUILD).rom"
+	TokenType = Expression
+	TargetMAK = Yes
+	TargetH = Yes
+	TargetEQU = Yes
+	Range  = "valid file name"
+End
+TOKEN
+	Name  = "AAEON_BIN"
+	Value  = "$(PROJECT_TAG)$(PROJECT_BUILD).bin"
+	TokenType = Expression
+	TargetMAK = Yes
+	TargetH = Yes
+	TargetEQU = Yes
+	Range  = "valid file name"
+End
+TOKEN
+	Name  = "PROJECT_BUILD"
+	Value  = "M$(AAEON_MAJOR_VERSION)$(AAEON_MINOR_VERSION)"
+	TokenType = Expression
+	TargetMAK = Yes
+	TargetH = Yes
+	TargetEQU = Yes
+	Range  = "Maximum 3 digits"
+	Token = "BUILD_FOR_TEST" "=" "0"
+End
+TOKEN
+	Name  = "PROJECT_BUILD"
+	Value  = "T$(AAEON_MAJOR_VERSION)$(AAEON_MINOR_VERSION)"
+	TokenType = Expression
+	TargetMAK = Yes
+	TargetH = Yes
+	TargetEQU = Yes
+	Range  = "Maximum 3 digits"
+	Token = "BUILD_FOR_TEST" "=" "1"
+End
+TOKEN
+	Name  = "BIOS_TAG"
+	Value  = "$(PROJECT_TAG)$(PROJECT_BUILD)"
+	TokenType = Expression
+	TargetEQU = Yes
+	TargetH = Yes
+	TargetMAK = Yes
+End
+TOKEN
+	Name  = "AMI_ROM"
+	Value  = "$(AAEON_ROM)"
+	TokenType = Expression
+	TargetMAK = Yes
+	TargetH = Yes
+	Range  = "valid file name"
+End
+
+TOKEN
+	Name  = "EC_SUPPORT"
+	Value  = "0"
+	TokenType = Boolean
+	TargetEQU = Yes
+	TargetH = Yes
+End
+
+##// {2815ee9f-c8eb-4782-b85f-81815a6fa91b}
+##static const struct GUID __NAME__ = {0x2815ee9f, 0xc8eb, 0x4782, {0xb8, 0x5f, 0x81, 0x81, 0x5a, 0x6f, 0xa9, 0x1b}};
+TOKEN
+	Name  = "PLATFORM_GUID"
+	Value  = "2815ee9f-c8eb-4782-b85f-81815a6fa91b"
+	Help  = "The unique platform GUID that does into the description file.\MUST BE CLONED IN EVERY PROJECT!"
+	TokenType = Expression
+	TargetDSC = Yes
+End
+
+TOKEN
+	Name  = "FW_VERSION_GUID"
+	Value  = "{0x2815ee9f, 0xc8eb, 0x4782, {0xb8, 0x5f, 0x81, 0x81, 0x5a, 0x6f, 0xa9, 0x1b}}"
+	Help  = "FW Version GUID inserted into Firmware ID structure.\FW version has to be overridden for every project."
+	TokenType = Expression
+	TargetH = Yes
+	Range  = "GUID"
+End
+
+TOKEN
+	Name  = "ADJUST_GPIO_SUPPORT"
+	Value  = "0"
+	TokenType = BOOLEAN
+	TargetH = Yes
+End
+
+TOKEN
+    Name  = "SILENT"
+    Value  = "1"
+    Help  = "Enables/disables silent build mode.\In silent build mode executed commands are not displayed, and certain auxiliary build process messages are suppressed or displayed in a condensed format.\In non-silent build mode executed command are displayed prior to execution, and all auxiliary messages are visible.\Silent build mode is typically faster because less information goes into a build log.\Non-silent mode is useful for debugging of the build issues."
+    TokenType = Boolean
+    TargetMAK = Yes
+End
+
+TOKEN
+    Name  = "BYTI_DUAL_BOOT_TXE_SUPPORT"
+    Value  = "0"
+    Help  = "Enable the token to build BIOS include BayTrail-I Dual Boot 1.375MB TXE"
+    TokenType = Boolean
+    TargetMAK = Yes
+    TargetH = Yes
+End
+
+TOKEN
+	Name  = "TXE_1_375MB_SUPPORT"
+	Value  = "1"
+	Help  = "Enable the token to build BIOS include 1.375MB TXE"
+  	TokenType = Boolean
+	TargetMAK = Yes
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "AMI_DESKTOP_ROM_8MB_TXE_1_375MB"
+	Value  = "$(AAEON_BIN)"
+	Help  = "File name of the Full BIOS rom image."
+	TokenType = Expression
+	TargetMAK = Yes
+	TargetH = Yes
+	Range  = "valid file name"
+End
+
+TOKEN
+	Name  = "===== Module Disable ====="
+	TokenType = Integer
+End
+
+TOKEN
+	Name  = "AaeonMagicWordPkg_SUPPORT"
+	Value  = "0"
+	TokenType = Boolean
+	TargetEQU = Yes
+	TargetMAK = Yes
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "AaeonSecureBoot_SUPPORT"
+	Value  = "0"
+	Help  = "Main switch to enable Setup support in Project"
+	TokenType = Boolean
+	TargetEQU = Yes
+	TargetMAK = Yes
+	TargetH = Yes
+End
+
+TOKEN
+    Name  = "CRB_SETUP_SUPPORT"
+    Value  = "0"
+    Help  = "Main switch to enable CRB Setup support in Project"
+    TokenType = Boolean
+    TargetMAK = Yes
+    TargetH = Yes
+End
+
+TOKEN
+    Name  = "WIN8_FIRMWARE_UPDATE_SUPPORT"
+    Value  = "0"
+    Help  = "Enables/Disables the Windows 8.x firmware update support."
+    TokenType = Integer
+    TargetMAK = Yes
+    TargetH = Yes
+End
+
+TOKEN
+	Name  = "KBC_SUPPORT"
+	Value  = "0"
+	Help  = "Enable/Disable KBC support"
+	TokenType = Boolean
+	TargetEQU = Yes
+	TargetMAK = Yes
+	TargetH = Yes
+End
+
+TOKEN
+    Name  = "EdkShellBinPkg_SUPPORT"
+    Value  = "0"
+    Help  = "Main switch to enable EdkShellBinPkg support in Project"
+    TokenType = Boolean
+    TargetEQU = Yes
+    TargetMAK = Yes
+End
+
+TOKEN
+    Name  = SECURE_FLASH_SUPPORT
+    Value  = "0"
+    TokenType = Boolean
+    TargetEQU = Yes
+    TargetMAK = Yes
+    Help  = "Main switch to enable Security Flash in Project"
+End
+
+TOKEN
+	Name  = "ISCT_PLATFORM_SUPPORT"
+	Value  = "0"
+	Help  = "Main switch to enable ISCT support in Project"
+	TokenType = Boolean
+	TargetEQU = Yes
+	TargetMAK = Yes
+End
+
+TOKEN
+    Name  = HARDWARE_SIGNATURE_MANAGEMENT_SUPPORT
+    Value  = "0"
+    TokenType = Boolean
+    TargetEQU = Yes
+    TargetMAK = Yes
+    TargetH = Yes
+    Help  = "Main switch to enable HardwareSignatureManagement support in Project"
+End
+
+TOKEN
+	Name  = "POST_TIME_TUNING_SUPPORT"
+	Value  = "0"
+	Help  = "Main switch to enable Post Time Tuning module in Project"
+	TokenType = Boolean
+	TargetEQU = Yes
+	TargetMAK = Yes
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "Ipv6_SUPPORT"
+	Value  = "0"
+	Help  = "Main switch to enable Ipv6 stack support in Project"
+	TokenType = Boolean
+	TargetMAK = Yes
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "PS2Ctl_SUPPORT"
+	Value  = "0"
+	Help  = "Main switch to enable PS2 Controller support in the project."
+	TokenType = Boolean
+	TargetEQU = Yes
+	TargetMAK = Yes
+End
+
+TOKEN
+	Name  = "MMC_SUPPORT"
+	Value  = "0"
+	Help  = "This driver is not POR for BayTrail D&M and also doesn't test."
+	TokenType = Boolean
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "I2C_SUPPORT"
+	Value  = "0"
+	Help  = "Disable\Enable I2C feature."
+	TokenType = Boolean
+	TargetH = Yes
+End
+
+TOKEN
+    Name  = "OpalSecurity_SUPPORT"
+    Value  = "0"
+    Help  = "Main switch to enable OpalSecurity support in Project"
+    TokenType = Boolean
+    TargetH = Yes
+End
+
+TOKEN
+    Name  = "OA3_SUPPORT"
+    Value = "0"
+    Help  = "Main switch to enable OA3 support in the project"
+    TokenType = Boolean
+    TargetH = Yes
+End
+
+TOKEN
+	Name  = "OA2_SUPPORT"
+	Value  = "0"
+	Help  = "Main switch to enable OA2 support in Project"
+	TokenType = Boolean
+	TargetH = Yes
+End
+
+INFComponent
+	Name  = "SIOPEIINIT"
+	File  = "SioPeiInit.inf"
+	Package  = "AmiModulePkg"
+	ModuleTypes  = "PEIM"
+	Token = "SIO_SUPPORT" "=" "1"
+	Disable = Yes
+End
+
+TOKEN
+	Name  = "SOC_UART_PRESENT"
+	Value  = "0"
+	Help  = "SOC UART3(COM1) Present / Not Present. \\When OEM board have debug port from SIO, you only select one port to output debug message. If you use SIO debug port, you must turn off on token."
+	TokenType = Boolean
+	TargetH = Yes
+End
+
+ELINK
+	Name  = "{{SCAN_F10, 0},0, HandleSaveExitKey, 0 },"
+	Parent  = "{{SCAN_F4, 0 },0, AaeonHandleSaveExitKey, 0 },"
+	InvokeOrder = ReplaceParent
+End
+
+TOKEN
+	Name  = " "
+	TokenType = Integer
+End
+
+TOKEN
+	Name  = "===== SIO Configurations ====="
+	TokenType = Integer
+End
+
+TOKEN
+	Name  = "AaeonIoPkg_SUPPORT"
+	Value  = "1"
+	TokenType = Boolean
+	TargetEQU = Yes
+	TargetMAK = Yes
+	TargetH = Yes
+End
+
+TOKEN
+    Name  = "F81866_SUPPORT"
+    Value  = "1"
+    Help  = "Main switch to enable F81866 support in Project"
+    TokenType = Boolean
+    TargetEQU = Yes
+    TargetH = Yes
+End
+
+TOKEN
+    Name  = "F81866_CONFIG_INDEX"
+    Value  = "0x4E"
+    TokenType = Integer
+    TargetEQU = Yes
+    TargetH = Yes
+End
+TOKEN
+    Name  = "F81866_CONFIG_DATA"
+    Value  = "0x4F"
+    TokenType = Integer
+    TargetEQU = Yes
+    TargetH = Yes
+End
+SIODEVICE
+    Name  = "F81866"
+    Parent  = "LpcBridge"
+    IndexPort  = 04eh
+    DataPort  = 04fh
+    StdSioType  = "Yes"
+    DevSelReg  = 07h
+    ActivateReg  = 030h
+    ActivateVal  = 01h
+    DeActivateVal  = 00h
+    BaseHiReg1  = 060h
+    BaseLoReg1  = 061h
+    BaseHiReg2  = 062h
+    BaseLoReg2  = 063h
+    Irq1Reg  = 070h
+    Irq2Reg  = 072h
+    Dma1Reg  = 074h
+    Dma2Reg  = 075h
+    GblRegFlag  = "0x3fe000000000"
+    LocalRegFlag  = "0xffffffff0000000000000000000000000033000f000000000001000000000000"
+    EnterConfig  = "Script,'Index;Write;87h','Index;Write;87h'"
+    ExitConfig  = "Script,'Index;Write;aah'"
+    SMBIOSStr  = "Test String"
+    GPEbit  = 01dh
+    SleepNum  = 03h
+    ASLfile  = "'AaeonIoPkg\F81866\F81866DEV.asl','AaeonIoPkg\F81866\F81866EVT.asl'"
+    ASLdeviceName  = "SIO1"
+# >> AAEON_OVERRIDE
+#    ASL_PTS  = "Method;\_SB.PCI0.SBRG.SIO1.SIOS(Arg0)"
+#    ASL_WAK  = "Method;\_SB.PCI0.SBRG.SIO1.SIOW(Arg0)"
+    ASL_PTS  = "Method;SIO_PTS(Arg0)"
+    ASL_WAK  = "Method;SIO_WAK(Arg0)"
+# << AAEON_OVERRIDE
+End
+TOKEN
+    Name  = "F81866_PARALLEL_PORT_PRESENT"
+    Value  = "0"
+    Help  = "LPT Port Present / Not Present."
+    TokenType = Boolean
+    TargetH = Yes
+End
+TOKEN
+    Name  = "F81866_KEYBOARD_PRESENT"
+    Value  = "0"
+    Help  = "Keyboard Present / Not Present."
+    TokenType = Boolean
+    TargetH = Yes
+End
+TOKEN
+    Name  = "F81866_MOUSE_PRESENT"
+    Value  = "0"
+    Help  = "Mouse Present / Not Present."
+    TokenType = Boolean
+    TargetH = Yes
+End
+TOKEN
+	Name  = "F81866_UART3_LEVEL_EDGE_SHARE_MODE"
+	Value  = "0"
+	Help  = "Select IRQ Share active by Level or edge mode.\ 0: Sharing IRQ active low Level mode.\ 1: Sharing IRQ active high edge mode.\ Note: For details, please refer to F81866\Porting_Guide.md."
+	TokenType = Boolean
+	TargetH = Yes
+End
+TOKEN
+	Name  = "F81866_UART4_LEVEL_EDGE_SHARE_MODE"
+	Value  = "0"
+	Help  = "Select IRQ Share active by Level or edge mode.\ 0: Sharing IRQ active low Level mode.\ 1: Sharing IRQ active high edge mode.\ Note: For details, please refer to F81866\Porting_Guide.md."
+	TokenType = Boolean
+	TargetH = Yes
+End
+TOKEN
+	Name  = "F81866_UART5_LEVEL_EDGE_SHARE_MODE"
+	Value  = "0"
+	Help  = "Select IRQ Share active by Level or edge mode.\ 0: Sharing IRQ active low Level mode.\ 1: Sharing IRQ active high edge mode.\ Note: For details, please refer to F81866\Porting_Guide.md."
+	TokenType = Boolean
+	TargetH = Yes
+End
+TOKEN
+	Name  = "F81866_UART6_LEVEL_EDGE_SHARE_MODE"
+	Value  = "0"
+	Help  = "Select IRQ Share active by Level or edge mode.\ 0: Sharing IRQ active low Level mode.\ 1: Sharing IRQ active high edge mode.\ Note: For details, please refer to F81866\Porting_Guide.md."
+	TokenType = Boolean
+	TargetH = Yes
+End
+TOKEN
+	Name  = "SCL_PIN67_EN"
+	Value  = "0"
+	Help  = "0: Disable SCL\1: Enable SCL"
+	TokenType = Integer
+	TargetH = Yes
+End
+TOKEN
+	Name  = "SDA_PIN68_EN"
+	Value  = "0"
+	Help  = "0: Disable SDA\1: Enable SDA"
+	TokenType = Integer
+	TargetH = Yes
+End
+TOKEN
+	Name  = "GPIO67_EN"
+	Value  = "1"
+	Help  = "0: S5#\1: GPIO67"
+	TokenType = Integer
+	TargetH = Yes
+End
+TOKEN
+	Name  = "GPIO26_EN"
+	Value  = "1"
+	Help  = "0: PWOK\1: GPIO26"
+	TokenType = Integer
+	TargetH = Yes
+End
+TOKEN
+	Name  = "F81866_T1_MODE"
+	Value  = "0"
+	Help  = "0: TEMP1 is connected to a thermistor\1: TEMP1 is connected to a BJT.(default)"
+	TokenType = Integer
+	TargetH = Yes
+End
+TOKEN
+	Name  = "VIN2_RA"
+	Value  = "200"
+	TokenType = Integer
+	TargetH = Yes
+End
+TOKEN
+	Name  = "VIN2_RB"
+	Value  = "47"
+	TokenType = Integer
+	TargetH = Yes
+End
+TOKEN
+	Name  = "VIN3_RA"
+	Value  = "200"
+	TokenType = Integer
+	TargetH = Yes
+End
+TOKEN
+	Name  = "VIN3_RB"
+	Value  = "47"
+	TokenType = Integer
+	TargetH = Yes
+End
+TOKEN
+	Name  = "VIN4_RA"
+	Value  = "200"
+	TokenType = Integer
+	TargetH = Yes
+End
+TOKEN
+	Name  = "VIN4_RB"
+	Value  = "47"
+	TokenType = Integer
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "F81866_SMF1_SUPPORT"
+	Value  = "1"
+	Help  = "F81866 SmartFan 1 control support"
+	TokenType = Boolean
+	TargetMAK = Yes
+	TargetH = Yes
+	Token = "F81866_SMF_SUPPORT" "=" "1"
+End
+
+TOKEN
+	Name  = "F81866_SMF2_SUPPORT"
+	Value  = "1"
+	Help  = "F81866 SmartFan 2 control support"
+	TokenType = Boolean
+	TargetMAK = Yes
+	TargetH = Yes
+	Token = "F81866_SMF_SUPPORT" "=" "1"
+End
+
+TOKEN
+	Name  = "FAN1_TYPE"
+	Value  = "2"
+	Help  = "FAN1 output type\00: Output PWM mode (push pull) to control fans.\01: Use linear fan application circuit to control fan speed by fan's power terminal.\10: Output PWM mode (open drain) to control Intel 4-wire fans."
+	TokenType = Integer
+	TargetH = Yes
+	Token = "F81866_SMF_SUPPORT" "=" "1"
+End
+TOKEN
+	Name  = "FAN2_TYPE"
+	Value  = "2"
+	Help  = "FAN1 output type\00: Output PWM mode (push pull) to control fans.\01: Use linear fan application circuit to control fan speed by fan's power terminal.\10: Output PWM mode (open drain) to control Intel 4-wire fans."
+	TokenType = Integer
+	TargetH = Yes
+	Token = "F81866_SMF_SUPPORT" "=" "1"
+End
+
+TOKEN
+	Name  = "F81866_ERP_SUPPORT"
+	Value  = "0"
+	Help = "F81866_ERP_Miles++"
+	TokenType = Integer
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = " "
+	TokenType = Integer
+End
+
+TOKEN
+	Name  = "===== Digital I/O Configurations ====="
+	TokenType = Integer
+End
+TOKEN
+	Name  = "AaeonDio3_SUPPORT"
+	Value  = "1"
+	TokenType = Boolean
+	TargetEQU = Yes
+	TargetMAK = Yes
+	TargetH = Yes
+End
+INFComponent
+	Name  = "AaeonDio3Dxe"
+	File  = "AaeonDio3Dxe.inf"
+	Package  = "AaeonCommonPkg"
+	ModuleTypes  = "DXE_DRIVER"
+	Disable = Yes
+End
+TOKEN
+	Name  = "FIRST_DIO_NUMBER"
+	Value  = "16"
+	Help  = "Number of DIO pins provided by 1st DIO controller."
+	TokenType = Integer
+	TargetH = Yes
+End
+TOKEN
+	Name  = "DIO_INPUT_CAPABLE_MAP"
+	Value  = "0x0000FFFF"
+	Help = "A map for DIO input capability. Each bit represents correspond pin supports input mode or not. 1:supported/0:not supported."
+	TokenType = Integer
+	TargetH = Yes
+End
+TOKEN
+	Name  = "DIO_OUTPUT_CAPABLE_MAP"
+	Value  = "0x0000FFFF"
+	Help = "A map for DIO output capability Each bit represents correspond pin supports output mode or not. 1:supported/0:not supported."
+	TokenType = Integer
+	TargetH = Yes
+End
+TOKEN
+	Name  = "FIRST_DIO_DIR_DEFAULT"
+	Value  = "0x0000FF00"
+	Help  = "A map of direction default for first DIO. Each bit represents direction default for correspond pin.\0: Input\1: Output"
+	TokenType = Integer
+	TargetH = Yes
+End
+TOKEN
+	Name  = "DIO_0_GPIO_DEFAULT"
+	Value  = "0"
+	Help = "Default value of the <GPIO Number> option for DIO 1.\minimum: 0\maximum: 100\step: 1"
+	TokenType = Integer
+	TargetH = Yes
+End
+TOKEN
+	Name  = "DIO_1_GPIO_DEFAULT"
+	Value  = "1"
+	Help = "Default value of the <GPIO Number> option for DIO 2.\minimum: 0\maximum: 100\step: 1"
+	TokenType = Integer
+	TargetH = Yes
+End
+TOKEN
+	Name  = "DIO_2_GPIO_DEFAULT"
+	Value  = "2"
+	Help = "Default value of the <GPIO Number> option for DIO 3.\minimum: 0\maximum: 100\step: 1"
+	TokenType = Integer
+	TargetH = Yes
+End
+TOKEN
+	Name  = "DIO_3_GPIO_DEFAULT"
+	Value  = "3"
+	Help = "Default value of the <GPIO Number> option for DIO 4.\minimum: 0\maximum: 100\step: 1"
+	TokenType = Integer
+	TargetH = Yes
+End
+TOKEN
+	Name  = "DIO_4_GPIO_DEFAULT"
+	Value  = "74"
+	Help = "Default value of the <GPIO Number> option for DIO 5.\minimum: 0\maximum: 100\step: 1"
+	TokenType = Integer
+	TargetH = Yes
+End
+TOKEN
+	Name  = "DIO_5_GPIO_DEFAULT"
+	Value  = "75"
+	Help = "Default value of the <GPIO Number> option for DIO 6.\minimum: 0\maximum: 100\step: 1"
+	TokenType = Integer
+	TargetH = Yes
+End
+TOKEN
+	Name  = "DIO_6_GPIO_DEFAULT"
+	Value  = "76"
+	Help = "Default value of the <GPIO Number> option for DIO 7.\minimum: 0\maximum: 100\step: 1"
+	TokenType = Integer
+	TargetH = Yes
+End
+TOKEN
+	Name  = "DIO_7_GPIO_DEFAULT"
+	Value  = "77"
+	Help = "Default value of the <GPIO Number> option for DIO 8.\minimum: 0\maximum: 100\step: 1"
+	TokenType = Integer
+	TargetH = Yes
+End
+TOKEN
+	Name  = "DIO_8_GPIO_DEFAULT"
+	Value  = "80"
+	Help = "Default value of the <GPIO Number> option for DIO 9.\minimum: 0\maximum: 100\step: 1"
+	TokenType = Integer
+	TargetH = Yes
+End
+TOKEN
+	Name  = "DIO_9_GPIO_DEFAULT"
+	Value  = "81"
+	Help = "Default value of the <GPIO Number> option for DIO 10.\minimum: 0\maximum: 100\step: 1"
+	TokenType = Integer
+	TargetH = Yes
+End
+TOKEN
+	Name  = "DIO_10_GPIO_DEFAULT"
+	Value  = "82"
+	Help = "Default value of the <GPIO Number> option for DIO 11.\minimum: 0\maximum: 100\step: 1"
+	TokenType = Integer
+	TargetH = Yes
+End
+TOKEN
+	Name  = "DIO_11_GPIO_DEFAULT"
+	Value  = "83"
+	Help = "Default value of the <GPIO Number> option for DIO 12.\minimum: 0\maximum: 100\step: 1"
+	TokenType = Integer
+	TargetH = Yes
+End
+TOKEN
+	Name  = "DIO_12_GPIO_DEFAULT"
+	Value  = "4"
+	Help = "Default value of the <GPIO Number> option for DIO 13.\minimum: 0\maximum: 100\step: 1"
+	TokenType = Integer
+	TargetH = Yes
+End
+TOKEN
+	Name  = "DIO_13_GPIO_DEFAULT"
+	Value  = "17"
+	Help = "Default value of the <GPIO Number> option for DIO 14.\minimum: 0\maximum: 100\step: 1"
+	TokenType = Integer
+	TargetH = Yes
+End
+TOKEN
+	Name  = "DIO_14_GPIO_DEFAULT"
+	Value  = "20"
+	Help = "Default value of the <GPIO Number> option for DIO 15.\minimum: 0\maximum: 100\step: 1"
+	TokenType = Integer
+	TargetH = Yes
+End
+TOKEN
+	Name  = "DIO_15_GPIO_DEFAULT"
+	Value  = "67"
+	Help = "Default value of the <GPIO Number> option for DIO 16.\minimum: 0\maximum: 100\step: 1"
+	TokenType = Integer
+	TargetH = Yes
+End
+TOKEN
+	Name  = " "
+	TokenType = Integer
+End
+
+TOKEN
+	Name  = "===== AAEON Common Configurations ====="
+	TokenType = Integer
+End
+
+TOKEN
+	Name  = "AAEON_BIOS_ROBOT_SUPPORT"
+	Value  = "0"
+	Help  = "Main switch to enable AaeonBiosRobot support in Project"
+	TokenType = Boolean
+	TargetEQU = Yes
+	TargetMAK = Yes
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "AaeonDefaultPwd_SUPPORT"
+	Value  = "0"
+	Help  = "Main switch to enable OEMTSEHook support in Project"
+	TokenType = Boolean
+	TargetEQU = Yes
+	TargetMAK = Yes
+End
+
+TOKEN
+	Name  = "AAEON_BFPI_SUPPORT"
+	Value  = "0"
+	Help  = "Main switch to enable AaeonBfpi support in Project"
+	TokenType = Boolean
+	TargetEQU = Yes
+	TargetMAK = Yes
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "AAEON_OEM_BEEP_MAP_SUPPORT"
+	Value  = "0"
+	Help  = "Main switch to enable Aaeon OEM Beep Map support in Project"
+	TokenType = Boolean
+	TargetEQU = Yes
+	TargetMAK = Yes
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "AAEON_LAN_UEFI_DRIVER_SUPPORT"
+	Value  = "1"
+	TokenType = Boolean
+#	Master = Yes
+	Help  = "Main switch to enable OemLanUefiDriver support in Project"
+End
+
+TOKEN
+	Name  = "Lan_Option"
+	Value  = "0"
+	Help  = "\0-IntelGigabitLan,\1-RealtekLan \2- Support Intel and RealTekLan"
+	TokenType = Integer
+	TargetMAK = Yes
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = " "
+	TokenType = Integer
+End
+
+############################################################
+#	BIOS Setup Menu
+############################################################
+ELINK
+	Name  = "ITEM_CALLBACK(ADVANCED_FORM_SET_CLASS,0,OEM_F81866_INTERACTIVE_KEY,F81866_HWM_CallBack),"
+	Parent  = "SetupItemCallbacks"
+	InvokeOrder = AfterParent
+End
+
+TOKEN
+	Name  = "===== DEBUG MODE ====="
+	TokenType = Integer
+End
+
+TOKEN
+	Name  = "DEBUG_MODE"
+	Value  = "0"
+	TokenType = Boolean
+	TargetH = Yes
+	TargetMAK = Yes
+End
+
+TOKEN
+	Name  = "STRING_STATUS_SUPPORT"
+	Value  = "1"
+	Help  = "Enables/Disables all string-based status code routines \defined by the ReportStringStatus eLink"
+	TokenType = Boolean
+	TargetH = Yes
+	Token = "DEBUG_MODE" "=" "1"
+End
+
+TOKEN
+	Name  = "SERIAL_DEBUG"
+	Value  = "0"
+	Help  = "A switch to print TSE Debug messages over Serial Port."
+	TokenType = Boolean
+	TargetH = Yes
+	Token = "DEBUG_MODE" "=" "1"
+End
+
+TOKEN
+	Name  = "DMIEDIT_DEBUG_TRACE"
+	Value  = "0"
+	Help  = "Enable/Disable debug trace messages"
+	TokenType = Boolean
+	TargetH = Yes
+	Token = "DEBUG_MODE" "=" "1"
+End
+
+TOKEN
+	Name  = "DEFAULT_DEBUGGER_CONSOLE_REDIRECTION_ENABLE"
+	Value  = "0"
+	Help  = "Once Rx/Redir/Debugger port been detected, enable/disable Console Redirection."
+	TokenType = Boolean
+	TargetH = Yes
+	Token = "DEBUG_MODE" "=" "1"
+End
+
+TOKEN
+	Name  = "DEFAULT_INTERNAL_UART_DEBUG_ENABLE"
+	Value  = "0"
+	Help  = "Use internal UART to output debug message in OS."
+	TokenType = Integer
+	TargetEQU = Yes
+	TargetH = Yes
+	Token = "DEBUG_MODE" "=" "1"
+End
+
+INFComponent
+	Name  = "PlatformHookSerialPortLib"
+	File  = "PlatformHookSerialPortLib.inf"
+	Package  = "AmiModulePkg"
+	Token = "DEBUG_MODE" "=" "1"
+	Disable = Yes
+End
+
+LibraryMapping
+	Class  = "PlatformHookLib"
+	Instance  = "AmiModulePkg.PlatformHookSerialPortLib"
+	Token = "DEBUG_MODE" "=" "1"
+	Token = "SOC_UART_PRESENT" "=" "0"
+	ModuleTypes  = "PEIM PEI_CORE"
+	Disable = Yes
+End
+
+TOKEN
+	Name  = " "
+	TokenType = Integer
+End
+
+TOKEN
+	Name  = "===== HD Audio ====="
+	TokenType = Integer
+End
+
+ELINK
+    Name  = "{{0x10EC, 0x0888, 0xFF, TRUE, 68, 0}, UpxAdl01_A01_OemHdaVerbTblSample},"
+    Parent  = "OEM_HDA_VERB_TABLE"
+    Help  = "CRB HDA Verb Table"
+    InvokeOrder = AfterParent
+End
+
+TOKEN
+	Name  = " "
+	TokenType = Integer
+End
+
+TOKEN
+	Name  = "===== UART Mode ====="
+	TokenType = Integer
+End
+
+TOKEN
+	Name  = "AaeonUartMode2Pkg_SUPPORT"
+	Value  = "1"
+	TokenType = Boolean
+	TargetEQU = Yes
+	TargetMAK = Yes
+	TargetH = Yes
+End
+
+TOKEN
+	Name = "F81438_RS232_TRUTH_TABLE"
+	Value = "{1, 0}"
+	Help = "GPIO value for RS232 mode, {GPIO0, GPIO1}"
+	TokenType = Expression
+	TargetH = Yes
+End
+
+TOKEN
+	Name = "F81438_RS422_TRUTH_TABLE"
+	Value = "{1, 1}"
+	Help = "GPIO value for RS422 mode, {GPIO0, GPIO1}"
+	TokenType = Expression
+	TargetH = Yes
+End
+
+TOKEN
+	Name = "F81438_RS485_TRUTH_TABLE"
+	Value = "{0, 1}"
+	Help = "GPIO value for RS485 mode, {GPIO0, GPIO1}"
+	TokenType = Expression
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "CHECKBOX_AAEON_UART1MODE_DEFAULT"
+	Value  = "1"
+	Help = "Default value of the <RS232/422/485 Support> option for COM1.\0: Disabled\1: Enabled"
+	TokenType = Integer
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "NUMERIC_AAEON_UART1MODE_GPIO0_DEFAULT"
+	Value  = "10"
+	Help = "Default value of the <Mode 0 GPIO Number> option for COM1.\minimum: 0\maximum: 100\step: 1"
+	TokenType = Integer
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "NUMERIC_AAEON_UART1MODE_GPIO1_DEFAULT"
+	Value  = "11"
+	Help = "Default value of the <Mode 1 GPIO Number> option for COM1.\minimum: 0\maximum: 100\step: 1"
+	TokenType = Integer
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "CHECKBOX_AAEON_UART2MODE_DEFAULT"
+	Value  = "1"
+	Help = "Default value of the <RS232/422/485 Support> option for COM2.\0: Disabled\1: Enabled"
+	TokenType = Integer
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "NUMERIC_AAEON_UART2MODE_GPIO0_DEFAULT"
+	Value  = "12"
+	Help = "Default value of the <Mode 0 GPIO Number> option for COM2.\minimum: 0\maximum: 100\step: 1"
+	TokenType = Integer
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "NUMERIC_AAEON_UART2MODE_GPIO1_DEFAULT"
+	Value  = "13"
+	Help = "Default value of the <Mode 1 GPIO Number> option for COM2.\minimum: 0\maximum: 100\step: 1"
+	TokenType = Integer
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "CHECKBOX_AAEON_UART3MODE_DEFAULT"
+	Value  = "3"
+	Help = "Default value of the <RS232/422/485 Support> option for COM3.\0: Disabled\1: Enabled"
+	TokenType = Integer
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "NUMERIC_AAEON_UART3MODE_GPIO0_DEFAULT"
+	Value  = "70"
+	Help = "Default value of the <Mode 0 GPIO Number> option for COM3.\minimum: 0\maximum: 100\step: 1"
+	TokenType = Integer
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "NUMERIC_AAEON_UART3MODE_GPIO1_DEFAULT"
+	Value  = "71"
+	Help = "Default value of the <Mode 1 GPIO Number> option for COM3.\minimum: 0\maximum: 100\step: 1"
+	TokenType = Integer
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "CHECKBOX_AAEON_UART4MODE_DEFAULT"
+	Value  = "1"
+	Help = "Default value of the <RS232/422/485 Support> option for COM4.\0: Disabled\1: Enabled"
+	TokenType = Integer
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "NUMERIC_AAEON_UART4MODE_GPIO0_DEFAULT"
+	Value  = "72"
+	Help = "Default value of the <Mode 0 GPIO Number> option for COM4.\minimum: 0\maximum: 100\step: 1"
+	TokenType = Integer
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "NUMERIC_AAEON_UART4MODE_GPIO1_DEFAULT"
+	Value  = "73"
+	Help = "Default value of the <Mode 1 GPIO Number> option for COM4.\minimum: 0\maximum: 100\step: 1"
+	TokenType = Integer
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "CHECKBOX_AAEON_UART5MODE_DEFAULT"
+	Value  = "1"
+	Help = "Default value of the <RS232/422/485 Support> option for COM5.\0: Disabled\1: Enabled"
+	TokenType = Integer
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "NUMERIC_AAEON_UART5MODE_GPIO0_DEFAULT"
+	Value  = "84"
+	Help = "Default value of the <Mode 0 GPIO Number> option for COM5.\minimum: 0\maximum: 100\step: 1"
+	TokenType = Integer
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "NUMERIC_AAEON_UART5MODE_GPIO1_DEFAULT"
+	Value  = "85"
+	Help = "Default value of the <Mode 1 GPIO Number> option for COM5.\minimum: 0\maximum: 100\step: 1"
+	TokenType = Integer
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "CHECKBOX_AAEON_UART6MODE_DEFAULT"
+	Value  = "1"
+	Help = "Default value of the <RS232/422/485 Support> option for COM6.\0: Disabled\1: Enabled"
+	TokenType = Integer
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "NUMERIC_AAEON_UART6MODE_GPIO0_DEFAULT"
+	Value  = "86"
+	Help = "Default value of the <Mode 0 GPIO Number> option for COM6.\minimum: 0\maximum: 100\step: 1"
+	TokenType = Integer
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "NUMERIC_AAEON_UART6MODE_GPIO1_DEFAULT"
+	Value  = "87"
+	Help = "Default value of the <Mode 1 GPIO Number> option for COM6.\minimum: 0\maximum: 100\step: 1"
+	TokenType = Integer
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = " "
+	TokenType = Integer
+End
+
+PCIDEVICE
+	Title  = "PCIE Port #1 Slot"
+	Parent  = "PCIE Root Port #1"
+	Attribute  = "0"
+	Dev_type  = "PciDevice"
+	Dev  = 00h
+	Slot  = 03h
+	Fun  = 0ffh
+	GPEbit  = 00h
+	SleepNum  = 01h
+	IntA = 	LNKA; 16
+	IntB = 	LNKB; 17
+	IntC = 	LNKC; 18
+	IntD = 	LNKD; 19
+	DeviceType = Slot
+	PCIBusSize = 32bit
+	ROMMain = No
+	PCIExpress = Yes
+	SuppressDeviceGeneration = Yes	#EIP187266 	
+	ROMFile  = "AaeonProject\Addon\PXE\BA1561L2.LOM"
+	OptionROM = Yes
+	LegacyRom = Yes
+	FFSFileName  = "ROM Storage"
+	ROMSectionGuid  = "938b1a2c-4221-409f-a683-cf8fc3260e81"
+End
+
+PCIDEVICE
+	Title  = "PCIE Port #2 Slot"
+	Parent  = "PCIE Root Port #2"
+	Attribute  = "0"
+	Dev_type  = "PciDevice"
+	Dev  = 00h
+	Slot  = 03h
+	Fun  = 0ffh
+	GPEbit  = 00h
+	SleepNum  = 01h
+	IntA = 	LNKB; 17
+	IntB = 	LNKC; 18
+	IntC = 	LNKD; 19
+	IntD = 	LNKA; 16
+	DeviceType = Slot
+	PCIBusSize = 32bit
+	ROMMain = No
+	PCIExpress = Yes
+	SuppressDeviceGeneration = Yes	#EIP187266 	
+	ROMFile  = "AaeonProject\Addon\PXE\BA1561L2.LOM"
+	OptionROM = Yes
+	LegacyRom = Yes
+	FFSFileName  = "ROM Storage"
+	ROMSectionGuid  = "938b1a2c-4221-409f-a683-cf8fc3260e81"
+End
+
+############################################################
+#	Terminal (Serial Port Console Redirection)
+############################################################
+TOKEN
+	Name  = "TOTAL_SIO_SERIAL_PORTS"
+	Value  = "6"
+	Help  = "**PORTING NEEDED** Total number of Super IO serial ports or ISA serial port present"
+	TokenType = Integer
+	TargetMAK = Yes
+	TargetH = Yes
+	Range  = "0-10"
+End
+TOKEN
+	Name  = "TOTAL_PCI_SERIAL_PORTS"
+	Value  = "0"
+	Help  = "**PORTING NEEDED** Total number of PCI serial ports present."
+	TokenType = Integer
+	TargetMAK = Yes
+	TargetH = Yes
+	Range  = "0-4"
+End
+TOKEN
+    Name  = "COM0_DEFAULT_CONSOLE_REDIRECTION_ENABLE"
+    Value  = "0"
+    TokenType = Boolean
+    TargetH = Yes
+End
+
+TOKEN
+	Name = "ONEOF_AAEONRESTOREACPOWERLOSS_DEFAULT"
+	Value = "1"
+	Help = "0: Last State\1: Always On\2: Always Off"
+	TokenType = Integer
+	TargetH = Yes
+End
+
+TOKEN
+    Name  = "DEFAULT_QUIET_BOOT"
+    Value  = "0"
+    Help  = "Default value of the Quiet Boot option"
+    TokenType = Boolean
+    TargetH = Yes
+End
+
+TOKEN
+	Name  = "TCG2Support"
+	Value  = "1"
+	Help  = "Enable or Disable TCG_generic support"
+	TokenType = Boolean
+	TargetMAK = Yes
+	TargetH = Yes
+End
+
+ELINK
+	Name  = "ITEM_CALLBACK(ADVANCED_FORM_SET_CLASS,0,OEM_KEY_VT_SETTING_CHANGE_KEY,VtSettingCallback),"
+	Parent  = "SetupItemCallbacks"
+	InvokeOrder = AfterParent
+End
+
+TOKEN
+	Name  = " "
+	TokenType = Integer
+End
+
+TOKEN
+	Name  = "DEFAULT_ENGINEERING_MODE"
+	Value  = "0"
+	Help  = "Main switch to enable Engineer setup mode"
+	TokenType = Boolean
+	TargetEQU = Yes
+	TargetMAK = Yes
+	TargetH = Yes
+End
+
+TOKEN
+	Name = "ONEOF_AAEONRESTOREACPOWERLOSSSRC_DEFAULT"
+	Value = "1"
+	Help = "0: Chipset\1: EC/Super IO"
+	TokenType = Integer
+	TargetH = Yes
+End
+
+TOKEN
+	Name  = "BEEP_ENABLE"
+	Value  = "0"
+	Help  = "This flag enables/disables all firmware beeps"
+	TokenType = Boolean
+	TargetH = Yes
+	TargetMAK = Yes
+End

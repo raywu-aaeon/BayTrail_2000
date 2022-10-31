@@ -6,7 +6,7 @@
 		<BuildCompactImage value="false"/>
 		<RegionOrder value="4321"/>
 		<EndManufacturingBitOverride value="false"/>
-		<Platform value="3"/>
+		<Platform value="4"/>
 	</ProgSettings>
 	<Chipset>
 		<Region0 name="Descriptor Region">
@@ -64,18 +64,18 @@
 				</SocStrap0>
 				<SocStrap2>
 					<SpiBootBlockSize value="00: 64KB (Default): Invert A16 if Top Swap is enabled." value_list="00: 64KB (Default): Invert A16 if Top Swap is enabled.,,01: 128KB: Invert A17 if Top Swap is enabled.,,10: 256KB: Invert A18 if Top Swap is enabled." edit="true" visible="true" name="SPI Boot Block Size" help_text="Sets SPI Boot Block Size."/>
-					<LPSS1_F0_Disable value="false" edit="true" visible="true" name="SIO1 F0 Disable" help_text="Disable LPSS1 function 0 (DMA). false = enable. true = disable."/>
-					<LPSS1_F1_Disable value="false" edit="true" visible="true" name="SIO1 F1 Disable" help_text="Disable LPSS1 function 1 (PWM#1). false = enable. true = disable."/>
-					<LPSS1_F2_Disable value="false" edit="true" visible="true" name="SIO1 F2 Disable" help_text="Disable LPSS1 function 2 (PWM#2). false = enable. true = disable."/>
-					<LPSS1_F3_Disable value="false" edit="true" visible="true" name="SIO1 F3 Disable" help_text="Disable LPSS1 function 3 (HSUART#1). false = enable. true = disable."/>
-					<LPSS1_F4_Disable value="false" edit="true" visible="true" name="SIO1 F4 Disable" help_text="Disable LPSS1 function 4 (HSUART#2). false = enable. true = disable."/>
-					<LPSS1_F5_Disable value="false" edit="true" visible="true" name="SIO1 F5 Disable" help_text="Disable LPSS1 function 5 (SPI). false = enable. true = disable."/>
-					<SccEmmcDisable value="false" edit="true" visible="true" name="SCC eMMC 4.41 Disable" help_text="Disable legacy eMMC 4.41. false = enable. true = disable."/>
-					<SccEmmcPlusDisable value="false" edit="true" visible="true" name="SCC eMMC 4.5 Disable" help_text="Disable eMMC 4.5. false = enable. true = disable."/>
-					<SccSdioDisable value="false" edit="true" visible="true" name="SCC SDIO Disable" help_text="Disable SDIO. false = enable. true = disable."/>
+					<LPSS1_F0_Disable value="false" edit="false" visible="true" name="SIO1 F0 Disable" help_text="Disable SIO1 function 0 (DMA). false = enable. true = disable."/>
+					<LPSS1_F1_Disable value="true" edit="true" visible="true" name="SIO1 F1 Disable" help_text="Disable LPSS1 function 1 (PWM#1). false = enable. true = disable."/>
+					<LPSS1_F2_Disable value="true" edit="true" visible="true" name="SIO1 F2 Disable" help_text="Disable LPSS1 function 2 (PWM#2). false = enable. true = disable."/>
+					<LPSS1_F3_Disable value="true" edit="true" visible="true" name="SIO1 F3 Disable" help_text="Disable LPSS1 function 3 (HSUART#1). false = enable. true = disable."/>
+					<LPSS1_F4_Disable value="true" edit="true" visible="true" name="SIO1 F4 Disable" help_text="Disable LPSS1 function 4 (HSUART#2). false = enable. true = disable."/>
+					<LPSS1_F5_Disable value="true" edit="true" visible="true" name="SIO1 F5 Disable" help_text="Disable LPSS1 function 5 (SPI). false = enable. true = disable."/>
+					<SccEmmcDisable value="true" edit="true" visible="true" name="SCC eMMC 4.41 Disable" help_text="Disable legacy eMMC 4.41. false = enable. true = disable."/>
+					<SccEmmcPlusDisable value="true" edit="true" visible="true" name="SCC eMMC 4.5 Disable" help_text="Disable eMMC 4.5. false = enable. true = disable."/>
+					<SccSdioDisable value="true" edit="true" visible="true" name="SCC SDIO Disable" help_text="Disable SDIO. false = enable. true = disable."/>
 					<SccSdcardDisable value="false" edit="true" visible="true" name="SCC SDCARD Disable" help_text="Disable SDCARD. false = enable. true = disable."/>
 					<HDA_Disable value="false" edit="true" visible="true" name="HDA Disable" help_text="Disable HD Audio: false = enable, true = disable."/>
-					<LpeDisable value="false" edit="true" visible="true" name="LPE Disable" help_text="Disable LPE. false = enable. true = disable."/>
+					<LpeDisable value="true" edit="true" visible="true" name="LPE Disable" help_text="Disable LPE. false = enable. true = disable."/>
 					<UshDisable value="false" edit="true" visible="true" name="XHCI Disable" help_text="Disable USH. false = enable. true = disable."/>
 					<LAN_Disable value="true" edit="true" visible="true" name="LAN Disable" help_text="Disable GbE: false = enable, true = disable."/>
 					<SATA_Disable value="false" edit="true" visible="true" name="SATA Disable" help_text="Disable SATA: false = enable, true = disable."/>
@@ -99,7 +99,7 @@
 					<PciClk_Ssen value="false" edit="true" visible="true" name="PCIECLK_SSEN" help_text="Enable spread spectrum to PCIe: false = disable, true = enable."/>
 					<SataClk_Ssen value="false" edit="true" visible="true" name="SATACLK_SSEN" help_text="Enable spread spectrum to SATA: false = disable, true = enable."/>
 					<SmbusDisable value="false" edit="true" visible="true" name="SMBUS Disable" help_text="Disable SMBus. false = enable. true = disable."/>
-					<OtgSsDisable value="false" edit="true" visible="true" name="OTG Super Speed PHY Disable" help_text="Disable OTG Super Speed PHY. false = enable. true = disable."/>
+					<OtgSsDisable value="true" edit="true" visible="true" name="OTG Super Speed PHY Disable" help_text="Disable OTG Super Speed PHY. false = enable. true = disable."/>
 					<UshSsDisable value="false" edit="true" visible="true" name="XHCI Super Speed PHY Disable" help_text="Disable USH Super Speed PHY. false = enable. true = disable."/>
 					<SscTable value="0.456" value_list="0.456,,0.439,,0.423,,0.391,,0.293,,0.260,,0.244,,0.195,,0.098" edit="true" visible="true" name="Spread Percentage" help_text="Select Spread Percentage (%). 0.456 is Intel recommended value. Other values are for testing purposes only."/>
 				</SocStrap3>
@@ -125,7 +125,7 @@
 					<SataCmnlnPwrEn value="true" edit="true" visible="true" name="SATACMNLNPW Enable" help_text="false = disable, true = enable. Note: Integrated clock usage and specs must be signed off by SEG architects."/>
 					<SataLane0PwrEn value="true" edit="true" visible="true" name="SATALANE0PWREN" help_text="SATA Enables power for digital (synthesized) logic for the Common Lane logic and PLL1Core uPAR: false = disable, true = enable."/>
 					<SataLane1PwrEn value="true" edit="true" visible="true" name="SATALANE1PWREN" help_text="SATA Enables power for digital (synthesized) logic in the data lane to reduce leakage."/>
-					<SataStatus2Pmc value="true" edit="true" visible="true" name="satastatus2PMC" help_text="false: sata to indicate D3 status to PMC. true: sata to indicate DEVSLP status to PMC."/>
+					<SataStatus2Pmc value="false" edit="true" visible="true" name="satastatus2PMC" help_text="false: sata to indicate D3 status to PMC. true: sata to indicate DEVSLP status to PMC."/>
 				</SocStrap8>
 			</SocStraps>
 			<VsccTable name="VSCC Table">
@@ -185,10 +185,10 @@
 			<RegionOffset value="0x00000000" edit="true" visible="true" name="Region Offset" help_text="The offset from the beginning of flash where the TXE region will start. If 0, then FITC will determine where to put it based on the region order."/>
 			<RomBypassVector value="00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 " edit="true" visible="false" name="Rom Bypass Vector Instruction" help_text="Up to 128 bits, this field represents the instruction that is placed at the beginning of the FPT used to jump to the Rom Bypass partition."/>
 			<RegionLength value="0x00000000" edit="true" visible="false" name="TXE region length" help_text="This is the size of the TXE region in bytes. Set this to 0 to make the region length equal to the binary file length (rounded up to 4k). Extra space will be filled with 0xFF."/>
-			<FlashCycleLifetime value="7" edit="true" visible="false" name="Flash Cycle Lifetime" help_text="Time in years the flash should last."/>
-			<FlashCycleLimit value="100" edit="true" visible="false" name="Flash Cycle Limit" help_text="This number multiplied by 1000 equals the maximum number of erase cycles the flash can perform."/>
-			<TicksToAdd value="0x0007" edit="false" visible="false" name="Ticks to add" help_text="This is used for access management."/>
-			<TokensToAdd value="0x0064" edit="false" visible="false" name="Tokens to add" help_text="This is used for access management."/>
+			<FlashCycleLifetime value="7" edit="false" visible="false" name="Flash Cycle Lifetime" help_text="Time in years the flash should last."/>
+			<FlashCycleLimit value="100" edit="false" visible="false" name="Flash Cycle Limit" help_text="This number multiplied by 1000 equals the maximum number of erase cycles the flash can perform."/>
+			<TicksToAdd value="0x0007" edit="true" visible="false" name="Ticks to add" help_text="This is used for access management."/>
+			<TokensToAdd value="0x0064" edit="true" visible="false" name="Tokens to add" help_text="This is used for access management."/>
 			<FptHeaderVer value="0x20" edit="false" visible="false" name="FPT Header Version" help_text="Defines the FPT header type set in the FPT header."/>
 			<FptEntryType value="0x10" edit="false" visible="false" name="FPT Entry Type" help_text="Defines the FPT entry type set in the FPT header that defines the type of entries used in the FPT."/>
 			<SecLayoutType value="0" edit="false" visible="false" name="TXE Layout Type" help_text="This setting reflects the layout type used after modifying the build settings."/>
@@ -198,7 +198,7 @@
 					<HostSecRegUnlock value="true" edit="true" visible="true" name="Host TXE Region Flash Protection Override" help_text="Set this to TRUE if you want the ability to have BIOS write to the TXE Region. Set to FALSE to opt out."/>
 					<OemTag value="0x00000000" edit="true" visible="true" name="OEM Tag" help_text="An OEM identification number to describe the flash image represented by the value."/>
 					<HideFwUpdCtrl value="false" edit="true" visible="true" name="Hide FW Update Control" help_text="Setting this parameter to 'true' will not allow end users to 'disable' or 'password protect' the TXE FW Update mechanism"/>
-					<FpfMirroringFile value="FpfMirrorNvarValues.txt" edit="true" visible="true" name="FPF Mirroring File" help_text="Enter a path to the FPF mirroring file. Note: This option will create a FPF configuration for TXE Firmware to emulate fuse configuration for testing purpose. This option will not program real fuses. Fuse values programmed here will not be used once manufacturing is closed. Real fuses should be programmed using Flash Programming Tool before closing manufacturing."/>
+					<FpfMirroringFile value="" edit="true" visible="true" name="FPF Mirroring File" help_text="Enter a path to the FPF mirroring file. Note: This option will create a FPF configuration for TXE Firmware to emulate fuse configuration for testing purpose. This option will not program real fuses. Fuse values programmed here will not be used once manufacturing is closed. Real fuses should be programmed using Flash Programming Tool before closing manufacturing."/>
 					<CekConfiguration value="" edit="true" visible="true" name="CEK Configuration" help_text="Binary file to use for CEK Configuration. Must be exactly 256 bytes."/>
 				</TXE>
 				<FeaturesSupported name="Features Supported">

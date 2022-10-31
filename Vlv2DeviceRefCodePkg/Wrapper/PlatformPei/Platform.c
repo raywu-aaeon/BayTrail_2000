@@ -205,6 +205,33 @@ PeiInitPlatform(
     UINT8                       OemTblId[8] = ACPI_OEM_TBL_ID_MAK;  //EIP134732
     UINTN                       i;
 
+/**
+ * @brief COM PORT Initialization for DEBUG MODE
+ * 
+ */
+#if DEBUG_MODE == 1
+    IoWrite8(0x4E, 0x87);
+    IoWrite8(0x4E, 0x87);
+
+    // GPIO10/11
+    IoWrite8(0x4E, 0x27);
+    IoWrite8(0x4F, (IoRead8(0x4F) & ~(BIT0+BIT2+BIT3)) | BIT2);
+
+    IoWrite8(0x4E, 0x2C);
+    IoWrite8(0x4F, IoRead8(0x4F) | (BIT0+BIT1));
+
+    IoWrite8(0x4E, 0x07);
+    IoWrite8(0x4F, 0x06);
+
+    // Output Enable
+    IoWrite8(0x4E, 0xE0);
+    IoWrite8(0x4F, IoRead8(0x4F) | (BIT0+BIT1));
+
+    // RS232, GPIO10: H, GPIO11: L
+    IoWrite8(0x4E, 0xE1);
+    IoWrite8(0x4F, (IoRead8(0x4F) & ~(BIT0+BIT1)) | BIT0);
+#endif
+
     ZeroMem(&PlatformInfo, sizeof(EFI_PLATFORM_INFO_HOB)); //P20120624_2 
 
     //

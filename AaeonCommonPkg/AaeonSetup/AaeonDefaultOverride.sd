@@ -1,0 +1,302 @@
+#ifdef SETUP_DATA_DEFINITION
+//----------------------------------------------------------------------------
+// Put NVRAM data definitions here.
+// For example: UINT8 Data1;
+// These definitions will be converted by the build process
+// to a definitions of SETUP_DATA fields.
+//----------------------------------------------------------------------------
+#endif
+//----------------------------------------------------------------------------
+//                CONTROL DEFINITION
+//----------------------------------------------------------------------------
+#if defined(VFRCOMPILE) && !defined(CONTROLS_ARE_DEFINED)
+#define CONTROL_DEFINITION
+#endif
+
+
+
+#ifdef CONTROL_DEFINITION
+
+//----------------------------------------------------------------------------
+//                 Exit
+//----------------------------------------------------------------------------
+//#ifdef AMI_TSE_SAVE_AND_RESET
+//#undef AMI_TSE_SAVE_AND_RESET
+#define AMI_TSE_SAVE_AND_RESET\
+    suppressif ideqval AMI_CALLBACK.Value == SAVE_AND_RESET_VALUE;\
+        goto AAEON_EXIT_MAIN,\
+            prompt = STRING_TOKEN(STR_SAVE_RESET),\
+            help = STRING_TOKEN(STR_SAVE_RESET_HELP);\
+    endif;
+//#endif // AMI_TSE_SAVE_AND_RESET
+
+//#ifdef AMI_TSE_DISCARD_AND_EXIT
+//#undef AMI_TSE_DISCARD_AND_EXIT
+#define AMI_TSE_DISCARD_AND_EXIT\
+    suppressif ideqval AMI_CALLBACK.Value == DISCARD_AND_EXIT_VALUE;\
+        goto AAEON_EXIT_MAIN,\
+            prompt = STRING_TOKEN(STR_DISCARD_EXIT),\
+            help = STRING_TOKEN(STR_DISCARD_EXIT_HELP);\
+    endif;
+//#endif // AMI_TSE_DISCARD_AND_EXIT
+
+//#ifdef AMI_TSE_RESTORE_DEFAULTS
+//#undef AMI_TSE_RESTORE_DEFAULTS
+#define AMI_TSE_RESTORE_DEFAULTS\
+    suppressif ideqval AMI_CALLBACK.Value == RESTORE_DEFAULTS_VALUE;\
+        goto AAEON_EXIT_MAIN,\
+            prompt = STRING_TOKEN(STR_RESTORE_DEFAULTS),\
+            help = STRING_TOKEN(STR_RESTORE_DEFAULTS_HELP);\
+    endif;
+//#endif // AMI_TSE_RESTORE_DEFAULTS
+
+#define QUIET_BOOT\
+        checkbox varid = AMITSESETUP.AMISilentBoot,\
+            prompt = STRING_TOKEN(STR_QUIET_BOOT),\
+            help = STRING_TOKEN(STR_QUIET_BOOT_HELP),\
+            flags = 0,\
+            key = 0,\
+            default = DEFAULT_QUIET_BOOT,\
+            default = DEFAULT_QUIET_BOOT, defaultstore = AmiMfgDefault,\
+        endcheckbox;
+
+#define AMI_BOOT_ORDER\
+        suppressif ideqvallist BOOT_MANAGER.BootCount == 0xFFFF;\
+            oneof varid = BOOT_ORDER.Value,\
+                prompt = STRING_TOKEN(STR_BOOT_ORDER_X),\
+                help = STRING_TOKEN(STR_BOOT_ORDER_HELP),\
+                flags = 0,\
+                option text = STRING_TOKEN(STR_EMPTY), value = 0, flags = 0;\
+                option text = STRING_TOKEN(STR_EMPTY), value = 1, flags = 0;\
+                default = 0,\
+                default = 0, defaultstore = AmiMfgDefault,\
+            endoneof;\
+        endif;
+
+#define AMI_BOOT_ORDER_GROUPS_GOTO\
+        suppressif ideqvallist LEGACY_DEV_INFO.GroupCount == 0xFFFF;\
+            goto BBS_ORDER_FORM,\
+                prompt = STRING_TOKEN(STR_EMPTY),\
+                help = STRING_TOKEN(STR_BBS_ORDER_HELP);\
+        endif;
+
+#undef SB_CHECKBOX_SCC_EMMC_SUPPORT
+#define SB_CHECKBOX_SCC_EMMC_SUPPORT\
+      oneof varid    = SETUP_DATA.eMMCEnabled,\
+          prompt       = STRING_TOKEN (STR_SCC_EMMC_PROMPT),\
+          help         = STRING_TOKEN (STR_SCC_EMMC_HELP),\
+          option text  = STRING_TOKEN (STR_SCC_EMMC45_PROMPT), value = 3, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_SCC_EMMC441_PROMPT), value = 2, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_SCC_EMMC_AUTO), value = 1, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+      endoneof;
+
+#undef SB_CHECKBOX_LPSS_DMA1_SUPPORT
+#define SB_CHECKBOX_LPSS_DMA1_SUPPORT\
+      oneof varid    = SETUP_DATA.LpssDma0Enabled,\
+          prompt       = STRING_TOKEN (STR_LPSS_DMA1_PROMPT),\
+          help         = STRING_TOKEN (STR_LPSS_DMA1_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+      endoneof;
+
+#undef SB_CHECKBOX_LPSS_DMA2_SUPPORT
+#define SB_CHECKBOX_LPSS_DMA2_SUPPORT\
+      oneof varid    = SETUP_DATA.LpssDma1Enabled,\
+          prompt       = STRING_TOKEN (STR_LPSS_DMA2_PROMPT),\
+          help         = STRING_TOKEN (STR_LPSS_DMA2_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+      endoneof;
+
+#undef SB_CHECKBOX_LPSS_I2C1_SUPPORT
+#define SB_CHECKBOX_LPSS_I2C1_SUPPORT\
+      oneof varid    = SETUP_DATA.LpssI2C0Enabled,\
+          prompt       = STRING_TOKEN (STR_LPSS_I2C1_PROMPT),\
+          help         = STRING_TOKEN (STR_LPSS_I2C1_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+      endoneof;
+
+#undef SB_CHECKBOX_LPSS_I2C2_SUPPORT
+#define SB_CHECKBOX_LPSS_I2C2_SUPPORT\
+      oneof varid    = SETUP_DATA.LpssI2C1Enabled,\
+          prompt       = STRING_TOKEN (STR_LPSS_I2C2_PROMPT),\
+          help         = STRING_TOKEN (STR_LPSS_I2C2_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+      endoneof;
+
+#undef SB_CHECKBOX_LPSS_I2C3_SUPPORT
+#define SB_CHECKBOX_LPSS_I2C3_SUPPORT\
+      oneof varid    = SETUP_DATA.LpssI2C2Enabled,\
+          prompt       = STRING_TOKEN (STR_LPSS_I2C3_PROMPT),\
+          help         = STRING_TOKEN (STR_LPSS_I2C3_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+      endoneof;
+
+#undef SB_CHECKBOX_LPSS_I2C4_SUPPORT
+#define SB_CHECKBOX_LPSS_I2C4_SUPPORT\
+      oneof varid    = SETUP_DATA.LpssI2C3Enabled,\
+          prompt       = STRING_TOKEN (STR_LPSS_I2C4_PROMPT),\
+          help         = STRING_TOKEN (STR_LPSS_I2C4_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+      endoneof;
+
+#undef SB_CHECKBOX_LPSS_I2C5_SUPPORT
+#define SB_CHECKBOX_LPSS_I2C5_SUPPORT\
+      oneof varid    = SETUP_DATA.LpssI2C4Enabled,\
+          prompt       = STRING_TOKEN (STR_LPSS_I2C5_PROMPT),\
+          help         = STRING_TOKEN (STR_LPSS_I2C5_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+      endoneof;
+
+#undef SB_CHECKBOX_LPSS_I2C6_SUPPORT
+#define SB_CHECKBOX_LPSS_I2C6_SUPPORT\
+      oneof varid    = SETUP_DATA.LpssI2C5Enabled,\
+          prompt       = STRING_TOKEN (STR_LPSS_I2C6_PROMPT),\
+          help         = STRING_TOKEN (STR_LPSS_I2C6_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+      endoneof;
+
+#undef SB_CHECKBOX_LPSS_I2C7_SUPPORT
+#define SB_CHECKBOX_LPSS_I2C7_SUPPORT\
+      oneof varid    = SETUP_DATA.LpssI2C6Enabled,\
+          prompt       = STRING_TOKEN (STR_LPSS_I2C7_PROMPT),\
+          help         = STRING_TOKEN (STR_LPSS_I2C7_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+      endoneof;
+
+#undef SB_CHECKBOX_LPSS_PWM1_SUPPORT
+#define SB_CHECKBOX_LPSS_PWM1_SUPPORT\
+      oneof varid    = SETUP_DATA.LpssPwm0Enabled,\
+          prompt       = STRING_TOKEN (STR_LPSS_PWM1_PROMPT),\
+          help         = STRING_TOKEN (STR_LPSS_PWM1_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+      endoneof;
+
+#undef SB_CHECKBOX_LPSS_PWM2_SUPPORT
+#define SB_CHECKBOX_LPSS_PWM2_SUPPORT\
+      oneof varid    = SETUP_DATA.LpssPwm1Enabled,\
+          prompt       = STRING_TOKEN (STR_LPSS_PWM2_PROMPT),\
+          help         = STRING_TOKEN (STR_LPSS_PWM2_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+      endoneof;
+
+#undef SB_CHECKBOX_LPSS_SPI_SUPPORT
+#define SB_CHECKBOX_LPSS_SPI_SUPPORT\
+      oneof varid    = SETUP_DATA.LpssSpiEnabled,\
+          prompt       = STRING_TOKEN (STR_LPSS_SPI_PROMPT),\
+          help         = STRING_TOKEN (STR_LPSS_SPI_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+      endoneof;
+
+#undef CSM_POLICY_OLD_OPROM
+#define CSM_POLICY_OLD_OPROM\
+        oneof varid = SETUP_DATA.OldOpRom,\
+            prompt  = STRING_TOKEN(STR_OLD_OPROM_LAUNCH_POLICY),\
+            help    = STRING_TOKEN(STR_OLD_OPROM_LAUNCH_POLICY_HELP),\
+            option text = STRING_TOKEN(STR_OPROM_POLICY_DISABLE),  value = 0, flags = RESET_REQUIRED;\
+            option text = STRING_TOKEN(STR_OPROM_POLICY_UEFI_ONLY),  value = 1, flags = RESET_REQUIRED;\
+            option text = STRING_TOKEN(STR_OPROM_POLICY_LEGACY_ONLY),  value = 2, flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;\
+        endoneof;
+
+#undef NC_CHECKBOX_RENDER_STANDBY
+#define NC_CHECKBOX_RENDER_STANDBY\
+      oneof varid = SETUP_DATA.EnableRenderStandby,\
+        prompt   = STRING_TOKEN(STR_VIDEO_RS2_PROMPT),\
+        help     = STRING_TOKEN(STR_VIDEO_RS2_HELP),\
+        option text = STRING_TOKEN(STR_COMMON_ENABLED), value = 1, flags = RESET_REQUIRED;\
+        option text = STRING_TOKEN(STR_COMMON_DISABLED), value = 0, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+      endoneof;
+
+#undef ACPI_ONEOF_NATIVEASPMENABLE
+#define ACPI_ONEOF_NATIVEASPMENABLE\
+  oneof varid    = SETUP_DATA.NativeAspmEnable,\
+    prompt   = STRING_TOKEN(STR_NATIVE_ASPM_PROMPT),\
+    help     = STRING_TOKEN(STR_NATIVE_ASPM_HELP),\
+    option text = STRING_TOKEN(STR_COMMON_DISABLED), value = 0, flags = DEFAULT | MANUFACTURING | RESET_REQUIRED;\
+    option text = STRING_TOKEN(STR_COMMON_ENABLED), value = 1, flags = RESET_REQUIRED;\
+  endoneof;
+
+#if defined(F81866_SMF1_SUPPORT) && (F81866_SMF1_SUPPORT == 1)
+#undef FAN1SMARTFANMODE
+#define FAN1SMARTFANMODE\
+        oneof varid     = SETUP_DATA.Fan1SmartFanMode,\
+                prompt      = STRING_TOKEN(STR_F81866_SMARTFAN_FAN1),\
+                help        = STRING_TOKEN(STR_F81866_SMARTFAN_CONFIG_HELP),\
+                option text = STRING_TOKEN(STR_F81866_SMARTFAN_FAN_MODE1), value = 1, flags = RESET_REQUIRED;\
+                option text = STRING_TOKEN(STR_F81866_SMARTFAN_FAN_MODE3), value = 3, flags = DEFAULT |RESET_REQUIRED;\
+        endoneof;
+#endif //F81866_SMF1_SUPPORT == 1
+
+#if defined(F81866_SMF2_SUPPORT) && (F81866_SMF2_SUPPORT == 1)
+#undef FAN2SMARTFANMODE
+#define FAN2SMARTFANMODE\
+        oneof varid     = SETUP_DATA.Fan2SmartFanMode,\
+                prompt      = STRING_TOKEN(STR_F81866_SMARTFAN_FAN2),\
+                help        = STRING_TOKEN(STR_F81866_SMARTFAN_CONFIG_HELP),\
+                option text = STRING_TOKEN(STR_F81866_SMARTFAN_FAN_MODE1), value = 1, flags = RESET_REQUIRED;\
+                option text = STRING_TOKEN(STR_F81866_SMARTFAN_FAN_MODE3), value = 3, flags = DEFAULT |RESET_REQUIRED;\
+        endoneof;
+#endif //F81866_SMF2_SUPPORT == 1
+
+#define OEM_NEHALEM_ONEOF_VT\
+    oneof varid     = SETUP_DATA.VT,\
+        questionid  = AUTO_ID(OEM_KEY_VT_SETTING_CHANGE_KEY),\
+        prompt      = STRING_TOKEN(STR_CPU_VT_PROMPT),\
+        help        = STRING_TOKEN(STR_CPU_VT_PROMPT_HELP),\
+        option text = STRING_TOKEN(STR_CPU_DISABLED),   value = 0, flags = RESET_REQUIRED | INTERACTIVE;\
+        option text = STRING_TOKEN(STR_CPU_ENABLED),    value = 1, flags = DEFAULT | MANUFACTURING | INTERACTIVE | RESET_REQUIRED;\
+    endoneof;
+
+#undef SB_CHECKBOX_SATAPORT0
+#define SB_CHECKBOX_SATAPORT0\
+      oneof varid    = SETUP_DATA.SataPort[0],\
+          prompt       = STRING_TOKEN (STR_SATA_0_STRING),\
+          help         = STRING_TOKEN (STR_SATA_0_PROMPT_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = RESET_REQUIRED;\
+      endoneof;
+
+#undef SB_CHECKBOX_SATAPORT1
+#define SB_CHECKBOX_SATAPORT1\
+      oneof varid    = SETUP_DATA.SataPort[1],\
+          prompt       = STRING_TOKEN (STR_SATA_1_STRING),\
+          help         = STRING_TOKEN (STR_SATA_1_PROMPT_HELP),\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = RESET_REQUIRED;\
+      endoneof;
+
+#undef TCG_ONEOF_TPMSUPPORT
+#define TCG_ONEOF_TPMSUPPORT\
+      oneof varid = SETUP_DATA.TpmSupport,\
+          prompt = STRING_TOKEN(STR_TPM_SUPPORT_PROMPT ),\
+          help = STRING_TOKEN(STR_TPMSUPPORT_HELP),\
+          option text = STRING_TOKEN(STR_TPM_DISABLE), value = 0, flags = RESET_REQUIRED | MANUFACTURING | DEFAULT;\
+          option text = STRING_TOKEN(STR_TPM_ENABLE),  value = 1, flags = RESET_REQUIRED;\
+      endoneof;
+
+#undef TCG_ONEOF_TCMSUPPORT
+#define TCG_ONEOF_TCMSUPPORT\
+      oneof varid = SETUP_DATA.TpmSupport,\
+          prompt = STRING_TOKEN(STR_TCM_SUPPORT_PROMPT ),\
+          help = STRING_TOKEN(STR_TPMSUPPORT_HELP),\
+          option text = STRING_TOKEN(STR_TPM_DISABLE), value = 0, flags = RESET_REQUIRED | MANUFACTURING | DEFAULT;\
+          option text = STRING_TOKEN(STR_TPM_ENABLE),  value = 1, flags = RESET_REQUIRED;\
+      endoneof;
+#endif //ENDIF CONTROL_DEFINITION
+
+
+
+#ifdef CONTROLS_WITH_DEFAULTS
+
+#endif //#ifdef CONTROLS_WITH_DEFAULTS

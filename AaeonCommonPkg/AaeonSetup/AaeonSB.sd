@@ -1,0 +1,154 @@
+#ifdef SETUP_DATA_DEFINITION
+//----------------------------------------------------------------------------
+// Put NVRAM data definitions here.
+// For example: UINT8 Data1;
+// These definitions will be converted by the build process
+// to a definitions of SETUP_DATA fields.
+//----------------------------------------------------------------------------
+#endif
+
+
+//----------------------------------------------------------------------------
+//                CONTROL DEFINITION
+//----------------------------------------------------------------------------
+#if defined(VFRCOMPILE) && !defined(CONTROLS_ARE_DEFINED)
+#define CONTROL_DEFINITION
+#endif
+
+#ifdef CONTROL_DEFINITION
+
+#endif
+
+//**********************************************************************
+//                CHIPSET - North/South Bridge Form
+//**********************************************************************
+#ifdef CHIPSET_FORM_SET
+
+    #ifdef FORM_SET_TYPEDEF
+    #endif
+
+    #ifdef AAEON_FORM_SET_ITEM
+    // Define controls to be added to the main page of the formset
+    #endif //AAEON_FORM_SET_ITEM
+  
+    #ifdef AAEON_FORM_SET_GOTO
+        // Define goto commands for the forms defined in this file
+        goto OEM_SB_FORM_ID, 
+            prompt  = STRING_TOKEN(STR_SB_FORM),
+            help    = STRING_TOKEN(STR_SB_FORM_HELP);
+    #endif //AAEON_FORM_SET_GOTO
+  
+    #ifdef FORM_SET_FORM
+        form formid = AUTO_ID(OEM_SB_FORM_ID),
+            title = STRING_TOKEN(STR_SB_FORM);
+
+            goto OEM_AZALIA_AUDIO_ID,
+            prompt  = STRING_TOKEN(STR_AZALIA_AUDIO_FORM),
+            help    = STRING_TOKEN(STR_AZALIA_AUDIO_FORM_HELP);
+
+            goto OEM_USB_CONFIG_ID,
+            prompt  = STRING_TOKEN(STR_USB_CONFIG_FORM),
+            help    = STRING_TOKEN(STR_USB_CONFIG_FORM_HELP);
+
+            goto OEM_PCIE_DEVICE_OPTIONS_FORM_ID,
+            prompt = STRING_TOKEN (STR_PCIE_OPTIONS_FORM_TITLE),
+            help   = STRING_TOKEN (STR_PCIE_OPTIONS_FORM_HELP);
+
+        endform; //ENDFORM OEM_SB_FORM_ID
+
+        form formid = AUTO_ID(OEM_AZALIA_AUDIO_ID),
+        title = STRING_TOKEN(STR_AZALIA_AUDIO_FORM);
+          SUBTITLE(STRING_TOKEN(STR_AUDIO_SUBTITLE))
+
+          SB_CHECKBOX_AZALIA
+          
+        endform;
+
+        form formid = AUTO_ID(OEM_USB_CONFIG_ID),
+        title = STRING_TOKEN(STR_USB_CONFIG_FORM);
+          SUBTITLE(STRING_TOKEN(STR_USB_SUBTITLE))
+
+          SEPARATOR
+
+          grayoutif ideqval SETUP_DATA.PchUsb20 == 1 AND ideqval SETUP_DATA.OsSelect == 2 OR //CSP20140423_23
+                    ideqval SETUP_DATA.PchUsb20W8 == 1 AND NOT ideqval SETUP_DATA.OsSelect == 2; //CSP20140423_23
+          suppressif NOT ideqval SETUP_DATA.OsSelect == 2; //CSP20140404_22
+            SB_CHECKBOX_XHCI_MODE
+          endif;
+          suppressif ideqval SETUP_DATA.OsSelect == 2; //CSP20140404_22
+            SB_CHECKBOX_XHCI_W8_MODE
+          endif;
+          endif; //grayoutif SETUP_DATA.Ehci
+          SEPARATOR
+    
+          grayoutif NOT ideqval SETUP_DATA.PchUsb30Mode == 0 AND ideqval SETUP_DATA.OsSelect == 2 OR //CSP20140404_22
+                    NOT ideqval SETUP_DATA.PchUsb30ModeW8 == 0 AND NOT ideqval SETUP_DATA.OsSelect == 2; //CSP20140404_22                
+          suppressif NOT ideqval SETUP_DATA.OsSelect == 2; 
+            SB_CHECKBOX_EHCI
+          endif;
+          suppressif ideqval SETUP_DATA.OsSelect == 2;
+            SB_CHECKBOX_EHCI_W8
+          endif;             
+          endif; //grayoutif SETUP_DATA.PchUsb30Mode == 1;
+
+          SB_CHECKBOX_EHCI_PER_PORT
+          SB_CHECKBOX_USB0
+          SB_CHECKBOX_USB1
+          SB_CHECKBOX_USB2
+          SB_CHECKBOX_USB3
+    
+        endform; // OEM_USB_CONFIG_ID
+
+        form formid = AUTO_ID(OEM_PCIE_DEVICE_OPTIONS_FORM_ID),
+        title = STRING_TOKEN(STR_PCIE_OPTIONS_FORM_TITLE);
+          SUBTITLE(STRING_TOKEN(STR_PCIE_OPTIONS_FORM_TITLE))
+    
+          SB_CHECKBOX_PCIE_PORT0
+      
+          suppressif  ideqval SETUP_DATA.PcieRootPortEn[0] == 0;
+            SB_CHECKBOX_PCIE_SPEED00
+            #if defined(PCIE_ROOT_PORT_DETECT_NON_COMPLAINT) && (PCIE_ROOT_PORT_DETECT_NON_COMPLAINT != 0)
+              SB_ONEOF_PCIEROOTPORTDNCD00
+            #endif
+            SEPARATOR
+          
+            SB_CHECKBOX_PCIE_PORT1
+          endif;  // suppress
+      
+          suppressif  ideqval SETUP_DATA.PcieRootPortEn[0] == 0;
+            SB_CHECKBOX_PCIE_SPEED01
+            #if defined(PCIE_ROOT_PORT_DETECT_NON_COMPLAINT) && (PCIE_ROOT_PORT_DETECT_NON_COMPLAINT != 0)
+              SB_ONEOF_PCIEROOTPORTDNCD01
+            #endif
+    
+            SEPARATOR
+          
+            SB_CHECKBOX_PCIE_PORT2
+      
+          endif;  // suppress
+      
+          suppressif  ideqval SETUP_DATA.PcieRootPortEn[0] == 0;
+            SB_CHECKBOX_PCIE_SPEED02
+            #if defined(PCIE_ROOT_PORT_DETECT_NON_COMPLAINT) && (PCIE_ROOT_PORT_DETECT_NON_COMPLAINT != 0)
+              SB_ONEOF_PCIEROOTPORTDNCD02 
+            #endif
+              
+            SEPARATOR
+          
+            SB_CHECKBOX_PCIE_PORT3
+      
+          endif;  // suppress
+      
+          suppressif  ideqval SETUP_DATA.PcieRootPortEn[0] == 0;
+            SB_CHECKBOX_PCIE_SPEED03
+            #if defined(PCIE_ROOT_PORT_DETECT_NON_COMPLAINT) && (PCIE_ROOT_PORT_DETECT_NON_COMPLAINT != 0)
+              SB_ONEOF_PCIEROOTPORTDNCD03 
+            #endif
+          endif;  // suppress
+    
+        endform; // OEM_PCIE_DEVICE_OPTIONS_FORM_ID
+    
+    #endif //FORM_SET_FORM
+
+#endif  // CHIPSET_FORM_SET
+

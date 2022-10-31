@@ -154,7 +154,7 @@ STATUS_CODE_TO_BYTE_MAP ErrorBeepMap[] =
 
 //Errors
 //Regular boot
-    { PEI_MEMORY_NOT_INSTALLED, 1 },
+    { PEI_MEMORY_NOT_INSTALLED, 3 },
     { PEI_MEMORY_INSTALLED_TWICE, 1 },
     { PEI_DXEIPL_NOT_FOUND, 3 },
     { PEI_DXE_CORE_NOT_FOUND, 3 },

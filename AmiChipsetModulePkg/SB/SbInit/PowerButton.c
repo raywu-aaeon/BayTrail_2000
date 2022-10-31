@@ -36,7 +36,7 @@
 #include <AmiDxeLib.h>
 #include <Protocol/SmmPowerButtonDispatch2.h>
 #include <PchRegs.h>
-
+#include <Library/SbPolicy.h>
 
 //----------------------------------------------------------------------------
 // Constant, Macro and Type Definition(s)
@@ -54,6 +54,7 @@
 //----------------------------------------------------------------------------
 // Variable Declaration(s)
 
+SB_SETUP_DATA                   PchPolicyData;
 
 //<AMI_PHDR_START>
 //----------------------------------------------------------------------------
@@ -78,6 +79,11 @@ EFI_STATUS SbPwrBtnHandler (
     IN OUT UINTN        *CommBufferSize OPTIONAL
 )
 {
+    if (PchPolicyData.LastState == 2){
+      //WRITE_MEM32(PMC_BASE_ADDRESS + R_PCH_PMC_GEN_PMCON_1, READ_MEM32 (PMC_BASE_ADDRESS + R_PCH_PMC_GEN_PMCON_1) | BIT00);
+      MmioWrite32(PMC_BASE_ADDRESS + R_PCH_PMC_GEN_PMCON_1, MmioRead32 (PMC_BASE_ADDRESS + R_PCH_PMC_GEN_PMCON_1) | BIT00);
+    }
+
 	//
 	// Enter S5 State
 	//
@@ -151,6 +157,9 @@ EFI_STATUS InitializePowerButton (
 )
 {
     InitAmiLib(ImageHandle, SystemTable);
+
+    GetSbSetupData (  (VOID*)pRS, &PchPolicyData, FALSE);
+
     return InitSmmHandler(ImageHandle, SystemTable, InSmmFunction, NULL);
 }
 
