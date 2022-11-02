@@ -469,6 +469,28 @@ EFI_STATUS F81866PeiInitEntryPoint(
 
     F81866MiscSetupFunction(PeiServices);
 
+#if DEBUG_MODE == 1
+    IoWrite8(F81866_CONFIG_INDEX, F81866_CONFIG_MODE_ENTER_VALUE);
+    IoWrite8(F81866_CONFIG_INDEX, F81866_CONFIG_MODE_ENTER_VALUE);
+    // GPIO10/11
+    IoWrite8(0x4E, 0x27);
+    IoWrite8(0x4F, (IoRead8(0x4F) & ~(BIT0+BIT2+BIT3)) | BIT2);
+
+    IoWrite8(0x4E, 0x2C);
+    IoWrite8(0x4F, IoRead8(0x4F) | (BIT0+BIT1));
+
+    IoWrite8(0x4E, 0x07);
+    IoWrite8(0x4F, 0x06);
+
+    // Output Enable
+    IoWrite8(0x4E, 0xE0);
+    IoWrite8(0x4F, IoRead8(0x4F) | (BIT0+BIT1));
+
+    // RS232, GPIO10: H, GPIO11: L
+    IoWrite8(0x4E, 0xE1);
+    IoWrite8(0x4F, (IoRead8(0x4F) & ~(BIT0+BIT1)) | BIT0);
+    IoWrite8(F81866_CONFIG_INDEX, F81866_CONFIG_MODE_EXIT_VALUE);
+#endif
     return EFI_SUCCESS;
 }
 
