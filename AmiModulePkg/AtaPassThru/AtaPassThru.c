@@ -141,6 +141,7 @@ InstallAtaPassThru (
                 (ATA_PASS_THRU_PROTOCOL*)&(AtaPassThruInterface->EfiAtaPassThru)
                 );
 
+    TRACE((-1, "Status(=%r) = InstallProtocolInterface(gEfiAtaPassThruProtocolGuid)\n",Status));
     if(EFI_ERROR(Status))return Status;
 
     if(ModeFlag){
