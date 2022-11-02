@@ -904,6 +904,7 @@ InstallOtherOptionalFeatures(
 
     TempHddSecurityProtocolPtr = NULL;  // Reset global variable
     
+    TRACE_AHCI((-1, "InstallOtherOptionalFeatures Start\n"));
     if ( HddSecurityInitProtocol == NULL) {
         pBS->LocateProtocol (&gAmiHddSecurityInitProtocolGuid,
                              NULL,
@@ -979,6 +980,7 @@ InstallOtherOptionalFeatures(
 
     } // end of for loop
 
+    TRACE_AHCI((-1, "InstallOtherOptionalFeatures End\n"));
     return EFI_SUCCESS;
 
 }
