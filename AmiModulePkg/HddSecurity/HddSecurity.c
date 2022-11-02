@@ -677,6 +677,7 @@ InstallSecurityInterface (
         &DeviceHandle,
         &gAmiHddSecurityProtocolGuid, SecurityInterface,
         NULL );
+    TRACE((-1, "Status(=%r) = InstallMultipleProtocolInterfaces(gAmiHddSecurityProtocolGuid)\n", Status));
     ASSERT_EFI_ERROR( Status );
     
     //  Update the Identify device buffer
