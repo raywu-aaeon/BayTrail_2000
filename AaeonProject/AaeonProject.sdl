@@ -1019,7 +1019,7 @@ End
 
 TOKEN
 	Name  = "CHECKBOX_AAEON_UART3MODE_DEFAULT"
-	Value  = "3"
+	Value  = "1"
 	Help = "Default value of the <RS232/422/485 Support> option for COM3.\0: Disabled\1: Enabled"
 	TokenType = Integer
 	TargetH = Yes
