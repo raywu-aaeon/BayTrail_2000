@@ -1260,3 +1260,12 @@ TOKEN
 	TargetH = Yes
 	TargetMAK = Yes
 End
+
+TOKEN
+    Name  = "HDD_SECURITY_SUPPORT"
+    Value  = "0"
+    Help  = "Main switch to enable HddSecurity support in Project"
+    TokenType = Boolean
+    TargetEQU = Yes
+    TargetH = Yes
+End
