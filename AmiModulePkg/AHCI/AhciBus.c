@@ -754,6 +754,7 @@ DetectAndConfigureDevice (
 
     SataDevInterface->DeviceState = DEVICE_DETECTED_SUCCESSFULLY;
 
+    TRACE_AHCI((-1, "SataDevInterface->DeviceType = 0x%X\n", SataDevInterface->DeviceType));
     // if this is a Port Multiplier skip the rest
     if (SataDevInterface->DeviceType == PMPORT) {
         SataDevInterface->DeviceState = DEVICE_CONFIGURED_SUCCESSFULLY;
