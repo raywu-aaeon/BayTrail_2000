@@ -866,7 +866,7 @@ End
 
 TOKEN
 	Name  = "SERIAL_DEBUG"
-	Value  = "0"
+	Value  = "1"
 	Help  = "A switch to print TSE Debug messages over Serial Port."
 	TokenType = Boolean
 	TargetH = Yes
