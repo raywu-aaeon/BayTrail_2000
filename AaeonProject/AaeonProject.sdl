@@ -1260,3 +1260,18 @@ TOKEN
     TargetEQU = Yes
     TargetH = Yes
 End
+
+ELINK
+	Name  = "ConInAvailabilityBeep,"
+	Parent  = "HandoffToTse,"
+	InvokeOrder = BeforeParent
+	Token = "BEEP_ENABLE" "=" "1"
+End
+
+ELINK
+	Name  = "ConInAvailabilityBeep,"
+	Parent  = "/* Connect ConIn Devices */"
+	Token = "BEEP_ENABLE" "=" "1"
+	InvokeOrder = AfterParent
+	Disable = YES
+End
