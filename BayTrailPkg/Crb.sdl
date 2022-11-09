@@ -755,24 +755,24 @@ TOKEN
 	TokenType = Integer
 End
 
-TOKEN
-	Name  = "===================== Chipset Configuration ====================="
-	Value  = "==========================================================="
-	TokenType = Expression
-End
-
-TOKEN
-	Name  = "HPET_PROTOCOL_SUPPORT"
-	Value  = "0"
-	Help  = "Use High Performance Event Timer (HPET) instead of 8254 to support Timer protocol in Project"
-	TokenType = Boolean
-	TargetH = Yes
-End
-
-TOKEN
-	Name  = " "
-	TokenType = Integer
-End
+#TOKEN
+#	Name  = "===================== Chipset Configuration ====================="
+#	Value  = "==========================================================="
+#	TokenType = Expression
+#End
+#
+#TOKEN
+#	Name  = "HPET_PROTOCOL_SUPPORT"
+#	Value  = "0"
+#	Help  = "Use High Performance Event Timer (HPET) instead of 8254 to support Timer protocol in Project"
+#	TokenType = Boolean
+#	TargetH = Yes
+#End
+#
+#TOKEN
+#	Name  = " "
+#	TokenType = Integer
+#End
 
 #EIP132975 >> 
 TOKEN
