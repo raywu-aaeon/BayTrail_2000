@@ -844,16 +844,16 @@
       oneof varid    = SETUP_DATA.ISPEn,\
           prompt       = STRING_TOKEN (STR_ISP_EN_DIS_PROMPT),\
           help         = STRING_TOKEN (STR_ISP_EN_DIS_HELP),\
-          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
-          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_ENABLED), value = 1, flags = RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
       endoneof;
 //EIP205589 >>
 #define NC_CHECKBOX_ISP_CONFIG\
       oneof varid    = SETUP_DATA.ISPDevSel,\
           prompt       = STRING_TOKEN (STR_ISP_PCI_DEVICE_SELECTION_PROMPT),\
           help         = STRING_TOKEN (STR_ISP_PCI_DEVICE_SELECTION_HELP),\
-          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = RESET_REQUIRED;\
-          option text  = STRING_TOKEN (STR_ISP_PCI_DEVICE_SELECTION_1), value = 1, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_COMMON_DISABLED), value = 0, flags = MANUFACTURING |DEFAULT | RESET_REQUIRED;\
+          option text  = STRING_TOKEN (STR_ISP_PCI_DEVICE_SELECTION_1), value = 1, flags = RESET_REQUIRED;\
           option text  = STRING_TOKEN (STR_ISP_PCI_DEVICE_SELECTION_2), value = 2, flags = RESET_REQUIRED;\
       endoneof;
 //EIP205589 <<
