@@ -871,7 +871,7 @@ TOKEN
 End
 
 ELINK
-    Name  = "{{0x10EC, 0x0888, 0xFF, TRUE, 68, 0}, UpxAdl01_A01_OemHdaVerbTblSample},"
+    Name  = "{{0x10EC0888, 0x0000, 0xFF, TRUE, 68, 0}, UpxAdl01_A01_OemHdaVerbTblSample},"
     Parent  = "OEM_HDA_VERB_TABLE"
     Help  = "CRB HDA Verb Table"
     InvokeOrder = AfterParent
@@ -1225,4 +1225,13 @@ ELINK
 	Token = "BEEP_ENABLE" "=" "1"
 	InvokeOrder = AfterParent
 	Disable = YES
+End
+
+TOKEN
+	Name  = "DEFAULT_HDMI_CODEC_PORT_C"
+	Value  = "1"
+	Help  = "Default setup item 'HDMI Port C' value. \0: Disable. \1: Enable"
+	TokenType = Integer
+	TargetEQU = Yes
+	TargetH = Yes
 End
