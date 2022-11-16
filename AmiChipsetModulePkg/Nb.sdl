@@ -446,7 +446,7 @@ End
 
 TOKEN
 	Name  = "VBT_FILE_PATH"
-	Value  = "AmiChipsetModulePkg/NB/GopDriver/X64/vbt.bin"
+	Value  = "AmiChipsetModulePkg/NB/GopDriver/X64/Vbt_7.1.1005.bin"
 	Help  = "The full file path and file name of VBT file."
 	TokenType = Expression
 	TargetFDF = Yes
